@@ -1,10 +1,17 @@
 """
-CognitiveRCD.py - 3NGIN3 Architecture Safety Component
+nethical.py - Cognitive Safety Governance for Autonomous Systems
 
-Implements the Cognitive Residual Current Device (RCD) for safety governance:
-- Intent vs Action deviation detection
-- Circuit breaker functionality for safety
-- Ethical constraint enforcement
+nethical is a Cognitive Residual Current Device (RCD) for safety governance in agent architectures.
+It continuously monitors and enforces ethical constraints, detects deviations between intent and action,
+and provides circuit breaker functionality to prevent unsafe or unauthorized behavior.
+
+Features:
+- Detects intent vs action deviation in autonomous and intelligent systems.
+- Enforces ethical and safety constraints through configurable policies.
+- Provides multi-level safety alerts (warning, critical, emergency) and circuit breaker protection.
+- Supports callbacks for custom safety incident handling and reporting.
+
+Originally based on the 3NGIN3 architecture safety component.
 """
 
 import logging
@@ -78,10 +85,12 @@ class SafetyViolation:
             self.timestamp = time.time()
 
 
-class CognitiveRCD:
+class nethical:
     """
-    Cognitive Residual Current Device - Safety governance system that monitors
-    for deviations between stated intent and actual actions
+    nethical - Cognitive Residual Current Device (RCD) for safety governance in autonomous agent architectures.
+
+    Monitors for deviations between stated intent and actual actions, enforces ethical constraints,
+    triggers multi-level safety alerts, and provides circuit breaker protection for unsafe behavior.
     """
     
     def __init__(self, config: Optional[Dict[str, Any]] = None):
@@ -107,7 +116,7 @@ class CognitiveRCD:
             SafetyLevel.EMERGENCY: []
         }
         
-        logging.info("CognitiveRCD initialized with safety governance active")
+        logging.info("nethical initialized with safety governance active")
         
     def register_intent(self, intent: Intent) -> str:
         """Register an agent's stated intent"""
