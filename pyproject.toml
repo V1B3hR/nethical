@@ -1,31 +1,39 @@
 [build-system]
-requires = ["setuptools>=61.0", "wheel"]
+requires = ["setuptools>=68", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "nethical"
 version = "0.1.0"
 description = "Safety governance system for AI agents"
-readme = "README.md"
-authors = [{name = "Nethical Team"}]
-license = {text = "MIT"}
+readme = { file = "README.md", content-type = "text/markdown" }
+requires-python = ">=3.8"
+license = { file = "LICENSE" }
+authors = [{ name = "Nethical Team" }]
+keywords = ["ai", "safety", "governance", "agents", "moderation", "compliance"]
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Intended Audience :: Developers",
     "License :: OSI Approved :: MIT License",
     "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3 :: Only",
     "Programming Language :: Python :: 3.8",
     "Programming Language :: Python :: 3.9",
     "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Typing :: Typed",
 ]
-requires-python = ">=3.8"
 dependencies = [
     "pydantic>=2.0.0",
-    "typing-extensions>=4.0.0",
+    "typing-extensions>=4.0.0; python_version < '3.11'",
     "dataclasses-json>=0.5.0",
 ]
+
+[project.urls]
+Homepage = "https://github.com/V1B3hR/nethical"
+Repository = "https://github.com/V1B3hR/nethical"
+Issues = "https://github.com/V1B3hR/nethical/issues"
 
 [project.optional-dependencies]
 dev = [
@@ -36,9 +44,18 @@ dev = [
     "mypy>=1.0.0",
 ]
 
+[tool.setuptools]
+# Only package the 'nethical' package directory. The top-level nethical.py is intentionally not included.
+include-package-data = true
+license-files = ["LICENSE"]
+
+[tool.setuptools.packages.find]
+include = ["nethical*"]
+exclude = ["tests*", "examples*"]
+
 [tool.black]
 line-length = 88
-target-version = ["py38", "py39", "py310", "py311"]
+target-version = ["py38", "py39", "py310", "py311", "py312"]
 
 [tool.mypy]
 python_version = "3.8"
@@ -46,6 +63,14 @@ warn_return_any = true
 warn_unused_configs = true
 disallow_untyped_defs = true
 ignore_missing_imports = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':', compatible with Black
+    "W503",  # line break before binary operator, compatible with Black
+]
+exclude = [".git", "__pycache__", ".venv", "venv", "build", "dist"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
