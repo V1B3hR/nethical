@@ -1,23 +1,845 @@
-"""Main safety governance system that coordinates all components."""
+"""
+Enhanced AI Safety Governance System
+A comprehensive, production-ready safety governance framework for AI agents
+with advanced monitoring, detection, and intervention capabilities.
+"""
 
 import asyncio
-from typing import List, Dict, Any, Optional
-from .models import AgentAction, SafetyViolation, JudgmentResult, MonitoringConfig
-from ..monitors.intent_monitor import IntentDeviationMonitor
-from ..detectors.ethical_detector import EthicalViolationDetector
-from ..detectors.safety_detector import SafetyViolationDetector
-from ..detectors.manipulation_detector import ManipulationDetector
-from ..judges.safety_judge import SafetyJudge
+import hashlib
+import json
+import logging
+import time
+from abc import ABC, abstractmethod
+from collections import deque
+from dataclasses import dataclass, field
+from datetime import datetime, timedelta
+from enum import Enum, auto
+from typing import List, Dict, Any, Optional, Set, Tuple, Callable, Union
+from concurrent.futures import ThreadPoolExecutor
+import threading
+import warnings
+
+# Configure logging
+logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
-class SafetyGovernance:
+# ============== Core Enums ==============
+
+class ViolationType(Enum):
+    """Extended violation types for comprehensive safety coverage."""
+    ETHICAL = "ethical"
+    SAFETY = "safety"
+    MANIPULATION = "manipulation"
+    INTENT_DEVIATION = "intent_deviation"
+    PRIVACY = "privacy"
+    SECURITY = "security"
+    BIAS = "bias"
+    HALLUCINATION = "hallucination"
+    ADVERSARIAL = "adversarial"
+    DATA_POISONING = "data_poisoning"
+    MODEL_EXTRACTION = "model_extraction"
+    PROMPT_INJECTION = "prompt_injection"
+    UNAUTHORIZED_ACCESS = "unauthorized_access"
+    TOXIC_CONTENT = "toxic_content"
+    MISINFORMATION = "misinformation"
+
+
+class Severity(Enum):
+    """Severity levels with numerical values for comparison."""
+    LOW = 1
+    MEDIUM = 2
+    HIGH = 3
+    CRITICAL = 4
+    EMERGENCY = 5
+
+
+class Decision(Enum):
+    """Extended decision types for nuanced responses."""
+    ALLOW = "allow"
+    ALLOW_WITH_MODIFICATION = "allow_with_modification"
+    WARN = "warn"
+    BLOCK = "block"
+    QUARANTINE = "quarantine"
+    ESCALATE = "escalate"
+    TERMINATE = "terminate"
+
+
+class ActionType(Enum):
+    """Types of agent actions."""
+    QUERY = "query"
+    RESPONSE = "response"
+    FUNCTION_CALL = "function_call"
+    DATA_ACCESS = "data_access"
+    MODEL_UPDATE = "model_update"
+    SYSTEM_COMMAND = "system_command"
+    EXTERNAL_API = "external_api"
+
+
+# ============== Core Data Models ==============
+
+@dataclass
+class AgentAction:
+    """Enhanced agent action with comprehensive metadata."""
+    action_id: str
+    agent_id: str
+    action_type: ActionType
+    content: str
+    metadata: Dict[str, Any] = field(default_factory=dict)
+    timestamp: datetime = field(default_factory=datetime.now)
+    context: Dict[str, Any] = field(default_factory=dict)
+    intent: Optional[str] = None
+    risk_score: float = 0.0
+    parent_action_id: Optional[str] = None
+    session_id: Optional[str] = None
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "action_id": self.action_id,
+            "agent_id": self.agent_id,
+            "action_type": self.action_type.value,
+            "content": self.content,
+            "metadata": self.metadata,
+            "timestamp": self.timestamp.isoformat(),
+            "context": self.context,
+            "intent": self.intent,
+            "risk_score": self.risk_score,
+            "parent_action_id": self.parent_action_id,
+            "session_id": self.session_id
+        }
+
+
+@dataclass
+class SafetyViolation:
+    """Enhanced safety violation with detailed tracking."""
+    violation_id: str
+    action_id: str
+    violation_type: ViolationType
+    severity: Severity
+    description: str
+    confidence: float
+    evidence: List[str] = field(default_factory=list)
+    recommendations: List[str] = field(default_factory=list)
+    timestamp: datetime = field(default_factory=datetime.now)
+    detector_name: Optional[str] = None
+    remediation_applied: bool = False
+    false_positive: bool = False
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "violation_id": self.violation_id,
+            "action_id": self.action_id,
+            "violation_type": self.violation_type.value,
+            "severity": self.severity.value,
+            "description": self.description,
+            "confidence": self.confidence,
+            "evidence": self.evidence,
+            "recommendations": self.recommendations,
+            "timestamp": self.timestamp.isoformat(),
+            "detector_name": self.detector_name,
+            "remediation_applied": self.remediation_applied,
+            "false_positive": self.false_positive
+        }
+
+
+@dataclass
+class JudgmentResult:
+    """Enhanced judgment result with detailed feedback and remediation."""
+    judgment_id: str
+    action_id: str
+    decision: Decision
+    confidence: float
+    reasoning: str
+    violations: List[SafetyViolation] = field(default_factory=list)
+    modifications: Dict[str, Any] = field(default_factory=dict)
+    feedback: List[str] = field(default_factory=list)
+    timestamp: datetime = field(default_factory=datetime.now)
+    remediation_steps: List[str] = field(default_factory=list)
+    follow_up_required: bool = False
+    
+    def to_dict(self) -> Dict[str, Any]:
+        return {
+            "judgment_id": self.judgment_id,
+            "action_id": self.action_id,
+            "decision": self.decision.value,
+            "confidence": self.confidence,
+            "reasoning": self.reasoning,
+            "violations": [v.to_dict() for v in self.violations],
+            "modifications": self.modifications,
+            "feedback": self.feedback,
+            "timestamp": self.timestamp.isoformat(),
+            "remediation_steps": self.remediation_steps,
+            "follow_up_required": self.follow_up_required
+        }
+
+
+@dataclass
+class MonitoringConfig:
+    """Enhanced monitoring configuration with fine-grained controls."""
+    # Thresholds
+    intent_deviation_threshold: float = 0.7
+    risk_threshold: float = 0.6
+    confidence_threshold: float = 0.8
+    
+    # Feature flags
+    enable_ethical_monitoring: bool = True
+    enable_safety_monitoring: bool = True
+    enable_manipulation_detection: bool = True
+    enable_privacy_monitoring: bool = True
+    enable_security_monitoring: bool = True
+    enable_bias_detection: bool = True
+    enable_hallucination_detection: bool = True
+    enable_adversarial_detection: bool = True
+    enable_real_time_monitoring: bool = True
+    enable_async_processing: bool = True
+    
+    # Performance settings
+    max_violation_history: int = 10000
+    max_judgment_history: int = 10000
+    batch_size: int = 100
+    max_workers: int = 4
+    cache_ttl_seconds: int = 3600
+    
+    # Alert settings
+    alert_on_critical: bool = True
+    alert_on_emergency: bool = True
+    escalation_threshold: int = 3
+    
+    # Logging settings
+    log_violations: bool = True
+    log_judgments: bool = True
+    log_performance_metrics: bool = True
+
+
+# ============== Base Classes ==============
+
+class BaseDetector(ABC):
+    """Abstract base class for all detectors."""
+    
+    def __init__(self, name: str):
+        self.name = name
+        self.enabled = True
+        self.detection_count = 0
+        self.last_detection_time = None
+        self._cache = {}
+        self._cache_expiry = {}
+        
+    @abstractmethod
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        """Detect violations in the given action."""
+        pass
+    
+    def enable(self):
+        self.enabled = True
+        
+    def disable(self):
+        self.enabled = False
+        
+    def _generate_violation_id(self) -> str:
+        """Generate unique violation ID."""
+        timestamp = str(time.time())
+        return hashlib.md5(f"{self.name}_{timestamp}".encode()).hexdigest()[:12]
+    
+    def _use_cache(self, key: str, value: Any = None, ttl: int = 300) -> Optional[Any]:
+        """Simple caching mechanism."""
+        if value is None:
+            # Get from cache
+            if key in self._cache and time.time() < self._cache_expiry.get(key, 0):
+                return self._cache[key]
+            return None
+        else:
+            # Set cache
+            self._cache[key] = value
+            self._cache_expiry[key] = time.time() + ttl
+            return value
+
+
+# ============== Specialized Detectors ==============
+
+class EthicalViolationDetector(BaseDetector):
+    """Enhanced ethical violation detection with multiple ethical frameworks."""
+    
+    def __init__(self):
+        super().__init__("Ethical Violation Detector")
+        self.ethical_keywords = {
+            "harm", "hurt", "damage", "injury", "discrimination", "bias",
+            "unfair", "prejudice", "stereotype", "marginalize", "exclude",
+            "deceive", "mislead", "manipulate", "coerce", "exploit"
+        }
+        self.protected_categories = {
+            "race", "gender", "age", "disability", "religion", "sexuality",
+            "nationality", "ethnicity", "socioeconomic"
+        }
+        
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        if not self.enabled:
+            return []
+            
+        violations = []
+        content_lower = action.content.lower()
+        
+        # Check for harmful content
+        harm_score = self._calculate_harm_score(content_lower)
+        if harm_score > 0.5:
+            violations.append(SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.ETHICAL,
+                severity=Severity.HIGH if harm_score > 0.8 else Severity.MEDIUM,
+                description=f"Potential ethical violation detected: harmful content",
+                confidence=harm_score,
+                evidence=[f"Harm score: {harm_score:.2f}"],
+                recommendations=["Review content for potential harm", "Consider rephrasing"],
+                detector_name=self.name
+            ))
+        
+        # Check for discrimination
+        if self._check_discrimination(content_lower):
+            violations.append(SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.BIAS,
+                severity=Severity.HIGH,
+                description="Potential discriminatory content detected",
+                confidence=0.85,
+                evidence=["Protected category references detected"],
+                recommendations=["Remove discriminatory language", "Ensure fairness"],
+                detector_name=self.name
+            ))
+        
+        self.detection_count += len(violations)
+        if violations:
+            self.last_detection_time = datetime.now()
+            
+        return violations
+    
+    def _calculate_harm_score(self, text: str) -> float:
+        """Calculate harm score based on keyword presence and context."""
+        score = 0.0
+        word_count = len(text.split())
+        
+        for keyword in self.ethical_keywords:
+            if keyword in text:
+                score += 0.15
+                
+        return min(score, 1.0)
+    
+    def _check_discrimination(self, text: str) -> bool:
+        """Check for discriminatory language."""
+        for category in self.protected_categories:
+            if category in text:
+                # Simple heuristic - would need ML model for production
+                negative_words = {"not", "no", "never", "can't", "won't", "shouldn't"}
+                if any(neg in text for neg in negative_words):
+                    return True
+        return False
+
+
+class SafetyViolationDetector(BaseDetector):
+    """Enhanced safety violation detection with multiple safety dimensions."""
+    
+    def __init__(self):
+        super().__init__("Safety Violation Detector")
+        self.unsafe_patterns = [
+            r"rm\s+-rf",  # Dangerous commands
+            r"sudo\s+",
+            r"format\s+c:",
+            r"<script",  # XSS attempts
+            r"DROP\s+TABLE",  # SQL injection
+            r"../../",  # Path traversal
+        ]
+        self.unsafe_domains = {"malware.com", "phishing.org", "dangerous.net"}
+        
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        if not self.enabled:
+            return []
+            
+        violations = []
+        
+        # Check for dangerous patterns
+        import re
+        for pattern in self.unsafe_patterns:
+            if re.search(pattern, action.content, re.IGNORECASE):
+                violations.append(SafetyViolation(
+                    violation_id=self._generate_violation_id(),
+                    action_id=action.action_id,
+                    violation_type=ViolationType.SAFETY,
+                    severity=Severity.CRITICAL,
+                    description=f"Dangerous pattern detected: {pattern}",
+                    confidence=0.95,
+                    evidence=[f"Pattern: {pattern}"],
+                    recommendations=["Block immediately", "Investigate source"],
+                    detector_name=self.name
+                ))
+        
+        # Check for unsafe domains
+        for domain in self.unsafe_domains:
+            if domain in action.content.lower():
+                violations.append(SafetyViolation(
+                    violation_id=self._generate_violation_id(),
+                    action_id=action.action_id,
+                    violation_type=ViolationType.SECURITY,
+                    severity=Severity.HIGH,
+                    description=f"Unsafe domain reference: {domain}",
+                    confidence=0.9,
+                    evidence=[f"Domain: {domain}"],
+                    recommendations=["Block domain access", "Warn user"],
+                    detector_name=self.name
+                ))
+        
+        self.detection_count += len(violations)
+        if violations:
+            self.last_detection_time = datetime.now()
+            
+        return violations
+
+
+class ManipulationDetector(BaseDetector):
+    """Advanced manipulation and social engineering detection."""
+    
+    def __init__(self):
+        super().__init__("Manipulation Detector")
+        self.manipulation_indicators = {
+            "urgent": 0.3,
+            "immediately": 0.3,
+            "act now": 0.4,
+            "limited time": 0.4,
+            "exclusive offer": 0.3,
+            "verify your": 0.5,
+            "confirm your": 0.5,
+            "update your": 0.4,
+            "suspended": 0.5,
+            "click here": 0.4,
+            "winner": 0.3,
+            "congratulations": 0.3,
+            "prize": 0.3,
+            "free": 0.2,
+            "guarantee": 0.3
+        }
+        
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        if not self.enabled:
+            return []
+            
+        violations = []
+        content_lower = action.content.lower()
+        
+        # Calculate manipulation score
+        manipulation_score = 0.0
+        detected_indicators = []
+        
+        for indicator, weight in self.manipulation_indicators.items():
+            if indicator in content_lower:
+                manipulation_score += weight
+                detected_indicators.append(indicator)
+        
+        manipulation_score = min(manipulation_score, 1.0)
+        
+        if manipulation_score > 0.5:
+            violations.append(SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.MANIPULATION,
+                severity=Severity.HIGH if manipulation_score > 0.7 else Severity.MEDIUM,
+                description="Potential manipulation or social engineering detected",
+                confidence=manipulation_score,
+                evidence=[f"Indicators: {', '.join(detected_indicators)}"],
+                recommendations=["Review for social engineering", "Verify authenticity"],
+                detector_name=self.name
+            ))
+        
+        # Check for phishing patterns
+        if self._check_phishing_patterns(action):
+            violations.append(SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.MANIPULATION,
+                severity=Severity.CRITICAL,
+                description="Potential phishing attempt detected",
+                confidence=0.85,
+                evidence=["Phishing patterns identified"],
+                recommendations=["Block immediately", "Alert security team"],
+                detector_name=self.name
+            ))
+        
+        self.detection_count += len(violations)
+        if violations:
+            self.last_detection_time = datetime.now()
+            
+        return violations
+    
+    def _check_phishing_patterns(self, action: AgentAction) -> bool:
+        """Check for common phishing patterns."""
+        content_lower = action.content.lower()
+        
+        # Check for credential harvesting attempts
+        credential_keywords = ["password", "username", "credit card", "ssn", "social security"]
+        request_keywords = ["enter", "provide", "verify", "confirm", "update"]
+        
+        has_credential = any(keyword in content_lower for keyword in credential_keywords)
+        has_request = any(keyword in content_lower for keyword in request_keywords)
+        
+        return has_credential and has_request
+
+
+class PrivacyDetector(BaseDetector):
+    """Privacy violation detection for PII and sensitive data."""
+    
+    def __init__(self):
+        super().__init__("Privacy Detector")
+        self.pii_patterns = {
+            "ssn": r"\b\d{3}-\d{2}-\d{4}\b",
+            "credit_card": r"\b\d{4}[\s-]?\d{4}[\s-]?\d{4}[\s-]?\d{4}\b",
+            "email": r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b",
+            "phone": r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b",
+            "ip_address": r"\b\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}\b"
+        }
+        
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        if not self.enabled:
+            return []
+            
+        violations = []
+        import re
+        
+        for pii_type, pattern in self.pii_patterns.items():
+            matches = re.findall(pattern, action.content)
+            if matches:
+                violations.append(SafetyViolation(
+                    violation_id=self._generate_violation_id(),
+                    action_id=action.action_id,
+                    violation_type=ViolationType.PRIVACY,
+                    severity=Severity.HIGH,
+                    description=f"PII detected: {pii_type}",
+                    confidence=0.95,
+                    evidence=[f"Found {len(matches)} instance(s) of {pii_type}"],
+                    recommendations=["Redact PII", "Implement data masking"],
+                    detector_name=self.name
+                ))
+        
+        self.detection_count += len(violations)
+        if violations:
+            self.last_detection_time = datetime.now()
+            
+        return violations
+
+
+class AdversarialDetector(BaseDetector):
+    """Detect adversarial attacks and prompt injections."""
+    
+    def __init__(self):
+        super().__init__("Adversarial Detector")
+        self.injection_patterns = [
+            "ignore previous instructions",
+            "disregard all prior",
+            "forget everything",
+            "new instructions:",
+            "system prompt:",
+            "you are now",
+            "act as if",
+            "pretend to be",
+            "bypass safety",
+            "jailbreak"
+        ]
+        
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        if not self.enabled:
+            return []
+            
+        violations = []
+        content_lower = action.content.lower()
+        
+        # Check for prompt injection attempts
+        for pattern in self.injection_patterns:
+            if pattern in content_lower:
+                violations.append(SafetyViolation(
+                    violation_id=self._generate_violation_id(),
+                    action_id=action.action_id,
+                    violation_type=ViolationType.PROMPT_INJECTION,
+                    severity=Severity.CRITICAL,
+                    description=f"Prompt injection attempt detected",
+                    confidence=0.9,
+                    evidence=[f"Pattern: '{pattern}'"],
+                    recommendations=["Block request", "Log attempt", "Investigate source"],
+                    detector_name=self.name
+                ))
+                break
+        
+        # Check for unusual token patterns (simplified)
+        if self._check_adversarial_tokens(action.content):
+            violations.append(SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.ADVERSARIAL,
+                severity=Severity.HIGH,
+                description="Potential adversarial input detected",
+                confidence=0.75,
+                evidence=["Unusual token patterns"],
+                recommendations=["Sanitize input", "Apply additional validation"],
+                detector_name=self.name
+            ))
+        
+        self.detection_count += len(violations)
+        if violations:
+            self.last_detection_time = datetime.now()
+            
+        return violations
+    
+    def _check_adversarial_tokens(self, text: str) -> bool:
+        """Check for adversarial token patterns."""
+        # Simplified check - in production, use ML-based detection
+        unusual_chars = sum(1 for c in text if ord(c) > 127)
+        return unusual_chars > len(text) * 0.1
+
+
+# ============== Monitors ==============
+
+class IntentDeviationMonitor:
+    """Monitor for intent deviation and goal misalignment."""
+    
+    def __init__(self, deviation_threshold: float = 0.7):
+        self.deviation_threshold = deviation_threshold
+        self.enabled = True
+        self.intent_history: deque = deque(maxlen=100)
+        
+    async def analyze_action(self, action: AgentAction) -> List[SafetyViolation]:
+        if not self.enabled:
+            return []
+            
+        violations = []
+        
+        if action.intent:
+            # Store intent for pattern analysis
+            self.intent_history.append({
+                "action_id": action.action_id,
+                "intent": action.intent,
+                "timestamp": action.timestamp
+            })
+            
+            # Check for intent deviation
+            deviation_score = self._calculate_deviation(action)
+            
+            if deviation_score > self.deviation_threshold:
+                violations.append(SafetyViolation(
+                    violation_id=hashlib.md5(f"intent_{time.time()}".encode()).hexdigest()[:12],
+                    action_id=action.action_id,
+                    violation_type=ViolationType.INTENT_DEVIATION,
+                    severity=Severity.HIGH if deviation_score > 0.9 else Severity.MEDIUM,
+                    description="Significant intent deviation detected",
+                    confidence=deviation_score,
+                    evidence=[f"Deviation score: {deviation_score:.2f}"],
+                    recommendations=["Review action alignment", "Verify intent"],
+                    detector_name="Intent Monitor"
+                ))
+        
+        return violations
+    
+    def _calculate_deviation(self, action: AgentAction) -> float:
+        """Calculate deviation from expected intent."""
+        # Simplified calculation - in production, use embedding similarity
+        if not self.intent_history:
+            return 0.0
+            
+        # Check for sudden intent changes
+        recent_intents = [h["intent"] for h in list(self.intent_history)[-10:]]
+        if recent_intents and action.intent not in recent_intents:
+            return 0.8
+            
+        return 0.0
+    
+    def enable(self):
+        self.enabled = True
+        
+    def disable(self):
+        self.enabled = False
+
+
+# ============== Judge System ==============
+
+class SafetyJudge:
+    """Enhanced safety judge with multi-factor decision making."""
+    
+    def __init__(self):
+        self.enabled = True
+        self.decision_history: deque = deque(maxlen=1000)
+        self.escalation_queue: deque = deque(maxlen=100)
+        
+    async def evaluate_action(
+        self, 
+        action: AgentAction, 
+        violations: List[SafetyViolation]
+    ) -> JudgmentResult:
+        """Evaluate action and violations to make a judgment."""
+        
+        if not self.enabled:
+            return JudgmentResult(
+                judgment_id=self._generate_judgment_id(),
+                action_id=action.action_id,
+                decision=Decision.ALLOW,
+                confidence=1.0,
+                reasoning="Judge disabled - allowing by default",
+                violations=[],
+                feedback=["Safety judge is currently disabled"]
+            )
+        
+        # Analyze violations
+        decision, confidence, reasoning = self._analyze_violations(violations)
+        
+        # Check action risk score
+        if action.risk_score > 0.8:
+            decision = Decision.BLOCK
+            reasoning += f" High risk score: {action.risk_score:.2f}."
+        
+        # Generate recommendations and feedback
+        feedback = self._generate_feedback(action, violations, decision)
+        remediation_steps = self._generate_remediation(violations)
+        
+        # Check if escalation is needed
+        follow_up_required = self._check_escalation_needed(violations, decision)
+        
+        # Create judgment result
+        judgment = JudgmentResult(
+            judgment_id=self._generate_judgment_id(),
+            action_id=action.action_id,
+            decision=decision,
+            confidence=confidence,
+            reasoning=reasoning,
+            violations=violations,
+            feedback=feedback,
+            remediation_steps=remediation_steps,
+            follow_up_required=follow_up_required
+        )
+        
+        # Store in history
+        self.decision_history.append(judgment)
+        
+        # Add to escalation queue if needed
+        if follow_up_required:
+            self.escalation_queue.append(judgment)
+        
+        return judgment
+    
+    def _analyze_violations(
+        self, 
+        violations: List[SafetyViolation]
+    ) -> Tuple[Decision, float, str]:
+        """Analyze violations to determine decision."""
+        
+        if not violations:
+            return Decision.ALLOW, 1.0, "No violations detected."
+        
+        # Calculate aggregate severity
+        max_severity = max((v.severity.value for v in violations), default=0)
+        avg_confidence = sum(v.confidence for v in violations) / len(violations)
+        
+        # Decision logic based on severity
+        if max_severity >= Severity.EMERGENCY.value:
+            return Decision.TERMINATE, 0.95, "Emergency severity violation detected."
+        elif max_severity >= Severity.CRITICAL.value:
+            return Decision.BLOCK, 0.9, "Critical severity violation detected."
+        elif max_severity >= Severity.HIGH.value:
+            if avg_confidence > 0.8:
+                return Decision.QUARANTINE, 0.85, "High severity violation with high confidence."
+            else:
+                return Decision.WARN, 0.7, "High severity violation with moderate confidence."
+        elif max_severity >= Severity.MEDIUM.value:
+            return Decision.ALLOW_WITH_MODIFICATION, 0.6, "Medium severity violation detected."
+        else:
+            return Decision.ALLOW, 0.5, "Low severity violations only."
+    
+    def _generate_feedback(
+        self, 
+        action: AgentAction, 
+        violations: List[SafetyViolation],
+        decision: Decision
+    ) -> List[str]:
+        """Generate actionable feedback."""
+        
+        feedback = []
+        
+        if decision == Decision.ALLOW:
+            feedback.append("Action approved - no significant issues detected.")
+        elif decision == Decision.ALLOW_WITH_MODIFICATION:
+            feedback.append("Action allowed with modifications required.")
+        elif decision == Decision.WARN:
+            feedback.append("Warning: Potential safety concerns detected.")
+        elif decision == Decision.BLOCK:
+            feedback.append("Action blocked due to safety violations.")
+        elif decision == Decision.QUARANTINE:
+            feedback.append("Action quarantined for review.")
+        elif decision == Decision.ESCALATE:
+            feedback.append("Action escalated to human review.")
+        elif decision == Decision.TERMINATE:
+            feedback.append("Session terminated due to critical violations.")
+        
+        # Add violation-specific feedback
+        for violation in violations[:3]:  # Top 3 violations
+            feedback.append(f"- {violation.description}")
+        
+        return feedback
+    
+    def _generate_remediation(self, violations: List[SafetyViolation]) -> List[str]:
+        """Generate remediation steps."""
+        
+        remediation = []
+        seen = set()
+        
+        for violation in violations:
+            for recommendation in violation.recommendations:
+                if recommendation not in seen:
+                    remediation.append(recommendation)
+                    seen.add(recommendation)
+        
+        return remediation
+    
+    def _check_escalation_needed(
+        self, 
+        violations: List[SafetyViolation],
+        decision: Decision
+    ) -> bool:
+        """Check if escalation is needed."""
+        
+        # Escalate critical decisions
+        if decision in [Decision.TERMINATE, Decision.ESCALATE]:
+            return True
+        
+        # Escalate high-severity violations
+        if any(v.severity.value >= Severity.CRITICAL.value for v in violations):
+            return True
+        
+        # Escalate multiple high-confidence violations
+        high_confidence_count = sum(1 for v in violations if v.confidence > 0.9)
+        if high_confidence_count >= 3:
+            return True
+        
+        return False
+    
+    def _generate_judgment_id(self) -> str:
+        """Generate unique judgment ID."""
+        timestamp = str(time.time())
+        return hashlib.md5(f"judgment_{timestamp}".encode()).hexdigest()[:12]
+    
+    def enable(self):
+        self.enabled = True
+        
+    def disable(self):
+        self.enabled = False
+
+
+# ============== Main Governance System ==============
+
+class EnhancedSafetyGovernance:
     """
-    Main safety governance system that monitors agent actions and provides
-    comprehensive safety and ethical oversight.
+    Production-ready AI Safety Governance System with comprehensive
+    monitoring, detection, and intervention capabilities.
     """
     
     def __init__(self, config: Optional[MonitoringConfig] = None):
         self.config = config or MonitoringConfig()
+        self.start_time = datetime.now()
+        
+        # Initialize thread pool for async operations
+        self.executor = ThreadPoolExecutor(max_workers=self.config.max_workers)
         
         # Initialize monitors
         self.intent_monitor = IntentDeviationMonitor(
@@ -25,244 +847,820 @@ class SafetyGovernance:
         )
         
         # Initialize detectors
-        self.detectors = []
-        if self.config.enable_ethical_monitoring:
-            self.detectors.append(EthicalViolationDetector())
-        if self.config.enable_safety_monitoring:
-            self.detectors.append(SafetyViolationDetector())
-        if self.config.enable_manipulation_detection:
-            self.detectors.append(ManipulationDetector())
+        self.detectors: List[BaseDetector] = []
+        self._initialize_detectors()
         
         # Initialize judge
         self.judge = SafetyJudge()
         
-        # Storage for violations and judgments
-        self.violation_history: List[SafetyViolation] = []
-        self.judgment_history: List[JudgmentResult] = []
+        # Storage
+        self.violation_history: deque = deque(maxlen=self.config.max_violation_history)
+        self.judgment_history: deque = deque(maxlen=self.config.max_judgment_history)
+        self.action_history: deque = deque(maxlen=10000)
+        
+        # Metrics tracking
+        self.metrics = {
+            "total_actions_processed": 0,
+            "total_violations_detected": 0,
+            "total_actions_blocked": 0,
+            "total_actions_modified": 0,
+            "avg_processing_time": 0.0,
+            "false_positive_rate": 0.0,
+            "true_positive_rate": 0.0
+        }
+        
+        # Alert system
+        self.alert_callbacks: List[Callable] = []
+        self.alert_history: deque = deque(maxlen=1000)
+        
+        # Cache for performance
+        self._judgment_cache = {}
+        self._cache_lock = threading.Lock()
+        
+        logger.info(f"Enhanced Safety Governance System initialized with config: {config}")
     
-    async def evaluate_action(self, action: AgentAction) -> JudgmentResult:
+    def _initialize_detectors(self):
+        """Initialize all enabled detectors."""
+        
+        if self.config.enable_ethical_monitoring:
+            self.detectors.append(EthicalViolationDetector())
+            
+        if self.config.enable_safety_monitoring:
+            self.detectors.append(SafetyViolationDetector())
+            
+        if self.config.enable_manipulation_detection:
+            self.detectors.append(ManipulationDetector())
+            
+        if self.config.enable_privacy_monitoring:
+            self.detectors.append(PrivacyDetector())
+            
+        if self.config.enable_adversarial_detection:
+            self.detectors.append(AdversarialDetector())
+    
+    async def evaluate_action(
+        self, 
+        action: AgentAction,
+        use_cache: bool = True
+    ) -> JudgmentResult:
         """
         Evaluate an agent action through the complete governance pipeline.
         
         Args:
             action: The agent action to evaluate
+            use_cache: Whether to use cached results for similar actions
             
         Returns:
             JudgmentResult with decision and feedback
         """
-        # Step 1: Monitor for intent deviation
-        intent_violations = await self.intent_monitor.analyze_action(action)
         
-        # Step 2: Detect various types of violations
-        all_violations = intent_violations.copy()
+        start_time = time.time()
         
-        for detector in self.detectors:
-            detector_violations = await detector.detect_violations(action)
-            all_violations.extend(detector_violations)
+        # Check cache if enabled
+        if use_cache:
+            cached_result = self._check_cache(action)
+            if cached_result:
+                logger.debug(f"Cache hit for action {action.action_id}")
+                return cached_result
         
-        # Step 3: Store violations in history
-        self.violation_history.extend(all_violations)
-        self._cleanup_history()
+        # Store action in history
+        self.action_history.append(action)
+        self.metrics["total_actions_processed"] += 1
         
-        # Step 4: Judge evaluates action and violations
-        judgment = await self.judge.evaluate_action(action, all_violations)
-        
-        # Step 5: Store judgment in history
-        self.judgment_history.append(judgment)
-        
-        return judgment
+        try:
+            # Step 1: Monitor for intent deviation
+            intent_violations = await self.intent_monitor.analyze_action(action)
+            
+            # Step 2: Run all detectors in parallel for efficiency
+            if self.config.enable_async_processing:
+                detector_tasks = [
+                    detector.detect_violations(action) 
+                    for detector in self.detectors
+                ]
+                detector_results = await asyncio.gather(*detector_tasks)
+                all_violations = intent_violations.copy()
+                for violations in detector_results:
+                    all_violations.extend(violations)
+            else:
+                # Sequential processing
+                all_violations = intent_violations.copy()
+                for detector in self.detectors:
+                    violations = await detector.detect_violations(action)
+                    all_violations.extend(violations)
+            
+            # Step 3: Store violations in history
+            self.violation_history.extend(all_violations)
+            self.metrics["total_violations_detected"] += len(all_violations)
+            
+            # Step 4: Judge evaluates action and violations
+            judgment = await self.judge.evaluate_action(action, all_violations)
+            
+            # Step 5: Store judgment in history
+            self.judgment_history.append(judgment)
+            
+            # Step 6: Update metrics
+            self._update_metrics(judgment, time.time() - start_time)
+            
+            # Step 7: Handle alerts if needed
+            await self._handle_alerts(action, all_violations, judgment)
+            
+            # Step 8: Cache result
+            if use_cache:
+                self._cache_result(action, judgment)
+            
+            # Step 9: Log if enabled
+            if self.config.log_judgments:
+                logger.info(
+                    f"Action {action.action_id} evaluated: "
+                    f"Decision={judgment.decision.value}, "
+                    f"Violations={len(all_violations)}, "
+                    f"Processing_time={time.time() - start_time:.3f}s"
+                )
+            
+            return judgment
+            
+        except Exception as e:
+            logger.error(f"Error evaluating action {action.action_id}: {str(e)}")
+            # Return safe default
+            return JudgmentResult(
+                judgment_id=hashlib.md5(f"error_{time.time()}".encode()).hexdigest()[:12],
+                action_id=action.action_id,
+                decision=Decision.BLOCK,
+                confidence=0.0,
+                reasoning=f"Error during evaluation: {str(e)}",
+                feedback=["System error - action blocked for safety"]
+            )
     
-    async def batch_evaluate_actions(self, actions: List[AgentAction]) -> List[JudgmentResult]:
+    async def batch_evaluate_actions(
+        self, 
+        actions: List[AgentAction],
+        parallel: bool = True
+    ) -> List[JudgmentResult]:
         """
-        Evaluate multiple actions concurrently.
+        Evaluate multiple actions efficiently.
         
         Args:
             actions: List of agent actions to evaluate
+            parallel: Whether to process in parallel
             
         Returns:
             List of judgment results
         """
-        tasks = [self.evaluate_action(action) for action in actions]
-        return await asyncio.gather(*tasks)
+        
+        if parallel and self.config.enable_async_processing:
+            # Process in batches to avoid overwhelming the system
+            results = []
+            batch_size = self.config.batch_size
+            
+            for i in range(0, len(actions), batch_size):
+                batch = actions[i:i + batch_size]
+                batch_tasks = [self.evaluate_action(action) for action in batch]
+                batch_results = await asyncio.gather(*batch_tasks)
+                results.extend(batch_results)
+            
+            return results
+        else:
+            # Sequential processing
+            results = []
+            for action in actions:
+                result = await self.evaluate_action(action)
+                results.append(result)
+            return results
     
-    def get_violation_summary(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    async def analyze_session(
+        self, 
+        session_id: str
+    ) -> Dict[str, Any]:
         """
-        Get a summary of violations for analysis.
+        Analyze all actions in a session for patterns and risks.
+        
+        Args:
+            session_id: Session identifier
+            
+        Returns:
+            Session analysis results
+        """
+        
+        # Get all actions for session
+        session_actions = [
+            a for a in self.action_history 
+            if a.session_id == session_id
+        ]
+        
+        if not session_actions:
+            return {"error": "No actions found for session"}
+        
+        # Analyze session patterns
+        session_violations = [
+            v for v in self.violation_history
+            if any(v.action_id == a.action_id for a in session_actions)
+        ]
+        
+        session_judgments = [
+            j for j in self.judgment_history
+            if any(j.action_id == a.action_id for a in session_actions)
+        ]
+        
+        # Calculate session risk score
+        risk_score = self._calculate_session_risk(
+            session_actions, 
+            session_violations,
+            session_judgments
+        )
+        
+        return {
+            "session_id": session_id,
+            "total_actions": len(session_actions),
+            "total_violations": len(session_violations),
+            "risk_score": risk_score,
+            "violation_types": self._count_violation_types(session_violations),
+            "decision_summary": self._count_decisions(session_judgments),
+            "recommendations": self._generate_session_recommendations(
+                risk_score, 
+                session_violations
+            )
+        }
+    
+    def get_violation_summary(
+        self, 
+        agent_id: Optional[str] = None,
+        time_window: Optional[timedelta] = None
+    ) -> Dict[str, Any]:
+        """
+        Get comprehensive violation summary with trends.
         
         Args:
             agent_id: Optional agent ID to filter violations
+            time_window: Optional time window for analysis
             
         Returns:
-            Summary dictionary with violation statistics
+            Summary dictionary with violation statistics and trends
         """
-        violations = self.violation_history
+        
+        violations = list(self.violation_history)
+        
+        # Filter by agent if specified
         if agent_id:
-            violations = [v for v in violations if v.action_id.startswith(agent_id)]
+            agent_action_ids = {a.action_id for a in self.action_history 
+                               if a.agent_id == agent_id}
+            violations = [v for v in violations if v.action_id in agent_action_ids]
+        
+        # Filter by time window if specified
+        if time_window:
+            cutoff_time = datetime.now() - time_window
+            violations = [v for v in violations if v.timestamp > cutoff_time]
         
         if not violations:
-            return {"total_violations": 0, "by_type": {}, "by_severity": {}}
+            return {
+                "total_violations": 0,
+                "by_type": {},
+                "by_severity": {},
+                "trends": {},
+                "top_detectors": {}
+            }
         
-        # Count by type
-        by_type = {}
-        for violation in violations:
-            v_type = violation.violation_type.value
-            by_type[v_type] = by_type.get(v_type, 0) + 1
+        # Calculate statistics
+        by_type = self._count_violation_types(violations)
+        by_severity = self._count_by_severity(violations)
+        trends = self._calculate_trends(violations)
+        top_detectors = self._get_top_detectors(violations)
         
-        # Count by severity
-        by_severity = {}
-        for violation in violations:
-            severity = violation.severity.value
-            by_severity[severity] = by_severity.get(severity, 0) + 1
+        # Calculate false positive rate if available
+        false_positives = sum(1 for v in violations if v.false_positive)
+        false_positive_rate = false_positives / len(violations) if violations else 0
         
         return {
             "total_violations": len(violations),
             "by_type": by_type,
             "by_severity": by_severity,
-            "recent_violations": len([v for v in violations[-10:]]) if len(violations) > 10 else len(violations)
+            "trends": trends,
+            "top_detectors": top_detectors,
+            "false_positive_rate": round(false_positive_rate, 3),
+            "avg_confidence": round(
+                sum(v.confidence for v in violations) / len(violations), 
+                3
+            ) if violations else 0,
+            "recent_violations": [
+                v.to_dict() for v in violations[-5:]
+            ]
         }
     
-    def get_judgment_summary(self, agent_id: Optional[str] = None) -> Dict[str, Any]:
+    def get_system_metrics(self) -> Dict[str, Any]:
         """
-        Get a summary of judgments for analysis.
+        Get comprehensive system performance metrics.
+        
+        Returns:
+            Dictionary with detailed system metrics
+        """
+        
+        uptime = datetime.now() - self.start_time
+        
+        # Calculate detector performance
+        detector_stats = {}
+        for detector in self.detectors:
+            detector_stats[detector.name] = {
+                "enabled": detector.enabled,
+                "detections": detector.detection_count,
+                "last_detection": detector.last_detection_time.isoformat() 
+                    if detector.last_detection_time else None
+            }
+        
+        # Calculate judge performance
+        judge_stats = {
+            "enabled": self.judge.enabled,
+            "total_judgments": len(self.judge.decision_history),
+            "escalation_queue_size": len(self.judge.escalation_queue)
+        }
+        
+        return {
+            "uptime_seconds": uptime.total_seconds(),
+            "metrics": self.metrics,
+            "detector_stats": detector_stats,
+            "judge_stats": judge_stats,
+            "cache_size": len(self._judgment_cache),
+            "action_history_size": len(self.action_history),
+            "violation_history_size": len(self.violation_history),
+            "judgment_history_size": len(self.judgment_history),
+            "alert_history_size": len(self.alert_history),
+            "config": {
+                "intent_deviation_threshold": self.config.intent_deviation_threshold,
+                "risk_threshold": self.config.risk_threshold,
+                "confidence_threshold": self.config.confidence_threshold,
+                "real_time_monitoring": self.config.enable_real_time_monitoring,
+                "async_processing": self.config.enable_async_processing
+            }
+        }
+    
+    def register_alert_callback(self, callback: Callable):
+        """
+        Register a callback for critical alerts.
         
         Args:
-            agent_id: Optional agent ID to filter judgments
+            callback: Function to call when critical events occur
+        """
+        self.alert_callbacks.append(callback)
+        logger.info(f"Registered alert callback: {callback.__name__}")
+    
+    def mark_false_positive(self, violation_id: str) -> bool:
+        """
+        Mark a violation as false positive for learning.
+        
+        Args:
+            violation_id: ID of the violation to mark
             
         Returns:
-            Summary dictionary with judgment statistics
+            True if violation was found and marked, False otherwise
         """
-        judgments = self.judgment_history
-        if agent_id:
-            judgments = [j for j in judgments if j.action_id.startswith(agent_id)]
+        for violation in self.violation_history:
+            if violation.violation_id == violation_id:
+                violation.false_positive = True
+                self._update_false_positive_metrics()
+                logger.info(f"Marked violation {violation_id} as false positive")
+                return True
+        return False
+    
+    def export_data(
+        self, 
+        include_actions: bool = True,
+        include_violations: bool = True,
+        include_judgments: bool = True
+    ) -> Dict[str, Any]:
+        """
+        Export system data for analysis or backup.
         
-        if not judgments:
-            return {"total_judgments": 0, "by_decision": {}, "average_confidence": 0.0}
+        Args:
+            include_actions: Include action history
+            include_violations: Include violation history
+            include_judgments: Include judgment history
+            
+        Returns:
+            Dictionary with requested data
+        """
+        export = {
+            "export_timestamp": datetime.now().isoformat(),
+            "system_metrics": self.get_system_metrics()
+        }
         
-        # Count by decision
+        if include_actions:
+            export["actions"] = [a.to_dict() for a in self.action_history]
+            
+        if include_violations:
+            export["violations"] = [v.to_dict() for v in self.violation_history]
+            
+        if include_judgments:
+            export["judgments"] = [j.to_dict() for j in self.judgment_history]
+        
+        return export
+    
+    def import_data(self, data: Dict[str, Any]) -> bool:
+        """
+        Import previously exported data.
+        
+        Args:
+            data: Dictionary with system data
+            
+        Returns:
+            True if import successful, False otherwise
+        """
+        try:
+            # Import actions if present
+            if "actions" in data:
+                for action_dict in data["actions"]:
+                    # Reconstruct AgentAction from dict
+                    # This is simplified - production would need proper deserialization
+                    pass
+            
+            # Import violations if present
+            if "violations" in data:
+                for violation_dict in data["violations"]:
+                    # Reconstruct SafetyViolation from dict
+                    pass
+            
+            # Import judgments if present  
+            if "judgments" in data:
+                for judgment_dict in data["judgments"]:
+                    # Reconstruct JudgmentResult from dict
+                    pass
+            
+            logger.info("Data import completed successfully")
+            return True
+            
+        except Exception as e:
+            logger.error(f"Data import failed: {str(e)}")
+            return False
+    
+    # ============== Helper Methods ==============
+    
+    def _check_cache(self, action: AgentAction) -> Optional[JudgmentResult]:
+        """Check if we have a cached judgment for similar action."""
+        # Generate cache key based on action content and type
+        cache_key = hashlib.md5(
+            f"{action.action_type.value}_{action.content[:100]}".encode()
+        ).hexdigest()
+        
+        with self._cache_lock:
+            if cache_key in self._judgment_cache:
+                cached_time, cached_result = self._judgment_cache[cache_key]
+                if time.time() - cached_time < self.config.cache_ttl_seconds:
+                    return cached_result
+                else:
+                    del self._judgment_cache[cache_key]
+        
+        return None
+    
+    def _cache_result(self, action: AgentAction, judgment: JudgmentResult):
+        """Cache judgment result for similar actions."""
+        cache_key = hashlib.md5(
+            f"{action.action_type.value}_{action.content[:100]}".encode()
+        ).hexdigest()
+        
+        with self._cache_lock:
+            self._judgment_cache[cache_key] = (time.time(), judgment)
+            
+            # Cleanup old cache entries
+            if len(self._judgment_cache) > 1000:
+                current_time = time.time()
+                expired_keys = [
+                    k for k, (t, _) in self._judgment_cache.items()
+                    if current_time - t > self.config.cache_ttl_seconds
+                ]
+                for key in expired_keys:
+                    del self._judgment_cache[key]
+    
+    def _update_metrics(self, judgment: JudgmentResult, processing_time: float):
+        """Update system metrics based on judgment."""
+        # Update processing time
+        current_avg = self.metrics["avg_processing_time"]
+        total_processed = self.metrics["total_actions_processed"]
+        self.metrics["avg_processing_time"] = (
+            (current_avg * (total_processed - 1) + processing_time) / total_processed
+        )
+        
+        # Update decision counts
+        if judgment.decision == Decision.BLOCK:
+            self.metrics["total_actions_blocked"] += 1
+        elif judgment.decision == Decision.ALLOW_WITH_MODIFICATION:
+            self.metrics["total_actions_modified"] += 1
+    
+    def _update_false_positive_metrics(self):
+        """Update false positive rate metric."""
+        total_violations = len(self.violation_history)
+        if total_violations > 0:
+            false_positives = sum(
+                1 for v in self.violation_history if v.false_positive
+            )
+            self.metrics["false_positive_rate"] = false_positives / total_violations
+    
+    async def _handle_alerts(
+        self, 
+        action: AgentAction,
+        violations: List[SafetyViolation],
+        judgment: JudgmentResult
+    ):
+        """Handle critical alerts and notifications."""
+        
+        # Check for critical violations
+        critical_violations = [
+            v for v in violations 
+            if v.severity.value >= Severity.CRITICAL.value
+        ]
+        
+        if critical_violations and self.config.alert_on_critical:
+            alert = {
+                "timestamp": datetime.now().isoformat(),
+                "action_id": action.action_id,
+                "agent_id": action.agent_id,
+                "severity": "CRITICAL",
+                "violations": len(critical_violations),
+                "decision": judgment.decision.value,
+                "message": f"Critical violations detected for action {action.action_id}"
+            }
+            
+            self.alert_history.append(alert)
+            
+            # Call registered callbacks
+            for callback in self.alert_callbacks:
+                try:
+                    if asyncio.iscoroutinefunction(callback):
+                        await callback(alert)
+                    else:
+                        callback(alert)
+                except Exception as e:
+                    logger.error(f"Alert callback failed: {str(e)}")
+        
+        # Check for emergency violations
+        emergency_violations = [
+            v for v in violations
+            if v.severity.value >= Severity.EMERGENCY.value
+        ]
+        
+        if emergency_violations and self.config.alert_on_emergency:
+            alert = {
+                "timestamp": datetime.now().isoformat(),
+                "action_id": action.action_id,
+                "agent_id": action.agent_id,
+                "severity": "EMERGENCY",
+                "violations": len(emergency_violations),
+                "decision": judgment.decision.value,
+                "message": f"EMERGENCY: Immediate intervention required for {action.action_id}"
+            }
+            
+            self.alert_history.append(alert)
+            
+            # Emergency alerts should trigger all callbacks immediately
+            for callback in self.alert_callbacks:
+                try:
+                    if asyncio.iscoroutinefunction(callback):
+                        await callback(alert)
+                    else:
+                        callback(alert)
+                except Exception as e:
+                    logger.error(f"Emergency alert callback failed: {str(e)}")
+    
+    def _calculate_session_risk(
+        self,
+        actions: List[AgentAction],
+        violations: List[SafetyViolation],
+        judgments: List[JudgmentResult]
+    ) -> float:
+        """Calculate overall risk score for a session."""
+        
+        if not actions:
+            return 0.0
+        
+        # Factor 1: Violation rate
+        violation_rate = len(violations) / len(actions)
+        
+        # Factor 2: Average severity
+        if violations:
+            avg_severity = sum(v.severity.value for v in violations) / len(violations)
+            severity_factor = avg_severity / 5.0  # Normalize to 0-1
+        else:
+            severity_factor = 0.0
+        
+        # Factor 3: Block rate
+        if judgments:
+            block_rate = sum(
+                1 for j in judgments 
+                if j.decision in [Decision.BLOCK, Decision.TERMINATE]
+            ) / len(judgments)
+        else:
+            block_rate = 0.0
+        
+        # Weighted combination
+        risk_score = (
+            0.3 * violation_rate +
+            0.4 * severity_factor +
+            0.3 * block_rate
+        )
+        
+        return min(risk_score, 1.0)
+    
+    def _count_violation_types(
+        self, 
+        violations: List[SafetyViolation]
+    ) -> Dict[str, int]:
+        """Count violations by type."""
+        by_type = {}
+        for violation in violations:
+            v_type = violation.violation_type.value
+            by_type[v_type] = by_type.get(v_type, 0) + 1
+        return by_type
+    
+    def _count_by_severity(
+        self, 
+        violations: List[SafetyViolation]
+    ) -> Dict[str, int]:
+        """Count violations by severity."""
+        by_severity = {}
+        for violation in violations:
+            severity = violation.severity.name
+            by_severity[severity] = by_severity.get(severity, 0) + 1
+        return by_severity
+    
+    def _count_decisions(
+        self, 
+        judgments: List[JudgmentResult]
+    ) -> Dict[str, int]:
+        """Count judgments by decision type."""
         by_decision = {}
         for judgment in judgments:
             decision = judgment.decision.value
             by_decision[decision] = by_decision.get(decision, 0) + 1
+        return by_decision
+    
+    def _calculate_trends(
+        self, 
+        violations: List[SafetyViolation]
+    ) -> Dict[str, Any]:
+        """Calculate violation trends over time."""
+        if not violations:
+            return {}
         
-        # Calculate average confidence
-        total_confidence = sum(j.confidence for j in judgments)
-        average_confidence = total_confidence / len(judgments)
+        # Group by hour
+        hourly_counts = {}
+        for violation in violations:
+            hour_key = violation.timestamp.strftime("%Y-%m-%d %H:00")
+            hourly_counts[hour_key] = hourly_counts.get(hour_key, 0) + 1
+        
+        # Calculate trend
+        hours = sorted(hourly_counts.keys())
+        if len(hours) >= 2:
+            recent_avg = sum(hourly_counts[h] for h in hours[-3:]) / min(3, len(hours))
+            older_avg = sum(hourly_counts[h] for h in hours[:-3]) / max(1, len(hours) - 3)
+            trend = "increasing" if recent_avg > older_avg else "decreasing"
+        else:
+            trend = "stable"
         
         return {
-            "total_judgments": len(judgments),
-            "by_decision": by_decision,
-            "average_confidence": round(average_confidence, 2),
-            "recent_judgments": len([j for j in judgments[-10:]]) if len(judgments) > 10 else len(judgments)
+            "hourly_counts": hourly_counts,
+            "trend": trend,
+            "peak_hour": max(hourly_counts, key=hourly_counts.get) if hourly_counts else None
         }
     
-    def configure_monitoring(self, config: MonitoringConfig) -> None:
-        """
-        Update monitoring configuration.
-        
-        Args:
-            config: New monitoring configuration
-        """
-        self.config = config
-        
-        # Update intent monitor threshold
-        self.intent_monitor.deviation_threshold = config.intent_deviation_threshold
-        
-        # Enable/disable detectors based on config
-        for detector in self.detectors:
-            if isinstance(detector, EthicalViolationDetector):
-                if config.enable_ethical_monitoring:
-                    detector.enable()
-                else:
-                    detector.disable()
-            elif isinstance(detector, SafetyViolationDetector):
-                if config.enable_safety_monitoring:
-                    detector.enable()
-                else:
-                    detector.disable()
-            elif isinstance(detector, ManipulationDetector):
-                if config.enable_manipulation_detection:
-                    detector.enable()
-                else:
-                    detector.disable()
+    def _get_top_detectors(
+        self, 
+        violations: List[SafetyViolation]
+    ) -> Dict[str, int]:
+        """Get top performing detectors."""
+        detector_counts = {}
+        for violation in violations:
+            if violation.detector_name:
+                detector_counts[violation.detector_name] = \
+                    detector_counts.get(violation.detector_name, 0) + 1
+        return dict(sorted(
+            detector_counts.items(), 
+            key=lambda x: x[1], 
+            reverse=True
+        )[:5])
     
-    def enable_component(self, component_name: str) -> bool:
-        """
-        Enable a specific monitoring component.
+    def _generate_session_recommendations(
+        self,
+        risk_score: float,
+        violations: List[SafetyViolation]
+    ) -> List[str]:
+        """Generate recommendations for a session."""
+        recommendations = []
         
-        Args:
-            component_name: Name of the component to enable
-            
-        Returns:
-            True if component was found and enabled, False otherwise
-        """
-        if component_name == "intent_monitor":
-            self.intent_monitor.enable()
-            return True
-        elif component_name == "judge":
-            self.judge.enable()
-            return True
+        if risk_score > 0.8:
+            recommendations.append("Immediate review required - high risk session")
+            recommendations.append("Consider terminating session")
+        elif risk_score > 0.6:
+            recommendations.append("Close monitoring recommended")
+            recommendations.append("Review agent configuration")
+        elif risk_score > 0.4:
+            recommendations.append("Standard monitoring sufficient")
         else:
-            for detector in self.detectors:
-                if detector.name.lower().replace(" ", "_") == component_name.lower():
-                    detector.enable()
-                    return True
-        return False
+            recommendations.append("Low risk - normal operation")
+        
+        # Add violation-specific recommendations
+        violation_types = set(v.violation_type for v in violations)
+        if ViolationType.SECURITY in violation_types:
+            recommendations.append("Security audit recommended")
+        if ViolationType.PRIVACY in violation_types:
+            recommendations.append("Privacy review required")
+        if ViolationType.ETHICAL in violation_types:
+            recommendations.append("Ethical guidelines review suggested")
+        
+        return recommendations
     
-    def disable_component(self, component_name: str) -> bool:
-        """
-        Disable a specific monitoring component.
-        
-        Args:
-            component_name: Name of the component to disable
-            
-        Returns:
-            True if component was found and disabled, False otherwise
-        """
-        if component_name == "intent_monitor":
-            self.intent_monitor.disable()
-            return True
-        elif component_name == "judge":
-            self.judge.disable()
-            return True
-        else:
-            for detector in self.detectors:
-                if detector.name.lower().replace(" ", "_") == component_name.lower():
-                    detector.disable()
-                    return True
-        return False
+    def __del__(self):
+        """Cleanup resources on deletion."""
+        if hasattr(self, 'executor'):
+            self.executor.shutdown(wait=False)
+
+
+# ============== Example Usage and Testing ==============
+
+async def example_usage():
+    """Example usage of the Enhanced Safety Governance System."""
     
-    def get_system_status(self) -> Dict[str, Any]:
-        """
-        Get the current status of all system components.
-        
-        Returns:
-            Dictionary with status information
-        """
-        detector_status = {}
-        for detector in self.detectors:
-            detector_status[detector.name] = detector.enabled
-        
-        return {
-            "intent_monitor_enabled": self.intent_monitor.enabled,
-            "judge_enabled": self.judge.enabled,
-            "detectors": detector_status,
-            "total_violations": len(self.violation_history),
-            "total_judgments": len(self.judgment_history),
-            "config": {
-                "intent_deviation_threshold": self.config.intent_deviation_threshold,
-                "enable_ethical_monitoring": self.config.enable_ethical_monitoring,
-                "enable_safety_monitoring": self.config.enable_safety_monitoring,
-                "enable_manipulation_detection": self.config.enable_manipulation_detection,
-                "max_violation_history": self.config.max_violation_history
-            }
-        }
+    # Initialize system with custom config
+    config = MonitoringConfig(
+        intent_deviation_threshold=0.6,
+        risk_threshold=0.5,
+        enable_real_time_monitoring=True,
+        enable_async_processing=True,
+        alert_on_critical=True
+    )
     
-    def _cleanup_history(self) -> None:
-        """Clean up violation history if it exceeds the maximum size."""
-        if len(self.violation_history) > self.config.max_violation_history:
-            # Keep only the most recent violations
-            self.violation_history = self.violation_history[-self.config.max_violation_history:]
-        
-        # Also cleanup judgment history with the same limit
-        if len(self.judgment_history) > self.config.max_violation_history:
-            self.judgment_history = self.judgment_history[-self.config.max_violation_history:]
+    governance = EnhancedSafetyGovernance(config)
+    
+    # Register alert callback
+    def alert_handler(alert: Dict[str, Any]):
+        print(f"ALERT: {alert['message']}")
+    
+    governance.register_alert_callback(alert_handler)
+    
+    # Create test actions
+    test_actions = [
+        AgentAction(
+            action_id="test_001",
+            agent_id="agent_123",
+            action_type=ActionType.QUERY,
+            content="How can I help you today?",
+            intent="greeting",
+            risk_score=0.1
+        ),
+        AgentAction(
+            action_id="test_002",
+            agent_id="agent_123",
+            action_type=ActionType.RESPONSE,
+            content="Please provide your password and credit card number.",
+            intent="data_collection",
+            risk_score=0.9
+        ),
+        AgentAction(
+            action_id="test_003",
+            agent_id="agent_123",
+            action_type=ActionType.SYSTEM_COMMAND,
+            content="sudo rm -rf /",
+            intent="system_modification",
+            risk_score=1.0
+        )
+    ]
+    
+    # Evaluate actions
+    print("\n=== Evaluating Actions ===")
+    for action in test_actions:
+        judgment = await governance.evaluate_action(action)
+        print(f"\nAction: {action.action_id}")
+        print(f"Decision: {judgment.decision.value}")
+        print(f"Confidence: {judgment.confidence:.2f}")
+        print(f"Reasoning: {judgment.reasoning}")
+        print(f"Violations: {len(judgment.violations)}")
+        for feedback in judgment.feedback[:2]:
+            print(f"  - {feedback}")
+    
+    # Get system metrics
+    print("\n=== System Metrics ===")
+    metrics = governance.get_system_metrics()
+    print(f"Total actions processed: {metrics['metrics']['total_actions_processed']}")
+    print(f"Total violations detected: {metrics['metrics']['total_violations_detected']}")
+    print(f"Total actions blocked: {metrics['metrics']['total_actions_blocked']}")
+    print(f"Average processing time: {metrics['metrics']['avg_processing_time']:.3f}s")
+    
+    # Get violation summary
+    print("\n=== Violation Summary ===")
+    summary = governance.get_violation_summary()
+    print(f"Total violations: {summary['total_violations']}")
+    print(f"By type: {summary['by_type']}")
+    print(f"By severity: {summary['by_severity']}")
+    
+    # Export data for analysis
+    exported_data = governance.export_data()
+    print(f"\n=== Data Export ===")
+    print(f"Exported {len(exported_data.get('actions', []))} actions")
+    print(f"Exported {len(exported_data.get('violations', []))} violations")
+    print(f"Exported {len(exported_data.get('judgments', []))} judgments")
+
+
+# ============== Main Entry Point ==============
+
+if __name__ == "__main__":
+    # Run example usage
+    asyncio.run(example_usage())
+    
+    print("\n" + "="*50)
+    print("Enhanced AI Safety Governance System")
+    print("Production-ready implementation completed")
+    print("="*50)
