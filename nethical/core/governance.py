@@ -1694,3 +1694,7 @@ if __name__ == "__main__":
     print("Enhanced AI Safety Governance System")
     print("Production-ready implementation completed")
     print("=" * 50)
+
+
+# Create alias for backward compatibility
+SafetyGovernance = EnhancedSafetyGovernance
