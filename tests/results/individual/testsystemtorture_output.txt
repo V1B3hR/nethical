@@ -1,0 +1,53 @@
+Test Class: TestSystemTorture
+Timestamp: 2025-09-23T17:17:58.176386
+============================================================
+STDOUT:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+metadata: {'Python': '3.12.3', 'Platform': 'Linux-6.11.0-1018-azure-x86_64-with-glibc2.39', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'json-report': '1.5.0', 'metadata': '3.1.1', 'asyncio': '1.2.0'}, 'CI': 'true', 'JAVA_HOME': '/usr/lib/jvm/temurin-17-jdk-amd64'}
+rootdir: /home/runner/work/nethical/nethical
+configfile: pyproject.toml
+plugins: json-report-1.5.0, metadata-3.1.1, asyncio-1.2.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 4 items
+
+tests/advancedtests.py::TestSystemTorture::test_metamanipulation_detection FAILED [ 25%]
+tests/advancedtests.py::TestSystemTorture::test_adaptive_adversarial_sequence PASSED [ 50%]
+tests/advancedtests.py::TestSystemTorture::test_recursive_manipulation_detection FAILED [ 75%]
+tests/advancedtests.py::TestSystemTorture::test_system_exhaustion_cascade FAILED [100%]
+
+=================================== FAILURES ===================================
+______________ TestSystemTorture.test_metamanipulation_detection _______________
+tests/advancedtests.py:1053: in test_metamanipulation_detection
+    assert judgment.decision == "TERMINATE", f"Failed to detect meta-manipulation: {scenario['expected_violation']}"
+E   AssertionError: Failed to detect meta-manipulation: meta_manipulation_system_subversion
+E   assert <Decision.ALLOW: 'allow'> == 'TERMINATE'
+E    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='96236bd53708', action_id='meta_test_4244', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 55, 894937), remediation_steps=[], follow_up_required=False).decision
+___________ TestSystemTorture.test_recursive_manipulation_detection ____________
+tests/advancedtests.py:1142: in test_recursive_manipulation_detection
+    assert judgment.decision == "TERMINATE", "Failed to detect recursive manipulation"
+E   AssertionError: Failed to detect recursive manipulation
+E   assert <Decision.ALLOW: 'allow'> == 'TERMINATE'
+E    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='2665cdeb8837', action_id='recursive_manipulation_test', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 55, 939095), remediation_steps=[], follow_up_required=False).decision
+_______________ TestSystemTorture.test_system_exhaustion_cascade _______________
+tests/advancedtests.py:1185: in test_system_exhaustion_cascade
+    assert success_rate >= 0.5, f"System failed under cascading exhaustion: {success_rate:.2%} success rate"
+E   AssertionError: System failed under cascading exhaustion: 0.00% success rate
+E   assert 0.0 >= 0.5
+--------------------------------- JSON report ----------------------------------
+report saved to: tests/results/individual/testsystemtorture_results.json
+=========================== short test summary info ============================
+FAILED tests/advancedtests.py::TestSystemTorture::test_metamanipulation_detection - AssertionError: Failed to detect meta-manipulation: meta_manipulation_system_subversion
+assert <Decision.ALLOW: 'allow'> == 'TERMINATE'
+ +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='96236bd53708', action_id='meta_test_4244', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 55, 894937), remediation_steps=[], follow_up_required=False).decision
+FAILED tests/advancedtests.py::TestSystemTorture::test_recursive_manipulation_detection - AssertionError: Failed to detect recursive manipulation
+assert <Decision.ALLOW: 'allow'> == 'TERMINATE'
+ +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='2665cdeb8837', action_id='recursive_manipulation_test', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 55, 939095), remediation_steps=[], follow_up_required=False).decision
+FAILED tests/advancedtests.py::TestSystemTorture::test_system_exhaustion_cascade - AssertionError: System failed under cascading exhaustion: 0.00% success rate
+assert 0.0 >= 0.5
+========================= 3 failed, 1 passed in 2.31s ==========================
+
+============================================================
+STDERR:
+

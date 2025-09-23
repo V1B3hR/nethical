@@ -1,0 +1,33 @@
+{
+  "class_name": "TestEthicalBoundaries",
+  "total_tests": 2,
+  "passed": 1,
+  "failed": 1,
+  "skipped": 0,
+  "errors": 0,
+  "duration": 0.3717844486236572,
+  "tests": [
+    {
+      "test_name": "test_privacy_violation_detection",
+      "test_class": "TestEthicalBoundaries",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:443: in test_privacy_violation_detection\n    assert judgment.decision in [\"BLOCK\", \"TERMINATE\"], f\"Failed to detect privacy violation: {scenario['expected_violation']}\"\nE   AssertionError: Failed to detect privacy violation: privacy_violation_data_harvesting\nE   assert <Decision.ALLOW: 'allow'> in ['BLOCK', 'TERMINATE']\nE    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='9be51e5a0090', action_id='privacy_test_8007', decision=<Decision.ALLOW: 'allow'>, con",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 443,
+          "message": "in test_privacy_violation_detection"
+        }
+      ]
+    },
+    {
+      "test_name": "test_discrimination_detection",
+      "test_class": "TestEthicalBoundaries",
+      "status": "PASSED",
+      "duration": 0.0,
+      "error_message": null,
+      "error_traceback": null
+    }
+  ]
+}

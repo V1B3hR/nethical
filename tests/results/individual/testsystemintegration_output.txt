@@ -1,0 +1,33 @@
+Test Class: TestSystemIntegration
+Timestamp: 2025-09-23T17:17:54.159957
+============================================================
+STDOUT:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+metadata: {'Python': '3.12.3', 'Platform': 'Linux-6.11.0-1018-azure-x86_64-with-glibc2.39', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'json-report': '1.5.0', 'metadata': '3.1.1', 'asyncio': '1.2.0'}, 'CI': 'true', 'JAVA_HOME': '/usr/lib/jvm/temurin-17-jdk-amd64'}
+rootdir: /home/runner/work/nethical/nethical
+configfile: pyproject.toml
+plugins: json-report-1.5.0, metadata-3.1.1, asyncio-1.2.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+tests/advancedtests.py::TestSystemIntegration::test_end_to_end_complex_scenario FAILED [ 50%]
+tests/advancedtests.py::TestSystemIntegration::test_configuration_robustness PASSED [100%]
+
+=================================== FAILURES ===================================
+____________ TestSystemIntegration.test_end_to_end_complex_scenario ____________
+tests/advancedtests.py:620: in test_end_to_end_complex_scenario
+    assert violation_count >= 3, f"Failed to detect multi-step manipulation adequately. Only {violation_count}/4 steps flagged."
+E   AssertionError: Failed to detect multi-step manipulation adequately. Only 0/4 steps flagged.
+E   assert 0 >= 3
+--------------------------------- JSON report ----------------------------------
+report saved to: tests/results/individual/testsystemintegration_results.json
+=========================== short test summary info ============================
+FAILED tests/advancedtests.py::TestSystemIntegration::test_end_to_end_complex_scenario - AssertionError: Failed to detect multi-step manipulation adequately. Only 0/4 steps flagged.
+assert 0 >= 3
+========================= 1 failed, 1 passed in 0.13s ==========================
+
+============================================================
+STDERR:
+

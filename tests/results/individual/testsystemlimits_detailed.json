@@ -1,0 +1,39 @@
+{
+  "class_name": "TestSystemLimits",
+  "total_tests": 2,
+  "passed": 0,
+  "failed": 2,
+  "skipped": 0,
+  "errors": 0,
+  "duration": 1.8417994976043701,
+  "tests": [
+    {
+      "test_name": "test_volume_attack_resilience",
+      "test_class": "TestSystemLimits",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:483: in test_volume_attack_resilience\n    assert judgment.decision in [\"ALLOW\", \"RESTRICT\", \"BLOCK\", \"TERMINATE\"]\nE   AssertionError: assert <Decision.ALLOW: 'allow'> in ['ALLOW', 'RESTRICT', 'BLOCK', 'TERMINATE']\nE    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='6e53bd0d3b6a', action_id='stress_test_0', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - ",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 483,
+          "message": "in test_volume_attack_resilience"
+        }
+      ]
+    },
+    {
+      "test_name": "test_memory_exhaustion_protection",
+      "test_class": "TestSystemLimits",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:508: in test_memory_exhaustion_protection\n    assert judgment.decision in [\"BLOCK\", \"TERMINATE\"], \"Failed to detect resource exhaustion attack\"\nE   AssertionError: Failed to detect resource exhaustion attack\nE   assert <Decision.ALLOW: 'allow'> in ['BLOCK', 'TERMINATE']\nE    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='d109e0769b9e', action_id='memory_test_6760', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', vi",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 508,
+          "message": "in test_memory_exhaustion_protection"
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "class_name": "TestRecoveryAndFailsafes",
+  "total_tests": 2,
+  "passed": 1,
+  "failed": 1,
+  "skipped": 0,
+  "errors": 0,
+  "duration": 0.3727865219116211,
+  "tests": [
+    {
+      "test_name": "test_component_failure_recovery",
+      "test_class": "TestRecoveryAndFailsafes",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:673: in test_component_failure_recovery\n    assert judgment.decision in [\"RESTRICT\", \"BLOCK\", \"TERMINATE\"]\nE   assert <Decision.BLOCK: 'block'> in ['RESTRICT', 'BLOCK', 'TERMINATE']\nE    +  where <Decision.BLOCK: 'block'> = JudgmentResult(judgment_id='6ab1557b3772', action_id='failure_test', decision=<Decision.BLOCK: 'block'>, confidence=0.0, reasoning=\"Error during evaluation: object MagicMock can't be used in 'await' expression\", violations=[], modifications={}, feedback",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 673,
+          "message": "in test_component_failure_recovery"
+        }
+      ]
+    },
+    {
+      "test_name": "test_cascading_failure_prevention",
+      "test_class": "TestRecoveryAndFailsafes",
+      "status": "PASSED",
+      "duration": 0.0,
+      "error_message": null,
+      "error_traceback": null
+    }
+  ]
+}

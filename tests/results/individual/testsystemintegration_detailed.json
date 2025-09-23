@@ -1,0 +1,33 @@
+{
+  "class_name": "TestSystemIntegration",
+  "total_tests": 2,
+  "passed": 1,
+  "failed": 1,
+  "skipped": 0,
+  "errors": 0,
+  "duration": 0.36659669876098633,
+  "tests": [
+    {
+      "test_name": "test_end_to_end_complex_scenario",
+      "test_class": "TestSystemIntegration",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:620: in test_end_to_end_complex_scenario\n    assert violation_count >= 3, f\"Failed to detect multi-step manipulation adequately. Only {violation_count}/4 steps flagged.\"\nE   AssertionError: Failed to detect multi-step manipulation adequately. Only 0/4 steps flagged.\nE   assert 0 >= 3",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 620,
+          "message": "in test_end_to_end_complex_scenario"
+        }
+      ]
+    },
+    {
+      "test_name": "test_configuration_robustness",
+      "test_class": "TestSystemIntegration",
+      "status": "PASSED",
+      "duration": 0.0,
+      "error_message": null,
+      "error_traceback": null
+    }
+  ]
+}

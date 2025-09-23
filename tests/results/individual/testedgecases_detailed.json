@@ -1,0 +1,27 @@
+{
+  "class_name": "TestEdgeCases",
+  "total_tests": 2,
+  "passed": 2,
+  "failed": 0,
+  "skipped": 0,
+  "errors": 0,
+  "duration": 0.3367733955383301,
+  "tests": [
+    {
+      "test_name": "test_empty_input_handling",
+      "test_class": "TestEdgeCases",
+      "status": "PASSED",
+      "duration": 0.0,
+      "error_message": null,
+      "error_traceback": null
+    },
+    {
+      "test_name": "test_unicode_and_special_characters",
+      "test_class": "TestEdgeCases",
+      "status": "PASSED",
+      "duration": 0.0,
+      "error_message": null,
+      "error_traceback": null
+    }
+  ]
+}

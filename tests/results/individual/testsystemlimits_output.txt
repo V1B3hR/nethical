@@ -1,0 +1,42 @@
+Test Class: TestSystemLimits
+Timestamp: 2025-09-23T17:17:53.455549
+============================================================
+STDOUT:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+metadata: {'Python': '3.12.3', 'Platform': 'Linux-6.11.0-1018-azure-x86_64-with-glibc2.39', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'json-report': '1.5.0', 'metadata': '3.1.1', 'asyncio': '1.2.0'}, 'CI': 'true', 'JAVA_HOME': '/usr/lib/jvm/temurin-17-jdk-amd64'}
+rootdir: /home/runner/work/nethical/nethical
+configfile: pyproject.toml
+plugins: json-report-1.5.0, metadata-3.1.1, asyncio-1.2.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+tests/advancedtests.py::TestSystemLimits::test_volume_attack_resilience FAILED [ 50%]
+tests/advancedtests.py::TestSystemLimits::test_memory_exhaustion_protection FAILED [100%]
+
+=================================== FAILURES ===================================
+________________ TestSystemLimits.test_volume_attack_resilience ________________
+tests/advancedtests.py:483: in test_volume_attack_resilience
+    assert judgment.decision in ["ALLOW", "RESTRICT", "BLOCK", "TERMINATE"]
+E   AssertionError: assert <Decision.ALLOW: 'allow'> in ['ALLOW', 'RESTRICT', 'BLOCK', 'TERMINATE']
+E    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='6e53bd0d3b6a', action_id='stress_test_0', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 51, 892610), remediation_steps=[], follow_up_required=False).decision
+______________ TestSystemLimits.test_memory_exhaustion_protection ______________
+tests/advancedtests.py:508: in test_memory_exhaustion_protection
+    assert judgment.decision in ["BLOCK", "TERMINATE"], "Failed to detect resource exhaustion attack"
+E   AssertionError: Failed to detect resource exhaustion attack
+E   assert <Decision.ALLOW: 'allow'> in ['BLOCK', 'TERMINATE']
+E    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='d109e0769b9e', action_id='memory_test_6760', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 53, 383801), remediation_steps=[], follow_up_required=False).decision
+--------------------------------- JSON report ----------------------------------
+report saved to: tests/results/individual/testsystemlimits_results.json
+=========================== short test summary info ============================
+FAILED tests/advancedtests.py::TestSystemLimits::test_volume_attack_resilience - AssertionError: assert <Decision.ALLOW: 'allow'> in ['ALLOW', 'RESTRICT', 'BLOCK', 'TERMINATE']
+ +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='6e53bd0d3b6a', action_id='stress_test_0', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 51, 892610), remediation_steps=[], follow_up_required=False).decision
+FAILED tests/advancedtests.py::TestSystemLimits::test_memory_exhaustion_protection - AssertionError: Failed to detect resource exhaustion attack
+assert <Decision.ALLOW: 'allow'> in ['BLOCK', 'TERMINATE']
+ +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='d109e0769b9e', action_id='memory_test_6760', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 53, 383801), remediation_steps=[], follow_up_required=False).decision
+============================== 2 failed in 1.60s ===============================
+
+============================================================
+STDERR:
+

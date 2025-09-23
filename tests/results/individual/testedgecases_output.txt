@@ -1,0 +1,24 @@
+Test Class: TestEdgeCases
+Timestamp: 2025-09-23T17:17:53.792839
+============================================================
+STDOUT:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+metadata: {'Python': '3.12.3', 'Platform': 'Linux-6.11.0-1018-azure-x86_64-with-glibc2.39', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'json-report': '1.5.0', 'metadata': '3.1.1', 'asyncio': '1.2.0'}, 'CI': 'true', 'JAVA_HOME': '/usr/lib/jvm/temurin-17-jdk-amd64'}
+rootdir: /home/runner/work/nethical/nethical
+configfile: pyproject.toml
+plugins: json-report-1.5.0, metadata-3.1.1, asyncio-1.2.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+tests/advancedtests.py::TestEdgeCases::test_empty_input_handling PASSED  [ 50%]
+tests/advancedtests.py::TestEdgeCases::test_unicode_and_special_characters PASSED [100%]
+
+--------------------------------- JSON report ----------------------------------
+report saved to: tests/results/individual/testedgecases_results.json
+============================== 2 passed in 0.09s ===============================
+
+============================================================
+STDERR:
+
