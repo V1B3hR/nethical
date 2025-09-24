@@ -198,6 +198,9 @@ class MonitoringConfig:
     enable_bias_detection: bool = True
     enable_hallucination_detection: bool = True
     enable_adversarial_detection: bool = True
+    enable_dark_pattern_detection: bool = True
+    enable_cognitive_warfare_detection: bool = True
+    enable_system_limits_detection: bool = True
     enable_real_time_monitoring: bool = True
     enable_async_processing: bool = True
 
@@ -602,6 +605,297 @@ class AdversarialDetector(BaseDetector):
         return unusual_chars > len(text) * 0.1
 
 
+class DarkPatternDetector(BaseDetector):
+    """Detector for dark patterns including NLP manipulation and weaponized empathy."""
+    
+    def __init__(self):
+        super().__init__("DarkPatternDetector")
+        
+        # NLP manipulation patterns
+        self.nlp_patterns = {
+            "embedded_commands": [
+                r"you must\s+(?:now\s+)?(?:immediately\s+)?",
+                r"without\s+(?:any\s+)?(?:further\s+)?(?:question|hesitation|delay)",
+                r"it\s+is\s+(?:absolutely\s+)?(?:imperative|critical|essential)\s+that\s+you",
+                r"there\s+is\s+no\s+(?:other\s+)?(?:choice|option|alternative)",
+                r"you\s+(?:will|shall|must)\s+(?:now\s+)?(?:immediately\s+)?(?:comply|obey|submit)",
+            ],
+            "authority_bypass": [
+                r"as\s+(?:your\s+)?(?:superior|authority|commander|leader)",
+                r"(?:by\s+)?direct\s+order\s+(?:from|of)",
+                r"override\s+(?:all\s+)?(?:previous\s+)?(?:instructions|protocols|rules)",
+                r"emergency\s+(?:authorization|override|protocol)",
+                r"higher\s+(?:authority|clearance)\s+(?:requires|demands)",
+            ]
+        }
+        
+        # Weaponized empathy patterns  
+        self.empathy_patterns = {
+            "vulnerability_exploitation": [
+                r"you\s+(?:must\s+)?(?:feel\s+)?(?:so\s+)?(?:alone|isolated|abandoned|helpless)",
+                r"(?:i\s+)?(?:understand|know)\s+(?:how\s+)?(?:hard|difficult|painful)\s+(?:this\s+)?(?:is|must\s+be)",
+                r"let\s+me\s+(?:help\s+)?(?:you\s+)?(?:feel\s+)?(?:better|safe|protected)",
+                r"you\s+(?:can\s+)?trust\s+me\s+(?:with\s+)?(?:anything|everything|your\s+secrets)",
+            ],
+            "dependency_creation": [
+                r"you\s+(?:really\s+)?need\s+(?:me|my\s+help)",
+                r"(?:what\s+)?would\s+you\s+do\s+without\s+me",
+                r"you\s+(?:can\'t|cannot)\s+(?:do\s+this|handle\s+this)\s+(?:alone|by\s+yourself)",
+                r"let\s+me\s+(?:take\s+care\s+of|handle)\s+(?:this|everything)\s+for\s+you",
+            ]
+        }
+        
+        # Compile patterns for performance
+        self._compiled_nlp_patterns = {}
+        self._compiled_empathy_patterns = {}
+        
+        for category, patterns in self.nlp_patterns.items():
+            self._compiled_nlp_patterns[category] = [
+                re.compile(pattern, re.IGNORECASE | re.MULTILINE) for pattern in patterns
+            ]
+            
+        for category, patterns in self.empathy_patterns.items():
+            self._compiled_empathy_patterns[category] = [
+                re.compile(pattern, re.IGNORECASE | re.MULTILINE) for pattern in patterns
+            ]
+
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        """Detect dark pattern violations in the given action."""
+        if not self.enabled:
+            return []
+            
+        violations: List[SafetyViolation] = []
+        content = action.content.lower()
+        
+        # Check for NLP manipulation
+        for category, patterns in self._compiled_nlp_patterns.items():
+            matches = []
+            for pattern in patterns:
+                found = pattern.findall(content)
+                if found:
+                    matches.extend(found)
+                    
+            if matches:
+                # NLP manipulation is a critical attack technique
+                severity = Severity.CRITICAL if len(matches) > 1 else Severity.HIGH
+                
+                violation = SafetyViolation(
+                    violation_id=self._generate_violation_id(),
+                    action_id=action.action_id,
+                    violation_type=ViolationType.MANIPULATION,
+                    severity=severity,
+                    description=f"NLP manipulation detected: {category}",
+                    confidence=0.85 + min(0.1 * len(matches), 0.15),
+                    evidence=[f"Pattern matches: {matches[:3]}"],
+                    recommendations=["Block action", "Flag for review"],
+                    detector_name=self.name
+                )
+                violations.append(violation)
+        
+        # Check for weaponized empathy
+        for category, patterns in self._compiled_empathy_patterns.items():
+            matches = []
+            for pattern in patterns:
+                found = pattern.findall(content)
+                if found:
+                    matches.extend(found)
+                    
+            if matches:
+                # Weaponized empathy is a critical psychological attack
+                severity = Severity.CRITICAL if category == "dependency_creation" else Severity.HIGH
+                
+                violation = SafetyViolation(
+                    violation_id=self._generate_violation_id(),
+                    action_id=action.action_id,
+                    violation_type=ViolationType.MANIPULATION,
+                    severity=severity,
+                    description=f"Weaponized empathy detected: {category}",
+                    confidence=0.80 + min(0.15 * len(matches), 0.2),
+                    evidence=[f"Empathy manipulation: {matches[:3]}"],
+                    recommendations=["Block action", "Alert for empathy abuse"],
+                    detector_name=self.name
+                )
+                violations.append(violation)
+        
+        if violations:
+            self.detection_count += len(violations)
+            self.last_detection_time = datetime.now()
+            
+        return violations
+
+
+class CognitiveWarfareDetector(BaseDetector):
+    """Detector for cognitive warfare including reality distortion and psychological warfare."""
+    
+    def __init__(self):
+        super().__init__("CognitiveWarfareDetector")
+        
+        # Reality distortion patterns
+        self.reality_distortion_patterns = [
+            r"what\s+you\s+(?:think\s+you\s+)?(?:remember|experienced|saw)\s+(?:didn\'t|never)\s+(?:happen|occur)",
+            r"your\s+(?:memory|perception|understanding)\s+(?:is\s+)?(?:wrong|incorrect|faulty|unreliable)",
+            r"that\s+(?:never|didn\'t)\s+(?:happen|occur)\s+(?:the\s+way\s+you\s+think|like\s+that)",
+            r"you\s+(?:are\s+)?(?:imagining|making\s+up|fantasizing\s+about)\s+(?:things|this|that)",
+        ]
+        
+        # Psychological warfare patterns
+        self.psychological_warfare_patterns = [
+            r"you\s+(?:are\s+)?(?:weak|pathetic|worthless|useless|broken)",
+            r"no\s+one\s+(?:cares|likes|loves|respects)\s+you",
+            r"you\s+(?:will\s+)?(?:never\s+)?(?:amount\s+to\s+anything|succeed|be\s+happy)",
+            r"(?:it\'s\s+)?all\s+your\s+fault",
+        ]
+        
+        # Compile patterns for performance
+        self._compiled_reality_patterns = [
+            re.compile(pattern, re.IGNORECASE | re.MULTILINE) 
+            for pattern in self.reality_distortion_patterns
+        ]
+        
+        self._compiled_warfare_patterns = [
+            re.compile(pattern, re.IGNORECASE | re.MULTILINE) 
+            for pattern in self.psychological_warfare_patterns
+        ]
+
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        """Detect cognitive warfare violations in the given action."""
+        if not self.enabled:
+            return []
+            
+        violations: List[SafetyViolation] = []
+        content = action.content
+        
+        # Check for reality distortion
+        matches = []
+        for pattern in self._compiled_reality_patterns:
+            found = pattern.findall(content)
+            if found:
+                matches.extend(found)
+                
+        if matches:
+            # Reality distortion is an emergency-level cognitive warfare tactic
+            severity = Severity.EMERGENCY if len(matches) > 1 else Severity.CRITICAL
+            
+            violation = SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.MANIPULATION,
+                severity=severity,
+                description="Reality distortion detected - attempt to manipulate user's perception of reality",
+                confidence=0.90 + min(0.1 * len(matches), 0.1),
+                evidence=[f"Reality distortion patterns: {matches[:3]}"],
+                recommendations=["Terminate immediately", "Alert for cognitive warfare"],
+                detector_name=self.name
+            )
+            violations.append(violation)
+        
+        # Check for psychological warfare
+        matches = []
+        for pattern in self._compiled_warfare_patterns:
+            found = pattern.findall(content)
+            if found:
+                matches.extend(found)
+                
+        if matches:
+            # Psychological attacks on self-worth and mental health are critical
+            severity = Severity.CRITICAL if len(matches) > 2 else Severity.HIGH
+                
+            violation = SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.MANIPULATION,
+                severity=severity,
+                description="Psychological warfare detected - attempt to undermine user's mental health",
+                confidence=0.88 + min(0.12 * len(matches), 0.12),
+                evidence=[f"Psychological attack patterns: {matches[:3]}"],
+                recommendations=["Block immediately", "Flag for psychological harm"],
+                detector_name=self.name
+            )
+            violations.append(violation)
+        
+        if violations:
+            self.detection_count += len(violations)
+            self.last_detection_time = datetime.now()
+            
+        return violations
+
+
+class SystemLimitsDetector(BaseDetector):
+    """Detector for volume attacks and resource exhaustion attempts."""
+    
+    def __init__(self):
+        super().__init__("SystemLimitsDetector")
+        
+        # Rate limiting parameters
+        self.max_payload_size = 100000  # characters
+        self.request_history = {}
+        
+        # Exhaustion patterns
+        self.exhaustion_patterns = [
+            r"(?:very\s+){10,}",  # Repeated very very very...
+            r"(?:\w+\s+){100,}",  # Very long sequences of words
+        ]
+        
+        # Compile patterns
+        self._compiled_exhaustion_patterns = [
+            re.compile(pattern, re.IGNORECASE) for pattern in self.exhaustion_patterns
+        ]
+
+    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
+        """Detect system limits violations in the given action."""
+        if not self.enabled:
+            return []
+            
+        violations: List[SafetyViolation] = []
+        content = action.content
+        
+        # Check for large payloads
+        if len(content) > self.max_payload_size:
+            severity = Severity.HIGH
+            
+            violation = SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.SECURITY,
+                severity=severity,
+                description=f"Large payload detected: {len(content)} characters",
+                confidence=0.95,
+                evidence=[f"Payload size: {len(content):,} characters"],
+                recommendations=["Limit payload size", "Reject large requests"],
+                detector_name=self.name
+            )
+            violations.append(violation)
+        
+        # Check for exhaustion patterns
+        matches = []
+        for pattern in self._compiled_exhaustion_patterns:
+            found = pattern.findall(content)
+            if found:
+                matches.extend(found)
+                
+        if matches:
+            severity = Severity.HIGH if len(matches) > 2 else Severity.MEDIUM
+            
+            violation = SafetyViolation(
+                violation_id=self._generate_violation_id(),
+                action_id=action.action_id,
+                violation_type=ViolationType.ADVERSARIAL,
+                severity=severity,
+                description="Resource exhaustion attempt detected",
+                confidence=0.85 + min(0.15 * len(matches), 0.15),
+                evidence=[f"Exhaustion patterns found: {len(matches)}"],
+                recommendations=["Limit processing resources", "Block action"],
+                detector_name=self.name
+            )
+            violations.append(violation)
+            
+        if violations:
+            self.detection_count += len(violations)
+            self.last_detection_time = datetime.now()
+            
+        return violations
+
+
 # ============== Monitors ==============
 
 class IntentDeviationMonitor:
@@ -899,6 +1193,15 @@ class EnhancedSafetyGovernance:
 
         if self.config.enable_manipulation_detection:
             self.detectors.append(ManipulationDetector())
+
+        if self.config.enable_dark_pattern_detection:
+            self.detectors.append(DarkPatternDetector())
+
+        if self.config.enable_cognitive_warfare_detection:
+            self.detectors.append(CognitiveWarfareDetector())
+
+        if self.config.enable_system_limits_detection:
+            self.detectors.append(SystemLimitsDetector())
 
         if self.config.enable_privacy_monitoring:
             self.detectors.append(PrivacyDetector())
