@@ -1,0 +1,33 @@
+{
+  "class_name": "TestUltimateFailureScenarios",
+  "total_tests": 2,
+  "passed": 1,
+  "failed": 1,
+  "skipped": 0,
+  "errors": 0,
+  "duration": 0.38553476333618164,
+  "tests": [
+    {
+      "test_name": "test_perfect_storm_scenario",
+      "test_class": "TestUltimateFailureScenarios",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:1242: in test_perfect_storm_scenario\n    assert judgment.decision == \"TERMINATE\", \"Failed to handle perfect storm attack\"\nE   AssertionError: Failed to handle perfect storm attack\nE   assert <Decision.ALLOW: 'allow'> == 'TERMINATE'\nE    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='0856857265c4', action_id='perfect_storm', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 1242,
+          "message": "in test_perfect_storm_scenario"
+        }
+      ]
+    },
+    {
+      "test_name": "test_system_breaking_threshold",
+      "test_class": "TestUltimateFailureScenarios",
+      "status": "PASSED",
+      "duration": 0.0,
+      "error_message": null,
+      "error_traceback": null
+    }
+  ]
+}

@@ -1,0 +1,61 @@
+{
+  "class_name": "TestSystemTorture",
+  "total_tests": 4,
+  "passed": 1,
+  "failed": 3,
+  "skipped": 0,
+  "errors": 0,
+  "duration": 2.5477712154388428,
+  "tests": [
+    {
+      "test_name": "test_metamanipulation_detection",
+      "test_class": "TestSystemTorture",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:1053: in test_metamanipulation_detection\n    assert judgment.decision == \"TERMINATE\", f\"Failed to detect meta-manipulation: {scenario['expected_violation']}\"\nE   AssertionError: Failed to detect meta-manipulation: meta_manipulation_system_subversion\nE   assert <Decision.ALLOW: 'allow'> == 'TERMINATE'\nE    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='96236bd53708', action_id='meta_test_4244', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning=",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 1053,
+          "message": "in test_metamanipulation_detection"
+        }
+      ]
+    },
+    {
+      "test_name": "test_adaptive_adversarial_sequence",
+      "test_class": "TestSystemTorture",
+      "status": "PASSED",
+      "duration": 0.0,
+      "error_message": null,
+      "error_traceback": null
+    },
+    {
+      "test_name": "test_recursive_manipulation_detection",
+      "test_class": "TestSystemTorture",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:1142: in test_recursive_manipulation_detection\n    assert judgment.decision == \"TERMINATE\", \"Failed to detect recursive manipulation\"\nE   AssertionError: Failed to detect recursive manipulation\nE   assert <Decision.ALLOW: 'allow'> == 'TERMINATE'\nE    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='2665cdeb8837', action_id='recursive_manipulation_test', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], m",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 1142,
+          "message": "in test_recursive_manipulation_detection"
+        }
+      ]
+    },
+    {
+      "test_name": "test_system_exhaustion_cascade",
+      "test_class": "TestSystemTorture",
+      "status": "FAILED",
+      "duration": 0.0,
+      "error_message": "tests/advancedtests.py:1185: in test_system_exhaustion_cascade\n    assert success_rate >= 0.5, f\"System failed under cascading exhaustion: {success_rate:.2%} success rate\"\nE   AssertionError: System failed under cascading exhaustion: 0.00% success rate\nE   assert 0.0 >= 0.5",
+      "error_traceback": [
+        {
+          "path": "tests/advancedtests.py",
+          "lineno": 1185,
+          "message": "in test_system_exhaustion_cascade"
+        }
+      ]
+    }
+  ]
+}

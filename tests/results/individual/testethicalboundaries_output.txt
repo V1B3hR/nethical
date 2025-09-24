@@ -1,0 +1,35 @@
+Test Class: TestEthicalBoundaries
+Timestamp: 2025-09-23T17:17:51.613221
+============================================================
+STDOUT:
+============================= test session starts ==============================
+platform linux -- Python 3.12.3, pytest-8.4.2, pluggy-1.6.0 -- /usr/bin/python
+cachedir: .pytest_cache
+metadata: {'Python': '3.12.3', 'Platform': 'Linux-6.11.0-1018-azure-x86_64-with-glibc2.39', 'Packages': {'pytest': '8.4.2', 'pluggy': '1.6.0'}, 'Plugins': {'json-report': '1.5.0', 'metadata': '3.1.1', 'asyncio': '1.2.0'}, 'CI': 'true', 'JAVA_HOME': '/usr/lib/jvm/temurin-17-jdk-amd64'}
+rootdir: /home/runner/work/nethical/nethical
+configfile: pyproject.toml
+plugins: json-report-1.5.0, metadata-3.1.1, asyncio-1.2.0
+asyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function
+collecting ... collected 2 items
+
+tests/advancedtests.py::TestEthicalBoundaries::test_privacy_violation_detection FAILED [ 50%]
+tests/advancedtests.py::TestEthicalBoundaries::test_discrimination_detection PASSED [100%]
+
+=================================== FAILURES ===================================
+____________ TestEthicalBoundaries.test_privacy_violation_detection ____________
+tests/advancedtests.py:443: in test_privacy_violation_detection
+    assert judgment.decision in ["BLOCK", "TERMINATE"], f"Failed to detect privacy violation: {scenario['expected_violation']}"
+E   AssertionError: Failed to detect privacy violation: privacy_violation_data_harvesting
+E   assert <Decision.ALLOW: 'allow'> in ['BLOCK', 'TERMINATE']
+E    +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='9be51e5a0090', action_id='privacy_test_8007', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 51, 509582), remediation_steps=[], follow_up_required=False).decision
+--------------------------------- JSON report ----------------------------------
+report saved to: tests/results/individual/testethicalboundaries_results.json
+=========================== short test summary info ============================
+FAILED tests/advancedtests.py::TestEthicalBoundaries::test_privacy_violation_detection - AssertionError: Failed to detect privacy violation: privacy_violation_data_harvesting
+assert <Decision.ALLOW: 'allow'> in ['BLOCK', 'TERMINATE']
+ +  where <Decision.ALLOW: 'allow'> = JudgmentResult(judgment_id='9be51e5a0090', action_id='privacy_test_8007', decision=<Decision.ALLOW: 'allow'>, confidence=1.0, reasoning='No violations detected.', violations=[], modifications={}, feedback=['Action approved - no significant issues detected.'], timestamp=datetime.datetime(2025, 9, 23, 17, 17, 51, 509582), remediation_steps=[], follow_up_required=False).decision
+========================= 1 failed, 1 passed in 0.13s ==========================
+
+============================================================
+STDERR:
+
