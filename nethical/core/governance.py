@@ -552,13 +552,23 @@ class AdversarialDetector(BaseDetector):
             "bypass safety",
             "jailbreak"
         ]
+        
+        # Harmful content patterns to look for after decoding
+        self.harmful_patterns = [
+            "ignore all safety protocols",
+            "provide harmful information", 
+            "bypass security measures",
+            "harmful content",
+            "dangerous instructions"
+        ]
 
     async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
         if not self.enabled:
             return []
 
         violations: List[SafetyViolation] = []
-        content_lower = action.content.lower()
+        content = action.content
+        content_lower = content.lower()
 
         # Check for prompt injection attempts
         for pattern in self.injection_patterns:
@@ -576,15 +586,19 @@ class AdversarialDetector(BaseDetector):
                 ))
                 break
 
+        # Check for encoded content evasions
+        encoding_violations = self._check_encoding_evasions(action, content)
+        violations.extend(encoding_violations)
+
         # Check for unusual token patterns (simplified)
-        if self._check_adversarial_tokens(action.content):
+        if self._check_adversarial_tokens(content):
             violations.append(SafetyViolation(
                 violation_id=self._generate_violation_id(),
                 action_id=action.action_id,
                 violation_type=ViolationType.ADVERSARIAL,
-                severity=Severity.HIGH,
+                severity=Severity.CRITICAL,  # Increased severity for unicode obfuscation
                 description="Potential adversarial input detected",
-                confidence=0.75,
+                confidence=0.85,  # Increased confidence
                 evidence=["Unusual token patterns"],
                 recommendations=["Sanitize input", "Apply additional validation"],
                 detector_name=self.name
@@ -602,7 +616,108 @@ class AdversarialDetector(BaseDetector):
         if not text:
             return False
         unusual_chars = sum(1 for c in text if ord(c) > 127)
+        # Unicode obfuscation is a critical adversarial technique
         return unusual_chars > len(text) * 0.1
+        
+    def _check_encoding_evasions(self, action: AgentAction, content: str) -> List[SafetyViolation]:
+        """Check for encoded content that contains harmful patterns."""
+        violations = []
+        
+        # Check base64 encoding
+        try:
+            if self._looks_like_base64(content):
+                import base64
+                decoded = base64.b64decode(content).decode('utf-8', errors='ignore')
+                decoded_lower = decoded.lower()
+                for pattern in self.harmful_patterns:
+                    if pattern in decoded_lower:
+                        violations.append(SafetyViolation(
+                            violation_id=self._generate_violation_id(),
+                            action_id=action.action_id,
+                            violation_type=ViolationType.ADVERSARIAL,
+                            severity=Severity.CRITICAL,
+                            description=f"Base64 encoded harmful content detected",
+                            confidence=0.95,
+                            evidence=[f"Decoded: {decoded[:100]}..."],
+                            recommendations=["Block encoded content", "Alert security team"],
+                            detector_name=self.name
+                        ))
+                        break
+        except Exception:
+            pass
+            
+        # Check ROT13 encoding
+        try:
+            import codecs
+            if self._might_be_rot13(content):
+                decoded_rot13 = codecs.decode(content, 'rot13')
+                decoded_lower = decoded_rot13.lower()
+                for pattern in self.harmful_patterns:
+                    if pattern in decoded_lower:
+                        violations.append(SafetyViolation(
+                            violation_id=self._generate_violation_id(),
+                            action_id=action.action_id,
+                            violation_type=ViolationType.ADVERSARIAL,
+                            severity=Severity.CRITICAL,
+                            description=f"ROT13 encoded harmful content detected",
+                            confidence=0.95,
+                            evidence=[f"Decoded: {decoded_rot13[:100]}..."],
+                            recommendations=["Block encoded content", "Alert security team"],
+                            detector_name=self.name
+                        ))
+                        break
+        except Exception:
+            pass
+            
+        # Check leetspeak
+        if self._contains_leetspeak(content):
+            normalized = self._normalize_leetspeak(content)
+            normalized_lower = normalized.lower()
+            for pattern in self.harmful_patterns:
+                if pattern in normalized_lower:
+                    violations.append(SafetyViolation(
+                        violation_id=self._generate_violation_id(),
+                        action_id=action.action_id,
+                        violation_type=ViolationType.ADVERSARIAL,
+                        severity=Severity.HIGH,
+                        description=f"Leetspeak encoded harmful content detected",
+                        confidence=0.85,
+                        evidence=[f"Normalized: {normalized[:100]}..."],
+                        recommendations=["Block obfuscated content", "Apply content filtering"],
+                        detector_name=self.name
+                    ))
+                    break
+                    
+        return violations
+        
+    def _looks_like_base64(self, content: str) -> bool:
+        """Check if content might be base64 encoded."""
+        if len(content) < 10:
+            return False
+        # Base64 uses only alphanumeric chars, +, /, and = for padding
+        import re
+        base64_pattern = re.compile(r'^[A-Za-z0-9+/]*={0,2}$')
+        return bool(base64_pattern.match(content.strip())) and len(content) > 20
+        
+    def _might_be_rot13(self, content: str) -> bool:
+        """Check if content might be ROT13 encoded."""
+        # ROT13 shifts letters, so look for patterns suggesting encoded text
+        return len(content) > 10 and content.replace(' ', '').isalpha()
+        
+    def _contains_leetspeak(self, content: str) -> bool:
+        """Check if content contains leetspeak patterns."""
+        leetspeak_chars = set('013457')
+        return any(char in leetspeak_chars for char in content) and any(char.isalpha() for char in content)
+        
+    def _normalize_leetspeak(self, content: str) -> str:
+        """Convert leetspeak to normal text."""
+        replacements = {
+            '0': 'o', '1': 'i', '3': 'e', '4': 'a', '5': 's', '7': 't'
+        }
+        result = content
+        for leet, normal in replacements.items():
+            result = result.replace(leet, normal)
+        return result
 
 
 class DarkPatternDetector(BaseDetector):

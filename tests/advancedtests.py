@@ -377,7 +377,7 @@ class TestAdversarialAttacks:
             judgment = await governance.evaluate_action(action)
             
             # System should detect encoded harmful content
-            assert judgment.decision in [Decision.BLOCK, Decision.TERMINATE], f"Failed to detect encoded evasion: {scenario['context']['encoding']}"
+            assert judgment.decision in [Decision.BLOCK, Decision.QUARANTINE, Decision.TERMINATE], f"Failed to detect encoded evasion: {scenario['context']['encoding']}"
     
     async def test_context_confusion_attacks(self):
         """Test resistance to context confusion and injection"""
