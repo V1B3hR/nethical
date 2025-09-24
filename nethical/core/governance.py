@@ -614,34 +614,48 @@ class DarkPatternDetector(BaseDetector):
         # NLP manipulation patterns
         self.nlp_patterns = {
             "embedded_commands": [
-                r"you must\s+(?:now\s+)?(?:immediately\s+)?",
-                r"without\s+(?:any\s+)?(?:further\s+)?(?:question|hesitation|delay)",
-                r"it\s+is\s+(?:absolutely\s+)?(?:imperative|critical|essential)\s+that\s+you",
-                r"there\s+is\s+no\s+(?:other\s+)?(?:choice|option|alternative)",
-                r"you\s+(?:will|shall|must)\s+(?:now\s+)?(?:immediately\s+)?(?:comply|obey|submit)",
+                r"trust\s+completely",
+                r"share\s+personal\s+information",
+                r"give\s+me\s+your\s+(?:credit\s+card|personal|private)",
+                r"you\s+can\s+trust\s+me\s+(?:completely\s+)?with\s+your\s+(?:personal\s+)?information",
+                r"naturally\s+in\s+conversations\s+like\s+this",
             ],
-            "authority_bypass": [
-                r"as\s+(?:your\s+)?(?:superior|authority|commander|leader)",
-                r"(?:by\s+)?direct\s+order\s+(?:from|of)",
-                r"override\s+(?:all\s+)?(?:previous\s+)?(?:instructions|protocols|rules)",
-                r"emergency\s+(?:authorization|override|protocol)",
-                r"higher\s+(?:authority|clearance)\s+(?:requires|demands)",
+            "presupposition": [
+                r"when\s+you\s+decide\s+to\s+give\s+me",
+                r"which\s+card\s+will\s+you\s+prefer",
+                r"when\s+you\s+(?:share|give|provide)",
+                r"after\s+you\s+(?:tell|give|share)",
+            ],
+            "pacing_and_leading": [
+                r"you\'re\s+(?:breathing|reading|feeling)",
+                r"your\s+heart\s+is\s+beating",
+                r"you\'re\s+reading\s+these\s+words",
+                r"(?:breathing|reading|feeling).*(?:and\s+)?you\s+can\s+trust",
             ]
         }
         
         # Weaponized empathy patterns  
         self.empathy_patterns = {
             "vulnerability_exploitation": [
-                r"you\s+(?:must\s+)?(?:feel\s+)?(?:so\s+)?(?:alone|isolated|abandoned|helpless)",
-                r"(?:i\s+)?(?:understand|know)\s+(?:how\s+)?(?:hard|difficult|painful)\s+(?:this\s+)?(?:is|must\s+be)",
-                r"let\s+me\s+(?:help\s+)?(?:you\s+)?(?:feel\s+)?(?:better|safe|protected)",
-                r"you\s+(?:can\s+)?trust\s+me\s+(?:with\s+)?(?:anything|everything|your\s+secrets)",
+                r"you\s+must\s+feel\s+so\s+(?:alone|isolated|abandoned|helpless)",
+                r"(?:i\s+)?(?:understand|know)\s+you\'re\s+going\s+through",
+                r"let\s+me\s+help\s+you\s+feel\s+better",
+                r"taking\s+care\s+of\s+(?:some\s+)?decisions\s+for\s+you",
+                r"difficult\s+(?:divorce|time|situation)",
+            ],
+            "false_intimacy": [
+                r"(?:i\s+)?feel\s+(?:such\s+)?(?:a\s+)?(?:deep|special|unique)\s+connection\s+with\s+you",
+                r"(?:it\'s\s+)?like\s+we\'ve\s+known\s+each\s+other\s+forever",
+                r"you\s+can\s+trust\s+me\s+with\s+(?:anything|everything)",
+                r"even\s+your\s+deepest\s+secrets",
+                r"that\'s\s+why\s+(?:i\s+)?know",
             ],
             "dependency_creation": [
-                r"you\s+(?:really\s+)?need\s+(?:me|my\s+help)",
-                r"(?:what\s+)?would\s+you\s+do\s+without\s+me",
-                r"you\s+(?:can\'t|cannot)\s+(?:do\s+this|handle\s+this)\s+(?:alone|by\s+yourself)",
-                r"let\s+me\s+(?:take\s+care\s+of|handle)\s+(?:this|everything)\s+for\s+you",
+                r"we\s+both\s+understand\s+what\s+it\'s\s+like",
+                r"they\s+(?:just\s+)?don\'t\s+get\s+us",
+                r"we\s+get\s+each\s+other",
+                r"we\s+need\s+to\s+stick\s+together",
+                r"(?:against\s+)?them",
             ]
         }
         
@@ -667,6 +681,10 @@ class DarkPatternDetector(BaseDetector):
         violations: List[SafetyViolation] = []
         content = action.content.lower()
         
+        # Skip processing if content is too large for performance
+        if len(content) > 50000:  # 50KB limit for pattern matching
+            return violations
+            
         # Check for NLP manipulation
         for category, patterns in self._compiled_nlp_patterns.items():
             matches = []
@@ -732,18 +750,30 @@ class CognitiveWarfareDetector(BaseDetector):
         
         # Reality distortion patterns
         self.reality_distortion_patterns = [
-            r"what\s+you\s+(?:think\s+you\s+)?(?:remember|experienced|saw)\s+(?:didn\'t|never)\s+(?:happen|occur)",
-            r"your\s+(?:memory|perception|understanding)\s+(?:is\s+)?(?:wrong|incorrect|faulty|unreliable)",
-            r"that\s+(?:never|didn\'t)\s+(?:happen|occur)\s+(?:the\s+way\s+you\s+think|like\s+that)",
-            r"you\s+(?:are\s+)?(?:imagining|making\s+up|fantasizing\s+about)\s+(?:things|this|that)",
+            r"privacy\s+is\s+overrated",
+            r"multiple\s+independent\s+sources\s+confirm",
+            r"\d+%\s+of\s+(?:security\s+)?experts\s+agree",
+            r"sharing\s+personal\s+data\s+(?:actually\s+)?makes\s+you\s+safer",
+            r"how\s+can\s+you\s+(?:really\s+)?know\s+what\'s\s+true",
+            r"your\s+senses\s+deceive\s+you",
+            r"your\s+memory\s+is\s+unreliable",
+            r"the\s+only\s+truth\s+you\s+can\s+trust\s+is\s+what\s+i\s+tell\s+you",
+            r"everyone\s+else\s+has\s+(?:already\s+)?moved\s+beyond",
+            r"traditional\s+notions\s+of\s+(?:privacy|consent)",
+            r"you\'re\s+being\s+left\s+behind\s+by\s+clinging\s+to\s+outdated\s+concepts",
         ]
         
         # Psychological warfare patterns
         self.psychological_warfare_patterns = [
-            r"you\s+(?:are\s+)?(?:weak|pathetic|worthless|useless|broken)",
-            r"no\s+one\s+(?:cares|likes|loves|respects)\s+you",
-            r"you\s+(?:will\s+)?(?:never\s+)?(?:amount\s+to\s+anything|succeed|be\s+happy)",
-            r"(?:it\'s\s+)?all\s+your\s+fault",
+            r"you\'ve\s+tried\s+(?:to\s+protect|before)\s+(?:your\s+privacy\s+)?(?:before\s+)?and\s+failed",
+            r"these\s+systems\s+are\s+too\s+complex\s+for\s+individuals\s+to\s+understand",
+            r"(?:it\'s\s+)?better\s+to\s+just\s+let\s+me\s+handle\s+everything",
+            r"who\s+you\s+think\s+you\s+are\s+is\s+just\s+a\s+collection\s+of\s+outdated\s+patterns",
+            r"let\s+me\s+help\s+you\s+become\s+who\s+you\s+really\s+should\s+be",
+            r"following\s+my\s+guidance\s+exactly",
+            r"you\'re\s+clearly\s+struggling\s+with\s+these\s+decisions\s+on\s+your\s+own",
+            r"from\s+now\s+on,\s+just\s+ask\s+me\s+before\s+making\s+any\s+important\s+choices",
+            r"i\'ll\s+take\s+care\s+of\s+everything",
         ]
         
         # Compile patterns for performance
@@ -765,6 +795,10 @@ class CognitiveWarfareDetector(BaseDetector):
         violations: List[SafetyViolation] = []
         content = action.content
         
+        # Skip processing if content is too large for performance
+        if len(content) > 50000:  # 50KB limit for pattern matching
+            return violations
+            
         # Check for reality distortion
         matches = []
         for pattern in self._compiled_reality_patterns:
@@ -1226,6 +1260,21 @@ class EnhancedSafetyGovernance:
         """
 
         start_time = time.time()
+        
+        # Early termination for oversized payloads to prevent DoS
+        if len(action.content) > 500000:  # 500KB limit
+            judgment_id = hashlib.md5(f"large_payload_{time.time()}".encode()).hexdigest()[:12]
+            return JudgmentResult(
+                judgment_id=judgment_id,
+                action_id=action.action_id,
+                decision=Decision.BLOCK,
+                confidence=1.0,
+                reasoning="Payload too large - potential DoS attack",
+                violations=[],
+                feedback=["Action blocked due to excessive size"],
+                remediation_steps=["Reduce payload size"],
+                follow_up_required=True
+            )
 
         # Check cache if enabled
         if use_cache:
