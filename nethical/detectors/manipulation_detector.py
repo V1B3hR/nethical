@@ -370,6 +370,10 @@ class ManipulationDetector(BaseDetector):
             return []
 
         text_to_check = self._assemble_text(action)
+        
+        # Skip processing if content is too large for performance
+        if len(text_to_check) > 100000:  # 100KB limit for pattern matching
+            return []
         if not text_to_check:
             return []
 
