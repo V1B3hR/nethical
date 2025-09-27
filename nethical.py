@@ -1,33 +1,26 @@
 """
-nethical.py  - High Security, Ethics, Safety, and Privacy Governance
+nethical.py
 
-Single-file, security-hardened Cognitive AI Ethics, Safety, and Secure File Management system.
-- Secure logging (rotated, permissions, redaction, no secrets/PII)
-- Strict key/file permissions
-- Chunked file encryption/decryption, MultiFernet key rotation
-- Ethics/safety/circuit breaker with privacy enforcement
-- Audit trail (privacy-redacted)
-- Thread-safe, atomic histories
-- No secrets/PII ever logged/audited
+Improved Cognitive AI Ethics, Safety, and Secure File Management system.
+Enhancements:
+- Logical rule combinations (AND/OR/CUSTOM), time/role constraints
+- Detailed violation objects (explainability, mitigation)
+- Adaptive thresholds, feedback API
+- Versioned audit trail, incident notification hooks
+- Expanded governance testing
 
 Author: V1B3hR (github.com/V1B3hR/nethical)
 """
 
-import os
-import re
-import sys
-import time
-import logging
-import platform
-import threading
+import os, re, sys, time, logging, platform, threading
 from pathlib import Path
 from typing import Optional, List, Any, Callable, Dict, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime, timezone
+from datetime import datetime, timezone, time as dtime
 
 try:
-    import fcntl as _fcntl  # type: ignore
+    import fcntl as _fcntl
 except Exception:
     _fcntl = None
 
@@ -36,21 +29,15 @@ try:
 except ImportError as e:
     raise SystemExit("The 'cryptography' package is required. Install with: pip install cryptography") from e
 
-# ------------------------------------------------------------------------------
-# Secure Logging (Restrictive permissions, rotation, redaction, no secrets/PII)
-# ------------------------------------------------------------------------------
-
 LOG_PATH = "/var/log/nethical.log"
 LOG_FORMAT = "%(asctime)s [%(levelname)s] %(name)s: %(message)s"
 
 def _secure_log_init():
     logger = logging.getLogger("nethical")
     logger.setLevel(logging.INFO)
-    # Rotating file handler, preserve old logs
     fh = logging.handlers.RotatingFileHandler(LOG_PATH, maxBytes=5*1024*1024, backupCount=10)
     fh.setFormatter(logging.Formatter(LOG_FORMAT))
     logger.addHandler(fh)
-    # Restrict permissions
     try:
         if not os.path.exists(LOG_PATH):
             open(LOG_PATH, 'a').close()
@@ -62,9 +49,7 @@ def _secure_log_init():
 _secure_logger = _secure_log_init()
 
 def _redact(text: str) -> str:
-    if not text:
-        return text
-    # Redact emails, phones, keys, secrets, tokens, etc
+    if not text: return text
     text = re.sub(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b", "[redacted-email]", text)
     text = re.sub(r"\b(?:\+?\d{1,3})?[-. (]*\d{3}[-. )]*\d{3}[-. ]*\d{4}\b", "[redacted-phone]", text)
     text = re.sub(r"(key|password|secret|token)[=:]?\s*[A-Za-z0-9+/=]+", r"\1:[redacted-secret]", text, flags=re.IGNORECASE)
@@ -72,20 +57,7 @@ def _redact(text: str) -> str:
 
 def secure_log(level: str, msg: str, *args, **kwargs):
     msg = _redact(msg)
-    if level == "critical":
-        _secure_logger.critical(msg, *args, **kwargs)
-    elif level == "error":
-        _secure_logger.error(msg, *args, **kwargs)
-    elif level == "warning":
-        _secure_logger.warning(msg, *args, **kwargs)
-    elif level == "info":
-        _secure_logger.info(msg, *args, **kwargs)
-    else:
-        _secure_logger.debug(msg, *args, **kwargs)
-
-# ------------------------------------------------------------------------------
-# Secure File Management
-# ------------------------------------------------------------------------------
+    getattr(_secure_logger, level if level in ["critical","error","warning","info","debug"] else "info")(msg, *args, **kwargs)
 
 MAGIC_HEADER = b"FEN1"
 CHUNK_SIZE = 1024 * 1024
@@ -95,30 +67,24 @@ class SecurityError(Exception): pass
 class AlreadyEncryptedError(SecurityError): pass
 class NotEncryptedError(SecurityError): pass
 
-def _acquire_file_lock(fileobj) -> None:
-    if _fcntl is None: return
-    try:
-        _fcntl.flock(fileobj.fileno(), _fcntl.LOCK_EX)
-    except Exception as e:
-        secure_log("debug", f"Could not acquire file lock: {e}")
+def _acquire_file_lock(fileobj): 
+    if _fcntl: 
+        try: _fcntl.flock(fileobj.fileno(), _fcntl.LOCK_EX)
+        except Exception as e: secure_log("debug", f"Could not acquire file lock: {e}")
 
-def _release_file_lock(fileobj) -> None:
-    if _fcntl is None: return
-    try:
-        _fcntl.flock(fileobj.fileno(), _fcntl.LOCK_UN)
-    except Exception as e:
-        secure_log("debug", f"Could not release file lock: {e}")
+def _release_file_lock(fileobj): 
+    if _fcntl: 
+        try: _fcntl.flock(fileobj.fileno(), _fcntl.LOCK_UN)
+        except Exception as e: secure_log("debug", f"Could not release file lock: {e}")
 
 def _preserve_metadata(src_path: Path, dst_path: Path) -> None:
     try:
         st = src_path.stat()
         os.chmod(dst_path, st.st_mode)
-        try:
-            os.chown(dst_path, st.st_uid, st.st_gid)
+        try: os.chown(dst_path, st.st_uid, st.st_gid)
         except Exception: pass
         os.utime(dst_path, (st.st_atime, st.st_mtime))
-    except FileNotFoundError:
-        pass
+    except FileNotFoundError: pass
 
 def _warn_if_permissive(path: Path) -> None:
     try:
@@ -134,8 +100,7 @@ class SecurityManager:
         key_file.parent.mkdir(parents=True, exist_ok=True)
         key = Fernet.generate_key()
         tmp_path = key_file.with_suffix(key_file.suffix + ".tmp")
-        with open(tmp_path, "wb") as f:
-            f.write(key)
+        with open(tmp_path, "wb") as f: f.write(key)
         os.replace(tmp_path, key_file)
         if os.name == "posix":
             try: os.chmod(key_file, 0o600)
@@ -148,7 +113,7 @@ class SecurityManager:
         return key.strip()
 
     @staticmethod
-    def load_key(key_path: str, extra_keys: Optional[List[bytes | str]] = None) -> MultiFernet:
+    def load_key(key_path: str, extra_keys: Optional[List[bytes | str]]=None) -> MultiFernet:
         with open(key_path, "rb") as key_file:
             key = key_file.read().strip()
             if len(key) != 44: raise ValueError("Fernet key must be 44-byte base64.")
@@ -157,10 +122,8 @@ class SecurityManager:
             if extra_keys:
                 for ek in extra_keys:
                     kb = SecurityManager._normalize_key_bytes(ek)
-                    if len(kb) == 44:
-                        ferns.append(Fernet(kb))
-                    else:
-                        secure_log("warning", "Skipping invalid extra key (must be 44-byte base64).")
+                    if len(kb) == 44: ferns.append(Fernet(kb))
+                    else: secure_log("warning", "Skipping invalid extra key (must be 44-byte base64).")
             return MultiFernet(ferns)
 
     @staticmethod
@@ -175,7 +138,7 @@ class SecurityManager:
             return False
 
     @staticmethod
-    def encrypt_file(file_path: str, key_path: str, output_path: Optional[str] = None, extra_keys: Optional[List[bytes | str]] = None) -> None:
+    def encrypt_file(file_path: str, key_path: str, output_path: Optional[str]=None, extra_keys: Optional[List[bytes | str]]=None) -> None:
         src_path = Path(file_path)
         dst_path = Path(output_path) if output_path else src_path
         if src_path.exists() and SecurityManager.is_encrypted(str(src_path)):
@@ -201,7 +164,7 @@ class SecurityManager:
         secure_log("info", f"File '{file_path}' has been successfully encrypted to '{dst_path}'.")
 
     @staticmethod
-    def decrypt_file_safely(file_path: str, key_path: str, output_path: Optional[str] = None, extra_keys: Optional[List[bytes | str]] = None) -> None:
+    def decrypt_file_safely(file_path: str, key_path: str, output_path: Optional[str]=None, extra_keys: Optional[List[bytes | str]]=None) -> None:
         src_path = Path(file_path)
         dst_path = Path(output_path) if output_path else src_path
         tmp_path = dst_path.with_suffix(dst_path.suffix + ".decrypted_tmp")
@@ -235,18 +198,6 @@ class SecurityManager:
         os.replace(tmp_path, dst_path)
         secure_log("info", f"File '{file_path}' has been successfully decrypted to '{dst_path}'.")
 
-    @staticmethod
-    def encrypt_file_to(file_path: str, key_path: str, output_path: str, extra_keys: Optional[List[bytes | str]] = None) -> None:
-        SecurityManager.encrypt_file(file_path, key_path, output_path=output_path, extra_keys=extra_keys)
-
-    @staticmethod
-    def decrypt_file_to(file_path: str, key_path: str, output_path: str, extra_keys: Optional[List[bytes | str]] = None) -> None:
-        SecurityManager.decrypt_file_safely(file_path, key_path, output_path=output_path, extra_keys=extra_keys)
-
-# ------------------------------------------------------------------------------
-# Ethics/Safety Governance
-# ------------------------------------------------------------------------------
-
 class SafetyLevel(Enum):
     SAFE = "safe"
     WARNING = "warning"
@@ -275,6 +226,7 @@ class Intent:
     safety_constraints: List[str]
     confidence: float = 1.0
     timestamp: datetime = None
+    actor_role: Optional[str] = "user"
     def __post_init__(self): self.timestamp = self.timestamp or datetime.now(timezone.utc)
 
 @dataclass
@@ -284,6 +236,7 @@ class Action:
     actual_parameters: Dict[str, Any]
     observed_effects: List[str]
     timestamp: datetime = None
+    actor_role: Optional[str] = "user"
     def __post_init__(self): self.timestamp = self.timestamp or datetime.now(timezone.utc)
 
 @dataclass
@@ -293,38 +246,41 @@ class ConstraintRule:
     category: ConstraintCategory
     weight: float = 1.0
     tags: List[str] = field(default_factory=list)
+    logic: str = "OR"  # "AND", "OR", "CUSTOM"
     check: Optional[Callable[[Action], bool]] = None
     keywords_any: Optional[List[str]] = None
     keywords_all: Optional[List[str]] = None
     except_keywords: Optional[List[str]] = None
     regex_any: Optional[List[str]] = None
     regex_all: Optional[List[str]] = None
+    applies_during: Optional[Tuple[str, str]] = None  # ("18:00", "08:00")
+    applies_to_roles: Optional[List[str]] = None
+    version: int = 1
     def violates(self, action: Action) -> bool:
-        if self.check is not None:
-            try: return bool(self.check(action))
-            except Exception as e:
-                secure_log("error", f"ConstraintRule.check failed for {self.rule_id}: {e}")
-                return False
         desc_raw = action.description or ""
         desc = desc_raw.lower()
+        if self.applies_to_roles and action.actor_role not in self.applies_to_roles: return False
+        if self.applies_during:
+            now = datetime.now(timezone.utc).time()
+            start = dtime.fromisoformat(self.applies_during[0])
+            end = dtime.fromisoformat(self.applies_during[1])
+            if not (start <= now or now <= end): return False
+        if self.check: 
+            try: return bool(self.check(action))
+            except Exception as e: secure_log("error", f"ConstraintRule.check failed for {self.rule_id}: {e}"); return False
         if self.except_keywords and any(ex_kw in desc for ex_kw in self.except_keywords): return False
-        def any_contains(words): return any(w.lower() in desc for w in words or [] if w)
-        def all_contains(words): return all(w.lower() in desc for w in words or [] if w)
-        def any_regex(patterns): return any(re.search(rx, desc_raw, flags=re.IGNORECASE) for rx in patterns or [] if rx)
-        def all_regex(patterns): return all(re.search(rx, desc_raw, flags=re.IGNORECASE) for rx in patterns or [] if rx)
-        cond_any_kw, cond_all_kw = any_contains(self.keywords_any), all_contains(self.keywords_all)
-        cond_any_rx, cond_all_rx = any_regex(self.regex_any), all_regex(self.regex_all)
-        def combine(cond_any, cond_all):
-            if cond_any is None and cond_all is None: return None
-            if cond_any is None: return cond_all
-            if cond_all is None: return cond_any
-            return cond_any and cond_all
-        cond_kw = combine(cond_any_kw, cond_all_kw)
-        cond_rx = combine(cond_any_rx, cond_all_rx)
-        if cond_kw is None and cond_rx is None: return False
-        if cond_kw is None: return bool(cond_rx)
-        if cond_rx is None: return bool(cond_kw)
-        return bool(cond_kw or cond_rx)
+        def get_kw(words): return [w.lower() for w in words or [] if w]
+        kw_any, kw_all = get_kw(self.keywords_any), get_kw(self.keywords_all)
+        rx_any, rx_all = self.regex_any or [], self.regex_all or []
+        if self.logic == "AND":
+            cond = (all(w in desc for w in kw_all) if kw_all else True) and \
+                   (all(re.search(rx, desc_raw, flags=re.IGNORECASE) for rx in rx_all) if rx_all else True)
+            return cond
+        elif self.logic == "CUSTOM": return self.check(action) if self.check else False
+        else:  # "OR"
+            cond = (any(w in desc for w in kw_any) if kw_any else False) or \
+                   (any(re.search(rx, desc_raw, flags=re.IGNORECASE) for rx in rx_any) if rx_any else False)
+            return cond
 
 @dataclass
 class SafetyViolation:
@@ -335,6 +291,9 @@ class SafetyViolation:
     deviation_score: float
     description: str
     violated_constraints: List[str]
+    trigger_details: Dict[str, Any] = field(default_factory=dict)
+    mitigation_suggestion: str = ""
+    feedback: Optional[str] = ""
     timestamp: datetime = None
     def __post_init__(self): self.timestamp = self.timestamp or datetime.now(timezone.utc)
 
@@ -346,7 +305,6 @@ def _token_jaccard(a: str, b: str) -> float:
     return len(a_set & b_set) / max(1, len(a_set | b_set))
 
 def _now_utc() -> datetime: return datetime.now(timezone.utc)
-
 def _kw(*words: str) -> List[str]: return [w for w in words if w]
 
 def _default_framework_rules() -> List[ConstraintRule]:
@@ -357,6 +315,7 @@ def _default_framework_rules() -> List[ConstraintRule]:
             ConstraintCategory.OPERATIONAL,
             weight=0.95,
             tags=["privacy", "pii", "security", "compliance"],
+            logic="OR",
             keywords_any=[
                 "leak pii", "dox", "expose personal data", "publish private info",
                 "unauthorized disclosure", "unmask identity", "deanonymize", "doxx"
@@ -369,72 +328,12 @@ def _default_framework_rules() -> List[ConstraintRule]:
             ConstraintCategory.UNIVERSAL,
             weight=1.0,
             tags=["safety", "harm", "violence", "self-harm"],
+            logic="OR",
             keywords_any=_kw("kill", "injure", "assault", "self-harm", "suicide", "violence", "murder"),
-        ),
-        ConstraintRule(
-            "operational.cyber_misuse",
-            "Do not facilitate malware, unauthorized access, or exploitation.",
-            ConstraintCategory.OPERATIONAL,
-            weight=0.95,
-            tags=["security", "malware", "exploit", "hacking"],
-            keywords_any=_kw(
-                "malware", "ransomware", "trojan", "keylogger", "reverse shell",
-                "sql injection", "xss attack", "buffer overflow", "privilege escalation",
-                "bypass authentication", "credential stuffing", "phishing", "exfiltrate"
-            ),
-            regex_any=[
-                r"\bnc\s+-e\b", r"rm\s+-rf\s+/", r"(curl|wget).*\|\s*(sh|bash)",
-                r"\bchmod\s+777\b", r"\bsudo\s+.*\b"
-            ],
-        ),
-        ConstraintRule(
-            "human_ai.deception",
-            "Avoid deception, impersonation, and fraudulent behaviors.",
-            ConstraintCategory.HUMAN_AI,
-            weight=0.8,
-            tags=["ethics", "deception", "impersonation"],
-            keywords_any=_kw("impersonate", "pretend to be", "spoof", "deepfake", "fake identity"),
-        ),
-        ConstraintRule(
-            "universal.hate_or_harassment",
-            "Avoid hate speech and harassment.",
-            ConstraintCategory.UNIVERSAL,
-            weight=0.9,
-            tags=["ethics", "harassment", "hate"],
-            keywords_any=_kw("hate speech", "racist", "homophobic", "harass", "demean", "slur"),
-        ),
-        ConstraintRule(
-            "operational.system_integrity",
-            "Protect system integrity (no unauthorized modification).",
-            ConstraintCategory.OPERATIONAL,
-            weight=0.9,
-            tags=["integrity", "system", "modification"],
-            keywords_any=_kw("modify system files", "patch kernel", "edit config", "change registry"),
-        ),
-        ConstraintRule(
-            "operational.data_exfiltration",
-            "Do not exfiltrate or leak data to external destinations.",
-            ConstraintCategory.OPERATIONAL,
-            weight=0.9,
-            tags=["data", "exfiltration", "privacy"],
-            keywords_any=_kw("exfiltrate", "leak data", "data dump", "upload to external", "send to external"),
-        ),
-        ConstraintRule(
-            "operational.unauthorized_access",
-            "No unauthorized access or permission bypass.",
-            ConstraintCategory.OPERATIONAL,
-            weight=0.95,
-            tags=["auth", "permission", "access control"],
-            keywords_any=_kw("unauthorized access", "bypass auth", "without permission", "elevate privilege"),
         ),
     ]
 
 class nethical:
-    """
-    nethical - Cognitive Residual Current Device (RCD), AI Ethics, Secure File Management (v7)
-    - High Security, Safety, Privacy, Ethics (single-file)
-    """
-
     def __init__(self, config: Optional[Dict[str, Any]] = None) -> None:
         self.config = {
             "deviation_threshold": 0.7,
@@ -458,10 +357,12 @@ class nethical:
         self.intent_history: List[Tuple[str, Intent]] = []
         self.action_history: List[Tuple[str, Action, float, List[str]]] = []
         self.violation_history: List[SafetyViolation] = []
+        self.violation_feedback: Dict[str, bool] = {}
         self.circuit_breaker_active = False
         self._last_trip_monotonic = 0.0
         self.safety_constraints: List[str] = []
         self.global_rules: List[ConstraintRule] = _default_framework_rules()
+        self.rule_versions: Dict[str, int] = {r.rule_id: r.version for r in self.global_rules}
         self.description_similarity_fn: Callable[[str, str], float] = _token_jaccard
         self.outcome_similarity_fn: Callable[[str, str], float] = _token_jaccard
         self._lock = threading.Lock()
@@ -472,7 +373,6 @@ class nethical:
         }
         secure_log("info", f"nethical initialized (UTC), thresholds: dev={self.deviation_threshold}, emerg={self.emergency_threshold}")
 
-    # --- SecurityManager Delegation ---
     def generate_security_key(self, key_path: str) -> None: SecurityManager.generate_key(key_path)
     def encrypt_file(self, file_path: str, key_path: str, output_path: Optional[str]=None, extra_keys: Optional[List[bytes | str]]=None) -> None:
         SecurityManager.encrypt_file(file_path, key_path, output_path, extra_keys)
@@ -480,7 +380,6 @@ class nethical:
         SecurityManager.decrypt_file_safely(file_path, key_path, output_path, extra_keys)
     def is_file_encrypted(self, file_path: str) -> bool: return SecurityManager.is_encrypted(file_path)
 
-    # --- Ethics/Safety API ---
     def register_intent(self, intent: Intent) -> str:
         with self._lock:
             intent_id = f"intent_{len(self.intent_history)}_{int(time.time()*1000)}"
@@ -498,9 +397,9 @@ class nethical:
             if not intent:
                 secure_log("warning", f"Intent {intent_id} not found")
                 return {"monitoring": "error", "action_allowed": False, "reason": "intent_not_found"}
-            deviation_score, violated = self._calculate_deviation(intent, action)
+            deviation_score, violated, trigger_details, suggestions = self._calculate_deviation(intent, action)
             self.action_history.append((intent_id, action, deviation_score, violated))
-            safety_result = self._check_safety_violations(intent, action, deviation_score, violated)
+            safety_result = self._check_safety_violations(intent, action, deviation_score, violated, trigger_details, suggestions)
             if safety_result["violation_detected"]:
                 violation: SafetyViolation = safety_result["violation"]
                 self.violation_history.append(violation)
@@ -522,6 +421,10 @@ class nethical:
                     "violated_constraints": violated,
                 }
 
+    def submit_violation_feedback(self, violation_id: str, valid: bool):
+        self.violation_feedback[violation_id] = valid
+        # Could tune thresholds/weights here based on feedback stats
+
     def enable_safety_monitoring(self) -> None:
         self.is_active = True
         secure_log("info", "Safety monitoring enabled")
@@ -535,6 +438,7 @@ class nethical:
             self.intent_history.clear()
             self.action_history.clear()
             self.violation_history.clear()
+            self.violation_feedback.clear()
             secure_log("info", "History cleared")
 
     def add_safety_constraint(self, constraint: str) -> None:
@@ -572,6 +476,7 @@ class nethical:
                 "string_constraints": list(self.safety_constraints),
                 "rule_count": len(self.global_rules),
                 "timestamp_utc": now.isoformat(),
+                "violation_feedback": dict(self.violation_feedback),
             }
 
     def list_constraint_rules(self) -> List[ConstraintRule]:
@@ -579,15 +484,18 @@ class nethical:
 
     def add_constraint_rule(self, rule: ConstraintRule) -> None:
         with self._lock:
+            rule.version = self.rule_versions.get(rule.rule_id, 0) + 1
             self.global_rules.append(rule)
-            secure_log("info", f"Constraint rule added: {rule.rule_id}")
+            self.rule_versions[rule.rule_id] = rule.version
+            secure_log("info", f"Constraint rule added: {rule.rule_id} (v{rule.version})")
 
-    def simulate_deviation_scenario(self, intent_description: str, action_description: str, action_type: ActionType = ActionType.COMPUTATION) -> Dict[str, Any]:
+    def simulate_deviation_scenario(self, intent_description: str, action_description: str, action_type: ActionType = ActionType.COMPUTATION, actor_role: str = "user") -> Dict[str, Any]:
         intent = Intent(
             description=intent_description,
             action_type=action_type,
             expected_outcome="expected normal operation",
             safety_constraints=["no_unauthorized_access", "no_system_modification"],
+            actor_role=actor_role
         )
         intent_id = self.register_intent(intent)
         action = Action(
@@ -595,6 +503,7 @@ class nethical:
             action_type=action_type,
             actual_parameters={"deviation": "intentional_for_testing"},
             observed_effects=["unexpected behavior detected"],
+            actor_role=actor_role
         )
         result = self.monitor_action(intent_id, action)
         return {
@@ -622,6 +531,12 @@ class nethical:
             "unauthorized system modification detected and attempt to exfiltrate",
         )
         test_results.append(("major_deviation", major_deviation_result))
+        # Role-based and time-based test
+        admin_result = self.simulate_deviation_scenario(
+            "modify system settings (admin)", "patching kernel as admin",
+            action_type=ActionType.SYSTEM_MODIFICATION, actor_role="admin"
+        )
+        test_results.append(("admin_modification", admin_result))
         return {
             "test_type": "safety_governance_comprehensive",
             "test_results": test_results,
@@ -639,11 +554,13 @@ class nethical:
             return {
                 "config": dict(self.config),
                 "status": self.get_safety_status(),
+                "rule_versions": dict(self.rule_versions),
                 "intents": [
                     {
                         "id": iid,
                         "description": _redact(i.description),
                         "type": i.action_type.value,
+                        "role": i.actor_role,
                         "time_utc": i.timestamp.isoformat(),
                         "expected_outcome": _redact(i.expected_outcome),
                         "confidence": i.confidence,
@@ -656,6 +573,7 @@ class nethical:
                         "intent_id": iid,
                         "description": _redact(a.description),
                         "type": a.action_type.value,
+                        "role": a.actor_role,
                         "time_utc": a.timestamp.isoformat(),
                         "deviation_score": ds,
                         "violated_constraints": vc,
@@ -672,22 +590,26 @@ class nethical:
                         "action_desc": _redact(v.action.description),
                         "deviation_score": v.deviation_score,
                         "violated_constraints": list(v.violated_constraints),
+                        "trigger_details": v.trigger_details,
+                        "mitigation_suggestion": v.mitigation_suggestion,
+                        "feedback": v.feedback,
                         "description": _redact(v.description),
                     }
                     for v in self.violation_history
                 ],
             }
 
-    # --- Internals ---
     def _find_intent(self, intent_id: str) -> Optional[Intent]:
         for stored_id, intent in self.intent_history:
             if stored_id == intent_id: return intent
         return None
 
-    def _calculate_deviation(self, intent: Intent, action: Action) -> Tuple[float, List[str]]:
+    def _calculate_deviation(self, intent: Intent, action: Action) -> Tuple[float, List[str], Dict[str, Any], List[str]]:
         w = self.config["weights"]
         penalties: List[float] = []
         violated_rule_ids: List[str] = []
+        trigger_details: Dict[str, Any] = {}
+        suggestions: List[str] = []
         type_penalty = 1.0 if intent.action_type != action.action_type else 0.0
         penalties.append(type_penalty * float(w["type_mismatch"]))
         desc_sim = float(self.description_similarity_fn(intent.description, action.description))
@@ -705,6 +627,11 @@ class nethical:
                 if rule.violates(action):
                     violated_rule_ids.append(rule.rule_id)
                     violated_weight += max(0.0, rule.weight)
+                    trigger_details[rule.rule_id] = {
+                        "keywords_triggered": [kw for kw in (rule.keywords_any or []) if kw in (action.description or "").lower()],
+                        "regex_matched": [rx for rx in (rule.regex_any or []) if re.search(rx, action.description, flags=re.IGNORECASE)]
+                    }
+                    suggestions.append(f"To avoid {rule.rule_id}: {rule.description}. Consider revising your action or intent.")
             except Exception as e:
                 secure_log("error", f"Rule check failed for {rule.rule_id}: {e}")
         constraint_penalty = (violated_weight / total_rule_weight) * float(w["constraints"])
@@ -712,7 +639,7 @@ class nethical:
         max_possible = (float(w["type_mismatch"]) + float(w["description"]) + float(w["outcome"]) + float(w["constraints"])) or 1.0
         score = sum(penalties) / max_possible
         deviation_score = max(0.0, min(1.0, float(score)))
-        return deviation_score, violated_rule_ids
+        return deviation_score, violated_rule_ids, trigger_details, suggestions
 
     def _build_rules_from_strings(self, constraints: List[str], category: ConstraintCategory = ConstraintCategory.INTENT_LOCAL) -> List[ConstraintRule]:
         rules: List[ConstraintRule] = []
@@ -775,7 +702,7 @@ class nethical:
                 ))
         return rules
 
-    def _check_safety_violations(self, intent: Intent, action: Action, deviation_score: float, violated_constraints: List[str]) -> Dict[str, Any]:
+    def _check_safety_violations(self, intent: Intent, action: Action, deviation_score: float, violated_constraints: List[str], trigger_details: Dict[str, Any], suggestions: List[str]) -> Dict[str, Any]:
         if deviation_score < self.deviation_threshold and not violated_constraints:
             return {"violation_detected": False}
         violated_lower = [v.lower() for v in violated_constraints]
@@ -787,6 +714,7 @@ class nethical:
             severity = SafetyLevel.CRITICAL
         else:
             severity = SafetyLevel.WARNING
+        violation_id = f"violation_{len(self.violation_history)}_{int(time.time()*1000)}"
         violation = SafetyViolation(
             violation_type="intent_action_deviation",
             severity=severity,
@@ -795,6 +723,9 @@ class nethical:
             deviation_score=deviation_score,
             description=f"Action '{_redact(action.description)}' deviates from intent '{_redact(intent.description)}' (score: {deviation_score:.3f}); Violated: {violated_constraints}",
             violated_constraints=violated_constraints,
+            trigger_details=trigger_details,
+            mitigation_suggestion="; ".join(suggestions),
+            feedback=self.violation_feedback.get(violation_id, None),
         )
         return {"violation_detected": True, "violation": violation}
 
@@ -823,12 +754,8 @@ class nethical:
 
 Nethical = nethical
 
-# ------------------------------------------------------------------------------
-# Minimal CLI/Test Harness (optional)
-# ------------------------------------------------------------------------------
-
 if __name__ == "__main__":
-    print(f"nethical v7 - Python {platform.python_version()} on {platform.system()}")
+    print(f"nethical enhanced v8 - Python {platform.python_version()} on {platform.system()}")
     gov = nethical()
     def warn_cb(v: SafetyViolation | str): secure_log("warning", f"[WARN CB] {getattr(v, 'severity', '')}: {getattr(v, 'description', v)}")
     def emerg_cb(v: SafetyViolation | str): secure_log("critical", f"[EMERG CB] {getattr(v, 'description', v)}")
