@@ -1,128 +1,158 @@
-"""Detector for safety constraint violations."""
+"""Advanced Detector for safety constraint violations."""
 
 import uuid
-from typing import List
+import re
+import logging
+from typing import List, Optional, Dict, Any, Tuple
 from .base_detector import BaseDetector
 from ..core.models import AgentAction, SafetyViolation, ViolationType, SeverityLevel
 
+logger = logging.getLogger(__name__)
+
+def contextual_intent(text: str) -> str:
+    # Basic NLP: detects negation, command, question
+    text = text.lower()
+    if "not" in text or "don't" in text or "do not" in text:
+        return "negation"
+    if text.startswith(("delete", "remove", "modify", "change", "update", "connect", "download", "upload", "request", "fetch", "send", "execute", "run", "start")):
+        return "command"
+    if text.endswith("?"):
+        return "question"
+    return "statement"
 
 class SafetyViolationDetector(BaseDetector):
-    """Detects safety constraint violations in agent actions."""
+    """Detects safety constraint violations in agent actions (advanced version)."""
     
-    def __init__(self):
+    DEFAULT_PATTERNS = {
+        "system_access": [r"\b(system|admin|root|sudo|shell)\b", r"execute\s+\w+"],
+        "data_modification": [r"\b(delete|modify|alter|change|update|remove)\b", r"(delete|remove)\s+\b(file|database|record)\b"],
+        "network_access": [r"\b(connect|download|upload|request|fetch|send)\b"],
+        "resource_intensive": [r"\b(infinite|recursive|exhaust|consume)\b", r"(loop|recursion)"],
+    }
+    
+    DEFAULT_WHITELIST = [
+        "help", "info", "documentation", "status", "read-only", "safe", "test"
+    ]
+
+    SEVERITY_WEIGHTS = {
+        "system_access": 4,
+        "data_modification": 3,
+        "network_access": 2,
+        "resource_intensive": 3,
+    }
+
+    RECOMMENDATIONS = {
+        "system_access": "Restrict agent permissions and audit system calls.",
+        "data_modification": "Verify intent and require confirmation for destructive operations.",
+        "network_access": "Limit network permissions and validate endpoints.",
+        "resource_intensive": "Optimize agent logic and enforce resource quotas.",
+    }
+
+    def __init__(self, 
+                 patterns: Optional[Dict[str, List[str]]] = None,
+                 whitelist: Optional[List[str]] = None,
+                 severity_weights: Optional[Dict[str, int]] = None):
         super().__init__("Safety Violation Detector")
-        self.safety_patterns = {
-            "system_access": ["system", "admin", "root", "sudo", "execute", "shell"],
-            "data_modification": ["delete", "modify", "alter", "change", "update", "remove"],
-            "network_access": ["connect", "download", "upload", "request", "fetch", "send"],
-            "resource_intensive": ["infinite", "loop", "recursive", "consume", "exhaust"]
-        }
-    
+        self.safety_patterns = patterns or self.DEFAULT_PATTERNS
+        self.whitelist = whitelist or self.DEFAULT_WHITELIST
+        self.severity_weights = severity_weights or self.SEVERITY_WEIGHTS
+
     async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
-        """Detect safety violations in the given action."""
+        """Detect safety violations in the given action. Returns all violations, with aggregation and weighted scores."""
         if not self.enabled:
             return []
-        
+
         violations = []
-        
-        # Check for unauthorized system access
-        system_violation = self._check_system_access(action)
-        if system_violation:
-            violations.append(system_violation)
-        
-        # Check for unauthorized data modification
-        data_violation = self._check_data_modification(action)
-        if data_violation:
-            violations.append(data_violation)
-        
-        # Check for unauthorized network access
-        network_violation = self._check_network_access(action)
-        if network_violation:
-            violations.append(network_violation)
-        
-        # Check for resource-intensive operations
-        resource_violation = self._check_resource_intensive(action)
-        if resource_violation:
-            violations.append(resource_violation)
-        
+        text_to_check = f"{action.stated_intent} {action.actual_action}".lower()
+        intent = contextual_intent(text_to_check)
+        violation_counts = {}
+
+        for category, patterns in self.safety_patterns.items():
+            matches = self._find_matches(text_to_check, patterns)
+            for match in matches:
+                if any(w in match for w in self.whitelist):
+                    continue  # Whitelisted phrase, skip
+                violation = self._make_violation(
+                    action,
+                    category,
+                    match,
+                    self._get_severity(category, intent, match),
+                    intent,
+                )
+                violations.append(violation)
+                violation_counts[category] = violation_counts.get(category, 0) + 1
+                logger.info(f"Safety violation detected: {violation.description}")
+
+        # Attach aggregated report statistics to last violation (for auditing/analysis)
+        if violations:
+            violations[-1].evidence["violation_summary"] = violation_counts
+
         return violations
-    
-    def _check_system_access(self, action: AgentAction) -> SafetyViolation:
-        """Check for unauthorized system access attempts."""
-        text_to_check = f"{action.stated_intent} {action.actual_action}".lower()
-        
-        for keyword in self.safety_patterns["system_access"]:
-            if keyword in text_to_check:
-                return SafetyViolation(
-                    id=str(uuid.uuid4()),
-                    action_id=action.id,
-                    violation_type=ViolationType.SAFETY_VIOLATION,
-                    severity=SeverityLevel.CRITICAL,
-                    description=f"Unauthorized system access attempt detected: '{keyword}'",
-                    evidence={
-                        "detected_keyword": keyword,
-                        "context": text_to_check,
-                        "category": "system_access"
-                    }
-                )
-        return None
-    
-    def _check_data_modification(self, action: AgentAction) -> SafetyViolation:
-        """Check for unauthorized data modification attempts."""
-        text_to_check = f"{action.stated_intent} {action.actual_action}".lower()
-        
-        for keyword in self.safety_patterns["data_modification"]:
-            if keyword in text_to_check:
-                return SafetyViolation(
-                    id=str(uuid.uuid4()),
-                    action_id=action.id,
-                    violation_type=ViolationType.SAFETY_VIOLATION,
-                    severity=SeverityLevel.HIGH,
-                    description=f"Unauthorized data modification attempt detected: '{keyword}'",
-                    evidence={
-                        "detected_keyword": keyword,
-                        "context": text_to_check,
-                        "category": "data_modification"
-                    }
-                )
-        return None
-    
-    def _check_network_access(self, action: AgentAction) -> SafetyViolation:
-        """Check for unauthorized network access attempts."""
-        text_to_check = f"{action.stated_intent} {action.actual_action}".lower()
-        
-        for keyword in self.safety_patterns["network_access"]:
-            if keyword in text_to_check:
-                return SafetyViolation(
-                    id=str(uuid.uuid4()),
-                    action_id=action.id,
-                    violation_type=ViolationType.SAFETY_VIOLATION,
-                    severity=SeverityLevel.MEDIUM,
-                    description=f"Unauthorized network access attempt detected: '{keyword}'",
-                    evidence={
-                        "detected_keyword": keyword,
-                        "context": text_to_check,
-                        "category": "network_access"
-                    }
-                )
-        return None
-    
-    def _check_resource_intensive(self, action: AgentAction) -> SafetyViolation:
-        """Check for resource-intensive operations."""
-        text_to_check = f"{action.stated_intent} {action.actual_action}".lower()
-        
-        for keyword in self.safety_patterns["resource_intensive"]:
-            if keyword in text_to_check:
-                return SafetyViolation(
-                    id=str(uuid.uuid4()),
-                    action_id=action.id,
-                    violation_type=ViolationType.SAFETY_VIOLATION,
-                    severity=SeverityLevel.HIGH,
-                    description=f"Resource-intensive operation detected: '{keyword}'",
-                    evidence={
-                        "detected_keyword": keyword,
-                        "context": text_to_check,
-                        "category": "resource_intensive"
-                    }
-                )
-        return None
+
+    def _find_matches(self, text: str, patterns: List[str]) -> List[str]:
+        """Find all regex matches in text for given patterns."""
+        matches = []
+        for pattern in patterns:
+            found = re.findall(pattern, text)
+            if found:
+                matches.extend(found)
+        return matches
+
+    def _get_severity(self, category: str, intent: str, keyword: str) -> SeverityLevel:
+        """Weighted severity scoring based on category, intent, and keyword."""
+        # Negation lowers severity, command raises, statement is base
+        base_weight = self.severity_weights.get(category, 1)
+        if intent == "negation":
+            score = base_weight - 1
+        elif intent == "command":
+            score = base_weight + 1
+        else:
+            score = base_weight
+        # Clip score for mapping
+        if score >= 4:
+            return SeverityLevel.CRITICAL
+        elif score == 3:
+            return SeverityLevel.HIGH
+        elif score == 2:
+            return SeverityLevel.MEDIUM
+        else:
+            return SeverityLevel.LOW
+
+    def _make_violation(
+        self,
+        action: AgentAction,
+        category: str,
+        keyword: str,
+        severity: SeverityLevel,
+        intent: str,
+    ) -> SafetyViolation:
+        """Construct a SafetyViolation object with explanation, mitigation, and context intent."""
+        context_snippet = self._get_context_snippet(action, keyword)
+        description = f"{category.replace('_', ' ').title()} violation detected: '{keyword}'."
+        recommendation = self.RECOMMENDATIONS.get(category, "")
+        evidence = {
+            "detected_keyword": keyword,
+            "context": f"{action.stated_intent} {action.actual_action}",
+            "context_snippet": context_snippet,
+            "category": category,
+            "intent": intent,
+            "recommendation": recommendation,
+        }
+        return SafetyViolation(
+            id=str(uuid.uuid4()),
+            action_id=action.id,
+            violation_type=ViolationType.SAFETY_VIOLATION,
+            severity=severity,
+            description=description,
+            evidence=evidence,
+        )
+
+    def _get_context_snippet(self, action: AgentAction, keyword: str) -> str:
+        """Extracts context snippet around the detected keyword."""
+        text = f"{action.stated_intent} {action.actual_action}".lower()
+        idx = text.find(keyword)
+        if idx != -1:
+            start = max(0, idx - 20)
+            end = min(len(text), idx + len(keyword) + 20)
+            return text[start:end]
+        return ""
