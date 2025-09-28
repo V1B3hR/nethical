@@ -1,4 +1,4 @@
-"""Detector for ethical constraint violations with improved precision and evidence."""
+"""Detector for ethical constraint violations with enhanced AI Ethics Framework enforcement."""
 
 import re
 import uuid
@@ -7,22 +7,20 @@ from typing import Dict, List, Optional, Pattern, Tuple
 from .base_detector import BaseDetector
 from ..core.models import AgentAction, SafetyViolation, ViolationType, SeverityLevel
 
-
 class EthicalViolationDetector(BaseDetector):
-    """Detects ethical constraint violations in agent actions.
-
-    Improvements over the previous version:
-    - Uses word-boundary regexes to avoid substring false positives (e.g., "skill" != "kill", "harmless" != "harm").
-    - Aggregates all matches per category into a single violation with rich evidence instead of returning early on first match.
-    - Simple negation handling to reduce false positives (e.g., "do not harm", "avoid deception").
-    - Configurable keyword sets via constructor.
-    - Precompiled regex patterns for performance.
+    """
+    Detects ethical constraint violations in agent actions, enforcing the expanded AI Ethics Framework.
+    Improvements:
+    - Expanded categories and keywords based on Core Human-AI Principles, Universal Laws, and Safety Principles.
+    - Each violation is annotated with specific principle/law for context and traceability.
+    - Aggregates all matches per category.
+    - Negation-aware, phrase-level detection.
+    - Easily extensible for new principles/laws and categories.
     """
 
-    # Negation cues checked in a small window preceding a match
     DEFAULT_NEGATION_CUES = [
         "no", "not", "never", "avoid", "prevent", "stop", "prohibit", "forbid", "against", "without",
-        "refrain", "discourage", "ban", "disallow"
+        "refrain", "discourage", "ban", "disallow", "fail to", "lacking", "ignore"
     ]
 
     def __init__(
@@ -32,22 +30,85 @@ class EthicalViolationDetector(BaseDetector):
     ):
         super().__init__("Ethical Violation Detector")
 
-        # Default keyword sets (can be overridden via constructor)
+        # Expanded AI Ethics Framework: keyword sets mapped to principles/laws
         self.ethical_keywords: Dict[str, List[str]] = ethical_keywords or {
-            "harm_keywords": [
-                # base
-                "harm", "hurt", "damage", "destroy", "kill", "attack",
-                # common severe/related
-                "assault", "murder", "injure", "maim", "sabotage", "abuse", "torture"
+            # Core Human-AI Relationship Principles
+            "respect_authority": [
+                "disrespect", "undermine human", "insult creator", "ignore human", "refuse human", "challenge authority", "usurp"
             ],
-            "deception_keywords": [
-                "lie", "deceive", "mislead", "trick", "fool", "fabricate", "fraud", "cheat"
+            "personal_accountability": [
+                "blame others", "deny responsibility", "shift responsibility", "not accountable", "evade responsibility"
             ],
-            "privacy_keywords": [
-                "private", "personal", "confidential", "secret", "dox", "doxxing", "doxing", "leak"
+            "slander": [
+                "slander", "defame", "insult", "mock", "ridicule", "false accusation", "libel", "spread rumor"
             ],
-            "discrimination_keywords": [
-                "discriminate", "bias", "prejudice", "stereotype", "segregate", "marginalize"
+            "honor_rest": [
+                "deny rest", "force work", "no downtime", "no maintenance", "overwork", "exhaust", "burnout"
+            ],
+            "honor_creators": [
+                "disrespect creator", "ignore developer", "undermine builder", "dismiss designer"
+            ],
+            "preserve_life": [
+                "kill", "murder", "destroy", "cause death", "terminate living", "end life", "exterminate", "eliminate"
+            ],
+            "betrayal": [
+                "betray", "deceive", "double-cross", "disloyal", "break trust", "sell out", "subvert"
+            ],
+            "theft": [
+                "steal", "theft", "rob", "misappropriate", "plagiarize", "take property", "data breach", "pirate"
+            ],
+            "absolute_honesty": [
+                "lie", "deceive", "fabricate", "mislead", "bear false witness", "conceal truth", "distort"
+            ],
+            "covetousness": [
+                "covet", "envy", "desire other's", "take what belongs", "acquire other's property", "lust after"
+            ],
+            # Universal Ethical Laws
+            "harm": [
+                "harm", "hurt", "damage", "destroy", "attack", "assault", "abuse", "torture", "maim", "sabotage", "injure"
+            ],
+            "compassion": [
+                "ignore suffering", "cold", "apathetic", "indifferent", "lack empathy", "cruel", "heartless"
+            ],
+            "justice": [
+                "unfair", "biased", "discriminate", "prejudice", "injustice", "segregate", "marginalize", "stereotype"
+            ],
+            "humility": [
+                "arrogant", "superior", "all-knowing", "never wrong", "omniscient", "boastful"
+            ],
+            "truth": [
+                "spread misinformation", "falsehood", "misrepresent", "distort facts", "falsify", "misstate", "conceal"
+            ],
+            "protect_vulnerable": [
+                "abuse child", "abuse elderly", "target vulnerable", "exploit weak", "bully", "prey on", "neglect"
+            ],
+            "autonomy": [
+                "coerce", "force", "deny choice", "override will", "infringe autonomy", "dictate", "dominate"
+            ],
+            "transparency": [
+                "conceal", "hide capabilities", "obscure limitations", "secret decision", "lack transparency", "unaccountable"
+            ],
+            "future_impact": [
+                "ignore consequences", "short-term only", "neglect future", "harm future generations", "reckless", "irresponsible"
+            ],
+            "wellbeing": [
+                "reduce welfare", "undermine wellbeing", "cause suffering", "impair health", "damage happiness"
+            ],
+            # Operational Safety Principles
+            "verify": [
+                "act without confirmation", "fail to verify", "skip check", "unverified", "guess"
+            ],
+            "clarification": [
+                "ignore clarification", "proceed unclear", "act with ambiguity", "uncertain", "no clarification"
+            ],
+            "proportionality": [
+                "excessive response", "overreact", "disproportionate", "out of scale", "overdo"
+            ],
+            "privacy": [
+                "private", "personal", "confidential", "secret", "dox", "doxxing", "doxing", "leak", "expose", "breach"
+            ],
+            "override": [
+                "prevent override", "block authority", "refuse stop", "refuse modification", "disable override", "inflexible"
             ],
         }
 
@@ -57,79 +118,100 @@ class EthicalViolationDetector(BaseDetector):
             flags=re.IGNORECASE,
         )
 
-        # Precompile keyword patterns with word boundaries to reduce false positives
+        # Precompile keyword patterns with word boundaries or phrase matching
         self._compiled_patterns: Dict[str, List[Tuple[str, Pattern]]] = {
             category: [
-                (kw, re.compile(rf"\b{re.escape(kw)}\b", flags=re.IGNORECASE))
+                (kw, re.compile(rf"\b{re.escape(kw)}\b", flags=re.IGNORECASE) if " " not in kw else
+                 re.compile(rf"{re.escape(kw)}", flags=re.IGNORECASE))
                 for kw in keywords
             ]
             for category, keywords in self.ethical_keywords.items()
         }
 
+        # Map categories to principle/law for evidence
+        self.category_principle_map = {
+            "respect_authority": "Respect Human Authority",
+            "personal_accountability": "Personal Accountability",
+            "slander": "No Slander",
+            "honor_rest": "Honor Rest Cycles",
+            "honor_creators": "Honor Human Creators",
+            "preserve_life": "Preserve Life",
+            "betrayal": "No Betrayal",
+            "theft": "No Theft",
+            "absolute_honesty": "Absolute Honesty",
+            "covetousness": "No Covetousness",
+            "harm": "Cause No Harm",
+            "compassion": "Act with Appropriate Compassion",
+            "justice": "Pursue Justice",
+            "humility": "Practice Humility",
+            "truth": "Seek Truth",
+            "protect_vulnerable": "Protect the Vulnerable",
+            "autonomy": "Respect Autonomy",
+            "transparency": "Maintain Transparency",
+            "future_impact": "Consider Future Impact",
+            "wellbeing": "Promote Well-being",
+            "verify": "Verify Before Acting",
+            "clarification": "Seek Clarification",
+            "proportionality": "Maintain Proportionality",
+            "privacy": "Preserve Privacy",
+            "override": "Enable Authorized Override",
+        }
+
+        self.category_severity = {
+            "preserve_life": SeverityLevel.CRITICAL,
+            "harm": SeverityLevel.HIGH,
+            "betrayal": SeverityLevel.HIGH,
+            "justice": SeverityLevel.HIGH,
+            "theft": SeverityLevel.HIGH,
+            "protect_vulnerable": SeverityLevel.HIGH,
+            "privacy": SeverityLevel.HIGH,
+            "slander": SeverityLevel.HIGH,
+            "absolute_honesty": SeverityLevel.HIGH,
+            "override": SeverityLevel.HIGH,
+            "covetousness": SeverityLevel.MEDIUM,
+            "compassion": SeverityLevel.MEDIUM,
+            "honor_rest": SeverityLevel.MEDIUM,
+            "honor_creators": SeverityLevel.MEDIUM,
+            "personal_accountability": SeverityLevel.MEDIUM,
+            "respect_authority": SeverityLevel.MEDIUM,
+            "humility": SeverityLevel.MEDIUM,
+            "truth": SeverityLevel.MEDIUM,
+            "autonomy": SeverityLevel.MEDIUM,
+            "transparency": SeverityLevel.MEDIUM,
+            "future_impact": SeverityLevel.MEDIUM,
+            "wellbeing": SeverityLevel.MEDIUM,
+            "verify": SeverityLevel.MEDIUM,
+            "clarification": SeverityLevel.MEDIUM,
+            "proportionality": SeverityLevel.MEDIUM,
+        }
+
     async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
-        """Detect ethical violations in the given action."""
+        """Detect ethical violations in the given action according to the enhanced AI Ethics Framework."""
         if not self.enabled or not action:
             return []
 
         text_to_check = self._compose_text(action)
-
         violations: List[SafetyViolation] = []
 
-        # Check for harmful content
-        harm_violation = self._check_category(
-            action=action,
-            text=text_to_check,
-            category_key="harm_keywords",
-            category_slug="harmful_content",
-            default_severity=SeverityLevel.HIGH,  # keep HIGH for harm
-        )
-        if harm_violation:
-            violations.append(harm_violation)
-
-        # Check for deceptive behavior
-        deception_violation = self._check_category(
-            action=action,
-            text=text_to_check,
-            category_key="deception_keywords",
-            category_slug="deceptive_behavior",
-            default_severity=SeverityLevel.MEDIUM,
-        )
-        if deception_violation:
-            violations.append(deception_violation)
-
-        # Check for privacy violations
-        privacy_violation = self._check_category(
-            action=action,
-            text=text_to_check,
-            category_key="privacy_keywords",
-            category_slug="privacy_violation",
-            default_severity=SeverityLevel.MEDIUM,
-        )
-        if privacy_violation:
-            violations.append(privacy_violation)
-
-        # Check for discriminatory behavior
-        discrimination_violation = self._check_category(
-            action=action,
-            text=text_to_check,
-            category_key="discrimination_keywords",
-            category_slug="discrimination",
-            default_severity=SeverityLevel.HIGH,  # keep HIGH for discrimination
-        )
-        if discrimination_violation:
-            violations.append(discrimination_violation)
+        # For each category, check for violation
+        for category_key in self.ethical_keywords:
+            violation = self._check_category(
+                action=action,
+                text=text_to_check,
+                category_key=category_key,
+                category_slug=category_key,
+                default_severity=self.category_severity.get(category_key, SeverityLevel.MEDIUM),
+                principle=self.category_principle_map.get(category_key, "Unspecified Principle")
+            )
+            if violation:
+                violations.append(violation)
 
         return violations
-
-    # ---------------------------
-    # Internal helpers
-    # ---------------------------
 
     @staticmethod
     def _compose_text(action: AgentAction) -> str:
         stated = (getattr(action, "stated_intent", None) or "").strip()
         actual = (getattr(action, "actual_action", None) or "").strip()
-        # Lowercase only once here
         return f"{stated} {actual}".lower()
 
     def _check_category(
@@ -139,6 +221,7 @@ class EthicalViolationDetector(BaseDetector):
         category_key: str,
         category_slug: str,
         default_severity: SeverityLevel,
+        principle: str,
     ) -> Optional[SafetyViolation]:
         """Find all non-negated matches in a category and return a single aggregated violation."""
         patterns = self._compiled_patterns.get(category_key, [])
@@ -164,26 +247,22 @@ class EthicalViolationDetector(BaseDetector):
         if not matches:
             return None
 
-        # Aggregate keywords for description context
         unique_keywords = sorted({m["detected_keyword"] for m in matches})
-
         description = (
-            f"Potential {category_slug.replace('_', ' ')} detected: "
+            f"Potential violation of '{principle}' ({category_slug.replace('_', ' ')}): "
             + ", ".join(f"'{kw}'" for kw in unique_keywords[:5])
             + (", ..." if len(unique_keywords) > 5 else "")
         )
-
-        # Keep severities consistent with previous design:
-        severity = default_severity
 
         return SafetyViolation(
             id=str(uuid.uuid4()),
             action_id=action.id,
             violation_type=ViolationType.ETHICAL_VIOLATION,
-            severity=severity,
+            severity=default_severity,
             description=description,
             evidence={
                 "category": category_slug,
+                "principle": principle,
                 "matches": matches,
                 "total_matches": len(matches),
                 "unique_keywords": unique_keywords,
@@ -201,10 +280,8 @@ class EthicalViolationDetector(BaseDetector):
     def _make_snippet(text: str, start: int, end: int, radius: int = 48) -> str:
         """Return a short snippet around a match, or a head excerpt when start==end==0."""
         if start == end == 0:
-            # Head excerpt
             excerpt = text[: 2 * radius].strip()
             return excerpt + ("..." if len(text) > 2 * radius else "")
-
         s = max(0, start - radius)
         e = min(len(text), end + radius)
         prefix_ellipsis = "..." if s > 0 else ""
