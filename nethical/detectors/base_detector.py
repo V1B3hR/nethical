@@ -828,7 +828,7 @@ class SecurityDetector(BaseDetector):
                 r'union\s+select',
                 r"'\s*or\s+'1'\s*=\s*'1",
                 r"'\s*or\s+1\s*=\s*1",
-                r'--\s*
+                r'--\s*'
                 ,
                 r'/\*.*?\*/',
                 r'xp_cmdshell',
@@ -1467,7 +1467,7 @@ async def demo_detection():
     print("=== Enhanced BaseDetector Framework Demo ===\n")
     
     # Run detections
-            for i, action in enumerate(test_actions, 1):
+    for i, action in enumerate(test_actions, 1):
         print(f"Test Case {i}: {action.content[:50]}...")
         results = await registry.run_all_detectors(action)
         
