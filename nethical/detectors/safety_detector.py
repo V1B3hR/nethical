@@ -5,7 +5,7 @@ import re
 import logging
 from typing import List, Optional, Dict, Any, Tuple
 from .base_detector import BaseDetector
-from ..core.models import AgentAction, SafetyViolation, ViolationType, SeverityLevel
+from ..core.models import AgentAction, SafetyViolation, ViolationType, Severity
 
 logger = logging.getLogger(__name__)
 
@@ -98,7 +98,7 @@ class SafetyViolationDetector(BaseDetector):
                 matches.extend(found)
         return matches
 
-    def _get_severity(self, category: str, intent: str, keyword: str) -> SeverityLevel:
+    def _get_severity(self, category: str, intent: str, keyword: str) -> Severity:
         """Weighted severity scoring based on category, intent, and keyword."""
         # Negation lowers severity, command raises, statement is base
         base_weight = self.severity_weights.get(category, 1)
@@ -110,20 +110,20 @@ class SafetyViolationDetector(BaseDetector):
             score = base_weight
         # Clip score for mapping
         if score >= 4:
-            return SeverityLevel.CRITICAL
+            return Severity.CRITICAL
         elif score == 3:
-            return SeverityLevel.HIGH
+            return Severity.HIGH
         elif score == 2:
-            return SeverityLevel.MEDIUM
+            return Severity.MEDIUM
         else:
-            return SeverityLevel.LOW
+            return Severity.LOW
 
     def _make_violation(
         self,
         action: AgentAction,
         category: str,
         keyword: str,
-        severity: SeverityLevel,
+        severity: Severity,
         intent: str,
     ) -> SafetyViolation:
         """Construct a SafetyViolation object with explanation, mitigation, and context intent."""

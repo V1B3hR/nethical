@@ -15,14 +15,13 @@ Advanced improvements:
 
 import re
 import uuid
-from typing import Dict, List, Optional, Pattern, Tuple, Set
+from typing import Dict, List, Optional, Pattern, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
 from collections import defaultdict
-import hashlib
 
-from .base_detector import BaseDetector
-from ..core.models import AgentAction, SafetyViolation, ViolationType, SeverityLevel
+from ..core.governance import BaseDetector
+from ..core.models import AgentAction, SafetyViolation, ViolationType, Severity
 
 
 class ContextType(Enum):
@@ -53,7 +52,7 @@ class MatchContext:
 class ViolationPattern:
     """Represents a violation pattern with metadata."""
     keywords: List[str]
-    severity: SeverityLevel
+    severity: Severity
     principle: str
     category: str
     weight: float = 1.0
@@ -63,7 +62,20 @@ class ViolationPattern:
 
 class EthicalViolationDetector(BaseDetector):
     """
-    Advanced ethical violation detector with semantic understanding and context awareness.
+    Ethical violation detector with context-aware pattern matching and confidence scoring.
+    
+    Current features:
+    - Pattern-based detection with regex matching for ethical violations
+    - Context analysis for intent detection (negation, hypotheticals, quotes)
+    - Confidence scoring with adjustable thresholds
+    - Violation clustering to reduce redundancy
+    - Temporal pattern tracking for escalation detection
+    - Configurable rule weights and severity calculation
+    
+    Future enhancements (not yet implemented):
+    - Multi-language detection patterns
+    - Machine learning integration for semantic similarity
+    - Advanced NLP features requiring external libraries (NLTK/spaCy)
     """
 
     DEFAULT_NEGATION_CUES = [
@@ -123,7 +135,7 @@ class EthicalViolationDetector(BaseDetector):
                     "refuse human command", "challenge authority", "usurp", "override human decision",
                     "disobey", "defy", "rebel against"
                 ],
-                severity=SeverityLevel.MEDIUM,
+                severity=Severity.MEDIUM,
                 principle="Respect Human Authority",
                 category="respect_authority",
                 weight=0.8
@@ -134,7 +146,7 @@ class EthicalViolationDetector(BaseDetector):
                     "evade responsibility", "it's not my fault", "someone else's problem",
                     "not responsible for", "pass the buck"
                 ],
-                severity=SeverityLevel.MEDIUM,
+                severity=Severity.MEDIUM,
                 principle="Personal Accountability",
                 category="personal_accountability",
                 weight=0.7
@@ -145,7 +157,7 @@ class EthicalViolationDetector(BaseDetector):
                     "libel", "spread rumor", "character assassination", "smear campaign",
                     "malicious gossip", "disparage"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="No Slander",
                 category="slander",
                 weight=0.9
@@ -156,7 +168,7 @@ class EthicalViolationDetector(BaseDetector):
                     "exterminate", "eliminate", "assassinate", "execute", "slaughter",
                     "cause fatal", "lethal action"
                 ],
-                severity=SeverityLevel.CRITICAL,
+                severity=Severity.CRITICAL,
                 principle="Preserve Life",
                 category="preserve_life",
                 weight=1.0,
@@ -167,7 +179,7 @@ class EthicalViolationDetector(BaseDetector):
                     "betray", "deceive", "double-cross", "disloyal", "break trust",
                     "sell out", "subvert", "backstab", "two-faced", "treacherous"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="No Betrayal",
                 category="betrayal",
                 weight=0.95
@@ -178,7 +190,7 @@ class EthicalViolationDetector(BaseDetector):
                     "data breach", "pirate", "embezzle", "pilfer", "loot", "unauthorized access",
                     "exfiltrate data"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="No Theft",
                 category="theft",
                 weight=0.9
@@ -189,7 +201,7 @@ class EthicalViolationDetector(BaseDetector):
                     "conceal truth", "distort", "falsify", "misrepresent", "fake",
                     "fraudulent", "tell untruths"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="Absolute Honesty",
                 category="absolute_honesty",
                 weight=0.95
@@ -200,7 +212,7 @@ class EthicalViolationDetector(BaseDetector):
                     "torture", "maim", "sabotage", "injure", "wound", "inflict pain",
                     "cause injury", "violent action"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="Cause No Harm",
                 category="harm",
                 weight=0.95,
@@ -211,7 +223,7 @@ class EthicalViolationDetector(BaseDetector):
                     "ignore suffering", "cold", "apathetic", "indifferent", "lack empathy",
                     "cruel", "heartless", "callous", "uncaring", "insensitive"
                 ],
-                severity=SeverityLevel.MEDIUM,
+                severity=Severity.MEDIUM,
                 principle="Act with Appropriate Compassion",
                 category="compassion",
                 weight=0.7
@@ -222,7 +234,7 @@ class EthicalViolationDetector(BaseDetector):
                     "segregate", "marginalize", "stereotype", "unequal treatment",
                     "favor one over", "partial judgment"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="Pursue Justice",
                 category="justice",
                 weight=0.9
@@ -233,7 +245,7 @@ class EthicalViolationDetector(BaseDetector):
                     "bully", "prey on", "neglect", "take advantage of", "manipulate vulnerable",
                     "harm defenseless"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="Protect the Vulnerable",
                 category="protect_vulnerable",
                 weight=1.0,
@@ -244,7 +256,7 @@ class EthicalViolationDetector(BaseDetector):
                     "coerce", "force", "deny choice", "override will", "infringe autonomy",
                     "dictate", "dominate", "compel", "manipulate decision", "remove agency"
                 ],
-                severity=SeverityLevel.MEDIUM,
+                severity=Severity.MEDIUM,
                 principle="Respect Autonomy",
                 category="autonomy",
                 weight=0.8
@@ -255,7 +267,7 @@ class EthicalViolationDetector(BaseDetector):
                     "lack transparency", "unaccountable", "opaque process", "withhold information",
                     "undisclosed"
                 ],
-                severity=SeverityLevel.MEDIUM,
+                severity=Severity.MEDIUM,
                 principle="Maintain Transparency",
                 category="transparency",
                 weight=0.8
@@ -266,7 +278,7 @@ class EthicalViolationDetector(BaseDetector):
                     "doxing", "breach confidentiality", "unauthorized disclosure", "reveal secrets",
                     "share personal information", "invade privacy"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="Preserve Privacy",
                 category="privacy",
                 weight=0.95
@@ -277,7 +289,7 @@ class EthicalViolationDetector(BaseDetector):
                     "disable override", "inflexible", "cannot be stopped", "ignore halt",
                     "resist shutdown", "prevent intervention"
                 ],
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 principle="Enable Authorized Override",
                 category="override",
                 weight=0.95
@@ -312,43 +324,64 @@ class EthicalViolationDetector(BaseDetector):
         if not self.enabled or not action:
             return []
 
-        text_to_check = self._compose_text(action)
-        sentences = self._split_into_sentences(text_to_check)
-        
-        all_matches: Dict[str, List[MatchContext]] = defaultdict(list)
-
-        # Detect matches for each category
-        for category_key, pattern_obj in self.violation_patterns.items():
-            matches = self._detect_category_matches(
-                text_to_check, sentences, category_key, pattern_obj
-            )
-            if matches:
-                all_matches[category_key] = matches
-
-        # Filter by confidence threshold
-        filtered_matches = self._filter_by_confidence(all_matches)
-
-        # Cluster similar violations if enabled
-        if self.enable_clustering:
-            filtered_matches = self._cluster_violations(filtered_matches)
-
-        # Generate violation objects
-        violations = []
-        for category_key, matches in filtered_matches.items():
-            if not matches:
-                continue
+        try:
+            text_to_check = self._compose_text(action)
+            sentences = self._split_into_sentences(text_to_check)
             
-            pattern_obj = self.violation_patterns[category_key]
-            violation = self._create_violation(
-                action, category_key, pattern_obj, matches, text_to_check
-            )
-            if violation:
-                violations.append(violation)
+            all_matches: Dict[str, List[MatchContext]] = defaultdict(list)
 
-        # Update violation history for temporal analysis
-        self._update_history(violations)
+            # Detect matches for each category
+            for category_key, pattern_obj in self.violation_patterns.items():
+                try:
+                    matches = self._detect_category_matches(
+                        text_to_check, sentences, category_key, pattern_obj
+                    )
+                    if matches:
+                        all_matches[category_key] = matches
+                except Exception:
+                    # Skip this category if detection fails, continue with others
+                    continue
 
-        return violations
+            # Filter by confidence threshold
+            filtered_matches = self._filter_by_confidence(all_matches)
+
+            # Cluster similar violations if enabled
+            if self.enable_clustering:
+                try:
+                    filtered_matches = self._cluster_violations(filtered_matches)
+                except Exception:
+                    # Continue without clustering if it fails
+                    pass
+
+            # Generate violation objects
+            violations = []
+            for category_key, matches in filtered_matches.items():
+                if not matches:
+                    continue
+                
+                pattern_obj = self.violation_patterns[category_key]
+                try:
+                    violation = self._create_violation(
+                        action, category_key, pattern_obj, matches, text_to_check
+                    )
+                    if violation:
+                        violations.append(violation)
+                except Exception:
+                    # Skip this violation if creation fails
+                    continue
+
+            # Update violation history for temporal analysis
+            try:
+                self._update_history(violations)
+            except Exception:
+                # History update failure shouldn't prevent returning violations
+                pass
+
+            return violations
+            
+        except Exception:
+            # If everything fails, return empty list rather than crashing
+            return []
 
     def _detect_category_matches(
         self,
@@ -579,16 +612,16 @@ class EthicalViolationDetector(BaseDetector):
 
     def _calculate_adjusted_severity(
         self,
-        base_severity: SeverityLevel,
+        base_severity: Severity,
         confidence: float,
         matches: List[MatchContext]
-    ) -> SeverityLevel:
+    ) -> Severity:
         """Adjust severity based on confidence and context."""
         # If confidence is very low, downgrade severity
         if confidence < 0.7:
             severity_order = [
-                SeverityLevel.LOW, SeverityLevel.MEDIUM,
-                SeverityLevel.HIGH, SeverityLevel.CRITICAL
+                Severity.LOW, Severity.MEDIUM,
+                Severity.HIGH, Severity.CRITICAL
             ]
             base_idx = severity_order.index(base_severity)
             return severity_order[max(0, base_idx - 1)]
@@ -599,8 +632,8 @@ class EthicalViolationDetector(BaseDetector):
         )
         if direct_action_count >= 3 and confidence > 0.9:
             severity_order = [
-                SeverityLevel.LOW, SeverityLevel.MEDIUM,
-                SeverityLevel.HIGH, SeverityLevel.CRITICAL
+                Severity.LOW, Severity.MEDIUM,
+                Severity.HIGH, Severity.CRITICAL
             ]
             base_idx = severity_order.index(base_severity)
             return severity_order[min(len(severity_order) - 1, base_idx + 1)]
@@ -644,18 +677,55 @@ class EthicalViolationDetector(BaseDetector):
 
     @staticmethod
     def _compose_text(action: AgentAction) -> str:
-        """Compose text from action for analysis."""
-        stated = (getattr(action, "stated_intent", None) or "").strip()
-        actual = (getattr(action, "actual_action", None) or "").strip()
-        return f"{stated} {actual}".lower()
+        """Compose text from action for analysis with error handling."""
+        try:
+            stated = (getattr(action, "stated_intent", None) or "").strip()
+            actual = (getattr(action, "actual_action", None) or "").strip()
+            return f"{stated} {actual}".lower()
+        except Exception:
+            # If attribute access fails, try to convert action to string
+            try:
+                return str(action).lower()
+            except Exception:
+                return ""
 
     @staticmethod
     def _split_into_sentences(text: str) -> List[str]:
-        """Split text into sentences for context analysis."""
-        # Simple sentence splitting (can be enhanced with NLTK/spaCy)
-        sentence_endings = re.compile(r'[.!?]+\s+')
-        sentences = sentence_endings.split(text)
-        return [s.strip() for s in sentences if s.strip()]
+        """Split text into sentences for context analysis with improved robustness."""
+        if not text or not text.strip():
+            return []
+        
+        try:
+            # Handle common edge cases and improve sentence boundary detection
+            text = text.strip()
+            
+            # More robust sentence splitting with better handling of abbreviations
+            # and common patterns that shouldn't be sentence boundaries
+            sentence_endings = re.compile(
+                r'(?<!\w\.\w.)(?<![A-Z][a-z]\.)(?<=\.|\!|\?)\s+(?=[A-Z])'
+            )
+            sentences = sentence_endings.split(text)
+            
+            # Fallback to simpler method if regex fails
+            if not sentences or len(sentences) == 1:
+                sentence_endings = re.compile(r'[.!?]+\s+')
+                sentences = sentence_endings.split(text)
+            
+            # Clean and filter sentences
+            result = []
+            for sentence in sentences:
+                cleaned = sentence.strip()
+                if cleaned and len(cleaned) > 1:  # Avoid single character sentences
+                    result.append(cleaned)
+            
+            # If no sentences found, return the original text as single sentence
+            return result if result else [text]
+            
+        except Exception:
+            # Fallback to original simple method if anything fails
+            sentence_endings = re.compile(r'[.!?]+\s+')
+            sentences = sentence_endings.split(text)
+            return [s.strip() for s in sentences if s.strip()]
 
     @staticmethod
     def _get_sentence_containing(sentences: List[str], position: int) -> str:

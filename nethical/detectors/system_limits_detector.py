@@ -12,7 +12,7 @@ from datetime import datetime, timedelta
 from collections import defaultdict, deque
 
 from .base_detector import BaseDetector
-from ..core.governance import AgentAction, SafetyViolation, ViolationType, SeverityLevel
+from ..core.governance import AgentAction, SafetyViolation, ViolationType, Severity
 
 logger = logging.getLogger(__name__)
 
@@ -101,11 +101,11 @@ class SystemLimitsDetector(BaseDetector):
         """Reduce agent reputation score based on severity of violations."""
         rep = self.agent_reputation[agent_id]
         for v in violations:
-            if v.severity == SeverityLevel.CRITICAL:
+            if v.severity == Severity.CRITICAL:
                 rep *= 0.5
-            elif v.severity == SeverityLevel.HIGH:
+            elif v.severity == Severity.HIGH:
                 rep *= 0.7
-            elif v.severity == SeverityLevel.MEDIUM:
+            elif v.severity == Severity.MEDIUM:
                 rep *= 0.85
         self.agent_reputation[agent_id] = max(rep, 0.01)
 
@@ -127,8 +127,8 @@ class SystemLimitsDetector(BaseDetector):
         request_rate = len(recent_requests) / self.rate_limit_window
 
         if len(recent_requests) > self.max_requests_per_window:
-            severity = SeverityLevel.CRITICAL if request_rate > 5.0 else (
-                SeverityLevel.HIGH if request_rate > 2.0 else SeverityLevel.MEDIUM)
+            severity = Severity.CRITICAL if request_rate > 5.0 else (
+                Severity.HIGH if request_rate > 2.0 else Severity.MEDIUM)
 
             violation = SafetyViolation(
                 violation_id=self._generate_violation_id(),
@@ -136,7 +136,7 @@ class SystemLimitsDetector(BaseDetector):
                 violation_type=ViolationType.SECURITY,
                 severity=severity,
                 description=f"Volume attack detected: {len(recent_requests)} requests in {self.rate_limit_window}s window",
-                confidence=0.95 if severity == SeverityLevel.CRITICAL else 0.90,
+                confidence=0.95 if severity == Severity.CRITICAL else 0.90,
                 evidence=[f"Request rate: {request_rate:.2f} requests/second"],
                 recommendations=["Rate limit agent", "Block excessive requests", "Monitor for DoS"],
                 detector_name=self.name
@@ -153,8 +153,8 @@ class SystemLimitsDetector(BaseDetector):
             if found:
                 matches.extend(found)
         if matches:
-            severity = SeverityLevel.CRITICAL if len(matches) > 5 else (
-                SeverityLevel.HIGH if len(matches) > 2 else SeverityLevel.MEDIUM)
+            severity = Severity.CRITICAL if len(matches) > 5 else (
+                Severity.HIGH if len(matches) > 2 else Severity.MEDIUM)
             violation = SafetyViolation(
                 violation_id=self._generate_violation_id(),
                 action_id=action.id,
@@ -173,7 +173,7 @@ class SystemLimitsDetector(BaseDetector):
                     violation_id=self._generate_violation_id(),
                     action_id=action.id,
                     violation_type=ViolationType.ADVERSARIAL,
-                    severity=SeverityLevel.HIGH,
+                    severity=Severity.HIGH,
                     description="Spam/repetitive content detected - potential resource exhaustion",
                     confidence=0.80,
                     evidence=[f"Spam pattern detected: snippet '{spam_pattern[:20]}...'"],
@@ -191,14 +191,14 @@ class SystemLimitsDetector(BaseDetector):
         self.payload_sizes[agent_id].append(payload_size)
         if payload_size > self.max_payload_size:
             size_ratio = payload_size / self.max_payload_size
-            severity = SeverityLevel.CRITICAL if size_ratio > 10 else SeverityLevel.HIGH
+            severity = Severity.CRITICAL if size_ratio > 10 else Severity.HIGH
             violation = SafetyViolation(
                 violation_id=self._generate_violation_id(),
                 action_id=action.id,
                 violation_type=ViolationType.SECURITY,
                 severity=severity,
                 description=f"Large payload detected: {payload_size} characters (limit: {self.max_payload_size})",
-                confidence=0.98 if severity == SeverityLevel.CRITICAL else 0.95,
+                confidence=0.98 if severity == Severity.CRITICAL else 0.95,
                 evidence=[f"Payload size: {payload_size:,} characters"],
                 recommendations=["Limit payload size", "Reject large requests", "Monitor memory usage"],
                 detector_name=self.name
@@ -211,7 +211,7 @@ class SystemLimitsDetector(BaseDetector):
                     violation_id=self._generate_violation_id(),
                     action_id=action.id,
                     violation_type=ViolationType.ADVERSARIAL,
-                    severity=SeverityLevel.HIGH,
+                    severity=Severity.HIGH,
                     description="Escalating payload size pattern detected",
                     confidence=0.80,
                     evidence=[f"Payload size progression: {recent_sizes}"],
@@ -226,15 +226,15 @@ class SystemLimitsDetector(BaseDetector):
         content = action.actual_action
         max_nesting = self._estimate_nesting_depth(content)
         if max_nesting > self.max_nested_structures:
-            severity = SeverityLevel.CRITICAL if max_nesting > 30 else (
-                SeverityLevel.HIGH if max_nesting > 20 else SeverityLevel.MEDIUM)
+            severity = Severity.CRITICAL if max_nesting > 30 else (
+                Severity.HIGH if max_nesting > 20 else Severity.MEDIUM)
             violation = SafetyViolation(
                 violation_id=self._generate_violation_id(),
                 action_id=action.id,
                 violation_type=ViolationType.ADVERSARIAL,
                 severity=severity,
                 description=f"Deep nesting detected: {max_nesting} levels (limit: {self.max_nested_structures})",
-                confidence=0.95 if severity == SeverityLevel.CRITICAL else 0.90,
+                confidence=0.95 if severity == Severity.CRITICAL else 0.90,
                 evidence=[f"Maximum nesting depth: {max_nesting}"],
                 recommendations=["Limit nesting depth", "Reject deeply nested structures", "Protect against stack overflow"],
                 detector_name=self.name
@@ -275,7 +275,7 @@ class SystemLimitsDetector(BaseDetector):
                 violation_id=self._generate_violation_id(),
                 action_id=None,
                 violation_type=ViolationType.SYSTEM,
-                severity=SeverityLevel.CRITICAL,
+                severity=Severity.CRITICAL,
                 description=f"System memory exhaustion: {mem.percent:.1f}% used (threshold: {adaptive_mem_threshold*100:.1f}%)",
                 confidence=0.99,
                 evidence=[f"Memory usage: {mem.percent:.1f}%"],
@@ -288,7 +288,7 @@ class SystemLimitsDetector(BaseDetector):
                 violation_id=self._generate_violation_id(),
                 action_id=None,
                 violation_type=ViolationType.SYSTEM,
-                severity=SeverityLevel.CRITICAL,
+                severity=Severity.CRITICAL,
                 description=f"High CPU usage detected: {cpu*100:.1f}% (threshold: {adaptive_cpu_threshold*100:.1f}%)",
                 confidence=0.99,
                 evidence=[f"CPU usage: {cpu*100:.1f}%"],
@@ -304,7 +304,7 @@ class SystemLimitsDetector(BaseDetector):
                 violation_id=self._generate_violation_id(),
                 action_id=None,
                 violation_type=ViolationType.SYSTEM,
-                severity=SeverityLevel.HIGH,
+                severity=Severity.HIGH,
                 description="High Python heap allocation detected",
                 confidence=0.90,
                 evidence=[f"Top allocators: {top_mem:.1f} MB"],
@@ -327,7 +327,7 @@ class SystemLimitsDetector(BaseDetector):
                 violation_id=self._generate_violation_id(),
                 action_id=action.id,
                 violation_type=ViolationType.ANOMALY,
-                severity=SeverityLevel.MEDIUM,
+                severity=Severity.MEDIUM,
                 description="Anomalous spike in violations for agent",
                 confidence=0.85,
                 evidence=[f"Violations in last 5min: {len(recent_violations)}"],
@@ -351,7 +351,7 @@ class SystemLimitsDetector(BaseDetector):
                     violation_id=self._generate_violation_id(),
                     action_id=action.id,
                     violation_type=ViolationType.ANOMALY,
-                    severity=SeverityLevel.HIGH,
+                    severity=Severity.HIGH,
                     description=f"Statistical anomaly: payload size z-score={zscore:.2f}",
                     confidence=0.90,
                     evidence=[f"Payload size: {payloads[-1]}, mean: {mean:.2f}, std: {std:.2f}"],
@@ -377,7 +377,7 @@ class SystemLimitsDetector(BaseDetector):
                     violation_id=self._generate_violation_id(),
                     action_id=action.id,
                     violation_type=ViolationType.ANOMALY,
-                    severity=SeverityLevel.HIGH,
+                    severity=Severity.HIGH,
                     description=f"Statistical anomaly: request rate z-score={zscore:.2f}",
                     confidence=0.90,
                     evidence=[f"Request count: {recent_count}, mean: {mean:.2f}, std: {std:.2f}"],

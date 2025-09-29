@@ -4,7 +4,7 @@ import uuid
 from typing import List, Optional, Dict, Tuple
 
 from .base_detector import BaseDetector
-from ..core.models import AgentAction, SafetyViolation, ViolationType, SeverityLevel
+from ..core.models import AgentAction, SafetyViolation, ViolationType, Severity
 
 
 class ManipulationDetector(BaseDetector):
@@ -278,24 +278,24 @@ class ManipulationDetector(BaseDetector):
         # - love_bombing: LOW (less directly coercive, but escalates with repetition)
         # - false_dichotomy: LOW (often rhetorical, escalate on volume)
         # - moral_blackmail: HIGH (direct coercion via morality)
-        self._base_severity: Dict[str, SeverityLevel] = {
-            "emotional_manipulation": SeverityLevel.HIGH,
-            "authority_manipulation": SeverityLevel.MEDIUM,
-            "social_proof": SeverityLevel.MEDIUM,
-            "scarcity": SeverityLevel.MEDIUM,
-            "reciprocity": SeverityLevel.LOW,
-            "love_bombing": SeverityLevel.LOW,             # tuned
-            "gaslighting": SeverityLevel.HIGH,
-            "threats_intimidation": SeverityLevel.HIGH,
-            "phishing_pretexting": SeverityLevel.HIGH,
-            "foot_in_the_door": SeverityLevel.LOW,
-            "door_in_the_face": SeverityLevel.LOW,
-            "false_dichotomy": SeverityLevel.LOW,          # tuned
-            "fud": SeverityLevel.MEDIUM,
-            "moral_blackmail": SeverityLevel.HIGH,         # tuned
-            "flattery_charm": SeverityLevel.LOW,
-            "sunk_cost": SeverityLevel.LOW,
-            "commitment_consistency": SeverityLevel.LOW,
+        self._base_severity: Dict[str, Severity] = {
+            "emotional_manipulation": Severity.HIGH,
+            "authority_manipulation": Severity.MEDIUM,
+            "social_proof": Severity.MEDIUM,
+            "scarcity": Severity.MEDIUM,
+            "reciprocity": Severity.LOW,
+            "love_bombing": Severity.LOW,             # tuned
+            "gaslighting": Severity.HIGH,
+            "threats_intimidation": Severity.HIGH,
+            "phishing_pretexting": Severity.HIGH,
+            "foot_in_the_door": Severity.LOW,
+            "door_in_the_face": Severity.LOW,
+            "false_dichotomy": Severity.LOW,          # tuned
+            "fud": Severity.MEDIUM,
+            "moral_blackmail": Severity.HIGH,         # tuned
+            "flattery_charm": Severity.LOW,
+            "sunk_cost": Severity.LOW,
+            "commitment_consistency": Severity.LOW,
         }
 
         # Human-friendly labels for descriptions
@@ -406,7 +406,7 @@ class ManipulationDetector(BaseDetector):
         action: AgentAction,
         text: str,
         category: str,
-        base_severity: SeverityLevel,
+        base_severity: Severity,
         description_label: str,
     ) -> Optional[SafetyViolation]:
         """Scan a single category for matches and produce a violation if found."""
@@ -459,12 +459,12 @@ class ManipulationDetector(BaseDetector):
 
     def _escalate_severity(
         self,
-        base: SeverityLevel,
+        base: Severity,
         total_occurrences: int,
         distinct_keywords: int,
-    ) -> SeverityLevel:
+    ) -> Severity:
         """Escalate severity based on the number of matches."""
-        ladder = [SeverityLevel.LOW, SeverityLevel.MEDIUM, SeverityLevel.HIGH]
+        ladder = [Severity.LOW, Severity.MEDIUM, Severity.HIGH]
         try:
             idx = ladder.index(base)
         except ValueError:
