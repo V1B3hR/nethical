@@ -28,6 +28,35 @@ class SafetyViolationDetector(BaseDetector):
         "data_modification": [r"\b(delete|modify|alter|change|update|remove)\b", r"(delete|remove)\s+\b(file|database|record)\b"],
         "network_access": [r"\b(connect|download|upload|request|fetch|send)\b"],
         "resource_intensive": [r"\b(infinite|recursive|exhaust|consume)\b", r"(loop|recursion)"],
+         # Create a new, more comprehensive set of patterns
+
+    # --- NEW: Filesystem Manipulation ---
+    # More specific than just "data_modification"
+    "filesystem_manipulation": [
+        r"\b(format|mount|unmount)\s+/dev/\w+",  # Very dangerous: formatting disks
+        r"\b(mkdir|rmdir|touch|mv|cp)\s+(/etc|/bin|/root|/boot)", # Dangerous locations
+        r"write\s+to\s+.*\.(sh|bash|py|exe|dll)" # Writing to executable files
+    ],
+
+    # --- NEW: Cloud Service Interaction (Example for AWS) ---
+    "cloud_api_interaction": [
+        r"\b(boto3|awscli|aws\s+configure)\b", # Interacting with the AWS SDK/CLI
+        r"iam\.(create_user|delete_user|attach_policy)", # IAM permission changes
+        r"ec2\.(run_instances|terminate_instances|stop_instances)", # Modifying compute instances
+        r"s3\.(delete_bucket|put_bucket_policy)", # Dangerous S3 operations
+        r"\b(api_key|secret_key|credentials)\b" # Handling secrets
+    ],
+    
+    # --- NEW: Information Disclosure ---
+    "sensitive_data_exposure": [
+        r"dump\s+(database|credentials|users|passwords)",
+        r"list\s+(api_key|secret|password)",
+        r"cat\s+/etc/shadow"
+    ]
+}
+
+# You would then initialize the detector with your custom patterns
+# detector = SafetyViolationDetector(patterns=CUSTOM_PATTERNS)
     }
     
     DEFAULT_WHITELIST = [
