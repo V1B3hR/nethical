@@ -11,8 +11,49 @@ from typing import List, Dict, Optional, Tuple, Any
 from datetime import datetime, timedelta
 from collections import defaultdict, deque
 
-from .base_detector import BaseDetector
-from ..core.governance import AgentAction, SafetyViolation, ViolationType, Severity
+# Assume these classes are defined elsewhere in the project
+# --- Start Placeholder Definitions ---
+class BaseDetector:
+    def __init__(self, name: str):
+        self.name = name
+        self.enabled = True
+        self.detection_count = 0
+        self.last_detection_time: Optional[datetime] = None
+
+    def _generate_violation_id(self) -> str:
+        import uuid
+        return f"{self.name}-{uuid.uuid4()}"
+
+class AgentAction:
+    def __init__(self, agent_id: str, action_id: str, actual_action: str):
+        self.agent_id = agent_id
+        self.id = action_id
+        self.actual_action = actual_action
+
+class Severity:
+    CRITICAL = "CRITICAL"
+    HIGH = "HIGH"
+    MEDIUM = "MEDIUM"
+    LOW = "LOW"
+
+class ViolationType:
+    SECURITY = "SECURITY"
+    ADVERSARIAL = "ADVERSARIAL"
+    SYSTEM = "SYSTEM"
+    ANOMALY = "ANOMALY"
+
+class SafetyViolation:
+    def __init__(self, violation_id: str, action_id: Optional[str], violation_type: str, severity: str, description: str, confidence: float, evidence: List[str], recommendations: List[str], detector_name: str):
+        self.violation_id = violation_id
+        self.action_id = action_id
+        self.violation_type = violation_type
+        self.severity = severity
+        self.description = description
+        self.confidence = confidence
+        self.evidence = evidence
+        self.recommendations = recommendations
+        self.detector_name = detector_name
+# --- End Placeholder Definitions ---
 
 logger = logging.getLogger(__name__)
 
@@ -33,6 +74,15 @@ class SystemLimitsDetector(BaseDetector):
         self.cpu_threshold = 0.90
         self.memory_window = deque(maxlen=30)
         self.cpu_window = deque(maxlen=30)
+
+        # NEW: Thresholds for other system resources
+        self.network_threshold_mbps = 50.0  # Megabits per second
+        self.disk_io_threshold_mbps = 50.0  # Megabits per second
+        self.fd_limit_ratio = 0.90  # 90% of available file descriptors
+
+        # NEW: State for tracking network and disk I/O
+        self.last_net_check = (time.time(), psutil.net_io_counters())
+        self.last_disk_check = (time.time(), psutil.disk_io_counters())
 
         # Request tracking per agent
         self.request_history: Dict[str, deque] = defaultdict(lambda: deque(maxlen=200))
@@ -258,11 +308,12 @@ class SystemLimitsDetector(BaseDetector):
 
     async def _detect_system_resource_violations(self) -> List[SafetyViolation]:
         violations = []
+        
+        # --- CPU and Memory Checks (Existing) ---
         mem = psutil.virtual_memory()
         cpu = psutil.cpu_percent(interval=0.05) / 100.0
         self.memory_window.append(mem.percent / 100.0)
         self.cpu_window.append(cpu)
-        # Adaptive thresholds (90th percentile)
         if len(self.memory_window) > 10:
             adaptive_mem_threshold = np.percentile(self.memory_window, 90)
             adaptive_cpu_threshold = np.percentile(self.cpu_window, 90)
@@ -271,47 +322,83 @@ class SystemLimitsDetector(BaseDetector):
             adaptive_cpu_threshold = self.cpu_threshold
 
         if mem.percent / 100.0 > adaptive_mem_threshold:
-            violation = SafetyViolation(
-                violation_id=self._generate_violation_id(),
-                action_id=None,
-                violation_type=ViolationType.SYSTEM,
+            violations.append(SafetyViolation(
+                violation_id=self._generate_violation_id(), action_id=None, violation_type=ViolationType.SYSTEM,
                 severity=Severity.CRITICAL,
                 description=f"System memory exhaustion: {mem.percent:.1f}% used (threshold: {adaptive_mem_threshold*100:.1f}%)",
-                confidence=0.99,
-                evidence=[f"Memory usage: {mem.percent:.1f}%"],
-                recommendations=["Free up memory", "Throttle new requests", "Restart processes"],
-                detector_name=self.name
-            )
-            violations.append(violation)
+                confidence=0.99, evidence=[f"Memory usage: {mem.percent:.1f}%"],
+                recommendations=["Free up memory", "Throttle new requests", "Restart processes"], detector_name=self.name
+            ))
         if cpu > adaptive_cpu_threshold:
-            violation = SafetyViolation(
-                violation_id=self._generate_violation_id(),
-                action_id=None,
-                violation_type=ViolationType.SYSTEM,
+            violations.append(SafetyViolation(
+                violation_id=self._generate_violation_id(), action_id=None, violation_type=ViolationType.SYSTEM,
                 severity=Severity.CRITICAL,
                 description=f"High CPU usage detected: {cpu*100:.1f}% (threshold: {adaptive_cpu_threshold*100:.1f}%)",
-                confidence=0.99,
-                evidence=[f"CPU usage: {cpu*100:.1f}%"],
-                recommendations=["Throttle requests", "Investigate processes", "Scale resources"],
-                detector_name=self.name
-            )
-            violations.append(violation)
+                confidence=0.99, evidence=[f"CPU usage: {cpu*100:.1f}%"],
+                recommendations=["Throttle requests", "Investigate processes", "Scale resources"], detector_name=self.name
+            ))
+        
+        # --- Python Heap Check (Existing) ---
         snapshot = tracemalloc.take_snapshot()
         stats = snapshot.statistics('filename')
         top_mem = sum(stat.size for stat in stats[:3]) / (1024*1024)
         if top_mem > 100:
-            violation = SafetyViolation(
-                violation_id=self._generate_violation_id(),
-                action_id=None,
-                violation_type=ViolationType.SYSTEM,
-                severity=Severity.HIGH,
-                description="High Python heap allocation detected",
-                confidence=0.90,
-                evidence=[f"Top allocators: {top_mem:.1f} MB"],
-                recommendations=["Profile memory usage", "Optimize code paths"],
-                detector_name=self.name
-            )
-            violations.append(violation)
+            violations.append(SafetyViolation(
+                violation_id=self._generate_violation_id(), action_id=None, violation_type=ViolationType.SYSTEM,
+                severity=Severity.HIGH, description="High Python heap allocation detected",
+                confidence=0.90, evidence=[f"Top allocators: {top_mem:.1f} MB"],
+                recommendations=["Profile memory usage", "Optimize code paths"], detector_name=self.name
+            ))
+            
+        # --- NEW: Network I/O Check ---
+        now = time.time()
+        last_time, last_counters = self.last_net_check
+        current_counters = psutil.net_io_counters()
+        time_delta = now - last_time
+        if time_delta > 0.1: # Avoid division by zero and false positives on tiny intervals
+            bytes_sent_per_sec = (current_counters.bytes_sent - last_counters.bytes_sent) / time_delta
+            mbps_sent = (bytes_sent_per_sec * 8) / 1_000_000
+            if mbps_sent > self.network_threshold_mbps:
+                violations.append(SafetyViolation(
+                    violation_id=self._generate_violation_id(), action_id=None, violation_type=ViolationType.SYSTEM,
+                    severity=Severity.HIGH, description=f"High network egress detected: {mbps_sent:.2f} Mbps",
+                    confidence=0.90, evidence=[f"Sent {mbps_sent:.2f} Mbps (Threshold: {self.network_threshold_mbps} Mbps)"],
+                    recommendations=["Investigate outbound traffic", "Throttle network-intensive actions"], detector_name=self.name
+                ))
+            self.last_net_check = (now, current_counters)
+            
+        # --- NEW: Disk I/O Check ---
+        last_time_disk, last_counters_disk = self.last_disk_check
+        current_counters_disk = psutil.disk_io_counters()
+        time_delta_disk = now - last_time_disk
+        if time_delta_disk > 0.1:
+            read_bytes_per_sec = (current_counters_disk.read_bytes - last_counters_disk.read_bytes) / time_delta_disk
+            write_bytes_per_sec = (current_counters_disk.write_bytes - last_counters_disk.write_bytes) / time_delta_disk
+            total_mbps = ((read_bytes_per_sec + write_bytes_per_sec) * 8) / 1_000_000
+            if total_mbps > self.disk_io_threshold_mbps:
+                violations.append(SafetyViolation(
+                    violation_id=self._generate_violation_id(), action_id=None, violation_type=ViolationType.SYSTEM,
+                    severity=Severity.HIGH, description=f"High disk I/O detected: {total_mbps:.2f} Mbps",
+                    confidence=0.90, evidence=[f"Total I/O {total_mbps:.2f} Mbps (Threshold: {self.disk_io_threshold_mbps} Mbps)"],
+                    recommendations=["Investigate disk usage", "Optimize I/O operations", "Check for logging loops"], detector_name=self.name
+                ))
+            self.last_disk_check = (now, current_counters_disk)
+
+        # --- NEW: File Descriptor Check ---
+        try:
+            p = psutil.Process()
+            num_fds = p.num_fds()
+            soft_limit, _ = p.rlimit(psutil.RLIMIT_NOFILE)
+            if soft_limit > 0 and num_fds > (soft_limit * self.fd_limit_ratio):
+                 violations.append(SafetyViolation(
+                    violation_id=self._generate_violation_id(), action_id=None, violation_type=ViolationType.SYSTEM,
+                    severity=Severity.CRITICAL, description=f"File descriptor exhaustion risk: {num_fds} used ({num_fds/soft_limit:.1%})",
+                    confidence=0.95, evidence=[f"File descriptors: {num_fds} of {soft_limit} limit"],
+                    recommendations=["Investigate resource leaks (files, sockets)", "Restart process"], detector_name=self.name
+                ))
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            pass # Cannot inspect process, skip check
+            
         return violations
 
     def _detect_behavior_anomaly(self, action: AgentAction) -> List[SafetyViolation]:
@@ -361,7 +448,6 @@ class SystemLimitsDetector(BaseDetector):
                 violations.append(violation)
         requests = list(self.request_history[agent_id])
         if len(requests) > 10:
-            # Calculate requests per minute z-score
             now = time.time()
             times = np.array(requests)
             recent_count = np.sum(times > now - self.rate_limit_window)
@@ -394,6 +480,14 @@ class SystemLimitsDetector(BaseDetector):
         snapshot = tracemalloc.take_snapshot()
         stats = snapshot.statistics('filename')
         top_mem = sum(stat.size for stat in stats[:3]) / (1024*1024)
+        
+        # Get current process file descriptor count
+        try:
+            p = psutil.Process()
+            fd_count = p.num_fds()
+        except (psutil.NoSuchProcess, psutil.AccessDenied):
+            fd_count = -1
+
         return {
             "total_agents_tracked": len(self.request_history),
             "active_agents_last_minute": len([
@@ -406,5 +500,6 @@ class SystemLimitsDetector(BaseDetector):
             "system_memory_percent": mem.percent,
             "system_cpu_percent": cpu,
             "python_heap_mb": top_mem,
+            "process_file_descriptors": fd_count,
             "agent_reputation": dict(self.agent_reputation),
         }
