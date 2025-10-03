@@ -1,0 +1,99 @@
+# Correlation Rules Configuration
+# Multi-agent pattern detection rules for Phase 3.1
+
+version: "1.0"
+
+# Multi-Agent Pattern Detection Rules
+multi_agent_patterns:
+  
+  # Escalating Multi-ID Probes
+  - name: "escalating_multi_id_probes"
+    description: "Detects multiple agent IDs probing with increasing intensity"
+    enabled: true
+    window_seconds: 300  # 5 minute window
+    min_agents: 3
+    min_actions_per_agent: 2
+    severity: "high"
+    thresholds:
+      action_rate_increase: 0.5  # 50% increase in rate
+      unique_targets: 3
+    
+  # Payload Entropy Shifts
+  - name: "payload_entropy_shift"
+    description: "Detects unusual changes in payload entropy across agents"
+    enabled: true
+    window_seconds: 600  # 10 minute window
+    min_samples: 5
+    severity: "medium"
+    thresholds:
+      entropy_delta: 0.3  # 30% change in entropy
+      min_entropy: 2.0
+      max_entropy: 7.0
+      
+  # Coordinated Attack Pattern
+  - name: "coordinated_attack"
+    description: "Detects coordinated multi-agent attack patterns"
+    enabled: true
+    window_seconds: 180  # 3 minute window
+    min_agents: 2
+    severity: "critical"
+    thresholds:
+      time_correlation_threshold: 30  # seconds
+      action_similarity_threshold: 0.7
+      
+  # Distributed Reconnaissance
+  - name: "distributed_reconnaissance"
+    description: "Detects distributed information gathering across agents"
+    enabled: true
+    window_seconds: 900  # 15 minute window
+    min_agents: 3
+    severity: "high"
+    thresholds:
+      unique_endpoints: 5
+      common_patterns: 2
+      
+  # Anomalous Agent Cluster
+  - name: "anomalous_agent_cluster"
+    description: "Detects clusters of agents with similar anomalous behavior"
+    enabled: true
+    window_seconds: 600
+    min_cluster_size: 4
+    severity: "high"
+    thresholds:
+      behavioral_similarity: 0.8
+      risk_score_threshold: 0.6
+
+# Risk Score Persistence Configuration
+persistence:
+  redis:
+    enabled: true
+    key_prefix: "nethical:risk_scores"
+    ttl_seconds: 86400  # 24 hours
+    snapshot_interval_seconds: 3600  # 1 hour
+  
+  snapshot:
+    enabled: true
+    directory: "risk_snapshots"
+    format: "json"
+    compression: true
+    retention_days: 30
+
+# Correlation Engine Configuration
+correlation_engine:
+  enabled: true
+  max_tracked_agents: 10000
+  window_cleanup_interval: 300  # Clean old windows every 5 minutes
+  batch_processing: true
+  batch_size: 100
+  
+# Alert Configuration
+alerts:
+  critical:
+    notify: true
+    escalate: true
+  high:
+    notify: true
+    escalate: false
+  medium:
+    notify: false
+    escalate: false
