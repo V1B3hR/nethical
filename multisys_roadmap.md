@@ -1,7 +1,19 @@
 # Detailed Job List: Phase 3, Phase 4, and Future Tracks
 
 ---
-Phase 1, 2 CompleteD 
+## Detailed Checklist by Phase
+
+### Phase 1 Must-Haves
+- 🟢 Detector registry abstraction (complete)
+- 🟢 Core schemas authored + validated (complete)
+- 🟢 Latency instrumentation (fast vs full path) (complete)
+- 🟢 Basic risk score scaffold (complete)
+
+### Phase 2
+- 🟠 Event bus integration (producer/consumer libs) (ongoing)
+- 🟠 Signed policy service + key rotation doc (ongoing)
+- 🟡 Correlation MVP (rate + basic anomaly) (partially live; improvement ongoing)
+- 🟡 Policy propagation metric (partially implemented, needs monitoring integration)
 
 ## Phase 3: Correlation & Adaptive Risk (Week 8–12)
 
