@@ -10,6 +10,8 @@ from nethical.core.risk_engine import RiskEngine, RiskTier, RiskProfile
 from nethical.core.correlation_engine import CorrelationEngine, CorrelationMatch
 from nethical.core.fairness_sampler import FairnessSampler, SamplingStrategy
 from nethical.core.ethical_drift_reporter import EthicalDriftReporter
+from nethical.core.performance_optimizer import PerformanceOptimizer, DetectorTier
+from nethical.core.phase3_integration import Phase3IntegratedGovernance
 
 
 class TestRiskEngine:
@@ -410,6 +412,227 @@ class TestEthicalDriftReporter:
         assert 'overall_stats' in dashboard
         assert 'violation_distribution' in dashboard
         assert dashboard['overall_stats']['total_cohorts'] == 1
+
+
+class TestPerformanceOptimizer:
+    """Test PerformanceOptimizer implementation."""
+    
+    def test_optimizer_initialization(self):
+        """Test optimizer initialization."""
+        optimizer = PerformanceOptimizer(target_cpu_reduction_pct=30.0)
+        assert optimizer.target_cpu_reduction_pct == 30.0
+        assert len(optimizer.detector_metrics) == 0
+    
+    def test_register_detector(self):
+        """Test detector registration."""
+        optimizer = PerformanceOptimizer()
+        
+        optimizer.register_detector("test_detector", DetectorTier.ADVANCED)
+        
+        assert "test_detector" in optimizer.detector_registry
+        assert optimizer.detector_registry["test_detector"] == DetectorTier.ADVANCED
+    
+    def test_risk_based_gating(self):
+        """Test risk-based detector gating."""
+        optimizer = PerformanceOptimizer()
+        
+        # Register detectors at different tiers
+        optimizer.register_detector("fast_detector", DetectorTier.FAST)
+        optimizer.register_detector("advanced_detector", DetectorTier.ADVANCED)
+        optimizer.register_detector("premium_detector", DetectorTier.PREMIUM)
+        
+        # Low risk - only fast should be invoked
+        assert optimizer.should_invoke_detector("fast_detector", 0.1)
+        assert not optimizer.should_invoke_detector("advanced_detector", 0.1)
+        assert not optimizer.should_invoke_detector("premium_detector", 0.1)
+        
+        # High risk - fast and advanced should be invoked
+        assert optimizer.should_invoke_detector("fast_detector", 0.6)
+        assert optimizer.should_invoke_detector("advanced_detector", 0.6)
+        assert not optimizer.should_invoke_detector("premium_detector", 0.6)
+        
+        # Very high risk - all should be invoked
+        assert optimizer.should_invoke_detector("fast_detector", 0.8)
+        assert optimizer.should_invoke_detector("advanced_detector", 0.8)
+        assert optimizer.should_invoke_detector("premium_detector", 0.8)
+    
+    def test_track_detector_invocation(self):
+        """Test tracking detector invocations."""
+        optimizer = PerformanceOptimizer()
+        optimizer.register_detector("test_detector", DetectorTier.STANDARD)
+        
+        optimizer.track_detector_invocation("test_detector", 50.0, was_cached=False)
+        optimizer.track_detector_invocation("test_detector", 30.0, was_cached=True)
+        
+        metrics = optimizer.detector_metrics["test_detector"]
+        assert metrics.total_invocations == 2
+        assert metrics.cache_hits == 1
+        assert metrics.cache_misses == 1
+    
+    def test_cpu_reduction_calculation(self):
+        """Test CPU reduction calculation."""
+        optimizer = PerformanceOptimizer()
+        
+        # Establish baseline
+        for i in range(100):
+            optimizer.track_action_processing(100.0, 5)
+        
+        assert optimizer.baseline_established
+        assert optimizer.baseline_cpu_ms == 100.0
+        
+        # Track improved performance
+        for i in range(100):
+            optimizer.track_action_processing(70.0, 3)
+        
+        reduction = optimizer.get_cpu_reduction_pct()
+        assert reduction > 0  # Should show improvement
+    
+    def test_optimization_suggestions(self):
+        """Test optimization suggestions."""
+        optimizer = PerformanceOptimizer()
+        
+        # Add expensive detector
+        optimizer.register_detector("expensive_detector", DetectorTier.ADVANCED)
+        optimizer.track_detector_invocation("expensive_detector", 150.0)
+        
+        suggestions = optimizer.suggest_optimizations()
+        assert len(suggestions) > 0
+        assert any("high average CPU time" in s for s in suggestions)
+    
+    def test_performance_report(self):
+        """Test performance report generation."""
+        optimizer = PerformanceOptimizer()
+        
+        optimizer.register_detector("detector1", DetectorTier.FAST)
+        optimizer.track_detector_invocation("detector1", 10.0)
+        optimizer.track_action_processing(50.0, 1)
+        
+        report = optimizer.get_performance_report()
+        
+        assert 'action_metrics' in report
+        assert 'detector_stats' in report
+        assert 'optimization' in report
+
+
+class TestPhase3Integration:
+    """Test Phase3IntegratedGovernance."""
+    
+    @pytest.fixture
+    def temp_storage(self):
+        """Create temporary storage directory."""
+        temp_dir = tempfile.mkdtemp()
+        yield temp_dir
+        shutil.rmtree(temp_dir)
+    
+    def test_integration_initialization(self, temp_storage):
+        """Test integrated governance initialization."""
+        governance = Phase3IntegratedGovernance(
+            storage_dir=temp_storage,
+            enable_performance_optimization=True
+        )
+        
+        assert governance.risk_engine is not None
+        assert governance.correlation_engine is not None
+        assert governance.fairness_sampler is not None
+        assert governance.ethical_drift_reporter is not None
+        assert governance.performance_optimizer is not None
+    
+    def test_process_action(self, temp_storage):
+        """Test integrated action processing."""
+        governance = Phase3IntegratedGovernance(
+            storage_dir=temp_storage,
+            enable_performance_optimization=True
+        )
+        
+        class MockAction:
+            def __init__(self, content):
+                self.content = content
+        
+        results = governance.process_action(
+            agent_id="agent_1",
+            action=MockAction("test action"),
+            cohort="test_cohort",
+            violation_detected=True,
+            violation_type="safety",
+            violation_severity="high",
+            detector_invocations={
+                "detector1": 10.0,
+                "detector2": 20.0
+            }
+        )
+        
+        assert 'risk_score' in results
+        assert 'risk_tier' in results
+        assert 'correlations' in results
+        assert 'performance_metrics' in results
+    
+    def test_should_invoke_detector(self, temp_storage):
+        """Test detector invocation decision."""
+        governance = Phase3IntegratedGovernance(
+            storage_dir=temp_storage,
+            enable_performance_optimization=True
+        )
+        
+        # Process action to set risk score
+        class MockAction:
+            def __init__(self, content):
+                self.content = content
+        
+        governance.process_action(
+            agent_id="agent_1",
+            action=MockAction("test"),
+            cohort="cohort_a",
+            violation_detected=False,
+            detector_invocations={}
+        )
+        
+        # Check detector gating
+        should_invoke = governance.should_invoke_detector(
+            detector_name="test_detector",
+            agent_id="agent_1",
+            tier=DetectorTier.PREMIUM
+        )
+        
+        assert isinstance(should_invoke, bool)
+    
+    def test_generate_drift_report(self, temp_storage):
+        """Test drift report generation via integration."""
+        governance = Phase3IntegratedGovernance(storage_dir=temp_storage)
+        
+        class MockAction:
+            def __init__(self, content):
+                self.content = content
+        
+        # Generate some data
+        for i in range(10):
+            governance.process_action(
+                agent_id=f"agent_{i}",
+                action=MockAction("test"),
+                cohort="cohort_a",
+                violation_detected=i % 2 == 0,
+                violation_type="safety",
+                violation_severity="medium"
+            )
+        
+        report = governance.generate_drift_report(days_back=1)
+        
+        assert 'report_id' in report
+        assert 'cohorts' in report
+        assert 'drift_metrics' in report
+    
+    def test_system_status(self, temp_storage):
+        """Test system status reporting."""
+        governance = Phase3IntegratedGovernance(storage_dir=temp_storage)
+        
+        status = governance.get_system_status()
+        
+        assert 'timestamp' in status
+        assert 'components' in status
+        assert 'risk_engine' in status['components']
+        assert 'correlation_engine' in status['components']
+        assert 'fairness_sampler' in status['components']
+        assert 'ethical_drift_reporter' in status['components']
+        assert 'performance_optimizer' in status['components']
 
 
 if __name__ == "__main__":
