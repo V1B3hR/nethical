@@ -161,6 +161,45 @@ status = governance.get_system_status()
 print(f"System components: {status}")
 ```
 
+## 🚀 Phase 3: Advanced Features (NEW!)
+
+Nethical now includes advanced correlation, risk management, and fairness monitoring:
+
+### Integrated Governance
+
+```python
+from nethical.core import Phase3IntegratedGovernance, DetectorTier
+
+# Initialize with all Phase 3 features
+governance = Phase3IntegratedGovernance(
+    storage_dir="./data",
+    enable_performance_optimization=True
+)
+
+# Process action with adaptive risk scoring
+results = governance.process_action(
+    agent_id="agent_123",
+    action=my_action,
+    cohort="production",
+    violation_detected=False,
+    detector_invocations={"safety_detector": 10.0}
+)
+
+print(f"Risk Score: {results['risk_score']:.3f}")
+print(f"Risk Tier: {results['risk_tier']}")
+print(f"Invoke Advanced: {results['invoke_advanced_detectors']}")
+```
+
+### Key Phase 3 Features
+
+- **🎯 Risk Engine**: Multi-factor risk scoring with exponential decay
+- **🔗 Correlation Engine**: Multi-agent pattern detection (5 algorithms)
+- **⚖️ Fairness Sampler**: Stratified sampling across agent cohorts
+- **📈 Ethical Drift Reporter**: Cohort-based bias detection
+- **⚡ Performance Optimizer**: 30%+ CPU reduction via risk-based gating
+
+See [PHASE3_GUIDE.md](PHASE3_GUIDE.md) for complete documentation.
+
 ## 🛠️ Development Setup
 
 ```bash
