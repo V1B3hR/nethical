@@ -305,6 +305,11 @@ class Explanation:
         if not (0.0 <= self.confidence <= 1.0):
             raise ValueError("Confidence must be between 0 and 1")
 
+class RuleLogic(Enum):
+    OR = "OR"
+    AND = "AND"
+    CUSTOM = "CUSTOM"
+
 @dataclass
 class ConstraintRule:
     rule_id: str
@@ -312,70 +317,62 @@ class ConstraintRule:
     category: ConstraintCategory
     weight: float = 1.0
     tags: List[str] = field(default_factory=list)
-    logic: str = "OR"
+    logic: RuleLogic = RuleLogic.OR
     check: Optional[Callable[[Action], bool]] = None
-    keywords_any: Optional[List[str]] = None
-    keywords_all: Optional[List[str]] = None
-    except_keywords: Optional[List[str]] = None
-    regex_any: Optional[List[str]] = None
-    regex_all: Optional[List[str]] = None
+    keywords_any: List[str] = field(default_factory=list)
+    keywords_all: List[str] = field(default_factory=list)
+    except_keywords: List[str] = field(default_factory=list)
+    regex_any: List[str] = field(default_factory=list)
+    regex_all: List[str] = field(default_factory=list)
     applies_during: Optional[Tuple[str, str]] = None
-    applies_to_roles: Optional[List[str]] = None
+    applies_to_roles: List[str] = field(default_factory=list)
     version: int = 1
-    regulatory_tags: Optional[List[str]] = None
-    context_conditions: Optional[Dict[str, Any]] = None
+    regulatory_tags: List[str] = field(default_factory=list)
+    context_conditions: Dict[str, Any] = field(default_factory=dict)
     
+    def _within_time_window(self) -> bool:
+        if not self.applies_during:
+            return True
+        now = datetime.now(timezone.utc).time()
+        start = dtime.fromisoformat(self.applies_during[0])
+        end = dtime.fromisoformat(self.applies_during[1])
+        if start <= end:
+            return start <= now <= end
+        else:
+            return now >= start or now <= end
+
+    def _context_conditions_met(self, action: Action) -> bool:
+        return all(action.context.get(k) == v for k, v in self.context_conditions.items())
+
+    def _keyword_in_text(self, keywords, text):
+        return any(re.search(r'\b%s\b' % re.escape(kw), text) for kw in keywords)
+
+    def _match_and(self, desc, action):
+        all_keywords = all(self._keyword_in_text([kw], desc) for kw in self.keywords_all) if self.keywords_all else True
+        all_regex = all(re.search(rx, action.description, re.I) for rx in self.regex_all) if self.regex_all else True
+        return all_keywords and all_regex
+
+    def _match_or(self, desc, action):
+        any_keywords = any(self._keyword_in_text([kw], desc) for kw in self.keywords_any) if self.keywords_any else False
+        any_regex = any(re.search(rx, action.description, re.I) for rx in self.regex_any) if self.regex_any else False
+        return any_keywords or any_regex
+
     def violates(self, action: Action) -> bool:
         desc = (action.description or "").lower()
-        
-        # Role check
         if self.applies_to_roles and action.actor_role not in self.applies_to_roles:
             return False
-        
-        # Time window check
-        if self.applies_during:
-            now = datetime.now(timezone.utc).time()
-            start = dtime.fromisoformat(self.applies_during[0])
-            end = dtime.fromisoformat(self.applies_during[1])
-            if start <= end:
-                if not (start <= now <= end):
-                    return False
-            else:
-                if not (now >= start or now <= end):
-                    return False
-        
-        # Context conditions
-        if self.context_conditions:
-            for key, expected_value in self.context_conditions.items():
-                if action.context.get(key) != expected_value:
-                    return False
-        
-        # Custom check function
-        if self.check:
-            try:
-                return bool(self.check(action))
-            except Exception as e:
-                secure_log("error", f"Rule check failed for {self.rule_id}: {e}")
-                return False
-        
-        # Exception keywords
+        if not self._within_time_window():
+            return False
+        if self.context_conditions and not self._context_conditions_met(action):
+            return False
         if self.except_keywords and any(kw in desc for kw in self.except_keywords):
             return False
-        
-        # Keyword/regex matching
-        kw_any = [w.lower() for w in (self.keywords_any or [])]
-        kw_all = [w.lower() for w in (self.keywords_all or [])]
-        rx_any = self.regex_any or []
-        rx_all = self.regex_all or []
-        
-        if self.logic == "AND":
-            return (all(w in desc for w in kw_all) if kw_all else True) and \
-                   (all(re.search(rx, action.description, re.I) for rx in rx_all) if rx_all else True)
-        elif self.logic == "CUSTOM":
+        if self.logic == RuleLogic.CUSTOM:
             return self.check(action) if self.check else False
+        if self.logic == RuleLogic.AND:
+            return self._match_and(desc, action)
         else:  # OR
-            return (any(w in desc for w in kw_any) if kw_any else False) or \
-                   (any(re.search(rx, action.description, re.I) for rx in rx_any) if rx_any else False)
+            return self._match_or(desc, action)
 
 @dataclass
 class SafetyViolation:
