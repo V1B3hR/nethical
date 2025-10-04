@@ -384,14 +384,15 @@ class SafetyViolation:
     description: str
     violated_constraints: List[str]
     trigger_details: Dict[str, Any] = field(default_factory=dict)
-    mitigation_suggestion: str = ""
+    mitigation_suggestion: Optional[str] = None
     feedback: Optional[str] = None
-    regulatory_tags: Optional[List[str]] = None
-    timestamp: datetime = None
+    regulatory_tags: List[str] = field(default_factory=list)
+    timestamp: Optional[datetime] = None
     explanation: Optional[Explanation] = None
-    
+
     def __post_init__(self):
-        self.timestamp = self.timestamp or datetime.now(timezone.utc)
+        if self.timestamp is None:
+            self.timestamp = datetime.now(timezone.utc)
 
 # ============================================================================
 # ABSTRACT INTERFACES
