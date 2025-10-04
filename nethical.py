@@ -434,99 +434,88 @@ class AuditLog(ABC):
 # ============================================================================
 # MERKLE TREE AUDIT LOG
 # ============================================================================
-
 class MerkleTreeAuditLog(AuditLog):
-    """Tamper-evident audit log using Merkle tree"""
-    
+    """Tamper-evident audit log using Merkle tree (incremental version)"""
+
     def __init__(self):
         self._entries: List[Tuple[datetime, str, str]] = []
-        self._merkle_roots: List[str] = []
+        self._leaf_hashes: List[str] = []
+        self._merkle_root: Optional[str] = None
         self._lock = threading.Lock()
-    
+
     def _hash(self, data: Union[str, bytes]) -> str:
         if isinstance(data, str):
             data = data.encode()
         return hashlib.sha256(data).hexdigest()
-    
-    def _compute_merkle_root(self) -> str:
-        if not self._entries:
-            return self._hash("")
-        
-        leaves = [self._hash(entry) for _, entry, _ in self._entries]
-        
+
+    def _update_merkle_root(self):
+        leaves = self._leaf_hashes[:]
+        if not leaves:
+            self._merkle_root = self._hash("")
+            return
         while len(leaves) > 1:
             if len(leaves) % 2 != 0:
                 leaves.append(leaves[-1])
-            
             leaves = [
                 self._hash(leaves[i] + leaves[i+1])
                 for i in range(0, len(leaves), 2)
             ]
-        
-        return leaves[0]
-    
+        self._merkle_root = leaves[0]
+
     def append(self, entry: str) -> None:
         with self._lock:
             timestamp = datetime.now(timezone.utc)
             entry_hash = self._hash(entry)
             self._entries.append((timestamp, entry, entry_hash))
-            
-            # Update Merkle root
-            root = self._compute_merkle_root()
-            self._merkle_roots.append(root)
-    
+            self._leaf_hashes.append(entry_hash)
+            self._update_merkle_root()
+
     def get_entries(self, start: Optional[datetime] = None, 
                     end: Optional[datetime] = None) -> List[str]:
         with self._lock:
-            filtered = []
-            for ts, entry, _ in self._entries:
-                if start and ts < start:
-                    continue
-                if end and ts > end:
-                    continue
-                filtered.append(entry)
-            return filtered
-    
+            return [
+                entry for ts, entry, _ in self._entries
+                if (not start or ts >= start) and (not end or ts <= end)
+            ]
+
     def verify_integrity(self) -> bool:
         with self._lock:
-            # Verify individual entries
-            for ts, entry, stored_hash in self._entries:
-                if self._hash(entry) != stored_hash:
+            for (ts, entry, stored_hash), leaf_hash in zip(self._entries, self._leaf_hashes):
+                if self._hash(entry) != stored_hash or stored_hash != leaf_hash:
                     return False
-            
-            # Verify Merkle root
-            if self._merkle_roots:
-                current_root = self._compute_merkle_root()
-                return current_root == self._merkle_roots[-1]
-            
-            return True
-    
-    def get_proof(self, entry_index: int) -> List[str]:
-        """Get Merkle proof for an entry"""
+            # Only compare current root
+            calc_root = self._merkle_root
+            tmp_leaves = self._leaf_hashes[:]
+            while len(tmp_leaves) > 1:
+                if len(tmp_leaves) % 2 != 0:
+                    tmp_leaves.append(tmp_leaves[-1])
+                tmp_leaves = [
+                    self._hash(tmp_leaves[i] + tmp_leaves[i+1])
+                    for i in range(0, len(tmp_leaves), 2)
+                ]
+            return calc_root == (tmp_leaves[0] if tmp_leaves else self._hash(""))
+
+    def get_proof(self, entry_index: int) -> List[Tuple[str, str]]:
+        """Returns a proof as (sibling_hash, direction) tuples ('L' or 'R')"""
         with self._lock:
-            if entry_index >= len(self._entries):
+            if entry_index >= len(self._leaf_hashes):
                 return []
-            
-            leaves = [self._hash(entry) for _, entry, _ in self._entries]
-            proof = []
             index = entry_index
-            
+            proof = []
+            leaves = self._leaf_hashes[:]
             while len(leaves) > 1:
                 if len(leaves) % 2 != 0:
                     leaves.append(leaves[-1])
-                
-                sibling_index = index + 1 if index % 2 == 0 else index - 1
+                sibling_index = index ^ 1
+                direction = 'R' if index % 2 == 0 else 'L'
                 if sibling_index < len(leaves):
-                    proof.append(leaves[sibling_index])
-                
+                    proof.append((leaves[sibling_index], direction))
+                index = index // 2
                 leaves = [
                     self._hash(leaves[i] + leaves[i+1])
                     for i in range(0, len(leaves), 2)
                 ]
-                index = index // 2
-            
             return proof
-
 # ============================================================================
 # ENHANCED KEY MANAGEMENT
 # ============================================================================
