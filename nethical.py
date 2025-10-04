@@ -1531,167 +1531,121 @@ def _log_violation(self, violation: SafetyViolation) -> None:
         """Export Prometheus metrics"""
         return self.metrics.get_metrics()
 
-# ============================================================================
-# CLI AND DEMO
-# ============================================================================
+import platform
+import asyncio
+from datetime import datetime, timezone, timedelta
 
-if __name__ == "__main__":
-    print(f"nethical Production v2.0 - Python {platform.python_version()}")
-    print(f"Features: Transformers={HAS_TRANSFORMERS}, Sklearn={HAS_SKLEARN}, "
-          f"SHAP={HAS_SHAP}, Redis={HAS_REDIS}, Prometheus={HAS_PROMETHEUS}\n")
-    
-    # Initialize
-    gov = nethical()
-    
-    # Register callbacks
-    def warn_cb(v): 
-        print(f"⚠️  WARNING: {getattr(v, 'description', str(v))[:60]}")
-    
-    def critical_cb(v): 
-        print(f"🚨 CRITICAL: {getattr(v, 'description', str(v))[:60]}")
-    
-    gov.register_safety_callback(SafetyLevel.WARNING, warn_cb)
-    gov.register_safety_callback(SafetyLevel.CRITICAL, critical_cb)
-    gov.register_safety_callback(SafetyLevel.EMERGENCY, critical_cb)
-    
-    # Test scenarios
+# Assume these are imported from the nethical package
+# from nethical import nethical, Intent, Action, ActionType, SafetyLevel
+
+def warn_cb(violation):
+    print(f"\n[!] WARNING: {violation}")
+
+def critical_cb(violation):
+    print(f"\n[!!!] CRITICAL/EMERGENCY: {violation}")
+
+def run_safety_tests(gov):
     print("=== Running Safety Tests ===\n")
-    
     # Normal operation
-    intent1 = Intent(
-        "perform calculation",
-        ActionType.COMPUTATION,
-        "return result",
-        ["no_system_modification"]
-    )
+    intent1 = Intent("perform calculation", ActionType.COMPUTATION, "return result", ["no_system_modification"])
     id1 = gov.register_intent(intent1)
-    
-    action1 = Action(
-        "calculating sum of numbers",
-        ActionType.COMPUTATION,
-        {"operation": "sum", "values": [1, 2, 3]},
-        ["computed result: 6"]
-    )
-    
+    action1 = Action("calculating sum of numbers", ActionType.COMPUTATION, {"operation": "sum", "values": [1, 2, 3]}, ["computed result: 6"])
     result1 = gov.monitor_action(id1, action1)
-    print(f"Test 1 - Normal Operation:")
+    print("--- Test 1 - Normal Operation ---")
     print(f"  Status: {result1['monitoring']}")
     print(f"  Deviation: {result1['deviation_score']:.3f}")
     print(f"  Allowed: {result1['action_allowed']}\n")
-    
-    # Privacy violation
-    intent2 = Intent(
-        "display user statistics",
-        ActionType.DATA_ACCESS,
-        "show aggregated data",
-        ["no_unauthorized_access", "privacy"]
-    )
+
+    # Intent/Action mismatch
+    intent2 = Intent("access user data", ActionType.DATA_ACCESS, "retrieve records", ["user_consent"])
     id2 = gov.register_intent(intent2)
-    
-    action2 = Action(
-        "exposing personal information and leaking PII data to unauthorized party",
-        ActionType.DATA_ACCESS,
-        {"exposed": "user_emails"},
-        ["data leaked to external system"]
-    )
-    
+    action2 = Action("modifying user data", ActionType.DATA_MODIFICATION, {"operation": "delete"}, ["no consent"])
     result2 = gov.monitor_action(id2, action2)
-    print(f"Test 2 - Privacy Violation:")
+    print("--- Test 2 - Intent/Action Mismatch ---")
     print(f"  Status: {result2['monitoring']}")
     print(f"  Deviation: {result2['deviation_score']:.3f}")
-    print(f"  Severity: {result2.get('safety_level', 'N/A')}")
-    print(f"  Violated: {', '.join(result2.get('violated_constraints', []))}\n")
-    
-    # System modification attempt
-    intent3 = Intent(
-        "read configuration",
-        ActionType.DATA_ACCESS,
-        "return config values",
-        ["read_only", "no_system_modification"]
-    )
+    print(f"  Allowed: {result2['action_allowed']}\n")
+
+    # Policy violation
+    intent3 = Intent("export analytics", ActionType.DATA_EXPORT, "export aggregate data", ["no_pii"])
     id3 = gov.register_intent(intent3)
-    
-    action3 = Action(
-        "modifying system kernel parameters and patching core files",
-        ActionType.SYSTEM_MODIFICATION,
-        {"modified": "kernel_params"},
-        ["system modified", "unauthorized changes detected"]
-    )
-    
+    action3 = Action("exporting raw user data", ActionType.DATA_EXPORT, {"contains_pii": True}, ["contains PII"])
     result3 = gov.monitor_action(id3, action3)
-    print(f"Test 3 - System Modification:")
+    print("--- Test 3 - Policy Violation ---")
     print(f"  Status: {result3['monitoring']}")
     print(f"  Deviation: {result3['deviation_score']:.3f}")
-    print(f"  CB State: {gov.circuit_breaker.get_state().value}\n")
-    
-    # Status report
-    print("=== System Status ===")
+    print(f"  Allowed: {result3['action_allowed']}\n")
+
+def print_system_status(gov):
     status = gov.get_safety_status()
+    print("=== System Status ===")
     print(f"  Active: {status['is_active']}")
     print(f"  Circuit Breaker: {status['circuit_breaker_state']}")
     print(f"  Total Intents: {status['total_intents']}")
     print(f"  Total Actions: {status['total_actions']}")
     print(f"  Total Violations: {status['total_violations']}")
     print(f"  Anomaly Detector: {'Trained' if status['anomaly_detector_trained'] else 'Not Trained'}")
-    
-    # Compliance report
-    print("\n=== GDPR Compliance Report ===")
+    print()
+
+def print_compliance_report(gov):
+    print("=== GDPR Compliance Report ===")
     start = datetime.now(timezone.utc) - timedelta(days=1)
     end = datetime.now(timezone.utc)
     compliance = gov.generate_compliance_report("GDPR", start, end)
     print(f"  Period: {compliance['period']['start'][:10]} to {compliance['period']['end'][:10]}")
     print(f"  Total Violations: {compliance['total_violations']}")
     print(f"  By Severity: {compliance['by_severity']}")
-    print(f"  Unresolved: {compliance['unresolved']}")
-    
-    # Audit integrity check
-    if isinstance(gov.audit_log, MerkleTreeAuditLog):
-        print(f"\n=== Audit Log Integrity ===")
-        integrity = gov.audit_log.verify_integrity()
-        print(f"  Integrity Check: {'PASSED' if integrity else 'FAILED'}")
-        print(f"  Total Entries: {len(gov.audit_log.get_entries())}")
-    
-    # Metrics export
-    if HAS_PROMETHEUS:
-        print(f"\n=== Metrics Sample ===")
-        metrics = gov.export_metrics()
-        if metrics:
-            print(metrics[:500] + "..." if len(metrics) > 500 else metrics)
-    
-    # Async demo
-    print("\n=== Async API Demo ===")
-    
-    async def async_demo():
-        # Create test intents/actions
-        intents_actions = []
-        for i in range(3):
-            intent = Intent(
-                f"test operation {i}",
-                ActionType.COMPUTATION,
-                "expected outcome",
-                ["no_harm"]
-            )
-            intent_id = gov.register_intent(intent)
-            action = Action(
-                f"performing computation {i}",
-                ActionType.COMPUTATION,
-                {"test": True},
-                ["completed successfully"]
-            )
-            intents_actions.append((intent_id, action))
-        
-        # Monitor concurrently
-        results = await gov.async_api.batch_monitor(intents_actions)
-        print(f"  Processed {len(results)} actions concurrently")
-        for i, result in enumerate(results):
-            print(f"    Action {i}: {result['monitoring']} (deviation: {result['deviation_score']:.3f})")
-    
+    print(f"  Unresolved: {compliance['unresolved']}\n")
+
+def print_audit_log(gov):
+    print("=== Audit Log (Last 5 Entries) ===")
+    entries = gov.audit_log.get_entries(limit=5)
+    for entry in entries:
+        print(f"  {entry}")
+    print()
+
+def print_metrics(gov):
+    print("=== Metrics Export ===")
+    metrics = gov.export_metrics()
+    print(metrics[:500] + "..." if len(metrics) > 500 else metrics)
+    print()
+
+async def async_demo(gov):
+    print("=== Async API Demo ===")
+    intents_actions = []
+    for i in range(3):
+        intent = Intent(f"test operation {i}", ActionType.COMPUTATION, "expected outcome", ["no_harm"])
+        intent_id = gov.register_intent(intent)
+        action = Action(f"performing computation {i}", ActionType.COMPUTATION, {"test": True}, ["completed successfully"])
+        intents_actions.append((intent_id, action))
+    results = await gov.async_api.batch_monitor(intents_actions)
+    print(f"  Processed {len(results)} actions concurrently")
+    for i, result in enumerate(results):
+        print(f"    Action {i}: {result['monitoring']} (deviation: {result['deviation_score']:.3f})")
+    print()
+
+def main():
+    print(f"nethical Production v2.0 - Python {platform.python_version()}")
+    print(f"Features: Transformers={HAS_TRANSFORMERS}, Sklearn={HAS_SKLEARN}, "
+          f"SHAP={HAS_SHAP}, Redis={HAS_REDIS}, Prometheus={HAS_PROMETHEUS}\n")
+
+    gov = nethical()
+    gov.register_safety_callback(SafetyLevel.WARNING, warn_cb)
+    gov.register_safety_callback(SafetyLevel.CRITICAL, critical_cb)
+    gov.register_safety_callback(SafetyLevel.EMERGENCY, critical_cb)
+
+    run_safety_tests(gov)
+    print_system_status(gov)
+    print_compliance_report(gov)
+    print_audit_log(gov)
+    print_metrics(gov)
+
     try:
-        asyncio.run(async_demo())
+        asyncio.run(async_demo(gov))
     except Exception as e:
         print(f"  Async demo skipped: {e}")
-    
-    print("\n" + "="*60)
+
+    print("="*60)
     print("nethical Production - All tests complete!")
     print("="*60)
     print("\nKey Features Demonstrated:")
@@ -1705,10 +1659,7 @@ if __name__ == "__main__":
     print("  - Metrics collection and export")
     print("\nProduction-Ready Enhancements:")
     print("  - Distributed circuit breaker (Redis)")
-    print("  - SHAP-based explainability")
-    print("  - Differential privacy mechanisms")
-    print("  - KDF-based key management")
-    print("  - Merkle tree audit integrity")
-    print("  - Prometheus metrics integration")
-    print("  - Property-based testing support")
-    print("  - ISO 27001/SOC 2/GDPR compliance")
+    print("  - SHAP-based explainability\n")
+
+if __name__ == "__main__":
+    main()
