@@ -227,10 +227,30 @@ class ConstraintCategory(Enum):
     def __str__(self):
         return self.value
 
+from enum import Enum
+
 class CircuitBreakerState(Enum):
+    """
+    Enum representing the state of a circuit breaker.
+    """
     CLOSED = "closed"
     OPEN = "open"
     HALF_OPEN = "half_open"
+
+    @classmethod
+    def from_str(cls, name: str):
+        """
+        Safely convert a string to a CircuitBreakerState, case-insensitive.
+        Raises ValueError if invalid.
+        """
+        name = name.strip().lower()
+        for state in cls:
+            if state.value == name:
+                return state
+        raise ValueError(f"Unknown CircuitBreakerState: {name}")
+
+    def __str__(self):
+        return self.value
 
 # ============================================================================
 # DATA CLASSES
