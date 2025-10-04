@@ -215,11 +215,17 @@ class ActionType(Enum):
         return self.value
 
 class ConstraintCategory(Enum):
+    """
+    Categories for classifying safety and policy constraints in the nethical framework.
+    """
     HUMAN_AI = "human_ai"
     UNIVERSAL = "universal"
     OPERATIONAL = "operational"
     CUSTOM = "custom"
     INTENT_LOCAL = "intent_local"
+
+    def __str__(self):
+        return self.value
 
 class CircuitBreakerState(Enum):
     CLOSED = "closed"
