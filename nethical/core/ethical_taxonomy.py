@@ -137,9 +137,13 @@ class EthicalTaxonomy:
         if base_mapping:
             self.tagged_violations.add(violation_type)
         
-        # Apply context adjustments if provided
-        scores = dict(base_mapping)
+        # Filter out non-numeric fields (like 'description')
+        scores = {
+            k: v for k, v in base_mapping.items()
+            if isinstance(v, (int, float))
+        }
         
+        # Apply context adjustments if provided
         if context:
             scores = self._apply_context_adjustments(scores, context)
         

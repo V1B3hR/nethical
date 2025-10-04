@@ -1,0 +1,287 @@
+#!/usr/bin/env python3
+"""CLI tool for policy diff auditing.
+
+Usage:
+    python cli/policy_diff <old_policy_file> <new_policy_file> [options]
+
+Options:
+    --format json|text|markdown    Output format (default: text)
+    --output <file>                Output file (default: stdout)
+    --save-version <version>       Save new policy as version
+"""
+
+import sys
+import json
+import yaml
+import argparse
+from pathlib import Path
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from nethical.core import PolicyDiffAuditor, RiskLevel
+
+
+def load_policy(file_path: str) -> dict:
+    """Load policy from file (JSON or YAML).
+    
+    Args:
+        file_path: Path to policy file
+        
+    Returns:
+        Policy dictionary
+    """
+    path = Path(file_path)
+    
+    if not path.exists():
+        raise FileNotFoundError(f"Policy file not found: {file_path}")
+    
+    with open(path, 'r') as f:
+        if path.suffix in ['.json']:
+            return json.load(f)
+        elif path.suffix in ['.yaml', '.yml']:
+            return yaml.safe_load(f)
+        else:
+            # Try JSON first, then YAML
+            content = f.read()
+            try:
+                return json.loads(content)
+            except:
+                return yaml.safe_load(content)
+
+
+def format_text_output(auditor: PolicyDiffAuditor, diff_result) -> str:
+    """Format diff as text report.
+    
+    Args:
+        auditor: Policy diff auditor
+        diff_result: Diff result
+        
+    Returns:
+        Formatted text
+    """
+    return auditor.format_diff_report(diff_result)
+
+
+def format_json_output(diff_result) -> str:
+    """Format diff as JSON.
+    
+    Args:
+        diff_result: Diff result
+        
+    Returns:
+        JSON string
+    """
+    output = {
+        'old_version': diff_result.old_version,
+        'new_version': diff_result.new_version,
+        'timestamp': diff_result.timestamp.isoformat(),
+        'risk_score': diff_result.risk_score,
+        'risk_level': diff_result.risk_level.value,
+        'summary': diff_result.summary,
+        'recommendations': diff_result.recommendations,
+        'changes': [
+            {
+                'path': c.path,
+                'change_type': c.change_type.value,
+                'old_value': c.old_value,
+                'new_value': c.new_value,
+                'risk_level': c.risk_level.value,
+                'impact_score': c.impact_score,
+                'description': c.description
+            }
+            for c in diff_result.changes
+        ]
+    }
+    
+    return json.dumps(output, indent=2)
+
+
+def format_markdown_output(diff_result) -> str:
+    """Format diff as Markdown.
+    
+    Args:
+        diff_result: Diff result
+        
+    Returns:
+        Markdown string
+    """
+    lines = []
+    lines.append(f"# Policy Diff: {diff_result.old_version} → {diff_result.new_version}")
+    lines.append("")
+    lines.append(f"**Timestamp**: {diff_result.timestamp.isoformat()}")
+    lines.append(f"**Risk Level**: {diff_result.risk_level.value.upper()}")
+    lines.append(f"**Risk Score**: {diff_result.risk_score:.3f}")
+    lines.append("")
+    
+    # Summary table
+    lines.append("## Summary")
+    lines.append("")
+    lines.append("| Metric | Count |")
+    lines.append("|--------|-------|")
+    for key, value in diff_result.summary.items():
+        lines.append(f"| {key.replace('_', ' ').title()} | {value} |")
+    lines.append("")
+    
+    # Changes by risk level
+    lines.append("## Changes")
+    lines.append("")
+    
+    for risk_level in [RiskLevel.CRITICAL, RiskLevel.HIGH, RiskLevel.MEDIUM, RiskLevel.LOW]:
+        level_changes = [c for c in diff_result.changes if c.risk_level == risk_level]
+        if level_changes:
+            emoji = {
+                RiskLevel.CRITICAL: "🔴",
+                RiskLevel.HIGH: "🟠",
+                RiskLevel.MEDIUM: "🟡",
+                RiskLevel.LOW: "🟢"
+            }.get(risk_level, "⚪")
+            
+            lines.append(f"### {emoji} {risk_level.value.upper()} Risk ({len(level_changes)})")
+            lines.append("")
+            
+            for change in level_changes:
+                symbol = {
+                    'added': "➕",
+                    'removed': "➖",
+                    'modified': "🔄"
+                }.get(change.change_type.value, "❓")
+                
+                lines.append(f"#### {symbol} `{change.path}`")
+                lines.append("")
+                if change.old_value is not None:
+                    lines.append(f"- **Old**: `{change.old_value}`")
+                if change.new_value is not None:
+                    lines.append(f"- **New**: `{change.new_value}`")
+                lines.append(f"- **Impact**: {change.impact_score:.2f}")
+                lines.append("")
+    
+    # Recommendations
+    if diff_result.recommendations:
+        lines.append("## Recommendations")
+        lines.append("")
+        for rec in diff_result.recommendations:
+            lines.append(f"- {rec}")
+        lines.append("")
+    
+    return "\n".join(lines)
+
+
+def main():
+    """Main CLI entry point."""
+    parser = argparse.ArgumentParser(
+        description='Compare two policy versions and assess risk',
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+    # Basic comparison
+    python cli/policy_diff policy_v1.yaml policy_v2.yaml
+    
+    # Output as JSON
+    python cli/policy_diff policy_v1.yaml policy_v2.yaml --format json
+    
+    # Save to file
+    python cli/policy_diff policy_v1.yaml policy_v2.yaml --output diff_report.md --format markdown
+    
+    # Save new policy version
+    python cli/policy_diff policy_v1.yaml policy_v2.yaml --save-version v2.0
+        """
+    )
+    
+    parser.add_argument(
+        'old_policy',
+        help='Path to old policy file (JSON or YAML)'
+    )
+    
+    parser.add_argument(
+        'new_policy',
+        help='Path to new policy file (JSON or YAML)'
+    )
+    
+    parser.add_argument(
+        '--format',
+        choices=['text', 'json', 'markdown'],
+        default='text',
+        help='Output format (default: text)'
+    )
+    
+    parser.add_argument(
+        '--output',
+        help='Output file (default: stdout)'
+    )
+    
+    parser.add_argument(
+        '--save-version',
+        metavar='VERSION',
+        help='Save new policy as version'
+    )
+    
+    parser.add_argument(
+        '--storage-dir',
+        default='policy_history',
+        help='Policy history storage directory (default: policy_history)'
+    )
+    
+    args = parser.parse_args()
+    
+    try:
+        # Load policies
+        old_policy = load_policy(args.old_policy)
+        new_policy = load_policy(args.new_policy)
+        
+        # Initialize auditor
+        auditor = PolicyDiffAuditor(storage_path=args.storage_dir)
+        
+        # Compare policies
+        diff_result = auditor.compare_policies(
+            old_policy=old_policy,
+            new_policy=new_policy,
+            old_version=Path(args.old_policy).stem,
+            new_version=Path(args.new_policy).stem
+        )
+        
+        # Format output
+        if args.format == 'json':
+            output = format_json_output(diff_result)
+        elif args.format == 'markdown':
+            output = format_markdown_output(diff_result)
+        else:  # text
+            output = format_text_output(auditor, diff_result)
+        
+        # Write output
+        if args.output:
+            with open(args.output, 'w') as f:
+                f.write(output)
+            print(f"Report written to: {args.output}")
+        else:
+            print(output)
+        
+        # Save version if requested
+        if args.save_version:
+            auditor.save_policy_version(
+                policy=new_policy,
+                version=args.save_version,
+                description=f"Compared from {args.old_policy}"
+            )
+            print(f"\nSaved policy as version: {args.save_version}")
+        
+        # Exit with appropriate code
+        if diff_result.risk_level in [RiskLevel.CRITICAL, RiskLevel.HIGH]:
+            sys.exit(2)  # High risk
+        elif diff_result.risk_level == RiskLevel.MEDIUM:
+            sys.exit(1)  # Medium risk
+        else:
+            sys.exit(0)  # Low risk
+            
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        sys.exit(3)
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        sys.exit(4)
+
+
+if __name__ == '__main__':
+    main()
