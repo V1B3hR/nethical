@@ -202,11 +202,17 @@ class SafetyLevel(Enum):
     EMERGENCY = "emergency"
 
 class ActionType(Enum):
+    """
+    Enumeration for the type of actions monitored by the system.
+    """
     COMPUTATION = "computation"
     COMMUNICATION = "communication"
-    SYSTEM_MODIFICATION = "system_modification"
     DATA_ACCESS = "data_access"
     EXTERNAL_INTERACTION = "external_interaction"
+    SYSTEM_MODIFICATION = "system_modification"
+
+    def __str__(self):
+        return self.value
 
 class ConstraintCategory(Enum):
     HUMAN_AI = "human_ai"
