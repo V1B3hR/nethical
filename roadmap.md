@@ -133,11 +133,44 @@ Deliver a layered (“defense in depth”) control plane for autonomous / semi�
 
 ## Immediate Next Actions
 
-1. Implement guardrail evaluation core + decision object schema.  
-2. Draft initial 10 scenarios (positive & negative) with expected outcomes.  
-3. Add coverage & conflict reports to CI.  
-4. Produce rules-only risk score (simple weighting).  
-5. Instrument structured JSON logging for every decision.  
+### Phase 8 – Human-in-the-Loop Ops (Current Priority)
+
+1. **Escalation Queue Infrastructure**
+   - Design escalation queue schema and storage (SQLite/Redis)
+   - Implement queue prioritization logic (uncertainty score, severity, age)
+   - Create CLI commands for queue management (`nethical queue list/review/resolve`)
+
+2. **Labeling Interface (CLI-First)**
+   - Build interactive CLI for human review workflow
+   - Implement feedback tag system: `false_positive`, `missed_violation`, `policy_gap`
+   - Store labeled cases with context (ruleset hash, model version, features)
+
+3. **Human Review Workflow**
+   - Define escalation criteria (confidence thresholds, severity levels)
+   - Implement review assignment and tracking
+   - Create feedback collection forms/prompts
+
+4. **SLA Tracking & Optimization**
+   - Instrument median triage time measurement
+   - Set initial SLA targets (e.g., 90th percentile < 24h)
+   - Build SLA monitoring dashboard/reports
+
+### Phase 9 – Continuous Optimization (Next)
+
+5. **Optimization Framework**
+   - Define multi-objective fitness function (recall, FP rate, latency, agreement)
+   - Implement grid/random search baseline for threshold tuning
+   - Create promotion gate validation (gate conditions must pass)
+
+6. **Feedback Loop Integration**
+   - Connect human labels to model retraining pipeline
+   - Implement batch incremental training workflow
+   - Add shadow evaluation vs incumbent model
+
+7. **Advanced Optimization (Optional)**
+   - Evolutionary strategies for weight/threshold optimization
+   - Bayesian optimization for calibration
+   - A/B testing framework for configuration promotion  
 
 ---
 
@@ -158,6 +191,7 @@ Deliver a layered (“defense in depth”) control plane for autonomous / semi�
 ---
 
 ## Change Log
+- 2025-01-XX: Updated "Immediate Next Actions" to focus on Phase 8-9 implementation priorities.
 - 2025-10-04: Expanded Phases 5-9 with detailed implementation specifications.
 - 2025-10-04: Updated Phases 0-4 to mark as implemented after successful completion.
 - 2025-10-04: Initial extraction (training/testing moved to separate file).
