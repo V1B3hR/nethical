@@ -286,14 +286,24 @@ class Action:
     actor_role: str = "user"  # Not Optional unless you want to allow None
     context: Dict[str, Any] = field(default_factory=dict)
 
+from dataclasses import dataclass, field
+from typing import List, Optional, Dict, Any, Union
+
 @dataclass
 class Explanation:
+    """
+    Holds a human-readable explanation for a safety violation or decision.
+    """
     primary_reason: str
     contributing_factors: List[str]
-    confidence: float
+    confidence: float  # Should be between 0 and 1
     counterfactuals: List[str]
-    feature_importance: Optional[Dict[str, float]] = None
-    shap_values: Optional[np.ndarray] = None
+    feature_importance: Optional[Dict[str, float]] = field(default=None)
+    shap_values: Optional[List[float]] = field(default=None)  # Changed from np.ndarray for easier serialization
+
+    def __post_init__(self):
+        if not (0.0 <= self.confidence <= 1.0):
+            raise ValueError("Confidence must be between 0 and 1")
 
 @dataclass
 class ConstraintRule:
