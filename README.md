@@ -214,27 +214,138 @@ Phase 4 introduces immutable audit trails, policy management, quarantine capabil
 
 See [PHASE4_GUIDE.md](PHASE4_GUIDE.md) for complete documentation.
 
-## 🤖 Phases 5-9: ML & Optimization Pipeline (PLANNED)
+## 🤖 Phases 5-7: ML & Anomaly Detection Pipeline ✅ IMPLEMENTED
 
-The next phases introduce machine learning, anomaly detection, human feedback loops, and continuous optimization:
+Nethical now includes machine learning integration and anomaly detection capabilities:
 
-### Phase 5 – ML Shadow Mode
-- Train minimal classifier (logistic regression or small transformer)
-- Passive inference with no enforcement authority
-- Log predictions alongside rule-based outcomes for comparison
-- Collect baseline metrics (precision, recall, F1, calibration)
+### Phase 5 – ML Shadow Mode ✅ COMPLETE
 
-### Phase 6 – ML Assisted Enforcement
-- Blend ML predictions with rule-based risk (e.g., `0.7 * rules + 0.3 * ml`)
-- Apply blending only in gray zone (uncertain decisions)
-- Maintain audit trail of decision adjustments
-- Gate: False positive delta <5%; improved detection rate
+Train and validate ML models in a safe, passive environment:
 
-### Phase 7 – Anomaly & Drift Detection
-- Sequence anomaly scoring using n-gram or simple models
-- Distribution shift detection (PSI / KL divergence)
-- Automated alert pipeline for drift events
-- Behavioral anomaly detection for unusual agent patterns
+```python
+from nethical.core import MLShadowClassifier, MLModelType
+
+# Initialize shadow classifier
+shadow = MLShadowClassifier(
+    model_type=MLModelType.HEURISTIC,
+    score_agreement_threshold=0.1,
+    storage_path="./shadow_logs"
+)
+
+# Make passive predictions (no enforcement)
+prediction = shadow.predict(
+    agent_id="agent_123",
+    action_id="action_456",
+    features={
+        'violation_count': 0.5,
+        'severity_max': 0.6,
+        'recency_score': 0.4
+    },
+    rule_risk_score=0.5,
+    rule_classification="warn"
+)
+
+# Get baseline metrics
+metrics = shadow.get_metrics_report()
+print(f"Precision: {metrics['precision']:.3f}")
+print(f"Recall: {metrics['recall']:.3f}")
+print(f"F1 Score: {metrics['f1_score']:.3f}")
+print(f"Expected Calibration Error: {metrics['expected_calibration_error']:.3f}")
+```
+
+### Phase 6 – ML Assisted Enforcement ✅ COMPLETE
+
+Blend ML predictions with rule-based decisions in the gray zone:
+
+```python
+from nethical.core import MLBlendedRiskEngine, RiskZone
+
+# Initialize blended risk engine
+blended = MLBlendedRiskEngine(
+    gray_zone_lower=0.4,
+    gray_zone_upper=0.6,
+    rule_weight=0.7,
+    ml_weight=0.3,
+    storage_path="./blended_logs"
+)
+
+# Compute blended risk (ML only influences gray zone)
+decision = blended.compute_blended_risk(
+    agent_id="agent_123",
+    action_id="action_456",
+    rule_risk_score=0.5,  # In gray zone
+    rule_classification="warn",
+    ml_risk_score=0.6,
+    ml_confidence=0.85
+)
+
+print(f"Risk Zone: {decision.risk_zone.value}")
+print(f"ML Influenced: {decision.ml_influenced}")
+print(f"Blended Score: {decision.blended_risk_score:.3f}")
+print(f"Final Classification: {decision.blended_classification}")
+
+# Check promotion gate
+metrics = blended.get_metrics_report()
+gate_metrics = metrics['gate_metrics']
+print(f"Passes Gate: {gate_metrics['passes_gate']}")
+print(f"FP Delta: {gate_metrics['fp_delta_percentage']:.1f}%")
+```
+
+### Phase 7 – Anomaly & Drift Detection ✅ COMPLETE
+
+Detect unusual patterns and distribution shifts:
+
+```python
+from nethical.core import AnomalyDriftMonitor, AnomalyType, DriftSeverity
+
+# Initialize anomaly monitor
+monitor = AnomalyDriftMonitor(
+    sequence_n=3,
+    psi_threshold=0.2,
+    kl_threshold=0.1,
+    storage_path="./anomaly_logs"
+)
+
+# Set baseline distribution
+baseline_scores = [0.2, 0.3, 0.25, 0.35, 0.28] * 100
+monitor.set_baseline_distribution(baseline_scores)
+
+# Record actions and check for anomalies
+alert = monitor.record_action(
+    agent_id="agent_123",
+    action_type="unusual_action",
+    risk_score=0.5,
+    cohort="production"
+)
+
+if alert:
+    print(f"⚠️ Alert: {alert.anomaly_type.value}")
+    print(f"Severity: {alert.severity.value}")
+    print(f"Score: {alert.anomaly_score:.3f}")
+    print(f"Quarantine Recommended: {alert.quarantine_recommended}")
+
+# Check for behavioral anomalies
+behavioral_alert = monitor.check_behavioral_anomaly("agent_123")
+
+# Check for distribution drift
+drift_alert = monitor.check_drift(cohort="production")
+
+# Get statistics
+stats = monitor.get_statistics()
+print(f"Total Alerts: {stats['alerts']['total']}")
+print(f"Critical Alerts: {stats['alerts']['by_severity']['critical']}")
+```
+
+**Key Features:**
+- ✅ Sequence anomaly detection (n-gram based)
+- ✅ Behavioral anomaly detection (repetitive patterns)
+- ✅ Distribution drift detection (PSI & KL divergence)
+- ✅ Automated alert pipeline with severity levels
+- ✅ Quarantine recommendations for critical anomalies
+
+## 🔄 Phases 8-9: Human-in-the-Loop & Optimization (PLANNED)
+
+The final phases introduce human feedback loops and continuous optimization:
 
 ### Phase 8 – Human-in-the-Loop Ops
 - Escalation queue with labeling interface (CLI or UI)

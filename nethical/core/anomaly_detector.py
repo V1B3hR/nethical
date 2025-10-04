@@ -59,7 +59,7 @@ class AnomalyAlert:
         """Convert to dictionary for logging."""
         return {
             'alert_id': self.alert_id,
-            'timestamp': self.timestamp.isoformat(),
+            'timestamp': self.timestamp.isoformat() if self.timestamp else None,
             'anomaly_type': self.anomaly_type.value,
             'severity': self.severity.value,
             'agent_id': self.agent_id,
