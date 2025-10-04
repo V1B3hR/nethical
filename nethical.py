@@ -970,24 +970,21 @@ class MetricsCollector:
 # ASYNC SUPPORT
 # ============================================================================
 
+import asyncio
+
 class AsyncNethical:
-    """Async wrapper for nethical operations"""
-    
-    def __init__(self, nethical_instance):
+    """Async wrapper for nethical operations."""
+
+    def __init__(self, nethical_instance: "nethical"):
         self.core = nethical_instance
-    
+
     async def monitor_action_async(self, intent_id: str, action: Action) -> Dict[str, Any]:
-        """Non-blocking action monitoring"""
-        loop = asyncio.get_event_loop()
-        return await loop.run_in_executor(
-            None, 
-            self.core.monitor_action, 
-            intent_id, 
-            action
-        )
-    
+        """Asynchronously monitor a single action given an intent ID."""
+        loop = asyncio.get_running_loop()
+        return await loop.run_in_executor(None, self.core.monitor_action, intent_id, action)
+
     async def batch_monitor(self, actions: List[Tuple[str, Action]]) -> List[Dict[str, Any]]:
-        """Monitor multiple actions concurrently"""
+        """Asynchronously batch monitor multiple actions."""
         tasks = [
             self.monitor_action_async(intent_id, action)
             for intent_id, action in actions
