@@ -51,6 +51,10 @@ coverage.xml
 # Test data files
 governance_data.sqlite
 demo_data/
+demo_phase567_data/
+phase4_data/
+phase567_data/
+nethical_data/
 
 # Translations
 *.mo
