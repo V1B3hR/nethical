@@ -45,7 +45,6 @@ dev = [
 ]
 
 [tool.setuptools]
-# Only package the 'nethical' package directory. The top-level nethical.py is intentionally not included.
 include-package-data = true
 license-files = ["LICENSE"]
 

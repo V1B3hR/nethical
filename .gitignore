@@ -48,6 +48,9 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 
+# Test data files
+governance_data.sqlite
+
 # Translations
 *.mo
 *.pot
