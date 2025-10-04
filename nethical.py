@@ -400,24 +400,36 @@ class SafetyViolation:
 
 class KeyStore(ABC):
     @abstractmethod
-    def store_key(self, key_id: str, key_bytes: bytes) -> None: pass
-    
+    def store_key(self, key_id: str, key_bytes: bytes) -> None:
+        """Store a key with the given key_id."""
+        ...
+
     @abstractmethod
-    def retrieve_key(self, key_id: str) -> Optional[bytes]: pass
-    
+    def retrieve_key(self, key_id: str) -> Optional[bytes]:
+        """Retrieve the value of the key for key_id, or None if not found."""
+        ...
+
     @abstractmethod
-    def rotate_key(self, key_id: str) -> bytes: pass
-    
+    def rotate_key(self, key_id: str) -> bytes:
+        """Rotate (replace) the key for key_id and return the new key bytes."""
+        ...
+
     @abstractmethod
-    def retire_key(self, key_id: str) -> None: pass
+    def retire_key(self, key_id: str) -> None:
+        """Remove the key for key_id from the store."""
+        ...
 
 class AuditLog(ABC):
     @abstractmethod
-    def append(self, entry: str) -> None: pass
-    
+    def append(self, entry: str) -> None:
+        """Append an entry to the audit log."""
+        ...
+
     @abstractmethod
     def get_entries(self, start: Optional[datetime] = None, 
-                    end: Optional[datetime] = None) -> List[str]: pass
+                    end: Optional[datetime] = None) -> List[str]:
+        """Return a list of entries between start and end datetimes."""
+        ...
 
 # ============================================================================
 # MERKLE TREE AUDIT LOG
