@@ -8,6 +8,46 @@ This guide covers the implementation of Phases 5, 6, and 7 of the Nethical syste
 - **Phase 6**: ML Assisted Enforcement - Blended risk scoring in uncertain decision zones
 - **Phase 7**: Anomaly & Drift Detection - Behavioral and statistical monitoring
 
+## Quick Start
+
+The simplest way to use Phases 5-7 is through the integrated governance class:
+
+```python
+from nethical.core import Phase567IntegratedGovernance
+
+# Initialize with all components enabled
+gov = Phase567IntegratedGovernance(
+    storage_dir="./phase567_data",
+    enable_shadow_mode=True,
+    enable_ml_blending=True,
+    enable_anomaly_detection=True
+)
+
+# Process an action through all phases
+result = gov.process_action(
+    agent_id="agent_123",
+    action_id="action_456",
+    action_type="response",
+    features={'violation_count': 0.5},
+    rule_risk_score=0.5,
+    rule_classification="warn"
+)
+
+print(f"Final Risk Score: {result['final_decision']['risk_score']:.2f}")
+```
+
+Run the integrated demo:
+```bash
+python examples/phase567_demo.py
+```
+
+Run the tests:
+```bash
+pytest tests/test_phase567_integration.py -v
+```
+
+---
+
 ## Phase 5: ML Shadow Mode
 
 ### Purpose
@@ -219,6 +259,66 @@ pytest tests/test_phase7.py -v
 ---
 
 ## Integration Examples
+
+### Unified Phase 5-7 Integration (Recommended)
+
+For simplified usage, use the integrated governance class that combines all three phases:
+
+```python
+from nethical.core import Phase567IntegratedGovernance
+
+# Initialize with all components
+gov = Phase567IntegratedGovernance(
+    storage_dir="./phase567_data",
+    enable_shadow_mode=True,
+    enable_ml_blending=True,
+    enable_anomaly_detection=True,
+    # Shadow mode config
+    shadow_model_type=MLModelType.HEURISTIC,
+    # Blending config
+    gray_zone_lower=0.4,
+    gray_zone_upper=0.6,
+    rule_weight=0.7,
+    ml_weight=0.3,
+    # Anomaly detection config
+    sequence_n=3,
+    psi_threshold=0.2
+)
+
+# Set baseline for anomaly detection
+baseline_scores = [0.2, 0.3, 0.25, 0.35] * 25
+gov.set_baseline_distribution(baseline_scores, cohort="production")
+
+# Process actions through all phases
+result = gov.process_action(
+    agent_id="agent_123",
+    action_id="action_456",
+    action_type="response",
+    features={'violation_count': 0.5, 'severity_max': 0.6},
+    rule_risk_score=0.5,
+    rule_classification="warn",
+    cohort="production"
+)
+
+# Result includes data from all phases:
+# - result['shadow']: ML shadow prediction
+# - result['blended']: Blended risk decision
+# - result['anomaly_alert']: Anomaly detection alert (if any)
+# - result['final_decision']: Final risk score and classification
+
+# Get metrics from all components
+shadow_metrics = gov.get_shadow_metrics()
+blending_metrics = gov.get_blending_metrics()
+anomaly_stats = gov.get_anomaly_statistics()
+
+# Get overall system status
+status = gov.get_system_status()
+
+# Export comprehensive report
+report = gov.export_phase567_report()
+```
+
+### Manual Component Integration
 
 ### Combined ML Pipeline
 

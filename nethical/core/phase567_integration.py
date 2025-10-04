@@ -196,10 +196,10 @@ class Phase567IntegratedGovernance:
                 results['anomaly_alert'] = {
                     'anomaly_type': anomaly_alert.anomaly_type.value,
                     'severity': anomaly_alert.severity.value,
-                    'score': anomaly_alert.score,
+                    'anomaly_score': anomaly_alert.anomaly_score,
                     'threshold': anomaly_alert.threshold,
                     'quarantine_recommended': anomaly_alert.quarantine_recommended,
-                    'message': anomaly_alert.message
+                    'message': anomaly_alert.description
                 }
             else:
                 results['anomaly_alert'] = None
@@ -210,7 +210,7 @@ class Phase567IntegratedGovernance:
                 results['behavioral_anomaly'] = {
                     'anomaly_type': behavioral_alert.anomaly_type.value,
                     'severity': behavioral_alert.severity.value,
-                    'score': behavioral_alert.score,
+                    'anomaly_score': behavioral_alert.anomaly_score,
                     'quarantine_recommended': behavioral_alert.quarantine_recommended
                 }
             
@@ -221,7 +221,7 @@ class Phase567IntegratedGovernance:
                     results['drift_alert'] = {
                         'anomaly_type': drift_alert.anomaly_type.value,
                         'severity': drift_alert.severity.value,
-                        'score': drift_alert.score,
+                        'anomaly_score': drift_alert.anomaly_score,
                         'quarantine_recommended': drift_alert.quarantine_recommended
                     }
         
