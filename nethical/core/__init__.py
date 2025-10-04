@@ -32,6 +32,9 @@ from .anomaly_detector import (
     DriftMetrics
 )
 
+# Phase 5-7 Integration
+from .phase567_integration import Phase567IntegratedGovernance
+
 __all__ = [
     # Phase 3
     'RiskEngine',
@@ -90,4 +93,6 @@ __all__ = [
     'AnomalyType',
     'DriftSeverity',
     'DriftMetrics',
+    # Phase 5-7 Integration
+    'Phase567IntegratedGovernance',
 ]
