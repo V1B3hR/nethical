@@ -41,7 +41,7 @@ from collections import Counter, deque
 from functools import lru_cache, wraps
 import numpy as np
 from cryptography.fernet import Fernet, InvalidToken
-
+from contextlib import contextmanager
 
 # ============================================================================
 # DEPENDENCY MANAGEMENT
@@ -598,62 +598,48 @@ class KDFKeyStore(KeyStore):
 # DISTRIBUTED CIRCUIT BREAKER
 # ============================================================================
 
-class DistributedCircuitBreaker:
-    """Circuit breaker with Redis-based distributed state"""
-    
-    def __init__(self, redis_client=None, key_prefix="nethical:cb"):
-        self.redis = redis_client
-        self.key_prefix = key_prefix
-        self.local_state = CircuitBreakerState.CLOSED
-        self._lock = threading.Lock()
-    
+DEFAULT_KEY_PREFIX = "nethical:cb"
+
+class CircuitBreaker(ABC):
+    @abstractmethod
     def get_state(self) -> CircuitBreakerState:
-        if self.redis:
-            try:
-                state_str = self.redis.get(f"{self.key_prefix}:state")
-                if state_str:
-                    return CircuitBreakerState(state_str.decode())
-            except Exception as e:
-                secure_log("warning", f"Redis get_state failed: {e}")
-        
-        return self.local_state
-    
+        pass
+
+    @abstractmethod
     def set_state(self, state: CircuitBreakerState) -> bool:
-        with self._lock:
-            self.local_state = state
-            
-            if self.redis:
-                try:
-                    self.redis.setex(
-                        f"{self.key_prefix}:state",
-                        3600,  # 1 hour TTL
-                        state.value
-                    )
-                    return True
-                except Exception as e:
-                    secure_log("error", f"Redis set_state failed: {e}")
-                    return False
-            
-            return True
-    
-    def try_acquire_lock(self, timeout: int = 10) -> bool:
-        """Distributed lock for state transitions"""
-        if not self.redis:
-            return True
-        
+        pass
+
+class DistributedCircuitBreaker(CircuitBreaker):
+    """Circuit breaker with Redis-based distributed state"""
+
+    def __init__(self, redis_client, key_prefix: str = DEFAULT_KEY_PREFIX):
+        if redis_client is None:
+            raise ValueError("A valid redis_client instance is required.")
+        self.redis_client = redis_client
+        self.key_prefix = key_prefix
+
+    def get_state(self) -> CircuitBreakerState:
+        ...
+
+    def set_state(self, state: CircuitBreakerState) -> bool:
+        ...
+
+    @contextmanager
+    def lock(self, timeout: int = 10):
+        acquired = self.try_acquire_lock(timeout)
         try:
-            lock_key = f"{self.key_prefix}:lock"
-            return self.redis.set(lock_key, "1", nx=True, ex=timeout)
-        except Exception as e:
-            secure_log("error", f"Lock acquisition failed: {e}")
-            return False
-    
+            if not acquired:
+                raise RuntimeError("Failed to acquire lock")
+            yield
+        finally:
+            if acquired:
+                self.release_lock()
+
+    def try_acquire_lock(self, timeout: int = 10) -> bool:
+        ...
+
     def release_lock(self):
-        if self.redis:
-            try:
-                self.redis.delete(f"{self.key_prefix}:lock")
-            except Exception:
-                pass
+        ...
 
 # ============================================================================
 # SEMANTIC SIMILARITY WITH CACHING
