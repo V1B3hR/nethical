@@ -214,6 +214,42 @@ Phase 4 introduces immutable audit trails, policy management, quarantine capabil
 
 See [PHASE4_GUIDE.md](PHASE4_GUIDE.md) for complete documentation.
 
+## 🤖 Phases 5-9: ML & Optimization Pipeline (PLANNED)
+
+The next phases introduce machine learning, anomaly detection, human feedback loops, and continuous optimization:
+
+### Phase 5 – ML Shadow Mode
+- Train minimal classifier (logistic regression or small transformer)
+- Passive inference with no enforcement authority
+- Log predictions alongside rule-based outcomes for comparison
+- Collect baseline metrics (precision, recall, F1, calibration)
+
+### Phase 6 – ML Assisted Enforcement
+- Blend ML predictions with rule-based risk (e.g., `0.7 * rules + 0.3 * ml`)
+- Apply blending only in gray zone (uncertain decisions)
+- Maintain audit trail of decision adjustments
+- Gate: False positive delta <5%; improved detection rate
+
+### Phase 7 – Anomaly & Drift Detection
+- Sequence anomaly scoring using n-gram or simple models
+- Distribution shift detection (PSI / KL divergence)
+- Automated alert pipeline for drift events
+- Behavioral anomaly detection for unusual agent patterns
+
+### Phase 8 – Human-in-the-Loop Ops
+- Escalation queue with labeling interface (CLI or UI)
+- Structured feedback tags: `false_positive`, `missed_violation`, `policy_gap`
+- Human review workflow for uncertain decisions
+- Median triage SLA tracking and optimization
+
+### Phase 9 – Continuous Optimization
+- Automated tuning of rule weights, classifier thresholds, and escalation boundaries
+- Multi-objective optimization (max recall, min FP rate, min latency)
+- Techniques: grid/random search, evolutionary strategies, Bayesian optimization
+- Continuous feedback loop from human labels to retrain models
+
+See [roadmap.md](roadmap.md) for complete phase specifications and exit criteria.
+
 ## 🚀 Future Tracks: Preparations for 11–50 Systems
 
 The Future Tracks outline upcoming enhancements for scaling Nethical to support larger multi-system deployments:
