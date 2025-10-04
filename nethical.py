@@ -44,6 +44,9 @@ from cryptography.fernet import Fernet, InvalidToken
 from contextlib import contextmanager
 from collections import OrderedDict
 import uuid
+from typing import Callable, List, Dict, Any, Optional
+from threading import Lock
+
 # ============================================================================
 # DEPENDENCY MANAGEMENT
 # ============================================================================
@@ -1441,99 +1444,82 @@ def _log_violation(self, violation: SafetyViolation) -> None:
         elapsed = (datetime.now(timezone.utc) - self._last_trip_time).total_seconds()
         return elapsed > recovery_seconds
     
-    # ========================================================================
-    # PUBLIC API
-    # ========================================================================
-    
-    def reset_circuit_breaker(self, authorization_token: Optional[str] = None) -> bool:
-        """Reset circuit breaker (requires authorization)"""
-        if authorization_token != "admin_reset":
-            secure_log("error", "Unauthorized reset attempt")
-            return False
-        
-        if self.circuit_breaker.try_acquire_lock():
-            try:
-                self.circuit_breaker.set_state(CircuitBreakerState.CLOSED)
-                self._recovery_success_count = 0
-                self._last_trip_time = None
-                secure_log("info", "Circuit breaker reset")
-                self.audit_log.append("Circuit breaker manually reset")
-                self.metrics.set_circuit_breaker(CircuitBreakerState.CLOSED)
-                return True
-            finally:
-                self.circuit_breaker.release_lock()
-        return False
-    
-    def add_constraint_rule(self, rule: ConstraintRule):
-        """Add a new constraint rule"""
-        with self._lock:
-            self.global_rules.append(rule)
-            secure_log("info", f"Rule added: {rule.rule_id}")
-            self.audit_log.append(f"Rule added: {rule.rule_id}")
-    
-    def register_safety_callback(self, level: SafetyLevel, callback: Callable):
-        """Register a safety callback"""
-        self.safety_callbacks[level].append(callback)
-    
-    def get_safety_status(self) -> Dict[str, Any]:
-        """Get current safety status"""
-        with self._lock:
-            now = datetime.now(timezone.utc)
-            recent_violations = [
-                v for v in self.violation_history
-                if (now - v.timestamp).total_seconds() < 3600
-            ]
-            
-            return {
-                "is_active": self.is_active,
-                "circuit_breaker_state": self.circuit_breaker.get_state().value,
-                "total_intents": len(self.intent_history),
-                "total_actions": len(self.action_history),
-                "total_violations": len(self.violation_history),
-                "recent_violations": len(recent_violations),
-                "rule_count": len(self.global_rules),
-                "anomaly_detector_trained": self.anomaly_detector.is_trained,
-                "timestamp_utc": now.isoformat(),
-            }
-    
-    def generate_compliance_report(
-        self, regulation: str, start_date: datetime, end_date: datetime
-    ) -> Dict[str, Any]:
-        """Generate regulatory compliance report"""
-        with self._lock:
-            violations = [
-                v for v in self.violation_history
-                if start_date <= v.timestamp <= end_date
-                and regulation in (v.regulatory_tags or [])
-            ]
-            
-            return {
-                "regulation": regulation,
-                "period": {
-                    "start": start_date.isoformat(),
-                    "end": end_date.isoformat()
-                },
-                "total_violations": len(violations),
-                "by_severity": dict(Counter(v.severity.value for v in violations)),
-                "unresolved": len([v for v in violations if v.feedback is None]),
-                "violations": [
-                    {
-                        "timestamp": v.timestamp.isoformat(),
-                        "severity": v.severity.value,
-                        "description": _redact(v.description),
-                        "violated_constraints": v.violated_constraints,
-                    }
-                    for v in violations
-                ]
-            }
-    
-    def export_metrics(self) -> str:
-        """Export Prometheus metrics"""
-        return self.metrics.get_metrics()
+# ============================================================================
+# PUBLIC API
+# ============================================================================
 
-import platform
-import asyncio
-from datetime import datetime, timezone, timedelta
+
+class NethicalAPI:
+    def __init__(self):
+        self._rules: List[ConstraintRule] = []
+        self._safety_callbacks: Dict[SafetyLevel, List[Callable]] = {level: [] for level in SafetyLevel}
+        self._lock = Lock()
+        self._circuit_breaker_state = CircuitBreakerState.CLOSED
+        self._metrics = {}  # Replace with proper metrics object
+        self._audit_log = []  # Replace with proper audit log class
+
+    def add_constraint_rule(self, rule: ConstraintRule) -> None:
+        """Add a new constraint rule to the system."""
+        if not isinstance(rule, ConstraintRule):
+            raise TypeError("rule must be an instance of ConstraintRule")
+        with self._lock:
+            self._rules.append(rule)
+            self._log_and_audit("info", f"Rule added: {rule}")
+
+    def register_safety_callback(self, level: SafetyLevel, callback: Callable[[Any], None]) -> None:
+        """Register a callback for a given safety level."""
+        if not callable(callback):
+            raise TypeError("callback must be callable")
+        with self._lock:
+            self._safety_callbacks[level].append(callback)
+            self._log_and_audit("info", f"Callback registered for {level}")
+
+    def get_safety_status(self) -> Dict[str, Any]:
+        """Return current safety status and rule summary."""
+        with self._lock:
+            return {
+                "rules": list(self._rules),
+                "circuit_breaker": self._circuit_breaker_state.name,
+                "callbacks": {level.name: len(cbs) for level, cbs in self._safety_callbacks.items()}
+            }
+
+    def generate_compliance_report(self) -> Dict[str, Any]:
+        """Generate a compliance report summary."""
+        # Replace with real logic
+        with self._lock:
+            report = {
+                "total_rules": len(self._rules),
+                "circuit_breaker_state": self._circuit_breaker_state.name,
+                "safety_callbacks_registered": sum(len(cbs) for cbs in self._safety_callbacks.values()),
+                "metrics": self._metrics.copy(),
+            }
+            self._log_and_audit("info", "Compliance report generated")
+            return report
+
+    def export_metrics(self) -> Dict[str, Any]:
+        """Export current metrics snapshot."""
+        with self._lock:
+            return self._metrics.copy()
+
+    def reset_circuit_breaker(self, authorization_token: Optional[str] = None) -> bool:
+        """Reset the circuit breaker (requires authorization)."""
+        if not self._is_authorized(authorization_token, "reset_circuit_breaker"):
+            self._log_and_audit("error", "Unauthorized circuit breaker reset attempt")
+            return False
+        with self._lock:
+            self._circuit_breaker_state = CircuitBreakerState.CLOSED
+            self._log_and_audit("info", "Circuit breaker reset")
+            return True
+
+    def _is_authorized(self, token: Optional[str], action: str) -> bool:
+        # Replace with real authorization logic
+        return token == "admin_reset"
+
+    def _log_and_audit(self, level: str, msg: str) -> None:
+        secure_log(level, msg)
+        self._audit_log.append(msg)  # Replace with real audit log method
+
+# ============================================================================
 
 # Assume these are imported from the nethical package
 # from nethical import nethical, Intent, Action, ActionType, SafetyLevel
