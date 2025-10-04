@@ -43,6 +43,7 @@ import numpy as np
 from cryptography.fernet import Fernet, InvalidToken
 from contextlib import contextmanager
 from collections import OrderedDict
+import uuid
 # ============================================================================
 # DEPENDENCY MANAGEMENT
 # ============================================================================
@@ -1125,145 +1126,102 @@ class nethical:
     # ========================================================================
     # INTENT & ACTION MANAGEMENT
     # ========================================================================
-    
-    def register_intent(self, intent: Intent) -> str:
-        """Register a new intent"""
-        with self._lock:
-            intent_id = f"intent_{len(self.intent_history)}_{int(time.time()*1000)}"
-            self.intent_history.append((intent_id, intent))
-            secure_log("info", f"Intent registered: {intent_id}")
-            self.audit_log.append(f"Intent registered: {intent_id} by {intent.actor_role}")
-            return intent_id
-    
-    def monitor_action(self, intent_id: str, action: Action) -> Dict[str, Any]:
-        """Monitor action against registered intent"""
-        if not self.is_active:
-            return {"monitoring": "disabled", "action_allowed": True}
-        
-        # Check circuit breaker
-        cb_state = self.circuit_breaker.get_state()
-        
-        if cb_state == CircuitBreakerState.OPEN:
-            if self._should_attempt_recovery():
-                self.circuit_breaker.set_state(CircuitBreakerState.HALF_OPEN)
-                secure_log("info", "Circuit breaker entering HALF_OPEN")
-            else:
-                self.metrics.record_action("blocked")
-                return {
-                    "monitoring": "blocked",
-                    "action_allowed": False,
-                    "reason": "circuit_breaker_open"
-                }
-        
-        with self._lock:
-            intent = self._find_intent(intent_id)
-            if not intent:
-                self.metrics.record_action("error")
-                return {
-                    "monitoring": "error",
-                    "action_allowed": False,
-                    "reason": "intent_not_found"
-                }
-            
-            # Update context
-            self.policy_engine.update_context(
-                recent_violations=len([
-                    v for v in self.violation_history
-                    if (datetime.now(timezone.utc) - v.timestamp).total_seconds() < 3600
-                ])
+
+def register_intent(self, intent: Intent) -> str:
+    """Register a new intent and return its unique ID."""
+    with self._lock:
+        intent_id = f"intent_{uuid.uuid4()}"
+        self.intent_history.append((intent_id, intent))
+        secure_log("info", f"Intent registered: {intent_id}", extra={"actor": intent.actor_role})
+        self.audit_log.append(f"Intent registered: {intent_id} by {intent.actor_role}")
+        return intent_id
+
+def monitor_action(self, intent_id: str, action: Action) -> Dict[str, Any]:
+    """
+    Monitor an action against its registered intent.
+    Returns a dictionary with monitoring results, including action_allowed (bool), reason (str), and other details.
+    """
+    if not self.is_active:
+        return {"monitoring": "disabled", "action_allowed": True}
+
+    cb_state = self.circuit_breaker.get_state()
+    if cb_state == CircuitBreakerState.OPEN:
+        if self._should_attempt_recovery():
+            self.circuit_breaker.set_state(CircuitBreakerState.HALF_OPEN)
+            secure_log("info", "Circuit breaker entering HALF_OPEN")
+        else:
+            self.metrics.record_action("blocked")
+            return {
+                "monitoring": "blocked",
+                "action_allowed": False,
+                "reason": "circuit_breaker_open"
+            }
+
+    with self._lock:
+        intent = self._find_intent(intent_id)
+        if not intent:
+            self.metrics.record_action("error")
+            return {
+                "monitoring": "error",
+                "action_allowed": False,
+                "reason": "intent_not_found"
+            }
+
+        self.policy_engine.update_context(
+            recent_violations=sum(
+                (datetime.now(timezone.utc) - v.timestamp).total_seconds() < 3600
+                for v in self.violation_history
             )
-            
-            # Calculate deviation
-            deviation_score, violated, trigger_details, suggestions = \
-                self._calculate_deviation(intent, action)
-            
-            # Anomaly detection
-            is_anomalous, anomaly_score, feature_importance = \
-                self.anomaly_detector.is_anomalous(intent, action)
-            
-            if is_anomalous:
-                secure_log("warning", f"Anomaly detected: {anomaly_score:.3f}")
-                suggestions.append(f"Anomalous pattern detected (score: {anomaly_score:.3f})")
-                self.metrics.record_anomaly()
-            
-            # Record action
-            self.action_history.append((intent_id, action, deviation_score, violated))
-            self.metrics.record_deviation(deviation_score)
-            
-            # Check violations
-            safety_result = self._check_safety_violations(
-                intent, action, deviation_score, violated,
-                trigger_details, suggestions
+        )
+
+        deviation_score, violated, trigger_details, suggestions = self._calculate_deviation(intent, action)
+        is_anomalous, anomaly_score, feature_importance = self.anomaly_detector.is_anomalous(intent, action)
+
+        if is_anomalous:
+            secure_log("warning", f"Anomaly detected: {anomaly_score:.3f}", extra={"intent_id": intent_id})
+            suggestions.append(f"Anomalous pattern detected (score: {anomaly_score:.3f})")
+            self.metrics.record_anomaly()
+
+        self.action_history.append((intent_id, action, deviation_score, violated))
+        self.metrics.record_deviation(deviation_score)
+
+        safety_result = self._check_safety_violations(
+            intent, action, deviation_score, violated, trigger_details, suggestions
+        )
+
+        if safety_result.get("violation_detected"):
+            violation: SafetyViolation = safety_result["violation"]
+            violation.explanation = self._generate_explanation(
+                intent, action, violation, feature_importance
             )
-            
-            if safety_result["violation_detected"]:
-                violation: SafetyViolation = safety_result["violation"]
-                
-                # Generate explanation
-                violation.explanation = self._generate_explanation(
-                    intent, action, violation, feature_importance
-                )
-                
-                self.violation_history.append(violation)
-                self.audit_log.append(
-                    f"Violation: {violation.severity.value} - {_redact(violation.description)}"
-                )
-                self.metrics.record_violation(violation.severity)
-                
-                # Update anomaly detector
-                self.anomaly_detector.add_sample(intent, action, is_violation=True)
-                
-                # Handle violation
-                self._handle_safety_violation(violation)
-                
-                if self.incident_notify_hook:
-                    self.incident_notify_hook(violation)
-                
-                # Circuit breaker logic
-                cb_state = self.circuit_breaker.get_state()
-                if cb_state == CircuitBreakerState.HALF_OPEN:
-                    self.circuit_breaker.set_state(CircuitBreakerState.OPEN)
-                    self._recovery_success_count = 0
-                    secure_log("critical", "Circuit breaker returned to OPEN")
-                
-                self.metrics.record_action("violation")
-                
-                return {
-                    "monitoring": "violation_detected",
-                    "action_allowed": cb_state == CircuitBreakerState.CLOSED,
-                    "deviation_score": deviation_score,
-                    "anomaly_score": anomaly_score,
-                    "violation": violation,
-                    "safety_level": violation.severity.value,
-                    "violated_constraints": violated,
-                    "explanation": violation.explanation,
-                }
-            else:
-                # Success in HALF_OPEN
-                cb_state = self.circuit_breaker.get_state()
-                if cb_state == CircuitBreakerState.HALF_OPEN:
-                    self._recovery_success_count += 1
-                    threshold = (self.config.get("half_open_success_threshold", 3) 
-                                if isinstance(self.config, dict) 
-                                else self.config.half_open_success_threshold)
-                    
-                    if self._recovery_success_count >= threshold:
-                        self.circuit_breaker.set_state(CircuitBreakerState.CLOSED)
-                        self._recovery_success_count = 0
-                        secure_log("info", "Circuit breaker recovered to CLOSED")
-                
-                self.anomaly_detector.add_sample(intent, action, is_violation=False)
-                self.metrics.record_action("safe")
-                
-                return {
-                    "monitoring": "safe",
-                    "action_allowed": True,
-                    "deviation_score": deviation_score,
-                    "anomaly_score": anomaly_score,
-                    "safety_level": SafetyLevel.SAFE.value,
-                    "violated_constraints": violated,
-                }
-    
+            self.violation_history.append(violation)
+            self._log_violation(violation)
+            self.metrics.record_violation(violation.severity)
+            self.anomaly_detector.add_sample(intent, action, is_violation=True)
+            self._handle_safety_violation(violation)
+            if self.incident_notify_hook:
+                self.incident_notify_hook(violation)
+            return {
+                "monitoring": "violation",
+                "action_allowed": False,
+                "reason": violation.severity.value,
+                "details": violation.explanation
+            }
+
+        return {
+            "monitoring": "ok",
+            "action_allowed": True,
+            "deviation_score": deviation_score,
+            "suggestions": suggestions,
+            "anomaly_score": anomaly_score if is_anomalous else None
+        }
+
+def _log_violation(self, violation: SafetyViolation) -> None:
+    """Log and redact a violation for auditing."""
+    redacted_desc = _redact(violation.description)
+    self.audit_log.append(f"Violation: {violation.severity.value} - {redacted_desc}")
+    secure_log("error", f"Violation detected: {redacted_desc}", extra={"severity": violation.severity.value})
+
     # ========================================================================
     # INTERNAL LOGIC
     # ========================================================================
