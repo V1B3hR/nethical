@@ -42,7 +42,7 @@ from functools import lru_cache, wraps
 import numpy as np
 from cryptography.fernet import Fernet, InvalidToken
 from contextlib import contextmanager
-
+from collections import OrderedDict
 # ============================================================================
 # DEPENDENCY MANAGEMENT
 # ============================================================================
@@ -650,8 +650,7 @@ class CachedSemanticSimilarity:
     
     def __init__(self, cache_size: int = 1000):
         self.model = None
-        self._cache = {}
-        self._cache_order = deque()
+        self._cache = OrderedDict()
         self._cache_size = cache_size
         self._lock = threading.Lock()
         
@@ -661,15 +660,22 @@ class CachedSemanticSimilarity:
                 secure_log("info", "Loaded sentence transformer model")
             except Exception as e:
                 secure_log("warning", f"Model load failed: {e}")
-    
+
+    def _normalize(self, text: str) -> str:
+        return (text or "").strip().lower()
+
     def _cache_key(self, text1: str, text2: str) -> str:
-        return hashlib.md5(f"{text1}||{text2}".encode()).hexdigest()
+        # Normalize inputs for consistent cache lookups
+        norm1 = self._normalize(text1)
+        norm2 = self._normalize(text2)
+        return hashlib.md5(f"{norm1}||{norm2}".encode()).hexdigest()
     
     def similarity(self, text1: str, text2: str) -> float:
         cache_key = self._cache_key(text1, text2)
-        
         with self._lock:
             if cache_key in self._cache:
+                # Move to end to mark as recently used
+                self._cache.move_to_end(cache_key)
                 return self._cache[cache_key]
         
         # Compute similarity
@@ -686,15 +692,12 @@ class CachedSemanticSimilarity:
         else:
             result = self._jaccard_similarity(text1, text2)
         
-        # Update cache
         with self._lock:
-            if len(self._cache) >= self._cache_size:
-                oldest = self._cache_order.popleft()
-                del self._cache[oldest]
-            
+            # Insert and maintain LRU order
             self._cache[cache_key] = result
-            self._cache_order.append(cache_key)
-        
+            self._cache.move_to_end(cache_key)
+            if len(self._cache) > self._cache_size:
+                self._cache.popitem(last=False)
         return result
     
     @staticmethod
