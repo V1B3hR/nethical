@@ -348,16 +348,31 @@ print(f"Critical Alerts: {stats['alerts']['by_severity']['critical']}")
 The final phases introduce human feedback loops and continuous optimization:
 
 ### Phase 8 – Human-in-the-Loop Ops
+
+**Escalation & Review Workflow:**
 - Escalation queue with labeling interface (CLI or UI)
 - Structured feedback tags: `false_positive`, `missed_violation`, `policy_gap`
-- Human review workflow for uncertain decisions
+- Human review workflow for uncertain or critical decisions
+- Structured feedback collection for model and rule improvement
 - Median triage SLA tracking and optimization
 
+**Key Objectives:**
+- Enable human reviewers to label uncertain cases for continuous improvement
+- Track and optimize response times for human escalations
+- Build a feedback loop that directly improves detection accuracy
+
 ### Phase 9 – Continuous Optimization
+
+**Automated Tuning:**
 - Automated tuning of rule weights, classifier thresholds, and escalation boundaries
 - Multi-objective optimization (max recall, min FP rate, min latency)
 - Techniques: grid/random search, evolutionary strategies, Bayesian optimization
 - Continuous feedback loop from human labels to retrain models
+
+**Promotion Gate:**
+- New configurations promoted only when gate conditions are met
+- Validation against precision/recall targets
+- A/B testing framework for configuration comparison
 
 See [roadmap.md](roadmap.md) for complete phase specifications and exit criteria.
 
