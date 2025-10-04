@@ -282,12 +282,9 @@ class Action:
     action_type: ActionType
     actual_parameters: Dict[str, Any]
     observed_effects: List[str]
-    timestamp: datetime = None
-    actor_role: Optional[str] = "user"
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    actor_role: str = "user"  # Not Optional unless you want to allow None
     context: Dict[str, Any] = field(default_factory=dict)
-    
-    def __post_init__(self):
-        self.timestamp = self.timestamp or datetime.now(timezone.utc)
 
 @dataclass
 class Explanation:
