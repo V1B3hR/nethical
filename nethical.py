@@ -41,6 +41,7 @@ from collections import Counter, deque
 from functools import lru_cache, wraps
 import numpy as np
 
+
 # ============================================================================
 # DEPENDENCY MANAGEMENT
 # ============================================================================
@@ -256,19 +257,24 @@ class CircuitBreakerState(Enum):
 # DATA CLASSES
 # ============================================================================
 
+
 @dataclass
 class Intent:
+    """
+    Represents an intended action with associated constraints and metadata.
+    """
     description: str
     action_type: ActionType
     expected_outcome: str
-    safety_constraints: List[str]
-    confidence: float = 1.0
-    timestamp: datetime = None
-    actor_role: Optional[str] = "user"
+    safety_constraints: List[str] = field(default_factory=list)
+    confidence: float = field(default=1.0)
+    timestamp: Optional[datetime] = None
+    actor_role: Optional[str] = field(default="user")
     context: Dict[str, Any] = field(default_factory=dict)
     
     def __post_init__(self):
-        self.timestamp = self.timestamp or datetime.now(timezone.utc)
+        if self.timestamp is None:
+            self.timestamp = datetime.now(timezone.utc)
 
 @dataclass
 class Action:
