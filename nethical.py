@@ -923,37 +923,45 @@ if HAS_PROMETHEUS:
     nethical_actions = Counter('nethical_actions_total', 'Total actions monitored', ['result'])
 
 class MetricsCollector:
-    """Collect and expose Prometheus metrics"""
-    
-    def __init__(self):
-        self.enabled = HAS_PROMETHEUS
-    
-    def record_violation(self, severity: SafetyLevel):
+    """Collect and expose Prometheus metrics."""
+
+    def __init__(self) -> None:
+        self.enabled: bool = HAS_PROMETHEUS
+        if not self.enabled:
+            secure_log("warning", "Prometheus metrics not enabled. Install prometheus_client to enable metrics.")
+
+    def record_violation(self, severity: SafetyLevel) -> None:
+        """Increment the violation counter for a given severity."""
         if self.enabled:
             nethical_violations.labels(severity=severity.value).inc()
-    
-    def record_deviation(self, score: float):
+
+    def record_deviation(self, score: float) -> None:
+        """Observe a deviation score."""
         if self.enabled:
             nethical_deviation_scores.observe(score)
-    
-    def set_circuit_breaker(self, state: CircuitBreakerState):
+
+    def set_circuit_breaker(self, state: CircuitBreakerState) -> None:
+        """Set the circuit breaker gauge to the current state."""
         if self.enabled:
             state_map = {
                 CircuitBreakerState.CLOSED: 0,
                 CircuitBreakerState.HALF_OPEN: 1,
                 CircuitBreakerState.OPEN: 2,
             }
-            nethical_circuit_breaker.set(state_map[state])
-    
-    def record_anomaly(self):
+            nethical_circuit_breaker.set(state_map.get(state, -1))
+
+    def record_anomaly(self) -> None:
+        """Increment the anomaly counter."""
         if self.enabled:
             nethical_anomalies.inc()
-    
-    def record_action(self, result: str):
+
+    def record_action(self, result: str) -> None:
+        """Increment the action counter for a given result."""
         if self.enabled:
             nethical_actions.labels(result=result).inc()
-    
+
     def get_metrics(self) -> str:
+        """Return the latest metrics as a Prometheus-formatted string."""
         if self.enabled:
             return generate_latest().decode()
         return ""
