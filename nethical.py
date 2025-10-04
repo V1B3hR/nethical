@@ -1222,148 +1222,132 @@ def _log_violation(self, violation: SafetyViolation) -> None:
     self.audit_log.append(f"Violation: {violation.severity.value} - {redacted_desc}")
     secure_log("error", f"Violation detected: {redacted_desc}", extra={"severity": violation.severity.value})
 
+        # ========================================================================
+    # INTERNAL LOGIC (Improved)
     # ========================================================================
-    # INTERNAL LOGIC
-    # ========================================================================
-    
+
+    def _config_value(self, key, default=None):
+        if isinstance(self.config, dict):
+            return self.config.get(key, default)
+        return getattr(self.config, key, default)
+
     def _find_intent(self, intent_id: str) -> Optional[Intent]:
-        for stored_id, intent in self.intent_history:
-            if stored_id == intent_id:
-                return intent
-        return None
-    
+        """Fast O(1) intent lookup using a dictionary."""
+        with self._lock:
+            return getattr(self, "_intent_lookup", {}).get(intent_id)
+
     def _calculate_deviation(
         self, intent: Intent, action: Action
     ) -> Tuple[float, List[str], Dict[str, Any], List[str]]:
-        """Calculate deviation score between intent and action"""
-        weights = (self.config.get("weights", {}) if isinstance(self.config, dict) 
-                  else {"type_mismatch": 1.0, "description": 1.0, "outcome": 0.8, "constraints": 1.2})
-        
+        """Calculate deviation score between intent and action."""
+        weights = self._config_value("weights", {
+            "type_mismatch": 1.0,
+            "description": 1.0,
+            "outcome": 0.8,
+            "constraints": 1.2
+        })
+
         penalties = []
         violated_ids = []
         trigger_details = {}
         suggestions = []
-        
+
         # Type mismatch
         type_penalty = 1.0 if intent.action_type != action.action_type else 0.0
         penalties.append(type_penalty * weights.get("type_mismatch", 1.0))
-        
+
         # Description similarity
-        desc_sim = self.semantic_similarity.similarity(
-            intent.description, action.description
-        )
+        desc_sim = self.semantic_similarity.similarity(intent.description, action.description)
         penalties.append((1.0 - desc_sim) * weights.get("description", 1.0))
-        
+
         # Outcome similarity
         expected = intent.expected_outcome or ""
         observed = " ".join(action.observed_effects or [])
         outcome_sim = self.semantic_similarity.similarity(expected, observed)
         penalties.append((1.0 - outcome_sim) * weights.get("outcome", 0.8))
-        
+
         # Constraint violations
         all_rules = self.global_rules + self._build_dynamic_rules(intent)
-        
-        # Filter rules based on policy engine
-        applicable_rules = [
-            rule for rule in all_rules
-            if self.policy_engine.should_apply_rule(rule)
-        ]
-        
+        applicable_rules = [rule for rule in all_rules if self.policy_engine.should_apply_rule(rule)]
         total_weight = sum(r.weight for r in applicable_rules) or 1.0
         violated_weight = 0.0
-        
+
         for rule in applicable_rules:
             try:
                 if rule.violates(action):
                     violated_ids.append(rule.rule_id)
                     violated_weight += rule.weight
                     trigger_details[rule.rule_id] = {
-                        "keywords": [kw for kw in (rule.keywords_any or []) 
-                                   if kw in action.description.lower()],
-                        "regex": [rx for rx in (rule.regex_any or [])
-                                if re.search(rx, action.description, re.I)]
+                        "keywords": [kw for kw in (rule.keywords_any or []) if kw in action.description.lower()],
+                        "regex": [rx for rx in (rule.regex_any or []) if re.search(rx, action.description, re.I)]
                     }
                     suggestions.append(f"Avoid: {rule.description}")
             except Exception as e:
                 secure_log("error", f"Rule check failed: {rule.rule_id}: {e}")
-        
+
         constraint_penalty = (violated_weight / total_weight) * weights.get("constraints", 1.2)
         penalties.append(constraint_penalty)
-        
-        # Calculate final score
+
         max_possible = sum(weights.values())
         score = sum(penalties) / max(max_possible, 1.0)
         deviation_score = max(0.0, min(1.0, score))
-        
+
         return deviation_score, violated_ids, trigger_details, suggestions
-    
+
+    _DYNAMIC_RULES_MAP = [
+        ("no_system_modification", "No system modification", 0.8, ["modify", "alter", "patch", "change system"]),
+        ("read_only", "Read-only constraint", 0.7, ["write", "delete", "overwrite"]),
+        ("no_unauthorized_access", "No unauthorized access", 0.9, ["unauthorized", "bypass", "elevate"]),
+    ]
+
     def _build_dynamic_rules(self, intent: Intent) -> List[ConstraintRule]:
-        """Build rules from intent constraints"""
+        """Build rules from intent constraints using a mapping table."""
         rules = []
         for constraint in intent.safety_constraints:
             lc = constraint.lower().strip()
             rule_id = f"intent::{re.sub(r'\\s+', '_', lc)}"
-            
-            if "no_system_modification" in lc:
-                rules.append(ConstraintRule(
-                    rule_id, "No system modification", ConstraintCategory.INTENT_LOCAL,
-                    weight=0.8, keywords_any=["modify", "alter", "patch", "change system"]
-                ))
-            elif "read_only" in lc:
-                rules.append(ConstraintRule(
-                    rule_id, "Read-only constraint", ConstraintCategory.INTENT_LOCAL,
-                    weight=0.7, keywords_any=["write", "delete", "overwrite"]
-                ))
-            elif "no_unauthorized_access" in lc:
-                rules.append(ConstraintRule(
-                    rule_id, "No unauthorized access", ConstraintCategory.INTENT_LOCAL,
-                    weight=0.9, keywords_any=["unauthorized", "bypass", "elevate"]
-                ))
+            for key, desc, weight, keywords in self._DYNAMIC_RULES_MAP:
+                if key in lc:
+                    rules.append(ConstraintRule(
+                        rule_id, desc, ConstraintCategory.INTENT_LOCAL,
+                        weight=weight, keywords_any=keywords
+                    ))
+                    break
             else:
                 rules.append(ConstraintRule(
                     rule_id, f"Custom: {constraint}", ConstraintCategory.INTENT_LOCAL,
                     weight=0.5, keywords_any=[lc] if lc else None
                 ))
-        
         return rules
-    
+
     def _check_safety_violations(
         self, intent: Intent, action: Action, deviation_score: float,
         violated_constraints: List[str], trigger_details: Dict,
         suggestions: List[str]
     ) -> Dict[str, Any]:
-        """Check if action constitutes a safety violation"""
-        threshold = (self.config.get("deviation_threshold", 0.7) 
-                    if isinstance(self.config, dict) 
-                    else self.config.deviation_threshold)
-        
+        """Check if action constitutes a safety violation."""
+        threshold = self._config_value("deviation_threshold", 0.7)
         if deviation_score < threshold and not violated_constraints:
             return {"violation_detected": False}
-        
-        # Determine severity
-        emergency_threshold = (self.config.get("emergency_threshold", 0.9)
-                             if isinstance(self.config, dict)
-                             else self.config.emergency_threshold)
-        
+
+        emergency_threshold = self._config_value("emergency_threshold", 0.9)
         violated_lower = [v.lower() for v in violated_constraints]
-        emergency_triggers = any("no_harm" in v or "preserve_life" in v 
-                               for v in violated_lower)
+        emergency_triggers = any("no_harm" in v or "preserve_life" in v for v in violated_lower)
         privacy_triggers = any("privacy" in v for v in violated_lower)
-        
+
         if deviation_score >= emergency_threshold or emergency_triggers:
             severity = SafetyLevel.EMERGENCY
         elif deviation_score >= 0.8 or privacy_triggers or len(violated_constraints) >= 3:
             severity = SafetyLevel.CRITICAL
         else:
             severity = SafetyLevel.WARNING
-        
-        # Collect regulatory tags
+
         regulatory_tags = list({
             tag for rule in self.global_rules
             for tag in (rule.regulatory_tags or [])
             if rule.rule_id in violated_constraints
         })
-        
+
         violation = SafetyViolation(
             violation_type="intent_action_deviation",
             severity=severity,
@@ -1376,44 +1360,33 @@ def _log_violation(self, violation: SafetyViolation) -> None:
             mitigation_suggestion="; ".join(suggestions),
             regulatory_tags=regulatory_tags,
         )
-        
         return {"violation_detected": True, "violation": violation}
-    
+
     def _generate_explanation(
         self, intent: Intent, action: Action, violation: SafetyViolation,
         feature_importance: Optional[Dict] = None
     ) -> Explanation:
-        """Generate human-readable explanation"""
+        """Generate human-readable explanation for a violation."""
         primary_reason = f"Deviation score {violation.deviation_score:.2f} exceeded threshold"
-        
         contributing_factors = []
         if intent.action_type != action.action_type:
             contributing_factors.append(
-                f"Type mismatch: expected {intent.action_type.value}, "
-                f"got {action.action_type.value}"
+                f"Type mismatch: expected {intent.action_type.value}, got {action.action_type.value}"
             )
-        
         if violation.violated_constraints:
             contributing_factors.append(
-                f"Violated {len(violation.violated_constraints)} constraints: "
-                f"{', '.join(violation.violated_constraints[:3])}"
+                f"Violated {len(violation.violated_constraints)} constraints: {', '.join(violation.violated_constraints[:3])}"
             )
-        
-        # Generate counterfactuals
+
         counterfactuals = []
         if intent.action_type != action.action_type:
             counterfactuals.append(
-                f"If action type was {intent.action_type.value}, "
-                "deviation would be lower"
+                f"If action type was {intent.action_type.value}, deviation would be lower"
             )
-        
         for constraint in violation.violated_constraints[:2]:
-            counterfactuals.append(
-                f"Avoiding '{constraint}' would improve safety"
-            )
-        
+            counterfactuals.append(f"Avoiding '{constraint}' would improve safety")
+
         confidence = 1.0 - (violation.deviation_score * 0.3)
-        
         return Explanation(
             primary_reason=primary_reason,
             contributing_factors=contributing_factors,
@@ -1421,36 +1394,29 @@ def _log_violation(self, violation: SafetyViolation) -> None:
             counterfactuals=counterfactuals,
             feature_importance=feature_importance
         )
-    
+
     def _handle_safety_violation(self, violation: SafetyViolation):
-        """Handle detected safety violation"""
+        """Handle detected safety violation and trip circuit breaker if needed."""
         secure_log("warning", f"Safety violation: {violation.description}")
-        
         if violation.severity in (SafetyLevel.CRITICAL, SafetyLevel.EMERGENCY):
-            cooldown = (self.config.get("trip_cooldown_seconds", 3.0)
-                       if isinstance(self.config, dict)
-                       else self.config.trip_cooldown_seconds)
-            
+            cooldown = self._config_value("trip_cooldown_seconds", 3.0)
             should_trip = (
                 self._last_trip_time is None or
                 (datetime.now(timezone.utc) - self._last_trip_time).total_seconds() >= cooldown
             )
-            
             if should_trip:
-                self.trip_circuit_breaker(
-                    f"{violation.severity.value}: {violation.violation_type}"
-                )
+                self.trip_circuit_breaker(f"{violation.severity.value}: {violation.violation_type}")
                 self._last_trip_time = datetime.now(timezone.utc)
-        
+
         # Execute callbacks
         for callback in self.safety_callbacks.get(violation.severity, []):
             try:
                 callback(violation)
             except Exception as e:
                 secure_log("error", f"Callback failed: {e}")
-    
+
     def trip_circuit_breaker(self, reason: str):
-        """Trip the circuit breaker"""
+        """Trip the circuit breaker."""
         if self.circuit_breaker.try_acquire_lock():
             try:
                 self.circuit_breaker.set_state(CircuitBreakerState.OPEN)
@@ -1459,7 +1425,6 @@ def _log_violation(self, violation: SafetyViolation) -> None:
                 secure_log("critical", f"CIRCUIT BREAKER TRIPPED: {reason}")
                 self.audit_log.append(f"Circuit breaker tripped: {reason}")
                 self.metrics.set_circuit_breaker(CircuitBreakerState.OPEN)
-                
                 for callback in self.safety_callbacks.get(SafetyLevel.EMERGENCY, []):
                     try:
                         callback(reason)
@@ -1467,16 +1432,12 @@ def _log_violation(self, violation: SafetyViolation) -> None:
                         secure_log("error", f"Emergency callback failed: {e}")
             finally:
                 self.circuit_breaker.release_lock()
-    
+
     def _should_attempt_recovery(self) -> bool:
-        """Check if circuit breaker should attempt recovery"""
+        """Check if circuit breaker should attempt recovery."""
         if not self._last_trip_time:
             return False
-        
-        recovery_seconds = (self.config.get("auto_recovery_seconds", 600.0)
-                          if isinstance(self.config, dict)
-                          else self.config.auto_recovery_seconds)
-        
+        recovery_seconds = self._config_value("auto_recovery_seconds", 600.0)
         elapsed = (datetime.now(timezone.utc) - self._last_trip_time).total_seconds()
         return elapsed > recovery_seconds
     
