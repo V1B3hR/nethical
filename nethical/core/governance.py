@@ -1638,7 +1638,7 @@ class EnhancedSafetyGovernance:
             "by_type": by_type,
             "by_severity": by_severity,
             "by_sub_mission": by_sub,
-            "unified_types" (if self.config.unify_specialized_manipulation_types else "ignored"):
+            ("unified_types" if self.config.unify_specialized_manipulation_types else "ignored"):
                 unified if unified else {},
             "recent": [v.to_dict() for v in violations[-5:]]
         }

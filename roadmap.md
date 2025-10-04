@@ -15,32 +15,32 @@
 - 🟡 Correlation MVP (rate + basic anomaly) (partially live; improvement ongoing)
 - 🟡 Policy propagation metric (partially implemented, needs monitoring integration)
 
-## Phase 3: Correlation & Adaptive Risk (Week 8–12)
+## Phase 3: Correlation & Adaptive Risk (Week 8–12) ✅ COMPLETE
 
-**Subphase 3.1: Correlation & Multi-Agent Detection**
-- Expand correlation: Add multi-agent pattern detection (payload entropy shifts, escalating multi-ID probes)
-- Implement correlation rules (`correlation_rules.yaml`)
-- Persist risk scores (Redis + periodic snapshot)
+**Subphase 3.1: Correlation & Multi-Agent Detection** ✅
+- ✅ Expand correlation: Add multi-agent pattern detection (payload entropy shifts, escalating multi-ID probes)
+- ✅ Implement correlation rules (`correlation_rules.yaml`)
+- ✅ Persist risk scores (Redis + periodic snapshot)
 
-**Subphase 3.2: Risk Engine Evolution**
-- Implement risk decay formula and multi-factor fusion
-- Risk tier transitions and persistence (LOW, NORMAL, HIGH, ELEVATED)
-- Introduce Elevated Tier triggers (invoke advanced detectors only when risk > threshold)
+**Subphase 3.2: Risk Engine Evolution** ✅
+- ✅ Implement risk decay formula and multi-factor fusion
+- ✅ Risk tier transitions and persistence (LOW, NORMAL, HIGH, ELEVATED)
+- ✅ Introduce Elevated Tier triggers (invoke advanced detectors only when risk > threshold)
 
-**Subphase 3.3: Fairness & Sampling**
-- Begin fairness sampling job (nightly + on-demand)
-- Fairness Sampler: selects stratified subset & stores for offline review
+**Subphase 3.3: Fairness & Sampling** ✅
+- ✅ Begin fairness sampling job (nightly + on-demand)
+- ✅ Fairness Sampler: selects stratified subset & stores for offline review
 
-**Subphase 3.4: Ethical Drift and Reporting**
-- Generate initial ethical drift report (difference in violation types by agent cohort)
-- Fairness dashboard online (sampling coverage exposure)
+**Subphase 3.4: Ethical Drift and Reporting** ✅
+- ✅ Generate initial ethical drift report (difference in violation types by agent cohort)
+- ✅ Fairness dashboard online (sampling coverage exposure)
 
-**Subphase 3.5: Performance & Cost Optimization**
-- Selective elevation: Reduce average CPU per action by >30% using risk-based gating
+**Subphase 3.5: Performance & Cost Optimization** ✅
+- ✅ Selective elevation: Reduce average CPU per action by >30% using risk-based gating
 
-**Subphase 3.6: Quality, Testing & Exit**
-- Human-labeled false positive rate <10% in HIGH severity violations
-- Complete phase with successful fairness dashboard and correlation detection
+**Subphase 3.6: Quality, Testing & Exit** ✅
+- ✅ Human-labeled false positive rate <10% in HIGH severity violations
+- ✅ Complete phase with successful fairness dashboard and correlation detection
 
 ---
 
