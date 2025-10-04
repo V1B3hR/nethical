@@ -40,6 +40,7 @@ from abc import ABC, abstractmethod
 from collections import Counter, deque
 from functools import lru_cache, wraps
 import numpy as np
+from cryptography.fernet import Fernet, InvalidToken
 
 
 # ============================================================================
@@ -530,8 +531,11 @@ class InMemoryKeyStore(KeyStore):
             self._store[key_id] = key_bytes
     
     def retrieve_key(self, key_id: str) -> Optional[bytes]:
-        with self._lock:
-            return self._store.get(key_id)
+    with self._lock:
+        key = self._store.get(key_id)
+        if key is None:
+            secure_log("warning", f"Key {key_id} not found in store")
+        return key
     
     def rotate_key(self, key_id: str) -> bytes:
         with self._lock:
@@ -544,13 +548,12 @@ class InMemoryKeyStore(KeyStore):
             self._store.pop(key_id, None)
 
 class KDFKeyStore(KeyStore):
-    """Key store with key derivation function"""
-    
+    """Key store with KDF and encryption for stored keys"""
     def __init__(self, master_password: str):
         self._master_password = master_password.encode()
-        self._store: Dict[str, Tuple[bytes, bytes]] = {}  # key_id -> (salt, derived_key)
+        self._store: Dict[str, Tuple[bytes, bytes]] = {}  # key_id -> (salt, encrypted_key)
         self._lock = threading.Lock()
-    
+
     def _derive_key(self, salt: bytes) -> bytes:
         kdf = PBKDF2(
             algorithm=hashes.SHA256(),
@@ -560,25 +563,33 @@ class KDFKeyStore(KeyStore):
             backend=default_backend()
         )
         return kdf.derive(self._master_password)
-    
+
     def store_key(self, key_id: str, key_bytes: bytes) -> None:
         with self._lock:
             salt = os.urandom(16)
-            self._store[key_id] = (salt, key_bytes)
-    
+            derived_key = self._derive_key(salt)
+            f = Fernet(Fernet.generate_key())
+            encrypted_key = Fernet(base64.urlsafe_b64encode(derived_key)).encrypt(key_bytes)
+            self._store[key_id] = (salt, encrypted_key)
+
     def retrieve_key(self, key_id: str) -> Optional[bytes]:
         with self._lock:
             if key_id in self._store:
-                return self._store[key_id][1]
+                salt, encrypted_key = self._store[key_id]
+                derived_key = self._derive_key(salt)
+                try:
+                    return Fernet(base64.urlsafe_b64encode(derived_key)).decrypt(encrypted_key)
+                except InvalidToken:
+                    secure_log("error", f"Invalid master password for key {key_id}")
+                    return None
             return None
-    
+
     def rotate_key(self, key_id: str) -> bytes:
         with self._lock:
             new_key = Fernet.generate_key()
-            salt = os.urandom(16)
-            self._store[key_id] = (salt, new_key)
+            self.store_key(key_id, new_key)
             return new_key
-    
+
     def retire_key(self, key_id: str) -> None:
         with self._lock:
             self._store.pop(key_id, None)
