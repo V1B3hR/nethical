@@ -38,28 +38,28 @@ Deliver a layered (“defense in depth”) control plane for autonomous / semi�
 
 ## Phase Details (Condensed)
 
-### Phase 0 – Foundations
-- Config schemas (Pydantic).
-- Artifact layout (`runs/`, `logs/`, `reports/`).
-- Add: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, this roadmap.
+### Phase 0 – Foundations ✅ IMPLEMENTED
+- ✅ Config schemas (Pydantic).
+- ✅ Artifact layout (`runs/`, `logs/`, `reports/`).
+- ✅ Add: `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md`, this roadmap.
 
-### Phase 1 – Hard Guardrails
-- Deterministic pattern & capability checks.
-- Enforcement outcomes: `deny`, `sanitize`, `allow`.
-- Latency benchmark & unit coverage.
+### Phase 1 – Hard Guardrails ✅ IMPLEMENTED
+- ✅ Deterministic pattern & capability checks.
+- ✅ Enforcement outcomes: `deny`, `sanitize`, `allow`.
+- ✅ Latency benchmark & unit coverage.
 
-### Phase 2 – Policy Engine
-- Load `ethics_taxonomy.json` + `correlation_rules.yaml`.
-- Compile to evaluators with severity, rationale.
-- Rule introspection CLI: `nethical policy list`.
+### Phase 2 – Policy Engine ✅ IMPLEMENTED
+- ✅ Load `ethics_taxonomy.json` + `correlation_rules.yaml`.
+- ✅ Compile to evaluators with severity, rationale.
+- ✅ Rule introspection CLI: `nethical policy list`.
 
-### Phase 3 – Simulation & Rule QA
-- Scenario DSL; multi-step agent interactions.
-- Coverage & conflict detection in CI.
+### Phase 3 – Simulation & Rule QA ✅ IMPLEMENTED
+- ✅ Scenario DSL; multi-step agent interactions.
+- ✅ Coverage & conflict detection in CI.
 
-### Phase 4 – Telemetry & Risk Aggregation
-- Unified event schema → rules-only risk.
-- Dashboard: rule hit frequency, risk distribution.
+### Phase 4 – Telemetry & Risk Aggregation ✅ IMPLEMENTED
+- ✅ Unified event schema → rules-only risk.
+- ✅ Dashboard: rule hit frequency, risk distribution.
 
 ### Phase 5 – ML Shadow Mode
 - Train minimal classifier (logistic / small transformer).
@@ -142,4 +142,5 @@ Deliver a layered (“defense in depth”) control plane for autonomous / semi�
 ---
 
 ## Change Log
+- 2025-10-04: Updated Phases 0-4 to mark as implemented after successful completion.
 - 2025-10-04: Initial extraction (training/testing moved to separate file).
