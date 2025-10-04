@@ -15,6 +15,23 @@ from .ethical_taxonomy import EthicalTaxonomy, EthicalTag, ViolationTagging, Eth
 from .sla_monitor import SLAMonitor, SLAStatus, SLATarget, SLABreach
 from .phase4_integration import Phase4IntegratedGovernance
 
+# Phase 5 components
+from .ml_shadow import MLShadowClassifier, ShadowPrediction, ShadowMetrics, MLModelType
+
+# Phase 6 components
+from .ml_blended_risk import MLBlendedRiskEngine, BlendedDecision, BlendingMetrics, RiskZone
+
+# Phase 7 components
+from .anomaly_detector import (
+    AnomalyDriftMonitor, 
+    SequenceAnomalyDetector, 
+    DistributionDriftDetector,
+    AnomalyAlert, 
+    AnomalyType, 
+    DriftSeverity,
+    DriftMetrics
+)
+
 __all__ = [
     # Phase 3
     'RiskEngine',
@@ -55,4 +72,22 @@ __all__ = [
     'SLATarget',
     'SLABreach',
     'Phase4IntegratedGovernance',
+    # Phase 5
+    'MLShadowClassifier',
+    'ShadowPrediction',
+    'ShadowMetrics',
+    'MLModelType',
+    # Phase 6
+    'MLBlendedRiskEngine',
+    'BlendedDecision',
+    'BlendingMetrics',
+    'RiskZone',
+    # Phase 7
+    'AnomalyDriftMonitor',
+    'SequenceAnomalyDetector',
+    'DistributionDriftDetector',
+    'AnomalyAlert',
+    'AnomalyType',
+    'DriftSeverity',
+    'DriftMetrics',
 ]
