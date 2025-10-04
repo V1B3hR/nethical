@@ -214,6 +214,21 @@ Phase 4 introduces immutable audit trails, policy management, quarantine capabil
 
 See [PHASE4_GUIDE.md](PHASE4_GUIDE.md) for complete documentation.
 
+## 🚀 Future Tracks: Preparations for 11–50 Systems
+
+The Future Tracks outline upcoming enhancements for scaling Nethical to support larger multi-system deployments:
+
+### Planned Subphases
+
+- **🌍 F1: Regionalization & Sharding**: Geographic distribution with `region_id` and `logical_domain` fields for hierarchical aggregation
+- **🔌 F2: Detector & Policy Extensibility**: RPC/gRPC-based detector externalization and Policy DSL for compiled rule specifications
+- **🔒 F3: Privacy & Data Handling**: Enhanced redaction pipeline with differential privacy for federated analytics
+- **🎯 F4: Thresholds, Tuning, & Adaptivity**: ML-driven threshold tuning based on decision outcomes and human feedback
+- **⏮️ F5: Simulation & Replay**: Time-travel debugging and what-if analysis with persistent action streams
+- **🏪 F6: Marketplace & Ecosystem**: Plugin registry and governance for community-contributed detectors
+
+See [roadmap.md](roadmap.md) for detailed specifications.
+
 ## 🛠️ Development Setup
 
 ```bash
