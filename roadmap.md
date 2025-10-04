@@ -61,27 +61,27 @@ Deliver a layered (“defense in depth”) control plane for autonomous / semi�
 - ✅ Unified event schema → rules-only risk.
 - ✅ Dashboard: rule hit frequency, risk distribution.
 
-### Phase 5 – ML Shadow Mode
-- Train minimal classifier (logistic / small transformer).
-- Passive inference; no enforcement authority.
-- Log predictions alongside rule-based outcomes for comparison.
-- Collect baseline metrics (precision, recall, F1, calibration).
-- No impact on enforcement decisions.
+### Phase 5 – ML Shadow Mode ✅ IMPLEMENTED
+- ✅ Train minimal classifier (logistic / small transformer).
+- ✅ Passive inference; no enforcement authority.
+- ✅ Log predictions alongside rule-based outcomes for comparison.
+- ✅ Collect baseline metrics (precision, recall, F1, calibration).
+- ✅ No impact on enforcement decisions.
 
-### Phase 6 – ML Assisted Enforcement
-- Risk blend: e.g. `0.7 * rules + 0.3 * ml`.
-- Only influences mid-band risk (gray zone).
-- Blended risk computed only for decisions in uncertain range (e.g., 0.4 ≤ rule_score ≤ 0.6).
-- Log pre/post decision differences for audit trail.
-- Gate: FP delta <5%; improved detection rate.
+### Phase 6 – ML Assisted Enforcement ✅ IMPLEMENTED
+- ✅ Risk blend: e.g. `0.7 * rules + 0.3 * ml`.
+- ✅ Only influences mid-band risk (gray zone).
+- ✅ Blended risk computed only for decisions in uncertain range (e.g., 0.4 ≤ rule_score ≤ 0.6).
+- ✅ Log pre/post decision differences for audit trail.
+- ✅ Gate: FP delta <5%; improved detection rate.
 
-### Phase 7 – Anomaly & Drift Detection
-- Sequence anomaly scoring (n-gram / simple model).
-- Distribution shift (PSI / KL divergence).
-- Alert pipeline.
-- Behavioral anomaly detection for unusual patterns in agent sequences.
-- Statistical drift monitoring to detect changes from baseline distribution.
-- Automated alerts when drift exceeds thresholds.
+### Phase 7 – Anomaly & Drift Detection ✅ IMPLEMENTED
+- ✅ Sequence anomaly scoring (n-gram / simple model).
+- ✅ Distribution shift (PSI / KL divergence).
+- ✅ Alert pipeline.
+- ✅ Behavioral anomaly detection for unusual patterns in agent sequences.
+- ✅ Statistical drift monitoring to detect changes from baseline distribution.
+- ✅ Automated alerts when drift exceeds thresholds.
 
 ### Phase 8 – Human-in-the-Loop Ops
 - Escalation queue, labeling UI (even CLI-first).
