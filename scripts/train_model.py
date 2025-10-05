@@ -9,6 +9,7 @@ Implements the training pipeline described in TrainTestPipeline.md:
 - Promotion gate validation
 """
 
+import argparse
 import json
 import os
 import sys
@@ -304,8 +305,82 @@ def save_training_data(data: List[Dict[str, Any]], output_file: str = "./data/la
     print(f"✓ Training data saved: {output_file}")
 
 
-def main():
-    """Main training pipeline."""
+def run_testing_pipeline():
+    """Run the testing pipeline after training."""
+    # Import test_model functions
+    try:
+        from test_model import (
+            find_latest_model,
+            load_model,
+            load_test_data,
+            evaluate_on_test_set,
+            save_evaluation_report
+        )
+    except ImportError:
+        print("\n✗ Could not import test_model.py")
+        return False
+    
+    print("\n" + "=" * 60)
+    print("STARTING TESTING PIPELINE")
+    print("=" * 60)
+    print()
+    
+    try:
+        # Step 1: Find and load latest model
+        try:
+            model_path = find_latest_model("./models/current")
+        except FileNotFoundError:
+            print("⚠ No model found in models/current/, checking candidates...")
+            try:
+                model_path = find_latest_model("./models/candidates")
+            except FileNotFoundError:
+                print("✗ No models found to test.")
+                return False
+        
+        classifier, model_metadata = load_model(model_path)
+        
+        # Step 2: Load test data
+        test_data = load_test_data()
+        
+        # Step 3: Evaluate on test set
+        ml_metrics, predictions_log = evaluate_on_test_set(classifier, test_data)
+        
+        # Step 4: Save evaluation report
+        save_evaluation_report(ml_metrics, predictions_log)
+        
+        print("\n" + "=" * 60)
+        print("TESTING COMPLETE")
+        print("=" * 60)
+        print("\nKey Findings:")
+        
+        if ml_metrics['f1_score'] >= 0.8:
+            print("✓ Model shows strong performance (F1 ≥ 0.8)")
+        elif ml_metrics['f1_score'] >= 0.6:
+            print("⚠ Model shows moderate performance (0.6 ≤ F1 < 0.8)")
+        else:
+            print("✗ Model needs improvement (F1 < 0.6)")
+        
+        if ml_metrics['expected_calibration_error'] <= 0.08:
+            print("✓ Model is well-calibrated (ECE ≤ 0.08)")
+        else:
+            print("⚠ Model calibration needs improvement (ECE > 0.08)")
+        
+        print()
+        return True
+        
+    except Exception as e:
+        print(f"\n✗ Testing pipeline failed: {e}")
+        import traceback
+        traceback.print_exc()
+        return False
+
+
+def main(run_all: bool = False):
+    """Main training pipeline.
+    
+    Args:
+        run_all: If True, also run testing pipeline after training
+    """
     print("=" * 60)
     print("NETHICAL ML TRAINING PIPELINE")
     print("=" * 60)
@@ -314,6 +389,8 @@ def main():
     print("- Baseline classifier with heuristic features")
     print("- Metrics: Precision, Recall, F1, ECE")
     print("- Promotion gate validation")
+    if run_all:
+        print("- Running complete workflow (training + testing)")
     print()
     
     # Step 1: Generate/load labeled data
@@ -344,13 +421,39 @@ def main():
     print("\n" + "=" * 60)
     print("TRAINING COMPLETE")
     print("=" * 60)
-    print("\nNext Steps:")
-    print("1. Review validation metrics")
-    print("2. Compare with rule-only baseline")
-    print("3. Run shadow mode evaluation")
-    print("4. If promotion gate passed, deploy to production")
-    print()
+    
+    if not run_all:
+        print("\nNext Steps:")
+        print("1. Review validation metrics")
+        print("2. Compare with rule-only baseline")
+        print("3. Run shadow mode evaluation")
+        print("4. If promotion gate passed, deploy to production")
+        print("\nTip: Use --run-all to automatically run testing after training")
+        print()
+    else:
+        # Run testing pipeline
+        print()
+        run_testing_pipeline()
 
 
 if __name__ == "__main__":
-    main()
+    parser = argparse.ArgumentParser(
+        description="Train Nethical ML models",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+Examples:
+  # Train only
+  python scripts/train_model.py
+  
+  # Train and test (complete workflow)
+  python scripts/train_model.py --run-all
+        """
+    )
+    parser.add_argument(
+        '--run-all',
+        action='store_true',
+        help='Run complete workflow: training followed by testing'
+    )
+    
+    args = parser.parse_args()
+    main(run_all=args.run_all)

@@ -41,13 +41,21 @@ Implements the complete training pipeline:
 **Usage:**
 
 ```bash
+# Train only
 python scripts/train_model.py
+
+# Train and test (complete workflow)
+python scripts/train_model.py --run-all
 ```
+
+**Options:**
+- `--run-all`: Automatically run the testing pipeline after training completes
 
 **Output:**
 - Training data: `data/labeled_events/training_data.json`
 - Model file: `models/candidates/model_YYYYMMDD_HHMMSS.json` (or `models/current/` if promoted)
 - Console output with detailed metrics and promotion gate results
+- (With `--run-all`) Evaluation report: `data/labeled_events/evaluation_report_YYYYMMDD_HHMMSS.json`
 
 ### test_model.py
 
@@ -72,6 +80,23 @@ python scripts/test_model.py
 ## Workflow
 
 ### Complete Training & Testing Workflow
+
+#### Option 1: Single Command (Recommended)
+
+Run the complete workflow with one command:
+```bash
+python scripts/train_model.py --run-all
+```
+
+This will:
+- Generate synthetic training data
+- Train a baseline model
+- Validate against promotion criteria
+- Save the model
+- Automatically run comprehensive testing
+- Generate an evaluation report
+
+#### Option 2: Step-by-Step
 
 1. **Train a model:**
    ```bash
