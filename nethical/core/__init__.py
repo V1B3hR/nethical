@@ -35,6 +35,31 @@ from .anomaly_detector import (
 # Phase 5-7 Integration
 from .phase567_integration import Phase567IntegratedGovernance
 
+# Phase 8 components
+from .human_feedback import (
+    EscalationQueue,
+    FeedbackTag,
+    ReviewStatus,
+    ReviewPriority,
+    HumanFeedback,
+    EscalationCase,
+    SLAMetrics
+)
+
+# Phase 9 components
+from .optimization import (
+    MultiObjectiveOptimizer,
+    Configuration,
+    PerformanceMetrics,
+    OptimizationObjective,
+    OptimizationTechnique,
+    ConfigStatus,
+    PromotionGate
+)
+
+# Phase 8-9 Integration
+from .phase89_integration import Phase89IntegratedGovernance
+
 __all__ = [
     # Phase 3
     'RiskEngine',
@@ -95,4 +120,22 @@ __all__ = [
     'DriftMetrics',
     # Phase 5-7 Integration
     'Phase567IntegratedGovernance',
+    # Phase 8
+    'EscalationQueue',
+    'FeedbackTag',
+    'ReviewStatus',
+    'ReviewPriority',
+    'HumanFeedback',
+    'EscalationCase',
+    'SLAMetrics',
+    # Phase 9
+    'MultiObjectiveOptimizer',
+    'Configuration',
+    'PerformanceMetrics',
+    'OptimizationObjective',
+    'OptimizationTechnique',
+    'ConfigStatus',
+    'PromotionGate',
+    # Phase 8-9 Integration
+    'Phase89IntegratedGovernance',
 ]

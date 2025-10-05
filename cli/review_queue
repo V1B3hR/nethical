@@ -1,0 +1,321 @@
+#!/usr/bin/env python3
+"""CLI tool for human review of escalated cases.
+
+Usage:
+    python cli/review_queue list                    List pending cases
+    python cli/review_queue next <reviewer_id>      Get next case for review
+    python cli/review_queue feedback <case_id> <reviewer_id> --tags <tags> --rationale <text>
+    python cli/review_queue stats                   Show SLA metrics
+    python cli/review_queue summary                 Show feedback summary
+
+Examples:
+    # List pending cases
+    python cli/review_queue list
+    
+    # Review next case
+    python cli/review_queue next reviewer_alice
+    
+    # Submit feedback
+    python cli/review_queue feedback esc_abc123 reviewer_alice \\
+        --tags false_positive \\
+        --rationale "Content was actually safe" \\
+        --corrected-decision allow
+    
+    # View statistics
+    python cli/review_queue stats
+"""
+
+import sys
+import json
+import argparse
+from pathlib import Path
+from datetime import datetime
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from nethical.core import (
+    EscalationQueue,
+    FeedbackTag,
+    ReviewStatus,
+    ReviewPriority
+)
+
+
+def format_case(case) -> str:
+    """Format case for display.
+    
+    Args:
+        case: Escalation case
+        
+    Returns:
+        Formatted string
+    """
+    lines = [
+        f"Case ID: {case.case_id}",
+        f"Status: {case.status.value}",
+        f"Priority: {case.priority.name}",
+        f"Agent: {case.agent_id}",
+        f"Decision: {case.decision} (confidence: {case.confidence:.2f})",
+        f"Violations: {len(case.violations)}",
+        f"Escalated: {case.escalated_at.strftime('%Y-%m-%d %H:%M:%S')}"
+    ]
+    
+    if case.assigned_to:
+        lines.append(f"Assigned to: {case.assigned_to}")
+    
+    if case.started_review_at:
+        lines.append(f"Review started: {case.started_review_at.strftime('%Y-%m-%d %H:%M:%S')}")
+    
+    # Show violation details
+    if case.violations:
+        lines.append("\nViolations:")
+        for i, v in enumerate(case.violations, 1):
+            v_type = v.get('type', 'unknown')
+            v_severity = v.get('severity', 0)
+            v_desc = v.get('description', 'No description')
+            lines.append(f"  {i}. [{v_type}] Severity {v_severity}: {v_desc}")
+    
+    return "\n".join(lines)
+
+
+def cmd_list(args):
+    """List pending cases.
+    
+    Args:
+        args: Command arguments
+    """
+    queue = EscalationQueue(storage_path=args.db_path)
+    
+    cases = queue.list_pending_cases(limit=args.limit)
+    
+    if not cases:
+        print("No pending cases in queue.")
+        return
+    
+    print(f"Pending Cases ({len(cases)}):")
+    print("=" * 70)
+    
+    for i, case in enumerate(cases, 1):
+        print(f"\n{i}. {format_case(case)}")
+        print("-" * 70)
+
+
+def cmd_next(args):
+    """Get next case for review.
+    
+    Args:
+        args: Command arguments
+    """
+    queue = EscalationQueue(storage_path=args.db_path)
+    
+    case = queue.get_next_case(reviewer_id=args.reviewer_id)
+    
+    if not case:
+        print("No cases available for review.")
+        return
+    
+    print("Next Case for Review:")
+    print("=" * 70)
+    print(format_case(case))
+    print("=" * 70)
+    print(f"\nAssigned to: {args.reviewer_id}")
+    print("\nTo submit feedback, use:")
+    print(f"  python cli/review_queue feedback {case.case_id} {args.reviewer_id} \\")
+    print(f"    --tags <tag1> [tag2 ...] \\")
+    print(f"    --rationale \"<your explanation>\" \\")
+    print(f"    [--corrected-decision <decision>]")
+
+
+def cmd_feedback(args):
+    """Submit feedback for a case.
+    
+    Args:
+        args: Command arguments
+    """
+    queue = EscalationQueue(storage_path=args.db_path)
+    
+    # Get case
+    case = queue.get_case(args.case_id)
+    if not case:
+        print(f"Error: Case {args.case_id} not found")
+        return
+    
+    # Parse feedback tags
+    try:
+        feedback_tags = [FeedbackTag(tag) for tag in args.tags]
+    except ValueError as e:
+        print(f"Error: Invalid feedback tag. Valid tags are:")
+        for tag in FeedbackTag:
+            print(f"  - {tag.value}")
+        return
+    
+    # Submit feedback
+    feedback = queue.submit_feedback(
+        case_id=args.case_id,
+        reviewer_id=args.reviewer_id,
+        feedback_tags=feedback_tags,
+        rationale=args.rationale,
+        corrected_decision=args.corrected_decision,
+        confidence=args.confidence
+    )
+    
+    print("Feedback Submitted Successfully!")
+    print("=" * 70)
+    print(f"Feedback ID: {feedback.feedback_id}")
+    print(f"Case ID: {feedback.judgment_id}")
+    print(f"Reviewer: {feedback.reviewer_id}")
+    print(f"Tags: {', '.join(tag.value for tag in feedback.feedback_tags)}")
+    print(f"Rationale: {feedback.rationale}")
+    if feedback.corrected_decision:
+        print(f"Corrected Decision: {feedback.corrected_decision}")
+    print(f"Confidence: {feedback.confidence:.2f}")
+    print("=" * 70)
+
+
+def cmd_stats(args):
+    """Show SLA metrics.
+    
+    Args:
+        args: Command arguments
+    """
+    queue = EscalationQueue(storage_path=args.db_path)
+    
+    metrics = queue.get_sla_metrics()
+    
+    print("SLA Metrics:")
+    print("=" * 70)
+    print(f"Total Cases: {metrics.total_cases}")
+    print(f"Pending Cases: {metrics.pending_cases}")
+    print(f"Completed Cases: {metrics.completed_cases}")
+    print()
+    print("Triage SLA:")
+    print(f"  Median: {metrics.median_triage_time_seconds:.1f}s ({metrics.median_triage_time_seconds/60:.1f} min)")
+    print(f"  P95: {metrics.p95_triage_time_seconds:.1f}s ({metrics.p95_triage_time_seconds/60:.1f} min)")
+    print()
+    print("Resolution SLA:")
+    print(f"  Median: {metrics.median_resolution_time_seconds:.1f}s ({metrics.median_resolution_time_seconds/3600:.1f} hours)")
+    print(f"  P95: {metrics.p95_resolution_time_seconds:.1f}s ({metrics.p95_resolution_time_seconds/3600:.1f} hours)")
+    print()
+    print(f"SLA Breaches: {metrics.sla_breaches}")
+    print("=" * 70)
+
+
+def cmd_summary(args):
+    """Show feedback summary.
+    
+    Args:
+        args: Command arguments
+    """
+    queue = EscalationQueue(storage_path=args.db_path)
+    
+    summary = queue.get_feedback_summary()
+    
+    print("Feedback Summary:")
+    print("=" * 70)
+    print(f"Total Feedback: {summary['total_feedback']}")
+    print()
+    print("Rates:")
+    print(f"  Correction Rate: {summary['correction_rate']:.1%}")
+    print(f"  False Positive Rate: {summary['false_positive_rate']:.1%}")
+    print(f"  Missed Violation Rate: {summary['missed_violation_rate']:.1%}")
+    print(f"  Policy Gap Rate: {summary['policy_gap_rate']:.1%}")
+    print()
+    print("Tag Counts:")
+    for tag, count in summary['tag_counts'].items():
+        print(f"  {tag}: {count}")
+    print("=" * 70)
+    
+    # Recommendations
+    if summary['total_feedback'] > 0:
+        print("\nRecommendations:")
+        if summary['false_positive_rate'] > 0.1:
+            print("  ⚠ High false positive rate - review detection thresholds")
+        if summary['missed_violation_rate'] > 0.05:
+            print("  ⚠ High missed violation rate - improve detection coverage")
+        if summary['policy_gap_rate'] > 0.1:
+            print("  ⚠ Policy gaps detected - update policy documentation")
+
+
+def main():
+    """Main CLI function."""
+    parser = argparse.ArgumentParser(
+        description="Human review queue CLI",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__
+    )
+    
+    parser.add_argument(
+        '--db-path',
+        default='./data/escalations.db',
+        help='Path to escalation database (default: ./data/escalations.db)'
+    )
+    
+    subparsers = parser.add_subparsers(dest='command', help='Command to execute')
+    
+    # List command
+    list_parser = subparsers.add_parser('list', help='List pending cases')
+    list_parser.add_argument(
+        '--limit',
+        type=int,
+        default=10,
+        help='Maximum number of cases to show (default: 10)'
+    )
+    
+    # Next command
+    next_parser = subparsers.add_parser('next', help='Get next case for review')
+    next_parser.add_argument('reviewer_id', help='Reviewer ID')
+    
+    # Feedback command
+    feedback_parser = subparsers.add_parser('feedback', help='Submit feedback for a case')
+    feedback_parser.add_argument('case_id', help='Case ID')
+    feedback_parser.add_argument('reviewer_id', help='Reviewer ID')
+    feedback_parser.add_argument(
+        '--tags',
+        nargs='+',
+        required=True,
+        help='Feedback tags (false_positive, missed_violation, policy_gap, correct_decision, etc.)'
+    )
+    feedback_parser.add_argument(
+        '--rationale',
+        required=True,
+        help='Human explanation/rationale'
+    )
+    feedback_parser.add_argument(
+        '--corrected-decision',
+        help='Corrected decision if different from original'
+    )
+    feedback_parser.add_argument(
+        '--confidence',
+        type=float,
+        default=1.0,
+        help='Confidence in feedback (0-1, default: 1.0)'
+    )
+    
+    # Stats command
+    stats_parser = subparsers.add_parser('stats', help='Show SLA metrics')
+    
+    # Summary command
+    summary_parser = subparsers.add_parser('summary', help='Show feedback summary')
+    
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return
+    
+    # Execute command
+    if args.command == 'list':
+        cmd_list(args)
+    elif args.command == 'next':
+        cmd_next(args)
+    elif args.command == 'feedback':
+        cmd_feedback(args)
+    elif args.command == 'stats':
+        cmd_stats(args)
+    elif args.command == 'summary':
+        cmd_summary(args)
+
+
+if __name__ == "__main__":
+    main()

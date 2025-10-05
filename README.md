@@ -343,36 +343,168 @@ print(f"Critical Alerts: {stats['alerts']['by_severity']['critical']}")
 - ✅ Automated alert pipeline with severity levels
 - ✅ Quarantine recommendations for critical anomalies
 
-## 🔄 Phases 8-9: Human-in-the-Loop & Optimization (PLANNED)
+## 🔄 Phases 8-9: Human-in-the-Loop & Optimization ✅ IMPLEMENTED
 
 The final phases introduce human feedback loops and continuous optimization:
 
-### Phase 8 – Human-in-the-Loop Ops
+### Phase 8 – Human-in-the-Loop Ops ✅ COMPLETE
 
 **Escalation & Review Workflow:**
-- Escalation queue with labeling interface (CLI or UI)
-- Structured feedback tags: `false_positive`, `missed_violation`, `policy_gap`
-- Human review workflow for uncertain or critical decisions
-- Structured feedback collection for model and rule improvement
-- Median triage SLA tracking and optimization
+- ✅ Escalation queue with labeling interface (CLI and programmatic API)
+- ✅ Structured feedback tags: `false_positive`, `missed_violation`, `policy_gap`, `correct_decision`, `edge_case`
+- ✅ Human review workflow for uncertain or critical decisions
+- ✅ Structured feedback collection for model and rule improvement
+- ✅ Median triage SLA tracking and optimization
+- ✅ SQLite persistence for escalation cases and feedback
+- ✅ Priority-based queue management (LOW, MEDIUM, HIGH, CRITICAL, EMERGENCY)
 
-**Key Objectives:**
-- Enable human reviewers to label uncertain cases for continuous improvement
-- Track and optimize response times for human escalations
-- Build a feedback loop that directly improves detection accuracy
+**Example Usage:**
 
-### Phase 9 – Continuous Optimization
+```python
+from nethical.core import Phase89IntegratedGovernance, FeedbackTag
+
+# Initialize governance with human-in-the-loop
+governance = Phase89IntegratedGovernance(
+    storage_dir="./data",
+    triage_sla_seconds=3600,      # 1 hour triage SLA
+    resolution_sla_seconds=86400  # 24 hour resolution SLA
+)
+
+# Process action with automatic escalation
+result = governance.process_with_escalation(
+    judgment_id="judg_123",
+    action_id="act_456",
+    agent_id="agent_789",
+    decision="block",
+    confidence=0.65,
+    violations=[{"type": "safety", "severity": 4}]
+)
+
+if result['escalated']:
+    print(f"Case escalated: {result['escalation_case_id']}")
+
+# Human reviewer workflow
+case = governance.get_next_case(reviewer_id="reviewer_alice")
+if case:
+    feedback = governance.submit_feedback(
+        case_id=case.case_id,
+        reviewer_id="reviewer_alice",
+        feedback_tags=[FeedbackTag.FALSE_POSITIVE],
+        rationale="Content was actually safe, detector too aggressive",
+        corrected_decision="allow",
+        confidence=0.9
+    )
+
+# Track SLA metrics
+metrics = governance.get_sla_metrics()
+print(f"Median Triage Time: {metrics.median_triage_time_seconds}s")
+print(f"SLA Breaches: {metrics.sla_breaches}")
+
+# Get feedback summary for continuous improvement
+summary = governance.get_feedback_summary()
+print(f"False Positive Rate: {summary['false_positive_rate']:.1%}")
+```
+
+**CLI Tool:**
+
+```bash
+# List pending cases
+python cli/review_queue list
+
+# Get next case for review
+python cli/review_queue next reviewer_alice
+
+# Submit feedback
+python cli/review_queue feedback esc_abc123 reviewer_alice \
+    --tags false_positive \
+    --rationale "Content was safe" \
+    --corrected-decision allow
+
+# View statistics
+python cli/review_queue stats
+python cli/review_queue summary
+```
+
+### Phase 9 – Continuous Optimization ✅ COMPLETE
 
 **Automated Tuning:**
-- Automated tuning of rule weights, classifier thresholds, and escalation boundaries
-- Multi-objective optimization (max recall, min FP rate, min latency)
-- Techniques: grid/random search, evolutionary strategies, Bayesian optimization
-- Continuous feedback loop from human labels to retrain models
+- ✅ Automated tuning of rule weights, classifier thresholds, and escalation boundaries
+- ✅ Multi-objective optimization (max recall, min FP rate, min latency, max human agreement)
+- ✅ Techniques: grid search, random search, evolutionary strategies
+- ✅ Continuous feedback loop from human labels to retrain models
+- ✅ Configuration versioning and tracking
 
 **Promotion Gate:**
-- New configurations promoted only when gate conditions are met
-- Validation against precision/recall targets
-- A/B testing framework for configuration comparison
+- ✅ New configurations promoted only when gate conditions are met
+- ✅ Validation against precision/recall targets
+- ✅ Configurable promotion criteria (recall gain, FP increase, latency, human agreement)
+- ✅ A/B testing framework support through configuration status tracking
+
+**Example Usage:**
+
+```python
+from nethical.core import Phase89IntegratedGovernance
+
+governance = Phase89IntegratedGovernance(storage_dir="./data")
+
+# Create baseline configuration
+baseline = governance.create_configuration(
+    config_version="baseline_v1.0",
+    classifier_threshold=0.5,
+    gray_zone_lower=0.4,
+    gray_zone_upper=0.6
+)
+
+# Record baseline metrics
+governance.record_metrics(
+    config_id=baseline.config_id,
+    detection_recall=0.82,
+    detection_precision=0.85,
+    false_positive_rate=0.08,
+    decision_latency_ms=12.0,
+    human_agreement=0.86,
+    total_cases=1000
+)
+
+# Run optimization to find better configuration
+results = governance.optimize_configuration(
+    technique="random_search",
+    param_ranges={
+        'classifier_threshold': (0.4, 0.7),
+        'gray_zone_lower': (0.3, 0.5),
+        'gray_zone_upper': (0.5, 0.7)
+    },
+    n_iterations=50
+)
+
+# Check best candidate against promotion gate
+best_config, best_metrics = results[0]
+passed, reasons = governance.check_promotion_gate(
+    candidate_id=best_config.config_id,
+    baseline_id=baseline.config_id
+)
+
+if passed:
+    # Promote to production
+    governance.promote_configuration(best_config.config_id)
+    print(f"✓ Promoted {best_config.config_version}")
+else:
+    print("Gate criteria not met:", reasons)
+
+# Run continuous improvement cycle
+cycle_result = governance.continuous_improvement_cycle()
+print(f"Human Agreement: {cycle_result['human_agreement']:.1%}")
+print(f"Recommendations: {cycle_result['recommendations']}")
+```
+
+**Key Features:**
+- ✅ Multi-objective fitness scoring with configurable weights
+- ✅ Grid search with parameter grids
+- ✅ Random search with parameter ranges
+- ✅ Evolutionary search with mutation and selection
+- ✅ Promotion gate validation with detailed criteria
+- ✅ SQLite persistence for configurations and metrics
+- ✅ Continuous improvement feedback loop
 
 See [roadmap.md](roadmap.md) for complete phase specifications and exit criteria.
 
