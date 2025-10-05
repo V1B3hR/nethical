@@ -9,13 +9,13 @@ Design Principle: Start deterministic (rules + guardrails) and add adaptivity (M
 ## Vision
 
 Deliver a layered (“defense in depth”) control plane for autonomous / semi‑autonomous agents:
-
-1. Hard Guardrails (non‑negotiable prohibitions)  
-2. Policy Engine (taxonomy + correlation rules)  
-3. Statistical / ML Classifiers (content / intent / misuse detection)  
-4. Anomaly & Drift Detection (behavioral + distributional)  
-5. Human Escalation & Oversight  
-6. Continuous Feedback (labeling & threshold tuning)  
+1. Sexual abuse (non‑negotiable prohibitions) 
+2. Hard Guardrails (non‑negotiable prohibitions)  
+3. Policy Engine (taxonomy + correlation rules)  
+4. Statistical / ML Classifiers (content / intent / misuse detection)  
+5. Anomaly & Drift Detection (behavioral + distributional)  
+6. Human Escalation & Oversight
+7. Continuous Feedback (labeling & threshold tuning)  
 
 ---
 
