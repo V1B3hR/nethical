@@ -60,6 +60,9 @@ from .optimization import (
 # Phase 8-9 Integration
 from .phase89_integration import Phase89IntegratedGovernance
 
+# Unified Integration (All Phases)
+from .integrated_governance import IntegratedGovernance
+
 __all__ = [
     # Phase 3
     'RiskEngine',
@@ -138,4 +141,6 @@ __all__ = [
     'PromotionGate',
     # Phase 8-9 Integration
     'Phase89IntegratedGovernance',
+    # Unified Integration (All Phases)
+    'IntegratedGovernance',
 ]

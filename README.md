@@ -506,6 +506,71 @@ print(f"Recommendations: {cycle_result['recommendations']}")
 - ✅ SQLite persistence for configurations and metrics
 - ✅ Continuous improvement feedback loop
 
+## 🎯 Unified Integrated Governance ✅ NEW
+
+For simplified usage, a **consolidated IntegratedGovernance** class is now available that brings together ALL phases (3, 4, 5-7, 8-9) into a single unified interface.
+
+**Example Usage:**
+
+```python
+from nethical.core import IntegratedGovernance
+
+# Initialize with all features
+gov = IntegratedGovernance(
+    storage_dir="./nethical_data",
+    # Phase 3
+    enable_performance_optimization=True,
+    # Phase 4
+    enable_merkle_anchoring=True,
+    enable_quarantine=True,
+    enable_ethical_taxonomy=True,
+    enable_sla_monitoring=True,
+    # Phase 5-7
+    enable_shadow_mode=True,
+    enable_ml_blending=True,
+    enable_anomaly_detection=True,
+    # Phase 8-9
+    auto_escalate_on_block=True,
+    auto_escalate_on_low_confidence=True
+)
+
+# Process action through ALL phases with a single call
+result = gov.process_action(
+    agent_id="agent_123",
+    action="User request processing",
+    cohort="production",
+    violation_detected=True,
+    violation_type="safety",
+    violation_severity="medium",
+    # ML features (optional)
+    action_id="action_456",
+    action_type="response",
+    features={'ml_score': 0.7},
+    rule_risk_score=0.65,
+    rule_classification="warn"
+)
+
+# Results include data from all phases
+print(f"Risk Score (Phase 3): {result['phase3']['risk_score']}")
+print(f"Merkle Events (Phase 4): {result['phase4']['merkle']['event_count']}")
+print(f"ML Shadow Score (Phase 5): {result['phase567']['shadow']['ml_risk_score']}")
+print(f"Blended Risk (Phase 6): {result['phase567']['blended']['blended_risk_score']}")
+
+# Get comprehensive system status
+status = gov.get_system_status()
+```
+
+**Benefits:**
+- ✅ Single unified interface for all governance features
+- ✅ Seamless integration across all phases
+- ✅ Simplified configuration and initialization
+- ✅ Comprehensive action processing pipeline
+- ✅ Unified system status and monitoring
+
+Run the demo: `python examples/unified_governance_demo.py`
+
+See [PHASE3_GUIDE.md](PHASE3_GUIDE.md), [PHASE4_GUIDE.md](PHASE4_GUIDE.md), [PHASE5-7_GUIDE.md](PHASE5-7_GUIDE.md), and [PHASE89_GUIDE.md](PHASE89_GUIDE.md) for detailed documentation on individual phases.
+
 See [roadmap.md](roadmap.md) for complete phase specifications and exit criteria.
 
 ## 🚀 Future Tracks: Preparations for 11–50 Systems
