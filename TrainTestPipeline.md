@@ -2,6 +2,26 @@
 
 This document covers both (a) rule-focused validation (pre-ML) and (b) the incremental introduction of machine learning, anomaly detection, and optimization.
 
+## Implementation
+
+The training and testing pipeline described in this document is now implemented in the `scripts/` directory:
+
+- **`scripts/train_model.py`** - Complete training pipeline with temporal split, baseline classifier, metrics, and promotion gate
+- **`scripts/test_model.py`** - Comprehensive model evaluation on test dataset
+- **`scripts/README.md`** - Detailed usage guide and workflow documentation
+
+**Quick Start:**
+
+```bash
+# Train a new model
+python scripts/train_model.py
+
+# Evaluate the model
+python scripts/test_model.py
+```
+
+See `scripts/README.md` for detailed documentation.
+
 ---
 
 ## 1. Conceptual Layers
