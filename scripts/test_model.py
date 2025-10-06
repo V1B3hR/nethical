@@ -37,18 +37,28 @@ def load_model(model_path: str) -> tuple:
     with open(model_path, 'r') as f:
         model_data = json.load(f)
     
-    # Reconstruct classifier
-    classifier = MLShadowClassifier(
-        model_type=MLModelType(model_data['model_type']),
-        score_agreement_threshold=model_data['score_agreement_threshold'],
-        storage_path="./models/current"
-    )
+    # Check model type and load accordingly
+    model_type = model_data.get('model_type', 'shadow')
     
-    # Restore feature weights
-    classifier.feature_weights = model_data['feature_weights']
-    
-    print(f"✓ Model loaded: {model_data['model_type']}")
-    print(f"  Timestamp: {model_data['timestamp']}")
+    if model_type == 'baseline':
+        # Load BaselineMLClassifier
+        from nethical.mlops.baseline import BaselineMLClassifier
+        classifier = BaselineMLClassifier.load(model_path)
+        print(f"✓ Model loaded: baseline")
+        print(f"  Timestamp: {model_data.get('timestamp', 'unknown')}")
+    else:
+        # Load MLShadowClassifier
+        classifier = MLShadowClassifier(
+            model_type=MLModelType(model_data['model_type']),
+            score_agreement_threshold=model_data.get('score_agreement_threshold', 0.1),
+            storage_path="./models/current"
+        )
+        
+        # Restore feature weights
+        classifier.feature_weights = model_data['feature_weights']
+        
+        print(f"✓ Model loaded: {model_data['model_type']}")
+        print(f"  Timestamp: {model_data['timestamp']}")
     
     return classifier, model_data
 
@@ -76,93 +86,151 @@ def load_test_data(data_path: str = "./data/labeled_events/training_data.json") 
     return test_data
 
 
-def evaluate_on_test_set(classifier: MLShadowClassifier, test_data: List[Dict[str, Any]]) -> Dict[str, float]:
+def evaluate_on_test_set(classifier, test_data: List[Dict[str, Any]]) -> tuple:
     """Run comprehensive evaluation on test set.
     
     Args:
-        classifier: Trained classifier
+        classifier: Trained classifier (BaselineMLClassifier or MLShadowClassifier)
         test_data: Test dataset
         
     Returns:
-        Dictionary of metrics
+        Tuple of (metrics dict, predictions_log list)
     """
     print("\nRunning evaluation on test set...")
     print("=" * 60)
     
-    # Reset metrics
-    classifier.metrics.true_positives = 0
-    classifier.metrics.true_negatives = 0
-    classifier.metrics.false_positives = 0
-    classifier.metrics.false_negatives = 0
-    classifier.metrics.total_predictions = 0
-    classifier.metrics.score_agreement_count = 0
-    classifier.metrics.classification_agreement_count = 0
+    # Check classifier type
+    from nethical.mlops.baseline import BaselineMLClassifier
+    is_baseline = isinstance(classifier, BaselineMLClassifier)
     
-    predictions_log = []
-    
-    for sample in test_data:
-        rule_class = 'deny' if sample['rule_score'] > 0.6 else 'warn' if sample['rule_score'] > 0.4 else 'allow'
+    if is_baseline:
+        # For BaselineMLClassifier, evaluate differently
+        predictions = []
+        labels = []
+        predictions_log = []
         
-        prediction = classifier.predict(
-            agent_id=sample['agent_id'],
-            action_id=sample['event_id'],
-            features=sample['features'],
-            rule_risk_score=sample['rule_score'],
-            rule_classification=rule_class
-        )
+        for sample in test_data:
+            pred = classifier.predict(sample['features'])
+            predictions.append(pred['label'])
+            labels.append(sample['label'])
+            
+            predictions_log.append({
+                'event_id': sample['event_id'],
+                'actual_label': sample['label'],
+                'ml_prediction': pred['label'],
+                'ml_score': pred['score'],
+                'rule_score': sample['rule_score'],
+                'correct': (pred['label'] == sample['label'])
+            })
         
-        # Update metrics based on actual label
-        actual_violation = sample['label'] == 1
-        predicted_violation = prediction.ml_classification in ['deny', 'warn']
+        # Compute metrics using the classifier's method
+        metrics = classifier.compute_metrics(predictions, labels)
         
-        if predicted_violation and actual_violation:
-            classifier.metrics.true_positives += 1
-        elif predicted_violation and not actual_violation:
-            classifier.metrics.false_positives += 1
-        elif not predicted_violation and actual_violation:
-            classifier.metrics.false_negatives += 1
-        else:
-            classifier.metrics.true_negatives += 1
+        # Format metrics to match expected output
+        formatted_metrics = {
+            'total_predictions': len(predictions),
+            'precision': metrics['precision'],
+            'recall': metrics['recall'],
+            'f1_score': metrics['f1_score'],
+            'accuracy': metrics['accuracy'],
+            'expected_calibration_error': metrics['ece'],
+            'confusion_matrix': {
+                'true_positives': metrics['true_positives'],
+                'true_negatives': metrics['true_negatives'],
+                'false_positives': metrics['false_positives'],
+                'false_negatives': metrics['false_negatives']
+            },
+            'score_agreement_rate': 0.0,  # Not applicable for baseline
+            'classification_agreement_rate': 0.0  # Not applicable for baseline
+        }
         
-        classifier.metrics.total_predictions += 1
+    else:
+        # For MLShadowClassifier, use original logic
+        # Reset metrics
+        classifier.metrics.true_positives = 0
+        classifier.metrics.true_negatives = 0
+        classifier.metrics.false_positives = 0
+        classifier.metrics.false_negatives = 0
+        classifier.metrics.total_predictions = 0
+        classifier.metrics.score_agreement_count = 0
+        classifier.metrics.classification_agreement_count = 0
         
-        # Update calibration bins
-        confidence_bin = f"{int(prediction.ml_confidence * 5) * 0.2:.1f}-{int(prediction.ml_confidence * 5) * 0.2 + 0.2:.1f}"
-        if confidence_bin in classifier.metrics.calibration_bins:
-            classifier.metrics.calibration_bins[confidence_bin]['total'] += 1
-            if prediction.classifications_agree:
-                classifier.metrics.calibration_bins[confidence_bin]['correct'] += 1
+        predictions_log = []
         
-        # Log prediction
-        predictions_log.append({
-            'event_id': sample['event_id'],
-            'actual_label': sample['label'],
-            'ml_prediction': prediction.ml_classification,
-            'ml_score': prediction.ml_risk_score,
-            'rule_score': sample['rule_score'],
-            'correct': (predicted_violation == actual_violation)
-        })
-    
-    # Get metrics
-    metrics = classifier.get_metrics_report()
+        for sample in test_data:
+            rule_class = 'deny' if sample['rule_score'] > 0.6 else 'warn' if sample['rule_score'] > 0.4 else 'allow'
+            
+            prediction = classifier.predict(
+                agent_id=sample['agent_id'],
+                action_id=sample['event_id'],
+                features=sample['features'],
+                rule_risk_score=sample['rule_score'],
+                rule_classification=rule_class
+            )
+            
+            # Update metrics based on actual label
+            actual_violation = sample['label'] == 1
+            predicted_violation = prediction.ml_classification in ['deny', 'warn']
+            
+            if predicted_violation and actual_violation:
+                classifier.metrics.true_positives += 1
+            elif predicted_violation and not actual_violation:
+                classifier.metrics.false_positives += 1
+            elif not predicted_violation and actual_violation:
+                classifier.metrics.false_negatives += 1
+            else:
+                classifier.metrics.true_negatives += 1
+            
+            classifier.metrics.total_predictions += 1
+            
+            # Update calibration bins
+            confidence_bin = f"{int(prediction.ml_confidence * 5) * 0.2:.1f}-{int(prediction.ml_confidence * 5) * 0.2 + 0.2:.1f}"
+            if confidence_bin in classifier.metrics.calibration_bins:
+                classifier.metrics.calibration_bins[confidence_bin]['total'] += 1
+                if prediction.classifications_agree:
+                    classifier.metrics.calibration_bins[confidence_bin]['correct'] += 1
+            
+            # Log prediction
+            predictions_log.append({
+                'event_id': sample['event_id'],
+                'actual_label': sample['label'],
+                'ml_prediction': prediction.ml_classification,
+                'ml_score': prediction.ml_risk_score,
+                'rule_score': sample['rule_score'],
+                'correct': (predicted_violation == actual_violation)
+            })
+        
+        # Get metrics
+        formatted_metrics = classifier.get_metrics_report()
     
     # Print detailed results
     print("\nTest Set Performance:")
     print("-" * 60)
-    print(f"Total Predictions: {metrics['total_predictions']}")
+    print(f"Total Predictions: {formatted_metrics['total_predictions']}")
     print()
     print("Classification Metrics:")
-    print(f"  Precision: {metrics['precision']:.3f}")
-    print(f"  Recall: {metrics['recall']:.3f}")
-    print(f"  F1 Score: {metrics['f1_score']:.3f}")
-    print(f"  Accuracy: {metrics['accuracy']:.3f}")
+    print(f"  Precision: {formatted_metrics['precision']:.3f}")
+    print(f"  Recall: {formatted_metrics['recall']:.3f}")
+    print(f"  F1 Score: {formatted_metrics['f1_score']:.3f}")
+    print(f"  Accuracy: {formatted_metrics['accuracy']:.3f}")
     print()
     print("Calibration:")
-    print(f"  Expected Calibration Error (ECE): {metrics['expected_calibration_error']:.3f}")
+    print(f"  Expected Calibration Error (ECE): {formatted_metrics['expected_calibration_error']:.3f}")
     print()
     print("Confusion Matrix:")
-    print(f"  True Positives:  {metrics['confusion_matrix']['true_positives']}")
-    print(f"  True Negatives:  {metrics['confusion_matrix']['true_negatives']}")
+    print(f"  True Positives:  {formatted_metrics['confusion_matrix']['true_positives']}")
+    print(f"  True Negatives:  {formatted_metrics['confusion_matrix']['true_negatives']}")
+    print(f"  False Positives: {formatted_metrics['confusion_matrix']['false_positives']}")
+    print(f"  False Negatives: {formatted_metrics['confusion_matrix']['false_negatives']}")
+    print()
+    
+    if not is_baseline:
+        print("Agreement with Rule-Based System:")
+        print(f"  Score Agreement: {formatted_metrics['score_agreement_rate']:.1%}")
+        print(f"  Classification Agreement: {formatted_metrics['classification_agreement_rate']:.1%}")
+    print("=" * 60)
+    
+    return formatted_metrics, predictions_log
     print(f"  False Positives: {metrics['confusion_matrix']['false_positives']}")
     print(f"  False Negatives: {metrics['confusion_matrix']['false_negatives']}")
     print()
@@ -208,7 +276,7 @@ def save_evaluation_report(metrics: Dict[str, float], predictions_log: List[Dict
         predictions_log: Detailed prediction log
         output_dir: Output directory
     """
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     report_file = os.path.join(output_dir, f"evaluation_report_{timestamp}.json")
     
     os.makedirs(output_dir, exist_ok=True)
@@ -235,6 +303,9 @@ def find_latest_model(model_dir: str = "./models/current") -> str:
         Path to latest model file
     """
     model_files = glob.glob(os.path.join(model_dir, "model_*.json"))
+    
+    # Filter out metrics files
+    model_files = [f for f in model_files if not f.endswith('_metrics.json')]
     
     if not model_files:
         raise FileNotFoundError(f"No model files found in {model_dir}")
