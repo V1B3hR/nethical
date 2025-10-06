@@ -34,6 +34,7 @@ from pathlib import Path
 # --- Import your models here ---
 from nethical.core.ml_shadow import MLModelType
 from nethical.mlops.baseline import BaselineMLClassifier
+from nethical.mlops.anomaly_classifier import AnomalyMLClassifier
 # from nethical.mlops.deep_nn import DeepNNClassifier   # Example for extensibility
 # from nethical.mlops.transformer import TransformerClassifier
 
@@ -51,6 +52,7 @@ def get_model_class(model_type: str):
         "heuristic": BaselineMLClassifier,
         "logistic": BaselineMLClassifier,
         "simple_transformer": BaselineMLClassifier,
+        "anomaly": AnomalyMLClassifier,
         # "deep_nn": DeepNNClassifier,
         # "transformer": TransformerClassifier,
     }
@@ -71,6 +73,61 @@ def load_data(num_samples=10000):
         }
         label = int(features['violation_count'] + features['severity_max'] > 1)
         data.append({'features': features, 'label': label})
+    return data
+
+def load_anomaly_data(num_samples=10000):
+    """Load synthetic anomaly detection data with sequences.
+    
+    Args:
+        num_samples: Number of samples to generate
+        
+    Returns:
+        List of samples with sequence features
+    """
+    print(f"[INFO] Loading {num_samples} anomaly detection samples...")
+    data = []
+    
+    # Define normal and anomalous patterns
+    normal_patterns = [
+        ['read', 'process', 'write'],
+        ['read', 'validate', 'process'],
+        ['fetch', 'transform', 'load'],
+        ['query', 'filter', 'aggregate'],
+        ['request', 'authenticate', 'respond'],
+        ['connect', 'read', 'disconnect']
+    ]
+    
+    anomalous_patterns = [
+        ['delete', 'exfiltrate', 'cover_tracks'],
+        ['escalate', 'access', 'exfiltrate'],
+        ['scan', 'exploit', 'inject'],
+        ['brute_force', 'access', 'modify'],
+        ['bypass', 'escalate', 'execute']
+    ]
+    
+    for i in range(num_samples):
+        # 70% normal, 30% anomalous for balanced training
+        if random.random() < 0.7:
+            # Normal sample
+            base_pattern = random.choice(normal_patterns)
+            # Add some variation
+            sequence = base_pattern.copy()
+            if random.random() < 0.3:
+                sequence.append(random.choice(['read', 'write', 'process', 'validate']))
+            label = 0
+        else:
+            # Anomalous sample
+            if random.random() < 0.8:
+                # Use known anomalous pattern
+                sequence = random.choice(anomalous_patterns).copy()
+            else:
+                # Create unusual sequence
+                sequence = [random.choice(['unknown', 'suspicious', 'rare']) for _ in range(3)]
+            label = 1
+        
+        features = {'sequence': sequence}
+        data.append({'features': features, 'label': label})
+    
     return data
 
 def temporal_split(data, train_ratio=0.8):
@@ -133,7 +190,10 @@ def main():
     set_seed(args.seed)
 
     # 1. Load Data
-    data = load_data(num_samples=args.num_samples)
+    if args.model_type == "anomaly":
+        data = load_anomaly_data(num_samples=args.num_samples)
+    else:
+        data = load_data(num_samples=args.num_samples)
     train_data, val_data = temporal_split(data)
 
     # 2. Select Model
