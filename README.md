@@ -112,6 +112,9 @@ Nethical includes trainable ML models for detecting anomalous agent behavior:
 # Train a model on synthetic data
 python training/train_any_model.py --model-type anomaly --num-samples 5000
 
+# Train with real data from datasets/datasets (requires processed data in data/processed/)
+python training/train_any_model.py --model-type logistic --use-real-data
+
 # Use the trained model
 python -c "
 from nethical.mlops.anomaly_classifier import AnomalyMLClassifier
