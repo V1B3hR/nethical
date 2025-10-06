@@ -3,13 +3,18 @@
 Plug-and-Play Training Script for Nethical ML Models
 
 Usage:
+    # Train with synthetic data:
     python train_model.py --model-type logistic --epochs 20 --batch-size 32 --num-samples 5000 --seed 123
+    
+    # Train with real data from datasets/datasets:
+    python train_model.py --model-type logistic --epochs 20 --use-real-data
 
 Supported Model Types (see MLModelType):
     - heuristic
     - logistic
     - simple_transformer
     - deep_nn
+    - anomaly
     - [add more as needed]
 
 Steps:
@@ -28,6 +33,7 @@ import os
 import sys
 import random
 import numpy as np
+import json
 from datetime import datetime
 from pathlib import Path
 
@@ -60,8 +66,75 @@ def get_model_class(model_type: str):
         raise ValueError(f"Unknown model_type: {model_type}. Supported: {list(registry.keys())}")
     return registry[model_type]
 
-def load_data(num_samples=10000):
-    print(f"[INFO] Loading {num_samples} samples...")
+def load_real_data_from_processed(data_dir="data/processed", num_samples=None):
+    """Load real data from processed dataset files.
+    
+    Args:
+        data_dir: Directory containing processed JSON files
+        num_samples: Optional limit on number of samples to load
+        
+    Returns:
+        List of data samples or None if no data available
+    """
+    data_path = Path(data_dir)
+    if not data_path.exists():
+        print(f"[WARNING] Data directory {data_dir} does not exist")
+        return None
+    
+    # Find all processed JSON files
+    json_files = list(data_path.glob("*_processed.json"))
+    
+    if not json_files:
+        print(f"[WARNING] No processed JSON files found in {data_dir}")
+        return None
+    
+    print(f"[INFO] Loading real data from {len(json_files)} processed file(s)...")
+    all_data = []
+    
+    for json_file in json_files:
+        try:
+            with open(json_file, 'r') as f:
+                dataset = json.load(f)
+                if isinstance(dataset, list):
+                    all_data.extend(dataset)
+                    print(f"[INFO] Loaded {len(dataset)} samples from {json_file.name}")
+        except Exception as e:
+            print(f"[WARNING] Failed to load {json_file.name}: {e}")
+            continue
+    
+    if not all_data:
+        print("[WARNING] No data loaded from processed files")
+        return None
+    
+    # Shuffle the combined data
+    random.shuffle(all_data)
+    
+    # Limit samples if requested
+    if num_samples and num_samples < len(all_data):
+        all_data = all_data[:num_samples]
+        print(f"[INFO] Limited to {num_samples} samples")
+    
+    print(f"[INFO] Total real data samples loaded: {len(all_data)}")
+    return all_data
+
+
+def load_data(num_samples=10000, use_real_data=False):
+    """Load training data (real or synthetic).
+    
+    Args:
+        num_samples: Number of samples to load
+        use_real_data: If True, attempt to load real data from processed files
+        
+    Returns:
+        List of data samples
+    """
+    if use_real_data:
+        real_data = load_real_data_from_processed(num_samples=num_samples)
+        if real_data:
+            return real_data
+        print("[INFO] Falling back to synthetic data generation...")
+    
+    print(f"[INFO] Generating {num_samples} synthetic samples...")
     data = []
     for _ in range(num_samples):
         features = {
@@ -185,6 +258,8 @@ def main():
     parser.add_argument("--batch-size", type=int, default=32, help="Batch size for training")
     parser.add_argument("--num-samples", type=int, default=10000, help="Number of samples to use")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--use-real-data", action="store_true", 
+                        help="Use real data from data/processed directory (falls back to synthetic if unavailable)")
     args = parser.parse_args()
 
     set_seed(args.seed)
@@ -193,7 +268,7 @@ def main():
     if args.model_type == "anomaly":
         data = load_anomaly_data(num_samples=args.num_samples)
     else:
-        data = load_data(num_samples=args.num_samples)
+        data = load_data(num_samples=args.num_samples, use_real_data=args.use_real_data)
     train_data, val_data = temporal_split(data)
 
     # 2. Select Model
@@ -202,8 +277,13 @@ def main():
     model = ModelClass()
 
     # 3. Train Model
-    print(f"[INFO] Training {model_type} model for {args.epochs} epochs, batch size {args.batch_size}...")
-    model.train(train_data, epochs=args.epochs, batch_size=args.batch_size)
+    print(f"[INFO] Training {model_type} model...")
+    # Some models (like anomaly) accept epochs and batch_size, others don't
+    try:
+        model.train(train_data, epochs=args.epochs, batch_size=args.batch_size)
+    except TypeError:
+        # Fallback for models that don't accept these parameters
+        model.train(train_data)
 
     # 4. Evaluate Model
     preds = [model.predict(sample['features'])['label'] for sample in val_data]
