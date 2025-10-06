@@ -12,17 +12,75 @@ nethical/
     labeled_events/         # Training data and evaluation reports
       training_data.json    # Generated training dataset
       evaluation_report_*.json  # Test evaluation reports
+    external/               # Downloaded datasets (CSV files)
+    processed/              # Processed datasets (JSON format)
   models/
     candidates/             # Candidate models (not yet promoted)
       model_*.json         # Model files with metadata
     current/                # Production-ready models
       model_*.json         # Promoted models
   scripts/
-    train_model.py          # Training pipeline script
+    train_model.py          # Training pipeline script (synthetic data)
     test_model.py           # Testing/evaluation script
+    baseline_orchestrator.py # End-to-end real dataset training
+    dataset_processors/     # Dataset-specific processors
 ```
 
 ## Scripts
+
+### baseline_orchestrator.py ⭐ NEW
+
+**End-to-end training orchestrator for real-world security datasets.**
+
+Implements a complete pipeline that:
+- Downloads datasets from Kaggle (if API is configured)
+- Processes each dataset with dedicated processors
+- Merges all processed data into `processed_train_data.json`
+- Trains the BaselineMLClassifier
+- Evaluates and saves the trained model
+
+**Usage:**
+
+```bash
+# Full pipeline: download, process, and train
+python scripts/baseline_orchestrator.py
+
+# Download datasets only
+python scripts/baseline_orchestrator.py --download
+
+# Process existing CSV files only
+python scripts/baseline_orchestrator.py --process-only
+
+# Train on existing processed_train_data.json
+python scripts/baseline_orchestrator.py --train-only
+```
+
+**Datasets Used:**
+
+The orchestrator processes datasets listed in `datasets/datasets`:
+- Cyber Security Attacks
+- Microsoft Security Incident Prediction
+- Security Breach Dataset
+- RBA Dataset
+- And more...
+
+**Setup Kaggle API (Optional):**
+
+For automatic downloads:
+```bash
+pip install kaggle
+mkdir -p ~/.kaggle
+echo '{"username":"your_username","key":"your_api_key"}' > ~/.kaggle/kaggle.json
+chmod 600 ~/.kaggle/kaggle.json
+```
+
+Get credentials from: https://www.kaggle.com/account
+
+**Output:**
+- `data/processed/*.json`: Individual processed datasets
+- `processed_train_data.json`: Merged training data
+- `models/candidates/baseline_model.json`: Trained model
+- `models/candidates/baseline_metrics.json`: Validation metrics
 
 ### train_model.py
 

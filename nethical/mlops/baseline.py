@@ -213,36 +213,3 @@ class BaselineMLClassifier:
         return classifier
 
 # --- End of BaselineMLClassifier definition ---
-
-# --- Main script for training and evaluation ---
-
-# Path to your processed dataset (must be a list of {"features": {...}, "label": ...})
-DATA_PATH = "processed_train_data.json"  # Update this to your actual file
-
-# Load data
-with open(DATA_PATH, "r") as f:
-    data = json.load(f)
-
-# Shuffle and split into train and validation sets
-random.shuffle(data)
-split = int(0.8 * len(data))
-train_data = data[:split]
-val_data = data[split:]
-
-# Train model
-clf = BaselineMLClassifier()
-clf.train(train_data)
-
-# Evaluate on validation set
-val_features = [d["features"] for d in val_data]
-val_labels = [d["label"] for d in val_data]
-val_preds = [clf.predict(f)["label"] for f in val_features]
-
-metrics = clf.compute_metrics(val_preds, val_labels)
-print("Validation Metrics:")
-for k, v in metrics.items():
-    print(f"{k}: {v}")
-
-# Save trained model
-clf.save("baseline_model.json")
-print("Model saved to baseline_model.json")

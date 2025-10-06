@@ -573,6 +573,72 @@ See [PHASE3_GUIDE.md](PHASE3_GUIDE.md), [PHASE4_GUIDE.md](PHASE4_GUIDE.md), [PHA
 
 See [roadmap.md](roadmap.md) for complete phase specifications and exit criteria.
 
+## 🎓 ML Training Pipeline with Real-World Datasets
+
+Nethical includes an end-to-end training orchestrator that can download, process, and train the BaselineMLClassifier using real-world security datasets from Kaggle.
+
+### Quick Start
+
+```bash
+# Full pipeline: download, process, and train
+python scripts/baseline_orchestrator.py
+
+# Or step by step:
+# 1. Download datasets (requires Kaggle API credentials)
+python scripts/baseline_orchestrator.py --download
+
+# 2. Process CSV files into standardized format
+python scripts/baseline_orchestrator.py --process-only
+
+# 3. Train on processed data
+python scripts/baseline_orchestrator.py --train-only
+```
+
+### Datasets Used
+
+The pipeline uses real-world security datasets listed in `datasets/datasets`:
+- [Cyber Security Attacks](https://www.kaggle.com/datasets/teamincribo/cyber-security-attacks)
+- [Microsoft Security Incident Prediction](https://www.kaggle.com/datasets/Microsoft/microsoft-security-incident-prediction)
+- [Security Breach Dataset](https://www.kaggle.com/datasets/xontoloyo/security-breachhh)
+- [RBA Dataset](https://www.kaggle.com/datasets/dasgroup/rba-dataset)
+- And more...
+
+### How It Works
+
+1. **Download**: Uses Kaggle API to download datasets (or manual download instructions)
+2. **Process**: Dataset-specific processors map fields to standard features:
+   - `violation_count`: Number/frequency of violations
+   - `severity_max`: Maximum severity level
+   - `recency_score`: How recent the event is
+   - `frequency_score`: Frequency of similar events
+   - `context_risk`: Contextual risk factors
+3. **Merge**: All processed datasets are combined into `processed_train_data.json`
+4. **Train**: BaselineMLClassifier is trained and evaluated on the merged data
+
+### Kaggle API Setup
+
+To enable automatic dataset downloads:
+
+```bash
+# Install Kaggle API
+pip install kaggle
+
+# Setup credentials (get from kaggle.com/account)
+mkdir -p ~/.kaggle
+echo '{"username":"your_username","key":"your_api_key"}' > ~/.kaggle/kaggle.json
+chmod 600 ~/.kaggle/kaggle.json
+```
+
+### Output
+
+The pipeline produces:
+- `data/processed/*.json`: Individual processed datasets
+- `processed_train_data.json`: Merged training data
+- `models/candidates/baseline_model.json`: Trained model
+- `models/candidates/baseline_metrics.json`: Validation metrics
+
+See [TrainTestPipeline.md](TrainTestPipeline.md) for detailed training specifications.
+
 ## 🚀 Future Tracks: Preparations for 11–50 Systems
 
 The Future Tracks outline upcoming enhancements for scaling Nethical to support larger multi-system deployments:
