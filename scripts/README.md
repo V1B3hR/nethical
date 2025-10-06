@@ -106,6 +106,7 @@ Implements the complete training pipeline using **real-world datasets**:
 python scripts/train_model.py
 
 # Train and test (complete workflow)
+python scripts/train_model.py all
 python scripts/train_model.py --run-all
 ```
 
@@ -119,6 +120,7 @@ Download the datasets manually and save CSV files to `data/external/`:
 
 **Options:**
 - `--run-all`: Automatically run the testing pipeline after training completes
+- Positional argument `all`: Same as `--run-all` (shorthand for complete workflow)
 
 **Output:**
 - Training data: `data/labeled_events/training_data.json`
@@ -154,6 +156,8 @@ python scripts/test_model.py
 
 Run the complete workflow with one command:
 ```bash
+python scripts/train_model.py all
+# or
 python scripts/train_model.py --run-all
 ```
 

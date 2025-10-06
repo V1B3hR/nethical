@@ -393,8 +393,15 @@ Examples:
   python scripts/train_model.py
 
   # Train and test (complete workflow)
+  python scripts/train_model.py all
   python scripts/train_model.py --run-all
         """
+    )
+    parser.add_argument(
+        'mode',
+        nargs='?',
+        choices=['all'],
+        help='Run mode: "all" for complete workflow (training + testing)'
     )
     parser.add_argument(
         '--run-all',
@@ -402,4 +409,5 @@ Examples:
         help='Run complete workflow: training followed by testing'
     )
     args = parser.parse_args()
-    main(run_all=args.run_all)
+    run_all = args.run_all or (args.mode == 'all')
+    main(run_all=run_all)

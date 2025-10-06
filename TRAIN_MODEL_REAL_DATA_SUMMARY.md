@@ -110,6 +110,8 @@ python scripts/train_model.py
 
 ### Full Workflow (Training + Testing)
 ```bash
+python scripts/train_model.py all
+# or
 python scripts/train_model.py --run-all
 ```
 
