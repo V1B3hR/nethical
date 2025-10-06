@@ -110,9 +110,8 @@ class AnomalyMLClassifier:
                         anomaly_ratio = anomalous_count / total
                         rarity_scores.append(anomaly_ratio)
                     else:
-                        # Unseen n-gram - check if it's more similar to normal or anomalous patterns
-                        # For unseen patterns, assign medium suspicion
-                        rarity_scores.append(0.6)
+                        # Unseen n-gram - moderately suspicious since it's unknown
+                        rarity_scores.append(0.7)
                 else:
                     # Not trained yet, use neutral score
                     rarity_scores.append(0.5)
@@ -132,8 +131,8 @@ class AnomalyMLClassifier:
                         # Higher if more common in anomalous
                         deviation_scores.append(anomalous_freq / total_freq)
                     else:
-                        # Unknown action - medium suspicion
-                        deviation_scores.append(0.6)
+                        # Unknown action - moderately suspicious
+                        deviation_scores.append(0.7)
                 features['action_frequency_deviation'] = sum(deviation_scores) / len(deviation_scores)
             else:
                 features['action_frequency_deviation'] = 0.5
@@ -217,10 +216,12 @@ class AnomalyMLClassifier:
         self.normal_ngrams = dict(normal_ngram_counts)
         self.anomalous_ngrams = dict(anomalous_ngram_counts)
         
+        # Mark as trained so feature extraction uses the learned distributions
+        self.trained = True
+        
         # Learn feature weights based on discriminative power
         self._learn_weights(train_data)
         
-        self.trained = True
         self.training_samples = len(train_data)
         self.timestamp = datetime.now().isoformat()
     
@@ -298,8 +299,9 @@ class AnomalyMLClassifier:
                 normal_avg = feature_sums[feature_name]['normal'] / normal_count
                 anomalous_avg = feature_sums[feature_name]['anomalous'] / anomalous_count
                 
-                # Discriminative power
-                power = abs(anomalous_avg - normal_avg) + 0.01
+                # Discriminative power: difference between normal and anomalous
+                # We want features where anomalous is higher than normal
+                power = max(0.0, anomalous_avg - normal_avg) + 0.01
                 new_weights[feature_name] = power
                 total_weight += power
             
