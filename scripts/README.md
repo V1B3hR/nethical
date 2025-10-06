@@ -82,11 +82,14 @@ Get credentials from: https://www.kaggle.com/account
 - `models/candidates/baseline_model.json`: Trained model
 - `models/candidates/baseline_metrics.json`: Validation metrics
 
-### train_model.py
+### train_model.py ⭐ UPDATED
 
-Implements the complete training pipeline:
+Implements the complete training pipeline using **real-world datasets**:
 
-- **Data Generation**: Creates synthetic labeled training data
+- **Data Loading**: Automatically downloads and processes two specific datasets:
+  - https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai
+  - https://www.kaggle.com/datasets/xontoloyo/security-breachhh
+- **Fallback**: Uses synthetic data if real datasets are unavailable
 - **Temporal Split**: Splits data chronologically (80% train, 20% validation)
 - **Model Training**: Trains a baseline heuristic classifier
 - **Evaluation**: Computes precision, recall, F1, accuracy, and ECE
@@ -99,12 +102,20 @@ Implements the complete training pipeline:
 **Usage:**
 
 ```bash
-# Train only
+# Train with real datasets (automatically downloads if Kaggle API available)
 python scripts/train_model.py
 
 # Train and test (complete workflow)
 python scripts/train_model.py --run-all
 ```
+
+**Manual Dataset Setup (if Kaggle API unavailable):**
+
+Download the datasets manually and save CSV files to `data/external/`:
+1. Download from https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai
+2. Download from https://www.kaggle.com/datasets/xontoloyo/security-breachhh
+3. Extract CSV files to `data/external/` directory
+4. Run the training script
 
 **Options:**
 - `--run-all`: Automatically run the testing pipeline after training completes

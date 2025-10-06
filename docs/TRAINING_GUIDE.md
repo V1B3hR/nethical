@@ -6,6 +6,24 @@ The end-to-end training pipeline downloads, processes, and trains the BaselineML
 
 ## Quick Start
 
+### Option 1: Using train_model.py (Recommended for specific datasets)
+
+The `train_model.py` script now uses real-world data by default from these two datasets:
+- https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai
+- https://www.kaggle.com/datasets/xontoloyo/security-breachhh
+
+```bash
+# Train with real datasets (downloads and processes automatically)
+python scripts/train_model.py
+
+# Train and test (complete workflow)
+python scripts/train_model.py --run-all
+```
+
+**Note:** If Kaggle API is not available, manually download the CSV files and place them in `data/external/`.
+
+### Option 2: Using baseline_orchestrator.py (For all datasets)
+
 ```bash
 # Full pipeline
 python scripts/baseline_orchestrator.py
