@@ -8,23 +8,21 @@ Implements the training pipeline described in TrainTestPipeline.md:
 - Shadow logging and comparison with rule-only outcomes
 - Promotion gate validation
 
-DATASET SOURCES:
-The following real-world datasets can be used for training or evaluation instead of (or in addition to)
-the synthetic data generated in generate_synthetic_labeled_data(). To use them, download the datasets,
-preprocess as needed, and load them in place of the synthetic data.
-
-See datasets/datasets for the maintained list. Example sources:
-    - https://www.kaggle.com/datasets/teamincribo/cyber-security-attacks
-    - https://www.kaggle.com/datasets/Microsoft/microsoft-security-incident-prediction
+REAL-WORLD DATASETS (Default):
+This script now uses real-world datasets by default:
     - https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai
     - https://www.kaggle.com/datasets/xontoloyo/security-breachhh
-    - https://www.kaggle.com/datasets/daylight-lab/cybersecurity-imagery-dataset
-    - https://www.kaggle.com/datasets/dasgroup/rba-dataset
-    - https://www.kaggle.com/competitions/2023-kaggle-ai-report/discussion/409817
-    - https://www.kaggle.com/discussions/general/409208
-    - https://www.kaggle.com/datasets/mpwolke/cusersmarildownloadsphilosophycsv/discussion/156387
 
-Example usage: Replace generate_synthetic_labeled_data() with load_real_world_data() in main().
+The script will:
+1. Attempt to download datasets using Kaggle API (if available)
+2. Process CSV files from data/external/ directory
+3. Train model on all available real data
+4. Fall back to synthetic data if no real datasets are found
+
+MANUAL DATASET SETUP:
+If Kaggle API is not available, manually download the datasets and place CSV files in data/external/
+
+See datasets/datasets for additional dataset sources that can be used with baseline_orchestrator.py.
 """
 import argparse
 import json
