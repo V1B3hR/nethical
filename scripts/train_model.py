@@ -42,6 +42,118 @@ sys.path.insert(0, str(Path(__file__).parent.parent))
 from nethical.mlops import model_registry
 from nethical.mlops.baseline import BaselineMLClassifier
 
+# ---- dataset processing imports ----
+from scripts.dataset_processors.generic_processor import GenericSecurityProcessor
+
+def load_real_world_data() -> List[Dict[str, Any]]:
+    """Load and process real-world datasets for training.
+    
+    Downloads and processes the following datasets:
+    - https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai
+    - https://www.kaggle.com/datasets/xontoloyo/security-breachhh
+    
+    Returns:
+        List of processed training records with features and labels
+    """
+    print("=" * 60)
+    print("LOADING REAL-WORLD DATASETS")
+    print("=" * 60)
+    
+    # Define the two datasets to use
+    datasets_to_use = [
+        "https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai",
+        "https://www.kaggle.com/datasets/xontoloyo/security-breachhh"
+    ]
+    
+    download_dir = Path("data/external")
+    processed_dir = Path("data/processed")
+    download_dir.mkdir(parents=True, exist_ok=True)
+    processed_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Try to download datasets using Kaggle API
+    print("\nAttempting to download datasets...")
+    try:
+        import kaggle
+        print("✓ Kaggle API is available")
+        
+        for url in datasets_to_use:
+            try:
+                if '/datasets/' in url:
+                    parts = url.split('/datasets/')[-1].split('/')
+                    if len(parts) >= 2:
+                        dataset_id = f"{parts[0]}/{parts[1]}"
+                        print(f"Downloading {dataset_id}...")
+                        kaggle.api.dataset_download_files(
+                            dataset_id,
+                            path=str(download_dir),
+                            unzip=True
+                        )
+                        print(f"✓ Downloaded {dataset_id}")
+                elif '/code/' in url:
+                    # For code/kernel datasets, extract kernel ID
+                    parts = url.split('/code/')[-1].split('/')
+                    if len(parts) >= 2:
+                        kernel_id = f"{parts[0]}/{parts[1]}"
+                        print(f"Downloading kernel {kernel_id}...")
+                        kaggle.api.kernels_pull(kernel_id, path=str(download_dir))
+                        print(f"✓ Downloaded kernel {kernel_id}")
+            except Exception as e:
+                print(f"Warning: Could not download {url}: {e}")
+                print("Please download manually and place CSV files in data/external/")
+    except ImportError:
+        print("✗ Kaggle API not installed")
+        print("Please install with: pip install kaggle")
+        print("\nOr download datasets manually:")
+        for url in datasets_to_use:
+            print(f"  - {url}")
+        print(f"And save CSV files to: {download_dir.absolute()}")
+    
+    # Process all CSV files found in download directory
+    print("\n" + "=" * 60)
+    print("PROCESSING DATASETS")
+    print("=" * 60)
+    
+    csv_files = list(download_dir.glob("**/*.csv"))
+    print(f"\nFound {len(csv_files)} CSV files in {download_dir}")
+    
+    all_records = []
+    
+    if csv_files:
+        for csv_file in csv_files:
+            print(f"\nProcessing: {csv_file.name}")
+            dataset_name = csv_file.stem.replace(' ', '_').lower()
+            
+            # Use GenericSecurityProcessor for all datasets
+            processor = GenericSecurityProcessor(dataset_name, processed_dir)
+            
+            try:
+                records = processor.process(csv_file)
+                if records:
+                    all_records.extend(records)
+                    output_file = processor.save_processed_data(records)
+                    print(f"✓ Processed {len(records)} records from {csv_file.name}")
+                    print(f"  Saved to {output_file}")
+            except Exception as e:
+                print(f"Warning: Failed to process {csv_file.name}: {e}")
+                continue
+    
+    if not all_records:
+        print("\n" + "=" * 60)
+        print("WARNING: No data loaded from real datasets")
+        print("=" * 60)
+        print("Falling back to synthetic data...")
+        return generate_synthetic_labeled_data(num_samples=1000)
+    
+    # Shuffle records
+    random.shuffle(all_records)
+    
+    print("\n" + "=" * 60)
+    print(f"✓ Successfully loaded {len(all_records)} total records from real datasets")
+    print("=" * 60)
+    
+    return all_records
+
+
 def generate_synthetic_labeled_data(num_samples: int = 1000) -> List[Dict[str, Any]]:
     """Generate synthetic labeled training data."""
     print(f"Generating {num_samples} synthetic training samples...")
@@ -224,19 +336,28 @@ def main(run_all: bool = False):
     if run_all:
         print("- Running complete workflow (training + testing)")
     print()
-    # Step 1: Generate/load labeled data
-    data = generate_synthetic_labeled_data(num_samples=1000)
-    # If using real-world data, uncomment the following and comment the above line:
-    # data = load_real_world_data("./datasets/your_downloaded_file.csv")
+    
+    # Step 1: Load real-world data (from the two specified datasets)
+    print("Loading real-world datasets:")
+    print("  - https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai")
+    print("  - https://www.kaggle.com/datasets/xontoloyo/security-breachhh")
+    print()
+    
+    data = load_real_world_data()
     save_training_data(data)
+    
     # Step 2: Temporal split
     train_data, val_data = temporal_split(data, train_ratio=0.8)
+    
     # Step 3: Train baseline model
     classifier = train_baseline_model(train_data)
+    
     # Step 4: Evaluate on validation set
     metrics = evaluate_model(classifier, val_data)
+    
     # Step 5: Check promotion gate
     promotion_passed = check_promotion_gate(metrics)
+    
     # Step 6: Save model to candidates
     model_file = save_model(classifier, metrics, model_dir="./models/candidates")
     
