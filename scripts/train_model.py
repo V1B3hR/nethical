@@ -26,9 +26,6 @@ See datasets/datasets for the maintained list. Example sources:
 
 Example usage: Replace generate_synthetic_labeled_data() with load_real_world_data() in main().
 """
-# Add parent directory to path (update to point directly to this repo if needed)
-sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
-
 import argparse
 import json
 import os
@@ -50,7 +47,7 @@ def generate_synthetic_labeled_data(num_samples: int = 1000) -> List[Dict[str, A
     print(f"Generating {num_samples} synthetic training samples...")
 
     data = []
-    base_time = datetime.utcnow() - timedelta(days=30)
+    base_time = datetime.now() - timedelta(days=30)
     for i in range(num_samples):
         timestamp = base_time + timedelta(minutes=i * 43)
         risk_level = random.choice(['low', 'medium', 'high'])
@@ -144,7 +141,7 @@ def check_promotion_gate(metrics: Dict[str, float], baseline_metrics: Dict[str, 
 def save_model(classifier: BaselineMLClassifier, metrics: Dict[str, float], model_dir: str = "./models/candidates"):
     """Save trained model and metadata using mlops model_registry."""
     os.makedirs(model_dir, exist_ok=True)
-    timestamp = datetime.utcnow().strftime("%Y%m%d_%H%M%S")
+    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     model_file = os.path.join(model_dir, f"model_{timestamp}.json")
     classifier.save(model_file)
     metadata_file = os.path.join(model_dir, f"model_{timestamp}_metrics.json")
@@ -202,7 +199,7 @@ def run_testing_pipeline():
             print("⚠ Model shows moderate performance (0.6 ≤ F1 < 0.8)")
         else:
             print("✗ Model needs improvement (F1 < 0.6)")
-        if ml_metrics.get('ece', 1.0) <= 0.08:
+        if ml_metrics.get('expected_calibration_error', 1.0) <= 0.08:
             print("✓ Model is well-calibrated (ECE ≤ 0.08)")
         else:
             print("⚠ Model calibration needs improvement (ECE > 0.08)")
@@ -240,15 +237,18 @@ def main(run_all: bool = False):
     metrics = evaluate_model(classifier, val_data)
     # Step 5: Check promotion gate
     promotion_passed = check_promotion_gate(metrics)
-    # Step 6: Save model
+    # Step 6: Save model to candidates
+    model_file = save_model(classifier, metrics, model_dir="./models/candidates")
+    
+    # Step 7: Promote if criteria met
     if promotion_passed:
-        model_file = save_model(classifier, metrics, model_dir="./models/current")
-        print("\n✓ Model promoted to production (models/current/)")
+        print("\n✓ Promoting model to production (models/current/)...")
         model_registry.promote_model(os.path.basename(model_file))
+        print("✓ Model promoted successfully")
     else:
-        model_file = save_model(classifier, metrics, model_dir="./models/candidates")
-        print("\n⚠ Model saved to candidates (models/candidates/)")
+        print("\n⚠ Model saved to candidates only (models/candidates/)")
         print("  Review metrics and retrain before promotion")
+    
     print("\n" + "=" * 60)
     print("TRAINING COMPLETE")
     print("=" * 60)
