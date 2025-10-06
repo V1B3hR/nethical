@@ -26,6 +26,8 @@ See datasets/datasets for the maintained list. Example sources:
 
 Example usage: Replace generate_synthetic_labeled_data() with load_real_world_data() in main().
 """
+# Add parent directory to path (update to point directly to this repo if needed)
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent))
 
 import argparse
 import json
