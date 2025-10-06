@@ -17,6 +17,7 @@ The `train_model.py` script now uses real-world data by default from these two d
 python scripts/train_model.py
 
 # Train and test (complete workflow)
+python scripts/train_model.py all
 python scripts/train_model.py --run-all
 ```
 
