@@ -14,11 +14,12 @@ def run_training(params=None):
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser()
-    parser.add_argument('--run-all', action='store_true', help='Run full workflow')
+    parser.add_argument('--train-only', action='store_true', help='Run training only (skip testing)')
     parser.add_argument('extra_args', nargs=argparse.REMAINDER, help='Additional arguments for training script')
     args = parser.parse_args()
     params = []
-    if args.run_all:
+    # By default, run full workflow (training + testing)
+    if not args.train_only:
         params.append('--run-all')
     params.extend(args.extra_args)
     run_training(params)
