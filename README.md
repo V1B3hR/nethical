@@ -25,6 +25,8 @@ The primary goal of Nethical is to bridge the gap between AI capability and AI s
 - 🛡️ **Safety Constraint Enforcement**: Monitors for unauthorized system access, data modification, and resource abuse
 - 🕵️ **Manipulation Recognition**: Detects emotional manipulation, authority abuse, social proof, scarcity tactics, and reciprocity exploitation
 - 🏛️ **Judge System**: Powerful decision-making component that evaluates actions and provides feedback with restrictions or case closure
+- 🤖 **ML-Based Anomaly Detection**: Trainable machine learning models that learn to detect anomalous agent behavior patterns
+- 📈 **Distribution Drift Monitoring**: Statistical detection of changes in agent behavior over time
 - 📊 **Comprehensive Reporting**: Detailed violation summaries and judgment analytics
 - ⚙️ **Configurable Monitoring**: Flexible configuration for different use cases and security levels
 
@@ -92,8 +94,34 @@ asyncio.run(main())
 ### Running Examples
 
 ```bash
+# Basic safety monitoring
 python examples/basic_usage.py
+
+# Anomaly detection
+python examples/phase7_demo.py
+
+# Train anomaly detection model
+python examples/train_anomaly_detector.py
 ```
+
+### Training Anomaly Detection Models
+
+Nethical includes trainable ML models for detecting anomalous agent behavior:
+
+```bash
+# Train a model on synthetic data
+python training/train_any_model.py --model-type anomaly --num-samples 5000
+
+# Use the trained model
+python -c "
+from nethical.mlops.anomaly_classifier import AnomalyMLClassifier
+clf = AnomalyMLClassifier.load('models/current/anomaly_model_*.json')
+result = clf.predict({'sequence': ['read', 'process', 'write']})
+print(f'Anomalous: {result[\"label\"] == 1}, Score: {result[\"score\"]:.3f}')
+"
+```
+
+See [ANOMALY_DETECTION_TRAINING.md](ANOMALY_DETECTION_TRAINING.md) for detailed documentation.
 
 ## 🏗️ System Architecture
 
@@ -112,6 +140,8 @@ Nethical consists of several key components:
 - **EthicalViolationDetector**: Identifies ethical constraint violations
 - **SafetyViolationDetector**: Detects safety-related violations  
 - **ManipulationDetector**: Recognizes various manipulation techniques
+- **AnomalyDriftMonitor**: Detects unusual behavior patterns and distribution shifts
+- **AnomalyMLClassifier**: ML-based anomaly detector (trainable)
 
 ### Decision Engine
 
