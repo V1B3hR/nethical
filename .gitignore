@@ -64,6 +64,12 @@ models/candidates/*.json
 models/current/*.json
 *.jsonl
 
+# Dataset files (downloaded and processed)
+data/external/*.csv
+data/external/*.zip
+data/processed/*.json
+processed_train_data.json
+
 # Translations
 *.mo
 *.pot
