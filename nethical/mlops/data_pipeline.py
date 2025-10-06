@@ -1,22 +1,26 @@
-import os
-import requests
+import logging
 from pathlib import Path
 
-DATASET_LIST = Path("datasets/datasets")
-DOWNLOAD_DIR = Path("data/external")
+# Configure logging
+logging.basicConfig(level=logging.INFO, format='[%(levelname)s] %(message)s')
 
 def fetch_kaggle_dataset(url):
-    print(f"[INFO] Please manually download dataset from: {url}")
-    # In production, integrate with Kaggle API or other automation
+    logging.info(f"Manual download required. Please download the dataset from: {url}")
+    # TODO: Integrate with Kaggle API for automated downloads
 
-def ingest_all():
-    DOWNLOAD_DIR.mkdir(parents=True, exist_ok=True)
-    with open(DATASET_LIST) as f:
-        for line in f:
-            url = line.strip()
-            if url and url.startswith("http"):
-                fetch_kaggle_dataset(url)
-    print("[INFO] Dataset ingestion completed. Please check data/external/ directory.")
+def ingest_all(dataset_list_path=Path("datasets/datasets"), download_dir=Path("data/external")):
+    download_dir.mkdir(parents=True, exist_ok=True)
+    try:
+        with open(dataset_list_path) as f:
+            for line in f:
+                url = line.strip()
+                if url and url.startswith("http"):
+                    fetch_kaggle_dataset(url)
+        logging.info(f"Dataset ingestion completed. Please check {download_dir}/ directory.")
+    except FileNotFoundError:
+        logging.error(f"Dataset list file not found: {dataset_list_path}")
+    except Exception as e:
+        logging.error(f"An error occurred during ingestion: {e}")
 
 if __name__ == "__main__":
     ingest_all()
