@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Risk Engine for risk tracking
+try:
+    from nethical.core.risk_engine import RiskEngine, RiskTier
+    RISK_ENGINE_AVAILABLE = True
+except ImportError:
+    RISK_ENGINE_AVAILABLE = False
+    print("[WARN] RiskEngine not available. Risk tracking will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,6 +420,8 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-risk-tracking", action="store_true", help="Enable risk engine tracking")
+    parser.add_argument("--risk-decay-hours", type=float, default=24.0, help="Risk score decay half-life in hours")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -453,6 +463,20 @@ def main():
             drift_reporter = None
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
+
+    # Initialize Risk Engine for risk tracking
+    risk_engine = None
+    agent_id = f"model_{args.model_type}"
+    if args.enable_risk_tracking and RISK_ENGINE_AVAILABLE:
+        try:
+            risk_engine = RiskEngine(decay_half_life_hours=args.risk_decay_hours)
+            print(f"[INFO] Risk engine tracking enabled. Decay half-life: {args.risk_decay_hours} hours")
+            print(f"[INFO] Tracking agent ID: {agent_id}")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize risk engine: {e}")
+            risk_engine = None
+    elif args.enable_risk_tracking and not RISK_ENGINE_AVAILABLE:
+        print("[WARN] Risk tracking requested but RiskEngine not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
@@ -513,6 +537,44 @@ def main():
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
     
+    # Track risk based on model performance
+    if risk_engine:
+        # Calculate violation severity based on metrics
+        # High calibration error or low accuracy indicates higher risk
+        violation_severity = 0.0
+        
+        # ECE contributes to violation severity (max ECE is typically < 0.5, scale it)
+        ece_factor = min(metrics['ece'] / 0.25, 1.0)  # Normalize to [0,1], severe if > 0.25
+        
+        # Low accuracy contributes to violation severity
+        accuracy_factor = max(0.0, (0.85 - metrics['accuracy']) / 0.85)  # 0 if acc >= 0.85, 1 if acc = 0
+        
+        # Combine factors
+        violation_severity = max(ece_factor, accuracy_factor)
+        
+        action_context = {
+            'model_type': args.model_type,
+            'cohort': cohort_id,
+            'has_violation': violation_severity > 0.3,
+            'metrics': {k: float(v) for k, v in metrics.items()}
+        }
+        
+        risk_score = risk_engine.calculate_risk_score(
+            agent_id=agent_id,
+            violation_severity=violation_severity,
+            action_context=action_context
+        )
+        
+        risk_tier = risk_engine.get_tier(agent_id)
+        print(f"\n[INFO] Risk Tracking:")
+        print(f"  Agent ID: {agent_id}")
+        print(f"  Risk Score: {risk_score:.4f}")
+        print(f"  Risk Tier: {risk_tier.value.upper()}")
+        print(f"  Violation Severity: {violation_severity:.4f}")
+        
+        if risk_engine.should_invoke_advanced_detectors(agent_id):
+            print(f"  ⚠️  ELEVATED risk tier - advanced detectors should be invoked")
+    
     # Track training performance for drift analysis
     if drift_reporter:
         # Track validation as an action with risk score based on accuracy
@@ -525,6 +587,29 @@ def main():
         )
 
     promoted = check_promotion_gate(metrics)
+    
+    # Track promotion gate result for risk analysis
+    if risk_engine and not promoted:
+        # Promotion gate failure is a significant risk event
+        gate_violation_severity = 0.8  # High severity for promotion failures
+        
+        gate_context = {
+            'model_type': args.model_type,
+            'cohort': cohort_id,
+            'promotion_failed': True,
+            'ece_exceeded': metrics['ece'] > 0.08,
+            'accuracy_below_threshold': metrics['accuracy'] < 0.85
+        }
+        
+        gate_risk_score = risk_engine.calculate_risk_score(
+            agent_id=agent_id,
+            violation_severity=gate_violation_severity,
+            action_context=gate_context
+        )
+        
+        print(f"\n[INFO] Promotion Gate Risk Update:")
+        print(f"  Updated Risk Score: {gate_risk_score:.4f}")
+        print(f"  Updated Risk Tier: {risk_engine.get_tier(agent_id).value.upper()}")
     
     # Track promotion gate result for drift analysis
     if drift_reporter:
@@ -583,6 +668,44 @@ def main():
             
         except Exception as e:
             print(f"[WARN] Failed to generate drift report: {e}")
+    
+    # Generate final risk profile summary if tracking is enabled
+    if risk_engine:
+        try:
+            print("\n[INFO] Generating final risk profile...")
+            final_profile = risk_engine.get_or_create_profile(agent_id)
+            
+            print(f"\n{'='*70}")
+            print("RISK PROFILE SUMMARY")
+            print(f"{'='*70}")
+            print(f"Agent ID: {agent_id}")
+            print(f"Final Risk Score: {final_profile.current_score:.4f}")
+            print(f"Final Risk Tier: {final_profile.current_tier.value.upper()}")
+            print(f"Total Actions: {final_profile.total_actions}")
+            print(f"Violation Count: {final_profile.violation_count}")
+            print(f"Last Update: {final_profile.last_update.isoformat()}")
+            print(f"\nRisk Components:")
+            print(f"  Behavior Score: {final_profile.behavior_score:.4f}")
+            print(f"  Severity Score: {final_profile.severity_score:.4f}")
+            print(f"  Frequency Score: {final_profile.frequency_score:.4f}")
+            print(f"  Recency Score: {final_profile.recency_score:.4f}")
+            
+            if final_profile.tier_history:
+                print(f"\nTier Transition History:")
+                for ts, tier in final_profile.tier_history[-5:]:  # Show last 5 transitions
+                    print(f"  {ts.isoformat()}: {tier.value.upper()}")
+            
+            # Log risk profile in Merkle audit if enabled
+            if merkle_anchor:
+                merkle_anchor.add_event({
+                    'event_type': 'risk_profile_final',
+                    'agent_id': agent_id,
+                    'risk_profile': final_profile.to_dict(),
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+            
+        except Exception as e:
+            print(f"[WARN] Failed to generate risk profile summary: {e}")
     
     # Finalize Merkle audit chunk if enabled
     if merkle_anchor:
