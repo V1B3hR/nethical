@@ -174,8 +174,9 @@ class CorrelationMLClassifier:
             feature_value = normalized_features.get(feature_name, 0.0)
             score += weight * feature_value
         
-        # Apply sigmoid transformation for non-linearity
-        score = 1.0 / (1.0 + math.exp(-5 * (score - 0.5)))
+        # Apply softer sigmoid transformation for better calibration
+        # Using temperature scaling with T=2 for better calibration
+        score = 1.0 / (1.0 + math.exp(-2 * (score - 0.5)))
         score = min(max(score, 0.0), 1.0)
         
         # Determine label (threshold at pattern_threshold)

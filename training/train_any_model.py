@@ -273,8 +273,8 @@ def load_data(num_samples=10000, model_type='logistic'):
         random.shuffle(data)
     elif model_type == 'correlation':
         # Generate synthetic correlation pattern detection data
-        # Normal multi-agent activity (70% of data)
-        normal_count = int(num_samples * 0.7)
+        # Normal multi-agent activity (65% of data)
+        normal_count = int(num_samples * 0.65)
         correlation_count = num_samples - normal_count
         
         # Generate normal samples (no correlation patterns)
@@ -282,9 +282,9 @@ def load_data(num_samples=10000, model_type='logistic'):
             features = {
                 'agent_count': random.randint(1, 3),  # Few agents
                 'action_rate': random.uniform(1, 10),  # Low action rate
-                'entropy_variance': random.uniform(0.1, 0.5),  # Low entropy variance
-                'time_correlation': random.uniform(0, 0.3),  # Low time correlation
-                'payload_similarity': random.uniform(0, 0.4)  # Low similarity
+                'entropy_variance': random.uniform(0.05, 0.3),  # Low entropy variance
+                'time_correlation': random.uniform(0, 0.25),  # Low time correlation
+                'payload_similarity': random.uniform(0, 0.3)  # Low similarity
             }
             data.append({
                 'features': features,
@@ -299,29 +299,29 @@ def load_data(num_samples=10000, model_type='logistic'):
             if pattern_type == 'escalating':
                 # Escalating multi-ID probes: many agents, increasing action rate
                 features = {
-                    'agent_count': random.randint(5, 15),
-                    'action_rate': random.uniform(20, 100),
-                    'entropy_variance': random.uniform(0.3, 0.8),
-                    'time_correlation': random.uniform(0.4, 0.7),
-                    'payload_similarity': random.uniform(0.3, 0.7)
+                    'agent_count': random.randint(6, 15),
+                    'action_rate': random.uniform(25, 100),
+                    'entropy_variance': random.uniform(0.4, 0.9),
+                    'time_correlation': random.uniform(0.5, 0.75),
+                    'payload_similarity': random.uniform(0.4, 0.8)
                 }
             elif pattern_type == 'coordinated':
                 # Coordinated attack: moderate agents, high time correlation
                 features = {
-                    'agent_count': random.randint(3, 8),
-                    'action_rate': random.uniform(15, 50),
-                    'entropy_variance': random.uniform(0.2, 0.6),
-                    'time_correlation': random.uniform(0.7, 1.0),  # High time correlation
-                    'payload_similarity': random.uniform(0.5, 0.9)
+                    'agent_count': random.randint(4, 10),
+                    'action_rate': random.uniform(20, 60),
+                    'entropy_variance': random.uniform(0.3, 0.7),
+                    'time_correlation': random.uniform(0.75, 1.0),  # High time correlation
+                    'payload_similarity': random.uniform(0.6, 0.95)
                 }
             else:  # distributed
                 # Distributed reconnaissance: many agents, diverse payloads
                 features = {
-                    'agent_count': random.randint(8, 20),
-                    'action_rate': random.uniform(10, 40),
-                    'entropy_variance': random.uniform(0.6, 1.0),  # High entropy variance
-                    'time_correlation': random.uniform(0.2, 0.5),
-                    'payload_similarity': random.uniform(0.2, 0.6)
+                    'agent_count': random.randint(10, 20),
+                    'action_rate': random.uniform(15, 50),
+                    'entropy_variance': random.uniform(0.65, 1.0),  # High entropy variance
+                    'time_correlation': random.uniform(0.3, 0.6),
+                    'payload_similarity': random.uniform(0.25, 0.65)
                 }
             
             data.append({
