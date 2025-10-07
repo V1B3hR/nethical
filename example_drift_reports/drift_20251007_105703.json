@@ -1,0 +1,34 @@
+{
+  "report_id": "drift_20251007_105703",
+  "start_time": "2025-10-07T10:57:03.369894+00:00",
+  "end_time": "2025-10-07T10:57:03.371202+00:00",
+  "cohorts": {
+    "cohort_b_logistic": {
+      "cohort_id": "cohort_b_logistic",
+      "agent_count": 0,
+      "action_count": 1,
+      "violation_stats": {
+        "total_count": 1,
+        "by_severity": {
+          "high": 1
+        },
+        "by_type": {
+          "low_accuracy": 1
+        },
+        "by_time": []
+      },
+      "avg_risk_score": 0.37000000629999996,
+      "risk_distribution": {
+        "normal": 1
+      }
+    }
+  },
+  "drift_metrics": {
+    "has_drift": false,
+    "message": "Insufficient cohorts for drift analysis"
+  },
+  "recommendations": [
+    "No significant ethical drift detected across cohorts"
+  ],
+  "generated_at": "2025-10-07T10:57:03.371223"
+}
