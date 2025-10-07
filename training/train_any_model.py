@@ -21,6 +21,17 @@ import numpy as np
 from datetime import datetime
 from pathlib import Path
 
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Import Merkle Anchor for audit logging
+try:
+    from nethical.core.audit_merkle import MerkleAnchor
+    MERKLE_AVAILABLE = True
+except ImportError:
+    MERKLE_AVAILABLE = False
+    print("[WARN] MerkleAnchor not available. Audit logging will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -235,21 +246,79 @@ def main():
     parser.add_argument("--batch-size", type=int, default=32, help="Batch size for training")
     parser.add_argument("--num-samples", type=int, default=10000, help="Number of samples to use")
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
+    parser.add_argument("--enable-audit", action="store_true", help="Enable Merkle audit logging")
+    parser.add_argument("--audit-path", type=str, default="training_audit_logs", help="Path for audit logs")
     args = parser.parse_args()
+
+    # Initialize Merkle Anchor for audit logging
+    merkle_anchor = None
+    if args.enable_audit and MERKLE_AVAILABLE:
+        try:
+            merkle_anchor = MerkleAnchor(
+                storage_path=args.audit_path,
+                chunk_size=100  # Smaller chunk size for training events
+            )
+            print(f"[INFO] Merkle audit logging enabled. Logs stored in: {args.audit_path}")
+            
+            # Log training start event
+            merkle_anchor.add_event({
+                'event_type': 'training_start',
+                'model_type': args.model_type,
+                'epochs': args.epochs,
+                'batch_size': args.batch_size,
+                'num_samples': args.num_samples,
+                'seed': args.seed,
+                'timestamp': datetime.utcnow().isoformat()
+            })
+        except Exception as e:
+            print(f"[WARN] Failed to initialize Merkle audit logging: {e}")
+            merkle_anchor = None
+    elif args.enable_audit and not MERKLE_AVAILABLE:
+        print("[WARN] Audit logging requested but MerkleAnchor not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
     raw_data = load_data(num_samples=args.num_samples)
+    
+    # Log data loading event
+    if merkle_anchor:
+        merkle_anchor.add_event({
+            'event_type': 'data_loaded',
+            'num_samples': len(raw_data),
+            'timestamp': datetime.utcnow().isoformat()
+        })
 
     ModelClass, preprocess_fn = get_model_class(args.model_type)
     print(f"[INFO] Preprocessing data for model type: {args.model_type}")
     processed_data = preprocess_fn(raw_data)
 
     train_data, val_data = temporal_split(processed_data)
+    
+    # Log data split event
+    if merkle_anchor:
+        merkle_anchor.add_event({
+            'event_type': 'data_split',
+            'train_samples': len(train_data),
+            'val_samples': len(val_data),
+            'timestamp': datetime.utcnow().isoformat()
+        })
 
     model = ModelClass()
     print(f"[INFO] Training {args.model_type} model for {args.epochs} epochs, batch size {args.batch_size}...")
-    model.train(train_data, epochs=args.epochs, batch_size=args.batch_size)
+    training_start_time = datetime.utcnow()
+    # Note: BaselineMLClassifier doesn't use epochs/batch_size, but we keep them for extensibility
+    model.train(train_data)
+    training_end_time = datetime.utcnow()
+    
+    # Log training completion event
+    if merkle_anchor:
+        merkle_anchor.add_event({
+            'event_type': 'training_completed',
+            'model_type': args.model_type,
+            'epochs': args.epochs,
+            'training_duration_seconds': (training_end_time - training_start_time).total_seconds(),
+            'timestamp': training_end_time.isoformat()
+        })
 
     preds = [model.predict(sample['features'])['label'] for sample in val_data]
     labels = [sample['label'] for sample in val_data]
@@ -257,9 +326,49 @@ def main():
     print("[INFO] Validation Metrics:")
     for k, v in metrics.items():
         print(f"  {k}: {v:.4f}")
+    
+    # Log validation metrics event
+    if merkle_anchor:
+        merkle_anchor.add_event({
+            'event_type': 'validation_metrics',
+            'metrics': metrics,
+            'timestamp': datetime.utcnow().isoformat()
+        })
 
     promoted = check_promotion_gate(metrics)
-    save_model_and_metrics(model, metrics, args.model_type, promoted=promoted)
+    model_path, metrics_path = save_model_and_metrics(model, metrics, args.model_type, promoted=promoted)
+    
+    # Log model save event
+    if merkle_anchor:
+        merkle_anchor.add_event({
+            'event_type': 'model_saved',
+            'model_path': model_path,
+            'metrics_path': metrics_path,
+            'promoted': promoted,
+            'timestamp': datetime.utcnow().isoformat()
+        })
+        
+        # Finalize chunk and get Merkle root
+        try:
+            if merkle_anchor.current_chunk.event_count > 0:
+                merkle_root = merkle_anchor.finalize_chunk()
+                print(f"[INFO] Training audit trail finalized. Merkle root: {merkle_root}")
+                print(f"[INFO] Audit logs saved to: {args.audit_path}")
+                
+                # Save audit summary
+                audit_summary_path = Path(args.audit_path) / "training_summary.json"
+                audit_summary = {
+                    'merkle_root': merkle_root,
+                    'model_type': args.model_type,
+                    'promoted': promoted,
+                    'metrics': metrics,
+                    'timestamp': datetime.utcnow().isoformat()
+                }
+                with open(audit_summary_path, 'w') as f:
+                    json.dump(audit_summary, f, indent=2)
+                print(f"[INFO] Audit summary saved to: {audit_summary_path}")
+        except Exception as e:
+            print(f"[WARN] Failed to finalize audit chunk: {e}")
 
 if __name__ == "__main__":
     main()
