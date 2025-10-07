@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Phase567IntegratedGovernance for integrated ML governance
+try:
+    from nethical.core import Phase567IntegratedGovernance, MLModelType
+    PHASE567_AVAILABLE = True
+except ImportError:
+    PHASE567_AVAILABLE = False
+    print("[WARN] Phase567IntegratedGovernance not available. Integrated governance will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,6 +420,11 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-phase567", action="store_true", help="Enable Phase567 integrated governance (shadow mode, blended risk, anomaly detection)")
+    parser.add_argument("--phase567-storage-dir", type=str, default="training_phase567_data", help="Storage directory for Phase567 governance data")
+    parser.add_argument("--enable-shadow-mode", action="store_true", help="Enable ML shadow mode (requires --enable-phase567)")
+    parser.add_argument("--enable-ml-blending", action="store_true", help="Enable ML blended risk (requires --enable-phase567)")
+    parser.add_argument("--enable-anomaly-detection", action="store_true", help="Enable anomaly detection (requires --enable-phase567)")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -453,6 +466,43 @@ def main():
             drift_reporter = None
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
+
+    # Initialize Phase567IntegratedGovernance for integrated ML governance
+    phase567_gov = None
+    if args.enable_phase567 and PHASE567_AVAILABLE:
+        try:
+            # Default to enabling all components if phase567 is enabled without specific flags
+            enable_shadow = args.enable_shadow_mode or not (args.enable_shadow_mode or args.enable_ml_blending or args.enable_anomaly_detection)
+            enable_blending = args.enable_ml_blending or not (args.enable_shadow_mode or args.enable_ml_blending or args.enable_anomaly_detection)
+            enable_anomaly = args.enable_anomaly_detection or not (args.enable_shadow_mode or args.enable_ml_blending or args.enable_anomaly_detection)
+            
+            phase567_gov = Phase567IntegratedGovernance(
+                storage_dir=args.phase567_storage_dir,
+                enable_shadow_mode=enable_shadow,
+                enable_ml_blending=enable_blending,
+                enable_anomaly_detection=enable_anomaly,
+                shadow_model_type=MLModelType.HEURISTIC,
+                gray_zone_lower=0.4,
+                gray_zone_upper=0.6,
+                rule_weight=0.7,
+                ml_weight=0.3
+            )
+            
+            components = []
+            if enable_shadow:
+                components.append("shadow mode")
+            if enable_blending:
+                components.append("blended risk")
+            if enable_anomaly:
+                components.append("anomaly detection")
+            
+            print(f"[INFO] Phase567 integrated governance enabled with: {', '.join(components)}")
+            print(f"[INFO] Phase567 data stored in: {args.phase567_storage_dir}")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize Phase567 governance: {e}")
+            phase567_gov = None
+    elif args.enable_phase567 and not PHASE567_AVAILABLE:
+        print("[WARN] Phase567 governance requested but Phase567IntegratedGovernance not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
@@ -512,6 +562,78 @@ def main():
             'metrics': metrics,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    # Process validation samples through Phase567 governance if enabled
+    if phase567_gov:
+        print("\n[INFO] Processing validation samples through Phase567 governance...")
+        
+        # Set baseline distribution for anomaly detection using training data
+        if phase567_gov.anomaly_monitor:
+            # Extract risk scores from training data (use label as proxy for risk)
+            train_risk_scores = [float(sample['label']) for sample in train_data[:100]]  # Use first 100 for baseline
+            phase567_gov.set_baseline_distribution(train_risk_scores, cohort=cohort_id)
+            print(f"[INFO] Set baseline distribution with {len(train_risk_scores)} training samples")
+        
+        # Process each validation sample through the governance pipeline
+        phase567_results = []
+        for i, (pred, label, sample) in enumerate(zip(preds, labels, val_data)):
+            # Convert predictions to risk scores and classifications
+            # pred is binary (0 or 1), convert to risk score
+            rule_risk_score = float(pred)  # Use prediction as rule-based score
+            rule_classification = 'deny' if pred >= 0.7 else ('warn' if pred >= 0.3 else 'allow')
+            
+            # Prepare features for Phase567
+            features = sample['features'] if isinstance(sample['features'], dict) else {'risk': float(pred)}
+            
+            # Process through Phase567
+            try:
+                result = phase567_gov.process_action(
+                    agent_id=f"model_{args.model_type}",
+                    action_id=f"validation_{i}",
+                    action_type="prediction",
+                    features=features,
+                    rule_risk_score=rule_risk_score,
+                    rule_classification=rule_classification,
+                    cohort=cohort_id
+                )
+                phase567_results.append(result)
+            except Exception as e:
+                print(f"[WARN] Error processing sample {i} through Phase567: {e}")
+        
+        # Get and display Phase567 metrics
+        print(f"[INFO] Processed {len(phase567_results)} validation samples through Phase567 governance")
+        
+        if phase567_gov.shadow_classifier:
+            shadow_metrics = phase567_gov.get_shadow_metrics()
+            print("\n[INFO] Phase567 Shadow Mode Metrics:")
+            print(f"  Total Predictions: {shadow_metrics.get('total_predictions', 0)}")
+            print(f"  Agreement Rate: {shadow_metrics.get('classification_agreement_rate', 0)*100:.1f}%")
+            print(f"  F1 Score: {shadow_metrics.get('f1_score', 0.0):.3f}")
+        
+        if phase567_gov.blended_engine:
+            blending_metrics = phase567_gov.get_blending_metrics()
+            print("\n[INFO] Phase567 Blended Risk Metrics:")
+            print(f"  Total Decisions: {blending_metrics.get('total_decisions', 0)}")
+            print(f"  ML Influence Rate: {blending_metrics.get('ml_influence_rate', 0.0)*100:.1f}%")
+            print(f"  Classification Change Rate: {blending_metrics.get('classification_change_rate', 0.0)*100:.1f}%")
+        
+        if phase567_gov.anomaly_monitor:
+            anomaly_stats = phase567_gov.get_anomaly_statistics()
+            print("\n[INFO] Phase567 Anomaly Detection Statistics:")
+            print(f"  Total Alerts: {anomaly_stats['alerts']['total']}")
+            print(f"  Tracked Agents: {anomaly_stats.get('tracked_agents', 0)}")
+        
+        # Log Phase567 metrics
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'phase567_metrics',
+                'shadow_metrics': phase567_gov.get_shadow_metrics() if phase567_gov.shadow_classifier else None,
+                'blending_metrics': phase567_gov.get_blending_metrics() if phase567_gov.blended_engine else None,
+                'anomaly_stats': phase567_gov.get_anomaly_statistics() if phase567_gov.anomaly_monitor else None,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            })
+        
+        print()
     
     # Track training performance for drift analysis
     if drift_reporter:
@@ -583,6 +705,32 @@ def main():
             
         except Exception as e:
             print(f"[WARN] Failed to generate drift report: {e}")
+    
+    # Export Phase567 comprehensive report if enabled
+    if phase567_gov:
+        try:
+            print("\n[INFO] Generating Phase567 comprehensive report...")
+            phase567_report = phase567_gov.export_phase567_report()
+            
+            # Save report to file
+            phase567_report_dir = Path(args.phase567_storage_dir)
+            phase567_report_dir.mkdir(parents=True, exist_ok=True)
+            report_path = phase567_report_dir / f"phase567_report_{args.model_type}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}.md"
+            
+            with open(report_path, 'w') as f:
+                f.write(phase567_report)
+            
+            print(f"[INFO] Phase567 report saved to: {report_path}")
+            
+            # Log Phase567 report generation
+            if merkle_anchor:
+                merkle_anchor.add_event({
+                    'event_type': 'phase567_report_generated',
+                    'report_path': str(report_path),
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+        except Exception as e:
+            print(f"[WARN] Failed to generate Phase567 report: {e}")
     
     # Finalize Merkle audit chunk if enabled
     if merkle_anchor:

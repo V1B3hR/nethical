@@ -154,3 +154,7 @@ training_audit_logs/
 training_drift_reports/
 example_drift_reports/
 drift_reports/
+
+# Phase567 integrated governance data
+training_phase567_data/
+
