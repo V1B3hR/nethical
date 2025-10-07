@@ -147,3 +147,5 @@ dmypy.json
 .Trashes
 ehthumbs.db
 Thumbs.db
+# Training audit logs
+training_audit_logs/

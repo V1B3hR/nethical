@@ -35,6 +35,36 @@ python scripts/baseline_orchestrator.py --process-only  # Process CSV files
 python scripts/baseline_orchestrator.py --train-only    # Train model
 ```
 
+### Option 3: Using train_any_model.py (With Audit Logging)
+
+The `training/train_any_model.py` script supports Merkle audit logging for immutable training audit trails:
+
+```bash
+# Train with audit logging enabled
+python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000 --enable-audit
+
+# Customize audit log path
+python training/train_any_model.py --model-type logistic --epochs 20 --enable-audit --audit-path custom_audit_logs
+
+# Train without audit logging (default)
+python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000
+```
+
+#### Audit Logging Features
+
+When `--enable-audit` is specified:
+- Creates an immutable audit trail using Merkle trees
+- Logs key training events: start, data loading, split, training completion, metrics, model save
+- Generates a Merkle root hash for cryptographic verification
+- Saves audit logs in structured JSON format
+- Creates a summary file with Merkle root and metrics
+
+The audit logs can be used for:
+- Compliance and regulatory requirements
+- Training reproducibility verification
+- Detecting tampering with training records
+- Tracking model lineage and provenance
+
 ## Dataset Sources
 
 All datasets are listed in `datasets/datasets`. See README.md for the complete list.
