@@ -112,6 +112,9 @@ Nethical includes trainable ML models for detecting anomalous agent behavior:
 # Train a model on synthetic data
 python training/train_any_model.py --model-type anomaly --num-samples 5000
 
+# Train with audit logging (for compliance and reproducibility)
+python training/train_any_model.py --model-type logistic --num-samples 10000 --enable-audit
+
 # Use the trained model
 python -c "
 from nethical.mlops.anomaly_classifier import AnomalyMLClassifier
@@ -120,6 +123,8 @@ result = clf.predict({'sequence': ['read', 'process', 'write']})
 print(f'Anomalous: {result[\"label\"] == 1}, Score: {result[\"score\"]:.3f}')
 "
 ```
+
+**Audit Logging**: Enable `--enable-audit` to create an immutable, cryptographically-verifiable training audit trail using Merkle trees. This is essential for compliance, model governance, and reproducibility. See [docs/AUDIT_LOGGING_GUIDE.md](docs/AUDIT_LOGGING_GUIDE.md) for details.
 
 See [ANOMALY_DETECTION_TRAINING.md](ANOMALY_DETECTION_TRAINING.md) for detailed documentation.
 
