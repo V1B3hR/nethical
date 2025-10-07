@@ -41,6 +41,11 @@ except ImportError:
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
 # Import IntegratedGovernance for full governance integration
+# IntegratedGovernance provides a unified system that includes:
+# - Phase 3: Risk scoring, correlation detection, fairness sampling, drift reporting
+# - Phase 4: Merkle audit logs, policy auditing, ethical taxonomy, SLA monitoring
+# - Phase 5-7: ML shadow mode, blended risk scoring, anomaly detection
+# - Phase 8-9: Human oversight, escalation queue, multi-objective optimization
 try:
     from nethical.core.integrated_governance import IntegratedGovernance
     INTEGRATED_GOVERNANCE_AVAILABLE = True
