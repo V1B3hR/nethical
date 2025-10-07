@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Quarantine Manager for model quarantine
+try:
+    from nethical.core.quarantine import QuarantineManager, QuarantineReason, QuarantineStatus
+    QUARANTINE_AVAILABLE = True
+except ImportError:
+    QUARANTINE_AVAILABLE = False
+    print("[WARN] QuarantineManager not available. Quarantine functionality will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,6 +420,8 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-quarantine", action="store_true", help="Enable quarantine system for model management")
+    parser.add_argument("--quarantine-on-failure", action="store_true", help="Automatically quarantine models that fail promotion gate")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -453,6 +463,33 @@ def main():
             drift_reporter = None
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
+
+    # Initialize Quarantine Manager for model quarantine
+    quarantine_manager = None
+    if args.enable_quarantine and QUARANTINE_AVAILABLE:
+        try:
+            quarantine_manager = QuarantineManager(
+                default_duration_hours=24.0,
+                auto_release=False
+            )
+            # Register the model cohort
+            quarantine_manager.register_agent_cohort(f"model_{args.model_type}", cohort_id)
+            print(f"[INFO] Quarantine system enabled for model cohort: {cohort_id}")
+            
+            # Log quarantine initialization event
+            if merkle_anchor:
+                merkle_anchor.add_event({
+                    'event_type': 'quarantine_initialized',
+                    'cohort_id': cohort_id,
+                    'model_type': args.model_type,
+                    'quarantine_on_failure': args.quarantine_on_failure,
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+        except Exception as e:
+            print(f"[WARN] Failed to initialize quarantine manager: {e}")
+            quarantine_manager = None
+    elif args.enable_quarantine and not QUARANTINE_AVAILABLE:
+        print("[WARN] Quarantine requested but QuarantineManager not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
@@ -525,6 +562,74 @@ def main():
         )
 
     promoted = check_promotion_gate(metrics)
+    
+    # Quarantine model cohort if promotion fails and quarantine-on-failure is enabled
+    if quarantine_manager and args.quarantine_on_failure and not promoted:
+        try:
+            print(f"\n[INFO] Model failed promotion gate. Quarantining cohort: {cohort_id}")
+            
+            # Determine quarantine reason based on failure
+            if metrics['ece'] > 0.08 and metrics['accuracy'] < 0.85:
+                reason = QuarantineReason.HIGH_RISK_SCORE
+                metadata = {
+                    'failure_reason': 'ece_and_accuracy_below_threshold',
+                    'ece': metrics['ece'],
+                    'accuracy': metrics['accuracy']
+                }
+            elif metrics['ece'] > 0.08:
+                reason = QuarantineReason.POLICY_VIOLATION
+                metadata = {
+                    'failure_reason': 'ece_above_threshold',
+                    'ece': metrics['ece']
+                }
+            else:
+                reason = QuarantineReason.POLICY_VIOLATION
+                metadata = {
+                    'failure_reason': 'accuracy_below_threshold',
+                    'accuracy': metrics['accuracy']
+                }
+            
+            metadata.update({
+                'model_type': args.model_type,
+                'training_timestamp': datetime.now(timezone.utc).isoformat()
+            })
+            
+            # Quarantine the cohort
+            quarantine_record = quarantine_manager.quarantine_cohort(
+                cohort=cohort_id,
+                reason=reason,
+                duration_hours=48.0,  # 48 hours for failed models
+                metadata=metadata
+            )
+            
+            print(f"[INFO] Cohort quarantined:")
+            print(f"  - Status: {quarantine_record.status.value}")
+            print(f"  - Reason: {quarantine_record.reason.value}")
+            print(f"  - Expires at: {quarantine_record.expires_at.isoformat()}")
+            print(f"  - Activation time: {quarantine_record.activation_time_ms:.2f}ms")
+            
+            # Log quarantine event
+            if merkle_anchor:
+                merkle_anchor.add_event({
+                    'event_type': 'model_quarantined',
+                    'cohort_id': cohort_id,
+                    'reason': reason.value,
+                    'metrics': metrics,
+                    'activation_time_ms': quarantine_record.activation_time_ms,
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+        except Exception as e:
+            print(f"[WARN] Failed to quarantine model cohort: {e}")
+    elif quarantine_manager and promoted:
+        # Log successful promotion without quarantine
+        print(f"\n[INFO] Model passed promotion gate. Cohort {cohort_id} remains active (not quarantined)")
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'model_promoted',
+                'cohort_id': cohort_id,
+                'metrics': metrics,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            })
     
     # Track promotion gate result for drift analysis
     if drift_reporter:
@@ -606,6 +711,34 @@ def main():
                 print(f"[INFO] Audit summary saved to: {audit_summary_path}")
         except Exception as e:
             print(f"[WARN] Failed to finalize audit chunk: {e}")
+    
+    # Print quarantine summary if enabled
+    if quarantine_manager:
+        print("\n" + "=" * 70)
+        print("[INFO] Quarantine System Summary")
+        print("=" * 70)
+        
+        # Get quarantine status for this cohort
+        status = quarantine_manager.get_quarantine_status(cohort_id)
+        print(f"Cohort ID: {cohort_id}")
+        print(f"Is Quarantined: {'YES' if status['is_quarantined'] else 'NO'}")
+        
+        if status['is_quarantined']:
+            print(f"  Reason: {status['reason']}")
+            print(f"  Status: {status['status']}")
+            print(f"  Activated at: {status['activated_at']}")
+            print(f"  Expires at: {status['expires_at']}")
+            print(f"  Duration: {status['duration_hours']} hours")
+            print(f"  Activation time: {status['activation_time_ms']:.2f}ms")
+        
+        # Get overall statistics
+        stats = quarantine_manager.get_statistics()
+        print(f"\nQuarantine Statistics:")
+        print(f"  Active quarantines: {stats['active_quarantines']}")
+        print(f"  Total quarantines: {stats['total_quarantines']}")
+        print(f"  Avg activation time: {stats['avg_activation_time_ms']:.2f}ms")
+        print(f"  Target activation time: {stats['target_activation_time_s']}s")
+        print("=" * 70)
 
 if __name__ == "__main__":
     main()
