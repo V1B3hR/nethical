@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import IntegratedGovernance for full governance integration
+try:
+    from nethical.core.integrated_governance import IntegratedGovernance
+    INTEGRATED_GOVERNANCE_AVAILABLE = True
+except ImportError:
+    INTEGRATED_GOVERNANCE_AVAILABLE = False
+    print("[WARN] IntegratedGovernance not available. Full governance mode will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,11 +420,54 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-integrated-governance", action="store_true", help="Enable full IntegratedGovernance system (includes all phases)")
+    parser.add_argument("--governance-storage-dir", type=str, default="training_governance_data", help="Storage directory for IntegratedGovernance")
     args = parser.parse_args()
 
-    # Initialize Merkle Anchor for audit logging
+    # Initialize IntegratedGovernance if enabled
+    integrated_gov = None
+    if args.enable_integrated_governance and INTEGRATED_GOVERNANCE_AVAILABLE:
+        try:
+            print(f"[INFO] Initializing IntegratedGovernance system...")
+            integrated_gov = IntegratedGovernance(
+                storage_dir=args.governance_storage_dir,
+                # Enable all core features for training
+                enable_performance_optimization=True,
+                enable_merkle_anchoring=True,
+                enable_quarantine=False,  # Not needed for training
+                enable_ethical_taxonomy=True,
+                enable_sla_monitoring=False,  # Not needed for training
+                enable_shadow_mode=True,
+                enable_ml_blending=True,
+                enable_anomaly_detection=True
+            )
+            print(f"[INFO] IntegratedGovernance enabled. Data stored in: {args.governance_storage_dir}")
+            print(f"[INFO] All governance phases (3, 4, 5-7, 8-9) are active.")
+            
+            # Log training initialization via governance
+            integrated_gov.process_action(
+                agent_id=f"training_{args.model_type}",
+                action="training_initialization",
+                cohort=args.cohort_id or f"{args.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+                violation_detected=False,
+                context={
+                    'event_type': 'training_start',
+                    'model_type': args.model_type,
+                    'epochs': args.epochs,
+                    'batch_size': args.batch_size,
+                    'num_samples': args.num_samples,
+                    'seed': args.seed
+                }
+            )
+        except Exception as e:
+            print(f"[WARN] Failed to initialize IntegratedGovernance: {e}")
+            integrated_gov = None
+    elif args.enable_integrated_governance and not INTEGRATED_GOVERNANCE_AVAILABLE:
+        print("[WARN] IntegratedGovernance requested but not available")
+
+    # Initialize Merkle Anchor for audit logging (if not using IntegratedGovernance)
     merkle_anchor = None
-    if args.enable_audit and MERKLE_AVAILABLE:
+    if args.enable_audit and MERKLE_AVAILABLE and not integrated_gov:
         try:
             merkle_anchor = MerkleAnchor(
                 storage_path=args.audit_path,
@@ -440,10 +491,10 @@ def main():
     elif args.enable_audit and not MERKLE_AVAILABLE:
         print("[WARN] Audit logging requested but MerkleAnchor not available")
 
-    # Initialize Ethical Drift Reporter for drift tracking
+    # Initialize Ethical Drift Reporter for drift tracking (if not using IntegratedGovernance)
     drift_reporter = None
     cohort_id = args.cohort_id or f"{args.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    if args.enable_drift_tracking and DRIFT_REPORTER_AVAILABLE:
+    if args.enable_drift_tracking and DRIFT_REPORTER_AVAILABLE and not integrated_gov:
         try:
             drift_reporter = EthicalDriftReporter(report_dir=args.drift_report_dir)
             print(f"[INFO] Ethical drift tracking enabled. Reports stored in: {args.drift_report_dir}")
@@ -459,7 +510,18 @@ def main():
     raw_data = load_data(num_samples=args.num_samples, model_type=args.model_type)
     
     # Log data loading event
-    if merkle_anchor:
+    if integrated_gov:
+        integrated_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action="data_loaded",
+            cohort=cohort_id,
+            violation_detected=False,
+            context={
+                'event_type': 'data_loaded',
+                'num_samples': len(raw_data)
+            }
+        )
+    elif merkle_anchor:
         merkle_anchor.add_event({
             'event_type': 'data_loaded',
             'num_samples': len(raw_data),
@@ -473,7 +535,19 @@ def main():
     train_data, val_data = temporal_split(processed_data)
     
     # Log data split event
-    if merkle_anchor:
+    if integrated_gov:
+        integrated_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action="data_split",
+            cohort=cohort_id,
+            violation_detected=False,
+            context={
+                'event_type': 'data_split',
+                'train_samples': len(train_data),
+                'val_samples': len(val_data)
+            }
+        )
+    elif merkle_anchor:
         merkle_anchor.add_event({
             'event_type': 'data_split',
             'train_samples': len(train_data),
@@ -489,7 +563,20 @@ def main():
     training_end_time = datetime.now(timezone.utc)
     
     # Log training completion event
-    if merkle_anchor:
+    if integrated_gov:
+        integrated_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action="training_completed",
+            cohort=cohort_id,
+            violation_detected=False,
+            context={
+                'event_type': 'training_completed',
+                'model_type': args.model_type,
+                'epochs': args.epochs,
+                'training_duration_seconds': (training_end_time - training_start_time).total_seconds()
+            }
+        )
+    elif merkle_anchor:
         merkle_anchor.add_event({
             'event_type': 'training_completed',
             'model_type': args.model_type,
@@ -506,7 +593,30 @@ def main():
         print(f"  {k}: {v:.4f}")
     
     # Log validation metrics event
-    if merkle_anchor:
+    if integrated_gov:
+        # Use IntegratedGovernance to track metrics with ML features
+        # Convert metrics to features for ML shadow mode
+        features = {
+            'violation_count': 1.0 - metrics['accuracy'],  # Lower accuracy = higher violation risk
+            'severity_max': metrics['ece'],  # Higher ECE = higher severity
+            'ml_score': 1.0 - metrics['f1']  # Lower F1 = higher risk
+        }
+        
+        integrated_gov.process_action(
+            agent_id=f"model_{args.model_type}",
+            action="validation_metrics",
+            cohort=cohort_id,
+            violation_detected=(metrics['ece'] > 0.08 or metrics['accuracy'] < 0.85),
+            violation_type="model_quality" if (metrics['ece'] > 0.08 or metrics['accuracy'] < 0.85) else None,
+            violation_severity="high" if (metrics['ece'] > 0.15 or metrics['accuracy'] < 0.70) else "medium",
+            context={'metrics': metrics},
+            action_id=f"validation_{args.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            action_type="model_validation",
+            features=features,
+            rule_risk_score=1.0 - metrics['accuracy'],
+            rule_classification="block" if metrics['accuracy'] < 0.70 else "warn" if metrics['accuracy'] < 0.85 else "allow"
+        )
+    elif merkle_anchor:
         merkle_anchor.add_event({
             'event_type': 'validation_metrics',
             'metrics': metrics,
@@ -514,7 +624,8 @@ def main():
         })
     
     # Track training performance for drift analysis
-    if drift_reporter:
+    # Note: If using IntegratedGovernance, drift tracking is already handled by the process_action calls above
+    if drift_reporter and not integrated_gov:
         # Track validation as an action with risk score based on accuracy
         # Higher accuracy = lower risk
         risk_score = 1.0 - metrics['accuracy']
@@ -527,7 +638,8 @@ def main():
     promoted = check_promotion_gate(metrics)
     
     # Track promotion gate result for drift analysis
-    if drift_reporter:
+    # Note: If using IntegratedGovernance, violations are already tracked in the validation_metrics call above
+    if drift_reporter and not integrated_gov:
         if not promoted:
             # Track promotion gate failure as a violation
             if metrics['ece'] > 0.08:
@@ -548,7 +660,22 @@ def main():
     model_path, metrics_path = save_model_and_metrics(model, metrics, args.model_type, promoted=promoted)
     
     # Log model save event
-    if merkle_anchor:
+    if integrated_gov:
+        integrated_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action="model_saved",
+            cohort=cohort_id,
+            violation_detected=not promoted,
+            violation_type="promotion_gate_failure" if not promoted else None,
+            violation_severity="medium" if not promoted else None,
+            context={
+                'event_type': 'model_saved',
+                'model_path': model_path,
+                'metrics_path': metrics_path,
+                'promoted': promoted
+            }
+        )
+    elif merkle_anchor:
         merkle_anchor.add_event({
             'event_type': 'model_saved',
             'model_path': model_path,
@@ -557,8 +684,8 @@ def main():
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
     
-    # Generate drift report if tracking is enabled
-    if drift_reporter:
+    # Generate drift report if tracking is enabled (and not using IntegratedGovernance which has its own reporting)
+    if drift_reporter and not integrated_gov:
         try:
             print("\n[INFO] Generating ethical drift report...")
             report_start_time = training_start_time
@@ -584,8 +711,53 @@ def main():
         except Exception as e:
             print(f"[WARN] Failed to generate drift report: {e}")
     
-    # Finalize Merkle audit chunk if enabled
-    if merkle_anchor:
+    # Generate IntegratedGovernance system report if enabled
+    if integrated_gov:
+        try:
+            print("\n[INFO] Generating IntegratedGovernance system report...")
+            system_status = integrated_gov.get_system_status()
+            
+            print(f"[INFO] Governance System Status:")
+            print(f"  Timestamp: {system_status['timestamp']}")
+            print(f"  Components enabled: {sum(system_status['components_enabled'].values())}/{len(system_status['components_enabled'])}")
+            
+            # Phase 3: Risk & Correlation
+            if 'phase3' in system_status:
+                print(f"\n  Phase 3 (Risk & Correlation):")
+                print(f"    Active risk profiles: {system_status['phase3']['risk_engine']['active_profiles']}")
+                print(f"    Tracked agents: {system_status['phase3']['correlation_engine']['tracked_agents']}")
+                if system_status['phase3']['performance_optimizer']['enabled']:
+                    print(f"    Meeting performance target: {system_status['phase3']['performance_optimizer']['meeting_target']}")
+            
+            # Phase 4: Audit & Taxonomy
+            if 'phase4' in system_status:
+                print(f"\n  Phase 4 (Audit & Taxonomy):")
+                print(f"    Merkle events logged: {system_status['phase4']['merkle_anchor']['current_chunk_events']}")
+                if system_status['phase4']['quarantine_manager']['enabled']:
+                    print(f"    Quarantined cohorts: {system_status['phase4']['quarantine_manager']['quarantined_cohorts']}")
+            
+            # Phase 5-7: ML & Anomaly
+            if 'phase567' in system_status:
+                print(f"\n  Phase 5-7 (ML & Anomaly Detection):")
+                print(f"    Shadow classifier enabled: {system_status['phase567']['shadow_classifier']['enabled']}")
+                print(f"    ML blending enabled: {system_status['phase567']['blended_engine']['enabled']}")
+                print(f"    Anomaly monitoring enabled: {system_status['phase567']['anomaly_monitor']['enabled']}")
+            
+            # Phase 8-9: Human Oversight & Optimization
+            if 'phase89' in system_status:
+                print(f"\n  Phase 8-9 (Human Oversight & Optimization):")
+                print(f"    Pending escalation cases: {system_status['phase89']['escalation_queue']['pending_cases']}")
+                print(f"    Tracked configurations: {system_status['phase89']['optimizer']['tracked_configs']}")
+            
+            print(f"\n[INFO] Full governance data saved to: {args.governance_storage_dir}")
+            
+        except Exception as e:
+            print(f"[WARN] Failed to generate governance report: {e}")
+            import traceback
+            traceback.print_exc()
+    
+    # Finalize Merkle audit chunk if enabled (and not using IntegratedGovernance)
+    if merkle_anchor and not integrated_gov:
         try:
             if merkle_anchor.current_chunk.event_count > 0:
                 merkle_root = merkle_anchor.finalize_chunk()
