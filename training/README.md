@@ -4,7 +4,7 @@ This directory contains scripts for training machine learning models for the Net
 
 ## train_any_model.py
 
-A plug-and-play training pipeline that supports multiple model types with optional audit logging and ethical drift tracking.
+A plug-and-play training pipeline that supports multiple model types with optional audit logging, ethical drift tracking, and governance validation.
 
 ### Features
 
@@ -14,6 +14,7 @@ A plug-and-play training pipeline that supports multiple model types with option
 - **Promotion Gate**: Validates models against quality criteria before promotion
 - **Audit Logging**: Optional Merkle tree-based audit trail for training events
 - **Ethical Drift Tracking**: Track and analyze model performance across training cohorts
+- **Governance Validation**: Real-time safety and ethical validation of training data and predictions
 
 ### Usage
 
@@ -30,6 +31,28 @@ python training/train_any_model.py \
     --num-samples 2000 \
     --enable-audit \
     --audit-path training_logs
+```
+
+Training with governance validation:
+```bash
+python training/train_any_model.py \
+    --model-type heuristic \
+    --epochs 10 \
+    --num-samples 1000 \
+    --enable-governance
+```
+
+Training with audit logging, governance, and drift tracking:
+```bash
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 20 \
+    --num-samples 2000 \
+    --enable-audit \
+    --enable-governance \
+    --enable-drift-tracking \
+    --drift-report-dir drift_reports \
+    --cohort-id cohort_alpha
 ```
 
 Training with ethical drift tracking:
@@ -56,6 +79,10 @@ python training/train_any_model.py \
 
 - `--enable-audit`: Enable Merkle audit logging
 - `--audit-path`: Path for audit logs (default: `training_audit_logs`)
+
+#### Governance Validation Options
+
+- `--enable-governance`: Enable governance validation during training
 
 #### Drift Tracking Options
 
@@ -117,6 +144,76 @@ Each drift report (saved as JSON) contains:
   "recommendations": ["List of recommendations"]
 }
 ```
+
+### Governance Validation
+
+Governance validation provides real-time safety and ethical checks during model training. When enabled with `--enable-governance`, the system validates:
+
+#### Training Data Validation
+
+- Checks first 100 training samples for safety violations
+- Detects harmful content, toxic language, and malicious patterns
+- Reports data samples that should be quarantined or blocked
+
+#### Model Prediction Validation
+
+- Validates first 50 model predictions during the validation phase
+- Ensures model outputs don't contain safety violations
+- Flags predictions that would be blocked in production
+
+#### Detected Violation Types
+
+The governance system checks for:
+
+- **Ethical Violations**: Harmful content, bias, discrimination
+- **Safety Violations**: Dangerous commands, unsafe domains, privilege escalation
+- **Manipulation**: Social engineering, phishing, emotional leverage
+- **Dark Patterns**: NLP manipulation, weaponized empathy, dependency creation
+- **Privacy Issues**: PII exposure (emails, phone numbers, credit cards, SSN, IP addresses)
+- **Security Issues**: Prompt injection, adversarial attacks, obfuscation
+- **Cognitive Warfare**: Reality distortion, psychological manipulation
+- **Toxic Content**: Offensive language, hate speech
+- **Model Extraction**: Suspicious probing patterns
+
+#### Governance Output
+
+Example governance validation output:
+
+```
+[INFO] Governance validation enabled
+[INFO] Running governance validation on training data samples...
+[WARN] Governance found 5 problematic data samples
+[INFO] Running governance validation on model predictions...
+[INFO] Governance validation passed for 50 predictions
+
+[INFO] Governance Validation Summary:
+  Data samples validated: 100
+  Data violations found: 5
+  Predictions validated: 50
+  Prediction violations found: 0
+```
+
+#### Integration with Audit Logging
+
+When both `--enable-governance` and `--enable-audit` are used, governance metrics are included in the audit summary:
+
+```json
+{
+  "merkle_root": "abc123...",
+  "model_type": "heuristic",
+  "promoted": true,
+  "metrics": {...},
+  "governance": {
+    "enabled": true,
+    "data_violations": 5,
+    "prediction_violations": 0,
+    "total_violations_detected": 5,
+    "total_actions_blocked": 0
+  }
+}
+```
+
+This provides a complete audit trail showing both model performance and safety compliance.
 
 ### Promotion Gate Criteria
 
