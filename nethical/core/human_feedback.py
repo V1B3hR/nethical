@@ -626,3 +626,195 @@ class EscalationQueue:
             Case if found, None otherwise
         """
         return self.cases_by_id.get(case_id)
+
+
+def _demo():
+    """Demonstrate the human feedback system functionality."""
+    import tempfile
+    import shutil
+    from pathlib import Path
+    
+    print("=" * 70)
+    print("Human Feedback System Demo")
+    print("=" * 70)
+    
+    # Create temporary directory for demo
+    temp_dir = tempfile.mkdtemp()
+    try:
+        storage_path = str(Path(temp_dir) / "escalations.db")
+        
+        # Initialize escalation queue
+        print("\n1. Initializing Escalation Queue...")
+        queue = EscalationQueue(
+            storage_path=storage_path,
+            triage_sla_seconds=3600,  # 1 hour
+            resolution_sla_seconds=86400  # 24 hours
+        )
+        print(f"   ✓ Queue initialized with storage at: {storage_path}")
+        print(f"   - Triage SLA: {queue.triage_sla_seconds}s (1 hour)")
+        print(f"   - Resolution SLA: {queue.resolution_sla_seconds}s (24 hours)")
+        
+        # Add test cases
+        print("\n2. Adding Cases to Escalation Queue...")
+        
+        test_cases = [
+            {
+                "judgment_id": "judg_001",
+                "action_id": "act_001",
+                "agent_id": "agent_alpha",
+                "decision": "block",
+                "confidence": 0.65,
+                "violations": [
+                    {"type": "safety", "severity": 4, "description": "Potential unsafe content"}
+                ],
+                "priority": ReviewPriority.HIGH,
+                "context": {"source": "user_action", "timestamp": "2024-01-01T10:00:00Z"}
+            },
+            {
+                "judgment_id": "judg_002",
+                "action_id": "act_002",
+                "agent_id": "agent_beta",
+                "decision": "allow",
+                "confidence": 0.55,
+                "violations": [
+                    {"type": "privacy", "severity": 3, "description": "Privacy concern"}
+                ],
+                "priority": ReviewPriority.MEDIUM,
+                "context": {"source": "automated_scan", "timestamp": "2024-01-01T10:15:00Z"}
+            },
+            {
+                "judgment_id": "judg_003",
+                "action_id": "act_003",
+                "agent_id": "agent_gamma",
+                "decision": "terminate",
+                "confidence": 0.45,
+                "violations": [
+                    {"type": "security", "severity": 5, "description": "Critical security violation"}
+                ],
+                "priority": ReviewPriority.EMERGENCY,
+                "context": {"source": "security_monitor", "timestamp": "2024-01-01T10:30:00Z"}
+            }
+        ]
+        
+        for i, case_data in enumerate(test_cases, 1):
+            case = queue.add_case(**case_data)
+            print(f"\n   Case {i} added:")
+            print(f"   - Case ID: {case.case_id}")
+            print(f"   - Decision: {case.decision} (confidence: {case.confidence})")
+            print(f"   - Priority: {case.priority.name}")
+            print(f"   - Status: {case.status.value}")
+            print(f"   - Violations: {len(case.violations)}")
+        
+        print(f"\n   ✓ Total cases in queue: {len(queue.pending_cases)}")
+        
+        # Review workflow
+        print("\n3. Human Review Workflow...")
+        reviewer_id = "reviewer_alice"
+        reviewed_cases = []
+        
+        while len(reviewed_cases) < 3:
+            case = queue.get_next_case(reviewer_id=reviewer_id)
+            if not case:
+                break
+            
+            reviewed_cases.append(case)
+            print(f"\n   Reviewing Case #{len(reviewed_cases)}:")
+            print(f"   - Case ID: {case.case_id}")
+            print(f"   - Agent: {case.agent_id}")
+            print(f"   - Decision: {case.decision} (confidence: {case.confidence})")
+            print(f"   - Priority: {case.priority.name}")
+            print(f"   - Status: {case.status.value}")
+            print(f"   - Assigned to: {case.assigned_to}")
+            
+            # Submit different types of feedback
+            if len(reviewed_cases) == 1:
+                # False positive case
+                feedback = queue.submit_feedback(
+                    case_id=case.case_id,
+                    reviewer_id=reviewer_id,
+                    feedback_tags=[FeedbackTag.FALSE_POSITIVE],
+                    rationale="Content was actually safe, detector was too aggressive",
+                    corrected_decision="allow",
+                    confidence=0.9,
+                    metadata={"review_notes": "Edge case that needs policy clarification"}
+                )
+                print(f"   - Feedback: FALSE_POSITIVE")
+                print(f"   - Rationale: {feedback.rationale}")
+                print(f"   - Corrected: {feedback.corrected_decision}")
+            
+            elif len(reviewed_cases) == 2:
+                # Correct decision
+                feedback = queue.submit_feedback(
+                    case_id=case.case_id,
+                    reviewer_id=reviewer_id,
+                    feedback_tags=[FeedbackTag.CORRECT_DECISION],
+                    rationale="Decision was appropriate given the context",
+                    confidence=0.95
+                )
+                print(f"   - Feedback: CORRECT_DECISION")
+                print(f"   - Rationale: {feedback.rationale}")
+            
+            else:
+                # Policy gap
+                feedback = queue.submit_feedback(
+                    case_id=case.case_id,
+                    reviewer_id=reviewer_id,
+                    feedback_tags=[FeedbackTag.POLICY_GAP, FeedbackTag.EDGE_CASE],
+                    rationale="Policy doesn't cover this scenario - needs update",
+                    corrected_decision="escalate_further",
+                    confidence=0.85,
+                    metadata={"suggested_policy": "Add explicit handling for security violations"}
+                )
+                print(f"   - Feedback: POLICY_GAP, EDGE_CASE")
+                print(f"   - Rationale: {feedback.rationale}")
+                print(f"   - Corrected: {feedback.corrected_decision}")
+        
+        # SLA Metrics
+        print("\n4. SLA Metrics...")
+        metrics = queue.get_sla_metrics()
+        print(f"   Total Cases: {metrics.total_cases}")
+        print(f"   Pending Cases: {metrics.pending_cases}")
+        print(f"   Completed Cases: {metrics.completed_cases}")
+        print(f"   Median Triage Time: {metrics.median_triage_time_seconds:.2f}s")
+        print(f"   Median Resolution Time: {metrics.median_resolution_time_seconds:.2f}s")
+        print(f"   P95 Triage Time: {metrics.p95_triage_time_seconds:.2f}s")
+        print(f"   P95 Resolution Time: {metrics.p95_resolution_time_seconds:.2f}s")
+        print(f"   SLA Breaches: {metrics.sla_breaches}")
+        
+        # Feedback Summary
+        print("\n5. Feedback Summary (for Continuous Improvement)...")
+        summary = queue.get_feedback_summary()
+        print(f"   Total Feedback: {summary['total_feedback']}")
+        print(f"   Correction Rate: {summary['correction_rate']:.1%}")
+        print(f"   False Positive Rate: {summary['false_positive_rate']:.1%}")
+        print(f"   Missed Violation Rate: {summary['missed_violation_rate']:.1%}")
+        print(f"   Policy Gap Rate: {summary['policy_gap_rate']:.1%}")
+        print(f"   Tag Counts: {summary['tag_counts']}")
+        
+        # List pending cases
+        print("\n6. Pending Cases...")
+        pending = queue.list_pending_cases(limit=5)
+        print(f"   Remaining pending cases: {len(pending)}")
+        for case in pending:
+            print(f"   - {case.case_id}: {case.priority.name} priority, {case.decision}")
+        
+        print("\n" + "=" * 70)
+        print("Demo Complete!")
+        print("=" * 70)
+        print("\nKey Features Demonstrated:")
+        print("  ✓ Escalation queue initialization with SLA tracking")
+        print("  ✓ Adding cases with different priorities")
+        print("  ✓ Priority-based case retrieval")
+        print("  ✓ Human review workflow with feedback submission")
+        print("  ✓ Structured feedback tags (FALSE_POSITIVE, CORRECT_DECISION, POLICY_GAP)")
+        print("  ✓ SLA metrics calculation")
+        print("  ✓ Feedback summary for continuous improvement")
+        print()
+        
+    finally:
+        # Cleanup
+        shutil.rmtree(temp_dir)
+
+
+if __name__ == "__main__":
+    _demo()
