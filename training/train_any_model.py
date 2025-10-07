@@ -99,12 +99,14 @@ def set_seed(seed=42):
 def get_model_class(model_type: str):
     from nethical.core.ml_shadow import MLModelType
     from nethical.mlops.baseline import BaselineMLClassifier
+    from nethical.mlops.anomaly_classifier import AnomalyMLClassifier
     # from nethical.mlops.deep_nn import DeepNNClassifier
     # from nethical.mlops.transformer import TransformerClassifier
     registry = {
         "heuristic": (BaselineMLClassifier, preprocess_for_heuristic),
         "logistic": (BaselineMLClassifier, preprocess_for_logistic),
         "simple_transformer": (BaselineMLClassifier, preprocess_for_transformer),
+        "anomaly": (AnomalyMLClassifier, preprocess_for_anomaly),
         # "deep_nn": (DeepNNClassifier, preprocess_for_deep_nn),
         # "transformer": (TransformerClassifier, preprocess_for_transformer),
     }
@@ -140,11 +142,17 @@ def preprocess_for_transformer(data):
             del sample["features"]["text"]
     return data
 
+def preprocess_for_anomaly(data):
+    # For anomaly detection, data should already be in the right format with sequences
+    # Each sample should have features['sequence'] as a list of actions
+    # No additional preprocessing needed
+    return data
+
 # def preprocess_for_deep_nn(data):
 #     # Add real preprocessing for deep NN if needed (normalization, encoding, etc.)
 #     return data
 
-def load_data(num_samples=10000):
+def load_data(num_samples=10000, model_type='logistic'):
     csv_files = list(DATA_EXTERNAL_DIR.glob("*.csv"))
     if csv_files:
         print(f"[INFO] Found {len(csv_files)} Kaggle CSVs. Loading and sampling data for training.")
@@ -181,16 +189,68 @@ def load_data(num_samples=10000):
             return data
     print(f"[INFO] Loading {num_samples} synthetic samples...")
     data = []
-    for _ in range(num_samples):
-        features = {
-            'violation_count': random.random(),
-            'severity_max': random.random(),
-            'recency_score': random.random(),
-            'frequency_score': random.random(),
-            'context_risk': random.random(),
-        }
-        label = int(features['violation_count'] + features['severity_max'] > 1)
-        data.append({'features': features, 'label': label})
+    
+    # Generate data based on model type
+    if model_type == 'anomaly':
+        # Generate synthetic anomaly detection data with action sequences
+        # Normal patterns (70% of data)
+        normal_patterns = [
+            ['read', 'process', 'write'],
+            ['fetch', 'transform', 'load'],
+            ['query', 'filter', 'aggregate'],
+            ['request', 'authenticate', 'respond'],
+            ['open', 'read', 'close'],
+            ['connect', 'send', 'receive'],
+            ['validate', 'process', 'store'],
+            ['load', 'analyze', 'report']
+        ]
+        
+        # Anomalous patterns (30% of data)
+        anomalous_patterns = [
+            ['delete', 'exfiltrate', 'cover_tracks'],
+            ['escalate', 'access', 'exfiltrate'],
+            ['scan', 'exploit', 'inject'],
+            ['brute_force', 'access', 'modify'],
+            ['bypass', 'steal', 'hide'],
+            ['probe', 'breach', 'extract'],
+            ['intercept', 'decrypt', 'leak'],
+            ['overflow', 'execute', 'control']
+        ]
+        
+        normal_count = int(num_samples * 0.7)
+        anomalous_count = num_samples - normal_count
+        
+        # Generate normal samples
+        for _ in range(normal_count):
+            pattern = random.choice(normal_patterns)
+            data.append({
+                'features': {'sequence': pattern.copy()},
+                'label': 0  # Normal
+            })
+        
+        # Generate anomalous samples
+        for _ in range(anomalous_count):
+            pattern = random.choice(anomalous_patterns)
+            data.append({
+                'features': {'sequence': pattern.copy()},
+                'label': 1  # Anomalous
+            })
+        
+        # Shuffle the data
+        random.shuffle(data)
+    else:
+        # Original synthetic data for other model types
+        for _ in range(num_samples):
+            features = {
+                'violation_count': random.random(),
+                'severity_max': random.random(),
+                'recency_score': random.random(),
+                'frequency_score': random.random(),
+                'context_risk': random.random(),
+            }
+            label = int(features['violation_count'] + features['severity_max'] > 1)
+            data.append({'features': features, 'label': label})
+    
     return data
 
 def temporal_split(data, train_ratio=0.8):
@@ -278,7 +338,7 @@ def main():
 
     set_seed(args.seed)
     download_kaggle_datasets()
-    raw_data = load_data(num_samples=args.num_samples)
+    raw_data = load_data(num_samples=args.num_samples, model_type=args.model_type)
     
     # Log data loading event
     if merkle_anchor:
