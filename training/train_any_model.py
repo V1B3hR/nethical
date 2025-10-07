@@ -5,9 +5,19 @@ Plug-and-Play Model Training Script for Nethical
 - Downloads datasets from Kaggle using your API key (writes it to ~/.kaggle/kaggle.json if needed).
 - Loads, preprocesses, and splits data according to the chosen model.
 - Trains the model, computes metrics, checks promotion gate, and saves results.
+- Optional: Enable Merkle audit logging for immutable training history.
+- Optional: Enable ethical drift tracking for model performance monitoring.
+- Optional: Enable quarantine system for automated model risk management.
 
 Usage:
+    # Basic training
     python train_any_model.py --model-type logistic --epochs 30 --batch-size 64 --num-samples 4000 --seed 32
+    
+    # Training with quarantine (auto-quarantine on failure)
+    python train_any_model.py --model-type logistic --epochs 10 --num-samples 1000 --enable-quarantine --quarantine-on-failure
+    
+    # Training with all governance features
+    python train_any_model.py --model-type anomaly --num-samples 5000 --enable-audit --enable-drift-tracking --enable-quarantine --quarantine-on-failure
 
 Dependencies: kaggle, pandas, numpy
 """
