@@ -14,6 +14,7 @@ A plug-and-play training pipeline that supports multiple model types with option
 - **Promotion Gate**: Validates models against quality criteria before promotion
 - **Audit Logging**: Optional Merkle tree-based audit trail for training events
 - **Ethical Drift Tracking**: Track and analyze model performance across training cohorts
+- **Continuous Optimization**: Multi-objective optimization with advanced promotion gates
 
 ### Usage
 
@@ -43,6 +44,26 @@ python training/train_any_model.py \
     --cohort-id cohort_alpha
 ```
 
+Training with continuous optimization:
+```bash
+# Create a baseline configuration
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 20 \
+    --num-samples 2000 \
+    --enable-optimization \
+    --optimization-db data/optimization.db
+
+# Train a candidate and compare against baseline
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 20 \
+    --num-samples 2000 \
+    --enable-optimization \
+    --optimization-db data/optimization.db \
+    --baseline-config-id cfg_abc123
+```
+
 ### Command-Line Arguments
 
 - `--model-type`: Type of model to train (required)
@@ -62,6 +83,12 @@ python training/train_any_model.py \
 - `--enable-drift-tracking`: Enable ethical drift tracking
 - `--drift-report-dir`: Directory for drift reports (default: `training_drift_reports`)
 - `--cohort-id`: Cohort identifier for drift tracking (default: `{model-type}_{timestamp}`)
+
+#### Optimization Options
+
+- `--enable-optimization`: Enable continuous optimization with advanced promotion gates
+- `--optimization-db`: Path to optimization database (default: `data/optimization.db`)
+- `--baseline-config-id`: Baseline configuration ID for promotion gate comparison
 
 ### Ethical Drift Tracking
 
@@ -118,12 +145,90 @@ Each drift report (saved as JSON) contains:
 }
 ```
 
+### Continuous Optimization
+
+The continuous optimization feature integrates the multi-objective optimizer from Phase 9 to enable:
+
+- **Advanced Promotion Gates**: Multi-objective criteria including recall gain, FP rate, latency, and human agreement
+- **Configuration Tracking**: Persistent storage of model configurations and performance metrics
+- **A/B Testing Support**: Compare candidate models against baseline configurations
+- **Production Safety**: Only promote models that meet strict quality criteria
+
+#### How It Works
+
+1. **Create a Baseline**: Run training with `--enable-optimization` to create a baseline configuration
+2. **Train Candidates**: Train new models with `--baseline-config-id` to compare against the baseline
+3. **Promotion Gate**: The optimizer evaluates candidates using multi-objective criteria:
+   - Minimum recall gain: +3% (absolute)
+   - Maximum FP rate increase: +2% (absolute)
+   - Maximum latency increase: +5ms
+   - Minimum human agreement: 85%
+   - Minimum sample size: 100 cases
+
+#### Advanced Promotion Gate Criteria
+
+When optimization is enabled, models are evaluated against more rigorous criteria than the simple promotion gate:
+
+| Criterion | Threshold | Description |
+|-----------|-----------|-------------|
+| Recall Gain | +3% | Candidate must improve recall by at least 3% over baseline |
+| FP Rate Increase | +2% | False positive rate cannot increase by more than 2% |
+| Latency Increase | +5ms | Decision latency cannot increase by more than 5ms |
+| Human Agreement | 85% | Model decisions must align with human judgments at least 85% of the time |
+| Sample Size | 100 | Minimum number of validation cases required |
+
+#### Optimization Workflow
+
+```bash
+# Step 1: Create a baseline configuration
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 20 \
+    --num-samples 5000 \
+    --seed 42 \
+    --enable-optimization \
+    --optimization-db data/optimization.db
+
+# Output: Recorded metrics for configuration: cfg_abc123
+
+# Step 2: Train a candidate model with different parameters
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 30 \
+    --num-samples 5000 \
+    --seed 43 \
+    --enable-optimization \
+    --optimization-db data/optimization.db \
+    --baseline-config-id cfg_abc123
+
+# Output: Promotion Gate Results with detailed comparison
+```
+
+#### Benefits
+
+- **Data-Driven Decisions**: Objective comparison of model performance
+- **Risk Mitigation**: Prevents degradation of production models
+- **Continuous Improvement**: Systematic approach to model optimization
+- **Audit Trail**: Complete history of configurations and their performance
+
 ### Promotion Gate Criteria
 
-Models must meet the following criteria to be promoted to production:
+#### Simple Promotion Gate (Default)
+
+When optimization is not enabled, models are evaluated using a simple threshold-based promotion gate:
 
 - **Maximum ECE**: ≤ 0.08 (Expected Calibration Error)
 - **Minimum Accuracy**: ≥ 0.85
+
+#### Advanced Promotion Gate (With Optimization)
+
+When `--enable-optimization` is used with `--baseline-config-id`, models are evaluated using multi-objective criteria:
+
+- **Recall Gain**: Must improve by ≥ +3% over baseline
+- **FP Rate Increase**: Must not increase by > +2% over baseline
+- **Latency Increase**: Must not increase by > +5ms over baseline
+- **Human Agreement**: Must be ≥ 85%
+- **Sample Size**: Must have ≥ 100 validation cases
 
 Models that pass the promotion gate are saved to `models/current/`, while those that fail are saved to `models/candidates/`.
 
@@ -144,4 +249,7 @@ python tests/test_train_audit_logging.py
 
 # Test drift tracking
 python tests/test_train_drift_tracking.py
+
+# Test optimization integration
+python tests/test_train_optimization.py
 ```
