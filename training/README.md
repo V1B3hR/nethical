@@ -14,6 +14,7 @@ A plug-and-play training pipeline that supports multiple model types with option
 - **Promotion Gate**: Validates models against quality criteria before promotion
 - **Audit Logging**: Optional Merkle tree-based audit trail for training events
 - **Ethical Drift Tracking**: Track and analyze model performance across training cohorts
+- **Performance Optimization**: Track and optimize CPU usage during training phases
 
 ### Usage
 
@@ -43,6 +44,27 @@ python training/train_any_model.py \
     --cohort-id cohort_alpha
 ```
 
+Training with performance optimization tracking:
+```bash
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 20 \
+    --num-samples 2000 \
+    --enable-performance-optimization \
+    --performance-target-reduction 30.0
+```
+
+Training with all features enabled:
+```bash
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 20 \
+    --num-samples 2000 \
+    --enable-audit \
+    --enable-drift-tracking \
+    --enable-performance-optimization
+```
+
 ### Command-Line Arguments
 
 - `--model-type`: Type of model to train (required)
@@ -62,6 +84,11 @@ python training/train_any_model.py \
 - `--enable-drift-tracking`: Enable ethical drift tracking
 - `--drift-report-dir`: Directory for drift reports (default: `training_drift_reports`)
 - `--cohort-id`: Cohort identifier for drift tracking (default: `{model-type}_{timestamp}`)
+
+#### Performance Optimization Options
+
+- `--enable-performance-optimization`: Enable performance optimization tracking
+- `--performance-target-reduction`: Target CPU reduction percentage (default: 30.0)
 
 ### Ethical Drift Tracking
 
@@ -118,6 +145,88 @@ Each drift report (saved as JSON) contains:
 }
 ```
 
+### Performance Optimization Tracking
+
+Performance optimization tracking monitors CPU usage during different training phases to identify optimization opportunities.
+
+#### Tracked Training Phases
+
+The performance optimizer tracks the following training phases:
+
+- **Data Loading** (FAST tier): Time spent loading and preparing datasets
+- **Preprocessing** (STANDARD tier): Time spent preprocessing and transforming data
+- **Training** (ADVANCED tier): Time spent training the model
+- **Validation** (STANDARD tier): Time spent validating model performance
+
+#### How It Works
+
+1. When enabled, the performance optimizer tracks CPU time for each training phase
+2. Metrics are collected including:
+   - Total CPU time per phase
+   - Average CPU time per invocation
+   - Number of invocations
+3. At the end of training, a performance report is generated with:
+   - Detailed timing metrics for each phase
+   - Optimization suggestions based on performance data
+   - Target achievement status (default: 30% CPU reduction)
+
+#### Performance Report Structure
+
+Performance reports are saved to `training_performance_reports/` as JSON files:
+
+```json
+{
+  "timestamp": "ISO 8601 timestamp",
+  "action_metrics": {
+    "total_actions": 0,
+    "total_cpu_time_ms": 0.0,
+    "avg_cpu_time_ms": 0.0
+  },
+  "detector_stats": {
+    "detectors": {
+      "data_loading": {
+        "tier": "fast",
+        "total_invocations": 1,
+        "total_cpu_time_ms": 150.5,
+        "avg_cpu_time_ms": 150.5
+      },
+      "preprocessing": {
+        "tier": "standard",
+        "total_invocations": 1,
+        "total_cpu_time_ms": 50.2,
+        "avg_cpu_time_ms": 50.2
+      },
+      "training": {
+        "tier": "advanced",
+        "total_invocations": 1,
+        "total_cpu_time_ms": 1200.8,
+        "avg_cpu_time_ms": 1200.8
+      },
+      "validation": {
+        "tier": "standard",
+        "total_invocations": 1,
+        "total_cpu_time_ms": 80.3,
+        "avg_cpu_time_ms": 80.3
+      }
+    }
+  },
+  "optimization": {
+    "baseline_cpu_ms": null,
+    "baseline_established": false,
+    "current_cpu_reduction_pct": 0.0,
+    "target_cpu_reduction_pct": 30.0,
+    "meeting_target": false
+  }
+}
+```
+
+#### Example Use Cases
+
+- **Bottleneck Identification**: Identify which training phases consume the most CPU time
+- **Optimization Verification**: Measure the impact of optimization changes
+- **Resource Planning**: Understand resource requirements for different model types
+- **Performance Regression Detection**: Track performance degradation over time
+
 ### Promotion Gate Criteria
 
 Models must meet the following criteria to be promoted to production:
@@ -144,4 +253,7 @@ python tests/test_train_audit_logging.py
 
 # Test drift tracking
 python tests/test_train_drift_tracking.py
+
+# Test performance optimization
+python tests/test_train_performance_optimization.py
 ```

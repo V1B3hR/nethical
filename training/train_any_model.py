@@ -17,6 +17,7 @@ import os
 import sys
 import random
 import json
+import time
 import numpy as np
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,6 +40,14 @@ try:
 except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
+
+# Import Performance Optimizer for performance tracking
+try:
+    from nethical.core.performance_optimizer import PerformanceOptimizer, DetectorTier
+    PERFORMANCE_OPTIMIZER_AVAILABLE = True
+except ImportError:
+    PERFORMANCE_OPTIMIZER_AVAILABLE = False
+    print("[WARN] PerformanceOptimizer not available. Performance tracking will be disabled.")
 
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
@@ -412,6 +421,8 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-performance-optimization", action="store_true", help="Enable performance optimization tracking")
+    parser.add_argument("--performance-target-reduction", type=float, default=30.0, help="Target CPU reduction percentage (default: 30.0)")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -454,9 +465,41 @@ def main():
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
 
+    # Initialize Performance Optimizer for performance tracking
+    performance_optimizer = None
+    if args.enable_performance_optimization and PERFORMANCE_OPTIMIZER_AVAILABLE:
+        try:
+            performance_optimizer = PerformanceOptimizer(
+                target_cpu_reduction_pct=args.performance_target_reduction
+            )
+            print(f"[INFO] Performance optimization tracking enabled. Target CPU reduction: {args.performance_target_reduction}%")
+            
+            # Register training phase "detectors" (components to track)
+            performance_optimizer.register_detector("data_loading", DetectorTier.FAST)
+            performance_optimizer.register_detector("preprocessing", DetectorTier.STANDARD)
+            performance_optimizer.register_detector("training", DetectorTier.ADVANCED)
+            performance_optimizer.register_detector("validation", DetectorTier.STANDARD)
+        except Exception as e:
+            print(f"[WARN] Failed to initialize performance optimizer: {e}")
+            performance_optimizer = None
+    elif args.enable_performance_optimization and not PERFORMANCE_OPTIMIZER_AVAILABLE:
+        print("[WARN] Performance optimization requested but PerformanceOptimizer not available")
+
     set_seed(args.seed)
     download_kaggle_datasets()
+    
+    # Track data loading performance
+    data_loading_start = time.time()
     raw_data = load_data(num_samples=args.num_samples, model_type=args.model_type)
+    data_loading_time_ms = (time.time() - data_loading_start) * 1000
+    
+    if performance_optimizer:
+        performance_optimizer.track_detector_invocation(
+            "data_loading",
+            data_loading_time_ms,
+            was_cached=False
+        )
+        print(f"[INFO] Data loading took {data_loading_time_ms:.2f}ms")
     
     # Log data loading event
     if merkle_anchor:
@@ -468,7 +511,19 @@ def main():
 
     ModelClass, preprocess_fn = get_model_class(args.model_type)
     print(f"[INFO] Preprocessing data for model type: {args.model_type}")
+    
+    # Track preprocessing performance
+    preprocessing_start = time.time()
     processed_data = preprocess_fn(raw_data)
+    preprocessing_time_ms = (time.time() - preprocessing_start) * 1000
+    
+    if performance_optimizer:
+        performance_optimizer.track_detector_invocation(
+            "preprocessing",
+            preprocessing_time_ms,
+            was_cached=False
+        )
+        print(f"[INFO] Preprocessing took {preprocessing_time_ms:.2f}ms")
 
     train_data, val_data = temporal_split(processed_data)
     
@@ -484,9 +539,19 @@ def main():
     model = ModelClass()
     print(f"[INFO] Training {args.model_type} model for {args.epochs} epochs, batch size {args.batch_size}...")
     training_start_time = datetime.now(timezone.utc)
+    training_start_perf = time.time()
     # Note: BaselineMLClassifier doesn't use epochs/batch_size, but we keep them for extensibility
     model.train(train_data)
     training_end_time = datetime.now(timezone.utc)
+    training_time_ms = (time.time() - training_start_perf) * 1000
+    
+    if performance_optimizer:
+        performance_optimizer.track_detector_invocation(
+            "training",
+            training_time_ms,
+            was_cached=False
+        )
+        print(f"[INFO] Training took {training_time_ms:.2f}ms")
     
     # Log training completion event
     if merkle_anchor:
@@ -498,9 +563,21 @@ def main():
             'timestamp': training_end_time.isoformat()
         })
 
+    # Track validation performance
+    validation_start = time.time()
     preds = [model.predict(sample['features'])['label'] for sample in val_data]
     labels = [sample['label'] for sample in val_data]
     metrics = compute_metrics(preds, labels)
+    validation_time_ms = (time.time() - validation_start) * 1000
+    
+    if performance_optimizer:
+        performance_optimizer.track_detector_invocation(
+            "validation",
+            validation_time_ms,
+            was_cached=False
+        )
+        print(f"[INFO] Validation took {validation_time_ms:.2f}ms")
+    
     print("[INFO] Validation Metrics:")
     for k, v in metrics.items():
         print(f"  {k}: {v:.4f}")
@@ -606,6 +683,43 @@ def main():
                 print(f"[INFO] Audit summary saved to: {audit_summary_path}")
         except Exception as e:
             print(f"[WARN] Failed to finalize audit chunk: {e}")
+    
+    # Generate performance optimization report if enabled
+    if performance_optimizer:
+        try:
+            print("\n[INFO] Generating performance optimization report...")
+            perf_report = performance_optimizer.get_performance_report()
+            
+            print(f"\n[INFO] Performance Metrics:")
+            print(f"  Total training phases tracked: {len(performance_optimizer.detector_metrics)}")
+            
+            # Display timing for each phase
+            detector_stats = perf_report['detector_stats']
+            for phase_name, phase_stats in detector_stats['detectors'].items():
+                print(f"  {phase_name}:")
+                print(f"    Total time: {phase_stats['total_cpu_time_ms']:.2f}ms")
+                print(f"    Invocations: {phase_stats['total_invocations']}")
+                if phase_stats['total_invocations'] > 0:
+                    print(f"    Avg time: {phase_stats['avg_cpu_time_ms']:.2f}ms")
+            
+            # Display optimization suggestions
+            suggestions = performance_optimizer.suggest_optimizations()
+            if suggestions:
+                print(f"\n[INFO] Performance Optimization Suggestions:")
+                for i, suggestion in enumerate(suggestions[:3], 1):
+                    print(f"  {i}. {suggestion}")
+            
+            # Save performance report
+            perf_report_path = Path("training_performance_reports")
+            perf_report_path.mkdir(exist_ok=True)
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            report_file = perf_report_path / f"perf_report_{args.model_type}_{timestamp}.json"
+            with open(report_file, 'w') as f:
+                json.dump(perf_report, f, indent=2)
+            print(f"[INFO] Performance report saved to: {report_file}")
+            
+        except Exception as e:
+            print(f"[WARN] Failed to generate performance report: {e}")
 
 if __name__ == "__main__":
     main()
