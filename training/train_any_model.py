@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Optimization module for continuous optimization
+try:
+    from nethical.core.optimization import MultiObjectiveOptimizer, Configuration, PerformanceMetrics
+    OPTIMIZATION_AVAILABLE = True
+except ImportError:
+    OPTIMIZATION_AVAILABLE = False
+    print("[WARN] Optimization module not available. Optimization features will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -378,14 +386,47 @@ def compute_metrics(preds, labels):
         "ece": ece,
     }
 
-def check_promotion_gate(metrics):
-    max_ece = 0.08
-    min_accuracy = 0.85
-    passed = metrics["ece"] <= max_ece and metrics["accuracy"] >= min_accuracy
-    print(f"[INFO] Promotion Gate: ECE <= {max_ece}, Accuracy >= {min_accuracy}")
-    print(f"[INFO] ECE: {metrics['ece']:.3f}, Accuracy: {metrics['accuracy']:.3f}")
-    print(f"[INFO] Promotion result: {'PASS' if passed else 'FAIL'}")
-    return passed
+def check_promotion_gate(metrics, optimizer=None, candidate_id=None, baseline_id=None):
+    """Check if model passes promotion gate.
+    
+    If optimizer is provided, use the advanced promotion gate from optimization module.
+    Otherwise, use the simple threshold-based promotion gate.
+    
+    Args:
+        metrics: Model performance metrics
+        optimizer: Optional MultiObjectiveOptimizer instance
+        candidate_id: Optional candidate configuration ID
+        baseline_id: Optional baseline configuration ID
+    
+    Returns:
+        Tuple of (passed, reasons) where reasons is a list of strings
+    """
+    if optimizer and candidate_id and baseline_id:
+        # Use advanced promotion gate from optimization module
+        print("[INFO] Using advanced promotion gate with multi-objective criteria")
+        return optimizer.check_promotion_gate(candidate_id, baseline_id)
+    else:
+        # Use simple threshold-based promotion gate
+        max_ece = 0.08
+        min_accuracy = 0.85
+        passed = metrics["ece"] <= max_ece and metrics["accuracy"] >= min_accuracy
+        reasons = []
+        
+        print(f"[INFO] Promotion Gate: ECE <= {max_ece}, Accuracy >= {min_accuracy}")
+        print(f"[INFO] ECE: {metrics['ece']:.3f}, Accuracy: {metrics['accuracy']:.3f}")
+        
+        if metrics["ece"] <= max_ece:
+            reasons.append(f"✓ ECE: {metrics['ece']:.3f} <= {max_ece}")
+        else:
+            reasons.append(f"ECE too high: {metrics['ece']:.3f} > {max_ece}")
+        
+        if metrics["accuracy"] >= min_accuracy:
+            reasons.append(f"✓ Accuracy: {metrics['accuracy']:.3f} >= {min_accuracy}")
+        else:
+            reasons.append(f"Accuracy too low: {metrics['accuracy']:.3f} < {min_accuracy}")
+        
+        print(f"[INFO] Promotion result: {'PASS' if passed else 'FAIL'}")
+        return passed, reasons
 
 def save_model_and_metrics(model, metrics, model_type, promoted=False):
     dest_dir = "models/current" if promoted else "models/candidates"
@@ -412,6 +453,9 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-optimization", action="store_true", help="Enable continuous optimization")
+    parser.add_argument("--optimization-db", type=str, default="data/optimization.db", help="Path to optimization database")
+    parser.add_argument("--baseline-config-id", type=str, default=None, help="Baseline configuration ID for promotion gate")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -453,6 +497,18 @@ def main():
             drift_reporter = None
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
+
+    # Initialize Multi-Objective Optimizer for continuous optimization
+    optimizer = None
+    if args.enable_optimization and OPTIMIZATION_AVAILABLE:
+        try:
+            optimizer = MultiObjectiveOptimizer(storage_path=args.optimization_db)
+            print(f"[INFO] Continuous optimization enabled. Database: {args.optimization_db}")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize optimizer: {e}")
+            optimizer = None
+    elif args.enable_optimization and not OPTIMIZATION_AVAILABLE:
+        print("[WARN] Optimization requested but optimization module not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
@@ -524,7 +580,56 @@ def main():
             risk_score=risk_score
         )
 
-    promoted = check_promotion_gate(metrics)
+    # Create configuration and record metrics if optimization is enabled
+    candidate_config_id = None
+    baseline_config_id = args.baseline_config_id
+    
+    if optimizer:
+        # Create a configuration for this training run
+        candidate_config = optimizer.create_configuration(
+            config_version=f"{args.model_type}_v{datetime.now().strftime('%Y%m%d_%H%M%S')}",
+            classifier_threshold=0.5,  # Default threshold
+            metadata={
+                'model_type': args.model_type,
+                'epochs': args.epochs,
+                'batch_size': args.batch_size,
+                'num_samples': args.num_samples,
+                'seed': args.seed
+            }
+        )
+        candidate_config_id = candidate_config.config_id
+        
+        # Record performance metrics in optimization database
+        optimizer.record_metrics(
+            config_id=candidate_config_id,
+            detection_recall=metrics['recall'],
+            detection_precision=metrics['precision'],
+            false_positive_rate=1.0 - metrics['precision'],  # Approximation
+            decision_latency_ms=10.0,  # Placeholder - would need actual latency measurement
+            human_agreement=metrics['accuracy'],  # Use accuracy as proxy
+            total_cases=len(val_data)
+        )
+        
+        print(f"[INFO] Recorded metrics for configuration: {candidate_config_id}")
+
+    # Check promotion gate
+    if optimizer and candidate_config_id and baseline_config_id:
+        # Use advanced promotion gate
+        promoted, reasons = check_promotion_gate(
+            metrics,
+            optimizer=optimizer,
+            candidate_id=candidate_config_id,
+            baseline_id=baseline_config_id
+        )
+        print(f"\n[INFO] Promotion Gate Results:")
+        for reason in reasons:
+            print(f"  {reason}")
+    else:
+        # Use simple promotion gate
+        promoted, reasons = check_promotion_gate(metrics)
+        print(f"\n[INFO] Promotion Gate Results:")
+        for reason in reasons:
+            print(f"  {reason}")
     
     # Track promotion gate result for drift analysis
     if drift_reporter:
@@ -544,6 +649,11 @@ def main():
                     violation_type="low_accuracy",
                     severity="high" if metrics['accuracy'] < 0.70 else "medium"
                 )
+    
+    # Promote configuration if using optimizer and promotion passed
+    if optimizer and promoted and candidate_config_id:
+        optimizer.promote_configuration(candidate_config_id)
+        print(f"[INFO] Configuration {candidate_config_id} promoted to production")
     
     model_path, metrics_path = save_model_and_metrics(model, metrics, args.model_type, promoted=promoted)
     

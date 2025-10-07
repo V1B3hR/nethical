@@ -651,6 +651,42 @@ class MultiObjectiveOptimizer:
         
         return population
     
+    def _load_metrics_from_db(self, config_id: str) -> Optional[PerformanceMetrics]:
+        """Load metrics from database.
+        
+        Args:
+            config_id: Configuration ID
+            
+        Returns:
+            PerformanceMetrics object or None if not found
+        """
+        conn = sqlite3.connect(str(self.storage_path))
+        cursor = conn.cursor()
+        
+        cursor.execute("""
+            SELECT config_id, detection_recall, detection_precision, false_positive_rate,
+                   decision_latency_ms, human_agreement, fitness_score, total_cases
+            FROM performance_metrics
+            WHERE config_id = ?
+        """, (config_id,))
+        
+        row = cursor.fetchone()
+        conn.close()
+        
+        if not row:
+            return None
+        
+        return PerformanceMetrics(
+            config_id=row[0],
+            detection_recall=row[1],
+            detection_precision=row[2],
+            false_positive_rate=row[3],
+            decision_latency_ms=row[4],
+            human_agreement=row[5],
+            fitness_score=row[6],
+            total_cases=row[7]
+        )
+    
     def check_promotion_gate(
         self,
         candidate_id: str,
@@ -666,7 +702,18 @@ class MultiObjectiveOptimizer:
             Tuple of (passed, reasons)
         """
         candidate_metrics = self.metrics_history.get(candidate_id)
+        if not candidate_metrics:
+            # Try loading from database
+            candidate_metrics = self._load_metrics_from_db(candidate_id)
+            if candidate_metrics:
+                self.metrics_history[candidate_id] = candidate_metrics
+        
         baseline_metrics = self.metrics_history.get(baseline_id)
+        if not baseline_metrics:
+            # Try loading from database
+            baseline_metrics = self._load_metrics_from_db(baseline_id)
+            if baseline_metrics:
+                self.metrics_history[baseline_id] = baseline_metrics
         
         if not candidate_metrics:
             return False, [f"No metrics found for candidate {candidate_id}"]
