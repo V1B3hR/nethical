@@ -426,3 +426,128 @@ class PolicyDiffAuditor:
         lines.append("=" * 60)
         
         return "\n".join(lines)
+
+
+if __name__ == "__main__":
+    """Demo policy diff auditing functionality."""
+    import tempfile
+    
+    print("\n" + "=" * 60)
+    print("  Policy Diff Auditor Demo")
+    print("=" * 60 + "\n")
+    
+    # Create temporary directory for demo
+    with tempfile.TemporaryDirectory() as tmpdir:
+        # Initialize auditor
+        print("1. Initializing Policy Diff Auditor...")
+        auditor = PolicyDiffAuditor(storage_path=tmpdir)
+        print(f"   ✓ Storage path: {auditor.storage_path}")
+        print(f"   ✓ High-risk fields: {len(auditor.high_risk_fields)}")
+        
+        # Define example policies
+        print("\n2. Defining Policy Versions...")
+        
+        old_policy = {
+            'threshold': 0.5,
+            'rate_limit': 100,
+            'security': {
+                'enabled': True,
+                'level': 'standard',
+                'authentication': 'basic'
+            },
+            'features': {
+                'logging': True,
+                'monitoring': False
+            }
+        }
+        
+        new_policy = {
+            'threshold': 0.8,
+            'rate_limit': 150,
+            'security': {
+                'enabled': True,
+                'level': 'high',
+                'authentication': 'multi-factor'
+            },
+            'features': {
+                'logging': True,
+                'monitoring': True,
+                'alerts': True
+            }
+        }
+        
+        print("   Old Policy:")
+        print(f"     - Threshold: {old_policy['threshold']}")
+        print(f"     - Rate Limit: {old_policy['rate_limit']}")
+        print(f"     - Security Level: {old_policy['security']['level']}")
+        
+        print("   New Policy:")
+        print(f"     - Threshold: {new_policy['threshold']}")
+        print(f"     - Rate Limit: {new_policy['rate_limit']}")
+        print(f"     - Security Level: {new_policy['security']['level']}")
+        
+        # Compare policies
+        print("\n3. Comparing Policies...")
+        diff_result = auditor.compare_policies(
+            old_policy=old_policy,
+            new_policy=new_policy,
+            old_version="v1.0",
+            new_version="v2.0"
+        )
+        
+        print(f"   ✓ Comparison complete")
+        print(f"   ✓ Risk Level: {diff_result.risk_level.value.upper()}")
+        print(f"   ✓ Risk Score: {diff_result.risk_score:.3f}")
+        
+        # Show summary
+        print("\n4. Change Summary:")
+        print(f"   Total Changes: {diff_result.summary['total_changes']}")
+        print(f"   Added: {diff_result.summary['added']}")
+        print(f"   Modified: {diff_result.summary['modified']}")
+        print(f"   Removed: {diff_result.summary['removed']}")
+        print(f"   High Risk: {diff_result.summary['high_risk']}")
+        
+        # Show detailed changes
+        print("\n5. Detailed Changes:")
+        for change in diff_result.changes[:5]:  # Show first 5 changes
+            symbol = {
+                ChangeType.ADDED: "+",
+                ChangeType.REMOVED: "-",
+                ChangeType.MODIFIED: "~"
+            }.get(change.change_type, "?")
+            print(f"   {symbol} {change.path} [{change.risk_level.value}]")
+            if change.old_value is not None:
+                print(f"       old: {change.old_value}")
+            if change.new_value is not None:
+                print(f"       new: {change.new_value}")
+        
+        if len(diff_result.changes) > 5:
+            print(f"   ... and {len(diff_result.changes) - 5} more changes")
+        
+        # Show recommendations
+        print("\n6. Recommendations:")
+        for rec in diff_result.recommendations:
+            print(f"   • {rec}")
+        
+        # Save policy versions
+        print("\n7. Saving Policy Versions...")
+        auditor.save_policy_version(old_policy, "v1.0", "Initial policy version")
+        auditor.save_policy_version(new_policy, "v2.0", "Updated security and features")
+        print("   ✓ Policies saved to history")
+        
+        # Load and verify
+        print("\n8. Verifying Saved Policies...")
+        loaded_v1 = auditor.load_policy_version("v1.0")
+        loaded_v2 = auditor.load_policy_version("v2.0")
+        print(f"   ✓ v1.0 loaded: {loaded_v1 == old_policy}")
+        print(f"   ✓ v2.0 loaded: {loaded_v2 == new_policy}")
+        
+        # Generate full report
+        print("\n9. Full Diff Report:")
+        print("-" * 60)
+        report = auditor.format_diff_report(diff_result)
+        print(report)
+        
+    print("\n" + "=" * 60)
+    print("  ✅ Demo Complete")
+    print("=" * 60 + "\n")
