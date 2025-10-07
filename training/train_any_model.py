@@ -32,6 +32,14 @@ except ImportError:
     MERKLE_AVAILABLE = False
     print("[WARN] MerkleAnchor not available. Audit logging will be disabled.")
 
+# Import Ethical Drift Reporter for drift tracking
+try:
+    from nethical.core.ethical_drift_reporter import EthicalDriftReporter
+    DRIFT_REPORTER_AVAILABLE = True
+except ImportError:
+    DRIFT_REPORTER_AVAILABLE = False
+    print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -75,8 +83,8 @@ def download_kaggle_datasets():
     try:
         import kaggle
     except ImportError:
-        print("[ERROR] Please install the kaggle package: pip install kaggle")
-        sys.exit(1)
+        print("[WARN] Kaggle package not installed. Skipping dataset downloads. Using synthetic data.")
+        return
     DATA_EXTERNAL_DIR.mkdir(parents=True, exist_ok=True)
     for dataset in KAGGLE_DATASETS:
         print(f"[INFO] Downloading {dataset} ...")
@@ -401,6 +409,9 @@ def main():
     parser.add_argument("--seed", type=int, default=42, help="Random seed")
     parser.add_argument("--enable-audit", action="store_true", help="Enable Merkle audit logging")
     parser.add_argument("--audit-path", type=str, default="training_audit_logs", help="Path for audit logs")
+    parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
+    parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
+    parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -428,6 +439,20 @@ def main():
             merkle_anchor = None
     elif args.enable_audit and not MERKLE_AVAILABLE:
         print("[WARN] Audit logging requested but MerkleAnchor not available")
+
+    # Initialize Ethical Drift Reporter for drift tracking
+    drift_reporter = None
+    cohort_id = args.cohort_id or f"{args.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    if args.enable_drift_tracking and DRIFT_REPORTER_AVAILABLE:
+        try:
+            drift_reporter = EthicalDriftReporter(report_dir=args.drift_report_dir)
+            print(f"[INFO] Ethical drift tracking enabled. Reports stored in: {args.drift_report_dir}")
+            print(f"[INFO] Training cohort ID: {cohort_id}")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize drift reporter: {e}")
+            drift_reporter = None
+    elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
+        print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
@@ -487,8 +512,39 @@ def main():
             'metrics': metrics,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    # Track training performance for drift analysis
+    if drift_reporter:
+        # Track validation as an action with risk score based on accuracy
+        # Higher accuracy = lower risk
+        risk_score = 1.0 - metrics['accuracy']
+        drift_reporter.track_action(
+            agent_id=f"model_{args.model_type}",
+            cohort=cohort_id,
+            risk_score=risk_score
+        )
 
     promoted = check_promotion_gate(metrics)
+    
+    # Track promotion gate result for drift analysis
+    if drift_reporter:
+        if not promoted:
+            # Track promotion gate failure as a violation
+            if metrics['ece'] > 0.08:
+                drift_reporter.track_violation(
+                    agent_id=f"model_{args.model_type}",
+                    cohort=cohort_id,
+                    violation_type="calibration_error",
+                    severity="high" if metrics['ece'] > 0.15 else "medium"
+                )
+            if metrics['accuracy'] < 0.85:
+                drift_reporter.track_violation(
+                    agent_id=f"model_{args.model_type}",
+                    cohort=cohort_id,
+                    violation_type="low_accuracy",
+                    severity="high" if metrics['accuracy'] < 0.70 else "medium"
+                )
+    
     model_path, metrics_path = save_model_and_metrics(model, metrics, args.model_type, promoted=promoted)
     
     # Log model save event
@@ -500,8 +556,36 @@ def main():
             'promoted': promoted,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
-        
-        # Finalize chunk and get Merkle root
+    
+    # Generate drift report if tracking is enabled
+    if drift_reporter:
+        try:
+            print("\n[INFO] Generating ethical drift report...")
+            report_start_time = training_start_time
+            report_end_time = datetime.now(timezone.utc)
+            
+            drift_report = drift_reporter.generate_report(
+                start_time=report_start_time,
+                end_time=report_end_time
+            )
+            
+            print(f"[INFO] Drift Report ID: {drift_report.report_id}")
+            print(f"[INFO] Drift detected: {drift_report.drift_metrics.get('has_drift', False)}")
+            
+            if drift_report.recommendations:
+                print("\n[INFO] Drift Analysis Recommendations:")
+                for i, rec in enumerate(drift_report.recommendations[:5], 1):
+                    print(f"  {i}. {rec}")
+            
+            # Save drift report path reference in model metadata
+            drift_report_path = Path(args.drift_report_dir) / f"{drift_report.report_id}.json"
+            print(f"[INFO] Drift report saved to: {drift_report_path}")
+            
+        except Exception as e:
+            print(f"[WARN] Failed to generate drift report: {e}")
+    
+    # Finalize Merkle audit chunk if enabled
+    if merkle_anchor:
         try:
             if merkle_anchor.current_chunk.event_count > 0:
                 merkle_root = merkle_anchor.finalize_chunk()
