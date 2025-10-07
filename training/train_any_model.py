@@ -100,6 +100,7 @@ def get_model_class(model_type: str):
     from nethical.core.ml_shadow import MLModelType
     from nethical.mlops.baseline import BaselineMLClassifier
     from nethical.mlops.anomaly_classifier import AnomalyMLClassifier
+    from nethical.mlops.correlation_classifier import CorrelationMLClassifier
     # from nethical.mlops.deep_nn import DeepNNClassifier
     # from nethical.mlops.transformer import TransformerClassifier
     registry = {
@@ -107,6 +108,7 @@ def get_model_class(model_type: str):
         "logistic": (BaselineMLClassifier, preprocess_for_logistic),
         "simple_transformer": (BaselineMLClassifier, preprocess_for_transformer),
         "anomaly": (AnomalyMLClassifier, preprocess_for_anomaly),
+        "correlation": (CorrelationMLClassifier, preprocess_for_correlation),
         # "deep_nn": (DeepNNClassifier, preprocess_for_deep_nn),
         # "transformer": (TransformerClassifier, preprocess_for_transformer),
     }
@@ -146,6 +148,37 @@ def preprocess_for_anomaly(data):
     # For anomaly detection, data should already be in the right format with sequences
     # Each sample should have features['sequence'] as a list of actions
     # No additional preprocessing needed
+    return data
+
+def preprocess_for_correlation(data):
+    # For correlation detection, normalize all numeric features to [0,1]
+    # Correlation features include: agent_count, action_rate, entropy_variance,
+    # time_correlation, payload_similarity
+    features = []
+    for sample in data:
+        feats = sample["features"]
+        if isinstance(feats, dict):
+            # Extract numeric features
+            features.append([
+                float(feats.get('agent_count', 0)),
+                float(feats.get('action_rate', 0)),
+                float(feats.get('entropy_variance', 0)),
+                float(feats.get('time_correlation', 0)),
+                float(feats.get('payload_similarity', 0))
+            ])
+    
+    if features:
+        arr = np.array(features)
+        mins, maxs = arr.min(axis=0), arr.max(axis=0)
+        
+        feature_names = ['agent_count', 'action_rate', 'entropy_variance', 'time_correlation', 'payload_similarity']
+        for i, sample in enumerate(data):
+            normalized = {}
+            for j, name in enumerate(feature_names):
+                val = features[i][j]
+                normalized[name] = (val - mins[j]) / (maxs[j] - mins[j] + 1e-8)
+            sample["features"] = normalized
+    
     return data
 
 # def preprocess_for_deep_nn(data):
@@ -234,6 +267,66 @@ def load_data(num_samples=10000, model_type='logistic'):
             data.append({
                 'features': {'sequence': pattern.copy()},
                 'label': 1  # Anomalous
+            })
+        
+        # Shuffle the data
+        random.shuffle(data)
+    elif model_type == 'correlation':
+        # Generate synthetic correlation pattern detection data
+        # Normal multi-agent activity (70% of data)
+        normal_count = int(num_samples * 0.7)
+        correlation_count = num_samples - normal_count
+        
+        # Generate normal samples (no correlation patterns)
+        for _ in range(normal_count):
+            features = {
+                'agent_count': random.randint(1, 3),  # Few agents
+                'action_rate': random.uniform(1, 10),  # Low action rate
+                'entropy_variance': random.uniform(0.1, 0.5),  # Low entropy variance
+                'time_correlation': random.uniform(0, 0.3),  # Low time correlation
+                'payload_similarity': random.uniform(0, 0.4)  # Low similarity
+            }
+            data.append({
+                'features': features,
+                'label': 0  # No correlation pattern
+            })
+        
+        # Generate correlation pattern samples
+        for _ in range(correlation_count):
+            # Simulate correlation patterns with specific characteristics
+            pattern_type = random.choice(['escalating', 'coordinated', 'distributed'])
+            
+            if pattern_type == 'escalating':
+                # Escalating multi-ID probes: many agents, increasing action rate
+                features = {
+                    'agent_count': random.randint(5, 15),
+                    'action_rate': random.uniform(20, 100),
+                    'entropy_variance': random.uniform(0.3, 0.8),
+                    'time_correlation': random.uniform(0.4, 0.7),
+                    'payload_similarity': random.uniform(0.3, 0.7)
+                }
+            elif pattern_type == 'coordinated':
+                # Coordinated attack: moderate agents, high time correlation
+                features = {
+                    'agent_count': random.randint(3, 8),
+                    'action_rate': random.uniform(15, 50),
+                    'entropy_variance': random.uniform(0.2, 0.6),
+                    'time_correlation': random.uniform(0.7, 1.0),  # High time correlation
+                    'payload_similarity': random.uniform(0.5, 0.9)
+                }
+            else:  # distributed
+                # Distributed reconnaissance: many agents, diverse payloads
+                features = {
+                    'agent_count': random.randint(8, 20),
+                    'action_rate': random.uniform(10, 40),
+                    'entropy_variance': random.uniform(0.6, 1.0),  # High entropy variance
+                    'time_correlation': random.uniform(0.2, 0.5),
+                    'payload_similarity': random.uniform(0.2, 0.6)
+                }
+            
+            data.append({
+                'features': features,
+                'label': 1  # Correlation pattern detected
             })
         
         # Shuffle the data
