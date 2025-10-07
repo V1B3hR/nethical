@@ -412,7 +412,19 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--run-shadow-demo", action="store_true", help="Run ML Shadow Mode demo before training")
     args = parser.parse_args()
+    
+    # Run shadow mode demo if requested
+    if args.run_shadow_demo:
+        print("\n" + "="*60)
+        print("Running ML Shadow Mode Demo")
+        print("="*60)
+        from nethical.core.ml_shadow import main as shadow_main
+        shadow_main()
+        print("\n" + "="*60)
+        print("Continuing with training pipeline...")
+        print("="*60 + "\n")
 
     # Initialize Merkle Anchor for audit logging
     merkle_anchor = None

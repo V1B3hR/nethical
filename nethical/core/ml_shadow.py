@@ -246,8 +246,8 @@ class MLShadowClassifier:
         
         # Create prediction record
         prediction = ShadowPrediction(
-            prediction_id=f"shadow_{int(datetime.utcnow().timestamp() * 1000000)}",
-            timestamp=datetime.utcnow(),
+            prediction_id=f"shadow_{int(datetime.now().timestamp() * 1000000)}",
+            timestamp=datetime.now(),
             agent_id=agent_id,
             action_id=action_id,
             ml_risk_score=ml_risk_score,
@@ -432,3 +432,115 @@ class MLShadowClassifier:
         """Reset metrics (useful for evaluation periods)."""
         self.metrics = ShadowMetrics()
         self.predictions.clear()
+
+
+def main():
+    """Run a simple demonstration of MLShadowClassifier."""
+    print("="*60)
+    print("ML Shadow Mode Classifier Demo")
+    print("="*60)
+    
+    # Initialize classifier
+    print("\n1. Initializing MLShadowClassifier...")
+    classifier = MLShadowClassifier(
+        model_type=MLModelType.HEURISTIC,
+        score_agreement_threshold=0.1,
+        storage_path=None
+    )
+    print("✓ Classifier initialized")
+    print(f"  Model type: {classifier.model_type.value}")
+    print(f"  Agreement threshold: {classifier.score_agreement_threshold}")
+    
+    # Generate some test predictions
+    print("\n2. Running test predictions...")
+    import random
+    random.seed(42)
+    
+    test_scenarios = [
+        ("agent_001", "low", 10),
+        ("agent_002", "medium", 10),
+        ("agent_003", "high", 10),
+    ]
+    
+    for agent_id, risk_level, count in test_scenarios:
+        for i in range(count):
+            # Generate features based on risk level
+            if risk_level == "low":
+                features = {
+                    'violation_count': random.uniform(0.0, 0.3),
+                    'severity_max': random.uniform(0.0, 0.2),
+                    'recency_score': random.uniform(0.0, 0.2),
+                    'frequency_score': random.uniform(0.0, 0.1),
+                    'context_risk': random.uniform(0.0, 0.1)
+                }
+                rule_score = random.uniform(0.0, 0.3)
+                rule_class = "allow"
+            elif risk_level == "medium":
+                features = {
+                    'violation_count': random.uniform(0.3, 0.6),
+                    'severity_max': random.uniform(0.3, 0.6),
+                    'recency_score': random.uniform(0.2, 0.5),
+                    'frequency_score': random.uniform(0.2, 0.4),
+                    'context_risk': random.uniform(0.1, 0.3)
+                }
+                rule_score = random.uniform(0.4, 0.6)
+                rule_class = "warn"
+            else:  # high
+                features = {
+                    'violation_count': random.uniform(0.6, 1.0),
+                    'severity_max': random.uniform(0.7, 1.0),
+                    'recency_score': random.uniform(0.5, 1.0),
+                    'frequency_score': random.uniform(0.5, 0.9),
+                    'context_risk': random.uniform(0.4, 0.8)
+                }
+                rule_score = random.uniform(0.7, 1.0)
+                rule_class = "deny"
+            
+            # Make prediction
+            prediction = classifier.predict(
+                agent_id=agent_id,
+                action_id=f"{agent_id}_action_{i}",
+                features=features,
+                rule_risk_score=rule_score,
+                rule_classification=rule_class
+            )
+    
+    print(f"✓ Completed {classifier.metrics.total_predictions} predictions")
+    
+    # Display metrics
+    print("\n3. Shadow Mode Metrics:")
+    metrics = classifier.get_metrics_report()
+    
+    print(f"\n  Classification Performance:")
+    print(f"  - Precision: {metrics['precision']:.3f}")
+    print(f"  - Recall: {metrics['recall']:.3f}")
+    print(f"  - F1 Score: {metrics['f1_score']:.3f}")
+    print(f"  - Accuracy: {metrics['accuracy']:.3f}")
+    
+    print(f"\n  Agreement with Rule-Based System:")
+    print(f"  - Score Agreement: {metrics['score_agreement_rate']*100:.1f}%")
+    print(f"  - Classification Agreement: {metrics['classification_agreement_rate']*100:.1f}%")
+    
+    print(f"\n  Calibration:")
+    print(f"  - Expected Calibration Error (ECE): {metrics['expected_calibration_error']:.3f}")
+    
+    print(f"\n  Confusion Matrix:")
+    cm = metrics['confusion_matrix']
+    print(f"  - True Positives: {cm['true_positives']}")
+    print(f"  - True Negatives: {cm['true_negatives']}")
+    print(f"  - False Positives: {cm['false_positives']}")
+    print(f"  - False Negatives: {cm['false_negatives']}")
+    
+    print("\n4. Key Shadow Mode Features:")
+    print("  ✓ Passive inference - no enforcement impact")
+    print("  ✓ Predictions logged alongside rule-based outcomes")
+    print("  ✓ Baseline metrics collection")
+    print("  ✓ Safe environment for ML validation")
+    
+    print("\n" + "="*60)
+    print("Demo Complete!")
+    print("="*60)
+
+
+if __name__ == "__main__":
+    main()
