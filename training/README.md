@@ -14,6 +14,7 @@ A plug-and-play training pipeline that supports multiple model types with option
 - **Promotion Gate**: Validates models against quality criteria before promotion
 - **Audit Logging**: Optional Merkle tree-based audit trail for training events
 - **Ethical Drift Tracking**: Track and analyze model performance across training cohorts
+- **SLA Monitoring**: Track and validate performance SLAs during training
 
 ### Usage
 
@@ -43,6 +44,16 @@ python training/train_any_model.py \
     --cohort-id cohort_alpha
 ```
 
+Training with SLA monitoring:
+```bash
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 10 \
+    --num-samples 1000 \
+    --enable-sla-monitoring \
+    --sla-report-dir sla_reports
+```
+
 ### Command-Line Arguments
 
 - `--model-type`: Type of model to train (required)
@@ -62,6 +73,11 @@ python training/train_any_model.py \
 - `--enable-drift-tracking`: Enable ethical drift tracking
 - `--drift-report-dir`: Directory for drift reports (default: `training_drift_reports`)
 - `--cohort-id`: Cohort identifier for drift tracking (default: `{model-type}_{timestamp}`)
+
+#### SLA Monitoring Options
+
+- `--enable-sla-monitoring`: Enable SLA performance monitoring
+- `--sla-report-dir`: Directory for SLA reports (default: `training_sla_reports`)
 
 ### Ethical Drift Tracking
 
@@ -118,6 +134,68 @@ Each drift report (saved as JSON) contains:
 }
 ```
 
+### SLA Monitoring
+
+SLA monitoring tracks performance metrics during training to ensure training operations meet service level agreements:
+
+- **P95 Latency Tracking**: Monitor 95th percentile latency for training operations
+- **P99 Latency Tracking**: Monitor 99th percentile latency for training operations
+- **Average Latency Tracking**: Monitor average latency across all operations
+- **Compliance Validation**: Verify that performance meets defined SLA targets
+
+#### How It Works
+
+1. When SLA monitoring is enabled, the training script tracks latency for key operations:
+   - Data loading
+   - Data preprocessing
+   - Model training
+   - Validation
+2. At the end of training, an SLA report is generated with:
+   - Current performance metrics (P50, P95, P99, average latency)
+   - SLA compliance status for each target
+   - Performance margins and breach information
+3. An SLA documentation file is also generated with:
+   - Performance targets and descriptions
+   - Current performance status
+   - Compliance guarantees
+
+#### SLA Targets
+
+Default SLA targets for training operations:
+
+- **P95 Latency**: ≤ 220ms
+- **P99 Latency**: ≤ 500ms
+- **Average Latency**: ≤ 100ms
+
+#### SLA Report Structure
+
+Each SLA report (saved as JSON) contains:
+
+```json
+{
+  "timestamp": "ISO 8601 timestamp",
+  "overall_status": "compliant|warning|breach",
+  "sla_met": true,
+  "p95_latency_ms": 0.37,
+  "p95_target_ms": 220.0,
+  "metrics": {
+    "p50_latency_ms": 0.074,
+    "p95_latency_ms": 0.37,
+    "p99_latency_ms": 0.37,
+    "avg_latency_ms": 0.14,
+    "sample_count": 4
+  },
+  "targets": {
+    "p95_latency": {
+      "target": 220.0,
+      "actual": 0.37,
+      "status": "compliant",
+      "description": "95th percentile latency"
+    }
+  }
+}
+```
+
 ### Promotion Gate Criteria
 
 Models must meet the following criteria to be promoted to production:
@@ -144,4 +222,7 @@ python tests/test_train_audit_logging.py
 
 # Test drift tracking
 python tests/test_train_drift_tracking.py
+
+# Test SLA monitoring
+python tests/test_train_sla_monitoring.py
 ```

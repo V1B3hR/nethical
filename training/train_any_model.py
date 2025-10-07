@@ -17,6 +17,7 @@ import os
 import sys
 import random
 import json
+import time
 import numpy as np
 from datetime import datetime, timezone
 from pathlib import Path
@@ -39,6 +40,14 @@ try:
 except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
+
+# Import SLA Monitor for performance tracking
+try:
+    from nethical.core.sla_monitor import SLAMonitor
+    SLA_MONITOR_AVAILABLE = True
+except ImportError:
+    SLA_MONITOR_AVAILABLE = False
+    print("[WARN] SLAMonitor not available. SLA monitoring will be disabled.")
 
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
@@ -412,6 +421,8 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-sla-monitoring", action="store_true", help="Enable SLA performance monitoring")
+    parser.add_argument("--sla-report-dir", type=str, default="training_sla_reports", help="Directory for SLA reports")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -454,9 +465,32 @@ def main():
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
 
+    # Initialize SLA Monitor for performance tracking
+    sla_monitor = None
+    if args.enable_sla_monitoring and SLA_MONITOR_AVAILABLE:
+        try:
+            sla_monitor = SLAMonitor(
+                target_p95_ms=220.0,
+                target_p99_ms=500.0,
+                target_avg_ms=100.0
+            )
+            print(f"[INFO] SLA monitoring enabled. Reports will be stored in: {args.sla_report_dir}")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize SLA monitor: {e}")
+            sla_monitor = None
+    elif args.enable_sla_monitoring and not SLA_MONITOR_AVAILABLE:
+        print("[WARN] SLA monitoring requested but SLAMonitor not available")
+
     set_seed(args.seed)
+    
+    # Track data loading latency
+    data_load_start = time.time() if sla_monitor else None
     download_kaggle_datasets()
     raw_data = load_data(num_samples=args.num_samples, model_type=args.model_type)
+    if sla_monitor:
+        data_load_latency_ms = (time.time() - data_load_start) * 1000
+        sla_monitor.record_latency(data_load_latency_ms)
+        print(f"[INFO] Data loading latency: {data_load_latency_ms:.2f}ms")
     
     # Log data loading event
     if merkle_anchor:
@@ -468,7 +502,14 @@ def main():
 
     ModelClass, preprocess_fn = get_model_class(args.model_type)
     print(f"[INFO] Preprocessing data for model type: {args.model_type}")
+    
+    # Track preprocessing latency
+    preprocess_start = time.time() if sla_monitor else None
     processed_data = preprocess_fn(raw_data)
+    if sla_monitor:
+        preprocess_latency_ms = (time.time() - preprocess_start) * 1000
+        sla_monitor.record_latency(preprocess_latency_ms)
+        print(f"[INFO] Preprocessing latency: {preprocess_latency_ms:.2f}ms")
 
     train_data, val_data = temporal_split(processed_data)
     
@@ -487,6 +528,12 @@ def main():
     # Note: BaselineMLClassifier doesn't use epochs/batch_size, but we keep them for extensibility
     model.train(train_data)
     training_end_time = datetime.now(timezone.utc)
+    training_duration_ms = (training_end_time - training_start_time).total_seconds() * 1000
+    
+    # Track training latency
+    if sla_monitor:
+        sla_monitor.record_latency(training_duration_ms)
+        print(f"[INFO] Training latency: {training_duration_ms:.2f}ms")
     
     # Log training completion event
     if merkle_anchor:
@@ -498,9 +545,16 @@ def main():
             'timestamp': training_end_time.isoformat()
         })
 
+    # Track validation latency
+    validation_start = time.time() if sla_monitor else None
     preds = [model.predict(sample['features'])['label'] for sample in val_data]
     labels = [sample['label'] for sample in val_data]
     metrics = compute_metrics(preds, labels)
+    if sla_monitor:
+        validation_latency_ms = (time.time() - validation_start) * 1000
+        sla_monitor.record_latency(validation_latency_ms)
+        print(f"[INFO] Validation latency: {validation_latency_ms:.2f}ms")
+    
     print("[INFO] Validation Metrics:")
     for k, v in metrics.items():
         print(f"  {k}: {v:.4f}")
@@ -583,6 +637,39 @@ def main():
             
         except Exception as e:
             print(f"[WARN] Failed to generate drift report: {e}")
+    
+    # Generate SLA report if monitoring is enabled
+    if sla_monitor:
+        try:
+            print("\n[INFO] Generating SLA performance report...")
+            sla_report = sla_monitor.get_sla_report()
+            
+            print(f"[INFO] SLA Status: {sla_report['overall_status']}")
+            print(f"[INFO] P95 Latency: {sla_report['p95_latency_ms']:.2f}ms (target: {sla_report['p95_target_ms']}ms)")
+            print(f"[INFO] SLA Met: {'✅ Yes' if sla_report['sla_met'] else '❌ No'}")
+            
+            # Save SLA report
+            import os
+            os.makedirs(args.sla_report_dir, exist_ok=True)
+            report_timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            sla_report_path = Path(args.sla_report_dir) / f"sla_report_{args.model_type}_{report_timestamp}.json"
+            
+            with open(sla_report_path, 'w') as f:
+                json.dump(sla_report, f, indent=2)
+            
+            print(f"[INFO] SLA report saved to: {sla_report_path}")
+            
+            # Save SLA documentation
+            sla_doc_path = Path(args.sla_report_dir) / f"sla_documentation_{args.model_type}_{report_timestamp}.md"
+            sla_documentation = sla_monitor.export_sla_documentation()
+            
+            with open(sla_doc_path, 'w') as f:
+                f.write(sla_documentation)
+            
+            print(f"[INFO] SLA documentation saved to: {sla_doc_path}")
+            
+        except Exception as e:
+            print(f"[WARN] Failed to generate SLA report: {e}")
     
     # Finalize Merkle audit chunk if enabled
     if merkle_anchor:
