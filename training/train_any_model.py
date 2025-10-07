@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Phase4IntegratedGovernance for comprehensive governance
+try:
+    from nethical.core.phase4_integration import Phase4IntegratedGovernance
+    PHASE4_AVAILABLE = True
+except ImportError:
+    PHASE4_AVAILABLE = False
+    print("[WARN] Phase4IntegratedGovernance not available. Phase 4 governance will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,11 +420,50 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-phase4", action="store_true", help="Enable Phase 4 Integrated Governance (includes audit, taxonomy, SLA monitoring)")
+    parser.add_argument("--phase4-storage", type=str, default="training_phase4_data", help="Storage directory for Phase 4 data")
     args = parser.parse_args()
 
-    # Initialize Merkle Anchor for audit logging
+    # Initialize Phase 4 Integrated Governance if requested
+    phase4_gov = None
+    if args.enable_phase4 and PHASE4_AVAILABLE:
+        try:
+            phase4_gov = Phase4IntegratedGovernance(
+                storage_dir=args.phase4_storage,
+                enable_merkle_anchoring=True,
+                enable_quarantine=False,  # Not needed for training
+                enable_ethical_taxonomy=True,
+                enable_sla_monitoring=True,
+                taxonomy_path="ethics_taxonomy.json"
+            )
+            print(f"[INFO] Phase 4 Integrated Governance enabled. Storage: {args.phase4_storage}")
+            
+            # Log training initialization with Phase 4
+            phase4_gov.process_action(
+                agent_id=f"training_{args.model_type}",
+                action={'type': 'training_start', 'config': {
+                    'model_type': args.model_type,
+                    'epochs': args.epochs,
+                    'batch_size': args.batch_size,
+                    'num_samples': args.num_samples,
+                    'seed': args.seed
+                }},
+                cohort=f"training_{args.model_type}",
+                violation_detected=False,
+                context={
+                    'timestamp': datetime.now(timezone.utc).isoformat(),
+                    'event_type': 'training_start'
+                }
+            )
+        except Exception as e:
+            print(f"[WARN] Failed to initialize Phase 4 governance: {e}")
+            phase4_gov = None
+    elif args.enable_phase4 and not PHASE4_AVAILABLE:
+        print("[WARN] Phase 4 governance requested but Phase4IntegratedGovernance not available")
+
+    # Initialize Merkle Anchor for audit logging (if Phase 4 not used)
     merkle_anchor = None
-    if args.enable_audit and MERKLE_AVAILABLE:
+    if args.enable_audit and MERKLE_AVAILABLE and not phase4_gov:
         try:
             merkle_anchor = MerkleAnchor(
                 storage_path=args.audit_path,
@@ -465,6 +512,19 @@ def main():
             'num_samples': len(raw_data),
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    if phase4_gov:
+        phase4_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action={'type': 'data_loaded', 'num_samples': len(raw_data)},
+            cohort=f"training_{args.model_type}",
+            violation_detected=False,
+            context={
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'event_type': 'data_loaded',
+                'num_samples': len(raw_data)
+            }
+        )
 
     ModelClass, preprocess_fn = get_model_class(args.model_type)
     print(f"[INFO] Preprocessing data for model type: {args.model_type}")
@@ -480,6 +540,20 @@ def main():
             'val_samples': len(val_data),
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    if phase4_gov:
+        phase4_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action={'type': 'data_split', 'train_samples': len(train_data), 'val_samples': len(val_data)},
+            cohort=f"training_{args.model_type}",
+            violation_detected=False,
+            context={
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'event_type': 'data_split',
+                'train_samples': len(train_data),
+                'val_samples': len(val_data)
+            }
+        )
 
     model = ModelClass()
     print(f"[INFO] Training {args.model_type} model for {args.epochs} epochs, batch size {args.batch_size}...")
@@ -497,6 +571,21 @@ def main():
             'training_duration_seconds': (training_end_time - training_start_time).total_seconds(),
             'timestamp': training_end_time.isoformat()
         })
+    
+    if phase4_gov:
+        phase4_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action={'type': 'training_completed', 'duration_seconds': (training_end_time - training_start_time).total_seconds()},
+            cohort=f"training_{args.model_type}",
+            violation_detected=False,
+            context={
+                'timestamp': training_end_time.isoformat(),
+                'event_type': 'training_completed',
+                'model_type': args.model_type,
+                'epochs': args.epochs,
+                'training_duration_seconds': (training_end_time - training_start_time).total_seconds()
+            }
+        )
 
     preds = [model.predict(sample['features'])['label'] for sample in val_data]
     labels = [sample['label'] for sample in val_data]
@@ -512,6 +601,33 @@ def main():
             'metrics': metrics,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    if phase4_gov:
+        # Track metrics quality - detect violations if metrics are poor
+        violation_detected = metrics['accuracy'] < 0.70 or metrics['ece'] > 0.15
+        violation_type = None
+        violation_severity = None
+        
+        if metrics['accuracy'] < 0.70:
+            violation_type = 'low_model_accuracy'
+            violation_severity = 'high'
+        elif metrics['ece'] > 0.15:
+            violation_type = 'poor_calibration'
+            violation_severity = 'high'
+        
+        phase4_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action={'type': 'validation_metrics', 'metrics': metrics},
+            cohort=f"training_{args.model_type}",
+            violation_detected=violation_detected,
+            violation_type=violation_type,
+            violation_severity=violation_severity,
+            context={
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'event_type': 'validation_metrics',
+                'metrics': metrics
+            }
+        )
     
     # Track training performance for drift analysis
     if drift_reporter:
@@ -556,6 +672,36 @@ def main():
             'promoted': promoted,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    if phase4_gov:
+        # Track promotion gate violations
+        violation_detected = not promoted
+        violation_type = None
+        violation_severity = None
+        
+        if not promoted:
+            if metrics['ece'] > 0.08:
+                violation_type = 'promotion_gate_ece_failure'
+                violation_severity = 'medium'
+            elif metrics['accuracy'] < 0.85:
+                violation_type = 'promotion_gate_accuracy_failure'
+                violation_severity = 'medium'
+        
+        phase4_gov.process_action(
+            agent_id=f"training_{args.model_type}",
+            action={'type': 'model_saved', 'promoted': promoted, 'model_path': model_path},
+            cohort=f"training_{args.model_type}",
+            violation_detected=violation_detected,
+            violation_type=violation_type,
+            violation_severity=violation_severity,
+            context={
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'event_type': 'model_saved',
+                'model_path': model_path,
+                'metrics_path': metrics_path,
+                'promoted': promoted
+            }
+        )
     
     # Generate drift report if tracking is enabled
     if drift_reporter:
@@ -606,6 +752,44 @@ def main():
                 print(f"[INFO] Audit summary saved to: {audit_summary_path}")
         except Exception as e:
             print(f"[WARN] Failed to finalize audit chunk: {e}")
+    
+    # Finalize Phase 4 governance and generate report
+    if phase4_gov:
+        try:
+            print("\n[INFO] Finalizing Phase 4 Integrated Governance...")
+            
+            # Finalize audit chunk
+            merkle_root = phase4_gov.finalize_audit_chunk()
+            if merkle_root:
+                print(f"[INFO] Phase 4 audit trail finalized. Merkle root: {merkle_root}")
+            
+            # Get SLA report
+            sla_report = phase4_gov.get_sla_report()
+            print(f"\n[INFO] SLA Performance:")
+            print(f"  Status: {sla_report['overall_status']}")
+            print(f"  P95 Latency: {sla_report['p95_latency_ms']:.2f}ms")
+            print(f"  SLA Met: {'✅' if sla_report['sla_met'] else '❌'}")
+            
+            # Get ethical coverage
+            if phase4_gov.ethical_taxonomy:
+                coverage = phase4_gov.get_ethical_coverage()
+                print(f"\n[INFO] Ethical Taxonomy Coverage:")
+                print(f"  Coverage: {coverage['coverage_percentage']:.1f}%")
+                print(f"  Target: {coverage['target_percentage']:.1f}%")
+                print(f"  Meets Target: {'✅' if coverage['meets_target'] else '❌'}")
+            
+            # Generate comprehensive Phase 4 report
+            phase4_report = phase4_gov.export_phase4_report()
+            phase4_report_path = Path(args.phase4_storage) / f"training_phase4_report_{args.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.md"
+            phase4_report_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(phase4_report_path, 'w') as f:
+                f.write(phase4_report)
+            print(f"\n[INFO] Phase 4 comprehensive report saved to: {phase4_report_path}")
+            
+        except Exception as e:
+            print(f"[WARN] Failed to finalize Phase 4 governance: {e}")
+            import traceback
+            traceback.print_exc()
 
 if __name__ == "__main__":
     main()
