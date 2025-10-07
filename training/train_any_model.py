@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Phase 8-9 Integration for human-in-the-loop and optimization
+try:
+    from nethical.core.phase89_integration import Phase89IntegratedGovernance
+    PHASE89_AVAILABLE = True
+except ImportError:
+    PHASE89_AVAILABLE = False
+    print("[WARN] Phase89IntegratedGovernance not available. Governance features will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,6 +420,11 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-phase89", action="store_true", help="Enable Phase 8-9 governance integration")
+    parser.add_argument("--phase89-storage", type=str, default="training_governance_data", help="Storage directory for Phase89 data")
+    parser.add_argument("--optimize-config", action="store_true", help="Run configuration optimization using Phase89")
+    parser.add_argument("--optimization-technique", type=str, default="random_search", choices=["grid_search", "random_search", "evolutionary"], help="Optimization technique")
+    parser.add_argument("--optimization-iterations", type=int, default=20, help="Number of optimization iterations")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -453,6 +466,25 @@ def main():
             drift_reporter = None
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
+
+    # Initialize Phase 8-9 Integrated Governance
+    governance = None
+    if args.enable_phase89 and PHASE89_AVAILABLE:
+        try:
+            governance = Phase89IntegratedGovernance(
+                storage_dir=args.phase89_storage,
+                triage_sla_seconds=3600,  # 1 hour
+                resolution_sla_seconds=86400,  # 24 hours
+                auto_escalate_on_block=True,
+                auto_escalate_on_low_confidence=True,
+                low_confidence_threshold=0.7
+            )
+            print(f"[INFO] Phase 8-9 governance enabled. Data stored in: {args.phase89_storage}")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize Phase89 governance: {e}")
+            governance = None
+    elif args.enable_phase89 and not PHASE89_AVAILABLE:
+        print("[WARN] Phase89 governance requested but Phase89IntegratedGovernance not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
@@ -524,6 +556,46 @@ def main():
             risk_score=risk_score
         )
 
+    # Create and track configuration with Phase89
+    config_version = f"{args.model_type}_v{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    baseline_config_id = None
+    if governance:
+        try:
+            print("\n[INFO] Recording configuration with Phase89 governance...")
+            # Create configuration for this training run
+            config = governance.create_configuration(
+                config_version=config_version,
+                classifier_threshold=0.5,
+                confidence_threshold=0.7,
+                gray_zone_lower=0.4,
+                gray_zone_upper=0.6,
+                metadata={
+                    'model_type': args.model_type,
+                    'epochs': args.epochs,
+                    'batch_size': args.batch_size,
+                    'num_samples': args.num_samples,
+                    'seed': args.seed,
+                    'training_timestamp': datetime.now(timezone.utc).isoformat()
+                }
+            )
+            baseline_config_id = config.config_id
+            print(f"[INFO] Configuration ID: {config.config_id}")
+            
+            # Record metrics with Phase89
+            # Map training metrics to Phase89 metrics format
+            phase89_metrics = governance.record_metrics(
+                config_id=config.config_id,
+                detection_recall=metrics['recall'],
+                detection_precision=metrics['precision'],
+                false_positive_rate=1.0 - metrics['precision'],  # Approximation
+                decision_latency_ms=10.0,  # Placeholder - would be actual inference time
+                human_agreement=0.85,  # Placeholder - would come from human review
+                total_cases=len(val_data)
+            )
+            print(f"[INFO] Metrics recorded. Fitness score: {phase89_metrics.fitness_score:.4f}")
+        except Exception as e:
+            print(f"[WARN] Failed to record Phase89 metrics: {e}")
+
     promoted = check_promotion_gate(metrics)
     
     # Track promotion gate result for drift analysis
@@ -583,6 +655,101 @@ def main():
             
         except Exception as e:
             print(f"[WARN] Failed to generate drift report: {e}")
+    
+    # Run configuration optimization if requested
+    if args.optimize_config and governance and baseline_config_id:
+        try:
+            print(f"\n[INFO] Running configuration optimization using {args.optimization_technique}...")
+            
+            # Define custom evaluation function for model configuration
+            def evaluate_model_config(config):
+                """Evaluate a model configuration."""
+                # In a real scenario, this would retrain/evaluate the model with new hyperparameters
+                # For now, we'll use the recorded metrics and add some variation
+                import random
+                base_recall = metrics['recall']
+                base_precision = metrics['precision']
+                
+                # Simulate variation based on configuration parameters
+                recall_var = random.uniform(-0.05, 0.05)
+                precision_var = random.uniform(-0.05, 0.05)
+                
+                return governance.record_metrics(
+                    config_id=config.config_id,
+                    detection_recall=max(0.0, min(1.0, base_recall + recall_var)),
+                    detection_precision=max(0.0, min(1.0, base_precision + precision_var)),
+                    false_positive_rate=random.uniform(0.01, 0.15),
+                    decision_latency_ms=random.uniform(8.0, 15.0),
+                    human_agreement=random.uniform(0.80, 0.95),
+                    total_cases=len(val_data)
+                )
+            
+            # Run optimization
+            if args.optimization_technique == "random_search":
+                optimization_results = governance.optimize_configuration(
+                    technique="random_search",
+                    param_ranges={
+                        'classifier_threshold': (0.4, 0.7),
+                        'confidence_threshold': (0.6, 0.9),
+                        'gray_zone_lower': (0.3, 0.5),
+                        'gray_zone_upper': (0.5, 0.7)
+                    },
+                    n_iterations=args.optimization_iterations
+                )
+            elif args.optimization_technique == "grid_search":
+                optimization_results = governance.optimize_configuration(
+                    technique="grid_search",
+                    param_grid={
+                        'classifier_threshold': [0.4, 0.5, 0.6],
+                        'gray_zone_lower': [0.3, 0.4, 0.5],
+                        'gray_zone_upper': [0.5, 0.6, 0.7]
+                    }
+                )
+            else:  # evolutionary
+                base_config = governance.optimizer.configurations.get(baseline_config_id)
+                optimization_results = governance.optimize_configuration(
+                    technique="evolutionary",
+                    base_config=base_config,
+                    population_size=10,
+                    n_generations=5,
+                    mutation_rate=0.2
+                )
+            
+            print(f"[INFO] Optimization completed. Evaluated {len(optimization_results)} configurations")
+            
+            # Display top 3 configurations
+            print("\n[INFO] Top 3 Configurations:")
+            for i, (config, opt_metrics) in enumerate(optimization_results[:3], 1):
+                print(f"  {i}. {config.config_version}")
+                print(f"     Fitness: {opt_metrics.fitness_score:.4f}")
+                print(f"     Recall: {opt_metrics.detection_recall:.3f}, Precision: {opt_metrics.detection_precision:.3f}")
+                print(f"     FP Rate: {opt_metrics.false_positive_rate:.3f}")
+            
+            # Check promotion gate for best configuration
+            if len(optimization_results) > 0:
+                best_config, best_metrics = optimization_results[0]
+                print(f"\n[INFO] Checking promotion gate for best configuration...")
+                passed, reasons = governance.check_promotion_gate(
+                    candidate_id=best_config.config_id,
+                    baseline_id=baseline_config_id
+                )
+                
+                print(f"[INFO] Promotion gate: {'PASSED' if passed else 'FAILED'}")
+                for reason in reasons:
+                    print(f"  - {reason}")
+                
+                if passed:
+                    print(f"[INFO] Promoting configuration {best_config.config_version} to production...")
+                    promoted_success = governance.promote_configuration(best_config.config_id)
+                    if promoted_success:
+                        print(f"[INFO] Configuration promoted successfully")
+                    else:
+                        print(f"[WARN] Failed to promote configuration")
+                        
+        except Exception as e:
+            print(f"[WARN] Failed to run configuration optimization: {e}")
+            import traceback
+            traceback.print_exc()
     
     # Finalize Merkle audit chunk if enabled
     if merkle_anchor:
