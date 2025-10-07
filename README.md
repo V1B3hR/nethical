@@ -126,6 +126,20 @@ print(f'Anomalous: {result[\"label\"] == 1}, Score: {result[\"score\"]:.3f}')
 
 **Audit Logging**: Enable `--enable-audit` to create an immutable, cryptographically-verifiable training audit trail using Merkle trees. This is essential for compliance, model governance, and reproducibility. See [docs/AUDIT_LOGGING_GUIDE.md](docs/AUDIT_LOGGING_GUIDE.md) for details.
 
+**Ethical Taxonomy**: Enable `--enable-ethical-taxonomy` to tag violations with multi-dimensional ethical impact scores across four key dimensions: Privacy, Manipulation, Fairness, and Safety. This provides transparency into the ethical implications of model violations and helps prioritize remediation efforts. See [ETHICAL_TAXONOMY_TRAINING.md](ETHICAL_TAXONOMY_TRAINING.md) for detailed documentation.
+
+```bash
+# Train with ethical taxonomy enabled
+python training/train_any_model.py --model-type heuristic --enable-ethical-taxonomy
+
+# Combine all features: audit logging, drift tracking, and ethical taxonomy
+python training/train_any_model.py \
+    --model-type logistic \
+    --enable-audit \
+    --enable-drift-tracking \
+    --enable-ethical-taxonomy
+```
+
 See [ANOMALY_DETECTION_TRAINING.md](ANOMALY_DETECTION_TRAINING.md) for detailed documentation.
 
 ## 🏗️ System Architecture
