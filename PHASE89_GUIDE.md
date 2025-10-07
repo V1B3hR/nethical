@@ -623,6 +623,41 @@ See `examples/phase89_demo.py` for complete working example.
 
 ---
 
+## Quick Start
+
+### Running the Human Feedback Demo
+
+You can run the human feedback system demo directly to see Phase 8 in action:
+
+```bash
+# Run as a Python script
+python nethical/core/human_feedback.py
+
+# Or run as a module
+python -m nethical.core.human_feedback
+```
+
+This will demonstrate:
+- Escalation queue initialization with SLA tracking
+- Adding cases with different priorities (HIGH, MEDIUM, EMERGENCY)
+- Priority-based case retrieval
+- Human review workflow with feedback submission
+- Structured feedback tags (FALSE_POSITIVE, CORRECT_DECISION, POLICY_GAP)
+- SLA metrics calculation
+- Feedback summary for continuous improvement
+
+### Running the Full Phase 8-9 Demo
+
+For a complete demonstration of both Phase 8 and Phase 9:
+
+```bash
+python examples/phase89_demo.py
+```
+
+This demonstrates the entire workflow including escalation, human review, optimization, and promotion gates.
+
+---
+
 ## Summary
 
 Phases 8-9 complete the Nethical governance system with:
