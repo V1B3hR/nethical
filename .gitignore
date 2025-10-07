@@ -149,3 +149,8 @@ ehthumbs.db
 Thumbs.db
 # Training audit logs
 training_audit_logs/
+
+# Drift tracking reports
+training_drift_reports/
+example_drift_reports/
+drift_reports/
