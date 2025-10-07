@@ -154,3 +154,6 @@ training_audit_logs/
 training_drift_reports/
 example_drift_reports/
 drift_reports/
+
+# Phase89 governance data
+training_governance_data/
