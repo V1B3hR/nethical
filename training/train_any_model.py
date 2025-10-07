@@ -7,7 +7,7 @@ Plug-and-Play Model Training Script for Nethical
 - Trains the model, computes metrics, checks promotion gate, and saves results.
 
 Usage:
-    python train_any_model.py --model-type logistic --epochs 30 --batch-size 64 --num-samples 5000 --seed 32
+    python train_any_model.py --model-type logistic --epochs 30 --batch-size 64 --num-samples 4000 --seed 32
 
 Dependencies: kaggle, pandas, numpy
 """
