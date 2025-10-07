@@ -18,7 +18,7 @@ import sys
 import random
 import json
 import numpy as np
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 
 # Add parent directory to path for imports
@@ -268,7 +268,7 @@ def main():
                 'batch_size': args.batch_size,
                 'num_samples': args.num_samples,
                 'seed': args.seed,
-                'timestamp': datetime.utcnow().isoformat()
+                'timestamp': datetime.now(timezone.utc).isoformat()
             })
         except Exception as e:
             print(f"[WARN] Failed to initialize Merkle audit logging: {e}")
@@ -285,7 +285,7 @@ def main():
         merkle_anchor.add_event({
             'event_type': 'data_loaded',
             'num_samples': len(raw_data),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
 
     ModelClass, preprocess_fn = get_model_class(args.model_type)
@@ -300,15 +300,15 @@ def main():
             'event_type': 'data_split',
             'train_samples': len(train_data),
             'val_samples': len(val_data),
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
 
     model = ModelClass()
     print(f"[INFO] Training {args.model_type} model for {args.epochs} epochs, batch size {args.batch_size}...")
-    training_start_time = datetime.utcnow()
+    training_start_time = datetime.now(timezone.utc)
     # Note: BaselineMLClassifier doesn't use epochs/batch_size, but we keep them for extensibility
     model.train(train_data)
-    training_end_time = datetime.utcnow()
+    training_end_time = datetime.now(timezone.utc)
     
     # Log training completion event
     if merkle_anchor:
@@ -332,7 +332,7 @@ def main():
         merkle_anchor.add_event({
             'event_type': 'validation_metrics',
             'metrics': metrics,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
 
     promoted = check_promotion_gate(metrics)
@@ -345,7 +345,7 @@ def main():
             'model_path': model_path,
             'metrics_path': metrics_path,
             'promoted': promoted,
-            'timestamp': datetime.utcnow().isoformat()
+            'timestamp': datetime.now(timezone.utc).isoformat()
         })
         
         # Finalize chunk and get Merkle root
@@ -362,7 +362,7 @@ def main():
                     'model_type': args.model_type,
                     'promoted': promoted,
                     'metrics': metrics,
-                    'timestamp': datetime.utcnow().isoformat()
+                    'timestamp': datetime.now(timezone.utc).isoformat()
                 }
                 with open(audit_summary_path, 'w') as f:
                     json.dump(audit_summary, f, indent=2)
