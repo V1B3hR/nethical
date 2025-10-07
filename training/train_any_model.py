@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Phase3IntegratedGovernance for integrated governance
+try:
+    from nethical.core.phase3_integration import Phase3IntegratedGovernance
+    PHASE3_AVAILABLE = True
+except ImportError:
+    PHASE3_AVAILABLE = False
+    print("[WARN] Phase3IntegratedGovernance not available. Phase3 integration will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,6 +420,8 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-phase3", action="store_true", help="Enable Phase3 integrated governance (includes risk engine, correlation engine, etc.)")
+    parser.add_argument("--phase3-storage-dir", type=str, default="nethical_training_data", help="Storage directory for Phase3 components")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -442,8 +452,32 @@ def main():
 
     # Initialize Ethical Drift Reporter for drift tracking
     drift_reporter = None
+    phase3_governance = None
     cohort_id = args.cohort_id or f"{args.model_type}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
-    if args.enable_drift_tracking and DRIFT_REPORTER_AVAILABLE:
+    
+    # Choose between Phase3 integrated governance or standalone drift reporter
+    if args.enable_phase3 and PHASE3_AVAILABLE:
+        try:
+            # Use Phase3IntegratedGovernance which includes all Phase 3 components
+            phase3_governance = Phase3IntegratedGovernance(
+                storage_dir=args.phase3_storage_dir,
+                enable_performance_optimization=True
+            )
+            # Override the drift report directory if specified
+            if args.drift_report_dir != "training_drift_reports":
+                phase3_governance.ethical_drift_reporter.report_dir = args.drift_report_dir
+            
+            print(f"[INFO] Phase3 integrated governance enabled. Data stored in: {args.phase3_storage_dir}")
+            print(f"[INFO] Training cohort ID: {cohort_id}")
+            print("[INFO] Phase3 includes: Risk Engine, Correlation Engine, Fairness Sampler, Ethical Drift Reporter, Performance Optimizer")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize Phase3 integrated governance: {e}")
+            phase3_governance = None
+    elif args.enable_phase3 and not PHASE3_AVAILABLE:
+        print("[WARN] Phase3 integration requested but Phase3IntegratedGovernance not available")
+    
+    # Fallback to standalone drift reporter if Phase3 not enabled
+    if args.enable_drift_tracking and not phase3_governance and DRIFT_REPORTER_AVAILABLE:
         try:
             drift_reporter = EthicalDriftReporter(report_dir=args.drift_report_dir)
             print(f"[INFO] Ethical drift tracking enabled. Reports stored in: {args.drift_report_dir}")
@@ -451,7 +485,7 @@ def main():
         except Exception as e:
             print(f"[WARN] Failed to initialize drift reporter: {e}")
             drift_reporter = None
-    elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
+    elif args.enable_drift_tracking and not phase3_governance and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
 
     set_seed(args.seed)
@@ -514,9 +548,28 @@ def main():
         })
     
     # Track training performance for drift analysis
-    if drift_reporter:
-        # Track validation as an action with risk score based on accuracy
+    if phase3_governance:
+        # Use Phase3 integrated governance to track action
         # Higher accuracy = lower risk
+        risk_score = 1.0 - metrics['accuracy']
+        
+        # Create a mock action object for tracking
+        class MockAction:
+            def __init__(self, content):
+                self.content = content
+        
+        action = MockAction(f"Training validation: model={args.model_type}, accuracy={metrics['accuracy']:.4f}")
+        
+        phase3_governance.process_action(
+            agent_id=f"model_{args.model_type}",
+            action=action,
+            cohort=cohort_id,
+            violation_detected=False,
+            violation_type=None,
+            violation_severity=None
+        )
+    elif drift_reporter:
+        # Fallback to standalone drift reporter
         risk_score = 1.0 - metrics['accuracy']
         drift_reporter.track_action(
             agent_id=f"model_{args.model_type}",
@@ -527,9 +580,26 @@ def main():
     promoted = check_promotion_gate(metrics)
     
     # Track promotion gate result for drift analysis
-    if drift_reporter:
+    if phase3_governance:
+        # Track promotion gate failures as violations using Phase3
         if not promoted:
-            # Track promotion gate failure as a violation
+            if metrics['ece'] > 0.08:
+                phase3_governance.ethical_drift_reporter.track_violation(
+                    agent_id=f"model_{args.model_type}",
+                    cohort=cohort_id,
+                    violation_type="calibration_error",
+                    severity="high" if metrics['ece'] > 0.15 else "medium"
+                )
+            if metrics['accuracy'] < 0.85:
+                phase3_governance.ethical_drift_reporter.track_violation(
+                    agent_id=f"model_{args.model_type}",
+                    cohort=cohort_id,
+                    violation_type="low_accuracy",
+                    severity="high" if metrics['accuracy'] < 0.70 else "medium"
+                )
+    elif drift_reporter:
+        # Fallback to standalone drift reporter
+        if not promoted:
             if metrics['ece'] > 0.08:
                 drift_reporter.track_violation(
                     agent_id=f"model_{args.model_type}",
@@ -558,7 +628,42 @@ def main():
         })
     
     # Generate drift report if tracking is enabled
-    if drift_reporter:
+    if phase3_governance:
+        try:
+            print("\n[INFO] Generating ethical drift report using Phase3 integrated governance...")
+            report_start_time = training_start_time
+            report_end_time = datetime.now(timezone.utc)
+            
+            # Use Phase3's generate_drift_report method
+            drift_report_dict = phase3_governance.generate_drift_report(
+                cohorts=[cohort_id],
+                days_back=7
+            )
+            
+            print(f"[INFO] Drift Report ID: {drift_report_dict['report_id']}")
+            print(f"[INFO] Drift detected: {drift_report_dict['drift_metrics'].get('has_drift', False)}")
+            
+            if drift_report_dict.get('recommendations'):
+                print("\n[INFO] Drift Analysis Recommendations:")
+                for i, rec in enumerate(drift_report_dict['recommendations'][:5], 1):
+                    print(f"  {i}. {rec}")
+            
+            # Get additional Phase3 metrics
+            print("\n[INFO] Phase3 System Status:")
+            status = phase3_governance.get_system_status()
+            for component, info in status['components'].items():
+                if info.get('enabled'):
+                    print(f"  ✓ {component}: {info}")
+            
+            # Save drift report path reference in model metadata
+            drift_report_path = Path(phase3_governance.ethical_drift_reporter.report_dir) / f"{drift_report_dict['report_id']}.json"
+            print(f"[INFO] Drift report saved to: {drift_report_path}")
+            
+        except Exception as e:
+            print(f"[WARN] Failed to generate Phase3 drift report: {e}")
+            import traceback
+            traceback.print_exc()
+    elif drift_reporter:
         try:
             print("\n[INFO] Generating ethical drift report...")
             report_start_time = training_start_time
