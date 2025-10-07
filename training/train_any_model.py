@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import FairnessSampler for fairness sampling
+try:
+    from nethical.core.fairness_sampler import FairnessSampler, SamplingStrategy
+    FAIRNESS_SAMPLER_AVAILABLE = True
+except ImportError:
+    FAIRNESS_SAMPLER_AVAILABLE = False
+    print("[WARN] FairnessSampler not available. Fairness sampling will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,6 +420,10 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-fairness-sampling", action="store_true", help="Enable fairness sampling")
+    parser.add_argument("--fairness-cohorts", type=str, default="train,validation", help="Comma-separated list of cohorts for fairness sampling")
+    parser.add_argument("--fairness-sample-size", type=int, default=100, help="Target sample size for fairness sampling")
+    parser.add_argument("--fairness-storage-dir", type=str, default="fairness_samples", help="Directory for fairness samples")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -454,6 +466,34 @@ def main():
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
 
+    # Initialize FairnessSampler for fairness sampling
+    fairness_sampler = None
+    fairness_job_id = None
+    if args.enable_fairness_sampling and FAIRNESS_SAMPLER_AVAILABLE:
+        try:
+            fairness_sampler = FairnessSampler(storage_dir=args.fairness_storage_dir)
+            cohorts = [c.strip() for c in args.fairness_cohorts.split(',')]
+            fairness_job_id = fairness_sampler.create_sampling_job(
+                cohorts=cohorts,
+                target_sample_size=args.fairness_sample_size,
+                strategy=SamplingStrategy.STRATIFIED,
+                metadata={
+                    'model_type': args.model_type,
+                    'training_start': datetime.now(timezone.utc).isoformat(),
+                    'seed': args.seed
+                }
+            )
+            print(f"[INFO] Fairness sampling enabled. Storage: {args.fairness_storage_dir}")
+            print(f"[INFO] Sampling job ID: {fairness_job_id}")
+            print(f"[INFO] Cohorts: {cohorts}")
+            print(f"[INFO] Target sample size: {args.fairness_sample_size}")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize fairness sampler: {e}")
+            fairness_sampler = None
+            fairness_job_id = None
+    elif args.enable_fairness_sampling and not FAIRNESS_SAMPLER_AVAILABLE:
+        print("[WARN] Fairness sampling requested but FairnessSampler not available")
+
     set_seed(args.seed)
     download_kaggle_datasets()
     raw_data = load_data(num_samples=args.num_samples, model_type=args.model_type)
@@ -480,6 +520,65 @@ def main():
             'val_samples': len(val_data),
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+
+    # Perform fairness sampling if enabled
+    if fairness_sampler and fairness_job_id:
+        try:
+            print("\n[INFO] Performing fairness sampling...")
+            
+            # Create population data for stratified sampling
+            population_data = {
+                'train': [
+                    {
+                        'agent_id': f"train_sample_{i}",
+                        'action_id': f"train_action_{i}",
+                        'metadata': {
+                            'label': sample['label'],
+                            'features': sample['features']
+                        }
+                    }
+                    for i, sample in enumerate(train_data)
+                ],
+                'validation': [
+                    {
+                        'agent_id': f"val_sample_{i}",
+                        'action_id': f"val_action_{i}",
+                        'metadata': {
+                            'label': sample['label'],
+                            'features': sample['features']
+                        }
+                    }
+                    for i, sample in enumerate(val_data)
+                ]
+            }
+            
+            # Perform stratified sampling
+            samples_collected = fairness_sampler.perform_stratified_sampling(
+                job_id=fairness_job_id,
+                population_data=population_data
+            )
+            
+            print(f"[INFO] Collected {samples_collected} fairness samples")
+            
+            # Get coverage statistics
+            coverage_stats = fairness_sampler.get_coverage_stats(fairness_job_id)
+            print(f"[INFO] Coverage rate: {coverage_stats.get('completion_rate', 0):.1%}")
+            
+            for cohort, coverage in coverage_stats.get('cohort_coverage', {}).items():
+                print(f"[INFO]   {cohort}: {coverage['count']} samples ({coverage['percentage']:.1f}%)")
+            
+            # Log fairness sampling event
+            if merkle_anchor:
+                merkle_anchor.add_event({
+                    'event_type': 'fairness_sampling',
+                    'job_id': fairness_job_id,
+                    'samples_collected': samples_collected,
+                    'coverage_stats': coverage_stats,
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+                
+        except Exception as e:
+            print(f"[WARN] Failed to perform fairness sampling: {e}")
 
     model = ModelClass()
     print(f"[INFO] Training {args.model_type} model for {args.epochs} epochs, batch size {args.batch_size}...")
@@ -583,6 +682,34 @@ def main():
             
         except Exception as e:
             print(f"[WARN] Failed to generate drift report: {e}")
+    
+    # Finalize fairness sampling job if enabled
+    if fairness_sampler and fairness_job_id:
+        try:
+            print("\n[INFO] Finalizing fairness sampling job...")
+            success = fairness_sampler.finalize_job(fairness_job_id)
+            if success:
+                print(f"[INFO] Fairness sampling job finalized: {fairness_job_id}")
+                
+                # Get final coverage statistics
+                final_stats = fairness_sampler.get_coverage_stats(fairness_job_id)
+                print(f"[INFO] Final coverage: {final_stats.get('total_samples')} samples")
+                
+                fairness_report_path = Path(args.fairness_storage_dir) / f"{fairness_job_id}.json"
+                print(f"[INFO] Fairness samples saved to: {fairness_report_path}")
+                
+                # Log fairness job finalization
+                if merkle_anchor:
+                    merkle_anchor.add_event({
+                        'event_type': 'fairness_job_finalized',
+                        'job_id': fairness_job_id,
+                        'final_stats': final_stats,
+                        'timestamp': datetime.now(timezone.utc).isoformat()
+                    })
+            else:
+                print(f"[WARN] Failed to finalize fairness sampling job")
+        except Exception as e:
+            print(f"[WARN] Failed to finalize fairness sampling job: {e}")
     
     # Finalize Merkle audit chunk if enabled
     if merkle_anchor:
