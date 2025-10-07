@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import ML Blended Risk Engine for blended risk evaluation
+try:
+    from nethical.core.ml_blended_risk import MLBlendedRiskEngine, RiskZone
+    BLENDED_RISK_AVAILABLE = True
+except ImportError:
+    BLENDED_RISK_AVAILABLE = False
+    print("[WARN] MLBlendedRiskEngine not available. Blended risk evaluation will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,6 +420,12 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-blended-risk", action="store_true", help="Enable ML blended risk evaluation")
+    parser.add_argument("--blended-risk-path", type=str, default="training_blended_risk", help="Path for blended risk logs")
+    parser.add_argument("--gray-zone-lower", type=float, default=0.4, help="Lower bound of gray zone (default: 0.4)")
+    parser.add_argument("--gray-zone-upper", type=float, default=0.6, help="Upper bound of gray zone (default: 0.6)")
+    parser.add_argument("--rule-weight", type=float, default=0.7, help="Weight for rule-based risk (default: 0.7)")
+    parser.add_argument("--ml-weight", type=float, default=0.3, help="Weight for ML risk (default: 0.3)")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -453,6 +467,27 @@ def main():
             drift_reporter = None
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
+
+    # Initialize ML Blended Risk Engine for blended risk evaluation
+    blended_engine = None
+    if args.enable_blended_risk and BLENDED_RISK_AVAILABLE:
+        try:
+            blended_engine = MLBlendedRiskEngine(
+                gray_zone_lower=args.gray_zone_lower,
+                gray_zone_upper=args.gray_zone_upper,
+                rule_weight=args.rule_weight,
+                ml_weight=args.ml_weight,
+                storage_path=args.blended_risk_path,
+                enable_ml_blending=True
+            )
+            print(f"[INFO] ML Blended Risk evaluation enabled. Logs stored in: {args.blended_risk_path}")
+            print(f"[INFO] Gray zone: [{args.gray_zone_lower}, {args.gray_zone_upper}]")
+            print(f"[INFO] Weights: {args.rule_weight} * rules + {args.ml_weight} * ML")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize blended risk engine: {e}")
+            blended_engine = None
+    elif args.enable_blended_risk and not BLENDED_RISK_AVAILABLE:
+        print("[WARN] Blended risk evaluation requested but MLBlendedRiskEngine not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
@@ -512,6 +547,76 @@ def main():
             'metrics': metrics,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    # Evaluate blended risk if enabled
+    blended_metrics = None
+    if blended_engine:
+        print("\n[INFO] Evaluating ML Blended Risk Scoring...")
+        
+        # For each validation sample, compute blended risk
+        for i, sample in enumerate(val_data):
+            # Get ML prediction score (probability)
+            ml_prediction = model.predict(sample['features'])
+            ml_risk_score = ml_prediction.get('risk_score', ml_prediction['label'])  # Use risk_score if available, else binary label
+            
+            # Simulate rule-based risk score (in real scenario, this comes from rule engine)
+            # For demo, we use a simple heuristic based on features
+            features = sample['features']
+            if isinstance(features, dict) and 'violation_count' in features:
+                rule_risk_score = float(features.get('violation_count', 0.5))
+            else:
+                # For other feature types, use the label as proxy
+                rule_risk_score = float(sample['label'])
+            
+            # Map label to classification
+            rule_classification = "deny" if rule_risk_score >= 0.7 else ("warn" if rule_risk_score >= 0.4 else "allow")
+            
+            # Compute blended decision
+            decision = blended_engine.compute_blended_risk(
+                agent_id=f"val_model_{args.model_type}",
+                action_id=f"val_action_{i}",
+                rule_risk_score=rule_risk_score,
+                rule_classification=rule_classification,
+                ml_risk_score=float(ml_risk_score),
+                ml_confidence=0.85,  # Placeholder confidence
+                features=features
+            )
+            
+            # Record ground truth for evaluation
+            true_label = sample['label']
+            predicted_label = 1 if decision.blended_risk_score >= 0.5 else 0
+            
+            is_true_positive = (predicted_label == 1 and true_label == 1)
+            is_false_positive = (predicted_label == 1 and true_label == 0)
+            
+            blended_engine.record_ground_truth(
+                decision_id=decision.decision_id,
+                is_true_positive=is_true_positive,
+                is_false_positive=is_false_positive
+            )
+        
+        # Get blended risk metrics report
+        blended_metrics = blended_engine.get_metrics_report()
+        
+        print("\n[INFO] Blended Risk Metrics:")
+        print(f"  Total decisions: {blended_metrics['total_decisions']}")
+        print(f"  Gray zone percentage: {blended_metrics['zone_distribution']['gray_zone_percentage']:.2f}%")
+        print(f"  ML influence rate: {blended_metrics['ml_influence']['influence_rate']:.2f}%")
+        print(f"  Classification changes: {blended_metrics['ml_influence']['classification_changes']}")
+        
+        gate_metrics = blended_metrics['gate_metrics']
+        print(f"\n[INFO] Blended Risk Gate Check:")
+        print(f"  FP delta: {gate_metrics['fp_delta']} ({gate_metrics['fp_delta_percentage']:.2f}%)")
+        print(f"  Detection improvement: {gate_metrics['detection_improvement']} ({gate_metrics['detection_improvement_rate']:.2f}%)")
+        print(f"  Gate result: {'PASS' if gate_metrics['passes_gate'] else 'FAIL'} - {gate_metrics['gate_reason']}")
+        
+        # Log blended risk metrics event
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'blended_risk_evaluation',
+                'metrics': blended_metrics,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            })
     
     # Track training performance for drift analysis
     if drift_reporter:

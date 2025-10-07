@@ -14,6 +14,7 @@ A plug-and-play training pipeline that supports multiple model types with option
 - **Promotion Gate**: Validates models against quality criteria before promotion
 - **Audit Logging**: Optional Merkle tree-based audit trail for training events
 - **Ethical Drift Tracking**: Track and analyze model performance across training cohorts
+- **ML Blended Risk Evaluation**: Evaluate models using blended rule-based and ML risk scoring
 
 ### Usage
 
@@ -43,6 +44,30 @@ python training/train_any_model.py \
     --cohort-id cohort_alpha
 ```
 
+Training with ML blended risk evaluation:
+```bash
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 10 \
+    --num-samples 1000 \
+    --enable-blended-risk \
+    --gray-zone-lower 0.4 \
+    --gray-zone-upper 0.6 \
+    --rule-weight 0.7 \
+    --ml-weight 0.3
+```
+
+Training with all features enabled:
+```bash
+python training/train_any_model.py \
+    --model-type heuristic \
+    --epochs 10 \
+    --num-samples 1000 \
+    --enable-audit \
+    --enable-drift-tracking \
+    --enable-blended-risk
+```
+
 ### Command-Line Arguments
 
 - `--model-type`: Type of model to train (required)
@@ -62,6 +87,63 @@ python training/train_any_model.py \
 - `--enable-drift-tracking`: Enable ethical drift tracking
 - `--drift-report-dir`: Directory for drift reports (default: `training_drift_reports`)
 - `--cohort-id`: Cohort identifier for drift tracking (default: `{model-type}_{timestamp}`)
+
+#### Blended Risk Evaluation Options
+
+- `--enable-blended-risk`: Enable ML blended risk evaluation during validation
+- `--blended-risk-path`: Path for blended risk logs (default: `training_blended_risk`)
+- `--gray-zone-lower`: Lower bound of gray zone for risk blending (default: 0.4)
+- `--gray-zone-upper`: Upper bound of gray zone for risk blending (default: 0.6)
+- `--rule-weight`: Weight for rule-based risk in blending (default: 0.7)
+- `--ml-weight`: Weight for ML risk in blending (default: 0.3)
+
+### ML Blended Risk Evaluation
+
+ML Blended Risk Evaluation combines rule-based and ML-based risk scoring to evaluate model predictions during validation. This helps assess how well the model would perform in a blended enforcement scenario.
+
+#### How It Works
+
+1. During validation, for each sample:
+   - A rule-based risk score is computed (simulated from features)
+   - An ML risk score is obtained from the model prediction
+   - A blended risk score is computed: `blended = rule_weight * rule_score + ml_weight * ml_score`
+
+2. Risk zones are determined based on rule scores:
+   - **Clear Allow Zone**: rule_score < gray_zone_lower (default: < 0.4)
+   - **Gray Zone**: gray_zone_lower ≤ rule_score ≤ gray_zone_upper (default: 0.4-0.6)
+   - **Clear Deny Zone**: rule_score > gray_zone_upper (default: > 0.6)
+
+3. ML influence is applied only in the gray zone, where decisions are uncertain
+
+4. Metrics tracked include:
+   - Zone distribution (how many decisions fall in each zone)
+   - ML influence rate (percentage of gray zone decisions influenced by ML)
+   - Classification changes (when blended score changes the decision)
+   - False positive delta (FP increase/decrease with blending)
+   - Detection improvement (true positive gains)
+
+#### Gate Check Criteria
+
+The blended risk evaluation includes a promotion gate check:
+
+- **Maximum FP Delta**: ≤ 5% (blended mode shouldn't increase false positives significantly)
+- **Detection Improvement**: > 0 (blended mode should improve true positive detection)
+- **Minimum Gray Zone Samples**: ≥ 100 (sufficient data for reliable evaluation)
+
+#### Example Output
+
+```
+[INFO] Blended Risk Metrics:
+  Total decisions: 40
+  Gray zone percentage: 20.00%
+  ML influence rate: 100.00%
+  Classification changes: 2
+
+[INFO] Blended Risk Gate Check:
+  FP delta: 1 (5.00%)
+  Detection improvement: 3 (15.00%)
+  Gate result: PASS - All gate checks passed
+```
 
 ### Ethical Drift Tracking
 
