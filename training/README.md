@@ -14,12 +14,23 @@ A plug-and-play training pipeline that supports multiple model types with option
 - **Promotion Gate**: Validates models against quality criteria before promotion
 - **Audit Logging**: Optional Merkle tree-based audit trail for training events
 - **Ethical Drift Tracking**: Track and analyze model performance across training cohorts
+- **Phase 4 Integrated Governance**: Comprehensive audit, ethical taxonomy, and SLA monitoring (NEW!)
 
 ### Usage
 
 Basic training:
 ```bash
 python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000
+```
+
+Training with Phase 4 Integrated Governance (recommended for production):
+```bash
+python training/train_any_model.py \
+    --model-type logistic \
+    --epochs 20 \
+    --num-samples 2000 \
+    --enable-phase4 \
+    --phase4-storage training_phase4_data
 ```
 
 Training with audit logging:
@@ -56,6 +67,13 @@ python training/train_any_model.py \
 
 - `--enable-audit`: Enable Merkle audit logging
 - `--audit-path`: Path for audit logs (default: `training_audit_logs`)
+
+#### Phase 4 Integrated Governance Options (NEW)
+
+- `--enable-phase4`: Enable Phase 4 Integrated Governance (includes audit, taxonomy, SLA monitoring)
+- `--phase4-storage`: Storage directory for Phase 4 data (default: `training_phase4_data`)
+
+See [PHASE4_INTEGRATION.md](PHASE4_INTEGRATION.md) for detailed Phase 4 documentation.
 
 #### Drift Tracking Options
 
