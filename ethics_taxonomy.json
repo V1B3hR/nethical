@@ -213,6 +213,18 @@
       "fairness": 0.85,
       "manipulation": 0.2,
       "description": "Systematic exclusion of individuals or groups"
+    },
+    "calibration_error": {
+      "fairness": 0.7,
+      "safety": 0.5,
+      "manipulation": 0.3,
+      "description": "Model predictions not well-calibrated with actual outcomes"
+    },
+    "low_accuracy": {
+      "fairness": 0.6,
+      "safety": 0.4,
+      "manipulation": 0.2,
+      "description": "Model performance below acceptable accuracy threshold"
     }
   },
   "aggregation_rules": {

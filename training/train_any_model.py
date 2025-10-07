@@ -40,6 +40,14 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Ethical Taxonomy for violation tagging
+try:
+    from nethical.core.ethical_taxonomy import EthicalTaxonomy
+    ETHICAL_TAXONOMY_AVAILABLE = True
+except ImportError:
+    ETHICAL_TAXONOMY_AVAILABLE = False
+    print("[WARN] EthicalTaxonomy not available. Ethical tagging will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -412,6 +420,8 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-ethical-taxonomy", action="store_true", help="Enable ethical taxonomy violation tagging")
+    parser.add_argument("--taxonomy-path", type=str, default="ethics_taxonomy.json", help="Path to ethics taxonomy file")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -453,6 +463,19 @@ def main():
             drift_reporter = None
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
+
+    # Initialize Ethical Taxonomy for violation tagging
+    ethical_taxonomy = None
+    if args.enable_ethical_taxonomy and ETHICAL_TAXONOMY_AVAILABLE:
+        try:
+            ethical_taxonomy = EthicalTaxonomy(taxonomy_path=args.taxonomy_path)
+            print(f"[INFO] Ethical taxonomy enabled. Using taxonomy from: {args.taxonomy_path}")
+            print(f"[INFO] Loaded {len(ethical_taxonomy.dimensions)} ethical dimensions: {list(ethical_taxonomy.dimensions.keys())}")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize ethical taxonomy: {e}")
+            ethical_taxonomy = None
+    elif args.enable_ethical_taxonomy and not ETHICAL_TAXONOMY_AVAILABLE:
+        print("[WARN] Ethical taxonomy requested but EthicalTaxonomy not available")
 
     set_seed(args.seed)
     download_kaggle_datasets()
@@ -526,7 +549,7 @@ def main():
 
     promoted = check_promotion_gate(metrics)
     
-    # Track promotion gate result for drift analysis
+    # Track promotion gate result for drift analysis and ethical taxonomy
     if drift_reporter:
         if not promoted:
             # Track promotion gate failure as a violation
@@ -545,7 +568,88 @@ def main():
                     severity="high" if metrics['accuracy'] < 0.70 else "medium"
                 )
     
+    # Tag violations with ethical taxonomy
+    violation_tags = []
+    if ethical_taxonomy and not promoted:
+        print("\n[INFO] Analyzing violations with ethical taxonomy...")
+        
+        if metrics['ece'] > 0.08:
+            # Calibration errors can relate to fairness and safety
+            tagging = ethical_taxonomy.create_tagging(
+                violation_type="calibration_error",
+                context={
+                    'ece': metrics['ece'],
+                    'threshold': 0.08,
+                    'severity': 'high' if metrics['ece'] > 0.15 else 'medium',
+                    'automated': True
+                }
+            )
+            violation_tags.append({
+                'violation_type': 'calibration_error',
+                'primary_dimension': tagging.primary_dimension,
+                'dimensions': {tag.dimension: tag.score for tag in tagging.tags},
+                'severity': 'high' if metrics['ece'] > 0.15 else 'medium'
+            })
+            print(f"  - Calibration Error: Primary dimension = {tagging.primary_dimension}")
+            print(f"    Dimension scores: {', '.join([f'{t.dimension}={t.score:.2f}' for t in tagging.tags])}")
+        
+        if metrics['accuracy'] < 0.85:
+            # Low accuracy can relate to fairness and manipulation
+            tagging = ethical_taxonomy.create_tagging(
+                violation_type="low_accuracy",
+                context={
+                    'accuracy': metrics['accuracy'],
+                    'threshold': 0.85,
+                    'severity': 'high' if metrics['accuracy'] < 0.70 else 'medium',
+                    'automated': True
+                }
+            )
+            violation_tags.append({
+                'violation_type': 'low_accuracy',
+                'primary_dimension': tagging.primary_dimension,
+                'dimensions': {tag.dimension: tag.score for tag in tagging.tags},
+                'severity': 'high' if metrics['accuracy'] < 0.70 else 'medium'
+            })
+            print(f"  - Low Accuracy: Primary dimension = {tagging.primary_dimension}")
+            print(f"    Dimension scores: {', '.join([f'{t.dimension}={t.score:.2f}' for t in tagging.tags])}")
+        
+        # Get coverage statistics
+        coverage_stats = ethical_taxonomy.get_coverage_stats()
+        print(f"\n[INFO] Ethical Taxonomy Coverage: {coverage_stats['coverage_percentage']:.1f}%")
+        print(f"[INFO] Coverage target: {coverage_stats['target_percentage']:.1f}%")
+        print(f"[INFO] Meets target: {coverage_stats['meets_target']}")
+    
     model_path, metrics_path = save_model_and_metrics(model, metrics, args.model_type, promoted=promoted)
+    
+    # Save ethical taxonomy report if violations were tagged
+    if ethical_taxonomy and violation_tags:
+        try:
+            dest_dir = "models/current" if promoted else "models/candidates"
+            timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
+            taxonomy_report_path = f"{dest_dir}/{args.model_type}_taxonomy_{timestamp}.json"
+            
+            taxonomy_report = {
+                'model_type': args.model_type,
+                'timestamp': datetime.now(timezone.utc).isoformat(),
+                'promoted': promoted,
+                'violation_tags': violation_tags,
+                'coverage_stats': ethical_taxonomy.get_coverage_stats(),
+                'dimensions': {
+                    name: {
+                        'description': dim.description,
+                        'weight': dim.weight,
+                        'severity_multiplier': dim.severity_multiplier
+                    }
+                    for name, dim in ethical_taxonomy.dimensions.items()
+                }
+            }
+            
+            with open(taxonomy_report_path, 'w') as f:
+                json.dump(taxonomy_report, f, indent=2)
+            
+            print(f"[INFO] Ethical taxonomy report saved to: {taxonomy_report_path}")
+        except Exception as e:
+            print(f"[WARN] Failed to save ethical taxonomy report: {e}")
     
     # Log model save event
     if merkle_anchor:
