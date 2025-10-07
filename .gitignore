@@ -154,3 +154,9 @@ training_audit_logs/
 training_drift_reports/
 example_drift_reports/
 drift_reports/
+
+# Phase3 training data
+example_phase3_training/
+example_traditional_drift/
+nethical_training_data/
+
