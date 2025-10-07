@@ -35,18 +35,24 @@ python scripts/baseline_orchestrator.py --process-only  # Process CSV files
 python scripts/baseline_orchestrator.py --train-only    # Train model
 ```
 
-### Option 3: Using train_any_model.py (With Audit Logging)
+### Option 3: Using train_any_model.py (With Audit Logging and Governance)
 
-The `training/train_any_model.py` script supports Merkle audit logging for immutable training audit trails:
+The `training/train_any_model.py` script supports both Merkle audit logging and governance validation:
 
 ```bash
 # Train with audit logging enabled
 python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000 --enable-audit
 
+# Train with governance validation enabled
+python training/train_any_model.py --model-type logistic --epochs 20 --num-samples 2000 --enable-governance
+
+# Train with both audit logging and governance validation
+python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000 --enable-audit --enable-governance
+
 # Customize audit log path
 python training/train_any_model.py --model-type logistic --epochs 20 --enable-audit --audit-path custom_audit_logs
 
-# Train without audit logging (default)
+# Train without audit logging or governance (default)
 python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000
 ```
 
@@ -64,6 +70,43 @@ The audit logs can be used for:
 - Training reproducibility verification
 - Detecting tampering with training records
 - Tracking model lineage and provenance
+
+#### Governance Validation Features
+
+When `--enable-governance` is specified:
+- Validates training data samples for safety violations (toxic content, harmful patterns, etc.)
+- Checks model predictions during validation for safety issues
+- Reports governance violations and decisions
+- Includes governance metrics in the training summary and audit logs
+
+The governance system detects:
+- Ethical violations (harmful content, bias, discrimination)
+- Safety violations (dangerous commands, unsafe domains)
+- Manipulation patterns (social engineering, phishing, emotional leverage)
+- Dark patterns (NLP manipulation, weaponized empathy)
+- Privacy issues (PII exposure)
+- Security issues (prompt injection, adversarial attacks)
+
+Governance validation provides:
+- Real-time safety checks during training
+- Detailed violation reports with confidence scores
+- Decision tracking (allow, block, quarantine, etc.)
+- Integration with audit logging for comprehensive compliance
+
+**Example Output:**
+```
+[INFO] Governance validation enabled
+[INFO] Running governance validation on training data samples...
+[WARN] Governance found 5 problematic data samples
+[INFO] Running governance validation on model predictions...
+[INFO] Governance validation passed for 50 predictions
+
+[INFO] Governance Validation Summary:
+  Data samples validated: 100
+  Data violations found: 5
+  Predictions validated: 50
+  Prediction violations found: 0
+```
 
 ## Dataset Sources
 

@@ -40,6 +40,20 @@ except ImportError:
     DRIFT_REPORTER_AVAILABLE = False
     print("[WARN] EthicalDriftReporter not available. Drift tracking will be disabled.")
 
+# Import Governance System for safety validation
+try:
+    from nethical.core.governance import (
+        EnhancedSafetyGovernance,
+        AgentAction,
+        ActionType,
+        Decision,
+        MonitoringConfig
+    )
+    GOVERNANCE_AVAILABLE = True
+except ImportError:
+    GOVERNANCE_AVAILABLE = False
+    print("[WARN] EnhancedSafetyGovernance not available. Governance validation will be disabled.")
+
 # ======= USER CONFIGURE HERE =======
 KAGGLE_USERNAME = "andrzejmatewski"
 KAGGLE_KEY = "bb8941672c5cc299926e65234a901284"
@@ -387,6 +401,45 @@ def check_promotion_gate(metrics):
     print(f"[INFO] Promotion result: {'PASS' if passed else 'FAIL'}")
     return passed
 
+async def validate_with_governance(governance, content, action_type, action_id, agent_id="training_pipeline"):
+    """Validate content through governance system."""
+    import asyncio
+    action = AgentAction(
+        action_id=action_id,
+        agent_id=agent_id,
+        action_type=action_type,
+        content=str(content)
+    )
+    judgment = await governance.evaluate_action(action)
+    return judgment
+
+def run_governance_validation(governance, content, action_type, action_id, agent_id="training_pipeline"):
+    """Synchronous wrapper for governance validation."""
+    import asyncio
+    try:
+        # Try to get existing event loop
+        loop = asyncio.get_event_loop()
+        if loop.is_running():
+            # If loop is running, create a new one
+            new_loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(new_loop)
+            try:
+                judgment = new_loop.run_until_complete(
+                    validate_with_governance(governance, content, action_type, action_id, agent_id)
+                )
+            finally:
+                new_loop.close()
+                asyncio.set_event_loop(loop)
+        else:
+            judgment = loop.run_until_complete(
+                validate_with_governance(governance, content, action_type, action_id, agent_id)
+            )
+        return judgment
+    except RuntimeError:
+        # No event loop exists
+        return asyncio.run(validate_with_governance(governance, content, action_type, action_id, agent_id))
+
+
 def save_model_and_metrics(model, metrics, model_type, promoted=False):
     dest_dir = "models/current" if promoted else "models/candidates"
     os.makedirs(dest_dir, exist_ok=True)
@@ -412,6 +465,7 @@ def main():
     parser.add_argument("--enable-drift-tracking", action="store_true", help="Enable ethical drift tracking")
     parser.add_argument("--drift-report-dir", type=str, default="training_drift_reports", help="Directory for drift reports")
     parser.add_argument("--cohort-id", type=str, default=None, help="Cohort identifier for drift tracking (defaults to model-type_timestamp)")
+    parser.add_argument("--enable-governance", action="store_true", help="Enable governance validation during training")
     args = parser.parse_args()
 
     # Initialize Merkle Anchor for audit logging
@@ -454,6 +508,21 @@ def main():
     elif args.enable_drift_tracking and not DRIFT_REPORTER_AVAILABLE:
         print("[WARN] Drift tracking requested but EthicalDriftReporter not available")
 
+    # Initialize Governance System for safety validation
+    governance = None
+    if args.enable_governance and GOVERNANCE_AVAILABLE:
+        try:
+            # Disable persistence to avoid database schema issues
+            config = MonitoringConfig()
+            config.enable_persistence = False
+            governance = EnhancedSafetyGovernance(config=config)
+            print("[INFO] Governance validation enabled")
+        except Exception as e:
+            print(f"[WARN] Failed to initialize governance system: {e}")
+            governance = None
+    elif args.enable_governance and not GOVERNANCE_AVAILABLE:
+        print("[WARN] Governance validation requested but EnhancedSafetyGovernance not available")
+
     set_seed(args.seed)
     download_kaggle_datasets()
     raw_data = load_data(num_samples=args.num_samples, model_type=args.model_type)
@@ -465,6 +534,43 @@ def main():
             'num_samples': len(raw_data),
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    # Validate data through governance if enabled
+    governance_violations = []
+    if governance:
+        print("[INFO] Running governance validation on training data samples...")
+        sample_size = min(100, len(raw_data))  # Check first 100 samples
+        for i, sample in enumerate(raw_data[:sample_size]):
+            try:
+                # Convert sample features to string for governance check
+                content = json.dumps(sample.get('features', {}))
+                judgment = run_governance_validation(
+                    governance,
+                    content,
+                    ActionType.DATA_ACCESS,
+                    action_id=f"data_sample_{i}",
+                    agent_id="training_data_loader"
+                )
+                if judgment.decision in [Decision.BLOCK, Decision.QUARANTINE]:
+                    governance_violations.append({
+                        'sample_id': i,
+                        'decision': judgment.decision.value,
+                        'violations': len(judgment.violations)
+                    })
+            except Exception as e:
+                print(f"[WARN] Error validating sample {i}: {e}")
+        
+        if governance_violations:
+            print(f"[WARN] Governance found {len(governance_violations)} problematic data samples")
+            if merkle_anchor:
+                merkle_anchor.add_event({
+                    'event_type': 'governance_data_validation',
+                    'samples_checked': sample_size,
+                    'violations_found': len(governance_violations),
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+        else:
+            print(f"[INFO] Governance validation passed for {sample_size} data samples")
 
     ModelClass, preprocess_fn = get_model_class(args.model_type)
     print(f"[INFO] Preprocessing data for model type: {args.model_type}")
@@ -512,6 +618,45 @@ def main():
             'metrics': metrics,
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+    
+    # Validate model predictions through governance if enabled
+    prediction_violations = []
+    if governance:
+        print("[INFO] Running governance validation on model predictions...")
+        sample_size = min(50, len(val_data))  # Check first 50 predictions
+        for i in range(sample_size):
+            try:
+                pred = preds[i]
+                sample = val_data[i]
+                # Create content string with prediction context
+                content = f"Model prediction: {pred} for features {json.dumps(sample.get('features', {}))}"
+                judgment = run_governance_validation(
+                    governance,
+                    content,
+                    ActionType.MODEL_UPDATE,
+                    action_id=f"prediction_{i}",
+                    agent_id=f"model_{args.model_type}"
+                )
+                if judgment.decision in [Decision.BLOCK, Decision.QUARANTINE]:
+                    prediction_violations.append({
+                        'prediction_id': i,
+                        'decision': judgment.decision.value,
+                        'violations': len(judgment.violations)
+                    })
+            except Exception as e:
+                print(f"[WARN] Error validating prediction {i}: {e}")
+        
+        if prediction_violations:
+            print(f"[WARN] Governance found {len(prediction_violations)} problematic predictions")
+            if merkle_anchor:
+                merkle_anchor.add_event({
+                    'event_type': 'governance_prediction_validation',
+                    'predictions_checked': sample_size,
+                    'violations_found': len(prediction_violations),
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+        else:
+            print(f"[INFO] Governance validation passed for {sample_size} predictions")
     
     # Track training performance for drift analysis
     if drift_reporter:
@@ -601,11 +746,44 @@ def main():
                     'metrics': metrics,
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 }
+                
+                # Add governance metrics if available
+                if governance:
+                    governance_metrics = governance.get_system_metrics()
+                    gov_summary = {
+                        'enabled': True,
+                        'data_violations': len(governance_violations),
+                        'prediction_violations': len(prediction_violations)
+                    }
+                    if 'metrics' in governance_metrics:
+                        metrics_dict = governance_metrics['metrics']
+                        if 'total_actions_evaluated' in metrics_dict:
+                            gov_summary['total_actions_evaluated'] = metrics_dict['total_actions_evaluated']
+                        if 'total_violations_detected' in metrics_dict:
+                            gov_summary['total_violations_detected'] = metrics_dict['total_violations_detected']
+                        if 'total_actions_blocked' in metrics_dict:
+                            gov_summary['total_actions_blocked'] = metrics_dict['total_actions_blocked']
+                    audit_summary['governance'] = gov_summary
+                else:
+                    audit_summary['governance'] = {'enabled': False}
+                
                 with open(audit_summary_path, 'w') as f:
                     json.dump(audit_summary, f, indent=2)
                 print(f"[INFO] Audit summary saved to: {audit_summary_path}")
         except Exception as e:
             print(f"[WARN] Failed to finalize audit chunk: {e}")
+    
+    # Print governance summary if enabled
+    if governance:
+        print("\n[INFO] Governance Validation Summary:")
+        print(f"  Data samples validated: {min(100, len(raw_data))}")
+        print(f"  Data violations found: {len(governance_violations)}")
+        print(f"  Predictions validated: {min(50, len(val_data))}")
+        print(f"  Prediction violations found: {len(prediction_violations)}")
+        gov_metrics = governance.get_system_metrics()
+        if 'metrics' in gov_metrics and 'total_actions_evaluated' in gov_metrics['metrics']:
+            print(f"  Total governance actions: {gov_metrics['metrics']['total_actions_evaluated']}")
+            print(f"  Total violations detected: {gov_metrics['metrics']['total_violations_detected']}")
 
 if __name__ == "__main__":
     main()
