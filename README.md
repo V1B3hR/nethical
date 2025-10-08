@@ -704,6 +704,8 @@ pip install -e .[dev]
 pytest tests/
 ```
 
+See [TEST_RESULTS.md](TEST_RESULTS.md) for detailed test status and coverage information.
+
 ### Code Quality
 
 This project uses Black for code formatting and Flake8 for linting:
@@ -717,6 +719,20 @@ mypy nethical/
 ## 🤝 Contributing
 
 Contributions are welcome! Please feel free to submit a Pull Request.
+
+### Project Documentation
+
+- **[AUDIT.md](AUDIT.md)** - Comprehensive repository structure analysis and audit
+- **[CHANGELOG.md](CHANGELOG.md)** - Detailed changelog with migration guides
+- **[REFACTORING_SUMMARY.md](REFACTORING_SUMMARY.md)** - Repository refactoring overview
+- **[TEST_RESULTS.md](TEST_RESULTS.md)** - Test suite status and coverage
+- **[roadmap.md](roadmap.md)** - Development roadmap and future plans
+
+### Key Documentation
+
+- **[docs/TRAINING_GUIDE.md](docs/TRAINING_GUIDE.md)** - ML model training guide
+- **[scripts/README.md](scripts/README.md)** - Training and testing scripts
+- **[training/README.md](training/README.md)** - Advanced training features
 
 ## 📄 License
 

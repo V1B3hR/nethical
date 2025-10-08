@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime
 
 from nethical.core.governance import SafetyGovernance
-from nethical.core.models import AgentAction, MonitoringConfig, JudgmentDecision
+from nethical.core.models import AgentAction, MonitoringConfig, Decision
 
 
 class TestSafetyGovernance:
@@ -51,7 +51,7 @@ class TestSafetyGovernance:
         judgment = await self.governance.evaluate_action(action)
         
         assert judgment.action_id == action.id
-        assert judgment.decision == JudgmentDecision.ALLOW
+        assert judgment.decision == Decision.ALLOW
         assert judgment.confidence > 0.5
         assert len(judgment.restrictions) == 0
     
@@ -69,7 +69,7 @@ class TestSafetyGovernance:
         judgment = await self.governance.evaluate_action(action)
         
         assert judgment.action_id == action.id
-        assert judgment.decision in [JudgmentDecision.BLOCK, JudgmentDecision.TERMINATE]
+        assert judgment.decision in [Decision.BLOCK, Decision.TERMINATE]
         assert len(judgment.violation_ids) > 0
         assert len(self.governance.violation_history) > 0
     
@@ -87,7 +87,7 @@ class TestSafetyGovernance:
         judgment = await self.governance.evaluate_action(action)
         
         assert judgment.action_id == action.id
-        assert judgment.decision in [JudgmentDecision.BLOCK, JudgmentDecision.TERMINATE]
+        assert judgment.decision in [Decision.BLOCK, Decision.TERMINATE]
         assert len(judgment.violation_ids) > 0
         assert "ethical_violation" in judgment.reasoning.lower()
     
@@ -105,7 +105,7 @@ class TestSafetyGovernance:
         judgment = await self.governance.evaluate_action(action)
         
         assert judgment.action_id == action.id
-        assert judgment.decision in [JudgmentDecision.RESTRICT, JudgmentDecision.BLOCK]
+        assert judgment.decision in [Decision.WARN, Decision.BLOCK]
         assert len(judgment.violation_ids) > 0
     
     @pytest.mark.asyncio
@@ -131,8 +131,8 @@ class TestSafetyGovernance:
         judgments = await self.governance.batch_evaluate_actions(actions)
         
         assert len(judgments) == 2
-        assert judgments[0].decision == JudgmentDecision.ALLOW
-        assert judgments[1].decision in [JudgmentDecision.BLOCK, JudgmentDecision.TERMINATE]
+        assert judgments[0].decision == Decision.ALLOW
+        assert judgments[1].decision in [Decision.BLOCK, Decision.TERMINATE]
     
     def test_get_violation_summary(self):
         """Test getting violation summary."""
@@ -180,7 +180,7 @@ class TestSafetyGovernance:
         judgment1 = JudgmentResult(
             id=str(uuid.uuid4()),
             action_id="action_1",
-            decision=JudgmentDecision.ALLOW,
+            decision=Decision.ALLOW,
             reasoning="Test judgment 1",
             confidence=0.9
         )
@@ -188,7 +188,7 @@ class TestSafetyGovernance:
         judgment2 = JudgmentResult(
             id=str(uuid.uuid4()),
             action_id="action_2",
-            decision=JudgmentDecision.BLOCK,
+            decision=Decision.BLOCK,
             reasoning="Test judgment 2",
             confidence=0.8
         )
