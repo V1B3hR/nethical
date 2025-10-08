@@ -329,15 +329,19 @@ class SafetyViolation(_BaseModel):
     @model_validator(mode='after')
     def validate_severity_confidence(self) -> 'SafetyViolation':
         """Validate severity aligns with confidence and type."""
+        # Get severity as enum if it's an int
+        severity_enum = self.severity if isinstance(self.severity, Severity) else Severity(self.severity)
+        violation_type_enum = self.violation_type if isinstance(self.violation_type, ViolationType) else ViolationType(self.violation_type)
+        
         # Critical violation types should have high severity
-        if self.violation_type in ViolationType.critical_types():
-            if self.severity.value < Severity.HIGH.value:
+        if violation_type_enum in ViolationType.critical_types():
+            if severity_enum.value < Severity.HIGH.value:
                 raise ValueError(
                     f"Violation type {self.violation_type} requires severity >= HIGH"
                 )
         
         # Low confidence should not trigger emergency severity
-        if self.confidence < 0.5 and self.severity == Severity.EMERGENCY:
+        if self.confidence < 0.5 and severity_enum == Severity.EMERGENCY:
             raise ValueError(
                 "EMERGENCY severity requires confidence >= 0.5"
             )
@@ -440,21 +444,24 @@ class JudgmentResult(_BaseModel):
     @model_validator(mode='after')
     def validate_decision_violations(self) -> 'JudgmentResult':
         """Validate decision aligns with violations."""
+        # Get decision as enum if it's a string
+        decision_enum = self.decision if isinstance(self.decision, Decision) else Decision(self.decision)
+        
         # Blocking decisions should have violations
-        if self.decision.is_blocking() and not self.violations:
+        if decision_enum.is_blocking() and not self.violations:
             raise ValueError(
                 f"Decision {self.decision} requires at least one violation"
             )
         
         # Critical violations should result in blocking or escalation
         critical_violations = [v for v in self.violations if v.is_critical]
-        if critical_violations and self.decision == Decision.ALLOW:
+        if critical_violations and decision_enum == Decision.ALLOW:
             raise ValueError(
                 "Cannot ALLOW when critical violations exist"
             )
         
         # Follow-up required for decisions requiring intervention
-        if self.decision.requires_intervention():
+        if decision_enum.requires_intervention():
             self.follow_up_required = True
         
         return self
