@@ -63,6 +63,25 @@ from .phase89_integration import Phase89IntegratedGovernance
 # Unified Integration (All Phases)
 from .integrated_governance import IntegratedGovernance
 
+# F2: Detector & Policy Extensibility
+from .plugin_interface import (
+    DetectorPlugin,
+    PluginManager,
+    PluginMetadata,
+    PluginStatus,
+    get_plugin_manager
+)
+from .policy_dsl import (
+    Policy,
+    PolicyAction,
+    PolicyEngine,
+    PolicyParser,
+    PolicyRule,
+    RuleEvaluator,
+    RuleSeverity,
+    get_policy_engine
+)
+
 __all__ = [
     # Phase 3
     'RiskEngine',
@@ -143,4 +162,18 @@ __all__ = [
     'Phase89IntegratedGovernance',
     # Unified Integration (All Phases)
     'IntegratedGovernance',
+    # F2: Detector & Policy Extensibility
+    'DetectorPlugin',
+    'PluginManager',
+    'PluginMetadata',
+    'PluginStatus',
+    'get_plugin_manager',
+    'Policy',
+    'PolicyAction',
+    'PolicyEngine',
+    'PolicyParser',
+    'PolicyRule',
+    'RuleEvaluator',
+    'RuleSeverity',
+    'get_policy_engine',
 ]
