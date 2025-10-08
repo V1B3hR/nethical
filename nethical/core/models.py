@@ -224,6 +224,9 @@ class AgentAction(_BaseModel):
     risk_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Risk score 0..1")
     parent_action_id: Optional[str] = Field(default=None, description="Parent action ID if part of a chain")
     session_id: Optional[str] = Field(default=None, description="Session identifier")
+    # Regional and sharding fields
+    region_id: Optional[str] = Field(default=None, description="Geographic region identifier (e.g., 'eu-west-1')")
+    logical_domain: Optional[str] = Field(default=None, description="Logical domain for hierarchical aggregation (e.g., 'customer-service')")
     
     @field_validator('timestamp', mode='before')
     @classmethod
@@ -285,6 +288,8 @@ class AgentAction(_BaseModel):
                 risk_score=self.risk_score,
                 parent_action_id=self.parent_action_id,
                 session_id=self.session_id,
+                region_id=self.region_id,
+                logical_domain=self.logical_domain,
             )
         except Exception:
             return self
@@ -307,6 +312,9 @@ class SafetyViolation(_BaseModel):
     detector_name: Optional[str] = Field(default=None, description="Name of the detecting component")
     remediation_applied: bool = Field(default=False, description="Whether remediation has been applied")
     false_positive: bool = Field(default=False, description="Marked as false positive")
+    # Regional and sharding fields
+    region_id: Optional[str] = Field(default=None, description="Geographic region identifier")
+    logical_domain: Optional[str] = Field(default=None, description="Logical domain for hierarchical aggregation")
     
     @field_validator('timestamp', mode='before')
     @classmethod
@@ -321,15 +329,19 @@ class SafetyViolation(_BaseModel):
     @model_validator(mode='after')
     def validate_severity_confidence(self) -> 'SafetyViolation':
         """Validate severity aligns with confidence and type."""
+        # Get severity as enum if it's an int
+        severity_enum = self.severity if isinstance(self.severity, Severity) else Severity(self.severity)
+        violation_type_enum = self.violation_type if isinstance(self.violation_type, ViolationType) else ViolationType(self.violation_type)
+        
         # Critical violation types should have high severity
-        if self.violation_type in ViolationType.critical_types():
-            if self.severity.value < Severity.HIGH.value:
+        if violation_type_enum in ViolationType.critical_types():
+            if severity_enum.value < Severity.HIGH.value:
                 raise ValueError(
                     f"Violation type {self.violation_type} requires severity >= HIGH"
                 )
         
         # Low confidence should not trigger emergency severity
-        if self.confidence < 0.5 and self.severity == Severity.EMERGENCY:
+        if self.confidence < 0.5 and severity_enum == Severity.EMERGENCY:
             raise ValueError(
                 "EMERGENCY severity requires confidence >= 0.5"
             )
@@ -380,6 +392,8 @@ class SafetyViolation(_BaseModel):
                 detector_name=self.detector_name,
                 remediation_applied=self.remediation_applied,
                 false_positive=self.false_positive,
+                region_id=self.region_id,
+                logical_domain=self.logical_domain,
             )
         except Exception:
             return self
@@ -413,6 +427,9 @@ class JudgmentResult(_BaseModel):
         default=False, 
         description="Whether human follow-up is required"
     )
+    # Regional and sharding fields
+    region_id: Optional[str] = Field(default=None, description="Geographic region identifier")
+    logical_domain: Optional[str] = Field(default=None, description="Logical domain for hierarchical aggregation")
     
     @field_validator('timestamp', mode='before')
     @classmethod
@@ -427,21 +444,24 @@ class JudgmentResult(_BaseModel):
     @model_validator(mode='after')
     def validate_decision_violations(self) -> 'JudgmentResult':
         """Validate decision aligns with violations."""
+        # Get decision as enum if it's a string
+        decision_enum = self.decision if isinstance(self.decision, Decision) else Decision(self.decision)
+        
         # Blocking decisions should have violations
-        if self.decision.is_blocking() and not self.violations:
+        if decision_enum.is_blocking() and not self.violations:
             raise ValueError(
                 f"Decision {self.decision} requires at least one violation"
             )
         
         # Critical violations should result in blocking or escalation
         critical_violations = [v for v in self.violations if v.is_critical]
-        if critical_violations and self.decision == Decision.ALLOW:
+        if critical_violations and decision_enum == Decision.ALLOW:
             raise ValueError(
                 "Cannot ALLOW when critical violations exist"
             )
         
         # Follow-up required for decisions requiring intervention
-        if self.decision.requires_intervention():
+        if decision_enum.requires_intervention():
             self.follow_up_required = True
         
         return self
@@ -492,6 +512,8 @@ class JudgmentResult(_BaseModel):
                 timestamp=self.timestamp,
                 remediation_steps=list(self.remediation_steps),
                 follow_up_required=self.follow_up_required,
+                region_id=self.region_id,
+                logical_domain=self.logical_domain,
             )
         except Exception:
             return self

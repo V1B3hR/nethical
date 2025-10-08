@@ -64,6 +64,10 @@ class IntegratedGovernance:
     def __init__(
         self,
         storage_dir: str = "./nethical_data",
+        # Regional & Sharding config
+        region_id: Optional[str] = None,
+        logical_domain: Optional[str] = None,
+        data_residency_policy: Optional[str] = None,
         # Phase 3 config
         redis_client=None,
         correlation_config_path: Optional[str] = None,
@@ -100,6 +104,9 @@ class IntegratedGovernance:
         
         Args:
             storage_dir: Base directory for all data storage
+            region_id: Geographic region identifier (e.g., 'eu-west-1')
+            logical_domain: Logical domain for hierarchical aggregation (e.g., 'customer-service')
+            data_residency_policy: Data residency policy (e.g., 'EU_GDPR', 'US_CCPA')
             redis_client: Optional Redis client for persistence
             correlation_config_path: Path to correlation rules config
             enable_performance_optimization: Enable performance optimizer
@@ -130,6 +137,16 @@ class IntegratedGovernance:
         """
         storage_path = Path(storage_dir)
         storage_path.mkdir(parents=True, exist_ok=True)
+        
+        # ==================== Regional Configuration ====================
+        self.region_id = region_id
+        self.logical_domain = logical_domain
+        self.data_residency_policy = data_residency_policy
+        self.regional_policies: Dict[str, Any] = {}
+        
+        # Initialize regional policy configurations
+        if data_residency_policy:
+            self._load_regional_policy(data_residency_policy)
         
         # ==================== Phase 3 Components ====================
         self.risk_engine = RiskEngine(
@@ -251,6 +268,117 @@ class IntegratedGovernance:
             'optimization': True
         }
     
+    def _load_regional_policy(self, policy_name: str) -> None:
+        """Load regional policy configuration.
+        
+        Args:
+            policy_name: Name of the policy (e.g., 'EU_GDPR', 'US_CCPA', 'AI_ACT')
+        """
+        # Define regional policy profiles
+        policy_profiles = {
+            'EU_GDPR': {
+                'compliance_requirements': ['GDPR', 'data_protection', 'right_to_erasure'],
+                'data_retention_days': 30,
+                'cross_border_transfer_allowed': False,
+                'encryption_required': True,
+                'audit_trail_required': True,
+                'consent_required': True
+            },
+            'US_CCPA': {
+                'compliance_requirements': ['CCPA', 'consumer_privacy'],
+                'data_retention_days': 90,
+                'cross_border_transfer_allowed': True,
+                'encryption_required': True,
+                'audit_trail_required': True,
+                'consent_required': False
+            },
+            'AI_ACT': {
+                'compliance_requirements': ['AI_ACT', 'high_risk_ai', 'transparency'],
+                'data_retention_days': 180,
+                'cross_border_transfer_allowed': True,
+                'encryption_required': True,
+                'audit_trail_required': True,
+                'human_oversight_required': True
+            },
+            'GLOBAL_DEFAULT': {
+                'compliance_requirements': ['basic_safety'],
+                'data_retention_days': 365,
+                'cross_border_transfer_allowed': True,
+                'encryption_required': False,
+                'audit_trail_required': False,
+                'consent_required': False
+            }
+        }
+        
+        self.regional_policies = policy_profiles.get(policy_name, policy_profiles['GLOBAL_DEFAULT'])
+    
+    def validate_data_residency(self, region_id: Optional[str] = None) -> Dict[str, Any]:
+        """Validate data residency compliance.
+        
+        Args:
+            region_id: Region identifier to validate
+            
+        Returns:
+            Validation result with compliance status
+        """
+        validation_result = {
+            'compliant': True,
+            'region_id': region_id or self.region_id,
+            'policy': self.data_residency_policy,
+            'violations': []
+        }
+        
+        # Check if cross-border transfers are allowed
+        if region_id and self.region_id and region_id != self.region_id:
+            if not self.regional_policies.get('cross_border_transfer_allowed', True):
+                validation_result['compliant'] = False
+                validation_result['violations'].append(
+                    f"Cross-border data transfer from {self.region_id} to {region_id} not allowed"
+                )
+        
+        return validation_result
+    
+    def aggregate_by_region(
+        self,
+        metrics: List[Dict[str, Any]],
+        group_by: str = 'region_id'
+    ) -> Dict[str, Dict[str, Any]]:
+        """Aggregate metrics by region or logical domain.
+        
+        Args:
+            metrics: List of metric dictionaries
+            group_by: Field to group by ('region_id' or 'logical_domain')
+            
+        Returns:
+            Aggregated metrics grouped by the specified field
+        """
+        aggregated: Dict[str, Dict[str, Any]] = {}
+        
+        for metric in metrics:
+            key = metric.get(group_by, 'unknown')
+            
+            if key not in aggregated:
+                aggregated[key] = {
+                    'count': 0,
+                    'total_risk_score': 0.0,
+                    'avg_risk_score': 0.0,
+                    'violations': 0,
+                    'actions': []
+                }
+            
+            aggregated[key]['count'] += 1
+            aggregated[key]['total_risk_score'] += metric.get('risk_score', 0.0)
+            if metric.get('violation_detected', False):
+                aggregated[key]['violations'] += 1
+            aggregated[key]['actions'].append(metric.get('action_id', 'unknown'))
+        
+        # Calculate averages
+        for key, data in aggregated.items():
+            if data['count'] > 0:
+                data['avg_risk_score'] = data['total_risk_score'] / data['count']
+        
+        return aggregated
+    
     def process_action(
         self,
         agent_id: str,
@@ -266,7 +394,10 @@ class IntegratedGovernance:
         action_type: Optional[str] = None,
         features: Optional[Dict[str, float]] = None,
         rule_risk_score: Optional[float] = None,
-        rule_classification: Optional[str] = None
+        rule_classification: Optional[str] = None,
+        # For regional processing
+        region_id: Optional[str] = None,
+        compliance_requirements: Optional[List[str]] = None
     ) -> Dict[str, Any]:
         """Process an action through all enabled governance phases.
         
@@ -286,15 +417,30 @@ class IntegratedGovernance:
             features: Feature dict for ML models
             rule_risk_score: Rule-based risk score (for ML blending)
             rule_classification: Rule-based classification (for ML blending)
+            region_id: Geographic region for this action
+            compliance_requirements: List of compliance requirements to validate
             
         Returns:
             Comprehensive results from all enabled phases
         """
         start_time = time.time()
         
+        # Use instance region if not provided
+        effective_region = region_id or self.region_id
+        effective_domain = self.logical_domain
+        
+        # Validate data residency if region specified
+        residency_validation = None
+        if effective_region:
+            residency_validation = self.validate_data_residency(effective_region)
+        
         results = {
             'agent_id': agent_id,
             'timestamp': datetime.utcnow().isoformat(),
+            'region_id': effective_region,
+            'logical_domain': effective_domain,
+            'compliance_requirements': compliance_requirements or [],
+            'data_residency': residency_validation,
             'phase3': {},
             'phase4': {},
             'phase567': {},
