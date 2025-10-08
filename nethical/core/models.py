@@ -224,6 +224,9 @@ class AgentAction(_BaseModel):
     risk_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Risk score 0..1")
     parent_action_id: Optional[str] = Field(default=None, description="Parent action ID if part of a chain")
     session_id: Optional[str] = Field(default=None, description="Session identifier")
+    # Regional and sharding fields
+    region_id: Optional[str] = Field(default=None, description="Geographic region identifier (e.g., 'eu-west-1')")
+    logical_domain: Optional[str] = Field(default=None, description="Logical domain for hierarchical aggregation (e.g., 'customer-service')")
     
     @field_validator('timestamp', mode='before')
     @classmethod
@@ -285,6 +288,8 @@ class AgentAction(_BaseModel):
                 risk_score=self.risk_score,
                 parent_action_id=self.parent_action_id,
                 session_id=self.session_id,
+                region_id=self.region_id,
+                logical_domain=self.logical_domain,
             )
         except Exception:
             return self
@@ -307,6 +312,9 @@ class SafetyViolation(_BaseModel):
     detector_name: Optional[str] = Field(default=None, description="Name of the detecting component")
     remediation_applied: bool = Field(default=False, description="Whether remediation has been applied")
     false_positive: bool = Field(default=False, description="Marked as false positive")
+    # Regional and sharding fields
+    region_id: Optional[str] = Field(default=None, description="Geographic region identifier")
+    logical_domain: Optional[str] = Field(default=None, description="Logical domain for hierarchical aggregation")
     
     @field_validator('timestamp', mode='before')
     @classmethod
@@ -380,6 +388,8 @@ class SafetyViolation(_BaseModel):
                 detector_name=self.detector_name,
                 remediation_applied=self.remediation_applied,
                 false_positive=self.false_positive,
+                region_id=self.region_id,
+                logical_domain=self.logical_domain,
             )
         except Exception:
             return self
@@ -413,6 +423,9 @@ class JudgmentResult(_BaseModel):
         default=False, 
         description="Whether human follow-up is required"
     )
+    # Regional and sharding fields
+    region_id: Optional[str] = Field(default=None, description="Geographic region identifier")
+    logical_domain: Optional[str] = Field(default=None, description="Logical domain for hierarchical aggregation")
     
     @field_validator('timestamp', mode='before')
     @classmethod
@@ -492,6 +505,8 @@ class JudgmentResult(_BaseModel):
                 timestamp=self.timestamp,
                 remediation_steps=list(self.remediation_steps),
                 follow_up_required=self.follow_up_required,
+                region_id=self.region_id,
+                logical_domain=self.logical_domain,
             )
         except Exception:
             return self

@@ -413,7 +413,9 @@ class PersistenceManager:
                     intent TEXT,
                     risk_score REAL,
                     parent_action_id TEXT,
-                    session_id TEXT
+                    session_id TEXT,
+                    region_id TEXT,
+                    logical_domain TEXT
                 );
                 CREATE TABLE IF NOT EXISTS violations(
                     violation_id TEXT PRIMARY KEY,
@@ -428,7 +430,9 @@ class PersistenceManager:
                     detector_name TEXT,
                     remediation_applied INTEGER,
                     false_positive INTEGER,
-                    sub_mission TEXT
+                    sub_mission TEXT,
+                    region_id TEXT,
+                    logical_domain TEXT
                 );
                 CREATE TABLE IF NOT EXISTS judgments(
                     judgment_id TEXT PRIMARY KEY,
@@ -441,7 +445,9 @@ class PersistenceManager:
                     feedback_json TEXT,
                     timestamp TEXT,
                     remediation_json TEXT,
-                    follow_up_required INTEGER
+                    follow_up_required INTEGER,
+                    region_id TEXT,
+                    logical_domain TEXT
                 );
                 """
             )
@@ -449,12 +455,14 @@ class PersistenceManager:
     def store_action(self, action: AgentAction):
         with self._lock, self._connect() as conn:
             conn.execute(
-                """INSERT OR REPLACE INTO actions VALUES(?,?,?,?,?,?,?,?,?,?)""",
+                """INSERT OR REPLACE INTO actions VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     action.action_id, action.agent_id, action.action_type.value,
                     action.content, json.dumps(action.metadata),
                     action.timestamp.isoformat(), action.intent,
-                    action.risk_score, action.parent_action_id, action.session_id
+                    action.risk_score, action.parent_action_id, action.session_id,
+                    getattr(action, 'region_id', None),
+                    getattr(action, 'logical_domain', None)
                 )
             )
 
@@ -463,7 +471,7 @@ class PersistenceManager:
             return
         with self._lock, self._connect() as conn:
             conn.executemany(
-                """INSERT OR REPLACE INTO violations VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                """INSERT OR REPLACE INTO violations VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 [
                     (
                         v.violation_id, v.action_id, v.violation_type.value,
@@ -472,7 +480,9 @@ class PersistenceManager:
                         v.timestamp.isoformat(), v.detector_name,
                         1 if v.remediation_applied else 0,
                         1 if v.false_positive else 0,
-                        v.sub_mission.value if v.sub_mission else None
+                        v.sub_mission.value if v.sub_mission else None,
+                        getattr(v, 'region_id', None),
+                        getattr(v, 'logical_domain', None)
                     )
                     for v in violations
                 ]
@@ -481,13 +491,15 @@ class PersistenceManager:
     def store_judgment(self, j: JudgmentResult):
         with self._lock, self._connect() as conn:
             conn.execute(
-                """INSERT OR REPLACE INTO judgments VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+                """INSERT OR REPLACE INTO judgments VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     j.judgment_id, j.action_id, j.decision.value, j.confidence,
                     j.reasoning, json.dumps([v.to_dict() for v in j.violations]),
                     json.dumps(j.modifications), json.dumps(j.feedback),
                     j.timestamp.isoformat(), json.dumps(j.remediation_steps),
-                    1 if j.follow_up_required else 0
+                    1 if j.follow_up_required else 0,
+                    getattr(j, 'region_id', None),
+                    getattr(j, 'logical_domain', None)
                 )
             )
 
