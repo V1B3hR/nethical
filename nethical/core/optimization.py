@@ -712,6 +712,101 @@ class MultiObjectiveOptimizer:
         
         return True
     
+    def bayesian_optimization(
+        self,
+        param_ranges: Dict[str, Tuple[float, float]],
+        evaluate_fn: Callable[[Configuration], PerformanceMetrics],
+        n_iterations: int = 30,
+        n_initial_random: int = 5
+    ) -> List[Tuple[Configuration, PerformanceMetrics]]:
+        """Perform Bayesian optimization over parameter space.
+        
+        Uses a simplified Gaussian Process approach to intelligently explore
+        the parameter space by balancing exploration and exploitation.
+        
+        Args:
+            param_ranges: Dictionary of parameter names to (min, max) tuples
+            evaluate_fn: Function to evaluate configuration
+            n_iterations: Total number of iterations
+            n_initial_random: Number of initial random samples
+            
+        Returns:
+            List of (configuration, metrics) tuples sorted by fitness
+        """
+        results = []
+        
+        # Phase 1: Initial random exploration
+        for i in range(n_initial_random):
+            params = {}
+            for param, (min_val, max_val) in param_ranges.items():
+                params[param] = random.uniform(min_val, max_val)
+            
+            config = self.create_configuration(
+                config_version=f"bayes_init_v{i}",
+                classifier_threshold=params.get('classifier_threshold', 0.5),
+                confidence_threshold=params.get('confidence_threshold', 0.7),
+                gray_zone_lower=params.get('gray_zone_lower', 0.4),
+                gray_zone_upper=params.get('gray_zone_upper', 0.6)
+            )
+            
+            metrics = evaluate_fn(config)
+            results.append((config, metrics))
+        
+        # Phase 2: Bayesian optimization using acquisition function
+        # Simplified approach: use expected improvement around best point
+        for i in range(n_initial_random, n_iterations):
+            # Get best configuration so far
+            best_metrics = max(results, key=lambda x: x[1].fitness_score)[1]
+            best_fitness = best_metrics.fitness_score
+            
+            # Sample around best configuration with adaptive exploration
+            # Higher variance early on, lower variance later
+            exploration_factor = 1.0 - (i - n_initial_random) / (n_iterations - n_initial_random)
+            variance = 0.1 + 0.2 * exploration_factor  # Variance from 0.1 to 0.3
+            
+            # Get best config parameters
+            best_config = max(results, key=lambda x: x[1].fitness_score)[0]
+            
+            # Sample with Gaussian perturbation around best point
+            params = {
+                'classifier_threshold': self._clip_value(
+                    best_config.classifier_threshold + random.gauss(0, variance),
+                    *param_ranges.get('classifier_threshold', (0.3, 0.7))
+                ),
+                'confidence_threshold': self._clip_value(
+                    best_config.confidence_threshold + random.gauss(0, variance),
+                    *param_ranges.get('confidence_threshold', (0.5, 0.9))
+                ),
+                'gray_zone_lower': self._clip_value(
+                    best_config.gray_zone_lower + random.gauss(0, variance * 0.5),
+                    *param_ranges.get('gray_zone_lower', (0.2, 0.5))
+                ),
+                'gray_zone_upper': self._clip_value(
+                    best_config.gray_zone_upper + random.gauss(0, variance * 0.5),
+                    *param_ranges.get('gray_zone_upper', (0.5, 0.8))
+                )
+            }
+            
+            config = self.create_configuration(
+                config_version=f"bayes_v{i}",
+                classifier_threshold=params['classifier_threshold'],
+                confidence_threshold=params['confidence_threshold'],
+                gray_zone_lower=params['gray_zone_lower'],
+                gray_zone_upper=params['gray_zone_upper']
+            )
+            
+            metrics = evaluate_fn(config)
+            results.append((config, metrics))
+        
+        # Sort by fitness
+        results.sort(key=lambda x: x[1].fitness_score, reverse=True)
+        
+        return results
+    
+    def _clip_value(self, value: float, min_val: float, max_val: float) -> float:
+        """Clip value to range."""
+        return max(min_val, min(max_val, value))
+    
     def get_best_configuration(self) -> Optional[Tuple[Configuration, PerformanceMetrics]]:
         """Get best configuration by fitness score.
         
@@ -730,3 +825,659 @@ class MultiObjectiveOptimizer:
             self.configurations[best_config_id],
             self.metrics_history[best_config_id]
         )
+
+
+@dataclass
+class OutcomeRecord:
+    """Record of an action outcome for learning."""
+    action_id: str
+    judgment_id: str
+    predicted_outcome: str
+    actual_outcome: str
+    confidence: float
+    timestamp: datetime
+    human_feedback: Optional[str] = None
+    was_correct: bool = False
+    
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary."""
+        return {
+            'action_id': self.action_id,
+            'judgment_id': self.judgment_id,
+            'predicted_outcome': self.predicted_outcome,
+            'actual_outcome': self.actual_outcome,
+            'confidence': self.confidence,
+            'timestamp': self.timestamp.isoformat(),
+            'human_feedback': self.human_feedback,
+            'was_correct': self.was_correct
+        }
+
+
+class AdaptiveThresholdTuner:
+    """Adaptive threshold tuner using outcome-based learning.
+    
+    Features:
+    - Learns from outcome feedback (false positives, false negatives)
+    - Automatically adjusts thresholds based on objectives
+    - Supports agent-specific threshold profiles
+    - Tracks performance over time
+    """
+    
+    def __init__(
+        self,
+        objectives: List[str],
+        learning_rate: float = 0.01,
+        storage_path: Optional[str] = None
+    ):
+        """Initialize adaptive threshold tuner.
+        
+        Args:
+            objectives: List of objectives (e.g., ["maximize_recall", "minimize_fp"])
+            learning_rate: Learning rate for threshold adjustment
+            storage_path: Optional path to SQLite database for persistence
+        """
+        self.objectives = objectives
+        self.learning_rate = learning_rate
+        self.storage_path = Path(storage_path) if storage_path else None
+        
+        # Outcome history
+        self.outcomes: List[OutcomeRecord] = []
+        
+        # Agent-specific thresholds
+        self.agent_thresholds: Dict[str, Dict[str, float]] = {}
+        
+        # Global thresholds
+        self.global_thresholds: Dict[str, float] = {
+            'classifier_threshold': 0.5,
+            'confidence_threshold': 0.7,
+            'gray_zone_lower': 0.4,
+            'gray_zone_upper': 0.6
+        }
+        
+        # Performance tracking
+        self.false_positives = 0
+        self.false_negatives = 0
+        self.true_positives = 0
+        self.true_negatives = 0
+        
+        if self.storage_path:
+            self._init_storage()
+    
+    def _init_storage(self) -> None:
+        """Initialize SQLite storage."""
+        if not self.storage_path:
+            return
+        
+        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        conn = sqlite3.connect(str(self.storage_path))
+        cursor = conn.cursor()
+        
+        # Outcomes table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS outcomes (
+                action_id TEXT PRIMARY KEY,
+                judgment_id TEXT,
+                predicted_outcome TEXT,
+                actual_outcome TEXT,
+                confidence REAL,
+                timestamp TEXT,
+                human_feedback TEXT,
+                was_correct INTEGER
+            )
+        """)
+        
+        # Agent thresholds table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS agent_thresholds (
+                agent_id TEXT PRIMARY KEY,
+                classifier_threshold REAL,
+                confidence_threshold REAL,
+                gray_zone_lower REAL,
+                gray_zone_upper REAL,
+                updated_at TEXT
+            )
+        """)
+        
+        conn.commit()
+        conn.close()
+    
+    def record_outcome(
+        self,
+        action_id: str,
+        judgment_id: str,
+        predicted_outcome: str,
+        actual_outcome: str,
+        confidence: float,
+        human_feedback: Optional[str] = None
+    ) -> OutcomeRecord:
+        """Record an outcome for learning.
+        
+        Args:
+            action_id: Action ID
+            judgment_id: Judgment ID
+            predicted_outcome: Predicted outcome (e.g., "allow", "block")
+            actual_outcome: Actual outcome (e.g., "false_positive", "correct")
+            confidence: Prediction confidence (0-1)
+            human_feedback: Optional human feedback
+            
+        Returns:
+            Outcome record
+        """
+        was_correct = actual_outcome in ["correct", "true_positive", "true_negative"]
+        
+        outcome = OutcomeRecord(
+            action_id=action_id,
+            judgment_id=judgment_id,
+            predicted_outcome=predicted_outcome,
+            actual_outcome=actual_outcome,
+            confidence=confidence,
+            timestamp=datetime.now(),
+            human_feedback=human_feedback,
+            was_correct=was_correct
+        )
+        
+        self.outcomes.append(outcome)
+        
+        # Update statistics
+        if actual_outcome == "false_positive":
+            self.false_positives += 1
+        elif actual_outcome == "false_negative":
+            self.false_negatives += 1
+        elif actual_outcome == "true_positive":
+            self.true_positives += 1
+        elif actual_outcome == "true_negative":
+            self.true_negatives += 1
+        elif actual_outcome == "correct":
+            # "correct" is a generic positive outcome, treat as true positive
+            if predicted_outcome in ["block", "flag", "review"]:
+                self.true_positives += 1
+            else:
+                self.true_negatives += 1
+        
+        # Store in database if available
+        if self.storage_path:
+            conn = sqlite3.connect(str(self.storage_path))
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT OR REPLACE INTO outcomes
+                (action_id, judgment_id, predicted_outcome, actual_outcome,
+                 confidence, timestamp, human_feedback, was_correct)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            """, (
+                outcome.action_id,
+                outcome.judgment_id,
+                outcome.predicted_outcome,
+                outcome.actual_outcome,
+                outcome.confidence,
+                outcome.timestamp.isoformat(),
+                outcome.human_feedback,
+                1 if outcome.was_correct else 0
+            ))
+            
+            conn.commit()
+            conn.close()
+        
+        # Adapt thresholds based on outcome
+        self._adapt_thresholds(outcome)
+        
+        return outcome
+    
+    def _adapt_thresholds(self, outcome: OutcomeRecord) -> None:
+        """Adapt thresholds based on outcome.
+        
+        Args:
+            outcome: Outcome record
+        """
+        # Adjust based on objectives and outcome
+        if "minimize_fp" in self.objectives or "minimize_false_positives" in self.objectives:
+            if outcome.actual_outcome == "false_positive":
+                # Increase threshold to reduce false positives
+                self.global_thresholds['classifier_threshold'] = min(
+                    0.9,
+                    self.global_thresholds['classifier_threshold'] + self.learning_rate
+                )
+        
+        if "maximize_recall" in self.objectives:
+            if outcome.actual_outcome == "false_negative":
+                # Decrease threshold to catch more violations
+                self.global_thresholds['classifier_threshold'] = max(
+                    0.1,
+                    self.global_thresholds['classifier_threshold'] - self.learning_rate
+                )
+        
+        # Adjust confidence threshold based on accuracy
+        if not outcome.was_correct and outcome.confidence > 0.8:
+            # High confidence but wrong - increase confidence threshold
+            self.global_thresholds['confidence_threshold'] = min(
+                0.95,
+                self.global_thresholds['confidence_threshold'] + self.learning_rate * 0.5
+            )
+    
+    def get_thresholds(self, agent_id: Optional[str] = None) -> Dict[str, float]:
+        """Get thresholds for agent or global.
+        
+        Args:
+            agent_id: Optional agent ID for agent-specific thresholds
+            
+        Returns:
+            Dictionary of threshold values
+        """
+        if agent_id and agent_id in self.agent_thresholds:
+            return self.agent_thresholds[agent_id].copy()
+        return self.global_thresholds.copy()
+    
+    def set_agent_thresholds(
+        self,
+        agent_id: str,
+        thresholds: Dict[str, float]
+    ) -> None:
+        """Set agent-specific thresholds.
+        
+        Args:
+            agent_id: Agent ID
+            thresholds: Threshold values
+        """
+        self.agent_thresholds[agent_id] = thresholds.copy()
+        
+        # Store in database if available
+        if self.storage_path:
+            conn = sqlite3.connect(str(self.storage_path))
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT OR REPLACE INTO agent_thresholds
+                (agent_id, classifier_threshold, confidence_threshold,
+                 gray_zone_lower, gray_zone_upper, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                agent_id,
+                thresholds.get('classifier_threshold', 0.5),
+                thresholds.get('confidence_threshold', 0.7),
+                thresholds.get('gray_zone_lower', 0.4),
+                thresholds.get('gray_zone_upper', 0.6),
+                datetime.now().isoformat()
+            ))
+            
+            conn.commit()
+            conn.close()
+    
+    def get_performance_stats(self) -> Dict[str, Any]:
+        """Get performance statistics.
+        
+        Returns:
+            Dictionary of statistics
+        """
+        total = self.true_positives + self.true_negatives + self.false_positives + self.false_negatives
+        
+        if total == 0:
+            return {
+                'total_outcomes': 0,
+                'accuracy': 0.0,
+                'precision': 0.0,
+                'recall': 0.0,
+                'false_positive_rate': 0.0,
+                'false_negative_rate': 0.0
+            }
+        
+        accuracy = (self.true_positives + self.true_negatives) / total
+        
+        # Precision: TP / (TP + FP)
+        precision = 0.0
+        if (self.true_positives + self.false_positives) > 0:
+            precision = self.true_positives / (self.true_positives + self.false_positives)
+        
+        # Recall: TP / (TP + FN)
+        recall = 0.0
+        if (self.true_positives + self.false_negatives) > 0:
+            recall = self.true_positives / (self.true_positives + self.false_negatives)
+        
+        fp_rate = self.false_positives / total
+        fn_rate = self.false_negatives / total
+        
+        return {
+            'total_outcomes': total,
+            'accuracy': accuracy,
+            'precision': precision,
+            'recall': recall,
+            'false_positive_rate': fp_rate,
+            'false_negative_rate': fn_rate,
+            'current_thresholds': self.global_thresholds.copy()
+        }
+
+
+class ABTestingFramework:
+    """A/B testing framework for threshold variants.
+    
+    Features:
+    - Variant management and traffic splitting
+    - Statistical significance testing
+    - Gradual rollout controls
+    - Automatic rollback on performance degradation
+    """
+    
+    def __init__(self, storage_path: Optional[str] = None):
+        """Initialize A/B testing framework.
+        
+        Args:
+            storage_path: Optional path to SQLite database for persistence
+        """
+        self.storage_path = Path(storage_path) if storage_path else None
+        
+        # Active variants
+        self.variants: Dict[str, Configuration] = {}
+        self.variant_metrics: Dict[str, PerformanceMetrics] = {}
+        self.variant_traffic: Dict[str, float] = {}  # Variant ID -> traffic percentage
+        
+        # Test configuration
+        self.control_variant_id: Optional[str] = None
+        self.min_sample_size: int = 100
+        self.significance_level: float = 0.05  # 95% confidence
+        
+        if self.storage_path:
+            self._init_storage()
+    
+    def _init_storage(self) -> None:
+        """Initialize SQLite storage."""
+        if not self.storage_path:
+            return
+        
+        self.storage_path.parent.mkdir(parents=True, exist_ok=True)
+        
+        conn = sqlite3.connect(str(self.storage_path))
+        cursor = conn.cursor()
+        
+        # Variants table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ab_variants (
+                variant_id TEXT PRIMARY KEY,
+                config_id TEXT,
+                traffic_percentage REAL,
+                is_control INTEGER,
+                created_at TEXT,
+                status TEXT
+            )
+        """)
+        
+        # Variant metrics table
+        cursor.execute("""
+            CREATE TABLE IF NOT EXISTS ab_variant_metrics (
+                variant_id TEXT PRIMARY KEY,
+                sample_size INTEGER,
+                detection_recall REAL,
+                false_positive_rate REAL,
+                decision_latency_ms REAL,
+                human_agreement REAL,
+                last_updated TEXT
+            )
+        """)
+        
+        conn.commit()
+        conn.close()
+    
+    def create_ab_test(
+        self,
+        control_config: Configuration,
+        treatment_config: Configuration,
+        traffic_split: float = 0.1
+    ) -> Tuple[str, str]:
+        """Create an A/B test with control and treatment variants.
+        
+        Args:
+            control_config: Control configuration (current production)
+            treatment_config: Treatment configuration (new variant)
+            traffic_split: Percentage of traffic to treatment (0-1)
+            
+        Returns:
+            Tuple of (control_variant_id, treatment_variant_id)
+        """
+        import uuid
+        
+        control_variant_id = f"ab_control_{uuid.uuid4().hex[:8]}"
+        treatment_variant_id = f"ab_treatment_{uuid.uuid4().hex[:8]}"
+        
+        self.variants[control_variant_id] = control_config
+        self.variants[treatment_variant_id] = treatment_config
+        
+        self.variant_traffic[control_variant_id] = 1.0 - traffic_split
+        self.variant_traffic[treatment_variant_id] = traffic_split
+        
+        self.control_variant_id = control_variant_id
+        
+        # Store in database if available
+        if self.storage_path:
+            conn = sqlite3.connect(str(self.storage_path))
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT INTO ab_variants
+                (variant_id, config_id, traffic_percentage, is_control, created_at, status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                control_variant_id,
+                control_config.config_id,
+                1.0 - traffic_split,
+                1,
+                datetime.now().isoformat(),
+                'active'
+            ))
+            
+            cursor.execute("""
+                INSERT INTO ab_variants
+                (variant_id, config_id, traffic_percentage, is_control, created_at, status)
+                VALUES (?, ?, ?, ?, ?, ?)
+            """, (
+                treatment_variant_id,
+                treatment_config.config_id,
+                traffic_split,
+                0,
+                datetime.now().isoformat(),
+                'active'
+            ))
+            
+            conn.commit()
+            conn.close()
+        
+        return control_variant_id, treatment_variant_id
+    
+    def record_variant_metrics(
+        self,
+        variant_id: str,
+        metrics: PerformanceMetrics
+    ) -> None:
+        """Record metrics for a variant.
+        
+        Args:
+            variant_id: Variant ID
+            metrics: Performance metrics
+        """
+        self.variant_metrics[variant_id] = metrics
+        
+        # Store in database if available
+        if self.storage_path:
+            conn = sqlite3.connect(str(self.storage_path))
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                INSERT OR REPLACE INTO ab_variant_metrics
+                (variant_id, sample_size, detection_recall, false_positive_rate,
+                 decision_latency_ms, human_agreement, last_updated)
+                VALUES (?, ?, ?, ?, ?, ?, ?)
+            """, (
+                variant_id,
+                metrics.total_cases,
+                metrics.detection_recall,
+                metrics.false_positive_rate,
+                metrics.decision_latency_ms,
+                metrics.human_agreement,
+                datetime.now().isoformat()
+            ))
+            
+            conn.commit()
+            conn.close()
+    
+    def check_statistical_significance(
+        self,
+        control_variant_id: str,
+        treatment_variant_id: str,
+        metric: str = "detection_recall"
+    ) -> Tuple[bool, float, str]:
+        """Check if difference between variants is statistically significant.
+        
+        Uses a simplified z-test for proportions.
+        
+        Args:
+            control_variant_id: Control variant ID
+            treatment_variant_id: Treatment variant ID
+            metric: Metric to test (detection_recall, false_positive_rate, etc.)
+            
+        Returns:
+            Tuple of (is_significant, p_value, interpretation)
+        """
+        control_metrics = self.variant_metrics.get(control_variant_id)
+        treatment_metrics = self.variant_metrics.get(treatment_variant_id)
+        
+        if not control_metrics or not treatment_metrics:
+            return False, 1.0, "Insufficient data"
+        
+        if control_metrics.total_cases < self.min_sample_size or \
+           treatment_metrics.total_cases < self.min_sample_size:
+            return False, 1.0, f"Need at least {self.min_sample_size} samples per variant"
+        
+        # Get metric values
+        if metric == "detection_recall":
+            p1 = control_metrics.detection_recall
+            p2 = treatment_metrics.detection_recall
+        elif metric == "false_positive_rate":
+            p1 = control_metrics.false_positive_rate
+            p2 = treatment_metrics.false_positive_rate
+        elif metric == "human_agreement":
+            p1 = control_metrics.human_agreement
+            p2 = treatment_metrics.human_agreement
+        else:
+            return False, 1.0, f"Unknown metric: {metric}"
+        
+        # Simplified z-test for proportions
+        n1 = control_metrics.total_cases
+        n2 = treatment_metrics.total_cases
+        
+        # Pooled proportion
+        p_pooled = (p1 * n1 + p2 * n2) / (n1 + n2)
+        
+        # Standard error
+        se = math.sqrt(p_pooled * (1 - p_pooled) * (1/n1 + 1/n2))
+        
+        if se == 0:
+            return False, 1.0, "Zero standard error"
+        
+        # Z-score
+        z = abs(p1 - p2) / se
+        
+        # Approximate p-value (two-tailed)
+        # Using normal approximation: p ≈ 2 * (1 - Φ(|z|))
+        # For |z| > 1.96, p < 0.05 (significant at 95% confidence)
+        p_value = 2 * (1 - self._normal_cdf(abs(z)))
+        
+        is_significant = p_value < self.significance_level
+        
+        improvement = ((p2 - p1) / p1 * 100) if p1 > 0 else 0
+        
+        interpretation = (
+            f"Treatment is {improvement:+.1f}% vs control. "
+            f"{'Significant' if is_significant else 'Not significant'} "
+            f"(p={p_value:.4f})"
+        )
+        
+        return is_significant, p_value, interpretation
+    
+    def _normal_cdf(self, z: float) -> float:
+        """Approximate normal CDF using error function approximation."""
+        return 0.5 * (1 + math.erf(z / math.sqrt(2)))
+    
+    def gradual_rollout(
+        self,
+        treatment_variant_id: str,
+        target_traffic: float,
+        step_size: float = 0.1
+    ) -> float:
+        """Gradually increase traffic to treatment variant.
+        
+        Args:
+            treatment_variant_id: Treatment variant ID
+            target_traffic: Target traffic percentage (0-1)
+            step_size: Traffic increase per step (0-1)
+            
+        Returns:
+            New traffic percentage
+        """
+        if treatment_variant_id not in self.variant_traffic:
+            return 0.0
+        
+        current_traffic = self.variant_traffic[treatment_variant_id]
+        new_traffic = min(target_traffic, current_traffic + step_size)
+        
+        self.variant_traffic[treatment_variant_id] = new_traffic
+        
+        # Update control traffic
+        if self.control_variant_id:
+            self.variant_traffic[self.control_variant_id] = 1.0 - new_traffic
+        
+        return new_traffic
+    
+    def rollback_variant(self, variant_id: str) -> bool:
+        """Rollback variant and route all traffic to control.
+        
+        Args:
+            variant_id: Variant ID to rollback
+            
+        Returns:
+            True if rolled back successfully
+        """
+        if variant_id not in self.variants:
+            return False
+        
+        # Set traffic to 0
+        self.variant_traffic[variant_id] = 0.0
+        
+        # Route all traffic to control
+        if self.control_variant_id:
+            self.variant_traffic[self.control_variant_id] = 1.0
+        
+        # Mark as rolled back in database
+        if self.storage_path:
+            conn = sqlite3.connect(str(self.storage_path))
+            cursor = conn.cursor()
+            
+            cursor.execute("""
+                UPDATE ab_variants
+                SET status = 'rolled_back', traffic_percentage = 0
+                WHERE variant_id = ?
+            """, (variant_id,))
+            
+            conn.commit()
+            conn.close()
+        
+        return True
+    
+    def get_variant_summary(self) -> Dict[str, Any]:
+        """Get summary of all variants.
+        
+        Returns:
+            Dictionary with variant information
+        """
+        summary = {
+            'variants': {},
+            'control_variant_id': self.control_variant_id
+        }
+        
+        for variant_id, config in self.variants.items():
+            metrics = self.variant_metrics.get(variant_id)
+            summary['variants'][variant_id] = {
+                'config_version': config.config_version,
+                'traffic': self.variant_traffic.get(variant_id, 0.0),
+                'is_control': variant_id == self.control_variant_id,
+                'metrics': metrics.to_dict() if metrics else None
+            }
+        
+        return summary

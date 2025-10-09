@@ -54,7 +54,10 @@ from .optimization import (
     OptimizationObjective,
     OptimizationTechnique,
     ConfigStatus,
-    PromotionGate
+    PromotionGate,
+    AdaptiveThresholdTuner,
+    ABTestingFramework,
+    OutcomeRecord
 )
 
 # Phase 8-9 Integration
@@ -158,6 +161,9 @@ __all__ = [
     'OptimizationTechnique',
     'ConfigStatus',
     'PromotionGate',
+    'AdaptiveThresholdTuner',
+    'ABTestingFramework',
+    'OutcomeRecord',
     # Phase 8-9 Integration
     'Phase89IntegratedGovernance',
     # Unified Integration (All Phases)

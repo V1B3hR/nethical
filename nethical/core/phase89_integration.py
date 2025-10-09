@@ -43,7 +43,9 @@ from .optimization import (
     Configuration,
     PerformanceMetrics,
     OptimizationTechnique,
-    ConfigStatus
+    ConfigStatus,
+    AdaptiveThresholdTuner,
+    ABTestingFramework
 )
 
 
@@ -90,6 +92,17 @@ class Phase89IntegratedGovernance:
         # Phase 9: Optimization
         self.optimizer = MultiObjectiveOptimizer(
             storage_path=str(storage_path / "optimization.db")
+        )
+        
+        # F4: Adaptive Thresholds & Tuning
+        self.adaptive_tuner = AdaptiveThresholdTuner(
+            objectives=["maximize_recall", "minimize_fp"],
+            learning_rate=0.01,
+            storage_path=str(storage_path / "adaptive_tuning.db")
+        )
+        
+        self.ab_testing = ABTestingFramework(
+            storage_path=str(storage_path / "ab_testing.db")
         )
         
         # Configuration
@@ -367,6 +380,20 @@ class Phase89IntegratedGovernance:
                 mutation_rate=kwargs.get('mutation_rate', 0.2)
             )
         
+        elif technique == "bayesian":
+            param_ranges = kwargs.get('param_ranges', {
+                'classifier_threshold': (0.3, 0.7),
+                'confidence_threshold': (0.5, 0.9),
+                'gray_zone_lower': (0.2, 0.5),
+                'gray_zone_upper': (0.5, 0.8)
+            })
+            return self.optimizer.bayesian_optimization(
+                param_ranges=param_ranges,
+                evaluate_fn=dummy_evaluate,
+                n_iterations=kwargs.get('n_iterations', 30),
+                n_initial_random=kwargs.get('n_initial_random', 5)
+            )
+        
         else:
             raise ValueError(f"Unknown technique: {technique}")
     
@@ -462,3 +489,179 @@ class Phase89IntegratedGovernance:
             )
         
         return result
+    
+    # ==================== F4: Adaptive Thresholds & Tuning ====================
+    
+    def record_outcome(
+        self,
+        action_id: str,
+        judgment_id: str,
+        predicted_outcome: str,
+        actual_outcome: str,
+        confidence: float,
+        human_feedback: Optional[str] = None
+    ) -> Dict[str, Any]:
+        """Record outcome for adaptive learning.
+        
+        This method feeds outcome data into the adaptive threshold tuner,
+        which automatically adjusts thresholds to improve performance.
+        
+        Args:
+            action_id: Action ID
+            judgment_id: Judgment ID
+            predicted_outcome: Predicted outcome (e.g., "allow", "block")
+            actual_outcome: Actual outcome (e.g., "false_positive", "correct")
+            confidence: Prediction confidence (0-1)
+            human_feedback: Optional human feedback
+            
+        Returns:
+            Dictionary with outcome record and updated thresholds
+        """
+        outcome = self.adaptive_tuner.record_outcome(
+            action_id=action_id,
+            judgment_id=judgment_id,
+            predicted_outcome=predicted_outcome,
+            actual_outcome=actual_outcome,
+            confidence=confidence,
+            human_feedback=human_feedback
+        )
+        
+        # Get updated thresholds
+        thresholds = self.adaptive_tuner.get_thresholds()
+        stats = self.adaptive_tuner.get_performance_stats()
+        
+        return {
+            'outcome': outcome.to_dict(),
+            'updated_thresholds': thresholds,
+            'performance_stats': stats
+        }
+    
+    def get_adaptive_thresholds(self, agent_id: Optional[str] = None) -> Dict[str, float]:
+        """Get current adaptive thresholds.
+        
+        Args:
+            agent_id: Optional agent ID for agent-specific thresholds
+            
+        Returns:
+            Dictionary of threshold values
+        """
+        return self.adaptive_tuner.get_thresholds(agent_id)
+    
+    def set_agent_thresholds(
+        self,
+        agent_id: str,
+        thresholds: Dict[str, float]
+    ) -> None:
+        """Set agent-specific thresholds.
+        
+        Args:
+            agent_id: Agent ID
+            thresholds: Threshold values
+        """
+        self.adaptive_tuner.set_agent_thresholds(agent_id, thresholds)
+    
+    def get_tuning_performance(self) -> Dict[str, Any]:
+        """Get performance statistics from adaptive tuner.
+        
+        Returns:
+            Performance statistics
+        """
+        return self.adaptive_tuner.get_performance_stats()
+    
+    def create_ab_test(
+        self,
+        control_config: Configuration,
+        treatment_config: Configuration,
+        traffic_split: float = 0.1
+    ) -> Tuple[str, str]:
+        """Create A/B test for threshold variants.
+        
+        Args:
+            control_config: Control configuration
+            treatment_config: Treatment configuration
+            traffic_split: Traffic percentage to treatment (0-1)
+            
+        Returns:
+            Tuple of (control_variant_id, treatment_variant_id)
+        """
+        return self.ab_testing.create_ab_test(
+            control_config,
+            treatment_config,
+            traffic_split
+        )
+    
+    def record_ab_metrics(
+        self,
+        variant_id: str,
+        metrics: PerformanceMetrics
+    ) -> None:
+        """Record metrics for A/B test variant.
+        
+        Args:
+            variant_id: Variant ID
+            metrics: Performance metrics
+        """
+        self.ab_testing.record_variant_metrics(variant_id, metrics)
+    
+    def check_ab_significance(
+        self,
+        control_variant_id: str,
+        treatment_variant_id: str,
+        metric: str = "detection_recall"
+    ) -> Tuple[bool, float, str]:
+        """Check statistical significance of A/B test.
+        
+        Args:
+            control_variant_id: Control variant ID
+            treatment_variant_id: Treatment variant ID
+            metric: Metric to test
+            
+        Returns:
+            Tuple of (is_significant, p_value, interpretation)
+        """
+        return self.ab_testing.check_statistical_significance(
+            control_variant_id,
+            treatment_variant_id,
+            metric
+        )
+    
+    def gradual_rollout(
+        self,
+        treatment_variant_id: str,
+        target_traffic: float,
+        step_size: float = 0.1
+    ) -> float:
+        """Gradually increase traffic to treatment variant.
+        
+        Args:
+            treatment_variant_id: Treatment variant ID
+            target_traffic: Target traffic percentage (0-1)
+            step_size: Traffic increase per step
+            
+        Returns:
+            New traffic percentage
+        """
+        return self.ab_testing.gradual_rollout(
+            treatment_variant_id,
+            target_traffic,
+            step_size
+        )
+    
+    def rollback_variant(self, variant_id: str) -> bool:
+        """Rollback A/B test variant.
+        
+        Args:
+            variant_id: Variant ID
+            
+        Returns:
+            True if rolled back successfully
+        """
+        return self.ab_testing.rollback_variant(variant_id)
+    
+    def get_ab_summary(self) -> Dict[str, Any]:
+        """Get A/B test summary.
+        
+        Returns:
+            Dictionary with variant information
+        """
+        return self.ab_testing.get_variant_summary()
