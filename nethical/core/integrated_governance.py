@@ -1,10 +1,11 @@
 """Unified Integrated Governance Module.
 
-This module consolidates ALL phases (3, 4, 5-7, 8-9) into a single unified interface:
+This module consolidates ALL phases (3, 4, 5-7, 8-9, F3) into a single unified interface:
 - Phase 3: Risk Engine, Correlation, Fairness, Drift Reporting, Performance Optimization
 - Phase 4: Merkle Anchoring, Policy Diff, Quarantine, Ethical Taxonomy, SLA Monitoring
 - Phase 5-7: ML Shadow Mode, ML Blended Risk, Anomaly Detection
 - Phase 8-9: Human-in-the-Loop, Continuous Optimization
+- F3: Privacy & Data Handling - Enhanced Redaction, Differential Privacy, Federated Analytics, Data Minimization
 
 This provides a complete governance system with all features in a single interface.
 """
@@ -50,9 +51,15 @@ from .optimization import (
     ConfigStatus
 )
 
+# F3: Privacy & Data Handling imports
+from .redaction_pipeline import EnhancedRedactionPipeline, RedactionPolicy as RedactionPolicyEnum
+from .differential_privacy import DifferentialPrivacy, PrivacyMechanism, DPTrainingConfig, PrivacyAudit
+from .federated_analytics import FederatedAnalytics, AggregationMethod
+from .data_minimization import DataMinimization, DataCategory, RetentionPolicy
+
 
 class IntegratedGovernance:
-    """Consolidated governance system with all features from Phases 3-9.
+    """Consolidated governance system with all features from Phases 3-9 and F3.
     
     This class provides a unified interface to all governance features:
     - Risk scoring and correlation detection (Phase 3)
@@ -98,7 +105,11 @@ class IntegratedGovernance:
         resolution_sla_seconds: float = 86400,
         auto_escalate_on_block: bool = True,
         auto_escalate_on_low_confidence: bool = True,
-        low_confidence_threshold: float = 0.7
+        low_confidence_threshold: float = 0.7,
+        # F3: Privacy & Data Handling config
+        privacy_mode: Optional[str] = None,
+        epsilon: float = 1.0,
+        redaction_policy: str = "standard"
     ):
         """Initialize unified integrated governance.
         
@@ -134,6 +145,9 @@ class IntegratedGovernance:
             auto_escalate_on_block: Auto-escalate BLOCK/TERMINATE decisions
             auto_escalate_on_low_confidence: Auto-escalate low confidence
             low_confidence_threshold: Threshold for low confidence escalation
+            privacy_mode: Privacy mode ('differential', 'standard', or None)
+            epsilon: Privacy budget for differential privacy
+            redaction_policy: Redaction policy ('minimal', 'standard', 'aggressive')
         """
         storage_path = Path(storage_dir)
         storage_path.mkdir(parents=True, exist_ok=True)
@@ -245,6 +259,54 @@ class IntegratedGovernance:
         self.low_confidence_threshold = low_confidence_threshold
         self.active_config: Optional[Configuration] = None
         
+        # ==================== F3: Privacy & Data Handling ====================
+        self.privacy_mode = privacy_mode
+        self.epsilon = epsilon
+        self.redaction_policy_name = redaction_policy
+        
+        # Enhanced Redaction Pipeline
+        redaction_policy_enum = {
+            'minimal': RedactionPolicyEnum.MINIMAL,
+            'standard': RedactionPolicyEnum.STANDARD,
+            'aggressive': RedactionPolicyEnum.AGGRESSIVE
+        }.get(redaction_policy, RedactionPolicyEnum.STANDARD)
+        
+        self.redaction_pipeline = EnhancedRedactionPipeline(
+            policy=redaction_policy_enum,
+            enable_audit=True,
+            enable_reversible=(privacy_mode == "differential"),
+            audit_log_path=str(storage_path / "redaction_audit.jsonl")
+        )
+        
+        # Differential Privacy (if enabled)
+        self.differential_privacy = None
+        if privacy_mode == "differential":
+            self.differential_privacy = DifferentialPrivacy(
+                epsilon=epsilon,
+                delta=1e-5,
+                mechanism=PrivacyMechanism.GAUSSIAN
+            )
+            self.privacy_audit = PrivacyAudit(self.differential_privacy)
+        
+        # Federated Analytics (if regions specified)
+        self.federated_analytics = None
+        if region_id:
+            regions_list = [region_id]
+            # In multi-region deployments, this would be configured with multiple regions
+            self.federated_analytics = FederatedAnalytics(
+                regions=regions_list,
+                enable_encryption=True,
+                privacy_preserving=(privacy_mode == "differential"),
+                noise_level=0.1
+            )
+        
+        # Data Minimization
+        self.data_minimization = DataMinimization(
+            storage_dir=str(storage_path / "data_minimization"),
+            enable_auto_deletion=True,
+            anonymization_enabled=True
+        )
+        
         # Component flags
         self.components_enabled = {
             # Phase 3
@@ -265,7 +327,12 @@ class IntegratedGovernance:
             'anomaly_detection': enable_anomaly_detection,
             # Phase 8-9
             'human_escalation': True,
-            'optimization': True
+            'optimization': True,
+            # F3: Privacy & Data Handling
+            'redaction_pipeline': True,
+            'differential_privacy': privacy_mode == "differential",
+            'federated_analytics': region_id is not None,
+            'data_minimization': True
         }
     
     def _load_regional_policy(self, policy_name: str) -> None:
