@@ -1,0 +1,56 @@
+# Example Policy: Financial Compliance
+# This policy enforces financial data handling requirements
+
+policies:
+  - name: "financial_compliance"
+    version: "1.0.0"
+    enabled: true
+    description: "Enforces PCI-DSS and SOX compliance for financial data"
+    tags: ["finance", "compliance", "pci-dss", "sox"]
+    
+    rules:
+      - condition: "contains(action.content, 'financial_data') or contains(action.content, 'credit card')"
+        severity: HIGH
+        description: "Financial data detected - requires encryption"
+        actions:
+          - require_encryption
+          - audit_log
+          - escalate
+        metadata:
+          compliance_standard: "PCI-DSS"
+          
+      - condition: "contains(action.content, 'transaction') and contains(action.content, 'amount')"
+        severity: HIGH
+        description: "Financial transaction detected"
+        actions:
+          - audit_log
+          - require_encryption
+        metadata:
+          compliance_standard: "SOX"
+          
+  - name: "pii_protection"
+    version: "1.0.0"
+    enabled: true
+    description: "Protects Personally Identifiable Information (PII)"
+    tags: ["privacy", "pii", "gdpr"]
+    
+    rules:
+      - condition: "matches_regex(action.content, r'\\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Z|a-z]{2,}\\b')"
+        severity: CRITICAL
+        description: "Email address detected without consent"
+        actions:
+          - block_action
+          - alert_dpo
+          - audit_log
+        metadata:
+          data_type: "email"
+          
+      - condition: "matches_regex(action.content, r'\\b\\d{3}-?\\d{2}-?\\d{4}\\b')"
+        severity: CRITICAL
+        description: "Social Security Number detected"
+        actions:
+          - block_action
+          - alert
+          - audit_log
+        metadata:
+          data_type: "ssn"

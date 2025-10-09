@@ -1,0 +1,60 @@
+{
+  "policies": [
+    {
+      "name": "healthcare_compliance",
+      "version": "1.0.0",
+      "enabled": true,
+      "description": "HIPAA compliance for Protected Health Information (PHI)",
+      "tags": ["healthcare", "hipaa", "phi"],
+      "rules": [
+        {
+          "condition": "matches_regex(action.content, r'\\bMRN[:\\s]*\\d{6,10}\\b')",
+          "severity": "CRITICAL",
+          "description": "Medical Record Number detected",
+          "actions": ["block_action", "alert_dpo", "audit_log"],
+          "metadata": {
+            "data_type": "medical_record_number",
+            "compliance_standard": "HIPAA"
+          }
+        },
+        {
+          "condition": "contains(action.content, 'patient') and contains(action.content, 'diagnosis')",
+          "severity": "HIGH",
+          "description": "Patient diagnosis information detected",
+          "actions": ["require_encryption", "audit_log"],
+          "metadata": {
+            "data_type": "diagnosis",
+            "compliance_standard": "HIPAA"
+          }
+        }
+      ]
+    },
+    {
+      "name": "data_classification",
+      "version": "1.0.0",
+      "enabled": true,
+      "description": "Enforces data classification and handling policies",
+      "tags": ["security", "data_classification"],
+      "rules": [
+        {
+          "condition": "contains(action.content, 'confidential') or contains(action.content, 'secret')",
+          "severity": "HIGH",
+          "description": "Confidential data detected",
+          "actions": ["require_encryption", "audit_log", "notify_user"],
+          "metadata": {
+            "classification": "confidential"
+          }
+        },
+        {
+          "condition": "contains(action.content, 'public')",
+          "severity": "LOW",
+          "description": "Public data classification",
+          "actions": ["audit_log"],
+          "metadata": {
+            "classification": "public"
+          }
+        }
+      ]
+    }
+  ]
+}
