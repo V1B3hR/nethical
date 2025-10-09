@@ -14,6 +14,7 @@ from .marketplace_client import (
 from .plugin_governance import (
     PluginGovernance,
     SecurityScanResult,
+    SecurityLevel,
     BenchmarkResult,
     CertificationStatus,
     CompatibilityReport
@@ -29,11 +30,13 @@ from .detector_packs import (
     DetectorPack,
     DetectorPackRegistry,
     IndustryPack,
+    Industry,
     UseCaseTemplate
 )
 from .integration_directory import (
     IntegrationDirectory,
     IntegrationAdapter,
+    IntegrationType,
     DataSourceAdapter,
     ExportUtility,
     ImportUtility
@@ -49,6 +52,7 @@ __all__ = [
     # Plugin Governance
     'PluginGovernance',
     'SecurityScanResult',
+    'SecurityLevel',
     'BenchmarkResult',
     'CertificationStatus',
     'CompatibilityReport',
@@ -62,10 +66,12 @@ __all__ = [
     'DetectorPack',
     'DetectorPackRegistry',
     'IndustryPack',
+    'Industry',
     'UseCaseTemplate',
     # Integration Directory
     'IntegrationDirectory',
     'IntegrationAdapter',
+    'IntegrationType',
     'DataSourceAdapter',
     'ExportUtility',
     'ImportUtility',
