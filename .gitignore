@@ -154,3 +154,25 @@ training_audit_logs/
 training_drift_reports/
 example_drift_reports/
 drift_reports/
+
+# Performance profiling results
+profiling_results/
+tests/performance/results/
+
+# MLOps data directories
+data/raw/
+data/processed/
+data/versions/
+models/development/
+models/staging/
+models/production/
+models/archived/
+models/metadata/
+
+# Integration logs
+logs/mlops.log
+logs/external_logs.jsonl
+
+# Backup files
+*.bak
+*_original.py.bak
