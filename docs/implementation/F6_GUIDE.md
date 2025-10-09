@@ -613,7 +613,7 @@ To contribute to the marketplace ecosystem:
 ## Support
 
 - **Documentation**: See F6_IMPLEMENTATION_SUMMARY.md
-- **Examples**: See examples/f6_marketplace_demo.py
+- **Examples**: See examples/advanced/f6_marketplace_demo.py
 - **Tests**: See tests/test_f6_marketplace.py
 - **Issues**: Report on GitHub
 

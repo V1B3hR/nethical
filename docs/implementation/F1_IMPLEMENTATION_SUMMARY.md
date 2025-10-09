@@ -144,7 +144,7 @@ def process_action(
 
 ### Documentation
 5. `docs/REGIONAL_DEPLOYMENT_GUIDE.md` - Complete deployment guide
-6. `examples/regional_deployment_demo.py` - Working examples
+6. `examples/advanced/regional_deployment_demo.py` - Working examples
 7. `roadmap.md` - Updated with completion status
 
 ## Test Coverage
@@ -280,7 +280,7 @@ All exit criteria from the roadmap have been met:
 
 1. **Review Documentation**
    - Read `docs/REGIONAL_DEPLOYMENT_GUIDE.md` for complete guide
-   - Study `examples/regional_deployment_demo.py` for working examples
+   - Study `examples/advanced/regional_deployment_demo.py` for working examples
 
 2. **Run Tests**
    ```bash
@@ -289,7 +289,7 @@ All exit criteria from the roadmap have been met:
 
 3. **Try Examples**
    ```bash
-   python examples/regional_deployment_demo.py
+   python examples/advanced/regional_deployment_demo.py
    ```
 
 4. **Integrate into Your System**
@@ -328,7 +328,7 @@ The aggregation method:
 ## Support and Resources
 
 - **Documentation**: `docs/REGIONAL_DEPLOYMENT_GUIDE.md`
-- **Examples**: `examples/regional_deployment_demo.py`
+- **Examples**: `examples/advanced/regional_deployment_demo.py`
 - **Tests**: `tests/test_regionalization.py`
 - **Core Implementation**: `nethical/core/integrated_governance.py`
 

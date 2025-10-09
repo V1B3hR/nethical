@@ -91,7 +91,7 @@ python training/train_any_model.py --model-type logistic --enable-governance --e
 python tests/test_train_governance.py
 
 # Run demo
-python examples/demo_governance_training.py
+python examples/training/demo_governance_training.py
 ```
 
 ## Documentation
@@ -112,7 +112,7 @@ python examples/demo_governance_training.py
 For issues or questions:
 1. Check `GOVERNANCE_TRAINING_IMPLEMENTATION.md` for details
 2. Review test examples in `tests/test_train_governance.py`
-3. Run demo: `python examples/demo_governance_training.py`
+3. Run demo: `python examples/training/demo_governance_training.py`
 
 ---
 

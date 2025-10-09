@@ -138,17 +138,17 @@ The system easily meets the < 10% overhead requirement with actual overhead bein
 
 ### Example Detectors
 
-1. **FinancialComplianceDetector** (`examples/custom_detectors.py`)
+1. **FinancialComplianceDetector** (`examples/basic/custom_detectors.py`)
    - Detects credit card numbers, bank accounts
    - Checks PCI-DSS compliance
    - Validates encryption and authorization
 
-2. **HealthcareComplianceDetector** (`examples/custom_detectors.py`)
+2. **HealthcareComplianceDetector** (`examples/basic/custom_detectors.py`)
    - Detects Protected Health Information (PHI)
    - Checks HIPAA compliance
    - Validates patient consent
 
-3. **CustomPolicyDetector** (`examples/custom_detectors.py`)
+3. **CustomPolicyDetector** (`examples/basic/custom_detectors.py`)
    - Configurable forbidden patterns
    - Configurable required patterns
    - Organization-specific policies
@@ -184,7 +184,7 @@ python tests/test_performance_benchmarks.py
 
 **Run Demo:**
 ```bash
-python examples/f2_extensibility_demo.py
+python examples/advanced/f2_extensibility_demo.py
 ```
 
 ## Documentation
@@ -325,7 +325,7 @@ For existing Nethical users, the plugin system is fully backward compatible. No 
 - **Documentation**: [PLUGIN_DEVELOPER_GUIDE.md](docs/PLUGIN_DEVELOPER_GUIDE.md)
 - **Examples**: `examples/` directory
 - **Tests**: `tests/test_plugin_extensibility.py`
-- **Demo**: `examples/f2_extensibility_demo.py`
+- **Demo**: `examples/advanced/f2_extensibility_demo.py`
 
 ## Conclusion
 
