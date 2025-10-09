@@ -491,7 +491,7 @@ class PersistenceManager:
     def store_judgment(self, j: JudgmentResult):
         with self._lock, self._connect() as conn:
             conn.execute(
-                """INSERT OR REPLACE INTO judgments VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                """INSERT OR REPLACE INTO judgments VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
                     j.judgment_id, j.action_id, j.decision.value, j.confidence,
                     j.reasoning, json.dumps([v.to_dict() for v in j.violations]),
@@ -508,6 +508,85 @@ class PersistenceManager:
         with self._lock, self._connect() as conn:
             for table in ("actions", "violations", "judgments"):
                 conn.execute(f"DELETE FROM {table} WHERE timestamp < ?", (cutoff,))
+
+    def query_actions(
+        self,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+        agent_ids: Optional[List[str]] = None,
+        limit: Optional[int] = None,
+        offset: int = 0
+    ) -> List[Dict[str, Any]]:
+        """Query actions with filters for replay functionality."""
+        with self._lock, self._connect() as conn:
+            query = "SELECT * FROM actions WHERE 1=1"
+            params = []
+            
+            if start_time:
+                query += " AND timestamp >= ?"
+                params.append(start_time)
+            
+            if end_time:
+                query += " AND timestamp <= ?"
+                params.append(end_time)
+            
+            if agent_ids:
+                placeholders = ",".join("?" * len(agent_ids))
+                query += f" AND agent_id IN ({placeholders})"
+                params.extend(agent_ids)
+            
+            query += " ORDER BY timestamp ASC"
+            
+            if limit:
+                query += " LIMIT ? OFFSET ?"
+                params.extend([limit, offset])
+            
+            cursor = conn.execute(query, params)
+            columns = [desc[0] for desc in cursor.description]
+            return [dict(zip(columns, row)) for row in cursor.fetchall()]
+
+    def query_judgments_by_action_ids(self, action_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+        """Query judgments for multiple action IDs."""
+        if not action_ids:
+            return {}
+        
+        with self._lock, self._connect() as conn:
+            placeholders = ",".join("?" * len(action_ids))
+            query = f"SELECT * FROM judgments WHERE action_id IN ({placeholders})"
+            cursor = conn.execute(query, action_ids)
+            columns = [desc[0] for desc in cursor.description]
+            results = {}
+            for row in cursor.fetchall():
+                judgment = dict(zip(columns, row))
+                results[judgment['action_id']] = judgment
+            return results
+
+    def count_actions(
+        self,
+        start_time: Optional[str] = None,
+        end_time: Optional[str] = None,
+        agent_ids: Optional[List[str]] = None
+    ) -> int:
+        """Count actions matching filters."""
+        with self._lock, self._connect() as conn:
+            query = "SELECT COUNT(*) FROM actions WHERE 1=1"
+            params = []
+            
+            if start_time:
+                query += " AND timestamp >= ?"
+                params.append(start_time)
+            
+            if end_time:
+                query += " AND timestamp <= ?"
+                params.append(end_time)
+            
+            if agent_ids:
+                placeholders = ",".join("?" * len(agent_ids))
+                query += f" AND agent_id IN ({placeholders})"
+                params.extend(agent_ids)
+            
+            cursor = conn.execute(query, params)
+            return cursor.fetchone()[0]
 
 
 # ========================== Utilities ==========================
