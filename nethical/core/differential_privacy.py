@@ -4,7 +4,7 @@ This module provides differential privacy mechanisms for model training and
 metric aggregation with privacy budget management.
 """
 
-from typing import Dict, List, Optional, Any, Callable
+from typing import Dict, List, Optional, Any, Callable, Tuple
 from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum

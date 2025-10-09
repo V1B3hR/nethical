@@ -285,6 +285,8 @@ class FederatedAnalytics:
         # Add privacy noise
         if self.privacy_preserving:
             correlation = self._add_privacy_noise(correlation, noise_level)
+            # Clip to valid correlation range
+            correlation = float(np.clip(correlation, -1.0, 1.0))
             self.stats['privacy_operations'] += 1
         
         # Compute p-value (simplified)

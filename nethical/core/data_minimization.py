@@ -499,7 +499,15 @@ class DataMinimization:
         user_id: Optional[str]
     ) -> str:
         """Generate unique record ID."""
-        content = json.dumps(data, sort_keys=True)
+        # Convert datetime objects to strings for JSON serialization
+        serializable_data = {}
+        for key, value in data.items():
+            if isinstance(value, datetime):
+                serializable_data[key] = value.isoformat()
+            else:
+                serializable_data[key] = value
+        
+        content = json.dumps(serializable_data, sort_keys=True, default=str)
         timestamp = datetime.now().isoformat()
         combined = f"{user_id}{content}{timestamp}"
         return hashlib.sha256(combined.encode()).hexdigest()[:16]
