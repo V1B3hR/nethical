@@ -360,7 +360,7 @@ F3 features support CCPA requirements:
 
 ## Examples
 
-See `examples/f3_privacy_demo.py` for comprehensive demonstrations of all features.
+See `examples/advanced/f3_privacy_demo.py` for comprehensive demonstrations of all features.
 
 ## Testing
 

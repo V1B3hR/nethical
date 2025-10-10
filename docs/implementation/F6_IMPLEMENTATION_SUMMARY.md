@@ -411,7 +411,7 @@ pytest tests/test_f6_marketplace.py -v
    - Technical design
    - Testing details
 
-3. **Demo Script** (examples/f6_marketplace_demo.py, ~500 lines)
+3. **Demo Script** (examples/advanced/f6_marketplace_demo.py, ~500 lines)
    - 6 comprehensive demonstrations
    - All features showcased
    - Runnable examples
@@ -510,4 +510,4 @@ The marketplace ecosystem provides a robust foundation for community-driven expa
 
 ---
 
-*For usage examples, see F6_GUIDE.md and examples/f6_marketplace_demo.py*
+*For usage examples, see F6_GUIDE.md and examples/advanced/f6_marketplace_demo.py*

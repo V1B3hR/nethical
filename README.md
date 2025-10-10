@@ -95,13 +95,13 @@ asyncio.run(main())
 
 ```bash
 # Basic safety monitoring
-python examples/basic_usage.py
+python examples/basic/basic_usage.py
 
 # Anomaly detection
-python examples/phase7_demo.py
+python examples/governance/phase7_demo.py
 
 # Train anomaly detection model
-python examples/train_anomaly_detector.py
+python examples/training/train_anomaly_detector.py
 ```
 
 ### Training Anomaly Detection Models
@@ -602,7 +602,7 @@ status = gov.get_system_status()
 - ✅ Comprehensive action processing pipeline
 - ✅ Unified system status and monitoring
 
-Run the demo: `python examples/unified_governance_demo.py`
+Run the demo: `python examples/basic/unified_governance_demo.py`
 
 See [PHASE3_GUIDE.md](PHASE3_GUIDE.md), [PHASE4_GUIDE.md](PHASE4_GUIDE.md), [PHASE5-7_GUIDE.md](PHASE5-7_GUIDE.md), and [PHASE89_GUIDE.md](PHASE89_GUIDE.md) for detailed documentation on individual phases.
 

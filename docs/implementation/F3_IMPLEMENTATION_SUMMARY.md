@@ -98,7 +98,7 @@ Successfully implemented complete F3: Privacy & Data Handling track with all exi
   - Performance considerations
 
 ### Demo Script
-- **File**: `examples/f3_privacy_demo.py` (336 lines)
+- **File**: `examples/advanced/f3_privacy_demo.py` (336 lines)
 - **Examples**:
   1. Enhanced Redaction Pipeline
   2. Differential Privacy & Budget Tracking
@@ -216,5 +216,5 @@ The implementation provides a solid foundation for privacy-preserving governance
 - Implementation: `nethical/core/redaction_pipeline.py`, `differential_privacy.py`, `federated_analytics.py`, `data_minimization.py`
 - Tests: `tests/test_privacy_features.py`
 - Documentation: `docs/F3_PRIVACY_GUIDE.md`
-- Demo: `examples/f3_privacy_demo.py`
+- Demo: `examples/advanced/f3_privacy_demo.py`
 - Roadmap: `roadmap.md` (Section F3)

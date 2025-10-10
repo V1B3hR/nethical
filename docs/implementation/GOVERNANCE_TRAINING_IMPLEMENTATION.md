@@ -65,7 +65,7 @@ Integrated the governance system to validate training data and model predictions
   - Example output
   - Integration with audit logging
 
-### 5. examples/demo_governance_training.py (NEW)
+### 5. examples/training/demo_governance_training.py (NEW)
 
 **Demonstration Script:**
 - Shows governance validation in action
@@ -214,7 +214,7 @@ python tests/test_train_audit_logging.py
 python tests/test_train_drift_tracking.py
 
 # Run demonstration
-python examples/demo_governance_training.py
+python examples/training/demo_governance_training.py
 ```
 
 **Test Results:**
@@ -290,7 +290,7 @@ The governance integration successfully provides real-time safety validation dur
 - `docs/AUDIT_LOGGING_GUIDE.md` - Audit logging guide
 - `nethical/core/governance.py` - Governance system implementation
 - `tests/test_train_governance.py` - Governance integration tests
-- `examples/demo_governance_training.py` - Live demonstration
+- `examples/training/demo_governance_training.py` - Live demonstration
 
 ## Command Reference
 
@@ -311,5 +311,5 @@ python training/train_any_model.py --model-type heuristic --enable-governance --
 python tests/test_train_governance.py
 
 # Run demo
-python examples/demo_governance_training.py
+python examples/training/demo_governance_training.py
 ```

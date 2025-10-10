@@ -98,7 +98,7 @@ Comprehensive test coverage:
 
 ### 7. Demo
 
-Created `examples/real_data_training_demo.py`:
+Created `examples/training/real_data_training_demo.py`:
 - Demonstrates the complete pipeline
 - Shows setup instructions
 - Provides usage examples
@@ -252,7 +252,7 @@ After running the pipeline:
 - `scripts/dataset_processors/generic_processor.py`: Generic processor
 - `tests/test_dataset_processors.py`: Processor tests
 - `tests/test_end_to_end_pipeline.py`: Integration test
-- `examples/real_data_training_demo.py`: Demo script
+- `examples/training/real_data_training_demo.py`: Demo script
 - `docs/TRAINING_GUIDE.md`: Quick reference guide
 
 ## Summary
