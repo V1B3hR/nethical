@@ -9,9 +9,21 @@ for AI agents, including:
 - Judge system for action evaluation and feedback
 """
 
+from typing import Any, Dict, Optional
+
 from .core.governance import SafetyGovernance, AgentAction as _AgentAction, SafetyViolation, JudgmentResult, MonitoringConfig, ActionType
 
-def AgentAction(id=None, action_id=None, agent_id=None, stated_intent=None, actual_action=None, content=None, action_type=None, context=None, **kwargs):
+def AgentAction(
+    id: Optional[str] = None,
+    action_id: Optional[str] = None,
+    agent_id: Optional[str] = None,
+    stated_intent: Optional[str] = None,
+    actual_action: Optional[str] = None,
+    content: Optional[str] = None,
+    action_type: Optional[ActionType] = None,
+    context: Optional[Dict[str, Any]] = None,
+    **kwargs: Any
+) -> _AgentAction:
     """Compatibility wrapper for AgentAction that accepts both old and new APIs."""
     # Handle backward compatibility
     if id is not None and action_id is None:
