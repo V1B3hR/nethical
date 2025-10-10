@@ -1,16 +1,40 @@
 """Phase 4 Integration Module.
 
+.. deprecated::
+   This module is deprecated and maintained only for backward compatibility.
+   Please use :class:`nethical.core.integrated_governance.IntegratedGovernance` instead,
+   which provides a unified interface for all phases (3, 4, 5-7, 8-9).
+
 This module integrates all Phase 4 components:
 - Merkle Anchoring
 - Policy Diff Auditing
 - Quarantine Mode
 - Ethical Taxonomy
 - SLA Monitoring
+
+Migration Guide:
+    Old::
+        from nethical.core.phase4_integration import Phase4IntegratedGovernance
+        governance = Phase4IntegratedGovernance(
+            storage_dir="./data",
+            enable_merkle_anchoring=True
+        )
+    
+    New::
+        from nethical.core.integrated_governance import IntegratedGovernance
+        governance = IntegratedGovernance(
+            storage_dir="./data",
+            enable_merkle_anchoring=True,
+            enable_quarantine=True,
+            enable_ethical_taxonomy=True,
+            enable_sla_monitoring=True
+        )
 """
 
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import time
+import warnings
 
 from .audit_merkle import MerkleAnchor, AuditChunk
 from .policy_diff import PolicyDiffAuditor, PolicyDiffResult, RiskLevel
@@ -20,7 +44,12 @@ from .sla_monitor import SLAMonitor, SLAStatus
 
 
 class Phase4IntegratedGovernance:
-    """Integrated governance system with all Phase 4 features."""
+    """Integrated governance system with all Phase 4 features.
+    
+    .. deprecated::
+       This class is deprecated. Use :class:`~nethical.core.integrated_governance.IntegratedGovernance` instead.
+       Phase4IntegratedGovernance is maintained for backward compatibility only.
+    """
     
     def __init__(
         self,
@@ -34,6 +63,9 @@ class Phase4IntegratedGovernance:
     ):
         """Initialize Phase 4 integrated governance.
         
+        .. deprecated::
+           Use IntegratedGovernance instead for unified access to all phases.
+        
         Args:
             storage_dir: Base storage directory
             enable_merkle_anchoring: Enable Merkle anchoring
@@ -43,6 +75,13 @@ class Phase4IntegratedGovernance:
             s3_bucket: Optional S3 bucket for Merkle anchoring
             taxonomy_path: Path to ethical taxonomy config
         """
+        warnings.warn(
+            "Phase4IntegratedGovernance is deprecated and will be removed in a future version. "
+            "Use IntegratedGovernance from nethical.core.integrated_governance instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
         self.storage_dir = storage_dir
         
         # Initialize components

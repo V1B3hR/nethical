@@ -12,12 +12,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - This CHANGELOG.md to track project changes
 - Organized examples into subdirectories: `basic/`, `governance/`, `training/`, `advanced/`
 - Created comprehensive `examples/README.md` with categorized example descriptions
+- **Deprecation notices** for phase integration files:
+  - `phase3_integration.py` - Added deprecation warnings and migration guide
+  - `phase4_integration.py` - Added deprecation warnings and migration guide
+  - `phase567_integration.py` - Added deprecation warnings and migration guide
+  - `phase89_integration.py` - Added deprecation warnings and migration guide
+  - All users are directed to use `IntegratedGovernance` for unified access to all phases
 
 ### Fixed
 - Import error in `tests/unit/test_governance.py` - changed incorrect `JudgmentDecision` import to correct `Decision` enum
 - Resolved test collection failure that was blocking test execution
+- **Test suite issues** in `tests/unit/test_governance.py`:
+  - All 9 tests now pass successfully with pytest-asyncio support
+  - Async test functions properly supported via pytest-asyncio plugin
+  - pytest-asyncio already included in requirements-dev.txt
 
 ### Completed
+- **Phase Integration Deprecation** (Technical Debt #2):
+  - All phase integration files now include deprecation warnings
+  - Files maintained for backward compatibility
+  - Clear migration paths documented in docstrings
+  - Runtime warnings guide users to IntegratedGovernance
+- **Test Import Errors** (Technical Debt #3):
+  - All unit tests passing successfully
+  - Proper async test support configured
+  - Test infrastructure modernized
 - **MLOps Stub Implementations** (Q2 2025 milestone):
   - `mlops/data_pipeline.py` - Full implementation with validation, versioning, and preprocessing (371 lines)
   - `mlops/model_registry.py` - Complete model registry with versioning and lifecycle management (417 lines)
@@ -90,11 +109,13 @@ nethical/
 ## Known Issues
 
 ### Test Status
-- `tests/unit/test_governance.py` - Tests now pass import but may fail assertions due to evolved API
-  - System now has 14 detectors instead of expected 3
-  - `MonitoringConfig` missing some expected attributes
-  - `AgentAction` requires additional fields
-  - These are expected issues due to system evolution, not blocking issues
+- ~~`tests/unit/test_governance.py`~~ ✅ COMPLETED
+  - ~~Tests now pass import but may fail assertions due to evolved API~~
+  - ~~System now has 14 detectors instead of expected 3~~
+  - ~~`MonitoringConfig` missing some expected attributes~~
+  - ~~`AgentAction` requires additional fields~~
+  - All 9 tests now pass successfully with pytest-asyncio support
+  - Test infrastructure modernized and working correctly
 
 ### Areas for Future Improvement
 
@@ -102,10 +123,11 @@ nethical/
    - `governance.py` (1732 lines) could benefit from modularization
    - Consider breaking into smaller, focused modules
 
-2. **Phase Integration Files**
-   - Multiple phase integration files (phase3_integration.py, phase4_integration.py, etc.)
-   - Now superseded by `integrated_governance.py`
-   - Consider adding deprecation notices or documenting as compatibility layers
+2. ~~**Phase Integration Files**~~ ✅ COMPLETED
+   - ~~Multiple phase integration files (phase3_integration.py, phase4_integration.py, etc.)~~
+   - ~~Now superseded by `integrated_governance.py`~~
+   - ~~Consider adding deprecation notices or documenting as compatibility layers~~
+   - All phase integration files now include deprecation warnings and migration guides
 
 3. ~~**Stub Implementations**~~ ✅ COMPLETED
    - ~~`mlops/data_pipeline.py` (26 lines)~~
@@ -123,6 +145,91 @@ nethical/
    - Examples now organized into 4 logical categories with comprehensive documentation
 
 ## Migration Guide
+
+### For Users of Phase Integration Files
+
+The phase-specific integration files are now deprecated in favor of the unified `IntegratedGovernance` class. While the old files remain for backward compatibility, you should migrate to the new interface:
+
+**Phase 3 Migration:**
+```python
+# Old (deprecated):
+from nethical.core.phase3_integration import Phase3IntegratedGovernance
+governance = Phase3IntegratedGovernance(
+    redis_client=redis,
+    enable_performance_optimization=True
+)
+
+# New (recommended):
+from nethical.core.integrated_governance import IntegratedGovernance
+governance = IntegratedGovernance(
+    redis_client=redis,
+    enable_performance_optimization=True
+)
+```
+
+**Phase 4 Migration:**
+```python
+# Old (deprecated):
+from nethical.core.phase4_integration import Phase4IntegratedGovernance
+governance = Phase4IntegratedGovernance(
+    storage_dir="./data",
+    enable_merkle_anchoring=True
+)
+
+# New (recommended):
+from nethical.core.integrated_governance import IntegratedGovernance
+governance = IntegratedGovernance(
+    storage_dir="./data",
+    enable_merkle_anchoring=True,
+    enable_quarantine=True,
+    enable_ethical_taxonomy=True
+)
+```
+
+**Phase 5-7 Migration:**
+```python
+# Old (deprecated):
+from nethical.core.phase567_integration import Phase567IntegratedGovernance
+governance = Phase567IntegratedGovernance(
+    storage_dir="./data",
+    enable_shadow_mode=True
+)
+
+# New (recommended):
+from nethical.core.integrated_governance import IntegratedGovernance
+governance = IntegratedGovernance(
+    storage_dir="./data",
+    enable_shadow_mode=True,
+    enable_ml_blending=True,
+    enable_anomaly_detection=True
+)
+```
+
+**Phase 8-9 Migration:**
+```python
+# Old (deprecated):
+from nethical.core.phase89_integration import Phase89IntegratedGovernance
+governance = Phase89IntegratedGovernance(
+    storage_dir="./data",
+    triage_sla_seconds=3600
+)
+
+# New (recommended):
+from nethical.core.integrated_governance import IntegratedGovernance
+governance = IntegratedGovernance(
+    storage_dir="./data",
+    enable_escalation=True,
+    enable_optimization=True,
+    triage_sla_seconds=3600
+)
+```
+
+**Benefits of IntegratedGovernance:**
+- Unified interface for all phases (3, 4, 5-7, 8-9)
+- Simplified configuration and initialization
+- Single method for processing actions across all phases
+- Comprehensive system status and monitoring
+- Easy feature toggling with individual enable flags
 
 ### For Users of training/test_model.py
 

@@ -1,16 +1,34 @@
 """Phase 3 Integration Module.
 
+.. deprecated::
+   This module is deprecated and maintained only for backward compatibility.
+   Please use :class:`nethical.core.integrated_governance.IntegratedGovernance` instead,
+   which provides a unified interface for all phases (3, 4, 5-7, 8-9).
+
 This module integrates all Phase 3 components:
 - Risk Engine
 - Correlation Engine
 - Fairness Sampler
 - Ethical Drift Reporter
 - Performance Optimizer
+
+Migration Guide:
+    Old::
+        from nethical.core.phase3_integration import Phase3IntegratedGovernance
+        governance = Phase3IntegratedGovernance(redis_client=redis)
+    
+    New::
+        from nethical.core.integrated_governance import IntegratedGovernance
+        governance = IntegratedGovernance(
+            redis_client=redis,
+            enable_performance_optimization=True
+        )
 """
 
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import time
+import warnings
 
 from .risk_engine import RiskEngine, RiskTier, RiskProfile
 from .correlation_engine import CorrelationEngine, CorrelationMatch
@@ -20,7 +38,12 @@ from .performance_optimizer import PerformanceOptimizer, DetectorTier
 
 
 class Phase3IntegratedGovernance:
-    """Integrated governance system with all Phase 3 features."""
+    """Integrated governance system with all Phase 3 features.
+    
+    .. deprecated::
+       This class is deprecated. Use :class:`~nethical.core.integrated_governance.IntegratedGovernance` instead.
+       Phase3IntegratedGovernance is maintained for backward compatibility only.
+    """
     
     def __init__(
         self,
@@ -31,12 +54,22 @@ class Phase3IntegratedGovernance:
     ):
         """Initialize integrated governance.
         
+        .. deprecated::
+           Use IntegratedGovernance instead for unified access to all phases.
+        
         Args:
             redis_client: Optional Redis client for persistence
             correlation_config_path: Path to correlation rules config
             storage_dir: Base directory for data storage
             enable_performance_optimization: Enable performance optimizer
         """
+        warnings.warn(
+            "Phase3IntegratedGovernance is deprecated and will be removed in a future version. "
+            "Use IntegratedGovernance from nethical.core.integrated_governance instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
         # Initialize all components
         self.risk_engine = RiskEngine(
             redis_client=redis_client,

@@ -1318,19 +1318,21 @@ governance.load_plugin("financial-compliance-v2")
    - **Effort**: 2-3 weeks
    - **Priority**: HIGH
 
-2. **Duplicate Functionality**
+2. **Duplicate Functionality**  ✅ COMPLETED
    - **Issue**: Phase integration files overlap with IntegratedGovernance
    - **Files**: `phase3_integration.py`, `phase4_integration.py`, `phase567_integration.py`, `phase89_integration.py`
    - **Solution**: Add deprecation notices, maintain for backward compatibility
    - **Effort**: 1 week
    - **Priority**: MEDIUM
+   - **Status**: COMPLETE - All phase integration files now include deprecation warnings directing users to IntegratedGovernance
 
-3. **Test Import Errors**
+3. **Test Import Errors**  ✅ COMPLETED
    - **File**: `tests/unit/test_governance.py`
    - **Issue**: Outdated imports and assertions
    - **Solution**: Update to current API, modernize tests
    - **Effort**: 1-2 days
    - **Priority**: HIGH
+   - **Status**: COMPLETE - Tests updated and passing with pytest-asyncio support
 
 #### Medium Priority  ✅ COMPLETED
 

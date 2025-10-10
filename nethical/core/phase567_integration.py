@@ -1,14 +1,37 @@
 """Phase 5-7 Integration Module.
 
+.. deprecated::
+   This module is deprecated and maintained only for backward compatibility.
+   Please use :class:`nethical.core.integrated_governance.IntegratedGovernance` instead,
+   which provides a unified interface for all phases (3, 4, 5-7, 8-9).
+
 This module integrates all Phase 5, 6, and 7 components:
 - Phase 5: ML Shadow Mode (MLShadowClassifier)
 - Phase 6: ML Assisted Enforcement (MLBlendedRiskEngine)
 - Phase 7: Anomaly & Drift Detection (AnomalyDriftMonitor)
+
+Migration Guide:
+    Old::
+        from nethical.core.phase567_integration import Phase567IntegratedGovernance
+        governance = Phase567IntegratedGovernance(
+            storage_dir="./data",
+            enable_shadow_mode=True
+        )
+    
+    New::
+        from nethical.core.integrated_governance import IntegratedGovernance
+        governance = IntegratedGovernance(
+            storage_dir="./data",
+            enable_shadow_mode=True,
+            enable_ml_blending=True,
+            enable_anomaly_detection=True
+        )
 """
 
 from typing import Dict, List, Optional, Any
 from datetime import datetime
 import time
+import warnings
 
 from .ml_shadow import MLShadowClassifier, MLModelType
 from .ml_blended_risk import MLBlendedRiskEngine, RiskZone
@@ -16,7 +39,12 @@ from .anomaly_detector import AnomalyDriftMonitor, AnomalyType, DriftSeverity
 
 
 class Phase567IntegratedGovernance:
-    """Integrated governance system with all Phase 5-7 ML and anomaly detection features."""
+    """Integrated governance system with all Phase 5-7 ML and anomaly detection features.
+    
+    .. deprecated::
+       This class is deprecated. Use :class:`~nethical.core.integrated_governance.IntegratedGovernance` instead.
+       Phase567IntegratedGovernance is maintained for backward compatibility only.
+    """
     
     def __init__(
         self,
@@ -56,6 +84,13 @@ class Phase567IntegratedGovernance:
             anomaly_sequence_threshold: Threshold for sequence anomalies
             anomaly_drift_threshold: Threshold for drift alerts
         """
+        warnings.warn(
+            "Phase567IntegratedGovernance is deprecated and will be removed in a future version. "
+            "Use IntegratedGovernance from nethical.core.integrated_governance instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
         self.storage_dir = storage_dir
         
         # Phase 5: ML Shadow Classifier
