@@ -1,8 +1,30 @@
 """Phase 8-9 Integration: Human-in-the-Loop & Continuous Optimization
 
+.. deprecated::
+   This module is deprecated and maintained only for backward compatibility.
+   Please use :class:`nethical.core.integrated_governance.IntegratedGovernance` instead,
+   which provides a unified interface for all phases (3, 4, 5-7, 8-9).
+
 This module provides integrated access to:
 - Phase 8: Escalation queue, human feedback, SLA tracking
 - Phase 9: Multi-objective optimization, configuration management, promotion gates
+
+Migration Guide:
+    Old::
+        from nethical.core.phase89_integration import Phase89IntegratedGovernance
+        governance = Phase89IntegratedGovernance(
+            storage_dir="./data",
+            triage_sla_seconds=3600
+        )
+    
+    New::
+        from nethical.core.integrated_governance import IntegratedGovernance
+        governance = IntegratedGovernance(
+            storage_dir="./data",
+            enable_escalation=True,
+            enable_optimization=True,
+            triage_sla_seconds=3600
+        )
 
 Usage:
     from nethical.core import Phase89IntegratedGovernance
@@ -29,6 +51,7 @@ from __future__ import annotations
 from datetime import datetime
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Tuple
+import warnings
 
 from .human_feedback import (
     EscalationQueue,
@@ -52,6 +75,10 @@ from .optimization import (
 class Phase89IntegratedGovernance:
     """Integrated governance with human-in-the-loop and optimization.
     
+    .. deprecated::
+       This class is deprecated. Use :class:`~nethical.core.integrated_governance.IntegratedGovernance` instead.
+       Phase89IntegratedGovernance is maintained for backward compatibility only.
+    
     Features:
     - Automated escalation based on decision criteria
     - Human review workflow with SLA tracking
@@ -71,6 +98,9 @@ class Phase89IntegratedGovernance:
     ):
         """Initialize integrated governance.
         
+        .. deprecated::
+           Use IntegratedGovernance instead for unified access to all phases.
+        
         Args:
             storage_dir: Directory for data storage
             triage_sla_seconds: SLA for starting review (default 1 hour)
@@ -79,6 +109,13 @@ class Phase89IntegratedGovernance:
             auto_escalate_on_low_confidence: Auto-escalate low confidence decisions
             low_confidence_threshold: Threshold for low confidence escalation
         """
+        warnings.warn(
+            "Phase89IntegratedGovernance is deprecated and will be removed in a future version. "
+            "Use IntegratedGovernance from nethical.core.integrated_governance instead.",
+            DeprecationWarning,
+            stacklevel=2
+        )
+        
         storage_path = Path(storage_dir)
         storage_path.mkdir(parents=True, exist_ok=True)
         
