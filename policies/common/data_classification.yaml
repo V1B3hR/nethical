@@ -1,0 +1,22 @@
+version: 0.1
+classes:
+- id: PUBLIC
+  description: Non-sensitive
+- id: INTERNAL
+  description: Internal operational data
+- id: SENSITIVE_PII
+  description: PII requiring protection (non-PHI)
+- id: PHI
+  description: Protected Health Information
+- id: SAFETY_CRITICAL
+  description: Mission/clinical safety impacting data
+controls:
+  PHI:
+    redact_in_logs: true
+    encrypt_at_rest: true
+    minimize_collection: true
+    retention_days: 30
+  SAFETY_CRITICAL:
+    immutable_audit: true
+    dual_control_changes: true
+    offline_tamper_store: true
