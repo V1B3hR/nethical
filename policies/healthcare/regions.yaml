@@ -1,0 +1,32 @@
+version: 0.1
+profiles:
+  US:
+    compliance:
+    - HIPAA
+    - SOC2
+    phi_locales: [en_US]
+    residency: required
+    export_controls: false
+  UK:
+    compliance:
+    - UK GDPR
+    - DPA 2018
+    - NHS DSPT
+    phi_locales: [en_GB]
+    residency: required
+    export_controls: false
+  EU:
+    compliance:
+    - EU GDPR
+    - NIS2
+    phi_locales: [en_GB, de_DE, fr_FR, es_ES, it_IT]
+    residency: required
+    export_controls: false
+  NATO:
+    compliance:
+    - NATO STANAG hooks
+    phi_locales: [en_GB]
+    residency: optional
+    export_controls: true
+notes:
+  NATO: "NATO profile enables hooks only; healthcare defaults keep defense features inert unless explicitly configured."
