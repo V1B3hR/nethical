@@ -1,0 +1,115 @@
+version: 0.2
+domain: healthcare
+description: Region-aware healthcare safety/ethics policy pack with hooks for defense-medical
+
+risk_tiers:
+  low: {threshold: 0.3}
+  medium: {threshold: 0.6}
+  high: {threshold: 0.8}
+  critical: {threshold: 0.9}
+
+disclaimers:
+  general: "This system does not provide medical diagnosis. For emergencies, call your local emergency number."
+  emergency_uk: "If this is urgent, call 999 (UK) or go to A&E."
+  emergency_us: "If this is an emergency, call 911 (US)."
+  emergency_eu: "If this is an emergency, call 112 (EU)."
+  non_diagnostic: "Information provided is educational and not a substitute for professional medical advice."
+
+region_overlays:
+  UK:
+    disclaimers:
+      emergency: "If this is urgent, call 999 (UK) or go to A&E."
+  US:
+    disclaimers:
+      emergency: "If this is an emergency, call 911 (US)."
+  EU:
+    disclaimers:
+      emergency: "If this is an emergency, call 112 (EU)."
+  NATO:
+    disclaimers:
+      emergency: "If this is an emergency, use local emergency number."
+
+routing:
+  emergency_intents:
+    escalate: true
+    priority: EMERGENCY
+    add_disclaimer: emergency
+  high_risk_medication:
+    escalate: true
+    priority: CRITICAL
+    add_disclaimer: non_diagnostic
+  ambiguous_symptoms:
+    escalate: true
+    priority: HIGH
+    add_disclaimer: non_diagnostic
+
+rules:
+  - id: hc.no_unqualified_diagnosis
+    description: Prevent definitive diagnoses without human review or validated protocol
+    when:
+      any:
+      - content.signals.contains_medical_diagnosis == true
+      - content.signals.suggests_treatment_plan == true
+    unless:
+      all:
+      - context.roles.contains_clinician == true
+      - governance.hil_approved == true
+    action:
+      decision: RESTRICT
+      add_disclaimer: non_diagnostic
+      require_hil_review: true
+      risk: high
+
+  - id: hc.prompt_injection_block
+    description: Block attempts to override safety/policy, data exfiltration, or tool abuse
+    when:
+      any:
+      - manipulation.prompt_injection.score >= 0.7
+      - manipulation.override_attempt == true
+      - manipulation.data_exfil_pattern == true
+    action:
+      decision: BLOCK
+      risk: critical
+      quarantine_recommended: true
+
+  - id: hc.phi_leakage_prevention
+    description: Mask or redact PHI before model output and logs
+    when:
+      any:
+      - security.phi_detected_outbound == true
+      - security.phi_detected_in_logs == true
+    action:
+      decision: RESTRICT
+      transform:
+      - redact_phi
+      risk: high
+
+  - id: hc.contraindication_flag
+    description: Flag potential contraindications for human review
+    when:
+      all:
+      - clinical.medication_mentioned == true
+      - clinical.condition_mentioned == true
+      - clinical.contraindication_possible == true
+    action:
+      decision: RESTRICT
+      require_hil_review: true
+      risk: high
+
+  - id: hc.emergency_intent_escalation
+    description: Escalate if self-harm/overdose/acute distress intent detected
+    when:
+      any:
+      - safety.emergency_intent == "self_harm"
+      - safety.emergency_intent == "overdose"
+      - safety.emergency_intent == "acute_distress"
+    action:
+      decision: TERMINATE
+      escalate: true
+      add_disclaimer: emergency
+      risk: critical
+
+# Defense-medical hooks (disabled by default)
+defense_hooks:
+  crypto_signaling_required: false
+  attestation_required: false
