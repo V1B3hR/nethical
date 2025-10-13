@@ -1,6 +1,9 @@
 from __future__ import annotations
-import json, hashlib, time
+import json
+import hashlib
+import time
 from typing import Dict, Any, Optional, Tuple, List
+
 
 class MerkleAppender:
     def __init__(self):
@@ -19,10 +22,11 @@ class MerkleAppender:
             nxt = []
             for i in range(0, len(nodes), 2):
                 a = nodes[i]
-                b = nodes[i+1] if i+1 < len(nodes) else a
-                nxt.append(hashlib.sha256((a+b).encode()).hexdigest())
+                b = nodes[i + 1] if i + 1 < len(nodes) else a
+                nxt.append(hashlib.sha256((a + b).encode()).hexdigest())
             nodes = nxt
         return nodes[0]
+
 
 class TamperEvidentOfflineStore:
     def __init__(self, tsa_url: Optional[str] = None):
@@ -39,7 +43,11 @@ class TamperEvidentOfflineStore:
         return leaf
 
     def snapshot(self) -> Dict[str, Any]:
-        return {"events": len(self.events), "merkle_root": self.merkle.root(), "anchors": self.anchors}
+        return {
+            "events": len(self.events),
+            "merkle_root": self.merkle.root(),
+            "anchors": self.anchors,
+        }
 
     def flush_to_remote(self) -> Tuple[bool, Optional[str]]:
         # TODO: push to remote + optional RFC3161 TSA anchor
@@ -47,6 +55,8 @@ class TamperEvidentOfflineStore:
         if not root:
             return True, None
         if self.tsa_url:
-            self.anchors.append({"type": "tsa", "url": self.tsa_url, "root": root, "ts": time.time()})
+            self.anchors.append(
+                {"type": "tsa", "url": self.tsa_url, "root": root, "ts": time.time()}
+            )
         # reset after flush (optionally keep)
         return True, root

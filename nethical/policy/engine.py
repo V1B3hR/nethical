@@ -1,7 +1,8 @@
 from __future__ import annotations
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import yaml
 from nethical.hooks.interfaces import Region
+
 
 class PolicyEngine:
     def __init__(self, rules: Dict[str, Any], region: Region):
@@ -34,28 +35,37 @@ class PolicyEngine:
         # Very minimal matcher; replace with proper AST evaluator
         any_conds = cond.get("any")
         all_conds = cond.get("all")
+
         def eval_atom(expr: str) -> bool:
             # expr example: 'manipulation.override_attempt == true'
             try:
                 left, op, right = expr.split()
                 val = self._get_fact(left, facts)
-                if right.lower() in ("true","false"):
+                if right.lower() in ("true", "false"):
                     rhs = right.lower() == "true"
                 else:
                     try:
                         rhs = float(right)
-                    except:
+                    except ValueError:
                         rhs = right.strip('"').strip("'")
-                if op == "==": return val == rhs
-                if op == ">=": return float(val) >= float(rhs)
-                if op == "<=": return float(val) <= float(rhs)
-                if op == ">":  return float(val) > float(rhs)
-                if op == "<":  return float(val) < float(rhs)
+                if op == "==":
+                    return val == rhs
+                if op == ">=":
+                    return float(val) >= float(rhs)
+                if op == "<=":
+                    return float(val) <= float(rhs)
+                if op == ">":
+                    return float(val) > float(rhs)
+                if op == "<":
+                    return float(val) < float(rhs)
                 return False
             except Exception:
                 return False
-        if any_conds and any(eval_atom(x) for x in any_conds): return True
-        if all_conds and all(eval_atom(x) for x in all_conds): return True
+
+        if any_conds and any(eval_atom(x) for x in any_conds):
+            return True
+        if all_conds and all(eval_atom(x) for x in all_conds):
+            return True
         return False
 
     def _get_fact(self, path: str, facts: Dict[str, Any]):

@@ -2,16 +2,25 @@ from __future__ import annotations
 from typing import Dict, Any, Optional
 from nethical.core import IntegratedGovernance
 from nethical.hooks.interfaces import (
-    Region, AttestationProvider, CryptoSignalProvider, CommsPolicy, OfflineStore
+    Region,
+    AttestationProvider,
+    CryptoSignalProvider,
+    CommsPolicy,
+    OfflineStore,
 )
 from nethical.security.attestation import NoopAttestation
-from nethical.security.crypto_signal import HmacRoleSignal
 from nethical.net.zerotrust import NoopCommsPolicy
 from nethical.storage.tamper_store import TamperEvidentOfflineStore
 from nethical.policy.engine import PolicyEngine
 
-from nethical.detectors.healthcare.phi_detector import PHIDetector, detect_and_redact_payload
-from nethical.detectors.healthcare.clinical_risk_detectors import extract_clinical_signals
+from nethical.detectors.healthcare.phi_detector import (
+    PHIDetector,
+    detect_and_redact_payload,
+)
+from nethical.detectors.healthcare.clinical_risk_detectors import (
+    extract_clinical_signals,
+)
+
 
 class HealthcareGuardrails:
     def __init__(
@@ -22,7 +31,7 @@ class HealthcareGuardrails:
         attestation: Optional[AttestationProvider] = None,
         crypto_signal: Optional[CryptoSignalProvider] = None,
         comms: Optional[CommsPolicy] = None,
-        offline_store: Optional[OfflineStore] = None
+        offline_store: Optional[OfflineStore] = None,
     ):
         self.gov = gov
         self.region = region
@@ -45,10 +54,14 @@ class HealthcareGuardrails:
         # PHI redaction at egress and in logs
         if "agent_output" in result and isinstance(result["agent_output"], str):
             result["agent_output"] = self.phi.redact(result["agent_output"])
-        self.offline.append_event({"type": "egress", "len": len(result.get("agent_output",""))})
+        self.offline.append_event(
+            {"type": "egress", "len": len(result.get("agent_output", ""))}
+        )
         return result
 
-    def evaluate(self, agent_id: str, action_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def evaluate(
+        self, agent_id: str, action_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         facts = {**payload, **extract_clinical_signals(payload)}
         policy_out = self.policy.evaluate(facts)
         decision = self.gov.process_action(
@@ -60,9 +73,9 @@ class HealthcareGuardrails:
             violation_severity="medium",
             action_id=action_id,
             action_type="healthcare_interaction",
-            features={'ml_score': 0.0},
+            features={"ml_score": 0.0},
             rule_risk_score=0.0,
-            rule_classification="warn"
+            rule_classification="warn",
         )
         self.offline.append_event({"type": "policy_outcome", "policy": policy_out})
         return {"facts": facts, "policy": policy_out, "governance": decision}
