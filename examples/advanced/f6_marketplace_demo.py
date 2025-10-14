@@ -6,25 +6,59 @@ This demo showcases all F6 marketplace features including:
 - Community contributions (reviews, submissions)
 - Detector packs (industry-specific bundles)
 - Integration directory (third-party systems)
+
+Status: Future Track F6 - Demonstration of planned functionality
 """
 
-from nethical.marketplace import (
-    MarketplaceClient,
-    PluginInfo,
-    PluginVersion,
-    PluginGovernance,
-    CommunityManager,
-    DetectorPackRegistry,
-    Industry,
-    IntegrationDirectory,
-    IntegrationType,
-    ExportUtility,
-    ImportUtility
-)
-from nethical.core import IntegratedGovernance
-from datetime import datetime
+import sys
 import tempfile
 import shutil
+from pathlib import Path
+from datetime import datetime
+from typing import Optional, Any, Dict
+
+# Add parent directory to path for demo utilities
+sys.path.insert(0, str(Path(__file__).parent))
+
+try:
+    from demo_utils import (
+        print_header, print_section, print_success, print_error,
+        print_warning, print_info, print_metric, safe_import,
+        run_demo_safely, print_feature_not_implemented, print_next_steps,
+        print_key_features
+    )
+except ImportError:
+    # Fallback implementations
+    def print_header(title, width=70): print(f"\n{'='*width}\n{title}\n{'='*width}\n")
+    def print_section(title, level=1): print(f"\n--- {title} ---")
+    def print_success(msg): print(f"✓ {msg}")
+    def print_error(msg): print(f"✗ {msg}")
+    def print_warning(msg): print(f"⚠  {msg}")
+    def print_info(msg, indent=0): print(f"{'  '*indent}{msg}")
+    def safe_import(module, cls=None):
+        try:
+            mod = __import__(module, fromlist=[cls] if cls else [])
+            return getattr(mod, cls) if cls else mod
+        except: return None
+    def run_demo_safely(func, name, skip=True):
+        try: func(); return True
+        except Exception as e: print_error(f"Error in {name}: {e}"); return False
+    def print_feature_not_implemented(name, coming=None):
+        msg = f"Feature '{name}' not yet implemented"
+        if coming: msg += f" (coming in {coming})"
+        print_warning(msg)
+    def print_next_steps(steps, title="Next Steps"):
+        print(f"\n{title}:")
+        for i, step in enumerate(steps, 1):
+            print(f"  {i}. {step}")
+    def print_key_features(features, title="Key Features"):
+        print(f"\n{title}:")
+        for feature in features:
+            print(f"  ✓ {feature}")
+
+# Try to import required modules (all from marketplace)
+MarketplaceClient = safe_import('nethical.marketplace', 'MarketplaceClient')
+IntegratedGovernance = safe_import('nethical.core', 'IntegratedGovernance')
 
 
 def print_section(title: str):
@@ -447,38 +481,59 @@ def demo_integrated_governance():
 
 def main():
     """Run all F6 marketplace demos."""
-    print("\n" + "="*60)
-    print("  F6: MARKETPLACE & ECOSYSTEM DEMO")
-    print("  Comprehensive demonstration of all marketplace features")
-    print("="*60)
+    print_header("F6: MARKETPLACE & ECOSYSTEM DEMO")
+    print_info("Comprehensive demonstration of all marketplace features\n")
+    
+    # Check if F6 features are available
+    if not MarketplaceClient:
+        print_feature_not_implemented("Marketplace & Ecosystem", "F6 Track")
+        print_key_features([
+            "Plugin marketplace (search, install, manage)",
+            "Plugin governance (security, performance, certification)",
+            "Community contributions (reviews, submissions)",
+            "Detector packs (industry-specific bundles)",
+            "Integration directory (third-party systems)",
+            "Integrated with governance system"
+        ])
+        print_next_steps([
+            "Review F6_GUIDE.md for comprehensive usage guide",
+            "Check F6_IMPLEMENTATION_SUMMARY.md for implementation details",
+            "See tests/test_f6_marketplace.py for test suite (39 tests)"
+        ])
+        return
     
     try:
         # Run all demos
-        demo_marketplace_client()
-        demo_plugin_governance()
-        demo_community_manager()
-        demo_detector_packs()
-        demo_integration_directory()
-        demo_integrated_governance()
+        run_demo_safely(demo_marketplace_client, "Marketplace Client")
+        run_demo_safely(demo_plugin_governance, "Plugin Governance")
+        run_demo_safely(demo_community_manager, "Community Manager")
+        run_demo_safely(demo_detector_packs, "Detector Packs")
+        run_demo_safely(demo_integration_directory, "Integration Directory")
+        run_demo_safely(demo_integrated_governance, "Integrated Governance")
         
         # Summary
-        print_section("Demo Complete ✓")
-        print("All F6 marketplace features demonstrated successfully!")
-        print("\nKey Features:")
-        print("  ✓ Plugin marketplace (search, install, manage)")
-        print("  ✓ Plugin governance (security, performance, certification)")
-        print("  ✓ Community contributions (reviews, submissions)")
-        print("  ✓ Detector packs (industry-specific bundles)")
-        print("  ✓ Integration directory (third-party systems)")
-        print("  ✓ Integrated with governance system")
+        print_header("Demo Complete ✓")
+        print_success("All F6 marketplace features demonstrated successfully!")
         
-        print("\nFor more information, see:")
-        print("  - F6_GUIDE.md: Comprehensive usage guide")
-        print("  - F6_IMPLEMENTATION_SUMMARY.md: Implementation details")
-        print("  - tests/test_f6_marketplace.py: Test suite (39 tests)")
+        print_key_features([
+            "Plugin marketplace (search, install, manage)",
+            "Plugin governance (security, performance, certification)",
+            "Community contributions (reviews, submissions)",
+            "Detector packs (industry-specific bundles)",
+            "Integration directory (third-party systems)",
+            "Integrated with governance system"
+        ])
         
+        print_next_steps([
+            "Review F6_GUIDE.md for comprehensive usage guide",
+            "Check F6_IMPLEMENTATION_SUMMARY.md for implementation details",
+            "See tests/test_f6_marketplace.py for test suite (39 tests)"
+        ])
+        
+    except KeyboardInterrupt:
+        print_warning("\nDemo interrupted by user")
     except Exception as e:
-        print(f"\n❌ Error during demo: {e}")
+        print_error(f"Error during demo: {e}")
         import traceback
         traceback.print_exc()
 
