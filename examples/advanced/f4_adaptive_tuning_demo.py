@@ -6,16 +6,59 @@ This script demonstrates:
 3. Agent-specific threshold profiles
 4. A/B testing with statistical significance
 5. Gradual rollout and rollback
+
+Status: Future Track F4 - Demonstration of planned functionality
 """
 
 import tempfile
 import time
+import sys
 from pathlib import Path
+from typing import Optional, Any, Dict
 
-from nethical.core import (
-    Phase89IntegratedGovernance,
-    PerformanceMetrics,
-)
+# Add parent directory to path for demo utilities
+sys.path.insert(0, str(Path(__file__).parent))
+
+try:
+    from demo_utils import (
+        print_header, print_section, print_success, print_error,
+        print_warning, print_info, print_metric, safe_import,
+        run_demo_safely, print_feature_not_implemented, print_next_steps,
+        print_key_features
+    )
+except ImportError:
+    # Fallback implementations
+    def print_header(title, width=70): print(f"\n{'='*width}\n{title}\n{'='*width}\n")
+    def print_section(title, level=1): print(f"\n{'---' if level==2 else '==='*23} {title} {'---' if level==2 else '==='*23}")
+    def print_success(msg): print(f"✓ {msg}")
+    def print_error(msg): print(f"✗ {msg}")
+    def print_warning(msg): print(f"⚠  {msg}")
+    def print_info(msg, indent=0): print(f"{'  '*indent}{msg}")
+    def print_metric(name, value, unit="", indent=1): print(f"{'  '*indent}{name}: {value}{unit}")
+    def safe_import(module, cls=None):
+        try:
+            mod = __import__(module, fromlist=[cls] if cls else [])
+            return getattr(mod, cls) if cls else mod
+        except: return None
+    def run_demo_safely(func, name, skip=True):
+        try: func(); return True
+        except Exception as e: print_error(f"Error in {name}: {e}"); return False
+    def print_feature_not_implemented(name, coming=None):
+        msg = f"Feature '{name}' not yet implemented"
+        if coming: msg += f" (coming in {coming})"
+        print_warning(msg)
+    def print_next_steps(steps, title="Next Steps"):
+        print(f"\n{title}:")
+        for i, step in enumerate(steps, 1):
+            print(f"  {i}. {step}")
+    def print_key_features(features, title="Key Features"):
+        print(f"\n{title}:")
+        for feature in features:
+            print(f"  ✓ {feature}")
+
+# Try to import required modules
+Phase89IntegratedGovernance = safe_import('nethical.core', 'Phase89IntegratedGovernance')
+PerformanceMetrics = safe_import('nethical.core', 'PerformanceMetrics')
 
 
 def demo_bayesian_optimization():
@@ -347,41 +390,59 @@ def demo_rollback():
 
 def main():
     """Run all demos."""
-    print("\n" + "="*70)
-    print("F4: THRESHOLDS, TUNING & ADAPTIVITY - DEMO")
-    print("="*70)
-    print("\nThis demo showcases the key features of F4:")
-    print("  1. Bayesian Optimization")
-    print("  2. Adaptive Threshold Tuning")
-    print("  3. Agent-Specific Profiles")
-    print("  4. A/B Testing Framework")
-    print("  5. Rollback Mechanism")
+    print_header("F4: THRESHOLDS, TUNING & ADAPTIVITY - DEMO")
+    print_info("This demo showcases the key features of F4:")
+    print_info("  1. Bayesian Optimization")
+    print_info("  2. Adaptive Threshold Tuning")
+    print_info("  3. Agent-Specific Profiles")
+    print_info("  4. A/B Testing Framework")
+    print_info("  5. Rollback Mechanism\n")
     
-    input("\nPress Enter to start...")
+    # Check if F4 features are available
+    if not Phase89IntegratedGovernance:
+        print_feature_not_implemented("F4 Adaptive Tuning", "F4 Track")
+        print_key_features([
+            "Bayesian optimization for parameter tuning",
+            "Adaptive threshold adjustment",
+            "Agent-specific threshold profiles",
+            "A/B testing with statistical significance",
+            "Gradual rollout and rollback mechanisms"
+        ])
+        print_next_steps([
+            "Review F4_GUIDE.md for complete feature guide",
+            "Check tests/test_f4_adaptive_tuning.py for test examples",
+            "See roadmap.md for implementation details"
+        ])
+        return
     
-    # Run demos
-    demo_bayesian_optimization()
-    input("\nPress Enter to continue...")
-    
-    demo_adaptive_threshold_tuner()
-    input("\nPress Enter to continue...")
-    
-    demo_agent_specific_profiles()
-    input("\nPress Enter to continue...")
-    
-    demo_ab_testing()
-    input("\nPress Enter to continue...")
-    
-    demo_rollback()
-    
-    print("\n" + "="*70)
-    print("DEMO COMPLETE")
-    print("="*70)
-    print("\nFor more information, see:")
-    print("  - F4_GUIDE.md - Complete feature guide")
-    print("  - tests/test_f4_adaptive_tuning.py - Test examples")
-    print("  - roadmap.md - Implementation details")
-    print("\n")
+    try:
+        print_info("Press Ctrl+C to skip individual demos\n", 0)
+        
+        run_demo_safely(demo_bayesian_optimization, "Bayesian Optimization")
+        run_demo_safely(demo_adaptive_threshold_tuner, "Adaptive Threshold Tuner")
+        run_demo_safely(demo_agent_specific_profiles, "Agent-Specific Profiles")
+        run_demo_safely(demo_ab_testing, "A/B Testing")
+        run_demo_safely(demo_rollback, "Rollback")
+        
+        print_header("DEMO COMPLETE")
+        print_key_features([
+            "Bayesian Optimization",
+            "Adaptive Threshold Tuning",
+            "Agent-Specific Profiles",
+            "A/B Testing Framework",
+            "Rollback Mechanism"
+        ])
+        
+        print_next_steps([
+            "Review F4_GUIDE.md for complete feature guide",
+            "Check tests/test_f4_adaptive_tuning.py for test examples",
+            "See roadmap.md for implementation details"
+        ])
+        
+    except KeyboardInterrupt:
+        print_warning("\nDemo interrupted by user")
+    except Exception as e:
+        print_error(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":

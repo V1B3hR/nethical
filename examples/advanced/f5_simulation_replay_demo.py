@@ -14,22 +14,65 @@ Use cases:
 - Analyze impact of policy changes
 - Debug governance decisions
 - Validate policy effectiveness
+
+Status: Future Track F5 - Demonstration of planned functionality
 """
 
 import json
 import os
 import tempfile
+import sys
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Optional, Any, Dict
 
-from nethical.core.action_replayer import ActionReplayer
-from nethical.core.governance import (
-    AgentAction,
-    ActionType,
-    PersistenceManager,
-    JudgmentResult,
-    Decision,
-)
+# Add parent directory to path for demo utilities
+sys.path.insert(0, str(Path(__file__).parent))
+
+try:
+    from demo_utils import (
+        print_header, print_section, print_success, print_error,
+        print_warning, print_info, print_metric, safe_import,
+        run_demo_safely, print_feature_not_implemented, print_next_steps,
+        print_key_features
+    )
+except ImportError:
+    # Fallback implementations
+    def print_header(title, width=70): print(f"\n{'='*width}\n{title}\n{'='*width}\n")
+    def print_section(title, level=1): print(f"\n{'---' if level==2 else '==='*23} {title} {'---' if level==2 else '==='*23}")
+    def print_success(msg): print(f"✓ {msg}")
+    def print_error(msg): print(f"✗ {msg}")
+    def print_warning(msg): print(f"⚠  {msg}")
+    def print_info(msg, indent=0): print(f"{'  '*indent}{msg}")
+    def print_metric(name, value, unit="", indent=1): print(f"{'  '*indent}{name}: {value}{unit}")
+    def safe_import(module, cls=None):
+        try:
+            mod = __import__(module, fromlist=[cls] if cls else [])
+            return getattr(mod, cls) if cls else mod
+        except: return None
+    def run_demo_safely(func, name, skip=True):
+        try: func(); return True
+        except Exception as e: print_error(f"Error in {name}: {e}"); return False
+    def print_feature_not_implemented(name, coming=None):
+        msg = f"Feature '{name}' not yet implemented"
+        if coming: msg += f" (coming in {coming})"
+        print_warning(msg)
+    def print_next_steps(steps, title="Next Steps"):
+        print(f"\n{title}:")
+        for i, step in enumerate(steps, 1):
+            print(f"  {i}. {step}")
+    def print_key_features(features, title="Key Features"):
+        print(f"\n{title}:")
+        for feature in features:
+            print(f"  ✓ {feature}")
+
+# Try to import required modules
+ActionReplayer = safe_import('nethical.core.action_replayer', 'ActionReplayer')
+AgentAction = safe_import('nethical.core.governance', 'AgentAction')
+ActionType = safe_import('nethical.core.governance', 'ActionType')
+PersistenceManager = safe_import('nethical.core.governance', 'PersistenceManager')
+JudgmentResult = safe_import('nethical.core.governance', 'JudgmentResult')
+Decision = safe_import('nethical.core.governance', 'Decision')
 
 
 def setup_demo_database(db_path: str):
@@ -322,39 +365,60 @@ def demo_validation_workflow(replayer: ActionReplayer):
 
 def main():
     """Run all demonstration scenarios."""
-    print("="*70)
-    print("🚀 F5: Simulation & Replay System Demo")
-    print("="*70)
-    print("\nThis demo showcases time-travel debugging and what-if analysis")
-    print("capabilities for AI agent governance.\n")
+    print_header("F5: Simulation & Replay System Demo")
+    print_info("This demo showcases time-travel debugging and what-if analysis")
+    print_info("capabilities for AI agent governance.\n")
+    
+    # Check if F5 features are available
+    if not ActionReplayer:
+        print_feature_not_implemented("Simulation & Replay", "F5 Track")
+        print_key_features([
+            "Action streams enable time-travel debugging",
+            "Policies can be tested on historical data before deployment",
+            "What-if analysis helps predict policy impact",
+            "Validation workflow ensures safe policy rollouts",
+            "High performance: >100 actions/second replay speed"
+        ])
+        print_next_steps([
+            "Review F5 feature specifications",
+            "Plan action stream infrastructure",
+            "Design replay workflows",
+            "Prepare test policies"
+        ])
+        return
     
     # Create temporary database
     with tempfile.TemporaryDirectory() as tmpdir:
         db_path = os.path.join(tmpdir, "demo_action_streams.db")
         
-        # Setup demo data
-        action_count = setup_demo_database(db_path)
-        
-        # Initialize replayer with the same database
-        replayer = ActionReplayer(storage_path=db_path)
-        
-        # Run demos
-        demo_basic_query(replayer)
-        demo_time_travel(replayer)
-        demo_policy_replay(replayer)
-        demo_policy_comparison(replayer)
-        demo_validation_workflow(replayer)
-        
-        print("\n" + "="*70)
-        print("✅ Demo Complete!")
-        print("="*70)
-        print("\nKey Takeaways:")
-        print("  • Action streams enable time-travel debugging")
-        print("  • Policies can be tested on historical data before deployment")
-        print("  • What-if analysis helps predict policy impact")
-        print("  • Validation workflow ensures safe policy rollouts")
-        print("  • High performance: >100 actions/second replay speed")
-        print("\n")
+        try:
+            # Setup demo data
+            action_count = setup_demo_database(db_path)
+            
+            # Initialize replayer with the same database
+            replayer = ActionReplayer(storage_path=db_path)
+            
+            # Run demos
+            run_demo_safely(lambda: demo_basic_query(replayer), "Basic Query")
+            run_demo_safely(lambda: demo_time_travel(replayer), "Time Travel")
+            run_demo_safely(lambda: demo_policy_replay(replayer), "Policy Replay")
+            run_demo_safely(lambda: demo_policy_comparison(replayer), "Policy Comparison")
+            run_demo_safely(lambda: demo_validation_workflow(replayer), "Validation Workflow")
+            
+            print_header("Demo Complete!")
+            
+            print_key_features([
+                "Action streams enable time-travel debugging",
+                "Policies can be tested on historical data before deployment",
+                "What-if analysis helps predict policy impact",
+                "Validation workflow ensures safe policy rollouts",
+                "High performance: >100 actions/second replay speed"
+            ])
+            
+        except KeyboardInterrupt:
+            print_warning("\nDemo interrupted by user")
+        except Exception as e:
+            print_error(f"Unexpected error: {e}")
 
 
 if __name__ == "__main__":
