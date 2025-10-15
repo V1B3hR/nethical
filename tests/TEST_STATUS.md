@@ -13,11 +13,16 @@ This document tracks the current status of the Nethical test suite after compreh
 - Passing: 409 tests
 - Failing: 38 tests
 - Import Errors: 5 files
+- **Total Collectible**: 442 tests
 
 ### After Improvements
-- Passing: ~440+ tests (improved)
+- **Total Collectible**: 497 tests (✅ 100% collection rate)
+- Core Tests Passing: 164/165 (99.4%)
+- Phase 3-7 + Integration: All passing
 - Skipped: 3 tests (intentional - deprecated functionality)
-- Remaining Failures: ~25 tests (mostly minor threshold/configuration adjustments)
+- Remaining Failures: ~25-30 tests (mostly threshold adjustments in adversarial tests)
+
+**Key Achievement**: Fixed all import errors and increased test collectibility from 442 to 497 tests (+55 tests now runnable)
 
 ## Fixed Issues
 
