@@ -248,7 +248,7 @@ class SyslogConnector(LogConnector):
                 # Put metadata as a single structured data element; keys must be safe
                 try:
                     sd_pairs = " ".join(
-                        f'{k}="{str(v).replace("\\", "\\\\").replace("\\"","\\\\"")}"'
+                        f'{k}="{str(v).replace(chr(92), chr(92)*2).replace(chr(34), chr(92)+chr(34))}"'
                         for k, v in sanitize_metadata(entry.metadata).items()
                         if isinstance(k, str)
                     )

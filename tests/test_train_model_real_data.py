@@ -5,10 +5,12 @@ import shutil
 import tempfile
 from pathlib import Path
 import sys
+import pytest
 
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 
+@pytest.mark.skip(reason="scripts.train_model module was deprecated - functionality moved to training/train_any_model.py")
 def test_train_model_with_real_data():
     """Test train_model.py with sample real datasets."""
     print("\n" + "=" * 70)
@@ -116,6 +118,7 @@ def test_train_model_with_real_data():
         os.chdir(original_dir)
 
 
+@pytest.mark.skip(reason="scripts.train_model module was deprecated - functionality moved to training/train_any_model.py")
 def test_fallback_to_synthetic():
     """Test that train_model.py falls back to synthetic data when no real data available."""
     print("\n" + "=" * 70)
