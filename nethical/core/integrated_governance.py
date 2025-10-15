@@ -60,6 +60,17 @@ from .data_minimization import DataMinimization, DataCategory, RetentionPolicy
 # F2: Plugin Interface imports
 from .plugin_interface import PluginManager, get_plugin_manager
 
+# Resource Management imports
+try:
+    from ..quotas import QuotaEnforcer, QuotaConfig
+    from ..utils.pii import PIIDetector, get_pii_detector
+    QUOTA_AVAILABLE = True
+except ImportError:
+    QUOTA_AVAILABLE = False
+    QuotaEnforcer = None
+    QuotaConfig = None
+    PIIDetector = None
+
 
 class IntegratedGovernance:
     """Consolidated governance system with all features from Phases 3-9 and F3.
@@ -112,7 +123,11 @@ class IntegratedGovernance:
         # F3: Privacy & Data Handling config
         privacy_mode: Optional[str] = None,
         epsilon: float = 1.0,
-        redaction_policy: str = "standard"
+        redaction_policy: str = "standard",
+        # Quota & Resource Management config
+        enable_quota_enforcement: bool = False,
+        requests_per_second: float = 10.0,
+        max_payload_bytes: int = 1_000_000
     ):
         """Initialize unified integrated governance.
         
@@ -310,6 +325,21 @@ class IntegratedGovernance:
             anonymization_enabled=True
         )
         
+        # ==================== Quota & Resource Management ====================
+        self.quota_enforcer = None
+        self.enable_quota_enforcement = enable_quota_enforcement
+        if enable_quota_enforcement and QUOTA_AVAILABLE:
+            quota_config = QuotaConfig(
+                requests_per_second=requests_per_second,
+                max_payload_bytes=max_payload_bytes
+            )
+            self.quota_enforcer = QuotaEnforcer(quota_config)
+        
+        # PII Detector (always available for enhanced privacy)
+        self.pii_detector = None
+        if QUOTA_AVAILABLE:
+            self.pii_detector = get_pii_detector()
+        
         # Component flags
         self.components_enabled = {
             # Phase 3
@@ -335,7 +365,10 @@ class IntegratedGovernance:
             'redaction_pipeline': True,
             'differential_privacy': privacy_mode == "differential",
             'federated_analytics': region_id is not None,
-            'data_minimization': True
+            'data_minimization': True,
+            # Resource Management
+            'quota_enforcement': enable_quota_enforcement and QUOTA_AVAILABLE,
+            'pii_detection': QUOTA_AVAILABLE
         }
     
     def _load_regional_policy(self, policy_name: str) -> None:
@@ -495,6 +528,47 @@ class IntegratedGovernance:
         """
         start_time = time.time()
         
+        # ==================== Quota & Resource Enforcement ====================
+        quota_result = None
+        pii_matches = []
+        pii_risk = 0.0
+        
+        if self.quota_enforcer:
+            # Calculate payload size
+            payload_size = len(str(action)) if action else 0
+            
+            # Check quotas
+            quota_result = self.quota_enforcer.check_quota(
+                agent_id=agent_id,
+                cohort=cohort,
+                tenant=effective_region if effective_region else None,  # Use region as tenant
+                payload_size=payload_size,
+                action_type=action_type or "query"
+            )
+            
+            # If blocked, return early
+            if not quota_result["allowed"] and quota_result["decision"] == "BLOCK":
+                return {
+                    'agent_id': agent_id,
+                    'timestamp': datetime.utcnow().isoformat(),
+                    'decision': 'BLOCK',
+                    'reason': quota_result["reason"],
+                    'quota_enforcement': quota_result,
+                    'blocked_by_quota': True
+                }
+        
+        # Enhanced PII Detection
+        if self.pii_detector and action:
+            action_str = str(action)
+            pii_matches = self.pii_detector.detect_all(action_str)
+            if pii_matches:
+                pii_risk = self.pii_detector.calculate_pii_risk_score(pii_matches)
+                # Boost violation score if PII detected
+                if pii_risk > 0.5:
+                    violation_detected = True
+                    violation_type = violation_type or "privacy"
+                    violation_severity = "critical" if pii_risk > 0.8 else "high"
+        
         # Use instance region if not provided
         effective_region = region_id or self.region_id
         effective_domain = self.logical_domain
@@ -511,6 +585,12 @@ class IntegratedGovernance:
             'logical_domain': effective_domain,
             'compliance_requirements': compliance_requirements or [],
             'data_residency': residency_validation,
+            'quota_enforcement': quota_result if quota_result else None,
+            'pii_detection': {
+                'matches_count': len(pii_matches),
+                'pii_risk_score': pii_risk,
+                'pii_types': [m.pii_type.value for m in pii_matches] if pii_matches else []
+            } if self.pii_detector else None,
             'phase3': {},
             'phase4': {},
             'phase567': {},
@@ -533,6 +613,13 @@ class IntegratedGovernance:
             violation_severity=violation_score,
             action_context=action_context
         )
+        
+        # Boost risk score based on PII detection and quota pressure
+        if pii_risk > 0:
+            risk_score = min(1.0, risk_score + (pii_risk * 0.3))  # Add up to 30% for PII
+        
+        if quota_result and quota_result.get("backpressure_level", 0) > 0.8:
+            risk_score = min(1.0, risk_score + 0.2)  # Add 20% for quota pressure
         
         results['phase3']['risk_score'] = risk_score
         results['phase3']['risk_tier'] = self.risk_engine.get_tier(agent_id).value
