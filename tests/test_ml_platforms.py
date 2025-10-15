@@ -14,7 +14,8 @@ from nethical.integrations.ml_platforms import (
     MLflowIntegration,
     WandBIntegration,
     SageMakerIntegration,
-    MLPlatformManager
+    MLPlatformManager,
+    RunStatus
 )
 
 
@@ -34,7 +35,7 @@ class TestExperimentRun:
         assert run.experiment_name == "test_experiment"
         assert run.parameters["lr"] == 0.001
         assert run.metrics["accuracy"] == 0.95
-        assert run.status == "running"
+        assert run.status == RunStatus.RUNNING
     
     def test_experiment_run_to_dict(self):
         """Test converting experiment run to dict"""
@@ -136,7 +137,7 @@ class TestMLflowIntegration:
         integration.end_run(run_id, status="completed")
         
         run = integration.active_runs[run_id]
-        assert run.status == "completed"
+        assert run.status == RunStatus.COMPLETED
         assert run.end_time is not None
     
     def test_complete_workflow(self):
@@ -166,7 +167,7 @@ class TestMLflowIntegration:
         
         # Verify
         run = integration.active_runs[run_id]
-        assert run.status == "completed"
+        assert run.status == RunStatus.COMPLETED
         assert run.parameters["model"] == "random_forest"
         assert run.metrics["train_accuracy"] == 0.98
         assert "model.pkl" in run.artifacts
@@ -323,7 +324,7 @@ class TestMLPlatformManager:
         for platform_name, run_id in run_ids.items():
             platform = manager.platforms[platform_name]
             run = platform.active_runs[run_id]
-            assert run.status == "completed"
+            assert run.status == RunStatus.COMPLETED
     
     def test_complete_multi_platform_workflow(self):
         """Test complete workflow across multiple platforms"""
@@ -360,7 +361,7 @@ class TestMLPlatformManager:
             platform = manager.platforms[platform_name]
             run = platform.active_runs[run_id]
             
-            assert run.status == "completed"
+            assert run.status == RunStatus.COMPLETED
             assert run.parameters["model"] == "xgboost"
             assert run.metrics["accuracy"] == 0.96
     

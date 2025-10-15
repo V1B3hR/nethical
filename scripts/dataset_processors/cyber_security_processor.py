@@ -223,7 +223,11 @@ class CyberSecurityAttacksProcessor(BaseDatasetProcessor):
         has_signal = any(k in row for k in (*self.SCORE_KEYS, *self.SEVERITY_KEYS, *self.COUNT_KEYS, *self.PROTOCOL_KEYS))
         return has_labelish or has_signal
 
-    def postprocess_record(self, record: Dict[str, Any], *, row: Dict[str, Any], idx: int) -> Dict[str, Any]:
+    def postprocess_record(self, record: Dict[str, Any], *, row: Optional[Dict[str, Any]] = None, idx: Optional[int] = None) -> Dict[str, Any]:
+        # If called from base class without row/idx, just return the record
+        if row is None or idx is None:
+            return record
+            
         # Attach helpful metadata and a deterministic group_id to support group-aware splits
         meta = record.setdefault("meta", {})
         meta.setdefault("dataset", self.dataset_name)
