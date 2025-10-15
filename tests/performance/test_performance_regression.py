@@ -8,7 +8,7 @@ Run with: pytest tests/performance/test_performance_regression.py -v
 import pytest
 import asyncio
 from nethical.core.governance import SafetyGovernance, MonitoringConfig, AgentAction, ActionType
-from nethical.profiling import PerformanceProfiler
+from nethical.performanceprofiling import PerformanceProfiler
 
 
 # Initialize profiler

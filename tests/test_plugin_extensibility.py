@@ -26,7 +26,7 @@ from nethical.core.policy_dsl import (
     RuleEvaluator, RuleSeverity
 )
 from nethical.detectors.base_detector import SafetyViolation
-from examples.custom_detectors import (
+from examples.basic.custom_detectors import (
     FinancialComplianceDetector, HealthcareComplianceDetector, CustomPolicyDetector
 )
 

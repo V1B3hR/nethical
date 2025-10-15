@@ -13,7 +13,7 @@ from statistics import mean, stdev
 from typing import List
 
 # Add examples to path
-sys.path.insert(0, str(Path(__file__).parent.parent / "examples"))
+sys.path.insert(0, str(Path(__file__).parent.parent / "examples" / "basic"))
 
 from nethical.core.plugin_interface import get_plugin_manager, PluginManager
 from nethical.core.policy_dsl import get_policy_engine, PolicyEngine
