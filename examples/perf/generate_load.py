@@ -548,8 +548,7 @@ def main():
     p95_ok = stats["latency_p95_ms"] < 200
     p99_ok = stats["latency_p99_ms"] < 500
     rps_ok = (
-        abs(stats["achieved_rps"] - stats["target_rps"]) / stats["target_rps"]
-        < 0.1
+        abs(stats["achieved_rps"] - stats["target_rps"]) / stats["target_rps"] < 0.1
     )
     error_ok = stats["error_rate"] < 0.01
 
