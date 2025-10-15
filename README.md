@@ -493,6 +493,62 @@ Grafana dashboards (accessible at http://localhost:3000 with docker-compose):
 - Resource utilization
 - Quota enforcement metrics
 
+## 📈 Performance & Sizing
+
+### Capacity Planning
+
+Nethical is designed for production deployments ranging from tight-budget pilots to high-scale multi-region systems. Performance depends on enabled features, hardware resources, and workload characteristics.
+
+**Typical Capacity** (with core features):
+- **Small** (2-4 vCPU, 8-16GB RAM): 100-200 RPS, ~200-400 agents
+- **Medium** (4-8 vCPU, 16-32GB RAM): 300-500 RPS, ~600-1000 agents  
+- **Large** (8+ vCPU, 32GB+ RAM): 500-1000 RPS, ~1000-2000 agents
+
+See the [Performance Sizing Guide](docs/ops/PERFORMANCE_SIZING.md) for detailed capacity planning, feature cost tiers, and tuning recommendations.
+
+### Load Testing
+
+Validate your deployment with the included load generator:
+
+```bash
+# Test tight-budget profile at 100 RPS for 60 seconds
+python examples/perf/generate_load.py \
+  --agents 200 \
+  --rps 100 \
+  --duration 60 \
+  --cohort production
+
+# Compare performance with different feature combinations
+python examples/perf/generate_load.py --agents 200 --rps 100 --duration 60 --no-shadow
+python examples/perf/generate_load.py --agents 200 --rps 100 --duration 60 --shadow --ml-blend
+```
+
+The load generator outputs:
+- Real-time summary: achieved RPS, latency percentiles (p50/p95/p99), error rates
+- CSV results: per-action timing and metadata (`perf_results.csv`)
+- SLO compliance check: validates p95 < 200ms, p99 < 500ms targets
+
+### Sample Configuration
+
+Use the tight-budget configuration as a starting point:
+
+```bash
+# With docker-compose
+docker-compose --env-file examples/perf/tight_budget_config.env up
+
+# Or export directly
+export $(cat examples/perf/tight_budget_config.env | grep -v '^#' | xargs)
+```
+
+The sample config ([examples/perf/tight_budget_config.env](examples/perf/tight_budget_config.env)) includes:
+- Quota enforcement: `NETHICAL_ENABLE_QUOTA=true`, `NETHICAL_REQUESTS_PER_SECOND=100.0`
+- Observability: `NETHICAL_ENABLE_OTEL=true` with OpenTelemetry integration
+- Core features enabled: ethical checks, standard PII redaction, Merkle anchoring
+- Heavy features in shadow mode: ML classifiers log scores without enforcement
+- Commented guidance for tuning and scaling
+
+**Growth path**: Start at 100 RPS with core features, scale vertically to 300 RPS, enable ML enforcement, then scale horizontally for 500+ RPS with regional sharding.
+
 ## ⚠️ Known Gaps and Roadmap
 
 ### Test Coverage Status (36 adversarial tests)
