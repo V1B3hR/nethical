@@ -179,6 +179,8 @@ us-e  us-w  ca-c       eu-w      eu-c         ap-s   ap-ne   ap-se
 - 10,000 concurrent agents (10 regions × 1,000 agents)
 - 100M actions storage with tiering
 
+**Note**: Actual throughput may be 5-10% lower due to cross-region coordination overhead and network latency. System designed with headroom to ensure targets are met under real-world conditions.
+
 ## Hardware Requirements
 
 Each regional instance requires:

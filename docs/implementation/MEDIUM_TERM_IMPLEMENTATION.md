@@ -68,8 +68,8 @@ Global Infrastructure:
 #### Storage Tiering Strategy
 - **Hot Tier**: Last 7 days on SSD (~200 GB per region)
 - **Warm Tier**: 8-30 days on HDD/Object Storage (~300 GB per region)
-- **Cold Tier**: 30+ days in archival storage (unlimited)
-- **Compression**: 3:1 ratio (Level 6)
+- **Cold Tier**: 30+ days in archival storage (scales with retention policy, typically 90-365 days)
+- **Compression**: 3:1 ratio typical for JSON data (Level 6); actual ratio varies by data patterns (2:1 to 5:1 range)
 
 #### Advanced Caching (3-Level)
 - **L1 (In-Memory)**: 2 GB, 30s TTL, 60-70% hit rate
