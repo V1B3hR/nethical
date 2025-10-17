@@ -35,6 +35,7 @@ import contextlib
 import time
 
 
+import os
 # -----------------------------------------------------------------------------
 # Logging
 # -----------------------------------------------------------------------------
@@ -928,12 +929,23 @@ class MarketplaceClient:
                     zf.extractall(dest_dir)
             elif suffixes.endswith(".tar.gz") or suffixes.endswith(".tgz") or suffixes.endswith(".tar"):
                 with tarfile.open(file_path, "r:*") as tf:
-                    tf.extractall(dest_dir)
+                    self._safe_extract_tar(tf, dest_dir)
             else:
                 # Non-archive: copy file
                 (dest_dir / file_path.name).write_bytes(file_path.read_bytes())
         except Exception as e:
             raise InstallationError(f"Failed to extract archive '{file_path.name}': {e}") from e
+
+    def _safe_extract_tar(self, tar: tarfile.TarFile, path: Path):
+        """Safely extract tar archive, preventing directory traversal attacks."""
+        for member in tar.getmembers():
+            member_path = path / member.name
+            abs_dest = (path / member.name).resolve()
+            if not str(abs_dest).startswith(str(path.resolve())):
+                raise InstallationError(f"Archive member '{member.name}' would extract outside of {path}")
+            if member.islnk() or member.issym():
+                raise InstallationError(f"Archive member '{member.name}' is a link (not allowed)")
+            tar.extract(member, path)
 
     # -------------------------------------------------------------------------
     # Optional: plugin dynamic loading utilities
