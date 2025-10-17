@@ -45,10 +45,70 @@ This document provides a comprehensive threat model using the STRIDE methodology
 
 | Control | Implementation | Status |
 |---------|---------------|--------|
-| Authentication | Agent ID validation | ✅ Partial |
-| Authorization | Risk-based decisions | ✅ Complete |
-| Audit Logging | Merkle-anchored | ✅ Complete |
+| Authentication | JWT tokens + API keys (`nethical/security/auth.py`) | ✅ Complete |
+| Authorization | RBAC + Risk-based decisions (`nethical/core/rbac.py`) | ✅ Complete |
+| Access Control | Role hierarchy (admin, operator, auditor, viewer) | ✅ Complete |
+| Audit Logging | Merkle-anchored + RBAC audit trail | ✅ Complete |
 | Data Protection | PII detection/redaction | ✅ Complete |
 | Rate Limiting | Quota enforcement | ✅ Complete |
+| Supply Chain | Dependabot + SBOM + signing | ✅ Complete |
+| Threat Model | Automated validation (CI/CD) | ✅ Complete |
 
 See full details in implementation.
+
+## Recent Security Enhancements (Phase 1)
+
+### 1.1 Role-Based Access Control (RBAC)
+**Implementation**: `nethical/core/rbac.py`
+
+- **Role Hierarchy**: 
+  - Admin: Full system control
+  - Operator: Execute actions and manage quarantine
+  - Auditor: Read-only access to logs and violations
+  - Viewer: Basic read access to metrics and policies
+  
+- **Features**:
+  - Decorator-based access control (`@require_role`, `@require_permission`)
+  - Fine-grained permissions (16+ permission types)
+  - Custom permission grants
+  - Comprehensive audit trail
+  - Hierarchical role inheritance
+
+### 1.2 JWT Authentication System
+**Implementation**: `nethical/security/auth.py`
+
+- **Token Types**:
+  - Access tokens (short-lived, 1 hour default)
+  - Refresh tokens (long-lived, 7 days default)
+  
+- **Features**:
+  - HS256-signed JWT tokens
+  - Token revocation support
+  - API key management for service-to-service auth
+  - Token refresh mechanism
+  - Expiration and validation
+  
+- **API Keys**:
+  - SHA-256 hashed storage
+  - Optional expiration
+  - Per-user key management
+  - Enable/disable functionality
+  - Last-used tracking
+
+### 1.3 Supply Chain Security
+**Implementation**: `.github/dependabot.yml`
+
+- Automated dependency updates (weekly)
+- Separate PRs for major/minor/patch updates
+- Security-focused dependency scanning
+- GitHub Actions version management
+- Docker image updates
+
+### 1.4 Threat Model Automation
+**Implementation**: `.github/workflows/threat-model.yml`
+
+- Automated STRIDE validation on PRs
+- Security controls mapping to code
+- Coverage metrics calculation
+- PR comments with security status
+- Weekly scheduled validation
