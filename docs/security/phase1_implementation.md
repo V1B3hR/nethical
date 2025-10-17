@@ -142,7 +142,10 @@ user_id = authenticate_request(
 - **Signature Verification**: HMAC-SHA256 signature validation
 - **Expiration Checking**: Automatic expiry validation
 - **API Key Hashing**: Keys are hashed with SHA-256
+  - Note: SHA-256 is acceptable for high-entropy API keys (32-byte random tokens)
+  - For user passwords, use bcrypt/scrypt/argon2 instead
 - **Last Used Tracking**: API keys track last usage
+- **Secure Logging**: API keys and tokens are not logged in full
 
 ## 3. Supply Chain Security
 

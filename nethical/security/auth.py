@@ -373,6 +373,9 @@ class AuthManager:
         api_key_string = f"{key_id}.{key_secret}"
         
         # Hash the key for storage
+        # Note: SHA256 is acceptable for high-entropy API keys (not passwords)
+        # API keys are 32-byte random tokens with ~256 bits of entropy
+        # For user passwords, use bcrypt/scrypt/argon2 instead
         key_hash = hashlib.sha256(api_key_string.encode()).hexdigest()
         
         api_key = APIKey(
@@ -385,7 +388,7 @@ class AuthManager:
         )
         
         self.api_keys[key_id] = api_key
-        log.info(f"Created API key '{name}' for user {user_id}")
+        log.info(f"Created API key '{name}' (ID: {key_id}) for user {user_id}")
         
         return api_key_string, api_key
     
@@ -427,7 +430,7 @@ class AuthManager:
             # Update last used
             api_key.last_used_at = datetime.now(timezone.utc)
             
-            log.info(f"Verified API key {key_id} for user {api_key.user_id}")
+            log.info(f"Verified API key (ID: {key_id}) for user {api_key.user_id}")
             return api_key
             
         except (ValueError, AttributeError) as e:

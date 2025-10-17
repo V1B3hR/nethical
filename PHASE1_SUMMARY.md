@@ -125,8 +125,8 @@ def delete_user(user_id: str, current_user: str):
 ## Files Changed/Added
 
 **New Files (8)**:
-- `nethical/core/rbac.py` (445 lines)
-- `nethical/security/auth.py` (542 lines)
+- `nethical/core/rbac.py` (436 lines)
+- `nethical/security/auth.py` (537 lines)
 - `tests/unit/test_rbac.py` (289 lines)
 - `tests/unit/test_auth.py` (354 lines)
 - `.github/dependabot.yml` (73 lines)
@@ -149,6 +149,8 @@ def delete_user(user_id: str, current_user: str):
 3. **API Key Rotation**: API keys support expiration dates
 4. **Audit Trail**: All access decisions are logged
 5. **Role Hierarchy**: Follows principle of least privilege
+6. **API Key Hashing**: Uses SHA256 for high-entropy API keys (32-byte random tokens). For user passwords, use bcrypt/scrypt/argon2 instead
+7. **Sensitive Data Logging**: API keys and tokens are not logged in full; only IDs are logged
 
 ## Compliance Support
 
@@ -169,9 +171,9 @@ Potential future additions:
 
 ## Testing Instructions
 
-1. **Run all tests**:
+1. **Run all security tests**:
    ```bash
-   pytest tests/unit/test_rbac.py tests/unit/test_auth.py -v
+   pytest tests/unit/test_rbac.py tests/unit/test_auth.py tests/unit/test_governance.py -v
    ```
 
 2. **Run security demo**:

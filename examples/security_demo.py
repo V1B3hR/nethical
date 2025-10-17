@@ -175,7 +175,7 @@ def example_api_keys():
     print(f"   User: {api_key.user_id}")
     print(f"   Name: {api_key.name}")
     print(f"   Expires: {api_key.expires_at}")
-    print(f"   Key string: {api_key_string[:20]}...{api_key_string[-10:]}")
+    print(f"   Key string: {api_key_string[:10]}...{api_key_string[-6:]}")  # Only show parts
     
     # Verify API key
     print("\n2. API Key Verification:")
