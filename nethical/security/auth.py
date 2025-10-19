@@ -430,7 +430,7 @@ class AuthManager:
             # Update last used
             api_key.last_used_at = datetime.now(timezone.utc)
             
-            log.info(f"Verified API key (ID: {key_id}) for user {api_key.user_id}")
+            log.info(f"Verified API key for user {api_key.user_id}")
             return api_key
             
         except (ValueError, AttributeError) as e:
