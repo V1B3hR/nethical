@@ -85,6 +85,18 @@ from .policy_dsl import (
     get_policy_engine
 )
 
+# Phase 1: Security & Governance
+from .rbac import (
+    Role,
+    Permission,
+    RBACManager,
+    AccessDeniedError,
+    require_role,
+    require_permission,
+    get_rbac_manager,
+    set_rbac_manager,
+)
+
 __all__ = [
     # Phase 3
     'RiskEngine',
@@ -182,4 +194,13 @@ __all__ = [
     'RuleEvaluator',
     'RuleSeverity',
     'get_policy_engine',
+    # Phase 1: Security & Governance
+    'Role',
+    'Permission',
+    'RBACManager',
+    'AccessDeniedError',
+    'require_role',
+    'require_permission',
+    'get_rbac_manager',
+    'set_rbac_manager',
 ]
