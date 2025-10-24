@@ -23,6 +23,18 @@ from .auth import (
     set_auth_manager,
 )
 
+from .middleware import (
+    AuthMiddleware,
+    require_auth,
+    require_auth_and_role,
+    require_auth_and_permission,
+)
+
+from .admin import (
+    AdminInterface,
+    UserInfo,
+)
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -43,5 +55,13 @@ __all__ = [
     "authenticate_request",
     "get_auth_manager",
     "set_auth_manager",
+    # Middleware
+    "AuthMiddleware",
+    "require_auth",
+    "require_auth_and_role",
+    "require_auth_and_permission",
+    # Admin Interface
+    "AdminInterface",
+    "UserInfo",
 ]
 
