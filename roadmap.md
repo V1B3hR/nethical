@@ -1,19 +1,7 @@
 Phase 1: Solidify Core Security and Governance ⚡ CRITICAL PRIORITY
 
-1.1 Implement RBAC and Access Control (NEW - URGENT)
 
-Criticality: CRITICAL (mentioned in threat model but missing)
-
-Actions:
-Design role hierarchy: admin, operator, auditor, viewer
-Implement nethical/core/rbac.py with decorator-based access control
-
-Add API authentication middleware
-Create admin interface for role management
-Add RBAC tests to security test suite
-Acceptance Criteria: All API endpoints protected with role-based permissions
-
-1.2 Formalize Threat Model Automation (Enhanced)
+1.1 Formalize Threat Model Automation (Enhanced)
 Criticality: HIGH
 
 Current State: Static threat model exists in docs/security/threat_model.md
@@ -25,7 +13,7 @@ Add threat model validation to CI/CD pipeline
 Implement automated security control verification
 Metrics: Coverage percentage, controls-to-threats mapping
 
-1.3 Enhance Supply Chain Security (Refine Existing)
+1.2 Enhance Supply Chain Security (Refine Existing)
 
 Current State: Good foundation with SBOM and signing
 
@@ -35,7 +23,7 @@ Implement dependabot.yml with automated PR creation
 Create supply chain security dashboard
 Add SLSA Level 3+ compliance tracking
 
-1.4 Complete Authentication System (NEW)
+1.3 Complete Authentication System (NEW)
 
 Criticality: HIGH
 
