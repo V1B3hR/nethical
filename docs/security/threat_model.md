@@ -53,7 +53,7 @@ This document provides a comprehensive threat model using the STRIDE methodology
 | Audit Logging | Merkle-anchored + RBAC audit trail | ✅ Complete |
 | Data Protection | PII detection/redaction | ✅ Complete |
 | Rate Limiting | Quota enforcement | ✅ Complete |
-| Supply Chain | Dependabot + SBOM + signing + SLSA L3 | ✅ Complete |
+| Supply Chain | Dependabot + SBOM + signing + version pinning | ✅ Implemented |
 | Threat Model | Automated validation (CI/CD) | ✅ Complete |
 
 See full details in implementation.
@@ -131,12 +131,13 @@ See full details in implementation.
 **Implementation**: `.github/dependabot.yml`, `scripts/supply_chain_dashboard.py`
 
 - Automated dependency updates (weekly)
-- Dependency version pinning with hash verification
-- SLSA Level 3 compliance tracking
-- SBOM generation
+- Dependency version pinning (requirements.txt)
+- SLSA compliance assessment and tracking
+- SBOM generation capability
 - Security vulnerability monitoring
 - GitHub Actions version management
 - Docker image updates
+- **Note**: Full hash verification (--hash) and complete SLSA Level 3 attestations in progress
 
 ### 1.6 Threat Model Automation
 **Implementation**: `.github/workflows/threat-model.yml`
