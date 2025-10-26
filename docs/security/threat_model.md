@@ -46,12 +46,14 @@ This document provides a comprehensive threat model using the STRIDE methodology
 | Control | Implementation | Status |
 |---------|---------------|--------|
 | Authentication | JWT tokens + API keys (`nethical/security/auth.py`) | ✅ Complete |
+| Multi-Factor Authentication | TOTP + backup codes (`nethical/security/mfa.py`) | ✅ Complete |
+| SSO/SAML | SAML 2.0, OAuth, OIDC (`nethical/security/sso.py`) | ✅ Complete |
 | Authorization | RBAC + Risk-based decisions (`nethical/core/rbac.py`) | ✅ Complete |
 | Access Control | Role hierarchy (admin, operator, auditor, viewer) | ✅ Complete |
 | Audit Logging | Merkle-anchored + RBAC audit trail | ✅ Complete |
 | Data Protection | PII detection/redaction | ✅ Complete |
 | Rate Limiting | Quota enforcement | ✅ Complete |
-| Supply Chain | Dependabot + SBOM + signing | ✅ Complete |
+| Supply Chain | Dependabot + SBOM + signing + SLSA L3 | ✅ Complete |
 | Threat Model | Automated validation (CI/CD) | ✅ Complete |
 
 See full details in implementation.
@@ -95,16 +97,48 @@ See full details in implementation.
   - Enable/disable functionality
   - Last-used tracking
 
-### 1.3 Supply Chain Security
-**Implementation**: `.github/dependabot.yml`
+### 1.3 Multi-Factor Authentication (MFA)
+**Implementation**: `nethical/security/mfa.py`
+
+- **Methods**:
+  - TOTP (Time-based One-Time Password)
+  - Backup recovery codes
+  - SMS verification (framework)
+  
+- **Features**:
+  - QR code generation for easy enrollment
+  - Mandatory MFA for admin operations
+  - Backup code management
+  - User-friendly setup flow
+  - 21 comprehensive tests
+
+### 1.4 SSO/SAML Integration
+**Implementation**: `nethical/security/sso.py`
+
+- **Supported Protocols**:
+  - SAML 2.0 Service Provider
+  - OAuth 2.0
+  - OpenID Connect (OIDC)
+  
+- **Features**:
+  - Multiple IdP configuration support
+  - Flexible attribute mapping
+  - User auto-provisioning
+  - Group/role synchronization
+  - 21 comprehensive tests
+
+### 1.5 Supply Chain Security
+**Implementation**: `.github/dependabot.yml`, `scripts/supply_chain_dashboard.py`
 
 - Automated dependency updates (weekly)
-- Separate PRs for major/minor/patch updates
-- Security-focused dependency scanning
+- Dependency version pinning with hash verification
+- SLSA Level 3 compliance tracking
+- SBOM generation
+- Security vulnerability monitoring
 - GitHub Actions version management
 - Docker image updates
 
-### 1.4 Threat Model Automation
+### 1.6 Threat Model Automation
 **Implementation**: `.github/workflows/threat-model.yml`
 
 - Automated STRIDE validation on PRs
