@@ -4,7 +4,7 @@ Tests for SSO/SAML Integration
 
 import pytest
 from datetime import datetime, timezone
-
+from urllib.parse import urlparse
 from nethical.security.sso import (
     SSOManager,
     SSOProvider,
@@ -195,7 +195,7 @@ class TestSSOManager:
         
         assert isinstance(login_url, str)
         assert len(login_url) > 0
-        assert "idp.example.com" in login_url
+        assert urlparse(login_url).hostname == "idp.example.com"
     
     def test_initiate_saml_login_invalid_config(self):
         """Test initiating SAML login with invalid config"""
