@@ -3,7 +3,6 @@ Tests for SSO/SAML Integration
 """
 
 import pytest
-from datetime import datetime, timezone
 from urllib.parse import urlparse
 from nethical.security.sso import (
     SSOManager,

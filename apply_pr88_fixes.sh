@@ -39,15 +39,21 @@ echo "Step 2: Restoring correct test file with security fixes..."
 if [ -f test_sso_CORRECTED.py ]; then
     cp test_sso_CORRECTED.py tests/unit/test_sso.py
     echo "✓ Test file restored from test_sso_CORRECTED.py"
-elif git show 889d794:tests/unit/test_sso.py > /tmp/test_sso_temp.py 2>/dev/null; then
-    # Apply the security fix to line 250
-    sed -i '250s/.*/        assert urlparse(auth_url).hostname == "oauth.example.com"/' /tmp/test_sso_temp.py
-    cp /tmp/test_sso_temp.py tests/unit/test_sso.py
-    echo "✓ Test file restored from commit 889d794 with security fix applied"
 else
-    echo "❌ Error: Could not find test_sso_CORRECTED.py or access commit 889d794"
-    echo "   Please manually restore tests/unit/test_sso.py"
-    exit 1
+    # Create secure temporary file
+    TEMP_FILE=$(mktemp) || { echo "❌ Error: Failed to create temporary file"; exit 1; }
+    trap "rm -f $TEMP_FILE" EXIT
+    
+    if git show 889d794:tests/unit/test_sso.py > "$TEMP_FILE" 2>/dev/null; then
+        # Apply the security fix using pattern-based replacement
+        sed -i 's/assert "oauth\.example\.com" in auth_url/assert urlparse(auth_url).hostname == "oauth.example.com"/' "$TEMP_FILE"
+        cp "$TEMP_FILE" tests/unit/test_sso.py
+        echo "✓ Test file restored from commit 889d794 with security fix applied"
+    else
+        echo "❌ Error: Could not find test_sso_CORRECTED.py or access commit 889d794"
+        echo "   Please manually restore tests/unit/test_sso.py"
+        exit 1
+    fi
 fi
 echo ""
 
