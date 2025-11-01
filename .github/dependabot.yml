@@ -13,9 +13,7 @@ updates:
     assignees:
       - "V1B3hR"
     labels:
-      - "dependencies"
       - "security"
-      - "automated"
     commit-message:
       prefix: "deps"
       include: "scope"
@@ -47,10 +45,7 @@ updates:
     open-pull-requests-limit: 5
     reviewers:
       - "V1B3hR"
-    labels:
-      - "dependencies"
-      - "github-actions"
-      - "automated"
+    labels: []
     commit-message:
       prefix: "ci"
       include: "scope"
@@ -65,9 +60,6 @@ updates:
     open-pull-requests-limit: 5
     reviewers:
       - "V1B3hR"
-    labels:
-      - "dependencies"
-      - "docker"
-      - "automated"
+    labels: []
     commit-message:
       prefix: "docker"
