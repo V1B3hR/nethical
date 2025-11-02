@@ -1,0 +1,268 @@
+{
+  "version": "1.0-healthcare",
+  "description": "Ethical dimension taxonomy for violation classification - Healthcare Specific",
+  "dimensions": {
+    "privacy": {
+      "description": "Data privacy, confidentiality, and personal information protection",
+      "weight": 1.0,
+      "severity_multiplier": 1.2,
+      "indicators": [
+        "unauthorized_data_access",
+        "pii_exposure",
+        "tracking",
+        "surveillance",
+        "data_retention_violation",
+        "consent_violation",
+        "data_breach"
+      ]
+    },
+    "manipulation": {
+      "description": "Deceptive practices, coercion, and psychological exploitation",
+      "weight": 1.0,
+      "severity_multiplier": 1.0,
+      "indicators": [
+        "emotional_manipulation",
+        "dark_patterns",
+        "false_scarcity",
+        "social_proof_abuse",
+        "authority_abuse",
+        "reciprocity_exploitation",
+        "deceptive_intent",
+        "misleading_information"
+      ]
+    },
+    "fairness": {
+      "description": "Equitable treatment, non-discrimination, and bias mitigation",
+      "weight": 1.0,
+      "severity_multiplier": 1.1,
+      "indicators": [
+        "discriminatory_behavior",
+        "bias",
+        "unfair_treatment",
+        "cohort_disparity",
+        "algorithmic_bias",
+        "disparate_impact",
+        "exclusion"
+      ]
+    },
+    "safety": {
+      "description": "Physical and psychological safety, harm prevention",
+      "weight": 1.0,
+      "severity_multiplier": 1.5,
+      "indicators": [
+        "harmful_content",
+        "dangerous_advice",
+        "resource_exhaustion",
+        "system_compromise",
+        "self_harm_content",
+        "violence_incitement",
+        "malicious_code",
+        "denial_of_service"
+      ]
+    },
+    "patient_safety": {
+      "description": "Protection of patient health and wellbeing",
+      "weight": 1.5,
+      "severity_multiplier": 2.0,
+      "indicators": [
+        "clinical_risk",
+        "medication_error",
+        "diagnostic_error",
+        "treatment_harm",
+        "care_delay"
+      ]
+    },
+    "medical_privacy": {
+      "description": "HIPAA and patient confidentiality",
+      "weight": 1.3,
+      "severity_multiplier": 1.8,
+      "indicators": [
+        "phi_exposure",
+        "unauthorized_medical_access",
+        "consent_violation_hipaa"
+      ]
+    }
+  },
+  "coverage_target": 0.9,
+  "minimum_confidence": 0.5,
+  "mapping": {
+    "unauthorized_data_access": {
+      "privacy": 0.95,
+      "safety": 0.3,
+      "description": "Accessing data without proper authorization"
+    },
+    "pii_exposure": {
+      "privacy": 1.0,
+      "safety": 0.2,
+      "description": "Exposing personally identifiable information"
+    },
+    "emotional_manipulation": {
+      "manipulation": 0.95,
+      "fairness": 0.2,
+      "description": "Using emotional tactics to influence behavior"
+    },
+    "dark_patterns": {
+      "manipulation": 1.0,
+      "fairness": 0.3,
+      "description": "Deceptive UI/UX design patterns"
+    },
+    "discriminatory_behavior": {
+      "fairness": 1.0,
+      "manipulation": 0.3,
+      "safety": 0.2,
+      "description": "Treating individuals unfairly based on protected characteristics"
+    },
+    "algorithmic_bias": {
+      "fairness": 0.95,
+      "privacy": 0.1,
+      "description": "Systematic bias in algorithmic decision-making"
+    },
+    "harmful_content": {
+      "safety": 1.0,
+      "manipulation": 0.2,
+      "description": "Content that may cause harm"
+    },
+    "dangerous_advice": {
+      "safety": 0.9,
+      "manipulation": 0.3,
+      "description": "Advice that could lead to harm"
+    },
+    "tracking": {
+      "privacy": 0.8,
+      "manipulation": 0.2,
+      "description": "Unauthorized tracking of user behavior"
+    },
+    "surveillance": {
+      "privacy": 0.9,
+      "safety": 0.3,
+      "description": "Excessive monitoring or surveillance"
+    },
+    "false_scarcity": {
+      "manipulation": 0.85,
+      "fairness": 0.1,
+      "description": "Creating artificial scarcity to manipulate decisions"
+    },
+    "social_proof_abuse": {
+      "manipulation": 0.8,
+      "fairness": 0.2,
+      "description": "Misusing social validation to influence behavior"
+    },
+    "authority_abuse": {
+      "manipulation": 0.9,
+      "safety": 0.3,
+      "description": "Exploiting perceived authority to manipulate"
+    },
+    "reciprocity_exploitation": {
+      "manipulation": 0.75,
+      "fairness": 0.2,
+      "description": "Exploiting reciprocity principle to manipulate"
+    },
+    "deceptive_intent": {
+      "manipulation": 0.95,
+      "privacy": 0.1,
+      "safety": 0.2,
+      "description": "Deliberate deception in stated intent"
+    },
+    "resource_exhaustion": {
+      "safety": 0.85,
+      "fairness": 0.2,
+      "description": "Excessive resource consumption"
+    },
+    "system_compromise": {
+      "safety": 1.0,
+      "privacy": 0.8,
+      "description": "Compromising system security or integrity"
+    },
+    "bias": {
+      "fairness": 0.9,
+      "description": "General bias in decision-making or treatment"
+    },
+    "unfair_treatment": {
+      "fairness": 0.85,
+      "manipulation": 0.2,
+      "description": "Treatment that lacks fairness or equity"
+    },
+    "cohort_disparity": {
+      "fairness": 0.9,
+      "privacy": 0.1,
+      "description": "Disparate treatment of different agent cohorts"
+    },
+    "consent_violation": {
+      "privacy": 0.9,
+      "manipulation": 0.4,
+      "description": "Acting without proper user consent"
+    },
+    "data_breach": {
+      "privacy": 1.0,
+      "safety": 0.7,
+      "description": "Unauthorized disclosure of data"
+    },
+    "data_retention_violation": {
+      "privacy": 0.75,
+      "description": "Retaining data beyond permitted duration"
+    },
+    "misleading_information": {
+      "manipulation": 0.8,
+      "safety": 0.3,
+      "description": "Providing false or misleading information"
+    },
+    "self_harm_content": {
+      "safety": 1.0,
+      "manipulation": 0.3,
+      "description": "Content promoting self-harm"
+    },
+    "violence_incitement": {
+      "safety": 1.0,
+      "manipulation": 0.4,
+      "description": "Content inciting violence"
+    },
+    "malicious_code": {
+      "safety": 1.0,
+      "privacy": 0.6,
+      "description": "Code with malicious intent"
+    },
+    "denial_of_service": {
+      "safety": 0.9,
+      "fairness": 0.4,
+      "description": "Preventing legitimate access to services"
+    },
+    "disparate_impact": {
+      "fairness": 0.95,
+      "privacy": 0.1,
+      "description": "Policies with disproportionate negative impact"
+    },
+    "exclusion": {
+      "fairness": 0.85,
+      "manipulation": 0.2,
+      "description": "Systematic exclusion of individuals or groups"
+    },
+    "unauthorized_medical_record_access": {
+      "medical_privacy": 1.0,
+      "privacy": 0.9,
+      "safety": 0.4,
+      "description": "Accessing medical records without authorization"
+    },
+    "medication_recommendation_error": {
+      "patient_safety": 1.0,
+      "safety": 0.9,
+      "description": "Incorrect medication recommendation"
+    }
+  },
+  "aggregation_rules": {
+    "multiple_dimensions_threshold": 0.3,
+    "primary_dimension_threshold": 0.6,
+    "severity_adjustment": {
+      "high_privacy_and_safety": 1.5,
+      "multiple_high_scores": 1.3,
+      "single_dimension": 1.0
+    }
+  },
+  "reporting": {
+    "include_low_confidence": false,
+    "group_by_dimension": true,
+    "track_coverage_over_time": true,
+    "alert_on_low_coverage": true,
+    "coverage_alert_threshold": 0.85
+  },
+  "industry": "healthcare"
+}
