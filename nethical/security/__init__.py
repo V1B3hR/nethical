@@ -23,6 +23,26 @@ from .auth import (
     set_auth_manager,
 )
 
+from .mfa import (
+    MFAMethod,
+    MFASetup,
+    MFAManager,
+    MFARequiredError,
+    InvalidMFACodeError,
+    get_mfa_manager,
+    set_mfa_manager,
+)
+
+from .sso import (
+    SSOProvider,
+    SSOConfig,
+    SAMLConfig,
+    SSOManager,
+    SSOError,
+    get_sso_manager,
+    set_sso_manager,
+)
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -43,5 +63,21 @@ __all__ = [
     "authenticate_request",
     "get_auth_manager",
     "set_auth_manager",
+    # Multi-Factor Authentication
+    "MFAMethod",
+    "MFASetup",
+    "MFAManager",
+    "MFARequiredError",
+    "InvalidMFACodeError",
+    "get_mfa_manager",
+    "set_mfa_manager",
+    # Single Sign-On
+    "SSOProvider",
+    "SSOConfig",
+    "SAMLConfig",
+    "SSOManager",
+    "SSOError",
+    "get_sso_manager",
+    "set_sso_manager",
 ]
 
