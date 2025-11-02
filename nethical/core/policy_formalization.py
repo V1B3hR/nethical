@@ -125,6 +125,9 @@ class PolicyGrammarEBNF:
     number = integer | (integer, ".", digit+);
     boolean = "true" | "false";
     
+    (* Basic character definitions - explicit enumeration for strict EBNF compliance *)
+    (* Note: Using explicit enumeration instead of ranges like [a-z] to ensure *)
+    (* compatibility with all EBNF parsers, as character range syntax varies *)
     letter = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | 
              "k" | "l" | "m" | "n" | "o" | "p" | "q" | "r" | "s" | "t" | 
              "u" | "v" | "w" | "x" | "y" | "z" | 

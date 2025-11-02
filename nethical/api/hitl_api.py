@@ -312,6 +312,9 @@ class HITLReviewAPI:
     ) -> Dict[str, Any]:
         """API endpoint: Update case status.
         
+        Note: This is a stub endpoint. Full implementation requires
+        extending EscalationQueue with case status update methods.
+        
         Args:
             judgment_id: Judgment ID
             status: New status (pending, in_review, completed, deferred)
@@ -331,8 +334,8 @@ class HITLReviewAPI:
                     message="Failed to update case status"
                 ).to_dict()
             
-            # Update status in database (would need to add this method to HumanFeedbackLoop)
-            # For now, just validate and return success
+            # TODO: Implement actual status update in EscalationQueue
+            # For now, this is a stub that validates input but doesn't persist changes
             
             return APIResponse(
                 success=True,
@@ -340,9 +343,10 @@ class HITLReviewAPI:
                     'judgment_id': judgment_id,
                     'new_status': status_enum.value,
                     'reviewer_id': reviewer_id,
-                    'updated_at': datetime.utcnow().isoformat()
+                    'updated_at': datetime.utcnow().isoformat(),
+                    'note': 'Status update validated but not persisted (stub implementation)'
                 },
-                message="Case status updated successfully"
+                message="Case status update validated (stub endpoint - full implementation pending)"
             ).to_dict()
         
         except Exception as e:

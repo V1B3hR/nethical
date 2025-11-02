@@ -50,8 +50,17 @@ class ExplanationComponent:
 class DecisionExplainer:
     """Generates explanations for decisions."""
     
-    def __init__(self):
-        """Initialize decision explainer."""
+    # Configuration constants
+    DEFAULT_RISK_THRESHOLD = 0.7
+    DEFAULT_VIOLATION_THRESHOLD = 0
+    
+    def __init__(self, risk_threshold: float = DEFAULT_RISK_THRESHOLD):
+        """Initialize decision explainer.
+        
+        Args:
+            risk_threshold: Risk score threshold for highlighting
+        """
+        self.risk_threshold = risk_threshold
         self.explanation_templates = self._load_templates()
     
     def _load_templates(self) -> Dict[str, str]:
@@ -160,7 +169,7 @@ class DecisionExplainer:
         
         # Check for risk score
         risk_score = judgment_data.get('risk_score')
-        if risk_score and risk_score > 0.7:
+        if risk_score and risk_score > self.risk_threshold:
             return f"high risk score ({risk_score:.2f})"
         
         # Default reasons
@@ -248,8 +257,8 @@ class DecisionExplainer:
         if risk_score is not None:
             comparisons['risk_score'] = {
                 'value': risk_score,
-                'threshold': 0.7,
-                'exceeded': risk_score > 0.7
+                'threshold': self.risk_threshold,
+                'exceeded': risk_score > self.risk_threshold
             }
         
         # Violation count
@@ -257,8 +266,8 @@ class DecisionExplainer:
         if violations:
             comparisons['violation_count'] = {
                 'value': len(violations),
-                'threshold': 0,
-                'exceeded': len(violations) > 0
+                'threshold': self.DEFAULT_VIOLATION_THRESHOLD,
+                'exceeded': len(violations) > self.DEFAULT_VIOLATION_THRESHOLD
             }
         
         return comparisons

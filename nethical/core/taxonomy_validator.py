@@ -32,8 +32,16 @@ class TaxonomyVersion:
 class TaxonomyValidator:
     """Validator for ethical taxonomy configurations."""
     
-    def __init__(self):
-        """Initialize taxonomy validator with schema."""
+    # Default schema hosting location (can be overridden)
+    DEFAULT_SCHEMA_ID = "https://nethical.io/schemas/taxonomy/v1.0.0"
+    
+    def __init__(self, schema_id: Optional[str] = None):
+        """Initialize taxonomy validator with schema.
+        
+        Args:
+            schema_id: Optional custom schema ID URL
+        """
+        self.schema_id = schema_id or self.DEFAULT_SCHEMA_ID
         self.schema = self._generate_json_schema()
     
     def _generate_json_schema(self) -> Dict[str, Any]:
@@ -44,7 +52,7 @@ class TaxonomyValidator:
         """
         return {
             "$schema": "http://json-schema.org/draft-07/schema#",
-            "$id": "https://nethical.io/schemas/taxonomy/v1.0.0",
+            "$id": self.schema_id,
             "title": "Ethical Taxonomy Schema",
             "description": "Schema for Nethical ethical dimension taxonomy",
             "type": "object",
