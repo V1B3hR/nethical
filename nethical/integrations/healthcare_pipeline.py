@@ -132,7 +132,8 @@ class HealthcareGuardrails:
             payload = {}
 
         # Minimum necessary first, then redact
-        filtered = self._apply_allowlist(copy.deepcopy(payload), self.input_allowlist)
+        # Note: _apply_allowlist creates a new dict, no deep copy needed
+        filtered = self._apply_allowlist(payload, self.input_allowlist)
         redacted = detect_and_redact_payload(filtered)
 
         # Attestation gate

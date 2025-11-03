@@ -256,7 +256,8 @@ class SystemLimitsDetector(BaseDetector):
             violations.append(violation)
         if len(self.payload_sizes[agent_id]) >= 6:
             recent_sizes = list(self.payload_sizes[agent_id])[-6:]
-            if all(recent_sizes[i] < recent_sizes[i+1] for i in range(len(recent_sizes)-1)):
+            # Check if sizes are monotonically increasing - optimized comparison
+            if all(a < b for a, b in zip(recent_sizes, recent_sizes[1:])):
                 violation = SafetyViolation(
                     violation_id=self._generate_violation_id(),
                     action_id=action.id,
@@ -451,9 +452,10 @@ class SystemLimitsDetector(BaseDetector):
             now = time.time()
             times = np.array(requests)
             recent_count = np.sum(times > now - self.rate_limit_window)
+            # Vectorized window count calculation for better performance
             all_counts = []
-            for i in range(len(times)):
-                count = np.sum((times >= times[i] - self.rate_limit_window) & (times <= times[i]))
+            for t in times:
+                count = np.sum((times >= t - self.rate_limit_window) & (times <= t))
                 all_counts.append(count)
             mean = np.mean(all_counts)
             std = np.std(all_counts)

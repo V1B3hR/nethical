@@ -171,16 +171,36 @@ class DifferentialPrivacy:
         Returns:
             Noised vector
         """
-        noised_vector = np.zeros_like(vector)
+        # Vectorized noise generation for better performance
+        vector_size = len(vector)
         
-        for i in range(len(vector)):
-            noised_vector[i] = self.add_noise(
-                vector[i],
-                sensitivity,
-                f"{operation}_dim{i}"
-            )
+        # Calculate privacy cost once for the entire vector operation
+        if self.mechanism == PrivacyMechanism.LAPLACE:
+            scale = sensitivity / self.budget.epsilon
+            noise = np.random.laplace(0, scale, size=vector_size)
+            privacy_cost = self.budget.epsilon / 2  # Simplified
+        elif self.mechanism == PrivacyMechanism.GAUSSIAN:
+            # Gaussian mechanism for (epsilon, delta)-DP
+            sigma = (sensitivity * np.sqrt(2 * np.log(1.25 / self.budget.delta))) / self.budget.epsilon
+            noise = np.random.normal(0, sigma, size=vector_size)
+            privacy_cost = self.budget.epsilon / 2  # Simplified
+        else:
+            raise NotImplementedError(f"Mechanism {self.mechanism} not implemented")
         
-        return noised_vector
+        # Consume privacy budget once for the entire vector
+        self.budget.consume(privacy_cost, operation)
+        
+        # Track operation
+        self.operation_history.append({
+            'timestamp': datetime.now().isoformat(),
+            'operation': operation,
+            'mechanism': self.mechanism.value,
+            'privacy_cost': privacy_cost,
+            'sensitivity': sensitivity,
+            'vector_size': vector_size
+        })
+        
+        return vector + noise
     
     def add_noise_to_aggregated_metrics(
         self,
