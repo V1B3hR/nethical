@@ -1,0 +1,201 @@
+# Production Environment Configuration
+# High resource usage, HA setup, strict security
+
+replicaCount: 5
+
+image:
+  repository: nethical
+  tag: "0.1.0"  # Pin specific version in production
+  pullPolicy: Always
+
+# Image pull secrets for private registry
+imagePullSecrets:
+  - name: regcred
+
+resources:
+  limits:
+    cpu: 2000m
+    memory: 4Gi
+  requests:
+    cpu: 500m
+    memory: 1Gi
+
+# Aggressive autoscaling for production
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 30
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min
+
+# Large storage for production
+persistence:
+  enabled: true
+  size: 100Gi
+  storageClass: "fast-ssd"
+  annotations:
+    backup.velero.io/backup-volumes: data
+
+# Production configuration
+nethical:
+  regionId: "us-east-1"
+  logicalDomain: "production"
+  
+  # High quota for production traffic
+  requestsPerSecond: 500.0
+  maxPayloadBytes: 1000000
+  
+  # Strict privacy settings
+  privacyMode: "differential"
+  epsilon: 0.5
+  redactionPolicy: "aggressive"
+  
+  # All features enabled
+  enableMerkle: true
+  enableQuarantine: true
+  enableQuota: true
+  enableOtel: true
+  
+  # OpenTelemetry configuration
+  otel:
+    exporter: "otlp"
+    endpoint: "http://otel-collector.observability.svc.cluster.local:4318"
+    serviceName: "nethical-production"
+
+# Strict PDB for HA
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 3
+
+# Production ingress with TLS
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/rate-limit: "1000"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+  hosts:
+    - host: nethical.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: nethical-prod-tls
+      hosts:
+        - nethical.example.com
+
+# Enable Redis for production caching
+redis:
+  enabled: true
+  host: "redis-master.redis.svc.cluster.local"
+  port: 6379
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+  seccompProfile:
+    type: RuntimeDefault
+
+# Container security context
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+  runAsNonRoot: true
+  runAsUser: 1000
+
+# Pod anti-affinity for HA
+affinity:
+  podAntiAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+    - labelSelector:
+        matchExpressions:
+        - key: app.kubernetes.io/name
+          operator: In
+          values:
+          - nethical
+      topologyKey: kubernetes.io/hostname
+    preferredDuringSchedulingIgnoredDuringExecution:
+    - weight: 100
+      podAffinityTerm:
+        labelSelector:
+          matchExpressions:
+          - key: app.kubernetes.io/name
+            operator: In
+            values:
+            - nethical
+        topologyKey: topology.kubernetes.io/zone
+
+# Node selector for production nodes
+nodeSelector:
+  node.kubernetes.io/instance-type: "m5.xlarge"
+  workload: "production"
+
+# Tolerations for production nodes
+tolerations:
+- key: "production"
+  operator: "Equal"
+  value: "true"
+  effect: "NoSchedule"
+
+# Production-grade probes
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startup:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+# Service account with annotations for IRSA/Workload Identity
+serviceAccount:
+  create: true
+  annotations:
+    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/nethical-production
+    # iam.gke.io/gcp-service-account: nethical-prod@PROJECT_ID.iam.gserviceaccount.com
+
+# Pod annotations for monitoring
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8888"
+  prometheus.io/path: "/metrics"
+  backup.velero.io/backup-volumes: data

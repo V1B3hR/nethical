@@ -1,0 +1,57 @@
+# Development Environment Configuration
+# Minimal resource usage, single replica, basic features
+
+replicaCount: 1
+
+image:
+  repository: nethical
+  tag: "latest"
+  pullPolicy: IfNotPresent
+
+resources:
+  limits:
+    cpu: 500m
+    memory: 1Gi
+  requests:
+    cpu: 100m
+    memory: 256Mi
+
+# Disable autoscaling in dev
+autoscaling:
+  enabled: false
+
+# Smaller storage for dev
+persistence:
+  enabled: true
+  size: 5Gi
+
+# Basic configuration
+nethical:
+  regionId: "dev-local"
+  logicalDomain: "development"
+  
+  # Relaxed quota for testing
+  requestsPerSecond: 10.0
+  
+  # Standard privacy mode
+  privacyMode: "standard"
+  epsilon: 2.0
+  redactionPolicy: "standard"
+  
+  # Enable all features for testing
+  enableMerkle: true
+  enableQuarantine: true
+  enableQuota: true
+  enableOtel: true
+
+# Disable PDB in dev
+podDisruptionBudget:
+  enabled: false
+
+# No ingress in dev (use port-forward)
+ingress:
+  enabled: false
+
+# Optional: Enable Redis for development
+redis:
+  enabled: false
