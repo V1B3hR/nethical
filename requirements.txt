@@ -1,30 +1,36 @@
 # Core dependencies with pinned versions for security and reproducibility
 # Generated: 2025-10-26
+# Last updated: 2025-11-04
 # To update: Review each dependency carefully and update version + hash
 # Hash verification provides supply chain security against tampering
 
-pydantic==2.12.3
-pydantic-core==2.41.4
-typing-extensions==4.15.0
-dataclasses-json==0.6.7
-numpy==1.26.4
-pandas==2.3.3
-PyYAML==6.0.3
+# Data validation and serialization
+pydantic==2.12.3  # Core data models and validation
+pydantic-core==2.41.4  # Low-level validation implementation
+typing-extensions==4.15.0  # Typing backports for older Python versions
+dataclasses-json==0.6.7  # JSON serialization for dataclasses
+
+# Scientific computing and data processing
+numpy==1.26.4  # Numerical operations for ML and analytics
+pandas==2.3.3  # Data manipulation and analysis
+
+# Configuration and data formats
+PyYAML==6.0.3  # YAML parsing for configs and policies
 
 # Transitive dependencies (pinned for reproducibility)
-annotated-types==0.7.0
-marshmallow==3.26.1
-typing-inspect==0.9.0
-typing-inspection==0.4.2
-mypy-extensions==1.1.0
-python-dateutil==2.9.0
-pytz==2024.2
-tzdata==2025.2
+annotated-types==0.7.0  # Pydantic annotations support
+marshmallow==3.26.1  # Serialization/deserialization (dataclasses-json dep)
+typing-inspect==0.9.0  # Runtime type inspection
+typing-inspection==0.4.2  # Type inspection utilities
+mypy-extensions==1.1.0  # Mypy type checking extensions
+python-dateutil==2.9.0  # Date/time utilities (pandas dep)
+pytz==2024.2  # Timezone database (pandas dep)
+tzdata==2025.2  # Timezone data (pandas dep)
 
 # Optional performance dependencies
 # Install with: pip install nethical[performance]
-# redis>=4.0.0
-# psycopg2-binary>=2.9.0
-# elasticsearch>=8.0.0
-# numba>=0.56.0
-# torch>=2.0.0
+# redis>=4.0.0  # Redis client for caching and session storage
+# psycopg2-binary>=2.9.0  # PostgreSQL adapter for TimescaleDB
+# elasticsearch>=8.0.0  # Elasticsearch client for log storage
+# numba>=0.56.0  # JIT compilation for numerical operations
+# torch>=2.0.0  # PyTorch for ML models (GPU acceleration)

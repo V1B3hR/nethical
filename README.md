@@ -588,8 +588,8 @@ docker run -d --env-file config/eu-west-1.env nethical:latest
 # Deploy Asia Pacific region (Tokyo)
 docker run -d --env-file config/ap-northeast-1.env nethical:latest
 
-# Deploy to all 20 regions for global coverage
-./scripts/deploy-global.sh --all-regions
+# Deploy additional regions as needed
+# Config files available for 20+ regions in config/ directory
 ```
 
 **Test Results**: All scalability targets validated with comprehensive test suites:
