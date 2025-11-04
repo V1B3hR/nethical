@@ -1,0 +1,114 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: governance
+    app.kubernetes.io/version: "0.1.0"
+spec:
+  serviceName: nethical
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: nethical
+      app.kubernetes.io/component: governance
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: nethical
+        app.kubernetes.io/component: governance
+        app.kubernetes.io/version: "0.1.0"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "8888"
+        prometheus.io/path: "/metrics"
+    spec:
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+      containers:
+      - name: nethical
+        image: nethical:latest
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8000
+          protocol: TCP
+        - name: metrics
+          containerPort: 8888
+          protocol: TCP
+        envFrom:
+        - configMapRef:
+            name: nethical-config
+        - secretRef:
+            name: nethical-secrets
+            optional: true
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: policies
+          mountPath: /app/correlation_rules.yaml
+          subPath: correlation_rules.yaml
+          readOnly: true
+        - name: policies
+          mountPath: /app/ethics_taxonomy.json
+          subPath: ethics_taxonomy.json
+          readOnly: true
+        resources:
+          requests:
+            memory: "512Mi"
+            cpu: "250m"
+          limits:
+            memory: "2Gi"
+            cpu: "1000m"
+        livenessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import nethical; print('healthy')"
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        readinessProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import nethical; print('healthy')"
+          initialDelaySeconds: 10
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 3
+        startupProbe:
+          exec:
+            command:
+            - python
+            - -c
+            - "import nethical; print('healthy')"
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          timeoutSeconds: 5
+          failureThreshold: 30
+      volumes:
+      - name: policies
+        configMap:
+          name: nethical-policies
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+      labels:
+        app.kubernetes.io/name: nethical
+        app.kubernetes.io/component: storage
+    spec:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 10Gi
+      # Optionally specify a storage class
+      # storageClassName: standard

@@ -1,0 +1,30 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nethical
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: ingress
+  annotations:
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # Add your ingress controller annotations here
+spec:
+  ingressClassName: nginx  # or your ingress class
+  rules:
+  - host: nethical.example.com  # Change to your domain
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nethical
+            port:
+              number: 8000
+  # TLS configuration (uncomment if using HTTPS)
+  # tls:
+  # - hosts:
+  #   - nethical.example.com
+  #   secretName: nethical-tls

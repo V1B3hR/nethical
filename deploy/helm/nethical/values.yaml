@@ -1,0 +1,226 @@
+# Default values for nethical.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# Number of replicas (for StatefulSet)
+replicaCount: 1
+
+image:
+  repository: nethical
+  pullPolicy: IfNotPresent
+  # Overrides the image tag whose default is the chart appVersion.
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account configuration
+serviceAccount:
+  # Specifies whether a service account should be created
+  create: true
+  # Annotations to add to the service account
+  annotations: {}
+  # The name of the service account to use.
+  # If not set and create is true, a name is generated using the fullname template
+  name: ""
+
+# Pod annotations
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8888"
+  prometheus.io/path: "/metrics"
+
+# Pod security context
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+# Container security context
+securityContext:
+  capabilities:
+    drop:
+    - ALL
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  metricsPort: 8888
+  annotations: {}
+
+# Ingress configuration
+ingress:
+  enabled: false
+  className: "nginx"
+  annotations: {}
+    # cert-manager.io/cluster-issuer: letsencrypt-prod
+    # nginx.ingress.kubernetes.io/rewrite-target: /
+  hosts:
+    - host: nethical.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls: []
+  #  - secretName: nethical-tls
+  #    hosts:
+  #      - nethical.example.com
+
+# Resource limits and requests
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+# Autoscaling configuration
+autoscaling:
+  enabled: false
+  minReplicas: 1
+  maxReplicas: 10
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+  behavior:
+    scaleUp:
+      stabilizationWindowSeconds: 60
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+      - type: Pods
+        value: 2
+        periodSeconds: 60
+      selectPolicy: Max
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 10
+        periodSeconds: 60
+      - type: Pods
+        value: 1
+        periodSeconds: 60
+      selectPolicy: Min
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 1
+  # maxUnavailable: 1
+
+# Node selector for pod assignment
+nodeSelector: {}
+
+# Tolerations for pod assignment
+tolerations: []
+
+# Affinity for pod assignment
+affinity: {}
+
+# Persistent storage configuration
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 10Gi
+  # storageClass: "-"
+  annotations: {}
+
+# Nethical application configuration
+nethical:
+  # Storage and data
+  storageDir: "/data/nethical"
+  regionId: "us-east-1"
+  logicalDomain: "default"
+  
+  # Feature flags
+  enableMerkle: true
+  enableQuarantine: true
+  enableQuota: true
+  enableOtel: true
+  
+  # Quota configuration
+  requestsPerSecond: 10.0
+  maxPayloadBytes: 1000000
+  
+  # Privacy settings
+  privacyMode: "differential"
+  epsilon: 1.0
+  redactionPolicy: "aggressive"
+  
+  # OpenTelemetry
+  otel:
+    exporter: "otlp"
+    endpoint: "http://otel-collector:4318"
+    serviceName: "nethical"
+
+  # Policy files (can be overridden via configmap)
+  policies:
+    correlationRules: |
+      # Correlation rules for multi-step attack detection
+      version: "1.0"
+      rules: []
+    
+    ethicsTaxonomy: |
+      {
+        "version": "1.0",
+        "taxonomies": []
+      }
+
+# Probes configuration
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startup:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 30
+
+# Redis configuration (for caching and persistence)
+redis:
+  enabled: false
+  host: "redis"
+  port: 6379
+  # password: ""
+
+# External secrets (for production use)
+# Use external secret management tools like:
+# - HashiCorp Vault
+# - AWS Secrets Manager
+# - Azure Key Vault
+# - Google Secret Manager
+# - Kubernetes External Secrets Operator
+externalSecrets:
+  enabled: false
+  # Add your external secrets configuration here
+
+# Extra environment variables
+extraEnv: []
+# - name: CUSTOM_VAR
+#   value: "custom_value"
+
+# Extra volumes
+extraVolumes: []
+# - name: extra-volume
+#   emptyDir: {}
+
+# Extra volume mounts
+extraVolumeMounts: []
+# - name: extra-volume
+#   mountPath: /extra-path

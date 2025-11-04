@@ -1,0 +1,55 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: config
+data:
+  # Storage and data
+  NETHICAL_STORAGE_DIR: "/data/nethical"
+  NETHICAL_REGION_ID: "us-east-1"
+  NETHICAL_LOGICAL_DOMAIN: "default"
+  
+  # Feature flags
+  NETHICAL_ENABLE_MERKLE: "true"
+  NETHICAL_ENABLE_QUARANTINE: "true"
+  NETHICAL_ENABLE_QUOTA: "true"
+  NETHICAL_ENABLE_OTEL: "true"
+  
+  # Quota configuration
+  NETHICAL_REQUESTS_PER_SECOND: "10.0"
+  NETHICAL_MAX_PAYLOAD_BYTES: "1000000"
+  
+  # Privacy settings
+  NETHICAL_PRIVACY_MODE: "differential"
+  NETHICAL_EPSILON: "1.0"
+  NETHICAL_REDACTION_POLICY: "aggressive"
+  
+  # OpenTelemetry
+  OTEL_EXPORTER: "otlp"
+  OTEL_EXPORTER_OTLP_ENDPOINT: "http://otel-collector:4318"
+  OTEL_SERVICE_NAME: "nethical"
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-policies
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: policies
+data:
+  correlation_rules.yaml: |
+    # Correlation rules for multi-step attack detection
+    # Add your custom correlation rules here
+    version: "1.0"
+    rules: []
+  
+  ethics_taxonomy.json: |
+    {
+      "version": "1.0",
+      "taxonomies": []
+    }
