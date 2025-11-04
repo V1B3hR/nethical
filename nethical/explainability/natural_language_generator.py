@@ -234,7 +234,8 @@ class NaturalLanguageGenerator:
         if not matched_policies:
             return ""
         
-        text = f"The request matched {len(matched_policies)} organization polic(y/ies):\n"
+        policy_word = "policy" if len(matched_policies) == 1 else "policies"
+        text = f"The request matched {len(matched_policies)} organization {policy_word}:\n"
         
         for policy in matched_policies[:3]:  # Top 3
             name = policy.get("policy_name", "unnamed")
@@ -269,7 +270,8 @@ class NaturalLanguageGenerator:
                 key_points.append(f"Risk score: {risk:.2f}")
             elif comp_type == "policy_match":
                 count = component.get("details", {}).get("count", 0)
-                key_points.append(f"Matched {count} polic(y/ies)")
+                policy_word = "policy" if count == 1 else "policies"
+                key_points.append(f"Matched {count} {policy_word}")
         
         return key_points
     

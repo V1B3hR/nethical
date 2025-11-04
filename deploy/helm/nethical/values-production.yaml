@@ -190,7 +190,9 @@ probes:
 serviceAccount:
   create: true
   annotations:
-    eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/nethical-production
+    # AWS: Replace ACCOUNT_ID with your AWS account ID
+    # eks.amazonaws.com/role-arn: arn:aws:iam::ACCOUNT_ID:role/nethical-production
+    # GCP: Replace PROJECT_ID with your GCP project ID
     # iam.gke.io/gcp-service-account: nethical-prod@PROJECT_ID.iam.gserviceaccount.com
 
 # Pod annotations for monitoring

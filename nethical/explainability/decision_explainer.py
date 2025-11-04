@@ -225,7 +225,8 @@ class DecisionExplainer:
             "count": len(policy_matches)
         }
         
-        description = f"Matched {len(policy_matches)} polic(y/ies)"
+        policy_word = "policy" if len(policy_matches) == 1 else "policies"
+        description = f"Matched {len(policy_matches)} {policy_word}"
         if policy_matches:
             actions = [p.get("action") for p in policy_matches]
             description += f": {', '.join(set(actions))}"
