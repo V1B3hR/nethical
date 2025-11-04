@@ -588,8 +588,8 @@ docker run -d --env-file config/eu-west-1.env nethical:latest
 # Deploy Asia Pacific region (Tokyo)
 docker run -d --env-file config/ap-northeast-1.env nethical:latest
 
-# Deploy to all 20 regions for global coverage
-./scripts/deploy-global.sh --all-regions
+# Deploy additional regions as needed
+# Config files available for 20+ regions in config/ directory
 ```
 
 **Test Results**: All scalability targets validated with comprehensive test suites:
@@ -634,12 +634,23 @@ See [GitHub Issues](https://github.com/V1B3hR/nethical/issues) for detailed road
 
 ## 🤝 Contributing
 
-Contributions are welcome! Please open a Pull Request.
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
+- Development setup and coding standards
+- Testing requirements and examples
+- Pull request process
+- Documentation guidelines
+- Community expectations
+
+You can also open issues for bug reports or feature requests.
 
 ## 📄 License
 
 GNU General Public License v3.0 — see [LICENSE](LICENSE).
 
 ---
+
+**Documentation Last Updated**: November 4, 2025  
+**Version**: 0.1.0  
+**Repository**: [github.com/V1B3hR/nethical](https://github.com/V1B3hR/nethical)
 
 Nethical — Ensuring AI agents operate safely, ethically, and transparently. 🔒
