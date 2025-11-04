@@ -7,6 +7,45 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2025-11-04
+- **CONTRIBUTING.md** - Comprehensive contribution guidelines with:
+  - Development setup instructions
+  - Coding standards and style guide
+  - Testing guidelines with examples
+  - Pull request process and templates
+  - Documentation requirements
+  - Community guidelines
+- **Enhanced requirements.txt documentation**:
+  - Inline comments explaining each dependency purpose
+  - Grouped dependencies by function
+  - Optional dependency documentation
+  - Last updated date tracking
+
+### Fixed - 2025-11-04
+- **License inconsistency** in `pyproject.toml`:
+  - Changed from MIT to GNU General Public License v3 (matches LICENSE file)
+  - Updated classifier to reflect actual license
+- **README.md corrections**:
+  - Removed reference to non-existent `scripts/deploy-global.sh`
+  - Updated deployment instructions with accurate guidance
+  - Clarified multi-region deployment options
+
+### Changed - 2025-11-04
+- **roadmap.md comprehensive update**:
+  - Updated Phase 3 status (Kubernetes, Marketplace, Performance Optimization)
+  - Marked completed features: RBAC, performance testing, policy engines, HITL backend
+  - Added accurate current state descriptions for all major features
+  - Updated immediate action items with completion status
+  - Added roadmap summary section with status legend
+  - Improved organization with clear status markers (✅ COMPLETED, ⚠️ IN PROGRESS, [ ] PLANNED)
+
+### Documentation
+- All core documentation now accurately reflects the current implementation state
+- References to missing files removed or corrected
+- Feature status properly marked across README, roadmap, and CHANGELOG
+
+## [0.1.0] - Historical
+
 ### Added
 - Comprehensive repository audit in `AUDIT.md` documenting all 90 Python files and organizational structure
 - This CHANGELOG.md to track project changes
