@@ -1,0 +1,251 @@
+name: Performance Testing
+
+on:
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'nethical/**'
+      - 'tests/**'
+      - 'examples/perf/**'
+  workflow_dispatch:
+    inputs:
+      duration:
+        description: 'Test duration in seconds'
+        required: false
+        default: '60'
+      rps:
+        description: 'Target requests per second'
+        required: false
+        default: '100'
+      agents:
+        description: 'Number of simulated agents'
+        required: false
+        default: '200'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  performance-test:
+    name: Performance Benchmark
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-benchmark
+          pip install -e .
+      
+      - name: Run baseline performance tests
+        run: |
+          pytest tests/ -k "test_performance" -v --benchmark-only --benchmark-json=baseline_benchmark.json
+        continue-on-error: true
+      
+      - name: Run load test
+        run: |
+          python examples/perf/generate_load.py \
+            --agents ${{ github.event.inputs.agents || 200 }} \
+            --rps ${{ github.event.inputs.rps || 100 }} \
+            --duration ${{ github.event.inputs.duration || 60 }} \
+            --cohort ci-test \
+            --output perf_results.csv
+        continue-on-error: true
+      
+      - name: Analyze results
+        run: |
+          python -c "
+          import csv
+          import json
+          from statistics import mean, median, quantiles
+          
+          # Read performance results
+          times = []
+          errors = 0
+          with open('perf_results.csv', 'r') as f:
+              reader = csv.DictReader(f)
+              for row in reader:
+                  if row.get('error') == 'True':
+                      errors += 1
+                  else:
+                      times.append(float(row.get('elapsed', 0)))
+          
+          if not times:
+              print('No successful requests')
+              exit(1)
+          
+          # Calculate statistics
+          total = len(times) + errors
+          success_rate = (len(times) / total) * 100 if total > 0 else 0
+          
+          p50, p95, p99 = 0, 0, 0
+          if len(times) >= 2:
+              quantile_values = quantiles(times, n=100)
+              p50 = quantile_values[49]
+              p95 = quantile_values[94]
+              p99 = quantile_values[98]
+          elif times:
+              p50 = p95 = p99 = times[0]
+          
+          stats = {
+              'total_requests': total,
+              'successful_requests': len(times),
+              'failed_requests': errors,
+              'success_rate': success_rate,
+              'mean_latency': mean(times) if times else 0,
+              'median_latency': median(times) if times else 0,
+              'p95_latency': p95,
+              'p99_latency': p99,
+              'min_latency': min(times) if times else 0,
+              'max_latency': max(times) if times else 0
+          }
+          
+          # Save statistics
+          with open('perf_stats.json', 'w') as f:
+              json.dump(stats, f, indent=2)
+          
+          # Print summary
+          print('\n=== Performance Test Results ===')
+          print(f'Total Requests: {stats[\"total_requests\"]}')
+          print(f'Success Rate: {stats[\"success_rate\"]:.2f}%')
+          print(f'Mean Latency: {stats[\"mean_latency\"]*1000:.2f}ms')
+          print(f'Median Latency: {stats[\"median_latency\"]*1000:.2f}ms')
+          print(f'P95 Latency: {stats[\"p95_latency\"]*1000:.2f}ms')
+          print(f'P99 Latency: {stats[\"p99_latency\"]*1000:.2f}ms')
+          print('================================\n')
+          
+          # Check SLO compliance
+          slo_violations = []
+          if stats['p95_latency'] > 0.200:  # 200ms SLO
+              slo_violations.append(f'P95 latency ({stats[\"p95_latency\"]*1000:.2f}ms) exceeds 200ms SLO')
+          if stats['p99_latency'] > 0.500:  # 500ms SLO
+              slo_violations.append(f'P99 latency ({stats[\"p99_latency\"]*1000:.2f}ms) exceeds 500ms SLO')
+          if stats['success_rate'] < 99.0:  # 99% success rate SLO
+              slo_violations.append(f'Success rate ({stats[\"success_rate\"]:.2f}%) below 99% SLO')
+          
+          if slo_violations:
+              print('⚠️  SLO Violations:')
+              for violation in slo_violations:
+                  print(f'  - {violation}')
+              print('\nNote: SLO violations are informational and do not fail the build.')
+          else:
+              print('✅ All SLOs met!')
+          "
+        continue-on-error: true
+      
+      - name: Download previous benchmark
+        uses: actions/cache@v3
+        with:
+          path: previous_benchmark.json
+          key: performance-benchmark-${{ github.base_ref || github.ref_name }}
+        continue-on-error: true
+      
+      - name: Compare with baseline
+        run: |
+          python -c "
+          import json
+          import os
+          
+          # Load current stats
+          with open('perf_stats.json', 'r') as f:
+              current = json.load(f)
+          
+          # Try to load previous stats
+          if os.path.exists('previous_benchmark.json'):
+              with open('previous_benchmark.json', 'r') as f:
+                  previous = json.load(f)
+              
+              print('\n=== Performance Comparison ===')
+              print(f'P95 Latency: {current[\"p95_latency\"]*1000:.2f}ms (was {previous.get(\"p95_latency\", 0)*1000:.2f}ms)')
+              print(f'P99 Latency: {current[\"p99_latency\"]*1000:.2f}ms (was {previous.get(\"p99_latency\", 0)*1000:.2f}ms)')
+              print(f'Success Rate: {current[\"success_rate\"]:.2f}% (was {previous.get(\"success_rate\", 0):.2f}%)')
+              
+              # Check for regressions (>10% slower)
+              p95_regression = ((current['p95_latency'] / previous.get('p95_latency', current['p95_latency'])) - 1) * 100
+              if p95_regression > 10:
+                  print(f'\n⚠️  Performance regression detected: P95 latency increased by {p95_regression:.1f}%')
+                  print('This is informational and does not fail the build.')
+              elif p95_regression < -10:
+                  print(f'\n✅ Performance improvement: P95 latency decreased by {abs(p95_regression):.1f}%')
+              print('==============================\n')
+          else:
+              print('No previous benchmark data available for comparison')
+          "
+        continue-on-error: true
+      
+      - name: Save benchmark for next run
+        run: |
+          cp perf_stats.json previous_benchmark.json
+        continue-on-error: true
+      
+      - name: Upload performance results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: |
+            perf_results.csv
+            perf_stats.json
+            baseline_benchmark.json
+        if: always()
+      
+      - name: Create performance comment
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            // Read performance stats
+            let stats = {};
+            try {
+              stats = JSON.parse(fs.readFileSync('perf_stats.json', 'utf8'));
+            } catch (e) {
+              console.log('Could not read performance stats');
+              return;
+            }
+            
+            // Create comment body
+            const body = `## 📊 Performance Test Results
+            
+            | Metric | Value | SLO |
+            |--------|-------|-----|
+            | Success Rate | ${stats.success_rate.toFixed(2)}% | ≥99% |
+            | Mean Latency | ${(stats.mean_latency * 1000).toFixed(2)}ms | - |
+            | Median Latency | ${(stats.median_latency * 1000).toFixed(2)}ms | - |
+            | P95 Latency | ${(stats.p95_latency * 1000).toFixed(2)}ms | <200ms |
+            | P99 Latency | ${(stats.p99_latency * 1000).toFixed(2)}ms | <500ms |
+            | Total Requests | ${stats.total_requests} | - |
+            | Failed Requests | ${stats.failed_requests} | - |
+            
+            ${stats.p95_latency <= 0.200 && stats.p99_latency <= 0.500 && stats.success_rate >= 99.0 
+              ? '✅ All SLOs met!' 
+              : '⚠️ Some SLOs not met (informational only)'}
+            `;
+            
+            // Post comment
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+        continue-on-error: true
+      
+      - name: Performance test summary
+        run: |
+          echo "### Performance Test Complete" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          cat perf_stats.json >> $GITHUB_STEP_SUMMARY
+        if: always()

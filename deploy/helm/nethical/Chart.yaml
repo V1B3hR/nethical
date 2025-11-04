@@ -1,0 +1,20 @@
+apiVersion: v2
+name: nethical
+description: A Helm chart for Nethical - Safety governance system for AI agents
+type: application
+version: 0.1.0
+appVersion: "0.1.0"
+keywords:
+  - ai
+  - safety
+  - governance
+  - agents
+  - moderation
+  - compliance
+home: https://github.com/V1B3hR/nethical
+sources:
+  - https://github.com/V1B3hR/nethical
+maintainers:
+  - name: Nethical Team
+    url: https://github.com/V1B3hR/nethical
+icon: https://raw.githubusercontent.com/V1B3hR/nethical/main/docs/logo.png

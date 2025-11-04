@@ -1,0 +1,37 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nethical.fullname" . }}-config
+  labels:
+    {{- include "nethical.labels" . | nindent 4 }}
+data:
+  NETHICAL_STORAGE_DIR: {{ .Values.nethical.storageDir | quote }}
+  NETHICAL_REGION_ID: {{ .Values.nethical.regionId | quote }}
+  NETHICAL_LOGICAL_DOMAIN: {{ .Values.nethical.logicalDomain | quote }}
+  NETHICAL_ENABLE_MERKLE: {{ .Values.nethical.enableMerkle | quote }}
+  NETHICAL_ENABLE_QUARANTINE: {{ .Values.nethical.enableQuarantine | quote }}
+  NETHICAL_ENABLE_QUOTA: {{ .Values.nethical.enableQuota | quote }}
+  NETHICAL_ENABLE_OTEL: {{ .Values.nethical.enableOtel | quote }}
+  NETHICAL_REQUESTS_PER_SECOND: {{ .Values.nethical.requestsPerSecond | quote }}
+  NETHICAL_MAX_PAYLOAD_BYTES: {{ .Values.nethical.maxPayloadBytes | quote }}
+  NETHICAL_PRIVACY_MODE: {{ .Values.nethical.privacyMode | quote }}
+  NETHICAL_EPSILON: {{ .Values.nethical.epsilon | quote }}
+  NETHICAL_REDACTION_POLICY: {{ .Values.nethical.redactionPolicy | quote }}
+  OTEL_EXPORTER: {{ .Values.nethical.otel.exporter | quote }}
+  OTEL_EXPORTER_OTLP_ENDPOINT: {{ .Values.nethical.otel.endpoint | quote }}
+  OTEL_SERVICE_NAME: {{ .Values.nethical.otel.serviceName | quote }}
+  {{- if .Values.redis.enabled }}
+  REDIS_HOST: {{ .Values.redis.host | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}
+  {{- end }}
+
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nethical.fullname" . }}-policies
+  labels:
+    {{- include "nethical.labels" . | nindent 4 }}
+data:
+  correlation_rules.yaml: {{ .Values.nethical.policies.correlationRules | nindent 4 }}
+  ethics_taxonomy.json: {{ .Values.nethical.policies.ethicsTaxonomy | nindent 4 }}
