@@ -22,6 +22,11 @@ on:
         required: false
         default: '200'
 
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
 jobs:
   performance-test:
     name: Performance Benchmark
