@@ -66,12 +66,11 @@ def calculate_risk_score_jit(
     # Normalize severities to 0-1 range
     normalized_severities = violation_severities / 5.0
     
-    # Calculate weighted score
-    total_score = 0.0
-    for i in range(len(violation_severities)):
-        severity_component = normalized_severities[i] * severity_weight
-        confidence_component = violation_confidences[i] * confidence_weight
-        total_score += (severity_component + confidence_component) * base_weight
+    # Vectorized weighted score calculation for better performance
+    severity_component = normalized_severities * severity_weight
+    confidence_component = violation_confidences * confidence_weight
+    scores = (severity_component + confidence_component) * base_weight
+    total_score = np.sum(scores)
     
     # Average and normalize
     avg_score = total_score / len(violation_severities)

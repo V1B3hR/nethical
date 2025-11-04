@@ -124,10 +124,12 @@ class InMemoryJtiStore:
 
     def register(self, jti: str) -> None:
         self._entries.add(jti)
-        # Simple pruning policy (could be improved)
+        # Simple pruning policy - remove excess entries efficiently
         if len(self._entries) > self.max_entries:
+            # Calculate how many to remove
+            to_remove = len(self._entries) - self.max_entries
             # Random sampling removal for O(1) average; acceptable for a lightweight utility
-            for _ in range(len(self._entries) - self.max_entries):
+            for _ in range(to_remove):
                 self._entries.pop()
 
 
