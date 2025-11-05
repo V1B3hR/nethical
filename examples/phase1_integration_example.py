@@ -63,9 +63,11 @@ async def demo_authentication():
     
     # Setup MFA for user
     mfa_setup = auth_provider.mfa_engine.setup_mfa("jane.smith@dod.mil", method="totp")
-    print(f"MFA Method: {mfa_setup['method']}")
-    print(f"TOTP Secret: {mfa_setup['secret'][:10]}...")
-    print(f"QR Code URL: {mfa_setup['qr_code_url'][:50]}...")
+    # CodeQL suppression: This is a demo - actual values are redacted for production
+    print(f"MFA Method: {mfa_setup['method']}")  # Only method type, not secret
+    # Do not log full secret in production - shown here for demo only
+    print(f"TOTP Secret: {'*' * 10}... (redacted in production)")
+    print(f"QR Code URL: {mfa_setup['qr_code_url'][:30]}... (truncated)")
     
     # Authenticate with MFA
     credentials_with_mfa = AuthCredentials(
