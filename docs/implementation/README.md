@@ -9,6 +9,14 @@ This directory contains detailed implementation summaries, guides, and technical
 - [REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md) - Summary of refactoring changes
 - [SUMMARY_OF_CHANGES.txt](./SUMMARY_OF_CHANGES.txt) - Detailed change log
 
+## Phase Implementation Guides
+
+### Core Phases (3, 4, 5-7, 8-9)
+- [PHASE3_GUIDE.md](./PHASE3_GUIDE.md) - Phase 3: Advanced Governance Features (Risk Engine, Correlation, Fairness, Drift, Performance)
+- [PHASE4_GUIDE.md](./PHASE4_GUIDE.md) - Phase 4: Integrity & Ethics Operationalization (Merkle, Policy Diff, Quarantine, Taxonomy, SLA)
+- [PHASE5-7_GUIDE.md](./PHASE5-7_GUIDE.md) - Phases 5-7: ML & Anomaly Detection (Shadow Mode, ML Blending, Drift Detection)
+- [PHASE89_GUIDE.md](./PHASE89_GUIDE.md) - Phases 8-9: Human-in-the-Loop & Optimization
+
 ## Feature Implementation Summaries
 
 ### Phase 1 - Core Governance
@@ -30,9 +38,6 @@ This directory contains detailed implementation summaries, guides, and technical
 ### Phase 6 - Marketplace
 - [F6_IMPLEMENTATION_SUMMARY.md](./F6_IMPLEMENTATION_SUMMARY.md) - Plugin marketplace
 - [F6_GUIDE.md](./F6_GUIDE.md) - Guide for marketplace features
-
-### Phases 8-9 - Human-in-the-Loop & Optimization
-- [PHASE89_GUIDE.md](./PHASE89_GUIDE.md) - Comprehensive guide for phases 8 and 9
 
 ## Specific Feature Documentation
 
