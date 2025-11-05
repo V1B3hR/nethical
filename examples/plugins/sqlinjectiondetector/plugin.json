@@ -1,0 +1,15 @@
+{
+    "name": "SQLInjectionDetector",
+    "version": "0.1.0",
+    "description": "Detects potential SQL injection patterns in actions",
+    "author": "Nethical Team",
+    "type": "detector",
+    "entry_point": "sqlinjectiondetector.Sqlinjectiondetector",
+    "requires_nethical_version": ">=0.1.0",
+    "dependencies": [],
+    "tags": ["detector"],
+    "created_at": "2025-11-05T09:09:55.434449+00:00",
+    "license": "MIT",
+    "homepage": "",
+    "repository": ""
+}
