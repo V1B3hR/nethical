@@ -59,10 +59,10 @@ Criticality: MEDIUM-HIGH
 Current State: Backend exists, no interface
 
 Actions: UI
-Design web-based review dashboard (React/Vue.js).
+Design web-based review dashboard.
 Design a sleek, modern UI dashboard for an AI safety governance system called Nethical. 
 The interface should include a real-time agent monitor, a metrics dashboard with precision/recall charts, 
-a plugin marketplace, and a human review panel. Use a dark theme with neon accents, modular cards, and smooth transitions. 
+a plugin marketplace, and a human review panel. Use a light green/lime theme with turquoise accents, modular cards, and smooth transitions. 
 Prioritize readability, ethical clarity, and reviewer empowerment.
 Implement escalation queue visualization
 Add case management system with:
