@@ -42,6 +42,14 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
       
+      - name: Run load test
+        run: |
+          if [ "$CI" = "true" ]; then
+            python generate_load.py --agents 50 --rps 15 --duration 60
+          else
+            python generate_load.py --agents 100 --rps 50 --duration 60
+          fi
+
       - name: Run current branch benchmarks
         id: current_bench
         run: |
