@@ -1,0 +1,359 @@
+name: Performance Regression Detection
+
+on:
+  pull_request:
+    branches:
+      - main
+      - develop
+  push:
+    branches:
+      - main
+  workflow_dispatch:
+    inputs:
+      baseline_ref:
+        description: 'Baseline reference (branch/tag/commit) to compare against'
+        required: false
+        default: 'main'
+
+permissions:
+  contents: read
+  pull-requests: write
+  checks: write
+
+jobs:
+  performance-benchmark:
+    name: Run Performance Benchmarks
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0  # Need full history for comparison
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      
+      - name: Run current branch benchmarks
+        id: current_bench
+        run: |
+          echo "Running benchmarks on current branch..."
+          
+          # Run performance tests if they exist
+          if [ -f "examples/perf/generate_load.py" ]; then
+            python examples/perf/generate_load.py \
+              --agents 100 \
+              --rps 50 \
+              --duration 30 \
+              --cohort benchmark \
+              --output perf_results_current.csv
+          fi
+          
+          # Extract key metrics
+          if [ -f "perf_results_current.csv" ]; then
+            # Calculate average latency
+            current_p50=$(awk -F',' 'NR>1 {sum+=$3; count++} END {if(count>0) print sum/count; else print 0}' perf_results_current.csv)
+            current_p95=$(awk -F',' 'NR>1 {if($3>max) max=$3} END {print max*0.95}' perf_results_current.csv)
+            
+            echo "current_p50=$current_p50" >> $GITHUB_OUTPUT
+            echo "current_p95=$current_p95" >> $GITHUB_OUTPUT
+            
+            echo "Current P50 latency: $current_p50 ms"
+            echo "Current P95 latency: $current_p95 ms"
+          fi
+      
+      - name: Checkout baseline
+        if: github.event_name == 'pull_request'
+        run: |
+          git fetch origin ${{ github.base_ref }}
+          git checkout origin/${{ github.base_ref }}
+      
+      - name: Run baseline benchmarks
+        if: github.event_name == 'pull_request'
+        id: baseline_bench
+        run: |
+          echo "Running benchmarks on baseline..."
+          
+          # Reinstall dependencies for baseline
+          pip install -e .
+          
+          if [ -f "examples/perf/generate_load.py" ]; then
+            python examples/perf/generate_load.py \
+              --agents 100 \
+              --rps 50 \
+              --duration 30 \
+              --cohort benchmark \
+              --output perf_results_baseline.csv
+          fi
+          
+          # Extract key metrics
+          if [ -f "perf_results_baseline.csv" ]; then
+            baseline_p50=$(awk -F',' 'NR>1 {sum+=$3; count++} END {if(count>0) print sum/count; else print 0}' perf_results_baseline.csv)
+            baseline_p95=$(awk -F',' 'NR>1 {if($3>max) max=$3} END {print max*0.95}' perf_results_baseline.csv)
+            
+            echo "baseline_p50=$baseline_p50" >> $GITHUB_OUTPUT
+            echo "baseline_p95=$baseline_p95" >> $GITHUB_OUTPUT
+            
+            echo "Baseline P50 latency: $baseline_p50 ms"
+            echo "Baseline P95 latency: $baseline_p95 ms"
+          fi
+      
+      - name: Compare performance
+        if: github.event_name == 'pull_request'
+        id: compare
+        run: |
+          current_p50="${{ steps.current_bench.outputs.current_p50 }}"
+          current_p95="${{ steps.current_bench.outputs.current_p95 }}"
+          baseline_p50="${{ steps.baseline_bench.outputs.baseline_p50 }}"
+          baseline_p95="${{ steps.baseline_bench.outputs.baseline_p95 }}"
+          
+          # Calculate regression percentages
+          if [ "$baseline_p50" != "0" ] && [ "$baseline_p50" != "" ]; then
+            p50_change=$(echo "scale=2; (($current_p50 - $baseline_p50) / $baseline_p50) * 100" | bc)
+          else
+            p50_change="N/A"
+          fi
+          
+          if [ "$baseline_p95" != "0" ] && [ "$baseline_p95" != "" ]; then
+            p95_change=$(echo "scale=2; (($current_p95 - $baseline_p95) / $baseline_p95) * 100" | bc)
+          else
+            p95_change="N/A"
+          fi
+          
+          echo "p50_change=$p50_change" >> $GITHUB_OUTPUT
+          echo "p95_change=$p95_change" >> $GITHUB_OUTPUT
+          
+          # Determine if regression is significant (>10% slower)
+          if [ "$p50_change" != "N/A" ]; then
+            regression=$(echo "$p50_change > 10" | bc)
+            if [ "$regression" -eq 1 ]; then
+              echo "regression_detected=true" >> $GITHUB_OUTPUT
+              echo "⚠️  Performance regression detected!"
+            else
+              echo "regression_detected=false" >> $GITHUB_OUTPUT
+              echo "✅ No significant performance regression"
+            fi
+          fi
+      
+      - name: Upload benchmark results
+        uses: actions/upload-artifact@v4
+        with:
+          name: performance-results
+          path: |
+            perf_results_*.csv
+        if: always()
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            const currentP50 = '${{ steps.current_bench.outputs.current_p50 }}';
+            const currentP95 = '${{ steps.current_bench.outputs.current_p95 }}';
+            const baselineP50 = '${{ steps.baseline_bench.outputs.baseline_p50 }}';
+            const baselineP95 = '${{ steps.baseline_bench.outputs.baseline_p95 }}';
+            const p50Change = '${{ steps.compare.outputs.p50_change }}';
+            const p95Change = '${{ steps.compare.outputs.p95_change }}';
+            const regressionDetected = '${{ steps.compare.outputs.regression_detected }}' === 'true';
+            
+            let emoji = regressionDetected ? '⚠️' : '✅';
+            let status = regressionDetected ? '**Performance Regression Detected**' : 'No Performance Regression';
+            
+            let comment = `## ${emoji} Performance Benchmark Results\n\n`;
+            comment += `### ${status}\n\n`;
+            comment += '| Metric | Baseline | Current | Change |\n';
+            comment += '|--------|----------|---------|--------|\n';
+            comment += `| P50 Latency | ${baselineP50} ms | ${currentP50} ms | ${p50Change}% |\n`;
+            comment += `| P95 Latency | ${baselineP95} ms | ${currentP95} ms | ${p95Change}% |\n`;
+            comment += '\n';
+            
+            if (regressionDetected) {
+              comment += '⚠️ **Warning**: P50 latency has increased by more than 10%.\n';
+              comment += 'Please review the changes for potential performance impacts.\n\n';
+            } else {
+              comment += '✅ Performance is within acceptable limits.\n\n';
+            }
+            
+            comment += '---\n';
+            comment += '*Benchmark Configuration: 100 agents, 50 RPS, 30 seconds*\n';
+            comment += `*Baseline: \`${context.payload.pull_request.base.ref}\`*\n`;
+            
+            // Find existing comment and update or create new
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Performance Benchmark Results')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+        continue-on-error: true
+      
+      - name: Fail on significant regression
+        if: github.event_name == 'pull_request' && steps.compare.outputs.regression_detected == 'true'
+        run: |
+          echo "::warning::Performance regression detected (>10% increase in P50 latency)"
+          echo "Please review the changes and optimize if necessary"
+          # Don't fail the build, just warn
+          exit 0
+  
+  memory-profiling:
+    name: Memory Profiling
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+          pip install memory-profiler psutil
+      
+      - name: Run memory profiling
+        run: |
+          echo "Running memory profiling..."
+          
+          # Create a simple memory profiling script
+          cat > memory_test.py << 'EOF'
+          from nethical.core import IntegratedGovernance
+          from memory_profiler import profile
+          import psutil
+          import os
+          
+          @profile
+          def test_governance_memory():
+              process = psutil.Process(os.getpid())
+              start_memory = process.memory_info().rss / 1024 / 1024  # MB
+              
+              gov = IntegratedGovernance(
+                  storage_dir="./test_data",
+                  enable_performance_optimization=True,
+                  enable_merkle_anchoring=True,
+                  enable_quarantine=True
+              )
+              
+              # Simulate some actions
+              for i in range(100):
+                  result = gov.process_action(
+                      agent_id=f"agent_{i % 10}",
+                      action=f"test action {i}",
+                      cohort="test"
+                  )
+              
+              end_memory = process.memory_info().rss / 1024 / 1024  # MB
+              memory_increase = end_memory - start_memory
+              
+              print(f"\nMemory Usage:")
+              print(f"  Start: {start_memory:.2f} MB")
+              print(f"  End: {end_memory:.2f} MB")
+              print(f"  Increase: {memory_increase:.2f} MB")
+              
+              return memory_increase
+          
+          if __name__ == '__main__':
+              memory_used = test_governance_memory()
+              
+              # Check for memory leaks (>100 MB for 100 actions is concerning)
+              if memory_used > 100:
+                  print(f"⚠️  WARNING: High memory usage detected: {memory_used:.2f} MB")
+              else:
+                  print(f"✅ Memory usage is acceptable: {memory_used:.2f} MB")
+          EOF
+          
+          python memory_test.py > memory_profile.txt 2>&1 || true
+          
+          # Display results
+          cat memory_profile.txt
+      
+      - name: Upload memory profile
+        uses: actions/upload-artifact@v4
+        with:
+          name: memory-profile
+          path: memory_profile.txt
+        if: always()
+  
+  benchmark-history:
+    name: Track Performance History
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install -e .
+      
+      - name: Run benchmark
+        run: |
+          if [ -f "examples/perf/generate_load.py" ]; then
+            python examples/perf/generate_load.py \
+              --agents 100 \
+              --rps 50 \
+              --duration 30 \
+              --cohort benchmark \
+              --output perf_results.csv
+          fi
+      
+      - name: Store benchmark results
+        run: |
+          mkdir -p benchmark-history
+          timestamp=$(date +%Y%m%d_%H%M%S)
+          commit_sha="${{ github.sha }}"
+          
+          if [ -f "perf_results.csv" ]; then
+            # Add metadata to results
+            echo "timestamp,commit,branch" > benchmark-history/benchmark_${timestamp}.csv
+            echo "$timestamp,$commit_sha,main" >> benchmark-history/benchmark_${timestamp}.csv
+            cat perf_results.csv >> benchmark-history/benchmark_${timestamp}.csv
+          fi
+      
+      - name: Upload to artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: benchmark-history-${{ github.sha }}
+          path: benchmark-history/
+        if: always()

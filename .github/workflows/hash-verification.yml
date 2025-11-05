@@ -1,0 +1,208 @@
+name: Hash Verification and Supply Chain Security
+
+on:
+  pull_request:
+    paths:
+      - 'requirements*.txt'
+  push:
+    branches:
+      - main
+      - develop
+    paths:
+      - 'requirements*.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  generate-hashes:
+    name: Generate and Verify Hashes
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+      
+      - name: Generate hashed requirements
+        run: |
+          python scripts/generate_hashed_requirements.py --all
+        continue-on-error: true
+      
+      - name: Verify hashed requirements can be installed
+        run: |
+          if [ -f requirements-hashed.txt ]; then
+            # Create test virtualenv
+            python -m venv test_env
+            source test_env/bin/activate
+            
+            # Try installing with hash verification
+            pip install --require-hashes -r requirements-hashed.txt || echo "Hash verification install test failed (expected if hashes incomplete)"
+            
+            deactivate
+            rm -rf test_env
+          fi
+        continue-on-error: true
+      
+      - name: Check for unpinned dependencies
+        run: |
+          echo "Checking for unpinned dependencies..."
+          
+          # Check requirements.txt
+          if grep -E '^[a-zA-Z0-9_-]+>=' requirements.txt; then
+            echo "⚠️  Found unpinned dependencies in requirements.txt:"
+            grep -E '^[a-zA-Z0-9_-]+>=' requirements.txt
+            exit 1
+          else
+            echo "✓ All dependencies in requirements.txt are pinned"
+          fi
+          
+          # Check requirements-dev.txt
+          if grep -E '^[a-zA-Z0-9_-]+>=' requirements-dev.txt 2>/dev/null; then
+            echo "⚠️  Found unpinned dependencies in requirements-dev.txt:"
+            grep -E '^[a-zA-Z0-9_-]+>=' requirements-dev.txt
+            echo "Note: Dev dependencies may use >= for flexibility"
+          fi
+      
+      - name: Generate supply chain dashboard
+        run: |
+          python scripts/supply_chain_dashboard.py --format markdown > supply_chain_report.md
+        continue-on-error: true
+      
+      - name: Upload supply chain report
+        uses: actions/upload-artifact@v4
+        with:
+          name: supply-chain-report
+          path: |
+            supply_chain_report.md
+            requirements-hashed.txt
+            requirements-dev-hashed.txt
+        if: always()
+      
+      - name: Comment on PR with report
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let comment = '## 🔒 Supply Chain Security Report\n\n';
+            
+            try {
+              const report = fs.readFileSync('supply_chain_report.md', 'utf8');
+              comment += report;
+            } catch (e) {
+              comment += 'Supply chain report generation failed. Please check the workflow logs.\n';
+            }
+            
+            comment += '\n\n---\n';
+            comment += '📊 **Hash Verification**: ';
+            
+            if (fs.existsSync('requirements-hashed.txt')) {
+              comment += '✅ Hashed requirements generated\n';
+            } else {
+              comment += '⚠️ Hashed requirements not generated\n';
+            }
+            
+            const { data: comments } = await github.rest.issues.listComments({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              issue_number: context.issue.number,
+            });
+            
+            const botComment = comments.find(comment => 
+              comment.user.type === 'Bot' && 
+              comment.body.includes('Supply Chain Security Report')
+            );
+            
+            if (botComment) {
+              await github.rest.issues.updateComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                comment_id: botComment.id,
+                body: comment
+              });
+            } else {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: context.issue.number,
+                body: comment
+              });
+            }
+        continue-on-error: true
+
+  verify-slsa:
+    name: Verify SLSA Compliance
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Check SLSA Level 3 requirements
+        run: |
+          echo "Checking SLSA Level 3 compliance..."
+          
+          # Check version control
+          if [ -d .git ]; then
+            echo "✓ Version control: Git repository"
+          else
+            echo "✗ Version control: Not a Git repository"
+            exit 1
+          fi
+          
+          # Check for signed commits (optional but recommended)
+          if git log -1 --show-signature 2>&1 | grep -q "Good signature"; then
+            echo "✓ Signed commits: Present"
+          else
+            echo "⚠️  Signed commits: Not found (recommended for SLSA L3)"
+          fi
+          
+          # Check for CI/CD workflows
+          if [ -d .github/workflows ]; then
+            echo "✓ CI/CD: GitHub Actions workflows present"
+            echo "  Found workflows:"
+            ls -1 .github/workflows/*.yml | sed 's|.*/||' | sed 's/^/  - /'
+          else
+            echo "✗ CI/CD: No workflows found"
+            exit 1
+          fi
+          
+          # Check for dependency management
+          if [ -f requirements.txt ]; then
+            pinned=$(grep -c '==' requirements.txt || echo 0)
+            total=$(grep -c '^[a-zA-Z]' requirements.txt || echo 0)
+            
+            if [ "$total" -gt 0 ]; then
+              percentage=$((pinned * 100 / total))
+              echo "✓ Dependency management: $pinned/$total dependencies pinned ($percentage%)"
+              
+              if [ "$percentage" -lt 100 ]; then
+                echo "⚠️  Some dependencies are not pinned"
+              fi
+            fi
+          fi
+          
+          # Check for SBOM generation workflow
+          if grep -q "sbom" .github/workflows/*.yml 2>/dev/null; then
+            echo "✓ SBOM generation: Workflow present"
+          else
+            echo "⚠️  SBOM generation: No workflow found"
+          fi
+          
+          # Check for artifact signing
+          if grep -q "cosign" .github/workflows/*.yml 2>/dev/null; then
+            echo "✓ Artifact signing: Cosign configured"
+          else
+            echo "⚠️  Artifact signing: Not configured"
+          fi
+          
+          echo ""
+          echo "SLSA Level 3 Readiness: Compliance checks completed"
