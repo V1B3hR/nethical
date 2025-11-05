@@ -189,8 +189,8 @@ class TestLDAPConnector:
             base_dn="dc=example,dc=gov",
         )
         
-        result = await connector.authenticate("testuser", "password")
-        assert result is True  # Stub implementation
+        result = await connector.authenticate("testuser", "password123")
+        assert result is True  # Stub implementation accepts 8+ char passwords
     
     @pytest.mark.asyncio
     async def test_get_user_groups(self):
@@ -293,7 +293,7 @@ class TestMilitaryGradeAuthProvider:
             certificate=b"fake_certificate",
             ldap_credentials={
                 "username": "user123",
-                "password": "password",
+                "password": "validpass123",  # 8+ chars for stub validation
             },
         )
         

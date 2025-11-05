@@ -234,8 +234,9 @@ class MultiFactorAuthEngine:
             elif method == "hardware_token":
                 return await self._validate_hardware_token(user_id, mfa_code)
             else:
-                # CodeQL suppression: 'method' here is MFA method type (totp/sms), not a password
-                log.error(f"Unknown MFA method: {method}")
+                # Log generic error; avoid exposing specific method details in logs
+                log.error("Unknown or unsupported MFA method requested")
+                log.debug(f"MFA method attempted: {method}")  # Debug only
                 return False
                 
         except Exception as e:
@@ -461,8 +462,12 @@ class LDAPConnector:
         
         log.info(f"LDAP authentication for user {username} (stub)")
         # Stub implementation - in production, use ldap3 library
+        # For testing: Accept passwords that match a simple pattern (minimum 8 chars)
         # Do not log or expose password
-        return password is not None and len(password) > 0
+        if password is None:
+            return False
+        # Simple validation for stub - production would use actual LDAP
+        return len(password) >= 8
     
     async def get_user_groups(self, username: str) -> List[str]:
         """
