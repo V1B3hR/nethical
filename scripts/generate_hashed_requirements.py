@@ -98,7 +98,6 @@ class HashedRequirementsGenerator:
                 
                 if result.returncode == 0:
                     # Get hash from pip hash command
-                    from pathlib import Path
                     downloaded_files = list(Path(tmpdir).glob(f'{package_name}-*'))
                     if downloaded_files:
                         hash_result = subprocess.run(

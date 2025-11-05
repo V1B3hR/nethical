@@ -19,7 +19,6 @@ import sys
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Optional, Dict, Any
-import shutil
 
 
 class PluginDevelopmentKit:
@@ -431,12 +430,15 @@ setup(
                 
                 # Validate entry point exists
                 if 'entry_point' in manifest:
-                    module_name, class_name = manifest['entry_point'].rsplit('.', 1)
-                    module_file = plugin_path / f"{module_name}.py"
-                    if not module_file.exists():
-                        errors.append(f"Entry point module not found: {module_file}")
-                    else:
-                        print(f"  ✓ Entry point module exists: {module_file}")
+                    try:
+                        module_name, class_name = manifest['entry_point'].rsplit('.', 1)
+                        module_file = plugin_path / f"{module_name}.py"
+                        if not module_file.exists():
+                            errors.append(f"Entry point module not found: {module_file}")
+                        else:
+                            print(f"  ✓ Entry point module exists: {module_file}")
+                    except ValueError:
+                        errors.append(f"Invalid entry point format: {manifest['entry_point']} (expected 'module.Class')")
             
             except json.JSONDecodeError as e:
                 errors.append(f"Invalid JSON in plugin.json: {e}")

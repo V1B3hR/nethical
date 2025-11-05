@@ -115,15 +115,15 @@ jobs:
           baseline_p50="${{ steps.baseline_bench.outputs.baseline_p50 }}"
           baseline_p95="${{ steps.baseline_bench.outputs.baseline_p95 }}"
           
-          # Calculate regression percentages
+          # Calculate regression percentages using Python instead of bc
           if [ "$baseline_p50" != "0" ] && [ "$baseline_p50" != "" ]; then
-            p50_change=$(echo "scale=2; (($current_p50 - $baseline_p50) / $baseline_p50) * 100" | bc)
+            p50_change=$(python3 -c "print(f'{(($current_p50 - $baseline_p50) / $baseline_p50) * 100:.2f}')")
           else
             p50_change="N/A"
           fi
           
           if [ "$baseline_p95" != "0" ] && [ "$baseline_p95" != "" ]; then
-            p95_change=$(echo "scale=2; (($current_p95 - $baseline_p95) / $baseline_p95) * 100" | bc)
+            p95_change=$(python3 -c "print(f'{(($current_p95 - $baseline_p95) / $baseline_p95) * 100:.2f}')")
           else
             p95_change="N/A"
           fi
@@ -133,7 +133,8 @@ jobs:
           
           # Determine if regression is significant (>10% slower)
           if [ "$p50_change" != "N/A" ]; then
-            regression=$(echo "$p50_change > 10" | bc)
+            # Use Python for comparison instead of bc
+            regression=$(python3 -c "print('1' if float('$p50_change') > 10 else '0')")
             if [ "$regression" -eq 1 ]; then
               echo "regression_detected=true" >> $GITHUB_OUTPUT
               echo "⚠️  Performance regression detected!"

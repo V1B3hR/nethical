@@ -559,23 +559,37 @@ class PluginRegistry:
         Returns:
             -1 if v1 < v2, 0 if equal, 1 if v1 > v2
         """
-        # Simple version comparison (major.minor.patch)
-        parts1 = [int(x) for x in v1.split('.')]
-        parts2 = [int(x) for x in v2.split('.')]
-        
-        for p1, p2 in zip(parts1, parts2):
-            if p1 < p2:
+        try:
+            # Simple version comparison (major.minor.patch)
+            # Strip pre-release tags and metadata for basic comparison
+            v1_clean = v1.split('-')[0].split('+')[0]
+            v2_clean = v2.split('-')[0].split('+')[0]
+            
+            parts1 = [int(x) for x in v1_clean.split('.')]
+            parts2 = [int(x) for x in v2_clean.split('.')]
+            
+            for p1, p2 in zip(parts1, parts2):
+                if p1 < p2:
+                    return -1
+                elif p1 > p2:
+                    return 1
+            
+            # Handle different lengths
+            if len(parts1) < len(parts2):
                 return -1
-            elif p1 > p2:
+            elif len(parts1) > len(parts2):
                 return 1
+            
+            return 0
         
-        # Handle different lengths
-        if len(parts1) < len(parts2):
-            return -1
-        elif len(parts1) > len(parts2):
-            return 1
-        
-        return 0
+        except (ValueError, AttributeError) as e:
+            logger.warning(f"Error comparing versions '{v1}' and '{v2}': {e}")
+            # Fall back to string comparison
+            if v1 < v2:
+                return -1
+            elif v1 > v2:
+                return 1
+            return 0
     
     def calculate_checksum(self, file_path: Path) -> str:
         """
