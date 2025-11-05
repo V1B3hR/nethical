@@ -43,6 +43,36 @@ from .sso import (
     set_sso_manager,
 )
 
+# Phase 1: Military-Grade Security Enhancements
+from .authentication import (
+    AuthCredentials,
+    AuthResult,
+    ClearanceLevel,
+    PKICertificateValidator,
+    MultiFactorAuthEngine,
+    SecureSessionManager,
+    LDAPConnector,
+    MilitaryGradeAuthProvider,
+)
+
+from .encryption import (
+    EncryptionAlgorithm,
+    KeyRotationPolicy,
+    HSMConfig,
+    EncryptedData,
+    MilitaryGradeEncryption,
+    KeyManagementService,
+)
+
+from .input_validation import (
+    ValidationResult,
+    ThreatLevel,
+    SemanticAnomalyDetector,
+    ThreatIntelligenceDB,
+    BehavioralAnalyzer,
+    AdversarialInputDefense,
+)
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -79,5 +109,28 @@ __all__ = [
     "SSOError",
     "get_sso_manager",
     "set_sso_manager",
+    # Phase 1: Military-Grade Authentication
+    "AuthCredentials",
+    "AuthResult",
+    "ClearanceLevel",
+    "PKICertificateValidator",
+    "MultiFactorAuthEngine",
+    "SecureSessionManager",
+    "LDAPConnector",
+    "MilitaryGradeAuthProvider",
+    # Phase 1: Encryption
+    "EncryptionAlgorithm",
+    "KeyRotationPolicy",
+    "HSMConfig",
+    "EncryptedData",
+    "MilitaryGradeEncryption",
+    "KeyManagementService",
+    # Phase 1: Input Validation
+    "ValidationResult",
+    "ThreatLevel",
+    "SemanticAnomalyDetector",
+    "ThreatIntelligenceDB",
+    "BehavioralAnalyzer",
+    "AdversarialInputDefense",
 ]
 
