@@ -290,7 +290,7 @@ MIT License - see LICENSE file for details
             'module_name': module_name,
             'class_name': class_name,
             'snake_name': snake_name,
-            'timestamp': datetime.utcnow().isoformat() + 'Z'
+            'timestamp': datetime.now(timezone.utc).isoformat()
         }
         
         # Create main plugin file
