@@ -54,7 +54,14 @@ jobs:
               --cohort benchmark \
               --output perf_results_current.csv
           fi
-
+  if [ -f "examples/perf/generate_load.py" ]; then
+  python examples/perf/generate_load.py \
+    --agents 100 \
+    --rps 50 \
+    --duration 30 \
+    --cohort benchmark \
+    --output perf_results_current.csv
+fi
     for row in r:
         try:
             lat.append(float(row[2]))
@@ -83,7 +90,14 @@ PY
         run: |
           git fetch origin ${{ github.base_ref }}
           git checkout origin/${{ github.base_ref }}
-
+if [ -f "examples/perf/generate_load.py" ]; then
+  python examples/perf/generate_load.py \
+    --agents 100 \
+    --rps 50 \
+    --duration 30 \
+    --cohort benchmark \
+    --output perf_results_baseline.csv
+fi
       - name: Run baseline benchmarks
         if: github.event_name == 'pull_request'
         id: baseline_bench
