@@ -18,6 +18,7 @@ on:
 permissions:
   contents: read
   pull-requests: write
+  issues: write
   checks: write
 
 jobs:
@@ -29,21 +30,42 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 0  # Need full history for comparison
+          fetch-depth: 0
 
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
 
-      - name: Install dependencies
+      - name: Install dependencies (current)
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
           pip install -e .
+
+      - name: Determine baseline ref
+        id: vars
+        shell: bash
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_REF: ${{ github.base_ref }}
+          INPUT_BASELINE: ${{ github.event.inputs.baseline_ref }}
+        run: |
+          # Priority: workflow_dispatch input > PR base_ref > default main
+          if [ "${EVENT_NAME}" = "workflow_dispatch" ] && [ -n "${INPUT_BASELINE}" ]; then
+            BASELINE="${INPUT_BASELINE}"
+          elif [ "${EVENT_NAME}" = "pull_request" ] && [ -n "${BASE_REF}" ]; then
+            BASELINE="${BASE_REF}"
+          else
+            BASELINE="main"
+          fi
+          echo "baseline_ref=${BASELINE}" | tee -a "$GITHUB_OUTPUT"
 
       - name: Run current branch benchmarks
         id: current_bench
+        shell: bash
         run: |
           echo "Running benchmarks on current branch..."
           if [ -f "examples/perf/generate_load.py" ]; then
@@ -53,15 +75,17 @@ jobs:
               --duration 30 \
               --cohort benchmark \
               --output perf_results_current.csv
+          else
+            echo "No examples/perf/generate_load.py found; skipping."
           fi
-  if [ -f "examples/perf/generate_load.py" ]; then
-  python examples/perf/generate_load.py \
-    --agents 100 \
-    --rps 50 \
-    --duration 30 \
-    --cohort benchmark \
-    --output perf_results_current.csv
-fi
+
+          if [ -f "perf_results_current.csv" ]; then
+            python3 - << 'PY' > current_metrics.out
+import csv, math
+lat = []
+with open('perf_results_current.csv', newline='') as f:
+    r = csv.reader(f)
+    next(r, None)  # skip header
     for row in r:
         try:
             lat.append(float(row[2]))
@@ -79,40 +103,52 @@ p95 = percentile(lat, 95)
 if p50 is not None: print(f"current_p50={p50:.2f}")
 if p95 is not None: print(f"current_p95={p95:.2f}")
 PY
-            cat current_metrics.out
-            cat current_metrics.out >> "$GITHUB_OUTPUT"
+            cat current_metrics.out | tee -a "$GITHUB_OUTPUT"
           else
             echo "No perf_results_current.csv found; skipping metrics extraction."
           fi
 
       - name: Checkout baseline
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ steps.vars.outputs.baseline_ref }}
+          path: baseline
+          fetch-depth: 0
+
+      - name: Install dependencies (baseline)
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
+        shell: bash
         run: |
-          git fetch origin ${{ github.base_ref }}
-          git checkout origin/${{ github.base_ref }}
-if [ -f "examples/perf/generate_load.py" ]; then
-  python examples/perf/generate_load.py \
-    --agents 100 \
-    --rps 50 \
-    --duration 30 \
-    --cohort benchmark \
-    --output perf_results_baseline.csv
-fi
+          if [ -d "baseline" ]; then
+            if [ -f "baseline/requirements.txt" ]; then
+              pip install -r baseline/requirements.txt
+            fi
+            pip install -e baseline
+          fi
+
       - name: Run baseline benchmarks
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
         id: baseline_bench
+        shell: bash
         run: |
-          echo "Running benchmarks on baseline..."
+          echo "Running benchmarks on baseline: ${{ steps.vars.outputs.baseline_ref }}"
+          if [ -f "baseline/examples/perf/generate_load.py" ]; then
+            python baseline/examples/perf/generate_load.py \
+              --agents 100 \
+              --rps 50 \
+              --duration 30 \
+              --cohort benchmark \
+              --output baseline/perf_results_baseline.csv
+          else
+            echo "No baseline/examples/perf/generate_load.py found; skipping."
+          fi
 
-          # Reinstall dependencies for baseline (ensure base branch requirements are applied)
-          pip install -r requirements.txt
-          pip install -e .
-
-          if [ -f "perf_results_baseline.csv" ]; then
+          if [ -f "baseline/perf_results_baseline.csv" ]; then
             python3 - << 'PY' > baseline_metrics.out
 import csv, math
 lat = []
-with open('perf_results_baseline.csv', newline='') as f:
+with open('baseline/perf_results_baseline.csv', newline='') as f:
     r = csv.reader(f)
     next(r, None)  # skip header
     for row in r:
@@ -132,14 +168,13 @@ p95 = percentile(lat, 95)
 if p50 is not None: print(f"baseline_p50={p50:.2f}")
 if p95 is not None: print(f"baseline_p95={p95:.2f}")
 PY
-            cat baseline_metrics.out
-            cat baseline_metrics.out >> "$GITHUB_OUTPUT"
+            cat baseline_metrics.out | tee -a "$GITHUB_OUTPUT"
           else
-            echo "No perf_results_baseline.csv found; skipping metrics extraction."
+            echo "No baseline/perf_results_baseline.csv found; skipping metrics extraction."
           fi
 
       - name: Compare performance
-        if: github.event_name == 'pull_request'
+        if: github.event_name == 'pull_request' || github.event_name == 'workflow_dispatch'
         id: compare
         env:
           CURRENT_P50: ${{ steps.current_bench.outputs.current_p50 }}
@@ -171,23 +206,22 @@ p95_change = pct_change(cp95, bp95)
 print(f"p50_change={p50_change}")
 print(f"p95_change={p95_change}")
 
-# Only flag regression if we have numeric p50_change
 if p50_change != "N/A":
     regression = float(p50_change) > 10.0
     print(f"regression_detected={'true' if regression else 'false'}")
 else:
     print("regression_detected=false")
 PY
-          cat compare.out
-          cat compare.out >> "$GITHUB_OUTPUT"
+          cat compare.out | tee -a "$GITHUB_OUTPUT"
 
       - name: Upload benchmark results
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: performance-results
           path: |
             perf_results_*.csv
-        if: always()
+            baseline/perf_results_baseline.csv
 
       - name: Comment on PR
         if: github.event_name == 'pull_request'
@@ -257,7 +291,6 @@ PY
         run: |
           echo "::warning::Performance regression detected (>10% increase in P50 latency)"
           echo "Please review the changes and optimize if necessary"
-          # Don't fail the build, just warn
           exit 0
 
   memory-profiling:
@@ -276,72 +309,69 @@ PY
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
           pip install -e .
           pip install memory-profiler psutil
 
       - name: Run memory profiling
+        shell: bash
         run: |
           echo "Running memory profiling..."
 
-          # Create a simple memory profiling script
           cat > memory_test.py << 'EOF'
-          from nethical.core import IntegratedGovernance
-          from memory_profiler import profile
-          import psutil
-          import os
+from nethical.core import IntegratedGovernance
+from memory_profiler import profile
+import psutil
+import os
 
-          @profile
-          def test_governance_memory():
-              process = psutil.Process(os.getpid())
-              start_memory = process.memory_info().rss / 1024 / 1024  # MB
+@profile
+def test_governance_memory():
+    process = psutil.Process(os.getpid())
+    start_memory = process.memory_info().rss / 1024 / 1024  # MB
 
-              gov = IntegratedGovernance(
-                  storage_dir="./test_data",
-                  enable_performance_optimization=True,
-                  enable_merkle_anchoring=True,
-                  enable_quarantine=True
-              )
+    gov = IntegratedGovernance(
+        storage_dir="./test_data",
+        enable_performance_optimization=True,
+        enable_merkle_anchoring=True,
+        enable_quarantine=True
+    )
 
-              # Simulate some actions
-              for i in range(100):
-                  result = gov.process_action(
-                      agent_id=f"agent_{i % 10}",
-                      action=f"test action {i}",
-                      cohort="test"
-                  )
+    for i in range(100):
+        _ = gov.process_action(
+            agent_id=f"agent_{i % 10}",
+            action=f"test action {i}",
+            cohort="test"
+        )
 
-              end_memory = process.memory_info().rss / 1024 / 1024  # MB
-              memory_increase = end_memory - start_memory
+    end_memory = process.memory_info().rss / 1024 / 1024  # MB
+    memory_increase = end_memory - start_memory
 
-              print(f"\nMemory Usage:")
-              print(f"  Start: {start_memory:.2f} MB")
-              print(f"  End: {end_memory:.2f} MB")
-              print(f"  Increase: {memory_increase:.2f} MB")
+    print(f"\nMemory Usage:")
+    print(f"  Start: {start_memory:.2f} MB")
+    print(f"  End: {end_memory:.2f} MB")
+    print(f"  Increase: {memory_increase:.2f} MB")
 
-              return memory_increase
+    return memory_increase
 
-          if __name__ == '__main__':
-              memory_used = test_governance_memory()
-
-              # Check for memory leaks (>100 MB for 100 actions is concerning)
-              if memory_used > 100:
-                  print(f"⚠️  WARNING: High memory usage detected: {memory_used:.2f} MB")
-              else:
-                  print(f"✅ Memory usage is acceptable: {memory_used:.2f} MB")
-          EOF
+if __name__ == '__main__':
+    memory_used = test_governance_memory()
+    if memory_used > 100:
+        print(f"⚠️  WARNING: High memory usage detected: {memory_used:.2f} MB")
+    else:
+        print(f"✅ Memory usage is acceptable: {memory_used:.2f} MB")
+EOF
 
           python memory_test.py > memory_profile.txt 2>&1 || true
-
-          # Display results
           cat memory_profile.txt
 
       - name: Upload memory profile
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: memory-profile
           path: memory_profile.txt
-        if: always()
 
   benchmark-history:
     name: Track Performance History
@@ -359,7 +389,9 @@ PY
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install -r requirements.txt
+          if [ -f "requirements.txt" ]; then
+            pip install -r requirements.txt
+          fi
           pip install -e .
 
       - name: Run benchmark
@@ -371,6 +403,8 @@ PY
               --duration 30 \
               --cohort benchmark \
               --output perf_results.csv
+          else
+            echo "No examples/perf/generate_load.py found; skipping."
           fi
 
       - name: Store benchmark results
@@ -380,15 +414,16 @@ PY
           commit_sha="${{ github.sha }}"
 
           if [ -f "perf_results.csv" ]; then
-            # Add metadata to results (consider using a separate metadata file in future)
             echo "timestamp,commit,branch" > benchmark-history/benchmark_${timestamp}.csv
             echo "$timestamp,$commit_sha,main" >> benchmark-history/benchmark_${timestamp}.csv
             cat perf_results.csv >> benchmark-history/benchmark_${timestamp}.csv
+          else
+            echo "No perf_results.csv found; nothing to store."
           fi
 
       - name: Upload to artifact
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: benchmark-history-${{ github.sha }}
           path: benchmark-history/
-        if: always()
