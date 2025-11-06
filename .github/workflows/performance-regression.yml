@@ -55,14 +55,6 @@ jobs:
               --output perf_results_current.csv
           fi
 
-          if [ -f "perf_results_current.csv" ]; then
-            # Compute true P50/P95 in Python, assuming latency in column 3 (0-based index 2)
-            python3 - << 'PY' > current_metrics.out
-import csv, math
-lat = []
-with open('perf_results_current.csv', newline='') as f:
-    r = csv.reader(f)
-    next(r, None)  # skip header
     for row in r:
         try:
             lat.append(float(row[2]))
@@ -101,15 +93,6 @@ PY
           # Reinstall dependencies for baseline (ensure base branch requirements are applied)
           pip install -r requirements.txt
           pip install -e .
-
-          if [ -f "examples/perf/generate_load.py" ]; then
-            python examples/perf/generate_load.py \
-              --agents 100 \
-              --rps 50 \
-              --duration 30 \
-              --cohort benchmark \
-              --output perf_results_baseline.csv
-          fi
 
           if [ -f "perf_results_baseline.csv" ]; then
             python3 - << 'PY' > baseline_metrics.out
