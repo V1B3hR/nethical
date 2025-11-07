@@ -129,6 +129,31 @@ from .audit_logging import (
     EnhancedAuditLogger,
 )
 
+# Phase 4: Zero Trust Architecture
+from .zero_trust import (
+    TrustLevel,
+    DeviceHealthStatus,
+    NetworkSegment,
+    ServiceMeshConfig,
+    DeviceHealthCheck,
+    PolicyEnforcer,
+    ContinuousAuthEngine,
+    ZeroTrustController,
+)
+
+# Phase 4: Secret Management
+from .secret_management import (
+    SecretType,
+    SecretRotationPolicy,
+    VaultConfig,
+    Secret,
+    SecretScanner,
+    DynamicSecretGenerator,
+    SecretRotationManager,
+    VaultIntegration,
+    SecretManagementSystem,
+)
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -232,5 +257,24 @@ __all__ = [
     "ForensicAnalyzer",
     "ChainOfCustodyManager",
     "EnhancedAuditLogger",
+    # Phase 4: Zero Trust Architecture
+    "TrustLevel",
+    "DeviceHealthStatus",
+    "NetworkSegment",
+    "ServiceMeshConfig",
+    "DeviceHealthCheck",
+    "PolicyEnforcer",
+    "ContinuousAuthEngine",
+    "ZeroTrustController",
+    # Phase 4: Secret Management
+    "SecretType",
+    "SecretRotationPolicy",
+    "VaultConfig",
+    "Secret",
+    "SecretScanner",
+    "DynamicSecretGenerator",
+    "SecretRotationManager",
+    "VaultIntegration",
+    "SecretManagementSystem",
 ]
 
