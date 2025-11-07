@@ -73,6 +73,33 @@ from .input_validation import (
     AdversarialInputDefense,
 )
 
+# Phase 2: Advanced Anomaly Detection
+from .anomaly_detection import (
+    AnomalyType,
+    AnomalyDetectionResult,
+    LSTMSequenceDetector,
+    TransformerContextAnalyzer,
+    GraphRelationshipAnalyzer,
+    InsiderThreatDetector,
+    APTBehavioralDetector,
+    AdvancedAnomalyDetectionEngine,
+)
+
+# Phase 2: SOC Integration
+from .soc_integration import (
+    SIEMFormat,
+    AlertSeverity,
+    IncidentStatus,
+    SIEMEvent,
+    Incident,
+    SIEMConnector,
+    IncidentManager,
+    ThreatHuntingEngine,
+    AlertingEngine,
+    ForensicCollector,
+    SOCIntegrationHub,
+)
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -132,5 +159,26 @@ __all__ = [
     "ThreatIntelligenceDB",
     "BehavioralAnalyzer",
     "AdversarialInputDefense",
+    # Phase 2: Advanced Anomaly Detection
+    "AnomalyType",
+    "AnomalyDetectionResult",
+    "LSTMSequenceDetector",
+    "TransformerContextAnalyzer",
+    "GraphRelationshipAnalyzer",
+    "InsiderThreatDetector",
+    "APTBehavioralDetector",
+    "AdvancedAnomalyDetectionEngine",
+    # Phase 2: SOC Integration
+    "SIEMFormat",
+    "AlertSeverity",
+    "IncidentStatus",
+    "SIEMEvent",
+    "Incident",
+    "SIEMConnector",
+    "IncidentManager",
+    "ThreatHuntingEngine",
+    "AlertingEngine",
+    "ForensicCollector",
+    "SOCIntegrationHub",
 ]
 
