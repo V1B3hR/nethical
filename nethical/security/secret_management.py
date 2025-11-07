@@ -339,7 +339,7 @@ class DynamicSecretGenerator:
         )
         
         self.generated_secrets[secret_id] = secret
-        log.info(f"Generated API key: {secret_id}")
+        log.info("Generated API key")
         return secret
     
     def generate_password(
@@ -377,7 +377,7 @@ class DynamicSecretGenerator:
         )
         
         self.generated_secrets[secret_id] = secret
-        log.info(f"Generated password: {secret_id}")
+        log.info("Generated password")
         return secret
     
     def generate_database_credential(
@@ -409,7 +409,7 @@ class DynamicSecretGenerator:
         )
         
         self.generated_secrets[secret_id] = secret
-        log.info(f"Generated database credential: {secret_id}")
+        log.info(f"Generated database credential for type: {database_type}")
         return secret
     
     def generate_encryption_key(
@@ -437,7 +437,7 @@ class DynamicSecretGenerator:
         )
         
         self.generated_secrets[secret_id] = secret
-        log.info(f"Generated encryption key: {secret_id}")
+        log.info("Generated encryption key")
         return secret
 
 
@@ -460,7 +460,7 @@ class SecretRotationManager:
     def add_policy(self, policy: SecretRotationPolicy) -> None:
         """Add rotation policy for a secret type"""
         self.policies[policy.secret_type] = policy
-        log.info(f"Added rotation policy for {policy.secret_type}")
+        log.info(f"Added rotation policy for secret type: {policy.secret_type.value}")
     
     def should_rotate(self, secret: Secret) -> bool:
         """
@@ -503,7 +503,7 @@ class SecretRotationManager:
         elif secret.secret_type == SecretType.ENCRYPTION_KEY:
             new_secret = generator.generate_encryption_key(new_secret_id)
         else:
-            log.warning(f"Rotation not supported for type: {secret.secret_type}")
+            log.warning(f"Rotation not supported for secret type: {secret.secret_type.value}")
             return secret
         
         # Update metadata
@@ -520,7 +520,7 @@ class SecretRotationManager:
             "rotated_at": datetime.now(timezone.utc).isoformat(),
         })
         
-        log.info(f"Rotated secret: {secret.secret_id} -> {new_secret.secret_id}")
+        log.info(f"Secret rotated: type={secret.secret_type.value}, rotation_count={new_secret.rotation_count}")
         return new_secret
     
     def get_rotation_schedule(
