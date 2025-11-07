@@ -253,6 +253,8 @@ class SecretScanner:
     
     def _calculate_entropy(self, string: str) -> float:
         """Calculate Shannon entropy of a string"""
+        import math
+        
         if not string:
             return 0.0
         
@@ -261,12 +263,13 @@ class SecretScanner:
         for char in string:
             frequencies[char] = frequencies.get(char, 0) + 1
         
-        # Calculate entropy
+        # Calculate Shannon entropy
         entropy = 0.0
         length = len(string)
         for count in frequencies.values():
             probability = count / length
-            entropy -= probability * (probability and hashlib.sha256(str(probability).encode()).digest()[0] / 256.0)
+            if probability > 0:
+                entropy -= probability * math.log2(probability)
         
         return entropy
     

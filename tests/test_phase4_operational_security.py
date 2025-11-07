@@ -37,7 +37,7 @@ class TestZeroTrust:
         levels = [TrustLevel.UNTRUSTED, TrustLevel.LOW, TrustLevel.MEDIUM, 
                  TrustLevel.HIGH, TrustLevel.VERIFIED]
         for i in range(len(levels) - 1):
-            assert levels[i].value < levels[i + 1].value or levels[i] != levels[i + 1]
+            assert levels[i].numeric_value < levels[i + 1].numeric_value
     
     def test_network_segment_creation(self):
         """Test network segment creation."""
@@ -573,16 +573,13 @@ class TestPhase4Integration:
         
         assert len(system.secrets) == 2
         
-        # Test scanning
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.py', delete=False) as f:
-            f.write('api_key = "sk-test123456789012345678"\n')
-            temp_file = f.name
-        
-        try:
-            findings = system.scan_for_secrets(temp_file)
+        # Test scanning with proper cleanup
+        with tempfile.TemporaryDirectory() as tmpdir:
+            temp_file = Path(tmpdir) / "test_config.py"
+            temp_file.write_text('api_key = "sk-test123456789012345678"\n')
+            
+            findings = system.scan_for_secrets(str(temp_file))
             assert len(findings) > 0
-        finally:
-            Path(temp_file).unlink()
         
         # Get status
         status = system.get_system_status()

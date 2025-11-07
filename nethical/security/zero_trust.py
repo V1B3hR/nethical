@@ -43,6 +43,18 @@ class TrustLevel(str, Enum):
     MEDIUM = "medium"
     HIGH = "high"
     VERIFIED = "verified"
+    
+    @property
+    def numeric_value(self) -> int:
+        """Get numeric value for comparison"""
+        mapping = {
+            "untrusted": 0,
+            "low": 1,
+            "medium": 2,
+            "high": 3,
+            "verified": 4,
+        }
+        return mapping.get(self.value, 0)
 
 
 class DeviceHealthStatus(str, Enum):
@@ -175,10 +187,8 @@ class PolicyEnforcer:
         
         segment = self.segments[segment_id]
         
-        # Check trust level
-        trust_levels = [TrustLevel.UNTRUSTED, TrustLevel.LOW, TrustLevel.MEDIUM, 
-                       TrustLevel.HIGH, TrustLevel.VERIFIED]
-        if trust_levels.index(trust_level) < trust_levels.index(segment.min_trust_level):
+        # Check trust level using numeric comparison
+        if trust_level.numeric_value < segment.min_trust_level.numeric_value:
             return False, f"Insufficient trust level: {trust_level} < {segment.min_trust_level}"
         
         # Check service authorization
