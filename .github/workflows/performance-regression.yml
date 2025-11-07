@@ -49,13 +49,12 @@ jobs:
           else
             python generate_load.py --agents 100 --rps 50 --duration 60
           fi
-
+    
       - name: Run current branch benchmarks
         id: current_bench
+        shell: bash
         run: |
           echo "Running benchmarks on current branch..."
-          
-          # Run performance tests if they exist
           if [ -f "examples/perf/generate_load.py" ]; then
             python examples/perf/generate_load.py \
               --agents 100 \
@@ -63,6 +62,8 @@ jobs:
               --duration 30 \
               --cohort benchmark \
               --output perf_results_current.csv
+          else
+            echo "No examples/perf/generate_load.py found; skipping."
           fi
           
           # Extract key metrics
