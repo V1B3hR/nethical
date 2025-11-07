@@ -1231,3 +1231,6 @@ class ManipulationDetector(BaseDetector):
             evidence={
                 "manipulation_type": category,
                 "detected_keywords": distinct_keywords
+            },
+            timestamp=datetime.now(timezone.utc)
+        )
