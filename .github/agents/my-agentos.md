@@ -1,12 +1,5 @@
----
-name:agent CHaCHaCHa
-description: Obcykany w temacie jak nic!
----
-
 # My Agent
 
-
-[my-agentos.md](https://github.com/user-attachments/files/23426669/my-agentos.md)
 # Agent Programistyczny - Specyfikacja
 
 ## Profil Agenta
