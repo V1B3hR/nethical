@@ -10,7 +10,7 @@
 
 ## EXECUTIVE SUMMARY
 
-NETHICAL is an AI safety and ethics governance framework with ML-driven anomaly detection, human-in-the-loop oversight, and extensible plugin architecture. Current implementation shows strong foundation but requires critical security hardening for mission-critical deployments.
+NETHICAL is an AI safety and ethics governance framework with ML-driven anomaly detection, human-in-the-loop oversight, and extensible plugin architecture. Current implementation shows strong foun[...]
 
 ### Current Strengths
 ✅ Multi-phase governance architecture (Phases 3-9)  
@@ -50,38 +50,15 @@ class MilitaryGradeAuthProvider:
     - Biometric authentication support
     - Session management with timeout policies
     """
-    
-    def __init__(self):
-        self.pki_validator = PKICertificateValidator()
-        self.mfa_engine = MultiFactorAuthEngine()
-        self.session_manager = SecureSessionManager(
-            timeout=900,  # 15 min for military ops
-            require_reauth_for_critical=True
-        )
-    
-    async def authenticate(self, credentials: AuthCredentials) -> AuthResult:
-        # Step 1: Certificate validation
-        cert_valid = await self.pki_validator.validate(credentials.certificate)
-        
-        # Step 2: Multi-factor challenge
-        mfa_valid = await self.mfa_engine.challenge(credentials.user_id)
-        
-        # Step 3: Role-based access control
-        permissions = await self.get_clearance_level(credentials.user_id)
-        
-        return AuthResult(
-            authenticated=cert_valid and mfa_valid,
-            clearance_level=permissions,
-            session_token=self.session_manager.create_session()
-        )
+    ...
 ```
 
 **Deliverables**:
-- [ ] PKI certificate validation system
-- [ ] CAC/PIV card reader integration
-- [ ] LDAP/Active Directory connector
-- [ ] OAuth2/SAML2 federation support
-- [ ] Audit logging for all auth events
+- [x] PKI certificate validation system
+- [x] CAC/PIV card reader integration
+- [x] LDAP/Active Directory connector
+- [~] OAuth2/SAML2 federation support <!-- stubbed, production integration planned -->
+- [x] Audit logging for all auth events
 
 ---
 
@@ -103,36 +80,15 @@ class MilitaryGradeEncryption:
     - HSM integration for key management
     - Perfect forward secrecy
     """
-    
-    def __init__(self, hsm_config: HSMConfig):
-        self.cipher = AES.new(
-            key=self._derive_key_from_hsm(hsm_config),
-            mode=AES.MODE_GCM
-        )
-        self.key_rotation_policy = KeyRotationPolicy(interval_days=90)
-        
-    async def encrypt_governance_decision(self, decision: JudgmentResult) -> bytes:
-        """Encrypt sensitive governance decisions"""
-        plaintext = decision.model_dump_json().encode()
-        nonce = secrets.token_bytes(16)
-        ciphertext, tag = self.cipher.encrypt_and_digest(plaintext)
-        
-        return self._package_encrypted_data(nonce, ciphertext, tag)
-    
-    async def encrypt_audit_log(self, log_entry: AuditLogEntry) -> bytes:
-        """Encrypt audit logs with Merkle root integrity"""
-        encrypted_content = await self.encrypt_governance_decision(log_entry)
-        merkle_root = self._compute_merkle_root(encrypted_content)
-        
-        return self._bind_encryption_and_integrity(encrypted_content, merkle_root)
+    ...
 ```
 
 **Deliverables**:
-- [ ] FIPS 140-2 validated crypto library integration
-- [ ] HSM (Hardware Security Module) support for key storage
-- [ ] Automated key rotation with audit trail
+- [x] FIPS 140-2 validated crypto library integration
+- [~] HSM (Hardware Security Module) support for key storage <!-- stubbed, real hardware integration needed -->
+- [x] Automated key rotation with audit trail
 - [ ] Encrypted backup and disaster recovery
-- [ ] Quantum-resistant algorithm evaluation (NIST PQC)
+- [~] Quantum-resistant algorithm evaluation (NIST PQC) <!-- POC/guidance only -->
 
 ---
 
@@ -154,54 +110,14 @@ class AdversarialInputDefense:
     - Context-aware sanitization
     - Zero-trust input processing
     """
-    
-    def __init__(self):
-        self.semantic_analyzer = SemanticAnomalyDetector()
-        self.tokenizer = SecureTokenizer()
-        self.known_attack_db = ThreatIntelligenceDB()
-        
-    async def validate_action(self, action: AgentAction) -> ValidationResult:
-        # Layer 1: Static pattern analysis (existing)
-        static_violations = await self._static_pattern_check(action)
-        
-        # Layer 2: Semantic analysis (NEW)
-        semantic_anomalies = await self.semantic_analyzer.detect_intent_mismatch(
-            stated_intent=action.stated_intent,
-            actual_content=action.content
-        )
-        
-        # Layer 3: Threat intelligence (NEW)
-        known_threats = await self.known_attack_db.check_ioc(action.content)
-        
-        # Layer 4: Behavioral analysis (NEW)
-        behavioral_score = await self._analyze_agent_behavior_history(action.agent_id)
-        
-        return self._aggregate_validation_results([
-            static_violations,
-            semantic_anomalies,
-            known_threats,
-            behavioral_score
-        ])
-    
-    async def sanitize_output(self, content: str) -> str:
-        """Context-aware output sanitization"""
-        # Remove PII with named entity recognition
-        content = await self._redact_pii_entities(content)
-        
-        # Sanitize code injection attempts
-        content = await self._neutralize_code_patterns(content)
-        
-        # Apply context-specific rules
-        content = await self._apply_domain_rules(content)
-        
-        return content
+    ...
 ```
 
 **Deliverables**:
-- [ ] ML-based semantic anomaly detection
-- [ ] Threat intelligence feed integration (STIX/TAXII)
-- [ ] Context-aware sanitization engine
-- [ ] Adversarial testing framework
+- [x] ML-based semantic anomaly detection
+- [~] Threat intelligence feed integration (STIX/TAXII) <!-- initial/POC, ready for production feed -->
+- [x] Context-aware sanitization engine
+- [x] Adversarial testing framework
 - [ ] Real-time attack signature updates
 
 ---
@@ -209,59 +125,6 @@ class AdversarialInputDefense:
 ## PHASE 2: DETECTION & RESPONSE ENHANCEMENT (Weeks 5-8)
 
 ### 2.1 Advanced Anomaly Detection
-
-**Current Enhancement**:
-```python
-# Enhancement: nethical/detectors/advanced_anomaly_detector.py
-
-class MilitaryGradeAnomalyDetector(BaseDetector):
-    """
-    Advanced anomaly detection for insider threats and APTs
-    - Time-series analysis for behavioral patterns
-    - Graph-based relationship analysis
-    - Ensemble ML models (Isolation Forest + LSTM + Transformer)
-    - Zero-day attack detection via unsupervised learning
-    """
-    
-    def __init__(self):
-        super().__init__(name="Military_Anomaly_Detector", version="2.0.0")
-        
-        # Ensemble models
-        self.isolation_forest = IsolationForest(contamination=0.01)
-        self.lstm_model = LSTMBehaviorModel(sequence_length=100)
-        self.transformer_model = TransformerAnomalyDetector()
-        
-        # Graph analysis for lateral movement detection
-        self.graph_analyzer = GraphBasedThreatDetector()
-        
-    async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
-        # Feature extraction
-        features = await self._extract_features(action)
-        
-        # Ensemble scoring
-        if_score = self.isolation_forest.score_samples([features])[0]
-        lstm_score = await self.lstm_model.predict_anomaly(action.agent_id, features)
-        transformer_score = await self.transformer_model.detect(action.content)
-        
-        # Graph analysis for coordinated attacks
-        graph_score = await self.graph_analyzer.detect_coordinated_behavior(
-            agent_id=action.agent_id,
-            action_history=self._get_recent_actions(action.agent_id)
-        )
-        
-        # Weighted ensemble
-        anomaly_score = (
-            0.25 * if_score +
-            0.30 * lstm_score +
-            0.30 * transformer_score +
-            0.15 * graph_score
-        )
-        
-        if anomaly_score > self.threshold:
-            return [self._create_anomaly_violation(action, anomaly_score)]
-        
-        return []
-```
 
 **Deliverables**:
 - [ ] LSTM-based sequence anomaly detection
@@ -273,15 +136,6 @@ class MilitaryGradeAnomalyDetector(BaseDetector):
 ---
 
 ### 2.2 Security Operations Center (SOC) Integration
-
-**New Module**: nethical/soc/integration.py
-
-**Features**:
-- SIEM integration (Splunk, QRadar, Sentinel)
-- SOAR playbook automation
-- Incident response workflows
-- Threat hunting capabilities
-- Real-time dashboards for security analysts
 
 **Deliverables**:
 - [ ] SIEM connector with CEF/LEEF format support
@@ -296,57 +150,6 @@ class MilitaryGradeAnomalyDetector(BaseDetector):
 
 ### 3.1 Regulatory Compliance Framework
 
-**Target Certifications**:
-- **FISMA** (Federal Information Security Management Act)
-- **FedRAMP** (Federal Risk and Authorization Management Program)
-- **HIPAA** (Health Insurance Portability and Accountability Act)
-- **NIST 800-53** Security Controls
-- **ISO 27001** Information Security Management
-
-**Implementation**:
-```python
-# New Module: nethical/compliance/framework.py
-
-class ComplianceFramework:
-    """
-    Multi-standard compliance validation and reporting
-    """
-    
-    def __init__(self):
-        self.nist_controls = NIST80053ControlSet()
-        self.hipaa_rules = HIPAASafeguardRules()
-        self.fedramp_baseline = FedRAMPModerateBaseline()
-        
-    async def validate_governance_decision(
-        self, 
-        decision: JudgmentResult,
-        context: ComplianceContext
-    ) -> ComplianceReport:
-        """Validate decision against applicable regulations"""
-        
-        violations = []
-        
-        # HIPAA validation for healthcare data
-        if context.contains_phi:
-            hipaa_result = await self.hipaa_rules.validate(decision)
-            violations.extend(hipaa_result.violations)
-        
-        # NIST 800-53 control validation
-        nist_result = await self.nist_controls.assess(decision)
-        violations.extend(nist_result.violations)
-        
-        # FedRAMP continuous monitoring
-        if context.fedramp_system:
-            fedramp_result = await self.fedramp_baseline.continuous_monitor(decision)
-            violations.extend(fedramp_result.violations)
-        
-        return ComplianceReport(
-            compliant=len(violations) == 0,
-            violations=violations,
-            recommendations=self._generate_remediation_plan(violations)
-        )
-```
-
 **Deliverables**:
 - [ ] NIST 800-53 control mapping
 - [ ] HIPAA Privacy Rule compliance validation
@@ -357,59 +160,6 @@ class ComplianceFramework:
 ---
 
 ### 3.2 Enhanced Audit Logging
-
-**Current State**: Merkle tree audit logs exist but incomplete coverage  
-**Enhancement**: Comprehensive audit trail with forensic capabilities
-
-**Implementation**:
-```python
-# Enhancement: nethical/audit/forensic_logging.py
-
-class ForensicAuditSystem:
-    """
-    Tamper-evident, forensically sound audit logging
-    - Blockchain-based immutable logs
-    - Chain-of-custody tracking
-    - Time-stamping with trusted authority
-    - Digital signatures for non-repudiation
-    """
-    
-    def __init__(self):
-        self.blockchain = PrivateBlockchain(consensus="raft")
-        self.timestamp_authority = RFC3161TimestampAuthority()
-        self.signature_service = DigitalSignatureService()
-        
-    async def log_governance_event(self, event: GovernanceEvent) -> AuditLogEntry:
-        # Create audit entry
-        entry = AuditLogEntry(
-            event_id=str(uuid4()),
-            timestamp=datetime.now(timezone.utc),
-            event_type=event.type,
-            actor=event.actor,
-            action=event.action,
-            result=event.result,
-            evidence=event.evidence
-        )
-        
-        # Digital signature for non-repudiation
-        signature = await self.signature_service.sign(entry.to_bytes())
-        
-        # Trusted timestamp
-        timestamp_token = await self.timestamp_authority.timestamp(entry.to_bytes())
-        
-        # Blockchain commit
-        block_hash = await self.blockchain.commit(
-            data=entry.to_dict(),
-            signature=signature,
-            timestamp=timestamp_token
-        )
-        
-        entry.blockchain_hash = block_hash
-        entry.signature = signature
-        entry.timestamp_token = timestamp_token
-        
-        return entry
-```
 
 **Deliverables**:
 - [ ] Private blockchain for audit logs
@@ -424,13 +174,6 @@ class ForensicAuditSystem:
 
 ### 4.1 Zero Trust Architecture
 
-**Implementation Areas**:
-- Micro-segmentation of governance components
-- Least privilege access enforcement
-- Continuous verification (never trust, always verify)
-- Device posture assessment
-- Encrypted internal communications
-
 **Deliverables**:
 - [ ] Service mesh with mutual TLS (Istio/Linkerd)
 - [ ] Policy-based network segmentation
@@ -441,35 +184,6 @@ class ForensicAuditSystem:
 ---
 
 ### 4.2 Secret Management
-
-**Current Gap**: Hardcoded patterns, no centralized secret store  
-**Solution**: HashiCorp Vault integration
-
-**Implementation**:
-```python
-# New Module: nethical/security/secrets.py
-
-class SecretManager:
-    """
-    Centralized secret management with HashiCorp Vault
-    """
-    
-    def __init__(self, vault_addr: str, auth_method: str = "kubernetes"):
-        self.vault_client = hvac.Client(url=vault_addr)
-        self.authenticate(auth_method)
-        
-    async def get_ml_model_credentials(self) -> ModelCredentials:
-        """Retrieve ML model API credentials"""
-        secret = await self.vault_client.secrets.kv.v2.read_secret_version(
-            path='nethical/ml-models/credentials',
-            mount_point='secret'
-        )
-        return ModelCredentials(**secret['data']['data'])
-    
-    async def rotate_encryption_keys(self) -> None:
-        """Automated key rotation"""
-        await self.vault_client.sys.rotate_encryption_key()
-```
 
 **Deliverables**:
 - [ ] HashiCorp Vault integration
@@ -484,16 +198,6 @@ class SecretManager:
 
 ### 5.1 Comprehensive Threat Modeling
 
-**Methodology**: STRIDE + PASTA
-
-**Threat Categories**:
-1. **Spoofing**: Adversary impersonating legitimate agent
-2. **Tampering**: Modification of governance decisions
-3. **Repudiation**: Denial of actions taken
-4. **Information Disclosure**: PII/PHI leakage
-5. **Denial of Service**: Resource exhaustion attacks
-6. **Elevation of Privilege**: Bypassing access controls
-
 **Deliverables**:
 - [ ] Threat model documentation (STRIDE analysis)
 - [ ] Attack tree diagrams
@@ -504,13 +208,6 @@ class SecretManager:
 ---
 
 ### 5.2 Penetration Testing Program
-
-**Testing Scope**:
-- External penetration testing
-- Internal network testing
-- Social engineering simulation
-- Physical security assessment
-- Red team exercises
 
 **Deliverables**:
 - [ ] Quarterly penetration test reports
@@ -525,47 +222,6 @@ class SecretManager:
 
 ### 6.1 AI/ML Security
 
-**Features**:
-- Adversarial ML attack detection
-- Model poisoning prevention
-- Federated learning for privacy
-- Differential privacy implementation
-- Model explainability for audits
-
-**Implementation**:
-```python
-# New Module: nethical/ml_security/adversarial_defense.py
-
-class AdversarialMLDefense:
-    """
-    Protection against adversarial ML attacks
-    """
-    
-    def __init__(self):
-        self.adversarial_detector = AdversarialExampleDetector()
-        self.model_integrity_checker = ModelPoisoningDetector()
-        
-    async def validate_ml_input(self, input_data: np.ndarray) -> bool:
-        """Detect adversarial examples"""
-        # Check for perturbations
-        perturbation_score = await self.adversarial_detector.detect(input_data)
-        
-        return perturbation_score < self.threshold
-    
-    async def verify_model_integrity(self, model: MLModel) -> IntegrityReport:
-        """Detect model poisoning"""
-        # Compare against known-good baseline
-        integrity_score = await self.model_integrity_checker.compare(
-            model=model,
-            baseline=self._get_baseline_model(model.name)
-        )
-        
-        return IntegrityReport(
-            integrity_maintained=integrity_score > 0.99,
-            deviation_score=1.0 - integrity_score
-        )
-```
-
 **Deliverables**:
 - [ ] Adversarial example detection
 - [ ] Model poisoning detection
@@ -576,11 +232,6 @@ class AdversarialMLDefense:
 ---
 
 ### 6.2 Quantum-Resistant Cryptography
-
-**Preparation for Post-Quantum Era**:
-- NIST PQC algorithm evaluation
-- Hybrid classical/quantum-resistant schemes
-- Migration planning for quantum threats
 
 **Deliverables**:
 - [ ] CRYSTALS-Kyber key encapsulation
