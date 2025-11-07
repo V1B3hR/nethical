@@ -100,6 +100,35 @@ from .soc_integration import (
     SOCIntegrationHub,
 )
 
+# Phase 3: Compliance & Audit Framework
+from .compliance import (
+    ComplianceFramework,
+    ComplianceStatus,
+    ControlSeverity,
+    ComplianceControl,
+    ComplianceEvidence,
+    ComplianceReport,
+    NIST80053ControlMapper,
+    HIPAAComplianceValidator,
+    FedRAMPMonitor,
+    ComplianceReportGenerator,
+    EvidenceCollector,
+)
+
+# Phase 3: Enhanced Audit Logging
+from .audit_logging import (
+    AuditEvent,
+    AuditEventType,
+    AuditSeverity,
+    BlockchainBlock,
+    TimestampAuthority,
+    DigitalSignature,
+    AuditBlockchain,
+    ForensicAnalyzer,
+    ChainOfCustodyManager,
+    EnhancedAuditLogger,
+)
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -180,5 +209,28 @@ __all__ = [
     "AlertingEngine",
     "ForensicCollector",
     "SOCIntegrationHub",
+    # Phase 3: Compliance Framework
+    "ComplianceFramework",
+    "ComplianceStatus",
+    "ControlSeverity",
+    "ComplianceControl",
+    "ComplianceEvidence",
+    "ComplianceReport",
+    "NIST80053ControlMapper",
+    "HIPAAComplianceValidator",
+    "FedRAMPMonitor",
+    "ComplianceReportGenerator",
+    "EvidenceCollector",
+    # Phase 3: Audit Logging
+    "AuditEvent",
+    "AuditEventType",
+    "AuditSeverity",
+    "BlockchainBlock",
+    "TimestampAuthority",
+    "DigitalSignature",
+    "AuditBlockchain",
+    "ForensicAnalyzer",
+    "ChainOfCustodyManager",
+    "EnhancedAuditLogger",
 ]
 
