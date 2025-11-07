@@ -62,7 +62,7 @@ jobs:
             BASELINE="main"
           fi
           echo "baseline_ref=${BASELINE}" | tee -a "$GITHUB_OUTPUT"
-
+    
       - name: Run current branch benchmarks
         id: current_bench
         shell: bash
