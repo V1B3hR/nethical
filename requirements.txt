@@ -5,32 +5,32 @@
 # Hash verification provides supply chain security against tampering
 
 # Data validation and serialization
-pydantic==2.12.3  # Core data models and validation
-pydantic-core==2.41.4  # Low-level validation implementation
+pydantic==2.12.3           # Core data models and validation
+pydantic-core==2.41.4      # Low-level validation implementation
 typing-extensions==4.15.0  # Typing backports for older Python versions
-dataclasses-json==0.6.7  # JSON serialization for dataclasses
+dataclasses-json==0.6.7    # JSON serialization for dataclasses
 
 # Scientific computing and data processing
-numpy==1.26.4  # Numerical operations for ML and analytics
-pandas==2.3.3  # Data manipulation and analysis
+numpy==1.26.4              # Numerical operations for ML and analytics
+pandas==2.3.3              # Data manipulation and analysis
 
 # Configuration and data formats
-PyYAML==6.0.3  # YAML parsing for configs and policies
+PyYAML==6.0.3              # YAML parsing for configs and policies
 
 # Transitive dependencies (pinned for reproducibility)
-annotated-types==0.7.0  # Pydantic annotations support
-marshmallow==3.26.1  # Serialization/deserialization (dataclasses-json dep)
-typing-inspect==0.9.0  # Runtime type inspection
-typing-inspection==0.4.2  # Type inspection utilities
-mypy-extensions==1.1.0  # Mypy type checking extensions
-python-dateutil==2.9.0  # Date/time utilities (pandas dep)
-pytz==2024.2  # Timezone database (pandas dep)
-tzdata==2025.2  # Timezone data (pandas dep)
+annotated-types==0.7.0     # Pydantic annotations support
+marshmallow==3.26.1        # Serialization/deserialization (dataclasses-json dep)
+typing-inspect==0.9.0      # Runtime type inspection
+typing-inspection==0.4.2   # Type inspection utilities
+mypy-extensions==1.1.0     # Mypy type checking extensions
+python-dateutil==2.9.0     # Date/time utilities (pandas dep)
+pytz==2024.2               # Timezone database (pandas dep)
+tzdata==2025.2             # Timezone data (pandas dep)
 
-# Optional performance dependencies
-# Install with: pip install nethical[performance]
-# redis>=4.0.0  # Redis client for caching and session storage
-# psycopg2-binary>=2.9.0  # PostgreSQL adapter for TimescaleDB
-# elasticsearch>=8.0.0  # Elasticsearch client for log storage
-# numba>=0.56.0  # JIT compilation for numerical operations
-# torch>=2.0.0  # PyTorch for ML models (GPU acceleration)
+# Optional performance dependencies (fully pinned for reproducibility)
+# To use, uncomment these lines as needed
+redis==4.0.0               # Redis client for caching and session storage
+psycopg2-binary==2.9.0     # PostgreSQL adapter for TimescaleDB
+elasticsearch==8.0.0       # Elasticsearch client for log storage
+numba==0.56.0              # JIT compilation for numerical operations
+torch==2.0.0               # PyTorch for ML models (GPU acceleration)
