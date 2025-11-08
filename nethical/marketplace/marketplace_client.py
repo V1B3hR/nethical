@@ -27,6 +27,7 @@ import logging
 import threading
 import hashlib
 import urllib.request
+from urllib.parse import urlparse
 import zipfile
 import tarfile
 import itertools
@@ -964,6 +965,14 @@ class MarketplaceClient:
     # -------------------------------------------------------------------------
     def _download_to_cache(self, url: str, plugin_id: str, version: str) -> Path:
         """Download a file to the cache directory with retries."""
+        # Validate URL scheme for security
+        parsed = urlparse(url)
+        if parsed.scheme not in ['http', 'https']:
+            raise ValueError(
+                f"Unsupported URL scheme: {parsed.scheme}. "
+                f"Only http and https are allowed."
+            )
+        
         safe_name = f"{plugin_id}-{version}"
         dest = self.cache_dir / safe_name
         # If already downloaded, reuse

@@ -5,6 +5,7 @@ in agent behavior sequences. It can be used with the train_any_model.py
 training pipeline.
 """
 
+import ast
 import json
 import math
 from typing import Dict, List, Any, Tuple
@@ -410,12 +411,12 @@ class AnomalyMLClassifier:
 
         classifier.feature_weights = model_data.get("feature_weights", classifier.feature_weights)
 
-        # Convert string keys back to tuples for n-grams
+        # Convert string keys back to tuples for n-grams using ast.literal_eval for safety
         normal_ngrams_str = model_data.get("normal_ngrams", {})
-        classifier.normal_ngrams = {eval(k): v for k, v in normal_ngrams_str.items()}
+        classifier.normal_ngrams = {ast.literal_eval(k): v for k, v in normal_ngrams_str.items()}
 
         anomalous_ngrams_str = model_data.get("anomalous_ngrams", {})
-        classifier.anomalous_ngrams = {eval(k): v for k, v in anomalous_ngrams_str.items()}
+        classifier.anomalous_ngrams = {ast.literal_eval(k): v for k, v in anomalous_ngrams_str.items()}
 
         classifier.normal_action_freq = model_data.get("normal_action_freq", {})
         classifier.anomalous_action_freq = model_data.get("anomalous_action_freq", {})

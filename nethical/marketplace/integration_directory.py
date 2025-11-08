@@ -432,8 +432,8 @@ class ImportUtility:
                     data = xmltodict.parse(f.read())
                 logger.info("Imported XML via xmltodict from %s", filepath)
                 return data
-            # Fallback: ElementTree into nested dicts (best-effort)
-            from xml.etree.ElementTree import parse  # noqa: S405
+            # Fallback: Use defusedxml for safe XML parsing
+            from defusedxml.ElementTree import parse
 
             def element_to_dict(el):
                 children = list(el)

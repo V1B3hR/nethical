@@ -23,6 +23,11 @@ from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any
 
+from cryptography import x509
+from cryptography.hazmat.backends import default_backend
+from cryptography.hazmat.primitives import hashes
+from cryptography.x509.oid import ExtensionOID
+
 __all__ = [
     "AuthCredentials",
     "AuthResult",
@@ -121,28 +126,35 @@ class PKICertificateValidator:
             return False
 
         try:
-            # TODO: In production, use cryptography library for actual validation
-            # from cryptography import x509
-            # from cryptography.hazmat.backends import default_backend
-            # cert = x509.load_der_x509_certificate(certificate, default_backend())
+            # Load certificate (try DER first, then PEM)
+            try:
+                cert = x509.load_der_x509_certificate(certificate, default_backend())
+            except Exception:
+                cert = x509.load_pem_x509_certificate(certificate, default_backend())
 
-            # For now, stub implementation
-            log.info("Certificate validation requested (stub implementation)")
+            # Verify certificate is not expired
+            now = datetime.now(timezone.utc)
+            if now < cert.not_valid_before_utc:
+                log.error("Certificate not yet valid")
+                return False
+            if now > cert.not_valid_after_utc:
+                log.error("Certificate has expired")
+                return False
 
             # Validate certificate chain
-            if not await self._validate_certificate_chain(certificate):
+            if not await self._validate_certificate_chain(cert):
                 log.error("Certificate chain validation failed")
                 return False
 
             # Check certificate revocation status
             if self.enable_crl_check:
-                if not await self._check_crl(certificate):
+                if not await self._check_crl(cert):
                     log.error("Certificate revoked (CRL check)")
                     return False
 
             # Check OCSP status
             if self.enable_ocsp:
-                if not await self._check_ocsp(certificate):
+                if not await self._check_ocsp(cert):
                     log.error("Certificate revoked (OCSP check)")
                     return False
 
@@ -153,19 +165,22 @@ class PKICertificateValidator:
             log.error(f"Certificate validation error: {e}")
             return False
 
-    async def _validate_certificate_chain(self, certificate: bytes) -> bool:
+    async def _validate_certificate_chain(self, cert: x509.Certificate) -> bool:
         """Validate certificate chain against trusted CAs"""
         # Stub: In production, validate against trusted_ca_certs
+        # This would involve building and validating the certificate chain
         return True
 
-    async def _check_crl(self, certificate: bytes) -> bool:
+    async def _check_crl(self, cert: x509.Certificate) -> bool:
         """Check Certificate Revocation List"""
         # Stub: In production, fetch and check CRL
+        # This would involve fetching the CRL from the certificate's CRL distribution points
         return True
 
-    async def _check_ocsp(self, certificate: bytes) -> bool:
+    async def _check_ocsp(self, cert: x509.Certificate) -> bool:
         """Check OCSP (Online Certificate Status Protocol)"""
         # Stub: In production, perform OCSP stapling check
+        # This would involve contacting the OCSP responder specified in the certificate
         return True
 
     def extract_user_info(self, certificate: bytes) -> Dict[str, str]:

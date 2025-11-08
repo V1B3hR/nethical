@@ -24,6 +24,10 @@ from pathlib import Path
 from typing import Dict, List, Optional, Set, Any
 import sqlite3
 
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
+from cryptography.exceptions import InvalidSignature
+
 logger = logging.getLogger(__name__)
 
 
@@ -64,6 +68,8 @@ class PluginRegistration:
     trust_level: PluginTrustLevel = PluginTrustLevel.UNKNOWN
     signature: Optional[str] = None
     checksum: Optional[str] = None
+    public_key_pem: Optional[str] = None
+    manifest_hash: Optional[str] = None
 
     # Metadata
     requires_nethical_version: str = ">=0.1.0"
@@ -358,24 +364,54 @@ class PluginRegistry:
             logger.error(f"Failed to search plugins: {e}")
             return []
 
-    def verify_signature(self, plugin_id: str, signature: str) -> bool:
+    def verify_signature(self, plugin_id: str, signature: bytes) -> bool:
         """
-        Verify plugin signature.
+        Verify plugin signature using cryptographic verification.
 
         Args:
             plugin_id: Plugin ID
-            signature: Digital signature to verify
+            signature: Digital signature bytes to verify
 
         Returns:
             True if signature is valid, False otherwise
         """
         plugin = self.get_plugin(plugin_id)
         if not plugin:
+            logger.error(f"Plugin {plugin_id} not found")
             return False
 
-        # TODO: Implement actual signature verification with public key
-        # For now, just check if signature matches stored value
-        return plugin.signature == signature
+        if not plugin.public_key_pem:
+            logger.error(f"No public key available for plugin {plugin_id}")
+            return False
+
+        if not plugin.manifest_hash:
+            logger.error(f"No manifest hash available for plugin {plugin_id}")
+            return False
+
+        try:
+            # Load public key from PEM format
+            public_key = serialization.load_pem_public_key(
+                plugin.public_key_pem.encode()
+            )
+
+            # Verify signature using RSA-PSS with SHA-256
+            public_key.verify(
+                signature,
+                plugin.manifest_hash.encode(),
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=padding.PSS.MAX_LENGTH
+                ),
+                hashes.SHA256()
+            )
+            logger.info(f"Signature verified successfully for plugin {plugin_id}")
+            return True
+        except InvalidSignature:
+            logger.error(f"Invalid signature for plugin {plugin_id}")
+            return False
+        except Exception as e:
+            logger.error(f"Error verifying signature for plugin {plugin_id}: {e}")
+            return False
 
     def check_version_compatibility(self, plugin_id: str, nethical_version: str) -> bool:
         """

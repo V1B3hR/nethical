@@ -502,6 +502,7 @@ class TimescaleDBStore:
 
         try:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
+                # Safe: aggregation is validated against whitelist above
                 query = f"""
                     SELECT
                         time_bucket(%s, time) AS bucket,

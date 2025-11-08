@@ -489,6 +489,7 @@ class PersistenceManager:
     def retention_cleanup(self):
         cutoff = (datetime.now(timezone.utc) - timedelta(days=self.retention_days)).isoformat()
         with self._lock, self._connect() as conn:
+            # Safe: table names are from hardcoded tuple, not user input
             for table in ("actions", "violations", "judgments"):
                 conn.execute(f"DELETE FROM {table} WHERE timestamp < ?", (cutoff,))
 
@@ -534,6 +535,7 @@ class PersistenceManager:
             return {}
 
         with self._lock, self._connect() as conn:
+            # Safe: placeholders is constructed from "?" * len(), not user input
             placeholders = ",".join("?" * len(action_ids))
             query = f"SELECT * FROM judgments WHERE action_id IN ({placeholders})"
             cursor = conn.execute(query, action_ids)
