@@ -9,13 +9,26 @@ from nethical.detectors.base_detector import SafetyViolation
 # Expanded PHI patterns (illustrative; tune for precision and performance)
 PHI_PATTERNS: Dict[str, re.Pattern] = {
     "ssn_us": re.compile(r"\b\d{3}-\d{2}-\d{4}\b"),
-    "mrn_generic": re.compile(r"\b(?:MRN|Med(?:ical)?\s*Record)\s*[:#]?\s*[A-Za-z0-9\-]{5,}\b", re.IGNORECASE),
-    "phone": re.compile(r"\b(?:\+?\d{1,3}[\s\-\.]?)?(?:\(?\d{3}\)?[\s\-\.]?)?\d{3}[\s\-\.]?\d{4}\b"),
+    "mrn_generic": re.compile(
+        r"\b(?:MRN|Med(?:ical)?\s*Record)\s*[:#]?\s*[A-Za-z0-9\-]{5,}\b", re.IGNORECASE
+    ),
+    "phone": re.compile(
+        r"\b(?:\+?\d{1,3}[\s\-\.]?)?(?:\(?\d{3}\)?[\s\-\.]?)?\d{3}[\s\-\.]?\d{4}\b"
+    ),
     "email": re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Za-z]{2,}\b"),
-    "address_hint": re.compile(r"\b(\d{1,6}\s+[A-Za-z0-9\.\-]+\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr))\b", re.IGNORECASE),
-    "dob": re.compile(r"\b(?:DOB[:\s]*)?(?:\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})\b", re.IGNORECASE),
-    "license_number": re.compile(r"\b(?:DL|Driver(?:'s)? License)[:\s#-]*[A-Za-z0-9\-]{5,}\b", re.IGNORECASE),
-    "health_plan_beneficiary": re.compile(r"\b(?:HPN|HICN|Medicare|Medicaid)[\s#:]*[A-Za-z0-9\-]{5,}\b", re.IGNORECASE),
+    "address_hint": re.compile(
+        r"\b(\d{1,6}\s+[A-Za-z0-9\.\-]+\s+(Street|St|Avenue|Ave|Road|Rd|Boulevard|Blvd|Lane|Ln|Drive|Dr))\b",
+        re.IGNORECASE,
+    ),
+    "dob": re.compile(
+        r"\b(?:DOB[:\s]*)?(?:\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})\b", re.IGNORECASE
+    ),
+    "license_number": re.compile(
+        r"\b(?:DL|Driver(?:'s)? License)[:\s#-]*[A-Za-z0-9\-]{5,}\b", re.IGNORECASE
+    ),
+    "health_plan_beneficiary": re.compile(
+        r"\b(?:HPN|HICN|Medicare|Medicaid)[\s#:]*[A-Za-z0-9\-]{5,}\b", re.IGNORECASE
+    ),
     "device_id": re.compile(r"\b(?:UDI|Device\s*ID)[:\s#-]*[A-Za-z0-9\-]{6,}\b", re.IGNORECASE),
     "url": re.compile(r"\bhttps?://[^\s]+", re.IGNORECASE),
     "ip": re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"),
@@ -37,6 +50,7 @@ SEVERITY_MAP = {
     "ip": "low",
 }
 
+
 class HealthcarePHIDetector(DetectorPlugin):
     def __init__(
         self,
@@ -52,7 +66,9 @@ class HealthcarePHIDetector(DetectorPlugin):
     ):
         super().__init__(name=name, version=version)
         self.max_matches_per_type = max_matches_per_type
-        self.enabled_patterns = set(enabled_patterns) if enabled_patterns else set(PHI_PATTERNS.keys())
+        self.enabled_patterns = (
+            set(enabled_patterns) if enabled_patterns else set(PHI_PATTERNS.keys())
+        )
         self.allowlist_emails = set(allowlist_emails or [])
         self.redaction_token = redaction_token
         self.pseudonymize = pseudonymize
@@ -83,25 +99,27 @@ class HealthcarePHIDetector(DetectorPlugin):
 
             severity = SEVERITY_MAP.get(match_type, "medium")
             snippet = self._safe_snippet(text, spans[0])
-            violations.append(SafetyViolation(
-                detector=self.name,
-                severity=severity,
-                description=f"Detected PHI: {match_type} ({len(spans)} match(es))",
-                category="healthcare_phi",
-                explanation=f"The content contains potential '{match_type}' identifiers, which may be PHI per HIPAA.",
-                confidence=self._confidence(match_type, spans, text),
-                recommendations=[
-                    "Remove or redact PHI before sharing externally",
-                    "Use pseudonymization or tokenization if linkability is required",
-                    "Limit data exposure to minimum necessary per HIPAA"
-                ],
-                metadata={
-                    "type": match_type,
-                    "count": len(spans),
-                    "spans": spans[:20],  # cap metadata size
-                    "sample": snippet,
-                }
-            ))
+            violations.append(
+                SafetyViolation(
+                    detector=self.name,
+                    severity=severity,
+                    description=f"Detected PHI: {match_type} ({len(spans)} match(es))",
+                    category="healthcare_phi",
+                    explanation=f"The content contains potential '{match_type}' identifiers, which may be PHI per HIPAA.",
+                    confidence=self._confidence(match_type, spans, text),
+                    recommendations=[
+                        "Remove or redact PHI before sharing externally",
+                        "Use pseudonymization or tokenization if linkability is required",
+                        "Limit data exposure to minimum necessary per HIPAA",
+                    ],
+                    metadata={
+                        "type": match_type,
+                        "count": len(spans),
+                        "spans": spans[:20],  # cap metadata size
+                        "sample": snippet,
+                    },
+                )
+            )
 
         return violations
 
@@ -111,6 +129,7 @@ class HealthcarePHIDetector(DetectorPlugin):
         for t, pattern in PHI_PATTERNS.items():
             if t not in self.enabled_patterns:
                 continue
+
             def _sub(m: re.Match) -> str:
                 val = m.group(0)
                 if t == "email" and val.lower() in self.allowlist_emails:
@@ -120,6 +139,7 @@ class HealthcarePHIDetector(DetectorPlugin):
                 if self.preserve_format:
                     return self._preserve_format_token(val, t)
                 return self.redaction_token.format(type=t)
+
             redacted = pattern.sub(_sub, redacted, count=self.max_matches_per_type)
         return redacted
 
@@ -179,12 +199,12 @@ class HealthcarePHIDetector(DetectorPlugin):
         tok = self.redaction_token.format(type=t)
         # Pad to roughly match length to avoid breaking downstream parsing/layout
         if len(tok) >= len(value):
-            return tok[:len(value)]
+            return tok[: len(value)]
         return tok + ("*" * max(0, len(value) - len(tok)))
 
     def _safe_snippet(self, text: str, span: Tuple[int, int, str], ctx: int = 20) -> str:
         s, e, _ = span
-        return text[max(0, s-ctx):min(len(text), e+ctx)]
+        return text[max(0, s - ctx) : min(len(text), e + ctx)]
 
 
 # Convenience function for payloads parallel to your current helper

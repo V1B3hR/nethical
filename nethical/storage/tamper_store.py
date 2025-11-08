@@ -115,9 +115,7 @@ class MerkleAppender:
             for i in range(0, len(nodes), 2):
                 a = nodes[i]
                 b = nodes[i + 1] if i + 1 < len(nodes) else a
-                nxt.append(
-                    _hex(_digest(self.algorithm, bytes.fromhex(a) + bytes.fromhex(b)))
-                )
+                nxt.append(_hex(_digest(self.algorithm, bytes.fromhex(a) + bytes.fromhex(b))))
             nodes = nxt
         return nodes[0]
 

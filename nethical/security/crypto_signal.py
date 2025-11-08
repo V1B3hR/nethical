@@ -6,13 +6,11 @@ import hmac
 import json
 import secrets
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from typing import (
     Any,
     Callable,
     Dict,
-    Iterable,
-    List,
     Mapping,
     MutableSet,
     Optional,
@@ -20,7 +18,6 @@ from typing import (
     Sequence,
     Set,
     Tuple,
-    Union,
 )
 
 from nethical.hooks.interfaces import (
@@ -70,8 +67,7 @@ class KeyResolver(Protocol):
     Given a key id (kid) return the shared secret bytes.
     """
 
-    def __call__(self, key_id: str) -> bytes:
-        ...
+    def __call__(self, key_id: str) -> bytes: ...
 
 
 @dataclass
@@ -79,6 +75,7 @@ class IssueOptions:
     """
     Options controlling issuance behavior.
     """
+
     ttl_seconds: int = 60
     not_before_leeway: int = 0  # Additional backdating leeway beyond core clock skew
     extra_claims: Dict[str, Any] | None = None
@@ -92,6 +89,7 @@ class VerifyOptions:
     """
     Options controlling verification behavior.
     """
+
     enforce_peer_issuer: bool = True
     max_ttl_seconds: Optional[int] = None  # Override provider default if set
     acceptable_clock_skew_seconds: Optional[int] = None
@@ -408,7 +406,9 @@ class HmacRoleSignal(CryptoSignalProvider):
             if typ != opts.required_type:
                 return SignalResult(ok=False, reason=REASON_TYP_MISMATCH, code="typ_mismatch")
             if ver != opts.required_version:
-                return SignalResult(ok=False, reason=REASON_VERSION_UNSUPPORTED, code="version_mismatch")
+                return SignalResult(
+                    ok=False, reason=REASON_VERSION_UNSUPPORTED, code="version_mismatch"
+                )
 
             # Resolve secret (supports rotation)
             secret = self._resolve_secret_for_verification(str(kid))
@@ -436,13 +436,17 @@ class HmacRoleSignal(CryptoSignalProvider):
             )
 
             if now + clock_skew < int(payload["nbf"]):
-                return SignalResult(ok=False, reason=REASON_TOKEN_NOT_YET_VALID, code="not_yet_valid")
+                return SignalResult(
+                    ok=False, reason=REASON_TOKEN_NOT_YET_VALID, code="not_yet_valid"
+                )
             if int(payload["exp"]) < now - clock_skew:
                 return SignalResult(ok=False, reason=REASON_TOKEN_EXPIRED, code="expired")
 
             # TTL enforcement (exp - iat)
             ttl = self._compute_ttl(payload)
-            limit_ttl = opts.max_ttl_seconds if opts.max_ttl_seconds is not None else self.max_ttl_seconds
+            limit_ttl = (
+                opts.max_ttl_seconds if opts.max_ttl_seconds is not None else self.max_ttl_seconds
+            )
             if ttl > limit_ttl:
                 return SignalResult(ok=False, reason=REASON_TTL_EXCESS, code="ttl_excess")
 
@@ -455,7 +459,9 @@ class HmacRoleSignal(CryptoSignalProvider):
             # Role filtering
             role_value = str(payload[role_claim_name])
             if opts.allowed_roles is not None and role_value not in opts.allowed_roles:
-                return SignalResult(ok=False, reason=REASON_ROLE_NOT_ALLOWED, code="role_not_allowed")
+                return SignalResult(
+                    ok=False, reason=REASON_ROLE_NOT_ALLOWED, code="role_not_allowed"
+                )
 
             # Replay protection
             jti = payload.get("jti")
@@ -483,7 +489,9 @@ class HmacRoleSignal(CryptoSignalProvider):
                     try:
                         res = validator(header, payload)
                         if isinstance(res, str):
-                            return SignalResult(ok=False, reason=res, code="custom_validator_failed")
+                            return SignalResult(
+                                ok=False, reason=res, code="custom_validator_failed"
+                            )
                     except Exception as ve:
                         return SignalResult(ok=False, reason=str(ve), code="custom_validator_error")
 

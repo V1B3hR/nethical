@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 import re
-from typing import Dict, Any, Optional, Iterable, Tuple, Union, List, Mapping
+from typing import Dict, Any, Optional, Tuple, List, Mapping
 
 import yaml
 
@@ -92,11 +92,11 @@ class PolicyEngine:
         """
         # Prepare outcomes
         outcomes = {
-            "decisions": [],       # all rule decisions in order of application
-            "disclaimers": [],     # unique disclaimers
-            "escalations": [],     # rule ids or targets that escalated
-            "tags": [],            # collected tags from actions
-            "matched_rules": [],   # structured trace of matched rules
+            "decisions": [],  # all rule decisions in order of application
+            "disclaimers": [],  # unique disclaimers
+            "escalations": [],  # rule ids or targets that escalated
+            "tags": [],  # collected tags from actions
+            "matched_rules": [],  # structured trace of matched rules
         }
 
         # Facts are augmented with region for convenience
@@ -121,7 +121,9 @@ class PolicyEngine:
             cond = rule.get("when", {})
             if self._eval_condition(cond, eval_facts):
                 action = rule.get("action", {}) or {}
-                decision = _normalize_decision(action.get("decision") or action.get("effect") or "RESTRICT")
+                decision = _normalize_decision(
+                    action.get("decision") or action.get("effect") or "RESTRICT"
+                )
                 outcomes["decisions"].append(decision)
 
                 # Disclaimers: allow str or list[str]
@@ -151,11 +153,13 @@ class PolicyEngine:
                         _append_unique(outcomes["tags"], t)
 
                 # Record matched rule
-                outcomes["matched_rules"].append({
-                    "id": str(rule.get("id") or ""),
-                    "priority": int(rule.get("priority", 0)),
-                    "decision": decision,
-                })
+                outcomes["matched_rules"].append(
+                    {
+                        "id": str(rule.get("id") or ""),
+                        "priority": int(rule.get("priority", 0)),
+                        "decision": decision,
+                    }
+                )
 
                 # Allow rules to mutate local evaluation context (non-persistent outside the call)
                 if isinstance(action.get("set"), dict):
@@ -246,7 +250,7 @@ class PolicyEngine:
         """
         try:
             # Attempt to split into three tokens; handle quoted right side
-            m = re.match(r'^\s*(\S+)\s*(==|!=|>=|<=|>|<|in)\s*(.+?)\s*$', expr)
+            m = re.match(r"^\s*(\S+)\s*(==|!=|>=|<=|>|<|in)\s*(.+?)\s*$", expr)
             if not m:
                 return False
             left_path, op, right_raw = m.group(1), m.group(2), m.group(3)
@@ -354,6 +358,7 @@ class PolicyEngine:
 # Utility functions
 # --------------------------
 
+
 def _deep_merge_dicts(base: Dict[str, Any], overlay: Dict[str, Any]) -> Dict[str, Any]:
     """
     Deep merge overlay into base. Lists are replaced by overlay lists (no deep-merge for lists).
@@ -426,17 +431,17 @@ def _split_path(path: str) -> List[str]:
     buf = []
     bracket = 0
     for ch in path:
-        if ch == '.' and bracket == 0:
-            parts.append(''.join(buf))
+        if ch == "." and bracket == 0:
+            parts.append("".join(buf))
             buf = []
         else:
-            if ch == '[':
+            if ch == "[":
                 bracket += 1
-            elif ch == ']':
+            elif ch == "]":
                 bracket = max(0, bracket - 1)
             buf.append(ch)
     if buf:
-        parts.append(''.join(buf))
+        parts.append("".join(buf))
     return parts
 
 

@@ -80,6 +80,7 @@ class Evidence(TypedDict, total=False):
     Fields are intentionally optional to allow different attesters to provide
     only the relevant subset.
     """
+
     runtime_quote: str  # e.g., TEE quote, VBS enclave report
     tcb_version: str  # Trusted Computing Base version
     cert_chain_pem: str  # PEM-encoded verifier/attester chain
@@ -92,6 +93,7 @@ class TokenMeta(TypedDict, total=False):
     """
     Metadata attached to issued or verified role tokens.
     """
+
     issuer: str
     subject: str
     audience: str
@@ -107,6 +109,7 @@ class OfflineEvent(TypedDict):
     """
     Append-only event record used during contested/offline operation.
     """
+
     type: str
     ts: float  # epoch seconds (UTC)
     payload: Dict[str, Any]
@@ -117,6 +120,7 @@ class OfflineSnapshot(TypedDict, total=False):
     """
     Snapshot of the offline store for auditing or reconciliation.
     """
+
     events: Iterable[OfflineEvent]
     last_event_id: str
     meta: Dict[str, Any]
@@ -136,6 +140,7 @@ class AttestationResult:
     code: Optional machine-readable error code for automated responses.
     created_at: UTC timestamp of when this result was produced.
     """
+
     ok: bool
     evidence: Evidence
     reason: Optional[str] = None
@@ -155,6 +160,7 @@ class SignalResult:
     code: Optional machine-readable error code for automated responses.
     created_at: UTC timestamp of when this result was produced.
     """
+
     ok: bool
     token: Optional[TokenStr] = None
     meta: Optional[TokenMeta] = None

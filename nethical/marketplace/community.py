@@ -27,13 +27,14 @@ from dataclasses import dataclass, field, asdict
 from datetime import datetime, timezone
 from enum import Enum
 from hashlib import sha256
-from typing import Dict, List, Optional, Set, Tuple, Any, Callable, Iterable
+from typing import Dict, List, Optional, Set, Any, Iterable
 from collections import defaultdict, Counter
 
 
 # ---------------------------------------------------------------------------
 # Utilities
 # ---------------------------------------------------------------------------
+
 
 def utcnow() -> datetime:
     """Current time in UTC."""
@@ -58,6 +59,7 @@ def _sha256_json(data: Any) -> str:
 # ---------------------------------------------------------------------------
 # Audit Logging (tamper-evident hash chaining)
 # ---------------------------------------------------------------------------
+
 
 class AuditLogger:
     """Append-only audit log with hash chaining (tamper-evident).
@@ -131,8 +133,10 @@ class AuditLogger:
 # Domain Models
 # ---------------------------------------------------------------------------
 
+
 class ReviewStatus(Enum):
     """Plugin review status."""
+
     PENDING = "pending"
     APPROVED = "approved"
     REJECTED = "rejected"
@@ -142,6 +146,7 @@ class ReviewStatus(Enum):
 @dataclass
 class SubmissionEvent:
     """State transition / note for a submission."""
+
     ts: datetime
     status: ReviewStatus
     note: str
@@ -159,6 +164,7 @@ class SubmissionEvent:
 @dataclass
 class PluginReview:
     """Plugin review from community member."""
+
     review_id: str
     plugin_id: str
     reviewer: str
@@ -196,6 +202,7 @@ class PluginReview:
 @dataclass
 class PluginSubmission:
     """Plugin submission for marketplace."""
+
     submission_id: str
     plugin_id: str
     author: str
@@ -231,14 +238,19 @@ class PluginSubmission:
         """Transition submission status with auditing."""
         ts = utcnow()
         self.status = new_status
-        self.status_history.append(SubmissionEvent(ts=ts, status=new_status, note=note, actor=actor))
+        self.status_history.append(
+            SubmissionEvent(ts=ts, status=new_status, note=note, actor=actor)
+        )
         # Also append human-readable note
-        self.reviewer_notes.append(f"[{ts.isoformat()}] ({actor}) {new_status.value.upper()}: {note}")
+        self.reviewer_notes.append(
+            f"[{ts.isoformat()}] ({actor}) {new_status.value.upper()}: {note}"
+        )
 
 
 @dataclass
 class ContributionTemplate:
     """Template for plugin contributions."""
+
     template_id: str
     name: str
     description: str
@@ -260,6 +272,7 @@ class ContributionTemplate:
 # ---------------------------------------------------------------------------
 # Persistence (lightweight JSONL)
 # ---------------------------------------------------------------------------
+
 
 class _JsonlStore:
     """Simple append-only JSONL store for submissions and reviews."""
@@ -294,6 +307,7 @@ class _JsonlStore:
 # ---------------------------------------------------------------------------
 # Community Manager
 # ---------------------------------------------------------------------------
+
 
 class CommunityManager:
     """Manage community contributions and reviews.
@@ -334,7 +348,9 @@ class CommunityManager:
 
         # Infra
         self._lock = threading.RLock()
-        self._store = _JsonlStore(os.path.join(self.storage_dir, "store")) if persist_jsonl else None
+        self._store = (
+            _JsonlStore(os.path.join(self.storage_dir, "store")) if persist_jsonl else None
+        )
         self._audit = AuditLogger(os.path.join(self.storage_dir, "audit")) if enable_audit else None
 
     # --------------------------
@@ -463,7 +479,9 @@ class CommunityManager:
                 return True
             return False
 
-    def reject_submission(self, submission_id: str, reason: str, *, actor: str = "reviewer") -> bool:
+    def reject_submission(
+        self, submission_id: str, reason: str, *, actor: str = "reviewer"
+    ) -> bool:
         """Reject a plugin submission.
 
         Args:
@@ -477,7 +495,9 @@ class CommunityManager:
         with self._lock:
             submission = self._submissions.get(submission_id)
             if submission:
-                submission.transition(ReviewStatus.REJECTED, f"Submission rejected: {reason}", actor=actor)
+                submission.transition(
+                    ReviewStatus.REJECTED, f"Submission rejected: {reason}", actor=actor
+                )
 
                 if self._store:
                     self._store.append_submission(submission)
@@ -593,7 +613,9 @@ class CommunityManager:
                     return counted
         return False
 
-    def moderate_review(self, review_id: str, plugin_id: str, reason: str, *, actor: str = "moderator") -> bool:
+    def moderate_review(
+        self, review_id: str, plugin_id: str, reason: str, *, actor: str = "moderator"
+    ) -> bool:
         """Flag a review as moderated/hidden."""
         reason = reason.strip() or "Policy violation"
         with self._lock:
@@ -676,8 +698,12 @@ class CommunityManager:
         # Time-to-approval metrics
         approval_durations: List[float] = []
         for s in submissions:
-            created_ts = next((e.ts for e in s.status_history if e.status == ReviewStatus.PENDING), None)
-            approved_ts = next((e.ts for e in s.status_history if e.status == ReviewStatus.APPROVED), None)
+            created_ts = next(
+                (e.ts for e in s.status_history if e.status == ReviewStatus.PENDING), None
+            )
+            approved_ts = next(
+                (e.ts for e in s.status_history if e.status == ReviewStatus.APPROVED), None
+            )
             if created_ts and approved_ts:
                 approval_durations.append((approved_ts - created_ts).total_seconds())
 
@@ -718,7 +744,9 @@ class CommunityManager:
             "average_rating": round(avg, 4),
             "total_reviews": len(reviews),
             "rating_histogram": hist,
-            "positive_share": round((sum(1 for r in reviews if r.is_positive()) / len(reviews)) if reviews else 0.0, 4),
+            "positive_share": round(
+                (sum(1 for r in reviews if r.is_positive()) / len(reviews)) if reviews else 0.0, 4
+            ),
             "helpful_votes_total": sum(r.helpful_votes for r in reviews),
         }
 
@@ -746,12 +774,7 @@ class CommunityManager:
         helpful_norm = min(helpful_votes / 100.0, 1.0)
 
         # Blend with weights (tunable)
-        score = (
-            0.5 * rating_norm
-            + 0.2 * volume_weight
-            + 0.2 * approval_ratio
-            + 0.1 * helpful_norm
-        )
+        score = 0.5 * rating_norm + 0.2 * volume_weight + 0.2 * approval_ratio + 0.1 * helpful_norm
         return max(0.0, min(1.0, score))
 
     # --------------------------

@@ -13,7 +13,7 @@ Enhancements:
 - Backward compatible with existing interfaces.
 """
 
-from typing import Any, Dict, Optional, Tuple, Literal, Callable, Union, Awaitable
+from typing import Any, Dict, Optional, Tuple, Literal, Callable
 import os
 import sys
 import platform
@@ -42,6 +42,7 @@ __all__ = [
 ]
 
 log = logging.getLogger(__name__)
+
 
 # ---------------------------------------------------------------------------
 # Error / status codes
@@ -215,6 +216,7 @@ def normalize_attestation_result(result: AttestationResult) -> AttestationResult
 # Policy evaluation scaffold
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PolicyOutcome:
     decision: Literal["permit", "deny", "indeterminate"]
@@ -235,15 +237,22 @@ def evaluate_policy_stub(
         # NOTE: Real logic would parse semver or vendor-specific version
         if tcb >= expected_tcb_min:
             return PolicyOutcome("permit", f"TCB {tcb} >= {expected_tcb_min}")
-        return PolicyOutcome("deny", f"TCB {tcb} < {expected_tcb_min}", {"expected_min": expected_tcb_min})
+        return PolicyOutcome(
+            "deny", f"TCB {tcb} < {expected_tcb_min}", {"expected_min": expected_tcb_min}
+        )
     if expected_tcb_min and not tcb:
-        return PolicyOutcome("indeterminate", "Expected TCB reference not present", {"expected_min": expected_tcb_min})
+        return PolicyOutcome(
+            "indeterminate",
+            "Expected TCB reference not present",
+            {"expected_min": expected_tcb_min},
+        )
     return PolicyOutcome("permit", "No TCB policy specified")
 
 
 # ---------------------------------------------------------------------------
 # Noop Attestation
 # ---------------------------------------------------------------------------
+
 
 class NoopAttestation(AttestationProvider):
     """
@@ -292,6 +301,7 @@ class NoopAttestation(AttestationProvider):
 # ---------------------------------------------------------------------------
 # Trusted Attestation (stubbed enhanced)
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class TrustedProviderConfig:
@@ -467,10 +477,17 @@ class TrustedAttestation(AttestationProvider):
             result = self._policy_to_result(result, policy_outcome)
             return normalize_attestation_result(result)
         except Exception as e:
-            log.exception("Trusted %s attestation failed", scope, extra={"scope": scope, "provider": self.cfg.provider})
+            log.exception(
+                "Trusted %s attestation failed",
+                scope,
+                extra={"scope": scope, "provider": self.cfg.provider},
+            )
             evidence = _base_evidence(
                 verifier=self.cfg.verifier_name,
-                measurements={"attestation.scope": scope, **_baseline_measurements(debug_extra=False)},
+                measurements={
+                    "attestation.scope": scope,
+                    **_baseline_measurements(debug_extra=False),
+                },
                 meta={"impl": "trusted", "exception": type(e).__name__},
             )
             return normalize_attestation_result(
@@ -498,9 +515,19 @@ class TrustedAttestation(AttestationProvider):
 
 
 # Register built-in provider types
-register_attestation_provider("noop", lambda cfg: NoopAttestation(meta=cfg.get("meta") or {}, debug_extra=bool(cfg.get("debug_extra", False))), override=True)
+register_attestation_provider(
+    "noop",
+    lambda cfg: NoopAttestation(
+        meta=cfg.get("meta") or {}, debug_extra=bool(cfg.get("debug_extra", False))
+    ),
+    override=True,
+)
 for p in ("trusted", "tpm2", "sgx", "sev-snp", "tdx", "custom"):
-    register_attestation_provider(p, lambda cfg, _p=p: TrustedAttestation({**cfg, "provider": cfg.get("provider") or _p}), override=True)
+    register_attestation_provider(
+        p,
+        lambda cfg, _p=p: TrustedAttestation({**cfg, "provider": cfg.get("provider") or _p}),
+        override=True,
+    )
 
 
 def select_attestation_provider(config: Optional[Dict[str, Any]] = None) -> AttestationProvider:

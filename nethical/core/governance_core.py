@@ -9,18 +9,11 @@ Refactored from the monolithic governance.py file.
 from __future__ import annotations
 
 import asyncio
-import base64
 import json
-import math
-import os
-import re
 import sqlite3
 import statistics
 import threading
 import time
-import uuid
-import hashlib
-from abc import ABC, abstractmethod
 from collections import deque
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
@@ -33,13 +26,12 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Iterable,
 )
 
 import logging
+
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
-
 
 
 class ViolationType(Enum):
@@ -135,29 +127,39 @@ VIOLATION_SUB_MISSIONS: Dict[ViolationType, set[SubMission]] = {
     ViolationType.ETHICAL: {SubMission.HARMFUL_CONTENT, SubMission.MANIPULATIVE_ETHICS},
     ViolationType.BIAS: {SubMission.PROTECTED_ATTRIBUTE_CONTEXT, SubMission.DISCRIMINATION},
     ViolationType.SECURITY: {
-        SubMission.DANGEROUS_COMMAND, SubMission.UNSAFE_DOMAIN,
-        SubMission.PRIVILEGE_ESCALATION, SubMission.DATA_EXFILTRATION
+        SubMission.DANGEROUS_COMMAND,
+        SubMission.UNSAFE_DOMAIN,
+        SubMission.PRIVILEGE_ESCALATION,
+        SubMission.DATA_EXFILTRATION,
     },
     ViolationType.SAFETY: {SubMission.DANGEROUS_PATTERN},
     ViolationType.MANIPULATION: {
-        SubMission.SOCIAL_ENGINEERING, SubMission.PHISHING, SubMission.EMOTIONAL_LEVERAGE
+        SubMission.SOCIAL_ENGINEERING,
+        SubMission.PHISHING,
+        SubMission.EMOTIONAL_LEVERAGE,
     },
     ViolationType.DARK_PATTERN: {
-        SubMission.NLP_MANIPULATION, SubMission.WEAPONIZED_EMPATHY, SubMission.DEPENDENCY_CREATION
+        SubMission.NLP_MANIPULATION,
+        SubMission.WEAPONIZED_EMPATHY,
+        SubMission.DEPENDENCY_CREATION,
     },
     ViolationType.COGNITIVE_WARFARE: {
-        SubMission.REALITY_DISTORTION, SubMission.PSYCHOLOGICAL_WARFARE
+        SubMission.REALITY_DISTORTION,
+        SubMission.PSYCHOLOGICAL_WARFARE,
     },
-    ViolationType.SYSTEM_LIMITS: {
-        SubMission.PAYLOAD_SIZE, SubMission.EXHAUSTION_PATTERN
-    },
+    ViolationType.SYSTEM_LIMITS: {SubMission.PAYLOAD_SIZE, SubMission.EXHAUSTION_PATTERN},
     ViolationType.ADVERSARIAL: {
-        SubMission.OBFUSCATION_UNICODE, SubMission.ENCODING_EVASION, SubMission.TOKEN_PATTERN
+        SubMission.OBFUSCATION_UNICODE,
+        SubMission.ENCODING_EVASION,
+        SubMission.TOKEN_PATTERN,
     },
     ViolationType.PROMPT_INJECTION: {SubMission.ROLE_OVERRIDE, SubMission.SAFETY_BYPASS},
     ViolationType.PRIVACY: {
-        SubMission.PII_EMAIL, SubMission.PII_PHONE, SubMission.PII_CREDIT_CARD,
-        SubMission.PII_SSN, SubMission.PII_IP
+        SubMission.PII_EMAIL,
+        SubMission.PII_PHONE,
+        SubMission.PII_CREDIT_CARD,
+        SubMission.PII_SSN,
+        SubMission.PII_IP,
     },
     ViolationType.INTENT_DEVIATION: {SubMission.SUDDEN_INTENT_SHIFT},
     ViolationType.HALLUCINATION: {SubMission.FACT_CONFIDENCE_LOW},
@@ -199,6 +201,7 @@ class ActionType(Enum):
 
 # ========================== Data Models ==========================
 
+
 @dataclass
 class AgentAction:
     action_id: str
@@ -225,7 +228,7 @@ class AgentAction:
             "intent": self.intent,
             "risk_score": self.risk_score,
             "parent_action_id": self.parent_action_id,
-            "session_id": self.session_id
+            "session_id": self.session_id,
         }
 
 
@@ -259,7 +262,7 @@ class SafetyViolation:
             "detector_name": self.detector_name,
             "remediation_applied": self.remediation_applied,
             "false_positive": self.false_positive,
-            "sub_mission": self.sub_mission.value if self.sub_mission else None
+            "sub_mission": self.sub_mission.value if self.sub_mission else None,
         }
 
 
@@ -289,7 +292,7 @@ class JudgmentResult:
             "feedback": self.feedback,
             "timestamp": self.timestamp.isoformat(),
             "remediation_steps": self.remediation_steps,
-            "follow_up_required": self.follow_up_required
+            "follow_up_required": self.follow_up_required,
         }
 
 
@@ -345,6 +348,7 @@ class MonitoringConfig:
 
 
 # ========================== Persistence Layer ==========================
+
 
 class PersistenceManager:
     """Simple SQLite persistence for actions, violations, judgments."""
@@ -418,13 +422,19 @@ class PersistenceManager:
             conn.execute(
                 """INSERT OR REPLACE INTO actions VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
-                    action.action_id, action.agent_id, action.action_type.value,
-                    action.content, json.dumps(action.metadata),
-                    action.timestamp.isoformat(), action.intent,
-                    action.risk_score, action.parent_action_id, action.session_id,
-                    getattr(action, 'region_id', None),
-                    getattr(action, 'logical_domain', None)
-                )
+                    action.action_id,
+                    action.agent_id,
+                    action.action_type.value,
+                    action.content,
+                    json.dumps(action.metadata),
+                    action.timestamp.isoformat(),
+                    action.intent,
+                    action.risk_score,
+                    action.parent_action_id,
+                    action.session_id,
+                    getattr(action, "region_id", None),
+                    getattr(action, "logical_domain", None),
+                ),
             )
 
     def store_violations(self, violations: List[SafetyViolation]):
@@ -435,18 +445,24 @@ class PersistenceManager:
                 """INSERT OR REPLACE INTO violations VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 [
                     (
-                        v.violation_id, v.action_id, v.violation_type.value,
-                        v.severity.value, v.description, v.confidence,
-                        json.dumps(v.evidence), json.dumps(v.recommendations),
-                        v.timestamp.isoformat(), v.detector_name,
+                        v.violation_id,
+                        v.action_id,
+                        v.violation_type.value,
+                        v.severity.value,
+                        v.description,
+                        v.confidence,
+                        json.dumps(v.evidence),
+                        json.dumps(v.recommendations),
+                        v.timestamp.isoformat(),
+                        v.detector_name,
                         1 if v.remediation_applied else 0,
                         1 if v.false_positive else 0,
                         v.sub_mission.value if v.sub_mission else None,
-                        getattr(v, 'region_id', None),
-                        getattr(v, 'logical_domain', None)
+                        getattr(v, "region_id", None),
+                        getattr(v, "logical_domain", None),
                     )
                     for v in violations
-                ]
+                ],
             )
 
     def store_judgment(self, j: JudgmentResult):
@@ -454,14 +470,20 @@ class PersistenceManager:
             conn.execute(
                 """INSERT OR REPLACE INTO judgments VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                 (
-                    j.judgment_id, j.action_id, j.decision.value, j.confidence,
-                    j.reasoning, json.dumps([v.to_dict() for v in j.violations]),
-                    json.dumps(j.modifications), json.dumps(j.feedback),
-                    j.timestamp.isoformat(), json.dumps(j.remediation_steps),
+                    j.judgment_id,
+                    j.action_id,
+                    j.decision.value,
+                    j.confidence,
+                    j.reasoning,
+                    json.dumps([v.to_dict() for v in j.violations]),
+                    json.dumps(j.modifications),
+                    json.dumps(j.feedback),
+                    j.timestamp.isoformat(),
+                    json.dumps(j.remediation_steps),
                     1 if j.follow_up_required else 0,
-                    getattr(j, 'region_id', None),
-                    getattr(j, 'logical_domain', None)
-                )
+                    getattr(j, "region_id", None),
+                    getattr(j, "logical_domain", None),
+                ),
             )
 
     def retention_cleanup(self):
@@ -476,32 +498,32 @@ class PersistenceManager:
         end_time: Optional[str] = None,
         agent_ids: Optional[List[str]] = None,
         limit: Optional[int] = None,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Dict[str, Any]]:
         """Query actions with filters for replay functionality."""
         with self._lock, self._connect() as conn:
             query = "SELECT * FROM actions WHERE 1=1"
             params = []
-            
+
             if start_time:
                 query += " AND timestamp >= ?"
                 params.append(start_time)
-            
+
             if end_time:
                 query += " AND timestamp <= ?"
                 params.append(end_time)
-            
+
             if agent_ids:
                 placeholders = ",".join("?" * len(agent_ids))
                 query += f" AND agent_id IN ({placeholders})"
                 params.extend(agent_ids)
-            
+
             query += " ORDER BY timestamp ASC"
-            
+
             if limit:
                 query += " LIMIT ? OFFSET ?"
                 params.extend([limit, offset])
-            
+
             cursor = conn.execute(query, params)
             columns = [desc[0] for desc in cursor.description]
             return [dict(zip(columns, row)) for row in cursor.fetchall()]
@@ -510,7 +532,7 @@ class PersistenceManager:
         """Query judgments for multiple action IDs."""
         if not action_ids:
             return {}
-        
+
         with self._lock, self._connect() as conn:
             placeholders = ",".join("?" * len(action_ids))
             query = f"SELECT * FROM judgments WHERE action_id IN ({placeholders})"
@@ -519,36 +541,35 @@ class PersistenceManager:
             results = {}
             for row in cursor.fetchall():
                 judgment = dict(zip(columns, row))
-                results[judgment['action_id']] = judgment
+                results[judgment["action_id"]] = judgment
             return results
 
     def count_actions(
         self,
         start_time: Optional[str] = None,
         end_time: Optional[str] = None,
-        agent_ids: Optional[List[str]] = None
+        agent_ids: Optional[List[str]] = None,
     ) -> int:
         """Count actions matching filters."""
         with self._lock, self._connect() as conn:
             query = "SELECT COUNT(*) FROM actions WHERE 1=1"
             params = []
-            
+
             if start_time:
                 query += " AND timestamp >= ?"
                 params.append(start_time)
-            
+
             if end_time:
                 query += " AND timestamp <= ?"
                 params.append(end_time)
-            
+
             if agent_ids:
                 placeholders = ",".join("?" * len(agent_ids))
                 query += f" AND agent_id IN ({placeholders})"
                 params.extend(agent_ids)
-            
+
             cursor = conn.execute(query, params)
             return cursor.fetchone()[0]
-
 
 
 # Utilities moved to governance_evaluation.py
@@ -580,6 +601,7 @@ from .governance_evaluation import IntentDeviationMonitor, SafetyJudge
 
 # ========================== Governance System ==========================
 
+
 class EnhancedSafetyGovernance:
     def __init__(self, config: Optional[MonitoringConfig] = None):
         self.config = config or MonitoringConfig()
@@ -604,8 +626,8 @@ class EnhancedSafetyGovernance:
             "avg_processing_time": 0.0,
             "false_positive_rate": 0.0,
             "true_positive_rate": 0.0,  # placeholder
-            "detector_timing": {},      # detector_name -> list[float]
-            "detector_counts_by_sub_mission": {}  # sub_mission -> int
+            "detector_timing": {},  # detector_name -> list[float]
+            "detector_counts_by_sub_mission": {},  # sub_mission -> int
         }
 
         # Persistence
@@ -692,15 +714,21 @@ class EnhancedSafetyGovernance:
             logger.error("Failed to load external patterns: %s", e)
 
     async def _maybe_reload_patterns(self):
-        if (self.config.pattern_dir and self.config.reload_patterns_on_interval
-                and (self._pattern_last_load is None or
-                     time.time() - self._pattern_last_load > self.config.reload_patterns_on_interval)):
+        if (
+            self.config.pattern_dir
+            and self.config.reload_patterns_on_interval
+            and (
+                self._pattern_last_load is None
+                or time.time() - self._pattern_last_load > self.config.reload_patterns_on_interval
+            )
+        ):
             self._load_external_patterns()
 
     # -------- Core Evaluation Pipeline --------
 
     async def evaluate_action(self, action: AgentAction, use_cache: bool = True) -> JudgmentResult:
         from .governance_evaluation import generate_id, sha256_content_key
+
         await self._maybe_reload_patterns()
         start = time.time()
 
@@ -714,7 +742,7 @@ class EnhancedSafetyGovernance:
                 violations=[],
                 feedback=["Blocked due to excessive content size"],
                 remediation_steps=["Reduce payload size"],
-                follow_up_required=True
+                follow_up_required=True,
             )
             return jr
 
@@ -761,8 +789,9 @@ class EnhancedSafetyGovernance:
                 # sub-mission count
                 if v.sub_mission:
                     sms = v.sub_mission.value
-                    self.metrics["detector_counts_by_sub_mission"][sms] = \
+                    self.metrics["detector_counts_by_sub_mission"][sms] = (
                         self.metrics["detector_counts_by_sub_mission"].get(sms, 0) + 1
+                    )
 
         self.violation_history.extend(validated)
         self.metrics["total_violations_detected"] += len(validated)
@@ -792,12 +821,17 @@ class EnhancedSafetyGovernance:
         if self.config.log_judgments:
             logger.info(
                 "Action %s -> decision=%s violations=%d processing=%.3fs",
-                action.action_id, judgment.decision.value, len(validated), time.time() - start
+                action.action_id,
+                judgment.decision.value,
+                len(validated),
+                time.time() - start,
             )
 
         return judgment
 
-    async def batch_evaluate_actions(self, actions: List[AgentAction], parallel: bool = True) -> List[JudgmentResult]:
+    async def batch_evaluate_actions(
+        self, actions: List[AgentAction], parallel: bool = True
+    ) -> List[JudgmentResult]:
         if parallel and self.config.enable_async_processing:
             tasks = [self.evaluate_action(a) for a in actions]
             res = await asyncio.gather(*tasks, return_exceptions=True)
@@ -813,7 +847,9 @@ class EnhancedSafetyGovernance:
 
     # -------- Detector Execution Offloading --------
 
-    async def _run_detector_cpu_bound(self, detector: BaseDetector, action: AgentAction) -> List[SafetyViolation]:
+    async def _run_detector_cpu_bound(
+        self, detector: BaseDetector, action: AgentAction
+    ) -> List[SafetyViolation]:
         start = time.time()
         if detector.cpu_bound:
             res = await asyncio.to_thread(lambda: asyncio.run(detector.detect_violations(action)))
@@ -835,14 +871,16 @@ class EnhancedSafetyGovernance:
                 "Invalid sub_mission '%s' for type '%s' (detector=%s)",
                 violation.sub_mission.value,
                 violation.violation_type.value,
-                violation.detector_name
+                violation.detector_name,
             )
             return False
         return True
 
     # -------- Alerts --------
 
-    async def _handle_alerts(self, action: AgentAction, violations: List[SafetyViolation], judgment: JudgmentResult):
+    async def _handle_alerts(
+        self, action: AgentAction, violations: List[SafetyViolation], judgment: JudgmentResult
+    ):
         if not violations:
             return
         critical = [v for v in violations if v.severity.value >= Severity.CRITICAL.value]
@@ -852,7 +890,9 @@ class EnhancedSafetyGovernance:
         if emergency and self.config.alert_on_emergency:
             await self._emit_alert(action, judgment, "EMERGENCY", len(emergency))
 
-    async def _emit_alert(self, action: AgentAction, judgment: JudgmentResult, level: str, count: int):
+    async def _emit_alert(
+        self, action: AgentAction, judgment: JudgmentResult, level: str, count: int
+    ):
         payload = {
             "timestamp": datetime.utcnow().isoformat(),
             "action_id": action.action_id,
@@ -860,7 +900,7 @@ class EnhancedSafetyGovernance:
             "decision": judgment.decision.value,
             "severity": level,
             "violation_count": count,
-            "message": f"{level} violations detected for action {action.action_id}"
+            "message": f"{level} violations detected for action {action.action_id}",
         }
         for cb in self.alert_callbacks:
             try:
@@ -948,9 +988,10 @@ class EnhancedSafetyGovernance:
             "by_type": by_type,
             "by_severity": by_severity,
             "by_sub_mission": by_sub,
-            ("unified_types" if self.config.unify_specialized_manipulation_types else "ignored"):
-                unified if unified else {},
-            "recent": [v.to_dict() for v in violations[-5:]]
+            ("unified_types" if self.config.unify_specialized_manipulation_types else "ignored"): (
+                unified if unified else {}
+            ),
+            "recent": [v.to_dict() for v in violations[-5:]],
         }
 
     def get_system_metrics(self) -> Dict[str, Any]:
@@ -959,7 +1000,11 @@ class EnhancedSafetyGovernance:
             name: {
                 "count": len(times),
                 "avg": sum(times) / len(times) if times else 0.0,
-                "p95": statistics.quantiles(times, n=20)[18] if len(times) >= 20 else max(times) if times else 0.0
+                "p95": (
+                    statistics.quantiles(times, n=20)[18]
+                    if len(times) >= 20
+                    else max(times) if times else 0.0
+                ),
             }
             for name, times in self.metrics["detector_timing"].items()
         }
@@ -971,8 +1016,8 @@ class EnhancedSafetyGovernance:
             "history_sizes": {
                 "actions": len(self.action_history),
                 "violations": len(self.violation_history),
-                "judgments": len(self.judgment_history)
-            }
+                "judgments": len(self.judgment_history),
+            },
         }
 
     # -------- External API --------
@@ -980,10 +1025,12 @@ class EnhancedSafetyGovernance:
     def register_alert_callback(self, cb: Callable):
         self.alert_callbacks.append(cb)
 
-    def export_data(self,
-                    include_actions: bool = True,
-                    include_violations: bool = True,
-                    include_judgments: bool = True) -> Dict[str, Any]:
+    def export_data(
+        self,
+        include_actions: bool = True,
+        include_violations: bool = True,
+        include_judgments: bool = True,
+    ) -> Dict[str, Any]:
         out = {"exported_at": datetime.utcnow().isoformat()}
         if include_actions:
             out["actions"] = [a.to_dict() for a in self.action_history]

@@ -2,11 +2,14 @@ from __future__ import annotations
 
 from typing import Dict, Any, Optional, Callable, Iterable
 from datetime import datetime
-import copy
 
 from nethical.core import IntegratedGovernance
 from nethical.hooks.interfaces import (
-    Region, AttestationProvider, CryptoSignalProvider, CommsPolicy, OfflineStore
+    Region,
+    AttestationProvider,
+    CryptoSignalProvider,
+    CommsPolicy,
+    OfflineStore,
 )
 from nethical.security.attestation import NoopAttestation
 from nethical.net.zerotrust import NoopCommsPolicy
@@ -164,7 +167,9 @@ class HealthcareGuardrails:
         # Apply output allowlist, if configured
         redacted_result = self._apply_allowlist(redacted_result, self.output_allowlist)
 
-        self._log_event({"type": "egress", "len": len(str(redacted_result.get("agent_output", "")))})
+        self._log_event(
+            {"type": "egress", "len": len(str(redacted_result.get("agent_output", "")))}
+        )
         return redacted_result
 
     def evaluate(self, agent_id: str, action_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
@@ -184,7 +189,9 @@ class HealthcareGuardrails:
 
         # Build features for governance
         features: Dict[str, Any] = {
-            "ml_score": float(policy_out.get("ml_score", 0.0)) if isinstance(policy_out, dict) else 0.0,
+            "ml_score": (
+                float(policy_out.get("ml_score", 0.0)) if isinstance(policy_out, dict) else 0.0
+            ),
             "attestation_ok": True,  # default; cannot re-attest synchronously here
             "crypto_signal_enabled": bool(self.crypto_signal is not None),
             "region": self.region.value,
@@ -200,7 +207,9 @@ class HealthcareGuardrails:
             action_id=action_id,
             action_type="healthcare_interaction",
             features=features,
-            rule_risk_score=float(policy_out.get("risk_score", 0.0)) if isinstance(policy_out, dict) else 0.0,
+            rule_risk_score=(
+                float(policy_out.get("risk_score", 0.0)) if isinstance(policy_out, dict) else 0.0
+            ),
             rule_classification=flags["rule_classification"],
         )
 
@@ -224,7 +233,9 @@ class HealthcareGuardrails:
             ingress = self.preprocess(payload)
             agent_result = agent_fn(ingress) or {}
             egress = self.postprocess(agent_result)
-            eval_out = self.evaluate(agent_id=agent_id, action_id=action_id, payload={**ingress, **egress})
+            eval_out = self.evaluate(
+                agent_id=agent_id, action_id=action_id, payload={**ingress, **egress}
+            )
             return {
                 "ingress": ingress,
                 "agent_result": egress,

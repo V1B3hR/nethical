@@ -12,7 +12,7 @@ This module implements:
 """
 
 from dataclasses import dataclass, field
-from typing import Dict, List, Optional, Any, Set, Tuple, Deque
+from typing import Dict, List, Optional, Any, Tuple, Deque
 from datetime import datetime, timedelta
 from enum import Enum
 from collections import defaultdict, deque
@@ -23,14 +23,16 @@ import uuid
 
 class AnomalyType(str, Enum):
     """Types of anomalies detected."""
-    SEQUENCE = "sequence"        # Unusual action sequences
-    FREQUENCY = "frequency"      # Unusual frequency patterns (bursts)
-    BEHAVIORAL = "behavioral"    # Unusual agent behavior (e.g., low entropy)
+
+    SEQUENCE = "sequence"  # Unusual action sequences
+    FREQUENCY = "frequency"  # Unusual frequency patterns (bursts)
+    BEHAVIORAL = "behavioral"  # Unusual agent behavior (e.g., low entropy)
     DISTRIBUTIONAL = "distributional"  # Distribution shift
 
 
 class DriftSeverity(str, Enum):
     """Severity levels for drift alerts."""
+
     INFO = "info"
     WARNING = "warning"
     CRITICAL = "critical"
@@ -39,6 +41,7 @@ class DriftSeverity(str, Enum):
 @dataclass
 class AnomalyAlert:
     """Alert for detected anomaly or drift."""
+
     alert_id: str
     timestamp: datetime
     anomaly_type: AnomalyType
@@ -61,24 +64,29 @@ class AnomalyAlert:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for logging."""
         return {
-            'alert_id': self.alert_id,
-            'timestamp': (self.timestamp.replace(microsecond=0).isoformat() + 'Z') if self.timestamp else None,
-            'anomaly_type': self.anomaly_type.value,
-            'severity': self.severity.value,
-            'agent_id': self.agent_id,
-            'cohort': self.cohort,
-            'anomaly_score': float(self.anomaly_score),
-            'threshold': float(self.threshold),
-            'description': self.description,
-            'evidence': self.evidence,
-            'auto_escalated': self.auto_escalated,
-            'quarantine_recommended': self.quarantine_recommended
+            "alert_id": self.alert_id,
+            "timestamp": (
+                (self.timestamp.replace(microsecond=0).isoformat() + "Z")
+                if self.timestamp
+                else None
+            ),
+            "anomaly_type": self.anomaly_type.value,
+            "severity": self.severity.value,
+            "agent_id": self.agent_id,
+            "cohort": self.cohort,
+            "anomaly_score": float(self.anomaly_score),
+            "threshold": float(self.threshold),
+            "description": self.description,
+            "evidence": self.evidence,
+            "auto_escalated": self.auto_escalated,
+            "quarantine_recommended": self.quarantine_recommended,
         }
 
 
 @dataclass
 class DriftMetrics:
     """Metrics for drift detection."""
+
     # Distribution metrics
     psi_score: float = 0.0  # Population Stability Index
     kl_divergence: float = 0.0  # Kullback-Leibler divergence (current || baseline)
@@ -97,16 +105,18 @@ class DriftMetrics:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
         return {
-            'psi_score': self.psi_score,
-            'kl_divergence': self.kl_divergence,
-            'js_distance': self.js_distance,
-            'psi_drift_detected': self.psi_drift_detected,
-            'kl_drift_detected': self.kl_drift_detected,
-            'js_drift_detected': self.js_drift_detected,
-            'psi_threshold': self.psi_threshold,
-            'kl_threshold': self.kl_threshold,
-            'js_threshold': self.js_threshold,
-            'drift_detected': any([self.psi_drift_detected, self.kl_drift_detected, self.js_drift_detected])
+            "psi_score": self.psi_score,
+            "kl_divergence": self.kl_divergence,
+            "js_distance": self.js_distance,
+            "psi_drift_detected": self.psi_drift_detected,
+            "kl_drift_detected": self.kl_drift_detected,
+            "js_drift_detected": self.js_drift_detected,
+            "psi_threshold": self.psi_threshold,
+            "kl_threshold": self.kl_threshold,
+            "js_threshold": self.js_threshold,
+            "drift_detected": any(
+                [self.psi_drift_detected, self.kl_drift_detected, self.js_drift_detected]
+            ),
         }
 
 
@@ -119,7 +129,7 @@ class SequenceAnomalyDetector:
         min_frequency: int = 2,
         anomaly_threshold: float = 0.8,
         window_size: int = 10000,
-        smoothing_alpha: float = 1.0
+        smoothing_alpha: float = 1.0,
     ):
         """Initialize sequence anomaly detector.
 
@@ -138,7 +148,9 @@ class SequenceAnomalyDetector:
 
         # N-gram frequency tracking within a sliding window
         self.ngram_counts: Dict[Tuple[str, ...], int] = defaultdict(int)
-        self.ngram_window: Deque[Tuple[str, ...]] = deque()  # we manually manage length to decrement counts
+        self.ngram_window: Deque[Tuple[str, ...]] = (
+            deque()
+        )  # we manually manage length to decrement counts
         self.total_ngrams: int = 0
 
         # Sequence history per agent
@@ -151,7 +163,7 @@ class SequenceAnomalyDetector:
         # Update n-gram counts if we have enough history
         sequence = self.agent_sequences[agent_id]
         if len(sequence) >= self.n:
-            ngram = tuple(list(sequence)[-self.n:])
+            ngram = tuple(list(sequence)[-self.n :])
 
             # Manage sliding window counts
             # Pop oldest if exceeding window size
@@ -181,9 +193,9 @@ class SequenceAnomalyDetector:
         sequence = self.agent_sequences[agent_id]
 
         if len(sequence) < self.n or self.total_ngrams == 0:
-            return False, 0.0, {'reason': 'insufficient_baseline_or_history'}
+            return False, 0.0, {"reason": "insufficient_baseline_or_history"}
 
-        recent_ngram = tuple(list(sequence)[-self.n:])
+        recent_ngram = tuple(list(sequence)[-self.n :])
         prob = self._probability(recent_ngram)
 
         # Normalize -log(prob) to [0,1] using the minimal possible probability under smoothing
@@ -199,13 +211,13 @@ class SequenceAnomalyDetector:
             score = min(1.0, score + 0.1)
 
         evidence = {
-            'ngram': list(recent_ngram),
-            'probability': prob,
-            'seen_count': seen_count,
-            'is_unseen': is_unseen,
-            'total_ngrams_window': self.total_ngrams,
-            'window_size': self.window_size,
-            'vocab_size': len(self.ngram_counts)
+            "ngram": list(recent_ngram),
+            "probability": prob,
+            "seen_count": seen_count,
+            "is_unseen": is_unseen,
+            "total_ngrams_window": self.total_ngrams,
+            "window_size": self.window_size,
+            "vocab_size": len(self.ngram_counts),
         }
 
         is_anomalous = score >= self.anomaly_threshold
@@ -214,13 +226,13 @@ class SequenceAnomalyDetector:
     def get_statistics(self) -> Dict[str, Any]:
         """Get detector statistics."""
         return {
-            'n': self.n,
-            'total_ngrams_in_window': self.total_ngrams,
-            'unique_ngrams': len(self.ngram_counts),
-            'tracked_agents': len(self.agent_sequences),
-            'anomaly_threshold': self.anomaly_threshold,
-            'smoothing_alpha': self.alpha,
-            'window_size': self.window_size
+            "n": self.n,
+            "total_ngrams_in_window": self.total_ngrams,
+            "unique_ngrams": len(self.ngram_counts),
+            "tracked_agents": len(self.agent_sequences),
+            "anomaly_threshold": self.anomaly_threshold,
+            "smoothing_alpha": self.alpha,
+            "window_size": self.window_size,
         }
 
 
@@ -234,7 +246,7 @@ class DistributionDriftDetector:
         kl_threshold: float = 0.1,
         js_threshold: float = 0.1,
         min_current_samples: int = 30,
-        epsilon: float = 1e-6
+        epsilon: float = 1e-6,
     ):
         """Initialize distribution drift detector.
 
@@ -283,7 +295,7 @@ class DistributionDriftDetector:
             return DriftMetrics(
                 psi_threshold=self.psi_threshold,
                 kl_threshold=self.kl_threshold,
-                js_threshold=self.js_threshold
+                js_threshold=self.js_threshold,
             )
 
         # Compute current distribution
@@ -304,7 +316,7 @@ class DistributionDriftDetector:
             js_drift_detected=js > self.js_threshold,
             psi_threshold=self.psi_threshold,
             kl_threshold=self.kl_threshold,
-            js_threshold=self.js_threshold
+            js_threshold=self.js_threshold,
         )
 
         # Record in history
@@ -366,14 +378,14 @@ class DistributionDriftDetector:
             _, recent_drift = self.drift_history[-1]
 
         return {
-            'num_bins': self.num_bins,
-            'baseline_size': len(self.baseline_scores),
-            'current_size': len(self.current_scores),
-            'drift_checks_performed': len(self.drift_history),
-            'recent_drift': recent_drift.to_dict() if recent_drift else None,
-            'psi_threshold': self.psi_threshold,
-            'kl_threshold': self.kl_threshold,
-            'js_threshold': self.js_threshold
+            "num_bins": self.num_bins,
+            "baseline_size": len(self.baseline_scores),
+            "current_size": len(self.current_scores),
+            "drift_checks_performed": len(self.drift_history),
+            "recent_drift": recent_drift.to_dict() if recent_drift else None,
+            "psi_threshold": self.psi_threshold,
+            "kl_threshold": self.kl_threshold,
+            "js_threshold": self.js_threshold,
         }
 
 
@@ -391,7 +403,7 @@ class AnomalyDriftMonitor:
         frequency_window_seconds: int = 60,
         frequency_burst_threshold: int = 30,
         # Alerting
-        alert_cooldown_seconds: int = 300
+        alert_cooldown_seconds: int = 300,
     ):
         """Initialize anomaly and drift monitor.
 
@@ -411,12 +423,12 @@ class AnomalyDriftMonitor:
         self.sequence_detector = SequenceAnomalyDetector(n=sequence_n)
         # Default drift detector (for None cohort)
         self.drift_detector = DistributionDriftDetector(
-            psi_threshold=psi_threshold,
-            kl_threshold=kl_threshold,
-            js_threshold=js_threshold
+            psi_threshold=psi_threshold, kl_threshold=kl_threshold, js_threshold=js_threshold
         )
         # Per-cohort drift detectors
-        self._drift_detectors: Dict[Optional[str], DistributionDriftDetector] = {None: self.drift_detector}
+        self._drift_detectors: Dict[Optional[str], DistributionDriftDetector] = {
+            None: self.drift_detector
+        }
 
         # Alert tracking
         self.alerts: List[AnomalyAlert] = []
@@ -428,7 +440,7 @@ class AnomalyDriftMonitor:
             AnomalyType.SEQUENCE: 0.8,
             AnomalyType.FREQUENCY: 0.75,
             AnomalyType.BEHAVIORAL: 0.7,
-            AnomalyType.DISTRIBUTIONAL: 0.5
+            AnomalyType.DISTRIBUTIONAL: 0.5,
         }
 
         # Behavioral tracking
@@ -450,16 +462,12 @@ class AnomalyDriftMonitor:
                 kl_threshold=base.kl_threshold,
                 js_threshold=base.js_threshold,
                 min_current_samples=base.min_current_samples,
-                epsilon=base.epsilon
+                epsilon=base.epsilon,
             )
         return self._drift_detectors[cohort]
 
     def record_action(
-        self,
-        agent_id: str,
-        action_type: str,
-        risk_score: float,
-        cohort: Optional[str] = None
+        self, agent_id: str, action_type: str, risk_score: float, cohort: Optional[str] = None
     ) -> Optional[AnomalyAlert]:
         """Record an action and check for anomalies.
 
@@ -491,18 +499,20 @@ class AnomalyDriftMonitor:
             # Score grows with magnitude of the burst relative to threshold
             burst_score = min(1.0, len(q) / float(self.frequency_burst_threshold))
             evidence = {
-                'window_seconds': int(self.frequency_window.total_seconds()),
-                'events_in_window': len(q),
-                'threshold': self.frequency_burst_threshold,
-                'recent_events_iso': [t.replace(microsecond=0).isoformat() + 'Z' for t in list(q)[-5:]],
-                'risk_score_last': risk_score
+                "window_seconds": int(self.frequency_window.total_seconds()),
+                "events_in_window": len(q),
+                "threshold": self.frequency_burst_threshold,
+                "recent_events_iso": [
+                    t.replace(microsecond=0).isoformat() + "Z" for t in list(q)[-5:]
+                ],
+                "risk_score_last": risk_score,
             }
             alert = self._create_alert(
                 anomaly_type=AnomalyType.FREQUENCY,
                 agent_id=agent_id,
                 cohort=cohort,
                 anomaly_score=burst_score,
-                evidence=evidence
+                evidence=evidence,
             )
             if alert:
                 return alert
@@ -515,7 +525,7 @@ class AnomalyDriftMonitor:
                 agent_id=agent_id,
                 cohort=cohort,
                 anomaly_score=anomaly_score,
-                evidence=evidence
+                evidence=evidence,
             )
             if alert:
                 return alert
@@ -532,12 +542,26 @@ class AnomalyDriftMonitor:
         detector = self._get_drift_detector(cohort)
         drift_metrics = detector.detect_drift()
 
-        if drift_metrics.psi_drift_detected or drift_metrics.kl_drift_detected or drift_metrics.js_drift_detected:
+        if (
+            drift_metrics.psi_drift_detected
+            or drift_metrics.kl_drift_detected
+            or drift_metrics.js_drift_detected
+        ):
             # Determine severity from combined signals
-            score_for_severity = max(drift_metrics.psi_score, drift_metrics.kl_divergence, drift_metrics.js_distance)
-            if drift_metrics.psi_score > 0.5 or drift_metrics.kl_divergence > 0.3 or drift_metrics.js_distance > 0.25:
+            score_for_severity = max(
+                drift_metrics.psi_score, drift_metrics.kl_divergence, drift_metrics.js_distance
+            )
+            if (
+                drift_metrics.psi_score > 0.5
+                or drift_metrics.kl_divergence > 0.3
+                or drift_metrics.js_distance > 0.25
+            ):
                 severity = DriftSeverity.CRITICAL
-            elif drift_metrics.psi_score > 0.3 or drift_metrics.kl_divergence > 0.15 or drift_metrics.js_distance > 0.18:
+            elif (
+                drift_metrics.psi_score > 0.3
+                or drift_metrics.kl_divergence > 0.15
+                or drift_metrics.js_distance > 0.18
+            ):
                 severity = DriftSeverity.WARNING
             else:
                 severity = DriftSeverity.INFO
@@ -553,7 +577,7 @@ class AnomalyDriftMonitor:
                 description=f"Distribution drift detected: PSI={drift_metrics.psi_score:.3f}, KL={drift_metrics.kl_divergence:.3f}, JS={drift_metrics.js_distance:.3f}",
                 evidence=drift_metrics.to_dict(),
                 auto_escalated=severity == DriftSeverity.CRITICAL,
-                quarantine_recommended=severity == DriftSeverity.CRITICAL
+                quarantine_recommended=severity == DriftSeverity.CRITICAL,
             )
 
             if not self._is_in_cooldown(AnomalyType.DISTRIBUTIONAL, None, cohort):
@@ -563,9 +587,7 @@ class AnomalyDriftMonitor:
         return None
 
     def check_behavioral_anomaly(
-        self,
-        agent_id: str,
-        cohort: Optional[str] = None
+        self, agent_id: str, cohort: Optional[str] = None
     ) -> Optional[AnomalyAlert]:
         """Check for behavioral anomalies in agent activity."""
         if agent_id not in self.agent_action_counts:
@@ -586,15 +608,17 @@ class AnomalyDriftMonitor:
         norm_entropy = entropy / math.log(k) if k > 1 else 0.0  # [0..1]
 
         # Anomaly if > 80% of actions are same type with sufficient volume or very low entropy
-        if (concentration > 0.8 and total_actions >= 10) or (norm_entropy < 0.2 and total_actions >= 10):
+        if (concentration > 0.8 and total_actions >= 10) or (
+            norm_entropy < 0.2 and total_actions >= 10
+        ):
             # Score blends both signals
             score = max(concentration, 1.0 - norm_entropy)
             evidence = {
-                'total_actions': total_actions,
-                'action_concentration': concentration,
-                'dominant_action': max(action_counts, key=action_counts.get),
-                'normalized_entropy': norm_entropy,
-                'action_distribution': dict(action_counts)
+                "total_actions": total_actions,
+                "action_concentration": concentration,
+                "dominant_action": max(action_counts, key=action_counts.get),
+                "normalized_entropy": norm_entropy,
+                "action_distribution": dict(action_counts),
             }
 
             alert = self._create_alert(
@@ -602,13 +626,15 @@ class AnomalyDriftMonitor:
                 agent_id=agent_id,
                 cohort=cohort,
                 anomaly_score=score,
-                evidence=evidence
+                evidence=evidence,
             )
             return alert
 
         return None
 
-    def _is_in_cooldown(self, anomaly_type: AnomalyType, agent_id: Optional[str], cohort: Optional[str]) -> bool:
+    def _is_in_cooldown(
+        self, anomaly_type: AnomalyType, agent_id: Optional[str], cohort: Optional[str]
+    ) -> bool:
         key = (anomaly_type, agent_id, cohort)
         last = self._last_alert_at.get(key)
         if last and (datetime.utcnow() - last) < self._alert_cooldown:
@@ -629,7 +655,7 @@ class AnomalyDriftMonitor:
         agent_id: Optional[str],
         cohort: Optional[str],
         anomaly_score: float,
-        evidence: Dict[str, Any]
+        evidence: Dict[str, Any],
     ) -> Optional[AnomalyAlert]:
         """Create and log an anomaly alert with cooldown deduplication."""
         threshold = self.alert_thresholds[anomaly_type]
@@ -650,7 +676,7 @@ class AnomalyDriftMonitor:
         descriptions = {
             AnomalyType.SEQUENCE: f"Unusual action sequence detected (score: {anomaly_score:.3f})",
             AnomalyType.BEHAVIORAL: f"Behavioral anomaly detected (score: {anomaly_score:.3f})",
-            AnomalyType.FREQUENCY: f"Frequency burst detected (score: {anomaly_score:.3f})"
+            AnomalyType.FREQUENCY: f"Frequency burst detected (score: {anomaly_score:.3f})",
         }
 
         alert = AnomalyAlert(
@@ -665,7 +691,7 @@ class AnomalyDriftMonitor:
             description=descriptions.get(anomaly_type, "Anomaly detected"),
             evidence=evidence,
             auto_escalated=severity == DriftSeverity.CRITICAL,
-            quarantine_recommended=severity == DriftSeverity.CRITICAL
+            quarantine_recommended=severity == DriftSeverity.CRITICAL,
         )
 
         self._record_alert(alert)
@@ -678,12 +704,13 @@ class AnomalyDriftMonitor:
 
         try:
             import os
+
             os.makedirs(self.storage_path, exist_ok=True)
 
             # Append to alerts log
             log_file = os.path.join(self.storage_path, "anomaly_alerts.jsonl")
-            with open(log_file, 'a', encoding='utf-8') as f:
-                f.write(json.dumps(alert.to_dict(), ensure_ascii=False) + '\n')
+            with open(log_file, "a", encoding="utf-8") as f:
+                f.write(json.dumps(alert.to_dict(), ensure_ascii=False) + "\n")
         except Exception:
             # Silent fail for logging
             pass
@@ -696,7 +723,7 @@ class AnomalyDriftMonitor:
         self,
         severity: Optional[DriftSeverity] = None,
         anomaly_type: Optional[AnomalyType] = None,
-        limit: Optional[int] = None
+        limit: Optional[int] = None,
     ) -> List[AnomalyAlert]:
         """Get alerts with optional filtering."""
         alerts = self.alerts
@@ -716,18 +743,32 @@ class AnomalyDriftMonitor:
         """Get comprehensive statistics."""
         # Alert counts by severity and type
         alert_counts = {
-            'total': len(self.alerts),
-            'by_severity': {
-                DriftSeverity.INFO.value: sum(1 for a in self.alerts if a.severity == DriftSeverity.INFO),
-                DriftSeverity.WARNING.value: sum(1 for a in self.alerts if a.severity == DriftSeverity.WARNING),
-                DriftSeverity.CRITICAL.value: sum(1 for a in self.alerts if a.severity == DriftSeverity.CRITICAL)
+            "total": len(self.alerts),
+            "by_severity": {
+                DriftSeverity.INFO.value: sum(
+                    1 for a in self.alerts if a.severity == DriftSeverity.INFO
+                ),
+                DriftSeverity.WARNING.value: sum(
+                    1 for a in self.alerts if a.severity == DriftSeverity.WARNING
+                ),
+                DriftSeverity.CRITICAL.value: sum(
+                    1 for a in self.alerts if a.severity == DriftSeverity.CRITICAL
+                ),
             },
-            'by_type': {
-                AnomalyType.SEQUENCE.value: sum(1 for a in self.alerts if a.anomaly_type == AnomalyType.SEQUENCE),
-                AnomalyType.FREQUENCY.value: sum(1 for a in self.alerts if a.anomaly_type == AnomalyType.FREQUENCY),
-                AnomalyType.BEHAVIORAL.value: sum(1 for a in self.alerts if a.anomaly_type == AnomalyType.BEHAVIORAL),
-                AnomalyType.DISTRIBUTIONAL.value: sum(1 for a in self.alerts if a.anomaly_type == AnomalyType.DISTRIBUTIONAL)
-            }
+            "by_type": {
+                AnomalyType.SEQUENCE.value: sum(
+                    1 for a in self.alerts if a.anomaly_type == AnomalyType.SEQUENCE
+                ),
+                AnomalyType.FREQUENCY.value: sum(
+                    1 for a in self.alerts if a.anomaly_type == AnomalyType.FREQUENCY
+                ),
+                AnomalyType.BEHAVIORAL.value: sum(
+                    1 for a in self.alerts if a.anomaly_type == AnomalyType.BEHAVIORAL
+                ),
+                AnomalyType.DISTRIBUTIONAL.value: sum(
+                    1 for a in self.alerts if a.anomaly_type == AnomalyType.DISTRIBUTIONAL
+                ),
+            },
         }
 
         # Per-cohort drift stats
@@ -737,15 +778,15 @@ class AnomalyDriftMonitor:
             cohorts_stats[key] = det.get_statistics()
 
         return {
-            'alerts': alert_counts,
-            'sequence_detector': self.sequence_detector.get_statistics(),
-            'drift_detectors': cohorts_stats,
-            'tracked_agents': len(self.agent_action_counts),
-            'frequency_burst_config': {
-                'window_seconds': int(self.frequency_window.total_seconds()),
-                'burst_threshold': self.frequency_burst_threshold
+            "alerts": alert_counts,
+            "sequence_detector": self.sequence_detector.get_statistics(),
+            "drift_detectors": cohorts_stats,
+            "tracked_agents": len(self.agent_action_counts),
+            "frequency_burst_config": {
+                "window_seconds": int(self.frequency_window.total_seconds()),
+                "burst_threshold": self.frequency_burst_threshold,
             },
-            'alert_cooldown_seconds': int(self._alert_cooldown.total_seconds())
+            "alert_cooldown_seconds": int(self._alert_cooldown.total_seconds()),
         }
 
     def export_alerts(self, limit: Optional[int] = None) -> List[Dict[str, Any]]:

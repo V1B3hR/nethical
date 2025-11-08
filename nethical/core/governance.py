@@ -5,7 +5,7 @@ This module provides a unified governance system for AI safety.
 The implementation has been refactored into multiple modules for better maintainability:
 
 - governance_core.py: Core data models, configuration, persistence, and orchestration
-- governance_detectors.py: All detector classes  
+- governance_detectors.py: All detector classes
 - governance_evaluation.py: Judge, intent monitor, and utility functions
 
 This file maintains backward compatibility by re-exporting all public APIs.
@@ -22,13 +22,11 @@ from .governance_core import (
     Decision,
     ActionType,
     VIOLATION_SUB_MISSIONS,
-    
     # Data Models
     AgentAction,
     SafetyViolation,
     JudgmentResult,
     MonitoringConfig,
-    
     # Core system
     PersistenceManager,
     EnhancedSafetyGovernance,
@@ -68,49 +66,44 @@ from .governance_evaluation import (
 # For backward compatibility, expose all public APIs
 __all__ = [
     # Enums
-    'ViolationType',
-    'SubMission',
-    'Severity',
-    'Decision',
-    'ActionType',
-    'VIOLATION_SUB_MISSIONS',
-    
+    "ViolationType",
+    "SubMission",
+    "Severity",
+    "Decision",
+    "ActionType",
+    "VIOLATION_SUB_MISSIONS",
     # Data Models
-    'AgentAction',
-    'SafetyViolation',
-    'JudgmentResult',
-    'MonitoringConfig',
-    
+    "AgentAction",
+    "SafetyViolation",
+    "JudgmentResult",
+    "MonitoringConfig",
     # Core system
-    'PersistenceManager',
-    'EnhancedSafetyGovernance',
-    'SafetyGovernance',
-    
+    "PersistenceManager",
+    "EnhancedSafetyGovernance",
+    "SafetyGovernance",
     # Detectors
-    'BaseDetector',
-    'EthicalViolationDetector',
-    'SafetyViolationDetector',
-    'ManipulationDetector',
-    'PrivacyDetector',
-    'AdversarialDetector',
-    'DarkPatternDetector',
-    'CognitiveWarfareDetector',
-    'SystemLimitsDetector',
-    'HallucinationDetector',
-    'MisinformationDetector',
-    'ToxicContentDetector',
-    'ModelExtractionDetector',
-    'DataPoisoningDetector',
-    'UnauthorizedAccessDetector',
-    
+    "BaseDetector",
+    "EthicalViolationDetector",
+    "SafetyViolationDetector",
+    "ManipulationDetector",
+    "PrivacyDetector",
+    "AdversarialDetector",
+    "DarkPatternDetector",
+    "CognitiveWarfareDetector",
+    "SystemLimitsDetector",
+    "HallucinationDetector",
+    "MisinformationDetector",
+    "ToxicContentDetector",
+    "ModelExtractionDetector",
+    "DataPoisoningDetector",
+    "UnauthorizedAccessDetector",
     # Evaluation
-    'IntentDeviationMonitor',
-    'SafetyJudge',
-    
+    "IntentDeviationMonitor",
+    "SafetyJudge",
     # Utilities
-    'generate_id',
-    'sha256_content_key',
-    'entropy',
-    'looks_like_base64',
-    'might_be_rot13',
+    "generate_id",
+    "sha256_content_key",
+    "entropy",
+    "looks_like_base64",
+    "might_be_rot13",
 ]

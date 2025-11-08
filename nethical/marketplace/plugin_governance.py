@@ -14,14 +14,13 @@ Enhancements:
 - Generate comprehensive report including summarized findings
 """
 
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Set, Any, Callable, Tuple
 from enum import Enum
 from datetime import datetime
 import time
 import hashlib
 import re
-import os
 import json
 import ast
 import logging
@@ -40,6 +39,7 @@ logger.setLevel(logging.INFO)
 
 class SecurityLevel(Enum):
     """Security risk level."""
+
     SAFE = "safe"
     LOW = "low"
     MEDIUM = "medium"
@@ -49,6 +49,7 @@ class SecurityLevel(Enum):
 
 class CertificationStatus(Enum):
     """Plugin certification status."""
+
     NOT_CERTIFIED = "not_certified"
     PENDING = "pending"
     CERTIFIED = "certified"
@@ -67,6 +68,7 @@ SEVERITY_WEIGHTS: Dict[SecurityLevel, int] = {
 @dataclass
 class Finding:
     """A structured finding from security analysis."""
+
     rule_id: str
     description: str
     severity: SecurityLevel
@@ -88,6 +90,7 @@ class Finding:
 @dataclass
 class SecurityScanResult:
     """Result from security scanning."""
+
     plugin_id: str
     scan_date: datetime
     security_level: SecurityLevel
@@ -115,9 +118,7 @@ class SecurityScanResult:
         self._adjust_level_and_passed(finding.severity)
         # Mirror structured findings into legacy lists for backward compatibility
         if finding.severity in (SecurityLevel.HIGH, SecurityLevel.CRITICAL, SecurityLevel.MEDIUM):
-            self.vulnerabilities.append(
-                f"[{finding.severity.value.upper()}] {finding.description}"
-            )
+            self.vulnerabilities.append(f"[{finding.severity.value.upper()}] {finding.description}")
         else:
             self.warnings.append(finding.description)
 
@@ -125,7 +126,13 @@ class SecurityScanResult:
         if level in (SecurityLevel.HIGH, SecurityLevel.CRITICAL):
             self.passed = False
         # Raise the overall level to the highest encountered
-        order = [SecurityLevel.SAFE, SecurityLevel.LOW, SecurityLevel.MEDIUM, SecurityLevel.HIGH, SecurityLevel.CRITICAL]
+        order = [
+            SecurityLevel.SAFE,
+            SecurityLevel.LOW,
+            SecurityLevel.MEDIUM,
+            SecurityLevel.HIGH,
+            SecurityLevel.CRITICAL,
+        ]
         if order.index(level) > order.index(self.security_level):
             self.security_level = level
 
@@ -147,6 +154,7 @@ class SecurityScanResult:
 @dataclass
 class BenchmarkResult:
     """Result from performance benchmarking."""
+
     plugin_id: str
     benchmark_date: datetime
     avg_latency_ms: float
@@ -164,13 +172,13 @@ class BenchmarkResult:
         self,
         max_latency_ms: float = 100.0,
         min_throughput: float = 10.0,
-        max_memory_mb: float = 500.0
+        max_memory_mb: float = 500.0,
     ) -> bool:
         """Check if benchmark meets performance requirements."""
         meets = (
-            self.p95_latency_ms <= max_latency_ms and
-            self.throughput_ops_per_sec >= min_throughput and
-            self.memory_usage_mb <= max_memory_mb
+            self.p95_latency_ms <= max_latency_ms
+            and self.throughput_ops_per_sec >= min_throughput
+            and self.memory_usage_mb <= max_memory_mb
         )
         self.passed = meets
         return meets
@@ -195,6 +203,7 @@ class BenchmarkResult:
 @dataclass
 class CompatibilityReport:
     """Compatibility testing report."""
+
     plugin_id: str
     test_date: datetime
     nethical_version: str
@@ -261,17 +270,21 @@ class PluginGovernance:
 
         # Security regex patterns for secrets and suspicious tokens
         self.secret_patterns = {
-            'aws_access_key_id': re.compile(r'AKIA[0-9A-Z]{16}'),
-            'aws_secret_access_key': re.compile(r'(?i)aws(.{0,20})?(secret|access).{0,20}?[:=]\s*[\'"]?[A-Za-z0-9/+=]{40}[\'"]?'),
-            'private_key': re.compile(r'-----BEGIN (?:RSA|EC|DSA|OPENSSH) PRIVATE KEY-----'),
-            'token_like': re.compile(r'(?i)(api|access|secret|token|key)[\s:_-]*[\'"]?([A-Za-z0-9_\-]{16,})[\'"]?'),
+            "aws_access_key_id": re.compile(r"AKIA[0-9A-Z]{16}"),
+            "aws_secret_access_key": re.compile(
+                r'(?i)aws(.{0,20})?(secret|access).{0,20}?[:=]\s*[\'"]?[A-Za-z0-9/+=]{40}[\'"]?'
+            ),
+            "private_key": re.compile(r"-----BEGIN (?:RSA|EC|DSA|OPENSSH) PRIVATE KEY-----"),
+            "token_like": re.compile(
+                r'(?i)(api|access|secret|token|key)[\s:_-]*[\'"]?([A-Za-z0-9_\-]{16,})[\'"]?'
+            ),
         }
 
         # Performance thresholds
         self.perf_thresholds = {
-            'max_latency_ms': 50.0 if strict_mode else 100.0,
-            'min_throughput': 20.0 if strict_mode else 10.0,
-            'max_memory_mb': 250.0 if strict_mode else 500.0,
+            "max_latency_ms": 50.0 if strict_mode else 100.0,
+            "min_throughput": 20.0 if strict_mode else 10.0,
+            "max_memory_mb": 250.0 if strict_mode else 500.0,
         }
 
         # Certification records
@@ -285,10 +298,7 @@ class PluginGovernance:
     # --------------------------
 
     def security_scan(
-        self,
-        plugin_id: str,
-        plugin_code: Optional[str] = None,
-        plugin_path: Optional[str] = None
+        self, plugin_id: str, plugin_code: Optional[str] = None, plugin_path: Optional[str] = None
     ) -> SecurityScanResult:
         """Perform security scanning on a plugin.
 
@@ -303,9 +313,7 @@ class PluginGovernance:
         start_time = time.perf_counter()
 
         result = SecurityScanResult(
-            plugin_id=plugin_id,
-            scan_date=datetime.now(),
-            security_level=SecurityLevel.SAFE
+            plugin_id=plugin_id, scan_date=datetime.now(), security_level=SecurityLevel.SAFE
         )
 
         sources: List[Tuple[str, str]] = []  # list of (file_path, code)
@@ -375,32 +383,66 @@ class PluginGovernance:
             # Escalate if denylisted or strict mode
             sev = severity
             if rule_id in self.denylist_rules:
-                sev = SecurityLevel.HIGH if severity in (SecurityLevel.LOW, SecurityLevel.MEDIUM) else severity
+                sev = (
+                    SecurityLevel.HIGH
+                    if severity in (SecurityLevel.LOW, SecurityLevel.MEDIUM)
+                    else severity
+                )
             if self.strict_mode and severity == SecurityLevel.MEDIUM:
                 sev = SecurityLevel.HIGH
             line = getattr(node, "lineno", None) if node else None
             excerpt = self._extract_line(code, line) if line else None
-            result.add_finding(Finding(rule_id=rule_id, description=msg, severity=sev, file_path=file_path, line=line, code=excerpt))
+            result.add_finding(
+                Finding(
+                    rule_id=rule_id,
+                    description=msg,
+                    severity=sev,
+                    file_path=file_path,
+                    line=line,
+                    code=excerpt,
+                )
+            )
 
         # Walk AST
         for node in ast.walk(tree):
             # from x import *
             if isinstance(node, ast.ImportFrom):
                 if any(getattr(n, "name", "") == "*" for n in node.names):
-                    add("import_star", "Wildcard import detected - may hide issues and complicate auditing", SecurityLevel.LOW, node)
+                    add(
+                        "import_star",
+                        "Wildcard import detected - may hide issues and complicate auditing",
+                        SecurityLevel.LOW,
+                        node,
+                    )
 
             # import suspicious modules
             if isinstance(node, ast.Import):
                 for n in node.names:
                     mod = n.name.split(".")[0]
                     if mod in {"subprocess", "pickle", "socket", "ftplib"}:
-                        sev = SecurityLevel.MEDIUM if mod in {"socket", "ftplib"} else SecurityLevel.HIGH if mod in {"subprocess", "pickle"} else SecurityLevel.MEDIUM
+                        sev = (
+                            SecurityLevel.MEDIUM
+                            if mod in {"socket", "ftplib"}
+                            else (
+                                SecurityLevel.HIGH
+                                if mod in {"subprocess", "pickle"}
+                                else SecurityLevel.MEDIUM
+                            )
+                        )
                         add(f"import_{mod}", f"Import of sensitive module '{mod}'", sev, node)
 
             if isinstance(node, ast.ImportFrom):
                 mod = (node.module or "").split(".")[0]
                 if mod in {"subprocess", "pickle", "socket", "ftplib"}:
-                    sev = SecurityLevel.MEDIUM if mod in {"socket", "ftplib"} else SecurityLevel.HIGH if mod in {"subprocess", "pickle"} else SecurityLevel.MEDIUM
+                    sev = (
+                        SecurityLevel.MEDIUM
+                        if mod in {"socket", "ftplib"}
+                        else (
+                            SecurityLevel.HIGH
+                            if mod in {"subprocess", "pickle"}
+                            else SecurityLevel.MEDIUM
+                        )
+                    )
                     add(f"from_{mod}_import", f"Import from sensitive module '{mod}'", sev, node)
 
             # Calls: exec/eval/compile/__import__, os.system, subprocess.*, pickle.loads
@@ -410,51 +452,83 @@ class PluginGovernance:
 
                 # Builtins
                 if func_name in {"exec", "eval", "compile", "__import__"}:
-                    add(f"call_{func_name}", f"Dangerous function call '{func_name}' detected", SecurityLevel.HIGH, node)
+                    add(
+                        f"call_{func_name}",
+                        f"Dangerous function call '{func_name}' detected",
+                        SecurityLevel.HIGH,
+                        node,
+                    )
 
                 # os.system / os.popen
                 if func_name in {"os.system", "os.popen"}:
-                    add("os_system", f"OS command execution via '{func_name}'", SecurityLevel.HIGH, node)
+                    add(
+                        "os_system",
+                        f"OS command execution via '{func_name}'",
+                        SecurityLevel.HIGH,
+                        node,
+                    )
 
                 # subprocess calls
                 if func_name and func_name.startswith("subprocess."):
-                    add("subprocess_call", f"Subprocess execution '{func_name}'", SecurityLevel.HIGH, node)
+                    add(
+                        "subprocess_call",
+                        f"Subprocess execution '{func_name}'",
+                        SecurityLevel.HIGH,
+                        node,
+                    )
 
                 # pickle.loads
                 if func_name in {"pickle.loads", "pickle.load"}:
-                    add("pickle_load", f"Untrusted deserialization via '{func_name}'", SecurityLevel.HIGH, node)
+                    add(
+                        "pickle_load",
+                        f"Untrusted deserialization via '{func_name}'",
+                        SecurityLevel.HIGH,
+                        node,
+                    )
 
                 # open(..., mode="w"/"a"/"x")
                 if func_name == "open":
                     mode = self._extract_open_mode(node)
                     if mode and any(m in mode for m in ("w", "a", "x", "+")):
-                        add("file_write", f"File write operation detected (mode='{mode}')", SecurityLevel.MEDIUM, node)
+                        add(
+                            "file_write",
+                            f"File write operation detected (mode='{mode}')",
+                            SecurityLevel.MEDIUM,
+                            node,
+                        )
 
                 # network libs usage
                 if func_name and (
-                    func_name.startswith("requests.") or
-                    func_name.startswith("urllib.") or
-                    func_name.startswith("http.client") or
-                    func_name in {"socket.socket"}
+                    func_name.startswith("requests.")
+                    or func_name.startswith("urllib.")
+                    or func_name.startswith("http.client")
+                    or func_name in {"socket.socket"}
                 ):
-                    add("network_usage", f"Network operation via '{func_name}'", SecurityLevel.LOW, node)
+                    add(
+                        "network_usage",
+                        f"Network operation via '{func_name}'",
+                        SecurityLevel.LOW,
+                        node,
+                    )
 
         # Simple regex fallback for exec/eval in code (in case of dynamic constructs)
         legacy_patterns = {
-            'exec': re.compile(r'\bexec\s*\('),
-            'eval': re.compile(r'\beval\s*\('),
+            "exec": re.compile(r"\bexec\s*\("),
+            "eval": re.compile(r"\beval\s*\("),
         }
         for rid, pat in legacy_patterns.items():
             for m in pat.finditer(code):
                 line_num = code.count("\n", 0, m.start()) + 1
-                result.add_finding(Finding(
-                    rule_id=f"rx_{rid}",
-                    description=f"Suspicious use of {rid} (regex)",
-                    severity=SecurityLevel.HIGH,
-                    file_path=file_path,
-                    line=line_num,
-                    code=self._extract_line(code, line_num),
-                ))
+                result.add_finding(
+                    Finding(
+                        rule_id=f"rx_{rid}",
+                        description=f"Suspicious use of {rid} (regex)",
+                        severity=SecurityLevel.HIGH,
+                        file_path=file_path,
+                        line=line_num,
+                        code=self._extract_line(code, line_num),
+                    )
+                )
 
     def _scan_code_secrets(self, code: str, file_path: str, result: SecurityScanResult):
         """Scan code for possible secrets."""
@@ -464,14 +538,16 @@ class PluginGovernance:
                 excerpt = self._extract_line(code, line_num)
                 # Reduce chance of false positives for token-like by checking variable names and length
                 severity = SecurityLevel.MEDIUM if rule_id == "token_like" else SecurityLevel.HIGH
-                result.add_finding(Finding(
-                    rule_id=f"secret_{rule_id}",
-                    description=f"Potential secret detected: {rule_id}",
-                    severity=severity,
-                    file_path=file_path,
-                    line=line_num,
-                    code=excerpt,
-                ))
+                result.add_finding(
+                    Finding(
+                        rule_id=f"secret_{rule_id}",
+                        description=f"Potential secret detected: {rule_id}",
+                        severity=severity,
+                        file_path=file_path,
+                        line=line_num,
+                        code=excerpt,
+                    )
+                )
 
     def _check_vulnerabilities(self, plugin_id: str, result: SecurityScanResult):
         """Check for known vulnerabilities.
@@ -565,7 +641,7 @@ class PluginGovernance:
             throughput_ops_per_sec=0.0,
             memory_usage_mb=0.0,
             cpu_usage_percent=0.0,
-            iterations=iterations
+            iterations=iterations,
         )
 
         # Warm-up
@@ -637,7 +713,7 @@ class PluginGovernance:
         plugin_id: str,
         nethical_version: str = "0.1.0",
         python_version: Optional[str] = None,
-        attempt_import: bool = True
+        attempt_import: bool = True,
     ) -> CompatibilityReport:
         """Test plugin compatibility.
 
@@ -655,7 +731,7 @@ class PluginGovernance:
             test_date=datetime.now(),
             nethical_version=nethical_version,
             python_version=python_version or f"{sys.version_info.major}.{sys.version_info.minor}",
-            compatible=True
+            compatible=True,
         )
 
         # Test basic import
@@ -673,7 +749,9 @@ class PluginGovernance:
         report.add_test_result("dependency_test", True, "All dependencies satisfied")
 
         # Test detector interface (if applicable, placeholder)
-        report.add_test_result("detector_interface", True, "Detector interface implemented correctly")
+        report.add_test_result(
+            "detector_interface", True, "Detector interface implemented correctly"
+        )
 
         # Persist result
         self._save_json(plugin_id, "compatibility", report.to_dict())
@@ -688,7 +766,7 @@ class PluginGovernance:
         plugin_id: str,
         security_result: Optional[SecurityScanResult] = None,
         benchmark_result: Optional[BenchmarkResult] = None,
-        compatibility_result: Optional[CompatibilityReport] = None
+        compatibility_result: Optional[CompatibilityReport] = None,
     ) -> CertificationStatus:
         """Certify a plugin for marketplace distribution.
 
@@ -714,17 +792,21 @@ class PluginGovernance:
         # Check certification requirements
         high_risk = security_result.security_level in (SecurityLevel.HIGH, SecurityLevel.CRITICAL)
         requirements_met = (
-            security_result.passed and
-            not high_risk and
-            benchmark_result.passed and
-            compatibility_result.compatible
+            security_result.passed
+            and not high_risk
+            and benchmark_result.passed
+            and compatibility_result.compatible
         )
 
         if requirements_met:
             status = CertificationStatus.CERTIFIED
         else:
             # If close to passing (no HIGH/CRITICAL but maybe perf borderline), mark as PENDING
-            if not high_risk and compatibility_result.compatible and security_result.risk_score <= 3:
+            if (
+                not high_risk
+                and compatibility_result.compatible
+                and security_result.risk_score <= 3
+            ):
                 status = CertificationStatus.PENDING
             else:
                 status = CertificationStatus.NOT_CERTIFIED
@@ -758,11 +840,15 @@ class PluginGovernance:
             self._certifications[plugin_id] = CertificationStatus.REVOKED
             self._persist_certifications()
             # Save audit log entry
-            self._save_json(plugin_id, "revocation", {
-                "plugin_id": plugin_id,
-                "reason": reason,
-                "revoked_at": datetime.now().isoformat(),
-            })
+            self._save_json(
+                plugin_id,
+                "revocation",
+                {
+                    "plugin_id": plugin_id,
+                    "reason": reason,
+                    "revoked_at": datetime.now().isoformat(),
+                },
+            )
             return True
         return False
 
@@ -775,7 +861,7 @@ class PluginGovernance:
         plugin_id: str,
         security_result: SecurityScanResult,
         benchmark_result: BenchmarkResult,
-        compatibility_result: CompatibilityReport
+        compatibility_result: CompatibilityReport,
     ) -> Dict[str, Any]:
         """Generate comprehensive governance report.
 
@@ -791,39 +877,41 @@ class PluginGovernance:
         cert_status = self.get_certification_status(plugin_id)
 
         report = {
-            'plugin_id': plugin_id,
-            'report_date': datetime.now().isoformat(),
-            'certification_status': cert_status.value,
-            'security': {
-                'level': security_result.security_level.value,
-                'passed': security_result.passed,
-                'risk_score': security_result.risk_score,
-                'vulnerabilities': len(security_result.vulnerabilities),
-                'warnings': len(security_result.warnings),
-                'scan_duration': security_result.scan_duration,
-                'fingerprint': security_result.fingerprint,
-                'findings': [f.to_dict() for f in security_result.findings[:100]],  # cap output size
+            "plugin_id": plugin_id,
+            "report_date": datetime.now().isoformat(),
+            "certification_status": cert_status.value,
+            "security": {
+                "level": security_result.security_level.value,
+                "passed": security_result.passed,
+                "risk_score": security_result.risk_score,
+                "vulnerabilities": len(security_result.vulnerabilities),
+                "warnings": len(security_result.warnings),
+                "scan_duration": security_result.scan_duration,
+                "fingerprint": security_result.fingerprint,
+                "findings": [
+                    f.to_dict() for f in security_result.findings[:100]
+                ],  # cap output size
             },
-            'performance': {
-                'passed': benchmark_result.passed,
-                'avg_latency_ms': benchmark_result.avg_latency_ms,
-                'p95_latency_ms': benchmark_result.p95_latency_ms,
-                'p99_latency_ms': benchmark_result.p99_latency_ms,
-                'throughput_ops_per_sec': benchmark_result.throughput_ops_per_sec,
-                'memory_mb': benchmark_result.memory_usage_mb,
-                'jitter_ms': benchmark_result.jitter_ms,
-                'iterations': benchmark_result.iterations,
-                'notes': benchmark_result.notes,
+            "performance": {
+                "passed": benchmark_result.passed,
+                "avg_latency_ms": benchmark_result.avg_latency_ms,
+                "p95_latency_ms": benchmark_result.p95_latency_ms,
+                "p99_latency_ms": benchmark_result.p99_latency_ms,
+                "throughput_ops_per_sec": benchmark_result.throughput_ops_per_sec,
+                "memory_mb": benchmark_result.memory_usage_mb,
+                "jitter_ms": benchmark_result.jitter_ms,
+                "iterations": benchmark_result.iterations,
+                "notes": benchmark_result.notes,
             },
-            'compatibility': {
-                'compatible': compatibility_result.compatible,
-                'nethical_version': compatibility_result.nethical_version,
-                'python_version': compatibility_result.python_version,
-                'tests_passed': sum(1 for p in compatibility_result.test_results.values() if p),
-                'tests_total': len(compatibility_result.test_results),
-                'issues': compatibility_result.issues,
-                'warnings': compatibility_result.warnings,
-            }
+            "compatibility": {
+                "compatible": compatibility_result.compatible,
+                "nethical_version": compatibility_result.nethical_version,
+                "python_version": compatibility_result.python_version,
+                "tests_passed": sum(1 for p in compatibility_result.test_results.values() if p),
+                "tests_total": len(compatibility_result.test_results),
+                "issues": compatibility_result.issues,
+                "warnings": compatibility_result.warnings,
+            },
         }
 
         # Persist combined report

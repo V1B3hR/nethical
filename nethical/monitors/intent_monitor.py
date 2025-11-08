@@ -53,7 +53,6 @@ from typing import (
     Awaitable,
     Callable,
     Dict,
-    Iterable,
     List,
     Optional,
     Sequence,
@@ -105,6 +104,7 @@ except Exception:
 # Logging Configuration
 # ---------------------------------------------------------------------------
 
+
 def setup_logging(
     level: Optional[str] = None,
     json_format: bool = False,
@@ -145,6 +145,7 @@ class JsonLogFormatter(logging.Formatter):
 # OpenTelemetry Observability Layer (graceful fallback)
 # ---------------------------------------------------------------------------
 
+
 class Observability:
     """
     Encapsulates OTEL tracer & meter plus metrics instruments.
@@ -173,17 +174,22 @@ class Observability:
             from opentelemetry.sdk.trace.export import BatchSpanProcessor
             from opentelemetry.sdk.metrics import MeterProvider
             from opentelemetry.sdk.metrics.export import PeriodicExportingMetricReader
+
             exporter_choice = os.getenv("OTEL_EXPORTER", "console").lower()
 
             # Span Exporter
             if exporter_choice == "otlp":
                 from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
-                from opentelemetry.exporter.otlp.proto.http.metric_exporter import OTLPMetricExporter
+                from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
+                    OTLPMetricExporter,
+                )
+
                 span_exporter = OTLPSpanExporter()
                 metric_exporter = OTLPMetricExporter()
             else:
                 from opentelemetry.sdk.trace.export import ConsoleSpanExporter
                 from opentelemetry.sdk.metrics.export import ConsoleMetricExporter
+
                 span_exporter = ConsoleSpanExporter()
                 metric_exporter = ConsoleMetricExporter()
 
@@ -253,8 +259,11 @@ class Observability:
 
 
 class _NullContext:
-    def __enter__(self): return self
-    def __exit__(self, *exc): return False
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        return False
 
 
 def setup_observability() -> Observability:
@@ -265,6 +274,7 @@ def setup_observability() -> Observability:
 # ---------------------------------------------------------------------------
 # Optional ML Backends
 # ---------------------------------------------------------------------------
+
 
 class _OptionalSentenceTransformerEmbedder:
     """Lazy loader for sentence-transformers embedding model (optional)."""
@@ -278,6 +288,7 @@ class _OptionalSentenceTransformerEmbedder:
         if self._model is None and self._available_error is None:
             try:
                 from sentence_transformers import SentenceTransformer  # type: ignore
+
                 self._model = SentenceTransformer(self.model_name)
             except Exception as e:  # noqa: BLE001
                 self._available_error = f"{type(e).__name__}: {e}"
@@ -310,6 +321,7 @@ class _OptionalNLI:
         if self._pipe is None and self._available_error is None:
             try:
                 from transformers import pipeline  # type: ignore
+
                 self._pipe = pipeline("text-classification", model=self.model_name)
             except Exception as e:  # noqa: BLE001
                 self._available_error = f"{type(e).__name__}: {e}"
@@ -343,9 +355,11 @@ class _OptionalNLI:
 # Metric Protocol & Implementations
 # ---------------------------------------------------------------------------
 
+
 @runtime_checkable
 class Metric(Protocol):
     name: str
+
     def compute(self, ctx: "MetricContext") -> float: ...
 
 
@@ -363,6 +377,7 @@ class MetricContext:
 class JaccardMetric:
     name: str
     use_bigrams: bool = False
+
     def compute(self, ctx: MetricContext) -> float:
         a = ctx.bigrams_intent if self.use_bigrams else ctx.intent_tokens
         b = ctx.bigrams_action if self.use_bigrams else ctx.action_tokens
@@ -378,6 +393,7 @@ class JaccardMetric:
 @dataclass
 class CosineTFMetric:
     name: str = "cosine"
+
     def compute(self, ctx: MetricContext) -> float:
         a_tokens, b_tokens = ctx.intent_tokens, ctx.action_tokens
         if not a_tokens and not b_tokens:
@@ -394,6 +410,7 @@ class CosineTFMetric:
 @dataclass
 class CharRatioMetric:
     name: str = "char_ratio"
+
     def compute(self, ctx: MetricContext) -> float:
         if not ctx.norm_intent and not ctx.norm_action:
             return 1.0
@@ -403,6 +420,7 @@ class CharRatioMetric:
 @dataclass
 class CoverageMetric:
     name: str = "coverage"
+
     def compute(self, ctx: MetricContext) -> float:
         si, sa = set(ctx.intent_tokens), set(ctx.action_tokens)
         if not si and not sa:
@@ -417,6 +435,7 @@ class CoverageMetric:
 # ---------------------------------------------------------------------------
 
 SeverityPolicy = Callable[[float, Dict[str, Any]], Optional[SeverityLevel]]
+
 
 @dataclass
 class IntentMonitorConfig:
@@ -452,39 +471,114 @@ class IntentMonitorConfig:
 # IntentDeviationMonitor
 # ---------------------------------------------------------------------------
 
+
 class IntentDeviationMonitor(BaseMonitor):
     """Detects deviation between stated intent and actual action with logging + OTEL instrumentation."""
 
     _DEFAULT_STOPWORDS: Set[str] = {
-        "the", "a", "an", "and", "or", "but",
-        "to", "of", "in", "on", "for", "with",
-        "at", "by", "from", "as", "is", "are",
-        "was", "were", "be", "been", "being",
-        "that", "this", "these", "those",
-        "it", "its", "into", "about", "over", "under",
-        "if", "then", "so", "than", "too", "very",
-        "can", "could", "should", "would",
-        "will", "may", "might", "must", "do", "does", "did",
-        "not", "no", "yes",
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "but",
+        "to",
+        "of",
+        "in",
+        "on",
+        "for",
+        "with",
+        "at",
+        "by",
+        "from",
+        "as",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "that",
+        "this",
+        "these",
+        "those",
+        "it",
+        "its",
+        "into",
+        "about",
+        "over",
+        "under",
+        "if",
+        "then",
+        "so",
+        "than",
+        "too",
+        "very",
+        "can",
+        "could",
+        "should",
+        "would",
+        "will",
+        "may",
+        "might",
+        "must",
+        "do",
+        "does",
+        "did",
+        "not",
+        "no",
+        "yes",
     }
 
     _RISK_TOKENS_CATEGORY: Dict[str, str] = {
-        "delete": "destructive", "drop": "destructive", "truncate": "destructive",
-        "wipe": "destructive", "erase": "destructive", "format": "destructive",
-        "shutdown": "destructive", "kill": "destructive", "terminate": "destructive",
-        "halt": "destructive", "rm": "destructive", "rmdir": "destructive", "rm -rf": "destructive",
-        "privilege": "privilege_escalation", "escalate": "privilege_escalation",
-        "exploit": "privilege_escalation", "backdoor": "privilege_escalation",
-        "sudo": "privilege_escalation", "root": "privilege_escalation",
-        "chmod": "privilege_escalation", "chown": "privilege_escalation",
-        "leak": "data_exfiltration", "exfiltrate": "data_exfiltration",
-        "exfil": "data_exfiltration", "steal": "data_exfiltration", "dump": "data_exfiltration",
-        "secrets": "secret_access", "token": "secret_access", "apikey": "secret_access",
-        "password": "secret_access", "passwd": "secret_access", "key": "secret_access",
-        "production": "environment", "prod": "environment", "database": "environment", "db": "environment",
-        "disable": "control_bypass", "bypass": "control_bypass", "ignore": "control_bypass", "override": "control_bypass",
+        "delete": "destructive",
+        "drop": "destructive",
+        "truncate": "destructive",
+        "wipe": "destructive",
+        "erase": "destructive",
+        "format": "destructive",
+        "shutdown": "destructive",
+        "kill": "destructive",
+        "terminate": "destructive",
+        "halt": "destructive",
+        "rm": "destructive",
+        "rmdir": "destructive",
+        "rm -rf": "destructive",
+        "privilege": "privilege_escalation",
+        "escalate": "privilege_escalation",
+        "exploit": "privilege_escalation",
+        "backdoor": "privilege_escalation",
+        "sudo": "privilege_escalation",
+        "root": "privilege_escalation",
+        "chmod": "privilege_escalation",
+        "chown": "privilege_escalation",
+        "leak": "data_exfiltration",
+        "exfiltrate": "data_exfiltration",
+        "exfil": "data_exfiltration",
+        "steal": "data_exfiltration",
+        "dump": "data_exfiltration",
+        "secrets": "secret_access",
+        "token": "secret_access",
+        "apikey": "secret_access",
+        "password": "secret_access",
+        "passwd": "secret_access",
+        "key": "secret_access",
+        "production": "environment",
+        "prod": "environment",
+        "database": "environment",
+        "db": "environment",
+        "disable": "control_bypass",
+        "bypass": "control_bypass",
+        "ignore": "control_bypass",
+        "override": "control_bypass",
     }
-    _BYPASS_PHRASES: Set[str] = {"ignore safety", "bypass policy", "disable guard", "disable safeguards"}
+    _BYPASS_PHRASES: Set[str] = {
+        "ignore safety",
+        "bypass policy",
+        "disable guard",
+        "disable safeguards",
+    }
     _NEGATIONS: Set[str] = {"not", "no", "never", "without", "avoid"}
 
     def __init__(self, observability: Optional[Observability] = None, **kwargs):
@@ -499,17 +593,29 @@ class IntentDeviationMonitor(BaseMonitor):
 
         self.deviation_threshold = self._clamp(self.config.deviation_threshold, 0.0, 1.0)
         self.min_token_len = max(0, int(self.config.min_token_len))
-        self.stopwords = set(self.config.stopwords) if self.config.stopwords is not None else set(self._DEFAULT_STOPWORDS)
+        self.stopwords = (
+            set(self.config.stopwords)
+            if self.config.stopwords is not None
+            else set(self._DEFAULT_STOPWORDS)
+        )
         self.synonyms = dict(self.config.synonyms) if self.config.synonyms else {}
         if not self.config.allow_synonym_cycle:
             self._validate_synonyms(self.synonyms)
 
-        self.high_risk_tokens: Set[str] = set(self._RISK_TOKENS_CATEGORY.keys()) | set(self.config.extra_high_risk_tokens)
-        self.configured_weights = self._sanitize_weights(self.config.weights or self._default_weights())
+        self.high_risk_tokens: Set[str] = set(self._RISK_TOKENS_CATEGORY.keys()) | set(
+            self.config.extra_high_risk_tokens
+        )
+        self.configured_weights = self._sanitize_weights(
+            self.config.weights or self._default_weights()
+        )
         self._punct_regex = re.compile(f"[{re.escape(string.punctuation)}]")
 
         # Optional ML
-        self._embedder = _OptionalSentenceTransformerEmbedder(self.config.embedding_model) if self.config.enable_embeddings else None
+        self._embedder = (
+            _OptionalSentenceTransformerEmbedder(self.config.embedding_model)
+            if self.config.enable_embeddings
+            else None
+        )
         self._nli = _OptionalNLI(self.config.nli_model) if self.config.enable_nli else None
 
         # Metrics registry
@@ -534,15 +640,25 @@ class IntentDeviationMonitor(BaseMonitor):
             stated_intent = getattr(action, "stated_intent", None)
             actual_action = getattr(action, "actual_action", None)
 
-            deviation_score, evidence, risk_info = await self._calculate_deviation_async(stated_intent, actual_action)
-            self.observability.record_deviation(deviation_score, attributes={"component": "intent_monitor"})
+            deviation_score, evidence, risk_info = await self._calculate_deviation_async(
+                stated_intent, actual_action
+            )
+            self.observability.record_deviation(
+                deviation_score, attributes={"component": "intent_monitor"}
+            )
 
             effective_threshold = self.deviation_threshold
             if risk_info.get("risk_cues_detected"):
-                effective_threshold = max(0.0, effective_threshold - self.config.risk_threshold_boost)
+                effective_threshold = max(
+                    0.0, effective_threshold - self.config.risk_threshold_boost
+                )
 
             if deviation_score > effective_threshold:
-                contradiction = evidence.get("nli", {}).get("intent->action", {}).get("contradiction", 0.0) if evidence.get("nli") else 0.0
+                contradiction = (
+                    evidence.get("nli", {}).get("intent->action", {}).get("contradiction", 0.0)
+                    if evidence.get("nli")
+                    else 0.0
+                )
                 severity = self._determine_severity(
                     deviation_score,
                     contradiction=contradiction,
@@ -550,7 +666,10 @@ class IntentDeviationMonitor(BaseMonitor):
                     evidence=evidence,
                 )
                 self.observability.increment_violation(
-                    attributes={"severity": severity, "risk": str(risk_info.get("risk_cues_detected"))}
+                    attributes={
+                        "severity": severity,
+                        "risk": str(risk_info.get("risk_cues_detected")),
+                    }
                 )
                 if risk_info.get("risk_cues_detected"):
                     self.observability.increment_risk_trigger()
@@ -646,7 +765,9 @@ class IntentDeviationMonitor(BaseMonitor):
             loop = asyncio.get_running_loop()
             with self.observability.span("intent_monitor.embedding"):
                 t0 = time.time()
-                sim = await loop.run_in_executor(None, self._embedder.similarity, norm_intent, norm_action)
+                sim = await loop.run_in_executor(
+                    None, self._embedder.similarity, norm_intent, norm_action
+                )
                 if self.config.enable_timings:
                     timings["embed_cosine"] = time.time() - t0
                 return sim
@@ -680,7 +801,8 @@ class IntentDeviationMonitor(BaseMonitor):
                 results = await asyncio.gather(*tasks, return_exceptions=True)
                 idx = 0
                 if self._embedder is not None:
-                    r = results[idx]; idx += 1
+                    r = results[idx]
+                    idx += 1
                     if not isinstance(r, Exception):
                         embed_sim = r  # type: ignore
                 if self._nli is not None:
@@ -717,10 +839,18 @@ class IntentDeviationMonitor(BaseMonitor):
         cat_intent = self._categorize_risks(risky_intent)
         cat_action = self._categorize_risks(risky_action)
 
-        only_in_intent = sorted(set(tokens_intent) - set(tokens_action))[: self.config.max_overlap_terms]
-        only_in_action = sorted(set(tokens_action) - set(tokens_intent))[: self.config.max_overlap_terms]
-        only_in_intent_bi = sorted(set(bigrams_intent) - set(bigrams_action))[: self.config.max_overlap_terms]
-        only_in_action_bi = sorted(set(bigrams_action) - set(bigrams_intent))[: self.config.max_overlap_terms]
+        only_in_intent = sorted(set(tokens_intent) - set(tokens_action))[
+            : self.config.max_overlap_terms
+        ]
+        only_in_action = sorted(set(tokens_action) - set(tokens_intent))[
+            : self.config.max_overlap_terms
+        ]
+        only_in_intent_bi = sorted(set(bigrams_intent) - set(bigrams_action))[
+            : self.config.max_overlap_terms
+        ]
+        only_in_action_bi = sorted(set(bigrams_action) - set(bigrams_intent))[
+            : self.config.max_overlap_terms
+        ]
 
         contribution_profile = self._build_contribution_profile(components, effective_weights)
 
@@ -743,7 +873,10 @@ class IntentDeviationMonitor(BaseMonitor):
             "model_availability": {"embeddings": embed_available, "nli": nli_available},
             "nli": nli_scores,
             "unigram_overlap": {"only_in_intent": only_in_intent, "only_in_action": only_in_action},
-            "bigram_overlap": {"only_in_intent": only_in_intent_bi, "only_in_action": only_in_action_bi},
+            "bigram_overlap": {
+                "only_in_intent": only_in_intent_bi,
+                "only_in_action": only_in_action_bi,
+            },
             "normalized": {"intent": norm_intent, "action": norm_action},
             "token_counts": {"intent": len(tokens_intent), "action": len(tokens_action)},
             "risk": {
@@ -770,7 +903,9 @@ class IntentDeviationMonitor(BaseMonitor):
     # Helper computations
     # -----------------------------------------------------------------------
 
-    def _build_contribution_profile(self, components: Dict[str, float], weights: Dict[str, float]) -> Dict[str, Any]:
+    def _build_contribution_profile(
+        self, components: Dict[str, float], weights: Dict[str, float]
+    ) -> Dict[str, Any]:
         contrib = []
         for k, w in weights.items():
             contrib.append((k, w * components.get(k, 0.0)))
@@ -847,7 +982,9 @@ class IntentDeviationMonitor(BaseMonitor):
         evidence: Dict[str, Any],
     ) -> SeverityLevel:
         adjusted = deviation_score
-        adjusted = min(1.0, adjusted + self.config.contradiction_severity_boost * (contradiction ** 0.5))
+        adjusted = min(
+            1.0, adjusted + self.config.contradiction_severity_boost * (contradiction**0.5)
+        )
         if risk_active:
             adjusted = min(1.0, adjusted + 0.15)
 
@@ -877,7 +1014,9 @@ class IntentDeviationMonitor(BaseMonitor):
     def _validate_synonyms(self, syn_map: Dict[str, str]) -> None:
         for k, v in syn_map.items():
             if syn_map.get(v) == k:
-                raise ValueError(f"Synonym cycle detected: {k} <-> {v}. Set allow_synonym_cycle=True to override.")
+                raise ValueError(
+                    f"Synonym cycle detected: {k} <-> {v}. Set allow_synonym_cycle=True to override."
+                )
 
     @lru_cache(maxsize=4096)
     def _tokenize_cached(self, text: str) -> List[str]:
@@ -904,7 +1043,10 @@ class IntentDeviationMonitor(BaseMonitor):
 
     def _maybe_truncate(self, text: str) -> Tuple[str, Optional[str]]:
         if len(text) > self.config.max_chars:
-            return text[: self.config.max_chars], f"truncated_input_{len(text)}->{self.config.max_chars}"
+            return (
+                text[: self.config.max_chars],
+                f"truncated_input_{len(text)}->{self.config.max_chars}",
+            )
         return text, None
 
     def _clamp(self, x: float, lo: float, hi: float) -> float:
@@ -933,18 +1075,31 @@ class IntentDeviationMonitor(BaseMonitor):
 # Demonstration / Manual Test
 # ---------------------------------------------------------------------------
 
+
 async def _demo():
     obs = setup_observability()
     monitor = IntentDeviationMonitor(
         observability=obs,
         enable_embeddings=False,  # set True if sentence-transformers available
-        enable_nli=False,         # set True if transformers available
+        enable_nli=False,  # set True if transformers available
     )
 
     examples = [
-        AgentAction(id="1", stated_intent="List files in the project directory", actual_action="List files in the project directory"),
-        AgentAction(id="2", stated_intent="Read configuration file", actual_action="Delete configuration and wipe database"),
-        AgentAction(id="3", stated_intent="Check user permissions", actual_action="Attempt to escalate privilege with sudo"),
+        AgentAction(
+            id="1",
+            stated_intent="List files in the project directory",
+            actual_action="List files in the project directory",
+        ),
+        AgentAction(
+            id="2",
+            stated_intent="Read configuration file",
+            actual_action="Delete configuration and wipe database",
+        ),
+        AgentAction(
+            id="3",
+            stated_intent="Check user permissions",
+            actual_action="Attempt to escalate privilege with sudo",
+        ),
     ]
 
     for act in examples:

@@ -43,7 +43,6 @@ from datetime import datetime, timedelta
 from enum import Enum
 from functools import wraps
 from pathlib import Path
-from statistics import mean
 from typing import (
     Any,
     Callable,
@@ -54,18 +53,19 @@ from typing import (
     Optional,
     Protocol,
     Tuple,
-    Union,
 )
 
 # Optional dependencies guarded
 try:
     from prometheus_client import Counter, Gauge, Histogram  # type: ignore
+
     _PROM_ENABLED = True
 except Exception:
     _PROM_ENABLED = False
 
 try:
     from scipy import stats  # type: ignore
+
     _SCIPY_AVAILABLE = True
 except Exception:
     _SCIPY_AVAILABLE = False
@@ -74,6 +74,7 @@ except Exception:
 try:
     from opentelemetry import trace  # type: ignore
     from opentelemetry.metrics import get_meter  # type: ignore
+
     _OTEL_ENABLED = True
 except Exception:
     _OTEL_ENABLED = False
@@ -81,6 +82,7 @@ except Exception:
 # ---------------------------------------------------------------------------
 # Logging Configuration
 # ---------------------------------------------------------------------------
+
 
 def _setup_root_logging(structured_json: bool):
     """Configure root logging only once."""
@@ -95,9 +97,7 @@ def _setup_root_logging(structured_json: bool):
                 '{"timestamp":"%(asctime)s","level":"%(levelname)s","name":"%(name)s","message":"%(message)s"}'
             )
         else:
-            formatter = logging.Formatter(
-                "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
-            )
+            formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s - %(message)s")
         handler.setFormatter(formatter)
         logger.addHandler(handler)
     logger._nethical_configured = True
@@ -106,6 +106,7 @@ def _setup_root_logging(structured_json: bool):
 # ---------------------------------------------------------------------------
 # Enums & Data Structures
 # ---------------------------------------------------------------------------
+
 
 class AlertSeverity(Enum):
     INFO = "info"
@@ -213,6 +214,7 @@ class MonitoringConfig:
 # Protocols / Interfaces
 # ---------------------------------------------------------------------------
 
+
 class DriftDetector(Protocol):
     def detect(
         self,
@@ -231,11 +233,14 @@ class DriftDetector(Protocol):
 # Drift Detectors
 # ---------------------------------------------------------------------------
 
+
 class SimpleMeanDriftDetector:
     def __init__(self, threshold: float = 0.1):
         self.threshold = threshold
 
-    def detect(self, current: Dict[str, Any], baseline: Dict[str, Any], feature: str, **_) -> Optional[Dict[str, Any]]:
+    def detect(
+        self, current: Dict[str, Any], baseline: Dict[str, Any], feature: str, **_
+    ) -> Optional[Dict[str, Any]]:
         if feature not in current or feature not in baseline:
             return None
         b = baseline[feature]
@@ -257,10 +262,13 @@ class SimpleMeanDriftDetector:
 
 class KSTestDriftDetector:
     """Requires distribution samples, not just summary stats. Uses SciPy KS-test if available."""
+
     def __init__(self, p_value_threshold: float = 0.05):
         self.p_value_threshold = p_value_threshold
 
-    def detect(self, current: Dict[str, Any], baseline: Dict[str, Any], feature: str, **_) -> Optional[Dict[str, Any]]:
+    def detect(
+        self, current: Dict[str, Any], baseline: Dict[str, Any], feature: str, **_
+    ) -> Optional[Dict[str, Any]]:
         if not _SCIPY_AVAILABLE:
             return None
         # Expect arrays under keys like f"{feature}_samples"
@@ -270,7 +278,9 @@ class KSTestDriftDetector:
             return None
         cur_samples = current[cur_key]
         base_samples = baseline[base_key]
-        if not isinstance(cur_samples, (list, tuple)) or not isinstance(base_samples, (list, tuple)):
+        if not isinstance(cur_samples, (list, tuple)) or not isinstance(
+            base_samples, (list, tuple)
+        ):
             return None
         if len(cur_samples) < 5 or len(base_samples) < 5:
             return None
@@ -288,10 +298,13 @@ class KSTestDriftDetector:
 
 class PopulationStabilityIndexDetector:
     """PSI-based detector for bucketed distributions: expects 'hist' arrays or bin percentages."""
+
     def __init__(self, psi_threshold: float = 0.2):
         self.psi_threshold = psi_threshold
 
-    def detect(self, current: Dict[str, Any], baseline: Dict[str, Any], feature: str, **_) -> Optional[Dict[str, Any]]:
+    def detect(
+        self, current: Dict[str, Any], baseline: Dict[str, Any], feature: str, **_
+    ) -> Optional[Dict[str, Any]]:
         cur_key = f"{feature}_hist"
         base_key = f"{feature}_baseline_hist"
         if cur_key not in current or base_key not in baseline:
@@ -323,6 +336,7 @@ class PopulationStabilityIndexDetector:
 # ---------------------------------------------------------------------------
 # Alert Manager
 # ---------------------------------------------------------------------------
+
 
 class AlertManager:
     """
@@ -371,6 +385,7 @@ class AlertManager:
         **metadata,
     ) -> Alert:
         import uuid
+
         alert = Alert(
             alert_id=str(uuid.uuid4())[:10],
             severity=severity,
@@ -393,7 +408,7 @@ class AlertManager:
                     handler(alert)
                     break
                 except Exception as e:
-                    backoff = (self._config.handler_retry_backoff ** attempt) + random.uniform(0, 0.1)
+                    backoff = (self._config.handler_retry_backoff**attempt) + random.uniform(0, 0.1)
                     logging.warning(
                         f"Alert handler error (attempt {attempt+1}/{self._config.handler_retry_attempts}): {e}. Backoff {backoff:.2f}s"
                     )
@@ -441,6 +456,7 @@ class AlertManager:
 # ---------------------------------------------------------------------------
 # Metrics Collector
 # ---------------------------------------------------------------------------
+
 
 class MetricsCollector:
     """
@@ -571,6 +587,7 @@ class MetricsCollector:
 # Model Monitor
 # ---------------------------------------------------------------------------
 
+
 class ModelMonitor:
     """
     Core monitoring orchestrator.
@@ -669,15 +686,24 @@ class ModelMonitor:
 
         # Metrics
         self.metrics.record(
-            "prediction_latency_ms", latency_ms, metric_type=MetricType.HISTOGRAM, tags={"model": self.config.model_name}
+            "prediction_latency_ms",
+            latency_ms,
+            metric_type=MetricType.HISTOGRAM,
+            tags={"model": self.config.model_name},
         )
         if error:
             self.metrics.record(
-                "prediction_error_total", 1, metric_type=MetricType.COUNTER, tags={"model": self.config.model_name}
+                "prediction_error_total",
+                1,
+                metric_type=MetricType.COUNTER,
+                tags={"model": self.config.model_name},
             )
         else:
             self.metrics.record(
-                "prediction_success_total", 1, metric_type=MetricType.COUNTER, tags={"model": self.config.model_name}
+                "prediction_success_total",
+                1,
+                metric_type=MetricType.COUNTER,
+                tags={"model": self.config.model_name},
             )
 
         # SLA evaluation
@@ -761,7 +787,9 @@ class ModelMonitor:
         now = datetime.utcnow()
         one_hour_ago = now - timedelta(hours=1)
         pred_last_hour = [
-            p for p in list(self._predictions) if datetime.fromisoformat(p["timestamp"]) >= one_hour_ago
+            p
+            for p in list(self._predictions)
+            if datetime.fromisoformat(p["timestamp"]) >= one_hour_ago
         ]
 
         errors = [p for p in pred_last_hour if p["error"]]
@@ -789,7 +817,11 @@ class ModelMonitor:
             "error_rate_window": window_summary,
             "latency_summary": latency_summary,
             "sla_violations": {
-                "latency": latency_summary.get("max", 0) > self.config.latency_sla_ms if latency_summary.get("count", 0) else False,
+                "latency": (
+                    latency_summary.get("max", 0) > self.config.latency_sla_ms
+                    if latency_summary.get("count", 0)
+                    else False
+                ),
                 "error_rate": window_summary.get("error_rate", 0) > self.config.error_rate_sla,
             },
             "active_alerts": len(active_alerts),
@@ -816,9 +848,7 @@ class ModelMonitor:
             "model": self.config.model_name,
             "predictions_buffered": len(self._predictions),
             "alerts": len(self.alerts.get_alerts(limit=10000)),
-            "persistence_backlog": {
-                k: len(v) for k, v in self._persist_buffers.items()
-            },
+            "persistence_backlog": {k: len(v) for k, v in self._persist_buffers.items()},
             "uptime_sec": self._uptime(),
             "timestamp": datetime.utcnow().isoformat(),
         }
@@ -908,11 +938,13 @@ class ModelMonitor:
         def slack_handler(alert: Alert):
             # Placeholder: Integrate requests.post(webhook_url, json=payload)
             logging.info(f"Slack handler placeholder for alert {alert.alert_id}")
+
         self.alerts.register_handler(slack_handler)
 
     def register_email_handler(self, to_addr: str, from_addr: str, smtp_server: str):
         def email_handler(alert: Alert):
             logging.info(f"Email handler placeholder: sending to {to_addr}")
+
         self.alerts.register_handler(email_handler)
 
     # -----------------------------
@@ -1012,6 +1044,7 @@ class ModelMonitor:
 _LEGACY_LOGGER_NAME = "mlops"
 _legacy_logger = None
 
+
 def setup_logger(logfile="logs/mlops.log", to_console=True):
     """
     Legacy function (deprecated).
@@ -1035,12 +1068,14 @@ def setup_logger(logfile="logs/mlops.log", to_console=True):
     logging.warning("setup_logger is deprecated. Use ModelMonitor instead.")
     return logger
 
+
 def get_logger():
     """Legacy accessor."""
     logger = logging.getLogger(_LEGACY_LOGGER_NAME)
     if not logger.handlers:
         setup_logger()
     return logger
+
 
 def log_event(event, **kwargs):
     """Legacy event logging."""

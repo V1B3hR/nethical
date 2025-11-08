@@ -11,4 +11,12 @@ This module provides MLOps functionality including:
 - Correlation classifier for correlation pattern detection
 """
 
-__all__ = ["data_pipeline", "training_pipeline", "model_registry", "monitoring", "baseline", "anomaly_classifier", "correlation_classifier"]
+__all__ = [
+    "data_pipeline",
+    "training_pipeline",
+    "model_registry",
+    "monitoring",
+    "baseline",
+    "anomaly_classifier",
+    "correlation_classifier",
+]
