@@ -1012,7 +1012,7 @@ class MarketplaceClient:
         try:
             if suffixes.endswith(".zip"):
                 with zipfile.ZipFile(file_path, "r") as zf:
-                    zf.extractall(dest_dir)
+                    self._safe_extract_zip(zf, dest_dir)
             elif (
                 suffixes.endswith(".tar.gz")
                 or suffixes.endswith(".tgz")
@@ -1025,6 +1025,16 @@ class MarketplaceClient:
                 (dest_dir / file_path.name).write_bytes(file_path.read_bytes())
         except Exception as e:
             raise InstallationError(f"Failed to extract archive '{file_path.name}': {e}") from e
+
+    def _safe_extract_zip(self, zf: zipfile.ZipFile, path: Path):
+        """Safely extract zip archive, preventing directory traversal attacks."""
+        for member in zf.namelist():
+            abs_dest = (path / member).resolve()
+            if not str(abs_dest).startswith(str(path.resolve())):
+                raise InstallationError(
+                    f"Archive member '{member}' would extract outside of {path}"
+                )
+            zf.extract(member, path)
 
     def _safe_extract_tar(self, tar: tarfile.TarFile, path: Path):
         """Safely extract tar archive, preventing directory traversal attacks."""

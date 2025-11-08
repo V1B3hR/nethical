@@ -291,8 +291,17 @@ class HITLReviewAPI:
                     message="Failed to update case status",
                 ).to_dict()
 
-            # TODO: Implement actual status update in EscalationQueue
-            # For now, this is a stub that validates input but doesn't persist changes
+            # Update case status in EscalationQueue
+            success = self.escalation_queue.update_case_status(
+                case_id=judgment_id, status=status_enum, reviewer_id=reviewer_id
+            )
+
+            if not success:
+                return APIResponse(
+                    success=False,
+                    error=f"Case not found: {judgment_id}",
+                    message="Failed to update case status",
+                ).to_dict()
 
             return APIResponse(
                 success=True,
@@ -301,7 +310,6 @@ class HITLReviewAPI:
                     "new_status": status_enum.value,
                     "reviewer_id": reviewer_id,
                     "updated_at": datetime.utcnow().isoformat(),
-                    "note": "Status update validated but not persisted (stub implementation)",
                 },
                 message="Case status update validated (stub endpoint - full implementation pending)",
             ).to_dict()

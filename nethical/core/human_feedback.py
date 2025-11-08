@@ -671,6 +671,35 @@ class EscalationQueue:
         """
         return self.cases_by_id.get(case_id)
 
+    def update_case_status(
+        self, case_id: str, status: ReviewStatus, reviewer_id: Optional[str] = None
+    ) -> bool:
+        """Update case status.
+
+        Args:
+            case_id: Case ID
+            status: New status
+            reviewer_id: Optional reviewer ID
+
+        Returns:
+            True if update successful, False otherwise
+        """
+        case = self.get_case(case_id)
+        if not case:
+            return False
+
+        case.status = status
+        if reviewer_id and not case.assigned_to:
+            case.assigned_to = reviewer_id
+
+        if status == ReviewStatus.IN_REVIEW and not case.started_review_at:
+            case.started_review_at = datetime.now(timezone.utc)
+        elif status in [ReviewStatus.COMPLETED, ReviewStatus.DEFERRED] and not case.completed_at:
+            case.completed_at = datetime.now(timezone.utc)
+
+        self._update_case(case)
+        return True
+
 
 def _demo():
     """Demonstrate the human feedback system functionality."""
