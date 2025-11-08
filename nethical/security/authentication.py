@@ -134,10 +134,13 @@ class PKICertificateValidator:
 
             # Verify certificate is not expired
             now = datetime.now(timezone.utc)
-            if now < cert.not_valid_before_utc:
+            # Use not_valid_before/after with replace for timezone-aware comparison
+            not_before = cert.not_valid_before.replace(tzinfo=timezone.utc)
+            not_after = cert.not_valid_after.replace(tzinfo=timezone.utc)
+            if now < not_before:
                 log.error("Certificate not yet valid")
                 return False
-            if now > cert.not_valid_after_utc:
+            if now > not_after:
                 log.error("Certificate has expired")
                 return False
 

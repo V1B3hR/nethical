@@ -153,6 +153,8 @@ class PluginRegistry:
                 trust_level INTEGER DEFAULT 0,
                 signature TEXT,
                 checksum TEXT,
+                public_key_pem TEXT,
+                manifest_hash TEXT,
                 requires_nethical_version TEXT,
                 dependencies TEXT,
                 tags TEXT,
@@ -233,10 +235,11 @@ class PluginRegistry:
                 INSERT INTO plugins (
                     plugin_id, name, version, author, description, entry_point,
                     plugin_type, security_status, trust_level, signature, checksum,
+                    public_key_pem, manifest_hash,
                     requires_nethical_version, dependencies, tags, homepage,
                     repository, license, created_at, updated_at, downloads,
                     rating, review_count
-                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
             """,
                 (
                     registration.plugin_id,
@@ -250,6 +253,8 @@ class PluginRegistry:
                     registration.trust_level.value,
                     registration.signature,
                     registration.checksum,
+                    registration.public_key_pem,
+                    registration.manifest_hash,
                     registration.requires_nethical_version,
                     dependencies_json,
                     tags_json,
@@ -604,6 +609,8 @@ class PluginRegistry:
             trust_level=PluginTrustLevel(data["trust_level"]),
             signature=data["signature"],
             checksum=data["checksum"],
+            public_key_pem=data.get("public_key_pem"),
+            manifest_hash=data.get("manifest_hash"),
             requires_nethical_version=data["requires_nethical_version"],
             dependencies=json.loads(data["dependencies"]) if data["dependencies"] else [],
             tags=set(json.loads(data["tags"])) if data["tags"] else set(),
