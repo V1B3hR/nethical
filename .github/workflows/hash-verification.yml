@@ -1,4 +1,12 @@
-name: Hash Verification and Supply Chain Security
+  name: Hash Verification and Supply Chain Security
+- name: Install pip-tools
+  run: python -m pip install --upgrade pip pip-tools
+
+- name: Re-generate hashed requirements file
+  run: pip-compile --generate-hashes --output-file _regen.txt requirements.txt
+
+- name: Check for hash drift
+  run: diff -u requirements-hashed.txt _regen.txt
 
 on:
   pull_request:
