@@ -8,7 +8,7 @@ This module provides REST API endpoints for:
 """
 
 from typing import Dict, Any, Optional, List
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from ..core.human_feedback import EscalationQueue, FeedbackTag, ReviewStatus
 from .taxonomy_api import APIResponse
@@ -309,7 +309,7 @@ class HITLReviewAPI:
                     "judgment_id": judgment_id,
                     "new_status": status_enum.value,
                     "reviewer_id": reviewer_id,
-                    "updated_at": datetime.utcnow().isoformat(),
+                    "updated_at": datetime.now(timezone.utc).isoformat(),
                 },
                 message="Case status update validated (stub endpoint - full implementation pending)",
             ).to_dict()

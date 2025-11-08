@@ -13,7 +13,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict, deque
 
 
@@ -34,7 +34,7 @@ class AgentActivityWindow:
 
     def cleanup_old(self, window_seconds: int):
         """Remove actions older than window."""
-        cutoff = datetime.utcnow() - timedelta(seconds=window_seconds)
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
         while self.timestamps and self.timestamps[0] < cutoff:
             self.actions.popleft()
             self.timestamps.popleft()
@@ -117,7 +117,7 @@ class CorrelationEngine:
             List of detected correlation patterns
         """
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
         # Add to window
         window = self.agent_windows[agent_id]
@@ -188,7 +188,7 @@ class CorrelationEngine:
         min_agents = pattern.get("min_agents", 3)
         min_actions = pattern.get("min_actions_per_agent", 2)
 
-        cutoff = datetime.utcnow() - timedelta(seconds=window_seconds)
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
 
         # Count actions per agent in window
         agent_counts = defaultdict(int)
@@ -209,7 +209,7 @@ class CorrelationEngine:
                         pattern_name="escalating_multi_id_probes",
                         severity=pattern.get("severity", "high"),
                         agent_ids=list(agent_counts.keys()),
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(timezone.utc),
                         confidence=min(increase_rate, 1.0),
                         evidence={
                             "agent_count": len(agent_counts),
@@ -226,7 +226,7 @@ class CorrelationEngine:
         window_seconds = pattern.get("window_seconds", 600)
         min_samples = pattern.get("min_samples", 5)
 
-        cutoff = datetime.utcnow() - timedelta(seconds=window_seconds)
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
 
         # Collect recent payloads
         all_payloads = []
@@ -255,7 +255,7 @@ class CorrelationEngine:
                         pattern_name="payload_entropy_shift",
                         severity=pattern.get("severity", "medium"),
                         agent_ids=list(set(agent_ids)),
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(timezone.utc),
                         confidence=min(max_delta / threshold, 1.0),
                         evidence={
                             "avg_entropy": avg_entropy,
@@ -272,7 +272,7 @@ class CorrelationEngine:
         window_seconds = pattern.get("window_seconds", 180)
         min_agents = pattern.get("min_agents", 2)
 
-        cutoff = datetime.utcnow() - timedelta(seconds=window_seconds)
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
 
         # Group actions by time proximity
         time_clusters = []
@@ -320,7 +320,7 @@ class CorrelationEngine:
         window_seconds = pattern.get("window_seconds", 900)
         min_agents = pattern.get("min_agents", 3)
 
-        cutoff = datetime.utcnow() - timedelta(seconds=window_seconds)
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
 
         # Track unique targets/endpoints
         agent_targets = defaultdict(set)
@@ -344,7 +344,7 @@ class CorrelationEngine:
                     pattern_name="distributed_reconnaissance",
                     severity=pattern.get("severity", "high"),
                     agent_ids=list(agent_targets.keys()),
-                    timestamp=datetime.utcnow(),
+                    timestamp=datetime.now(timezone.utc),
                     confidence=min(len(all_targets) / (unique_threshold * 2), 1.0),
                     evidence={
                         "agent_count": len(agent_targets),
@@ -361,7 +361,7 @@ class CorrelationEngine:
         window_seconds = pattern.get("window_seconds", 600)
         min_cluster = pattern.get("min_cluster_size", 4)
 
-        cutoff = datetime.utcnow() - timedelta(seconds=window_seconds)
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=window_seconds)
 
         # Calculate behavior signatures for each agent
         agent_signatures = {}
@@ -385,7 +385,7 @@ class CorrelationEngine:
                         pattern_name="anomalous_agent_cluster",
                         severity=pattern.get("severity", "high"),
                         agent_ids=cluster,
-                        timestamp=datetime.utcnow(),
+                        timestamp=datetime.now(timezone.utc),
                         confidence=len(cluster) / (min_cluster * 2),
                         evidence={
                             "cluster_size": len(cluster),

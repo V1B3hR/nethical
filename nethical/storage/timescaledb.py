@@ -7,7 +7,7 @@ data such as metrics, events, and audit logs with efficient time-based queries.
 
 import logging
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     import psycopg2
@@ -247,7 +247,7 @@ class TimescaleDBStore:
         if not self.enabled:
             return False
 
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or datetime.now(timezone.utc)
         conn = self._get_connection()
 
         try:
@@ -308,7 +308,7 @@ class TimescaleDBStore:
         if not self.enabled:
             return False
 
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or datetime.now(timezone.utc)
         conn = self._get_connection()
 
         try:
@@ -369,7 +369,7 @@ class TimescaleDBStore:
         if not self.enabled:
             return False
 
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or datetime.now(timezone.utc)
         conn = self._get_connection()
 
         try:

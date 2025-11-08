@@ -17,6 +17,10 @@ pandas==2.3.3  # Data manipulation and analysis
 # Configuration and data formats
 PyYAML==6.0.3  # YAML parsing for configs and policies
 
+# Security
+cryptography>=41.0.0  # Cryptographic signature verification and X.509 certificate validation
+defusedxml>=0.7.1  # Safe XML parsing to prevent XXE attacks
+
 # Transitive dependencies (pinned for reproducibility)
 annotated-types==0.7.0  # Pydantic annotations support
 marshmallow==3.26.1  # Serialization/deserialization (dataclasses-json dep)

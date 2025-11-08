@@ -36,7 +36,7 @@ import shutil
 import tempfile
 import threading
 from dataclasses import dataclass, field, asdict
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Tuple, Union
@@ -581,7 +581,7 @@ class ModelRegistry:
         with self._lock:
             model = self._require_model(version_id)
             model.status = ModelStatus.DEPRECATED
-            model.deprecated_at = datetime.utcnow()
+            model.deprecated_at = datetime.now(timezone.utc)
             if reason:
                 model.metadata.setdefault("deprecation", {})["reason"] = reason
             self._save_metadata(model)
@@ -807,7 +807,7 @@ class ModelRegistry:
             "python_version": sys.version.split()[0],
             "platform": platform.platform(),
             "implementation": platform.python_implementation(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             # Avoid heavy pip freeze by default (toggle externally if needed)
         }
 
@@ -868,7 +868,7 @@ class ModelRegistry:
     def export_registry(self, export_path: Union[str, Path]) -> Path:
         export_path = Path(export_path)
         payload = {
-            "exported_at": datetime.utcnow().isoformat(),
+            "exported_at": datetime.now(timezone.utc).isoformat(),
             "models": {vid: mv.to_dict() for vid, mv in self.models.items()},
         }
         with open(export_path, "w") as f:

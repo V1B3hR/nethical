@@ -18,7 +18,7 @@ import json
 import logging
 import re
 from dataclasses import asdict, dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
@@ -122,9 +122,9 @@ class DetectorPack:
             try:
                 created_at = datetime.fromisoformat(created_at_raw)
             except ValueError:
-                created_at = datetime.utcnow()
+                created_at = datetime.now(timezone.utc)
         else:
-            created_at = datetime.utcnow()
+            created_at = datetime.now(timezone.utc)
 
         pack = DetectorPack(
             pack_id=data["pack_id"],

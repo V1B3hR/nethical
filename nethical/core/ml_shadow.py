@@ -10,7 +10,7 @@ This module implements:
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import json
 import math
@@ -252,8 +252,8 @@ class MLShadowClassifier:
 
         # Create prediction record
         prediction = ShadowPrediction(
-            prediction_id=f"shadow_{int(datetime.utcnow().timestamp() * 1000000)}",
-            timestamp=datetime.utcnow(),
+            prediction_id=f"shadow_{int(datetime.now(timezone.utc).timestamp() * 1000000)}",
+            timestamp=datetime.now(timezone.utc),
             agent_id=agent_id,
             action_id=action_id,
             ml_risk_score=ml_risk_score,

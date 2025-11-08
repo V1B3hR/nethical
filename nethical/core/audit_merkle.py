@@ -13,7 +13,7 @@ import time
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -85,7 +85,7 @@ class MerkleAnchor:
         Returns:
             Chunk ID
         """
-        chunk_id = f"chunk_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{int(time.time() * 1000000) % 1000000}"
+        chunk_id = f"chunk_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{int(time.time() * 1000000) % 1000000}"
         self.current_chunk = AuditChunk(chunk_id=chunk_id)
         return chunk_id
 
@@ -166,7 +166,7 @@ class MerkleAnchor:
 
         # Add timestamp if not present
         if "timestamp" not in event_data:
-            event_data["timestamp"] = datetime.utcnow().isoformat()
+            event_data["timestamp"] = datetime.now(timezone.utc).isoformat()
 
         # Add to current chunk
         self.current_chunk.events.append(event_data)
@@ -194,7 +194,7 @@ class MerkleAnchor:
 
         # Update chunk
         self.current_chunk.merkle_root = merkle_root
-        self.current_chunk.finalized_at = datetime.utcnow()
+        self.current_chunk.finalized_at = datetime.now(timezone.utc)
 
         # Store chunk
         chunk_id = self.current_chunk.chunk_id

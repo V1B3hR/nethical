@@ -10,7 +10,7 @@ import json
 import random
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 from pathlib import Path
 from enum import Enum
@@ -139,14 +139,14 @@ class FairnessSampler:
         Returns:
             Job ID
         """
-        job_id = f"job_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
+        job_id = f"job_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{random.randint(1000, 9999)}"
 
         job = SamplingJob(
             job_id=job_id,
             strategy=strategy,
             target_sample_size=target_sample_size,
             cohorts=cohorts,
-            start_time=datetime.utcnow(),
+            start_time=datetime.now(timezone.utc),
             metadata=metadata or {},
         )
 
@@ -195,7 +195,7 @@ class FairnessSampler:
             cohort=cohort,
             violation_type=violation_type,
             severity=severity,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             metadata=metadata or {},
         )
 
@@ -274,7 +274,7 @@ class FairnessSampler:
             return False
 
         job = self.jobs[job_id]
-        job.end_time = datetime.utcnow()
+        job.end_time = datetime.now(timezone.utc)
 
         # Persist to disk
         self._save_job_to_disk(job)

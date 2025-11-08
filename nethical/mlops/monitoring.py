@@ -39,7 +39,7 @@ import time
 from collections import deque
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from functools import wraps
 from pathlib import Path
@@ -533,7 +533,7 @@ class MetricsCollector:
                 self._cleanup()
 
     def _cleanup(self):
-        cutoff = datetime.utcnow() - timedelta(hours=self._retention_hours)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=self._retention_hours)
         for name, dq in self._metrics.items():
             while dq and dq[0].timestamp < cutoff:
                 dq.popleft()
@@ -554,7 +554,7 @@ class MetricsCollector:
         window_minutes: int = 60,
         percentiles: Iterable[float] = (0.5, 0.9, 0.95),
     ) -> Dict[str, Any]:
-        cutoff = datetime.utcnow() - timedelta(minutes=window_minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
         points = self.get_metrics(name, since=cutoff)
         if not points:
             return {"count": 0}
@@ -574,7 +574,7 @@ class MetricsCollector:
         return result
 
     def rate_per_minute(self, name: str, window_minutes: int) -> float:
-        cutoff = datetime.utcnow() - timedelta(minutes=window_minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=window_minutes)
         n = len(self.get_metrics(name, since=cutoff))
         return n / window_minutes if window_minutes > 0 else float("nan")
 
@@ -673,7 +673,7 @@ class ModelMonitor:
         **metadata,
     ):
         record = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "model": self.config.model_name,
             "latency_ms": latency_ms,
             "error": error,
@@ -734,7 +734,7 @@ class ModelMonitor:
             self._buffer_for_persistence(
                 "metrics",
                 {
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "name": metric_name,
                     "value": float(val),
                     "model": self.config.model_name,
@@ -784,7 +784,7 @@ class ModelMonitor:
     # -----------------------------
 
     def get_dashboard_metrics(self) -> Dict[str, Any]:
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         one_hour_ago = now - timedelta(hours=1)
         pred_last_hour = [
             p
@@ -829,7 +829,7 @@ class ModelMonitor:
         }
 
     def _error_rate_window(self) -> Dict[str, Any]:
-        cutoff = datetime.utcnow() - timedelta(minutes=self.config.rate_window_minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(minutes=self.config.rate_window_minutes)
         preds = [
             p for p in list(self._predictions) if datetime.fromisoformat(p["timestamp"]) >= cutoff
         ]
@@ -850,7 +850,7 @@ class ModelMonitor:
             "alerts": len(self.alerts.get_alerts(limit=10000)),
             "persistence_backlog": {k: len(v) for k, v in self._persist_buffers.items()},
             "uptime_sec": self._uptime(),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _uptime(self) -> float:
@@ -904,7 +904,7 @@ class ModelMonitor:
             self._last_flush = time.time()
 
     def _write_jsonl(self, category: str, rows: List[Dict[str, Any]]):
-        date_str = datetime.utcnow().strftime("%Y%m%d")
+        date_str = datetime.now(timezone.utc).strftime("%Y%m%d")
         file_path = self.config.persistence_dir / f"{category}_{date_str}.jsonl"
         with open(file_path, "a", encoding="utf-8") as f:
             for r in rows:

@@ -10,7 +10,7 @@ This module implements:
 import json
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 from enum import Enum
 
@@ -343,7 +343,7 @@ class PolicyDiffAuditor:
 
         version_data = {
             "version": version,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "description": description,
             "policy": policy,
         }

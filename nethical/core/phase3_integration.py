@@ -26,7 +26,7 @@ Migration Guide:
 """
 
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import warnings
 
@@ -125,7 +125,7 @@ class Phase3IntegratedGovernance:
 
         results = {
             "agent_id": agent_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "risk_score": 0.0,
             "risk_tier": "low",
             "correlations": [],
@@ -248,7 +248,7 @@ class Phase3IntegratedGovernance:
         """
         from datetime import timedelta
 
-        end_time = datetime.utcnow()
+        end_time = datetime.now(timezone.utc)
         start_time = end_time - timedelta(days=days_back)
 
         report = self.ethical_drift_reporter.generate_report(
@@ -312,7 +312,7 @@ class Phase3IntegratedGovernance:
             System status dictionary
         """
         status = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "components": {
                 "risk_engine": {"active_profiles": len(self.risk_engine.profiles), "enabled": True},
                 "correlation_engine": {

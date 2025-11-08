@@ -13,7 +13,7 @@ This module implements:
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Tuple, Deque
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from collections import defaultdict, deque
 import math
@@ -320,7 +320,7 @@ class DistributionDriftDetector:
         )
 
         # Record in history
-        self.drift_history.append((datetime.utcnow(), metrics))
+        self.drift_history.append((datetime.now(timezone.utc), metrics))
         # Reset current buffer after detection to avoid over-accumulation
         self.reset_current()
 
@@ -474,7 +474,7 @@ class AnomalyDriftMonitor:
         Returns:
             Alert if anomaly detected, None otherwise
         """
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
 
         # Update sequence detector
         self.sequence_detector.record_action(agent_id, action_type)
@@ -568,7 +568,7 @@ class AnomalyDriftMonitor:
 
             alert = AnomalyAlert(
                 alert_id=str(uuid.uuid4()),
-                timestamp=datetime.utcnow(),
+                timestamp=datetime.now(timezone.utc),
                 anomaly_type=AnomalyType.DISTRIBUTIONAL,
                 severity=severity,
                 cohort=cohort,
@@ -637,7 +637,7 @@ class AnomalyDriftMonitor:
     ) -> bool:
         key = (anomaly_type, agent_id, cohort)
         last = self._last_alert_at.get(key)
-        if last and (datetime.utcnow() - last) < self._alert_cooldown:
+        if last and (datetime.now(timezone.utc) - last) < self._alert_cooldown:
             return True
         return False
 
@@ -681,7 +681,7 @@ class AnomalyDriftMonitor:
 
         alert = AnomalyAlert(
             alert_id=str(uuid.uuid4()),
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             anomaly_type=anomaly_type,
             severity=severity,
             agent_id=agent_id,

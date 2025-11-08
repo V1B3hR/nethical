@@ -9,7 +9,7 @@ This module implements:
 import time
 from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 
@@ -151,14 +151,14 @@ class QuarantineManager:
         )
 
         # Set expiration
-        record.expires_at = datetime.utcnow() + timedelta(hours=duration)
+        record.expires_at = datetime.now(timezone.utc) + timedelta(hours=duration)
 
         # Get affected agents
         record.affected_agents = self.cohort_agents.get(cohort, set()).copy()
 
         # Activate quarantine
         record.status = QuarantineStatus.ACTIVE
-        record.activated_at = datetime.utcnow()
+        record.activated_at = datetime.now(timezone.utc)
 
         # Store quarantine
         self.quarantines[cohort] = record
@@ -187,7 +187,7 @@ class QuarantineManager:
 
         record = self.quarantines[cohort]
         record.status = QuarantineStatus.RELEASED
-        record.released_at = datetime.utcnow()
+        record.released_at = datetime.now(timezone.utc)
         record.metadata["release_reason"] = reason
 
         # Remove from active quarantines
@@ -210,7 +210,7 @@ class QuarantineManager:
             return {"is_quarantined": False, "cohort": cohort}
 
         # Check if expired
-        if record.expires_at and datetime.utcnow() > record.expires_at:
+        if record.expires_at and datetime.now(timezone.utc) > record.expires_at:
             if record.auto_release:
                 self.release_cohort(cohort, reason="auto_expired")
                 return {
@@ -335,7 +335,7 @@ class QuarantineManager:
         expired = []
 
         for cohort, record in list(self.quarantines.items()):
-            if record.expires_at and datetime.utcnow() > record.expires_at:
+            if record.expires_at and datetime.now(timezone.utc) > record.expires_at:
                 if record.auto_release:
                     expired.append(cohort)
 

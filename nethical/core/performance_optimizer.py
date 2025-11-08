@@ -8,7 +8,7 @@ This module implements:
 
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import deque
 from enum import Enum
 
@@ -283,7 +283,7 @@ class PerformanceOptimizer:
             Performance report dictionary
         """
         report = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "action_metrics": self.action_metrics.to_dict(),
             "detector_stats": self.get_detector_stats(),
             "optimization": {
