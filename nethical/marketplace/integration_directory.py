@@ -26,12 +26,15 @@ import threading
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     # Basic logger setup; the host application can override this.
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(name)s: %(message)s"
+    )
 
 
 # ======================
 # Error definitions
 # ======================
+
 
 class IntegrationError(Exception):
     """Base class for integration-related errors."""
@@ -49,8 +52,10 @@ class IntegrationConnectionError(IntegrationError):
 # Types and metadata
 # ======================
 
+
 class IntegrationType(Enum):
     """Integration type."""
+
     DATA_SOURCE = "data_source"
     API_CONNECTOR = "api_connector"
     EXPORT = "export"
@@ -61,6 +66,7 @@ class IntegrationType(Enum):
 @dataclass
 class IntegrationMetadata:
     """Integration metadata."""
+
     integration_id: str
     name: str
     description: str
@@ -77,6 +83,7 @@ class IntegrationMetadata:
 # Base Adapters
 # ======================
 
+
 class IntegrationAdapter(ABC):
     """Base class for integration adapters."""
 
@@ -90,7 +97,9 @@ class IntegrationAdapter(ABC):
         self.integration_id = integration_id
         self.config = config
         self._connected = False
-        logger.debug("Initialized adapter %s with config keys: %s", integration_id, list(config.keys()))
+        logger.debug(
+            "Initialized adapter %s with config keys: %s", integration_id, list(config.keys())
+        )
 
     def __enter__(self):
         if not self.connect():
@@ -227,6 +236,7 @@ class WebhookAdapter(IntegrationAdapter):
 # Export/Import Utilities
 # ======================
 
+
 def _module_available(name: str) -> bool:
     try:
         __import__(name)
@@ -261,10 +271,13 @@ class ExportUtility:
             logger.error("Export JSON error: %s", e, exc_info=True)
             return False
 
-    def export_to_csv(self, data: List[Dict[str, Any]], filepath: str, encoding: str = "utf-8") -> bool:
+    def export_to_csv(
+        self, data: List[Dict[str, Any]], filepath: str, encoding: str = "utf-8"
+    ) -> bool:
         """Export data to CSV."""
         try:
             import csv
+
             if not data:
                 # Create an empty file with no headers if data is empty
                 with open(filepath, "w", newline="", encoding=encoding):
@@ -296,6 +309,7 @@ class ExportUtility:
             return False
         try:
             import yaml  # type: ignore
+
             with open(filepath, "w", encoding=encoding) as f:
                 yaml.safe_dump(data, f, sort_keys=False, allow_unicode=True)
             logger.info("Exported YAML to %s", filepath)
@@ -304,10 +318,12 @@ class ExportUtility:
             logger.error("Export YAML error: %s", e, exc_info=True)
             return False
 
-    def export_to_xml(self, data: Any, filepath: str, root_tag: str = "root", encoding: str = "utf-8") -> bool:
+    def export_to_xml(
+        self, data: Any, filepath: str, root_tag: str = "root", encoding: str = "utf-8"
+    ) -> bool:
         """Export data to XML using a simple, generic mapper."""
         try:
-            from xml.etree.ElementTree import Element, ElementTree, tostring  # noqa: S405
+            from xml.etree.ElementTree import Element, ElementTree  # noqa: S405
 
             def to_element(key: str, value: Any):
                 el = Element(str(key))
@@ -377,6 +393,7 @@ class ImportUtility:
         """Import data from CSV."""
         try:
             import csv
+
             with open(filepath, "r", encoding=encoding) as f:
                 reader = csv.DictReader(f)
                 rows = [dict(r) for r in reader]
@@ -393,6 +410,7 @@ class ImportUtility:
             return None
         try:
             import yaml  # type: ignore
+
             with open(filepath, "r", encoding=encoding) as f:
                 data = yaml.safe_load(f)
             logger.info("Imported YAML from %s", filepath)
@@ -409,12 +427,14 @@ class ImportUtility:
         try:
             if _module_available("xmltodict"):
                 import xmltodict  # type: ignore
+
                 with open(filepath, "rb") as f:
                     data = xmltodict.parse(f.read())
                 logger.info("Imported XML via xmltodict from %s", filepath)
                 return data
             # Fallback: ElementTree into nested dicts (best-effort)
             from xml.etree.ElementTree import parse  # noqa: S405
+
             def element_to_dict(el):
                 children = list(el)
                 if not children:
@@ -467,7 +487,9 @@ _PY_TYPE_MAP: Dict[str, Type[Any]] = {
 }
 
 
-def _basic_validate_and_apply_defaults(schema: Dict[str, Any], config: Dict[str, Any]) -> Dict[str, Any]:
+def _basic_validate_and_apply_defaults(
+    schema: Dict[str, Any], config: Dict[str, Any]
+) -> Dict[str, Any]:
     """Minimal validator using the schema shape in configuration_schema.
 
     Supports:
@@ -504,6 +526,7 @@ def validate_config(schema: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
     if _module_available("jsonschema"):
         try:
             from jsonschema import validate as js_validate  # type: ignore
+
             js_schema = {
                 "type": "object",
                 "properties": {},
@@ -616,7 +639,9 @@ class IntegrationDirectory:
         # Assume it is callable(factory signature matches)
         return factory  # type: ignore[return-value]
 
-    def register_integration(self, metadata: IntegrationMetadata, adapter_class: AdapterFactoryLike):
+    def register_integration(
+        self, metadata: IntegrationMetadata, adapter_class: AdapterFactoryLike
+    ):
         """Register an integration.
 
         Args:
@@ -627,7 +652,9 @@ class IntegrationDirectory:
             if metadata.integration_id in self._integrations:
                 logger.warning("Overwriting existing integration: %s", metadata.integration_id)
             self._integrations[metadata.integration_id] = metadata
-            self._adapter_factories[metadata.integration_id] = self._normalize_factory(adapter_class)
+            self._adapter_factories[metadata.integration_id] = self._normalize_factory(
+                adapter_class
+            )
             logger.info("Registered integration '%s' (%s)", metadata.integration_id, metadata.name)
 
     def unregister_integration(self, integration_id: str) -> bool:
@@ -644,7 +671,9 @@ class IntegrationDirectory:
         with self._lock:
             return integration_id in self._integrations
 
-    def create_adapter(self, integration_id: str, config: Dict[str, Any]) -> Optional[IntegrationAdapter]:
+    def create_adapter(
+        self, integration_id: str, config: Dict[str, Any]
+    ) -> Optional[IntegrationAdapter]:
         """Create an integration adapter.
 
         Args:
@@ -671,7 +700,9 @@ class IntegrationDirectory:
         logger.debug("Created adapter instance for '%s'", integration_id)
         return adapter
 
-    def list_integrations(self, integration_type: Optional[IntegrationType] = None) -> List[IntegrationMetadata]:
+    def list_integrations(
+        self, integration_type: Optional[IntegrationType] = None
+    ) -> List[IntegrationMetadata]:
         """List available integrations.
 
         Args:

@@ -22,7 +22,6 @@ from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Dict, List, Optional, Any
-from abc import ABC, abstractmethod
 
 __all__ = [
     "AuthCredentials",
@@ -40,6 +39,7 @@ log = logging.getLogger(__name__)
 
 class ClearanceLevel(str, Enum):
     """Security clearance levels for role-based access control"""
+
     UNCLASSIFIED = "unclassified"
     CONFIDENTIAL = "confidential"
     SECRET = "secret"
@@ -50,6 +50,7 @@ class ClearanceLevel(str, Enum):
 @dataclass
 class AuthCredentials:
     """Authentication credentials container"""
+
     user_id: str
     certificate: Optional[bytes] = None
     password: Optional[str] = None
@@ -62,6 +63,7 @@ class AuthCredentials:
 @dataclass
 class AuthResult:
     """Authentication result"""
+
     authenticated: bool
     user_id: Optional[str] = None
     clearance_level: Optional[ClearanceLevel] = None
@@ -69,7 +71,7 @@ class AuthResult:
     error_message: Optional[str] = None
     requires_mfa: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
-    
+
     def is_success(self) -> bool:
         """Check if authentication was successful"""
         return self.authenticated and not self.requires_mfa
@@ -78,11 +80,11 @@ class AuthResult:
 class PKICertificateValidator:
     """
     PKI Certificate Validation System
-    
+
     Validates X.509 certificates for CAC/PIV cards and other PKI tokens.
     Supports certificate chain validation, CRL checking, and OCSP.
     """
-    
+
     def __init__(
         self,
         trusted_ca_certs: Optional[List[bytes]] = None,
@@ -91,7 +93,7 @@ class PKICertificateValidator:
     ):
         """
         Initialize PKI validator
-        
+
         Args:
             trusted_ca_certs: List of trusted CA certificates in DER format
             enable_crl_check: Enable Certificate Revocation List checking
@@ -101,75 +103,75 @@ class PKICertificateValidator:
         self.enable_crl_check = enable_crl_check
         self.enable_ocsp = enable_ocsp
         self._crl_cache: Dict[str, Any] = {}
-        
+
         log.info("PKI Certificate Validator initialized")
-    
+
     async def validate(self, certificate: Optional[bytes]) -> bool:
         """
         Validate a PKI certificate
-        
+
         Args:
             certificate: X.509 certificate in DER or PEM format
-            
+
         Returns:
             True if certificate is valid, False otherwise
         """
         if not certificate:
             log.warning("No certificate provided for validation")
             return False
-        
+
         try:
             # TODO: In production, use cryptography library for actual validation
             # from cryptography import x509
             # from cryptography.hazmat.backends import default_backend
             # cert = x509.load_der_x509_certificate(certificate, default_backend())
-            
+
             # For now, stub implementation
             log.info("Certificate validation requested (stub implementation)")
-            
+
             # Validate certificate chain
             if not await self._validate_certificate_chain(certificate):
                 log.error("Certificate chain validation failed")
                 return False
-            
+
             # Check certificate revocation status
             if self.enable_crl_check:
                 if not await self._check_crl(certificate):
                     log.error("Certificate revoked (CRL check)")
                     return False
-            
+
             # Check OCSP status
             if self.enable_ocsp:
                 if not await self._check_ocsp(certificate):
                     log.error("Certificate revoked (OCSP check)")
                     return False
-            
+
             log.info("Certificate validation successful")
             return True
-            
+
         except Exception as e:
             log.error(f"Certificate validation error: {e}")
             return False
-    
+
     async def _validate_certificate_chain(self, certificate: bytes) -> bool:
         """Validate certificate chain against trusted CAs"""
         # Stub: In production, validate against trusted_ca_certs
         return True
-    
+
     async def _check_crl(self, certificate: bytes) -> bool:
         """Check Certificate Revocation List"""
         # Stub: In production, fetch and check CRL
         return True
-    
+
     async def _check_ocsp(self, certificate: bytes) -> bool:
         """Check OCSP (Online Certificate Status Protocol)"""
         # Stub: In production, perform OCSP stapling check
         return True
-    
+
     def extract_user_info(self, certificate: bytes) -> Dict[str, str]:
         """
         Extract user information from certificate
-        
+
         Returns:
             Dictionary with subject DN, email, CN, etc.
         """
@@ -184,51 +186,51 @@ class PKICertificateValidator:
 class MultiFactorAuthEngine:
     """
     Multi-Factor Authentication Engine
-    
+
     Supports multiple MFA methods:
     - TOTP (Time-based One-Time Password)
     - Hardware tokens (YubiKey, CAC)
     - SMS/Email verification
     - Biometric authentication
     """
-    
+
     def __init__(self, require_mfa_for_critical: bool = True):
         """
         Initialize MFA engine
-        
+
         Args:
             require_mfa_for_critical: Require MFA for critical operations
         """
         self.require_mfa_for_critical = require_mfa_for_critical
         self._user_mfa_settings: Dict[str, Dict[str, Any]] = {}
-        
+
         log.info("Multi-Factor Auth Engine initialized")
-    
+
     async def challenge(self, user_id: str, mfa_code: Optional[str] = None) -> bool:
         """
         Challenge user for MFA verification
-        
+
         Args:
             user_id: User identifier
             mfa_code: MFA code provided by user
-            
+
         Returns:
             True if MFA validation successful, False otherwise
         """
         if not self._is_mfa_enabled(user_id):
             log.info(f"MFA not enabled for user {user_id}")
             return True
-        
+
         if not mfa_code:
             log.warning(f"MFA code required but not provided for user {user_id}")
             return False
-        
+
         try:
             # Validate MFA code
             # In production, integrate with TOTP library (pyotp) or hardware token API
             settings = self._user_mfa_settings.get(user_id, {})
             method = settings.get("method", "totp")
-            
+
             if method == "totp":
                 return await self._validate_totp(user_id, mfa_code)
             elif method == "hardware_token":
@@ -238,31 +240,31 @@ class MultiFactorAuthEngine:
                 log.error("Unknown or unsupported MFA method requested")
                 log.debug(f"MFA method attempted: {method}")  # Debug only
                 return False
-                
+
         except Exception as e:
             log.error(f"MFA validation error: {e}")
             return False
-    
+
     def _is_mfa_enabled(self, user_id: str) -> bool:
         """Check if MFA is enabled for user"""
         return user_id in self._user_mfa_settings
-    
+
     async def _validate_totp(self, user_id: str, code: str) -> bool:
         """Validate TOTP code"""
         # Stub: In production, use pyotp library
         log.info(f"TOTP validation for user {user_id} (stub)")
         return len(code) == 6 and code.isdigit()
-    
+
     async def _validate_hardware_token(self, user_id: str, token: str) -> bool:
         """Validate hardware token (YubiKey, CAC)"""
         # Stub: In production, integrate with hardware token APIs
         log.info(f"Hardware token validation for user {user_id} (stub)")
         return len(token) > 0
-    
+
     def setup_mfa(self, user_id: str, method: str = "totp") -> Dict[str, Any]:
         """
         Setup MFA for a user
-        
+
         Returns:
             Setup information (e.g., TOTP secret, QR code)
         """
@@ -272,7 +274,7 @@ class MultiFactorAuthEngine:
             "secret": secret,
             "enabled": True,
         }
-        
+
         log.info(f"MFA setup completed for user {user_id}")
         return {
             "method": method,
@@ -284,14 +286,14 @@ class MultiFactorAuthEngine:
 class SecureSessionManager:
     """
     Secure Session Manager
-    
+
     Manages user sessions with:
     - Configurable timeout policies
     - Re-authentication for critical operations
     - Session tracking and audit
     - Concurrent session limiting
     """
-    
+
     def __init__(
         self,
         timeout: int = 900,  # 15 minutes default
@@ -300,7 +302,7 @@ class SecureSessionManager:
     ):
         """
         Initialize session manager
-        
+
         Args:
             timeout: Session timeout in seconds
             require_reauth_for_critical: Require re-auth for critical ops
@@ -311,9 +313,9 @@ class SecureSessionManager:
         self.max_concurrent_sessions = max_concurrent_sessions
         self._sessions: Dict[str, Dict[str, Any]] = {}
         self._user_sessions: Dict[str, List[str]] = {}
-        
+
         log.info(f"Session Manager initialized (timeout={timeout}s)")
-    
+
     def create_session(
         self,
         user_id: str,
@@ -322,21 +324,21 @@ class SecureSessionManager:
     ) -> str:
         """
         Create a new session
-        
+
         Args:
             user_id: User identifier
             clearance_level: User's clearance level
             metadata: Additional session metadata
-            
+
         Returns:
             Session token
         """
         # Generate secure session token
         session_token = secrets.token_urlsafe(32)
-        
+
         # Enforce concurrent session limit
         self._enforce_session_limit(user_id)
-        
+
         # Create session
         now = datetime.now(timezone.utc)
         session_data = {
@@ -347,21 +349,21 @@ class SecureSessionManager:
             "expires_at": now + timedelta(seconds=self.timeout),
             "metadata": metadata or {},
         }
-        
+
         self._sessions[session_token] = session_data
-        
+
         # Track user sessions
         if user_id not in self._user_sessions:
             self._user_sessions[user_id] = []
         self._user_sessions[user_id].append(session_token)
-        
+
         log.info(f"Session created for user {user_id}")
         return session_token
-    
+
     def validate_session(self, session_token: str) -> Optional[Dict[str, Any]]:
         """
         Validate a session token
-        
+
         Returns:
             Session data if valid, None otherwise
         """
@@ -369,20 +371,20 @@ class SecureSessionManager:
         if not session:
             log.warning(f"Session not found: {session_token[:8]}...")
             return None
-        
+
         # Check expiration
         now = datetime.now(timezone.utc)
         if now > session["expires_at"]:
             log.warning(f"Session expired for user {session['user_id']}")
             self.revoke_session(session_token)
             return None
-        
+
         # Update last activity
         session["last_activity"] = now
         session["expires_at"] = now + timedelta(seconds=self.timeout)
-        
+
         return session
-    
+
     def revoke_session(self, session_token: str) -> bool:
         """Revoke a session"""
         session = self._sessions.pop(session_token, None)
@@ -393,12 +395,12 @@ class SecureSessionManager:
             log.info(f"Session revoked for user {user_id}")
             return True
         return False
-    
+
     def _enforce_session_limit(self, user_id: str) -> None:
         """Enforce maximum concurrent sessions per user"""
         if user_id not in self._user_sessions:
             return
-        
+
         user_sessions = self._user_sessions[user_id]
         if len(user_sessions) >= self.max_concurrent_sessions:
             # Revoke oldest session
@@ -410,14 +412,14 @@ class SecureSessionManager:
 class LDAPConnector:
     """
     LDAP/Active Directory Connector
-    
+
     Integrates with enterprise directory services for:
     - User authentication
     - Group membership lookup
     - Role/permission retrieval
     - Organizational unit hierarchy
     """
-    
+
     def __init__(
         self,
         server_url: str,
@@ -427,7 +429,7 @@ class LDAPConnector:
     ):
         """
         Initialize LDAP connector
-        
+
         Args:
             server_url: LDAP server URL (e.g., ldaps://ldap.example.gov:636)
             base_dn: Base DN for searches (e.g., dc=example,dc=gov)
@@ -439,27 +441,27 @@ class LDAPConnector:
         self.bind_dn = bind_dn
         self.bind_password = bind_password
         self._connection = None
-        
+
         log.info(f"LDAP Connector initialized for {server_url}")
-    
+
     async def authenticate(self, username: str, password: str) -> bool:
         """
         Authenticate user against LDAP/AD
-        
+
         Args:
             username: Username or email
             password: User password
-            
+
         Returns:
             True if authentication successful
         """
         # Stub: In production, use ldap3 library
         # from ldap3 import Server, Connection, ALL
         # server = Server(self.server_url, get_info=ALL)
-        # conn = Connection(server, user=f"cn={username},{self.base_dn}", 
+        # conn = Connection(server, user=f"cn={username},{self.base_dn}",
         #                   password=password)
         # return conn.bind()
-        
+
         log.info(f"LDAP authentication for user {username} (stub)")
         # Stub implementation - in production, use ldap3 library
         # For testing: Accept passwords that match a simple pattern (minimum 8 chars)
@@ -468,28 +470,28 @@ class LDAPConnector:
             return False
         # Simple validation for stub - production would use actual LDAP
         return len(password) >= 8
-    
+
     async def get_user_groups(self, username: str) -> List[str]:
         """
         Get user's group memberships
-        
+
         Returns:
             List of group DNs or names
         """
         # Stub: In production, query LDAP for memberOf attribute
         log.info(f"Fetching groups for user {username} (stub)")
         return ["cn=Users,dc=example,dc=gov", "cn=Developers,dc=example,dc=gov"]
-    
+
     async def get_clearance_level(self, username: str) -> ClearanceLevel:
         """
         Determine user's clearance level from LDAP attributes
-        
+
         Returns:
             User's clearance level
         """
         # Stub: In production, map LDAP groups/attributes to clearance levels
         groups = await self.get_user_groups(username)
-        
+
         # Example mapping logic
         if any("admin" in g.lower() for g in groups):
             return ClearanceLevel.ADMIN
@@ -502,18 +504,18 @@ class LDAPConnector:
 class MilitaryGradeAuthProvider:
     """
     Military-Grade Authentication Provider
-    
+
     Comprehensive authentication system supporting:
     - PKI certificate validation (CAC/PIV cards)
     - Multi-factor authentication
     - LDAP/Active Directory integration
     - Secure session management
     - Audit logging
-    
+
     Designed for military, government, and healthcare deployments
     requiring FISMA, FedRAMP, and HIPAA compliance.
     """
-    
+
     def __init__(
         self,
         pki_validator: Optional[PKICertificateValidator] = None,
@@ -523,7 +525,7 @@ class MilitaryGradeAuthProvider:
     ):
         """
         Initialize authentication provider
-        
+
         Args:
             pki_validator: PKI certificate validator
             mfa_engine: Multi-factor authentication engine
@@ -534,65 +536,58 @@ class MilitaryGradeAuthProvider:
         self.mfa_engine = mfa_engine or MultiFactorAuthEngine()
         self.session_manager = session_manager or SecureSessionManager()
         self.ldap_connector = ldap_connector
-        
+
         # Audit log storage
         self._audit_log: List[Dict[str, Any]] = []
-        
+
         log.info("Military-Grade Auth Provider initialized")
-    
+
     async def authenticate(self, credentials: AuthCredentials) -> AuthResult:
         """
         Authenticate user with multiple authentication factors
-        
+
         Supports:
         - PKI certificate authentication (CAC/PIV)
         - LDAP/AD password authentication
         - Multi-factor authentication
-        
+
         Args:
             credentials: Authentication credentials
-            
+
         Returns:
             Authentication result with session token if successful
         """
         start_time = datetime.now(timezone.utc)
-        
+
         try:
             # Step 1: PKI Certificate validation
             if credentials.certificate:
                 cert_valid = await self.pki_validator.validate(credentials.certificate)
                 if not cert_valid:
                     return self._create_failure_result(
-                        credentials.user_id,
-                        "Certificate validation failed"
+                        credentials.user_id, "Certificate validation failed"
                     )
-                
+
                 # Extract user info from certificate
-                user_info = self.pki_validator.extract_user_info(
-                    credentials.certificate
-                )
+                user_info = self.pki_validator.extract_user_info(credentials.certificate)
                 log.info(f"Certificate validated for {user_info.get('common_name')}")
-            
+
             # Step 2: LDAP/AD authentication (if configured and credentials provided)
             if self.ldap_connector and credentials.ldap_credentials:
                 username = credentials.ldap_credentials.get("username", credentials.user_id)
                 password = credentials.ldap_credentials.get("password", "")
-                
+
                 ldap_valid = await self.ldap_connector.authenticate(username, password)
                 if not ldap_valid:
                     return self._create_failure_result(
-                        credentials.user_id,
-                        "LDAP authentication failed"
+                        credentials.user_id, "LDAP authentication failed"
                     )
-                
+
                 log.info(f"LDAP authentication successful for {username}")
-            
+
             # Step 3: Multi-factor authentication
-            mfa_valid = await self.mfa_engine.challenge(
-                credentials.user_id,
-                credentials.mfa_code
-            )
-            
+            mfa_valid = await self.mfa_engine.challenge(credentials.user_id, credentials.mfa_code)
+
             if not mfa_valid:
                 if credentials.mfa_code is None:
                     # MFA required but not provided
@@ -600,33 +595,30 @@ class MilitaryGradeAuthProvider:
                         authenticated=False,
                         user_id=credentials.user_id,
                         requires_mfa=True,
-                        error_message="Multi-factor authentication required"
+                        error_message="Multi-factor authentication required",
                     )
                 else:
                     # MFA code invalid
-                    return self._create_failure_result(
-                        credentials.user_id,
-                        "Invalid MFA code"
-                    )
-            
+                    return self._create_failure_result(credentials.user_id, "Invalid MFA code")
+
             # Step 4: Determine clearance level
             clearance_level = await self._get_clearance_level(credentials.user_id)
-            
+
             # Step 5: Create session
             session_token = self.session_manager.create_session(
                 user_id=credentials.user_id,
                 clearance_level=clearance_level,
-                metadata=credentials.metadata
+                metadata=credentials.metadata,
             )
-            
+
             # Audit successful authentication
             self._log_auth_event(
                 user_id=credentials.user_id,
                 event_type="authentication_success",
                 clearance_level=clearance_level,
-                duration=(datetime.now(timezone.utc) - start_time).total_seconds()
+                duration=(datetime.now(timezone.utc) - start_time).total_seconds(),
             )
-            
+
             return AuthResult(
                 authenticated=True,
                 user_id=credentials.user_id,
@@ -635,29 +627,26 @@ class MilitaryGradeAuthProvider:
                 metadata={
                     "auth_methods": self._get_auth_methods_used(credentials),
                     "timestamp": datetime.now(timezone.utc).isoformat(),
-                }
+                },
             )
-            
+
         except Exception as e:
             log.error(f"Authentication error: {e}")
             self._log_auth_event(
-                user_id=credentials.user_id,
-                event_type="authentication_error",
-                error=str(e)
+                user_id=credentials.user_id, event_type="authentication_error", error=str(e)
             )
             return self._create_failure_result(
-                credentials.user_id,
-                f"Authentication error: {str(e)}"
+                credentials.user_id, f"Authentication error: {str(e)}"
             )
-    
+
     async def _get_clearance_level(self, user_id: str) -> ClearanceLevel:
         """Determine user's clearance level"""
         if self.ldap_connector:
             return await self.ldap_connector.get_clearance_level(user_id)
-        
+
         # Default clearance level
         return ClearanceLevel.UNCLASSIFIED
-    
+
     def _get_auth_methods_used(self, credentials: AuthCredentials) -> List[str]:
         """Get list of authentication methods used"""
         methods = []
@@ -668,21 +657,15 @@ class MilitaryGradeAuthProvider:
         if credentials.mfa_code:
             methods.append("mfa")
         return methods
-    
+
     def _create_failure_result(self, user_id: str, error_message: str) -> AuthResult:
         """Create authentication failure result"""
         self._log_auth_event(
-            user_id=user_id,
-            event_type="authentication_failure",
-            error=error_message
+            user_id=user_id, event_type="authentication_failure", error=error_message
         )
-        
-        return AuthResult(
-            authenticated=False,
-            user_id=user_id,
-            error_message=error_message
-        )
-    
+
+        return AuthResult(authenticated=False, user_id=user_id, error_message=error_message)
+
     def _log_auth_event(
         self,
         user_id: str,
@@ -700,10 +683,10 @@ class MilitaryGradeAuthProvider:
             "error": error,
             "duration_seconds": duration,
         }
-        
+
         self._audit_log.append(event)
         log.info(f"Auth event: {event_type} for user {user_id}")
-    
+
     def get_audit_log(
         self,
         user_id: Optional[str] = None,
@@ -712,21 +695,21 @@ class MilitaryGradeAuthProvider:
     ) -> List[Dict[str, Any]]:
         """
         Retrieve audit log entries
-        
+
         Args:
             user_id: Filter by user ID
             event_type: Filter by event type
             limit: Maximum number of entries to return
-            
+
         Returns:
             List of audit log entries
         """
         filtered = self._audit_log
-        
+
         if user_id:
             filtered = [e for e in filtered if e["user_id"] == user_id]
-        
+
         if event_type:
             filtered = [e for e in filtered if e["event_type"] == event_type]
-        
+
         return filtered[-limit:]

@@ -30,12 +30,22 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Any, Dict, Iterable, List, Optional, Tuple, Union
+from typing import Any, Dict, Iterable, List, Optional, Union
 
 
 # ====== Utilities ======
 
-_DEFAULT_REDACT_KEYS = {"password", "pass", "token", "secret", "api_key", "apikey", "authorization", "auth", "bearer"}
+_DEFAULT_REDACT_KEYS = {
+    "password",
+    "pass",
+    "token",
+    "secret",
+    "api_key",
+    "apikey",
+    "authorization",
+    "auth",
+    "bearer",
+}
 _DEFAULT_MAX_METADATA_LEN = 32_000  # cap very large blobs
 
 
@@ -86,6 +96,7 @@ def sanitize_metadata(
 
 class LogLevel(Enum):
     """Log levels"""
+
     DEBUG = "DEBUG"
     INFO = "INFO"
     WARNING = "WARNING"
@@ -96,6 +107,7 @@ class LogLevel(Enum):
 @dataclass
 class LogEntry:
     """Structured log entry with UTC timestamps and safe metadata."""
+
     timestamp: datetime
     level: LogLevel
     message: str
@@ -123,10 +135,26 @@ class LogEntry:
         for k, v in getattr(record, "__dict__", {}).items():
             # Filter internal LogRecord attributes
             if k in {
-                "name", "msg", "args", "levelname", "levelno", "pathname", "filename",
-                "module", "exc_info", "exc_text", "stack_info", "lineno", "funcName",
-                "created", "msecs", "relativeCreated", "thread", "threadName",
-                "processName", "process"
+                "name",
+                "msg",
+                "args",
+                "levelname",
+                "levelno",
+                "pathname",
+                "filename",
+                "module",
+                "exc_info",
+                "exc_text",
+                "stack_info",
+                "lineno",
+                "funcName",
+                "created",
+                "msecs",
+                "relativeCreated",
+                "thread",
+                "threadName",
+                "processName",
+                "process",
             }:
                 continue
             md[k] = v
@@ -182,7 +210,7 @@ class SyslogConnector(LogConnector):
         port: int = 514,
         facility: int = 16,  # LOG_LOCAL0
         protocol: str = "UDP",
-        rfc: int = 3164,     # or 5424
+        rfc: int = 3164,  # or 5424
         app_name: Optional[str] = None,
         procid: Optional[str] = None,
         msgid: str = "-",
@@ -332,6 +360,7 @@ class CloudWatchConnector(LogConnector):
 
         try:
             import boto3  # type: ignore
+
             self._client = boto3.client("logs", region_name=region)
             if create_if_missing:
                 self._ensure_group_stream()
@@ -344,7 +373,9 @@ class CloudWatchConnector(LogConnector):
         if not self._client:
             return
         try:
-            groups = self._client.describe_log_groups(logGroupNamePrefix=self.log_group).get("logGroups", [])
+            groups = self._client.describe_log_groups(logGroupNamePrefix=self.log_group).get(
+                "logGroups", []
+            )
             if not any(g.get("logGroupName") == self.log_group for g in groups):
                 self._client.create_log_group(logGroupName=self.log_group)
         except self._client.exceptions.ResourceAlreadyExistsException:  # type: ignore
@@ -357,7 +388,9 @@ class CloudWatchConnector(LogConnector):
                 logGroupName=self.log_group, logStreamNamePrefix=self.log_stream
             ).get("logStreams", [])
             if not any(s.get("logStreamName") == self.log_stream for s in streams):
-                self._client.create_log_stream(logGroupName=self.log_group, logStreamName=self.log_stream)
+                self._client.create_log_stream(
+                    logGroupName=self.log_group, logStreamName=self.log_stream
+                )
                 self._sequence_token = None
             else:
                 # Capture existing token if present
@@ -463,7 +496,9 @@ class JSONFileConnector(LogConnector):
         if self.max_bytes <= 0:
             return False
         try:
-            return self.file.tell() >= self.max_bytes or (self.filepath.exists() and self.filepath.stat().st_size >= self.max_bytes)
+            return self.file.tell() >= self.max_bytes or (
+                self.filepath.exists() and self.filepath.stat().st_size >= self.max_bytes
+            )
         except Exception:
             return False
 
@@ -550,6 +585,7 @@ class MerkleAnchorConnector(LogConnector):
         try:
             # Lazy import to avoid hard dependency for general use
             from nethical.core.audit_merkle import MerkleAnchor  # type: ignore
+
             self._anchor = MerkleAnchor(base_path=str(self.audit_path))
         except Exception as e:
             logging.info(f"MerkleAnchor not available, running in NO-OP mode: {e}")

@@ -57,6 +57,7 @@ TResult = TypeVar("TResult", bound=JudgmentResult)
 @dataclass(slots=True)
 class EvaluationContext:
     """Execution context and timing information for an evaluation run."""
+
     start_time_monotonic: float
     end_time_monotonic: Optional[float] = None
     evaluation_id: Optional[str] = None
@@ -77,6 +78,7 @@ class EvaluationContext:
 @dataclass(slots=True)
 class EvaluationStats:
     """Aggregate metrics for judge operation."""
+
     evaluations: int = 0
     errors: int = 0
     total_duration_seconds: float = 0.0
@@ -141,9 +143,7 @@ class BaseJudge(ABC, Generic[TAction, TViolation, TResult]):
         self,
         name: str,
         *,
-        trace_hook: Optional[
-            Callable[[str, Dict[str, Any]], Awaitable[None] | None]
-        ] = None,
+        trace_hook: Optional[Callable[[str, Dict[str, Any]], Awaitable[None] | None]] = None,
     ) -> None:
         self.name: str = name
         self.enabled: bool = True
@@ -339,11 +339,7 @@ class BaseJudge(ABC, Generic[TAction, TViolation, TResult]):
 
         async def _eval(i: int):
             action = actions[i]
-            vio_iter = (
-                violations_list[i]
-                if violations_list is not None
-                else ()
-            )
+            vio_iter = violations_list[i] if violations_list is not None else ()
             async with semaphore:
                 evaluation_id = f"{self.name}-{i}-{int(time.time()*1000)}"
                 try:

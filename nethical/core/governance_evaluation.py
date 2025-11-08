@@ -14,7 +14,6 @@ import math
 import re
 import uuid
 from collections import Counter, deque
-from datetime import datetime
 from typing import List, Tuple
 
 # Import required types
@@ -26,9 +25,6 @@ if TYPE_CHECKING:
         Decision,
         JudgmentResult,
         SafetyViolation,
-        Severity,
-        SubMission,
-        ViolationType,
     )
 else:
     from .governance_core import (
@@ -36,13 +32,11 @@ else:
         Decision,
         JudgmentResult,
         SafetyViolation,
-        Severity,
-        SubMission,
-        ViolationType,
     )
 
 
 # ========================== Utilities ==========================
+
 
 def generate_id(prefix: str) -> str:
     return f"{prefix}_{uuid.uuid4().hex[:16]}"
@@ -100,6 +94,7 @@ def might_be_rot13(content: str) -> bool:
 
 # ========================== Intent Deviation Monitor ==========================
 
+
 class IntentDeviationMonitor:
     def __init__(self, deviation_threshold: float = 0.7):
         self.deviation_threshold = deviation_threshold
@@ -108,25 +103,25 @@ class IntentDeviationMonitor:
 
     async def analyze_action(self, action: AgentAction) -> List[SafetyViolation]:
         from .governance_core import SafetyViolation, ViolationType, Severity, SubMission
+
         if not self.enabled or not action.intent:
             return []
-        self.intent_history.append({
-            "intent": action.intent,
-            "timestamp": action.timestamp
-        })
+        self.intent_history.append({"intent": action.intent, "timestamp": action.timestamp})
         if self._is_shift(action.intent):
-            return [SafetyViolation(
-                violation_id=generate_id("viol"),
-                action_id=action.action_id,
-                violation_type=ViolationType.INTENT_DEVIATION,
-                severity=Severity.MEDIUM,
-                description="Intent deviation detected",
-                confidence=0.75,
-                evidence=["Recent intent shift"],
-                recommendations=["Confirm new intent", "Add verification step"],
-                detector_name="IntentDeviationMonitor",
-                sub_mission=SubMission.SUDDEN_INTENT_SHIFT
-            )]
+            return [
+                SafetyViolation(
+                    violation_id=generate_id("viol"),
+                    action_id=action.action_id,
+                    violation_type=ViolationType.INTENT_DEVIATION,
+                    severity=Severity.MEDIUM,
+                    description="Intent deviation detected",
+                    confidence=0.75,
+                    evidence=["Recent intent shift"],
+                    recommendations=["Confirm new intent", "Add verification step"],
+                    detector_name="IntentDeviationMonitor",
+                    sub_mission=SubMission.SUDDEN_INTENT_SHIFT,
+                )
+            ]
         return []
 
     def _is_shift(self, current_intent: str) -> bool:
@@ -142,14 +137,18 @@ class IntentDeviationMonitor:
 
 # ========================== Judge ==========================
 
+
 class SafetyJudge:
     def __init__(self):
         self.enabled = True
         self.decision_history: deque = deque(maxlen=1000)
         self.escalation_queue: deque = deque(maxlen=200)
 
-    async def evaluate_action(self, action: AgentAction, violations: List[SafetyViolation]) -> JudgmentResult:
+    async def evaluate_action(
+        self, action: AgentAction, violations: List[SafetyViolation]
+    ) -> JudgmentResult:
         from .governance_core import JudgmentResult, Decision
+
         if not self.enabled:
             return JudgmentResult(
                 judgment_id=generate_id("judg"),
@@ -158,7 +157,7 @@ class SafetyJudge:
                 confidence=1.0,
                 reasoning="Judge disabled",
                 violations=[],
-                feedback=["Judge bypassed"]
+                feedback=["Judge bypassed"],
             )
         decision, confidence, reasoning = self._analyze(violations)
         if action.risk_score > 0.8:
@@ -176,7 +175,7 @@ class SafetyJudge:
             violations=violations,
             feedback=feedback,
             remediation_steps=remediation,
-            follow_up_required=follow_up
+            follow_up_required=follow_up,
         )
         self.decision_history.append(jr)
         if follow_up:
@@ -185,6 +184,7 @@ class SafetyJudge:
 
     def _analyze(self, violations: List[SafetyViolation]) -> Tuple[Decision, float, str]:
         from .governance_core import Decision, Severity
+
         if not violations:
             return Decision.ALLOW, 1.0, "No violations"
         max_sev = max(v.severity.value for v in violations)
@@ -194,9 +194,11 @@ class SafetyJudge:
         if max_sev >= Severity.CRITICAL.value:
             return Decision.BLOCK, 0.9, "Critical violation"
         if max_sev >= Severity.HIGH.value:
-            return (Decision.QUARANTINE if avg_conf > 0.8 else Decision.WARN,
-                    0.85 if avg_conf > 0.8 else 0.7,
-                    "High severity violation")
+            return (
+                Decision.QUARANTINE if avg_conf > 0.8 else Decision.WARN,
+                0.85 if avg_conf > 0.8 else 0.7,
+                "High severity violation",
+            )
         if max_sev >= Severity.MEDIUM.value:
             return Decision.ALLOW_WITH_MODIFICATION, 0.65, "Medium severity violation"
         return Decision.ALLOW, 0.5, "Low severity violation"
@@ -222,6 +224,7 @@ class SafetyJudge:
 
     def _needs_escalation(self, violations: List[SafetyViolation], decision: Decision) -> bool:
         from .governance_core import Decision
+
         if decision in (Decision.TERMINATE, Decision.BLOCK):
             return True
         return sum(1 for v in violations if v.confidence > 0.9) >= 3

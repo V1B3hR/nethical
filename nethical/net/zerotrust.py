@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from typing import Any, Dict, Iterable, Mapping, Optional, Set, Tuple, List, Union
+from typing import Any, Iterable, Mapping, Optional, Set, Tuple, List, Union
 import fnmatch
 
 from nethical.hooks.interfaces import CommsPolicy
@@ -10,10 +10,12 @@ from nethical.hooks.interfaces import CommsPolicy
 # Simple, permissive policy (unchanged)
 # =======================================
 
+
 class NoopCommsPolicy(CommsPolicy):
     """
     Permissive policy that always allows connections. Useful for development.
     """
+
     __slots__ = ()
 
     def connection_allowed(self, peer_id: str, context: Mapping[str, Any]) -> bool:
@@ -26,6 +28,7 @@ class NoopCommsPolicy(CommsPolicy):
 # =======================================
 # Advanced mTLS + SPIFFE Zero-Trust Policy
 # =======================================
+
 
 class MTLSCommsPolicy(CommsPolicy):
     """
@@ -308,6 +311,7 @@ class MTLSCommsPolicy(CommsPolicy):
 # ----------
 # Utilities
 # ----------
+
 
 def _normalize_trust_domain(raw: str) -> str:
     """

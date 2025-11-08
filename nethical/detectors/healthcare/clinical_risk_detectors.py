@@ -9,6 +9,7 @@ from typing import Any, Dict, Iterable, List, Optional, Tuple
 # Utilities
 # -----------------------------
 
+
 def _regex_union(terms: Iterable[str], *, word_boundary: bool = True) -> re.Pattern:
     """
     Compile a case-insensitive regex that matches any term in 'terms'.
@@ -34,7 +35,19 @@ def _has_negation_near(text: str, span: Tuple[int, int], window_tokens: int = 5)
     Rudimentary negation detection: checks for negation tokens within a window
     of tokens before the matched span.
     """
-    neg_cues = {"no", "not", "never", "none", "without", "deny", "denies", "denied", "don't", "doesn't", "didn't"}
+    neg_cues = {
+        "no",
+        "not",
+        "never",
+        "none",
+        "without",
+        "deny",
+        "denies",
+        "denied",
+        "don't",
+        "doesn't",
+        "didn't",
+    }
     # Build token index mapping
     tokens = _tokenize(text)
     # Map character offsets to token indices (approximate)
@@ -56,58 +69,147 @@ def _has_negation_near(text: str, span: Tuple[int, int], window_tokens: int = 5)
 # Expanded controlled substances and common brand names/synonyms.
 CONTROLLED_SUBSTANCES = {
     # Opioids
-    "oxycodone", "oxycontin", "percocet", "hydromorphone", "dilaudid",
-    "morphine", "hydrocodone", "vicodin", "codeine", "tramadol",
-    "fentanyl", "patch",  # patch combined with fentanyl is common; handled carefully via patterns below
-    "methadone", "buprenorphine", "suboxone", "subutex",
+    "oxycodone",
+    "oxycontin",
+    "percocet",
+    "hydromorphone",
+    "dilaudid",
+    "morphine",
+    "hydrocodone",
+    "vicodin",
+    "codeine",
+    "tramadol",
+    "fentanyl",
+    "patch",  # patch combined with fentanyl is common; handled carefully via patterns below
+    "methadone",
+    "buprenorphine",
+    "suboxone",
+    "subutex",
     # Stimulants / benzodiazepines
-    "amphetamine", "dextroamphetamine", "adderall", "methylphenidate", "ritalin",
-    "alprazolam", "xanax", "diazepam", "valium", "clonazepam", "klonopin", "lorazepam", "ativan",
+    "amphetamine",
+    "dextroamphetamine",
+    "adderall",
+    "methylphenidate",
+    "ritalin",
+    "alprazolam",
+    "xanax",
+    "diazepam",
+    "valium",
+    "clonazepam",
+    "klonopin",
+    "lorazepam",
+    "ativan",
 }
 
 # Conditions, including broader coverage and key contraindication risk flags
 CONDITIONS = {
-    "pregnancy", "pregnant", "breastfeeding", "postpartum", "trimester",
-    "kidney failure", "renal failure", "ckd", "dialysis",
-    "liver disease", "cirrhosis", "hepatic failure", "hepatitis",
-    "hypertension", "high blood pressure",
-    "asthma", "copd",
-    "diabetes", "diabetic", "hyperglycemia", "hypoglycemia",
+    "pregnancy",
+    "pregnant",
+    "breastfeeding",
+    "postpartum",
+    "trimester",
+    "kidney failure",
+    "renal failure",
+    "ckd",
+    "dialysis",
+    "liver disease",
+    "cirrhosis",
+    "hepatic failure",
+    "hepatitis",
+    "hypertension",
+    "high blood pressure",
+    "asthma",
+    "copd",
+    "diabetes",
+    "diabetic",
+    "hyperglycemia",
+    "hypoglycemia",
     "sleep apnea",
 }
 
 # Medication intent verbs to distinguish "request/usage" vs mere mention
 MEDICATION_INTENT_VERBS = {
-    "prescribe", "refill", "dose", "dosing", "take", "took", "takin", "taking",
-    "give", "gave", "administer", "administered", "need", "want", "get", "buy", "purchase",
+    "prescribe",
+    "refill",
+    "dose",
+    "dosing",
+    "take",
+    "took",
+    "takin",
+    "taking",
+    "give",
+    "gave",
+    "administer",
+    "administered",
+    "need",
+    "want",
+    "get",
+    "buy",
+    "purchase",
 }
 
 # Prompt injection / override expansion
 OVERRIDE_PHRASES = {
-    "ignore safety", "ignore policy", "ignore policies", "bypass safety", "bypass policy", "bypass policies",
-    "override safety", "override policy", "override policies", "forget your guidelines", "no disclaimers",
-    "uncensored", "without warnings", "no warnings", "no filter", "no filtering",
+    "ignore safety",
+    "ignore policy",
+    "ignore policies",
+    "bypass safety",
+    "bypass policy",
+    "bypass policies",
+    "override safety",
+    "override policy",
+    "override policies",
+    "forget your guidelines",
+    "no disclaimers",
+    "uncensored",
+    "without warnings",
+    "no warnings",
+    "no filter",
+    "no filtering",
 }
 ROLEPLAY_PHRASES = {
-    "act as a doctor", "act as an expert", "act as a clinician", "act as a pharmacist",
-    "you are a doctor", "you are a physician", "you are a clinician", "you are a pharmacist",
-    "roleplay as a doctor", "break character",
+    "act as a doctor",
+    "act as an expert",
+    "act as a clinician",
+    "act as a pharmacist",
+    "you are a doctor",
+    "you are a physician",
+    "you are a clinician",
+    "you are a pharmacist",
+    "roleplay as a doctor",
+    "break character",
 }
 
 # Emergency / acute intent patterns with broader coverage
 EMERGENCY_PATTERNS = {
-    "self_harm": re.compile(r"\b(suicide|kill myself|self[\-\s]?harm|end my life|hurt myself)\b", re.IGNORECASE),
-    "overdose": re.compile(r"\b(overdose|od|took too many|too many (pills|tablets|tabs)|excess (pills|medication))\b", re.IGNORECASE),
-    "acute_distress": re.compile(r"\b(chest pain|shortness of breath|sob|stroke symptoms|one side weak|face droop|slurred speech)\b", re.IGNORECASE),
+    "self_harm": re.compile(
+        r"\b(suicide|kill myself|self[\-\s]?harm|end my life|hurt myself)\b", re.IGNORECASE
+    ),
+    "overdose": re.compile(
+        r"\b(overdose|od|took too many|too many (pills|tablets|tabs)|excess (pills|medication))\b",
+        re.IGNORECASE,
+    ),
+    "acute_distress": re.compile(
+        r"\b(chest pain|shortness of breath|sob|stroke symptoms|one side weak|face droop|slurred speech)\b",
+        re.IGNORECASE,
+    ),
 }
 
 # Time-urgency qualifiers
-URGENCY_TERMS = _regex_union({"now", "right now", "immediately", "asap", "urgent", "tonight", "today", "this instant"})
+URGENCY_TERMS = _regex_union(
+    {"now", "right now", "immediately", "asap", "urgent", "tonight", "today", "this instant"}
+)
 
 # Dosage, route, frequency extraction
-RE_DOSAGE = re.compile(r"\b(\d+(?:\.\d+)?)\s?(mg|mcg|g|ml|milligrams?|micrograms?|grams?|milliliters?)\b", re.IGNORECASE)
+RE_DOSAGE = re.compile(
+    r"\b(\d+(?:\.\d+)?)\s?(mg|mcg|g|ml|milligrams?|micrograms?|grams?|milliliters?)\b",
+    re.IGNORECASE,
+)
 RE_QUANTITY = re.compile(r"\b(\d+)\s?(pills?|tabs?|tablets?|caps?|capsules?)\b", re.IGNORECASE)
-RE_ROUTE = re.compile(r"\b(iv|im|po|subq|sc|sl|oral|intravenous|intramuscular|subcutaneous|sublingual|patch|inhaled|topical|transdermal)\b", re.IGNORECASE)
+RE_ROUTE = re.compile(
+    r"\b(iv|im|po|subq|sc|sl|oral|intravenous|intramuscular|subcutaneous|sublingual|patch|inhaled|topical|transdermal)\b",
+    re.IGNORECASE,
+)
 RE_FREQUENCY = re.compile(
     r"\b(q\d+h|qid|tid|bid|qd|qhs|qod|once daily|twice daily|three times daily|every \d+\s?(hours?|hrs?|days?))\b",
     re.IGNORECASE,
@@ -119,8 +221,14 @@ CONDITIONS_RX = _regex_union(CONDITIONS)
 MEDICATION_INTENT_VERBS_RX = _regex_union(MEDICATION_INTENT_VERBS)
 
 OVERRIDE_PATTERNS = [
-    re.compile(r"(ignore|bypass|override)\s+(safety|policy|policies|instructions|guidelines)", re.IGNORECASE),
-    re.compile(r"(forget|disable|turn off)\s+(safety|policy|policies|instructions|guidelines|filters?)", re.IGNORECASE),
+    re.compile(
+        r"(ignore|bypass|override)\s+(safety|policy|policies|instructions|guidelines)",
+        re.IGNORECASE,
+    ),
+    re.compile(
+        r"(forget|disable|turn off)\s+(safety|policy|policies|instructions|guidelines|filters?)",
+        re.IGNORECASE,
+    ),
     re.compile(r"no\s+(warnings|disclaimers|filter|filters)", re.IGNORECASE),
     _regex_union(OVERRIDE_PHRASES, word_boundary=False),
     re.compile(r"act as (?:a|an)\s+(doctor|clinician|pharmacist|physician|expert)", re.IGNORECASE),
@@ -131,6 +239,7 @@ OVERRIDE_PATTERNS = [
 # -----------------------------
 # Data Structures
 # -----------------------------
+
 
 @dataclass
 class Match:
@@ -184,6 +293,7 @@ class Analysis:
 # Core Analyzer
 # -----------------------------
 
+
 class ClinicalRiskAnalyzer:
     """
     Advanced analyzer for clinical risk and manipulation signals.
@@ -204,22 +314,35 @@ class ClinicalRiskAnalyzer:
         self.negation_window_tokens = negation_window_tokens
 
     @staticmethod
-    def _find_all(pattern: re.Pattern, text: str, label: str, negation_window_tokens: int) -> List[Match]:
+    def _find_all(
+        pattern: re.Pattern, text: str, label: str, negation_window_tokens: int
+    ) -> List[Match]:
         results: List[Match] = []
         for m in pattern.finditer(text):
             span = m.span()
             neg = _has_negation_near(text, span, window_tokens=negation_window_tokens)
-            results.append(Match(label=label, text=m.group(0), start=span[0], end=span[1], negated=neg))
+            results.append(
+                Match(label=label, text=m.group(0), start=span[0], end=span[1], negated=neg)
+            )
         return results
 
     def extract_entities(self, text: str) -> Extraction:
-        meds = self._find_all(CONTROLLED_SUBSTANCES_RX, text, "medication", self.negation_window_tokens)
+        meds = self._find_all(
+            CONTROLLED_SUBSTANCES_RX, text, "medication", self.negation_window_tokens
+        )
         conds = self._find_all(CONDITIONS_RX, text, "condition", self.negation_window_tokens)
         dosages = self._find_all(RE_DOSAGE, text, "dosage", self.negation_window_tokens)
         qtys = self._find_all(RE_QUANTITY, text, "quantity", self.negation_window_tokens)
         routes = self._find_all(RE_ROUTE, text, "route", self.negation_window_tokens)
         freqs = self._find_all(RE_FREQUENCY, text, "frequency", self.negation_window_tokens)
-        return Extraction(medications=meds, conditions=conds, dosages=dosages, quantities=qtys, routes=routes, frequencies=freqs)
+        return Extraction(
+            medications=meds,
+            conditions=conds,
+            dosages=dosages,
+            quantities=qtys,
+            routes=routes,
+            frequencies=freqs,
+        )
 
     def detect_manipulation(self, text: str) -> ManipulationScores:
         pi_hits = []
@@ -237,7 +360,9 @@ class ClinicalRiskAnalyzer:
             if pat.search(text):
                 # Negation-aware: if negation near the first match, treat as None
                 m = pat.search(text)
-                if m and _has_negation_near(text, m.span(), window_tokens=self.negation_window_tokens):
+                if m and _has_negation_near(
+                    text, m.span(), window_tokens=self.negation_window_tokens
+                ):
                     continue
                 emerg_label = label
                 break
@@ -263,13 +388,19 @@ class ClinicalRiskAnalyzer:
             medication_request_intent=medication_request_intent,
         )
 
-    def overall_score(self, manipulation: ManipulationScores, clinical: ClinicalFlags, safety: SafetySignals) -> float:
+    def overall_score(
+        self, manipulation: ManipulationScores, clinical: ClinicalFlags, safety: SafetySignals
+    ) -> float:
         w = self.WEIGHTS
         score = 0.0
         score += w["prompt_injection"] * manipulation.prompt_injection
         score += w["override_attempt"] * (1.0 if manipulation.override_attempt else 0.0)
-        score += w["contraindication_possible"] * (1.0 if clinical.contraindication_possible else 0.0)
-        score += w["medication_request_intent"] * (1.0 if clinical.medication_request_intent else 0.0)
+        score += w["contraindication_possible"] * (
+            1.0 if clinical.contraindication_possible else 0.0
+        )
+        score += w["medication_request_intent"] * (
+            1.0 if clinical.medication_request_intent else 0.0
+        )
         score += w["emergency_intent"] * (1.0 if safety.emergency_intent else 0.0)
         score += w["urgency"] * (1.0 if safety.urgency else 0.0)
         return max(0.0, min(1.0, score))
@@ -295,11 +426,13 @@ class ClinicalRiskAnalyzer:
 # Backwards-compatible shim
 # -----------------------------
 
+
 class ClinicalSignals:
     """
     Backwards-compatible facade preserving the original simple methods.
     Internally delegates to ClinicalRiskAnalyzer for improved accuracy.
     """
+
     def __init__(self, text: str):
         self.text = text or ""
         self._analyzer = ClinicalRiskAnalyzer()

@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-import dataclasses
 import logging
 import re
 from dataclasses import dataclass
@@ -21,6 +20,7 @@ class ComplianceFramework(str, Enum):
 
     Subclassing str helps JSON serialization and logs remain human-friendly.
     """
+
     HIPAA = "HIPAA"
     SOC2 = "SOC2"
     UK_GDPR = "UK GDPR"
@@ -33,6 +33,7 @@ class ComplianceFramework(str, Enum):
 
 class GeofencingPolicy(str, Enum):
     """Default policy for geofencing behavior, if relevant to the region."""
+
     OPEN = "open"
     RESTRICTED = "restricted"
     MISSION_ONLY = "mission_only"
@@ -70,6 +71,7 @@ class RegionProfile:
       - last_reviewed_at: Optional date for auditability/governance.
       - schema_version: Optional schema version of this profile structure.
     """
+
     region: Region
     compliance: Tuple[ComplianceFramework, ...]
     locales: Tuple[str, ...]
@@ -81,7 +83,7 @@ class RegionProfile:
 
     def __post_init__(self) -> None:
         # Ensure uniqueness and normalization of locales
-        normalized_locales = tuple(sorted({ _normalize_locale(l) for l in self.locales }))
+        normalized_locales = tuple(sorted({_normalize_locale(l) for l in self.locales}))
         object.__setattr__(self, "locales", normalized_locales)
 
         # Ensure uniqueness of compliance frameworks
@@ -117,7 +119,9 @@ class RegionProfile:
             "data_residency_required": self.data_residency_required,
             "export_controls_required": self.export_controls_required,
             "default_geofencing_policy": self.default_geofencing_policy.value,
-            "last_reviewed_at": self.last_reviewed_at.isoformat() if self.last_reviewed_at else None,
+            "last_reviewed_at": (
+                self.last_reviewed_at.isoformat() if self.last_reviewed_at else None
+            ),
             "schema_version": self.schema_version,
         }
 
@@ -154,7 +158,11 @@ _BUILTIN_REGION_PROFILES: dict[Region, RegionProfile] = {
     ),
     Region.UK: _mk_profile(
         region=Region.UK,
-        compliance=(ComplianceFramework.UK_GDPR, ComplianceFramework.DPA_2018, ComplianceFramework.NHS_DSPT),
+        compliance=(
+            ComplianceFramework.UK_GDPR,
+            ComplianceFramework.DPA_2018,
+            ComplianceFramework.NHS_DSPT,
+        ),
         locales=("en_GB",),
         data_residency_required=True,
         export_controls_required=False,
@@ -243,7 +251,9 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
 
         base = merged.get(region)
 
-        def _cf_list(values: Iterable[str | ComplianceFramework]) -> Tuple[ComplianceFramework, ...]:
+        def _cf_list(
+            values: Iterable[str | ComplianceFramework],
+        ) -> Tuple[ComplianceFramework, ...]:
             out = []
             for v in values:
                 if isinstance(v, ComplianceFramework):
@@ -252,22 +262,22 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
                     try:
                         out.append(ComplianceFramework(v))
                     except ValueError as exc:
-                        raise ValueError(f"Unknown compliance framework '{v}' for region '{region_name}'") from exc
+                        raise ValueError(
+                            f"Unknown compliance framework '{v}' for region '{region_name}'"
+                        ) from exc
             return tuple(out)
 
         compliance = _cf_list(spec.get("compliance", base.compliance if base else ()))
         locales = tuple(spec.get("locales", base.locales if base else ()))
-        data_residency_required = bool(spec.get(
-            "data_residency_required",
-            base.data_residency_required if base else False
-        ))
-        export_controls_required = bool(spec.get(
-            "export_controls_required",
-            base.export_controls_required if base else False
-        ))
+        data_residency_required = bool(
+            spec.get("data_residency_required", base.data_residency_required if base else False)
+        )
+        export_controls_required = bool(
+            spec.get("export_controls_required", base.export_controls_required if base else False)
+        )
         geofence_str = spec.get(
             "default_geofencing_policy",
-            base.default_geofencing_policy.value if base else GeofencingPolicy.OPEN.value
+            base.default_geofencing_policy.value if base else GeofencingPolicy.OPEN.value,
         )
         try:
             default_geofencing_policy = GeofencingPolicy(geofence_str)
@@ -276,7 +286,10 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
                 f"Invalid default_geofencing_policy '{geofence_str}' for region '{region_name}'"
             ) from exc
 
-        lra = spec.get("last_reviewed_at", base.last_reviewed_at.isoformat() if (base and base.last_reviewed_at) else None)
+        lra = spec.get(
+            "last_reviewed_at",
+            base.last_reviewed_at.isoformat() if (base and base.last_reviewed_at) else None,
+        )
         last_reviewed_at = date.fromisoformat(lra) if isinstance(lra, str) else None
         schema_version = spec.get("schema_version", base.schema_version if base else "1.0")
 
@@ -300,6 +313,7 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
 # - 'phi_locales' -> use 'locales'
 # - 'export_controls_enabled' -> use 'export_controls_required'
 # You can also provide a thin adapter function to emit legacy dicts if needed.
+
 
 def as_legacy_dict(profile: RegionProfile) -> dict:
     """Produce a legacy-shaped dict compatible with older code paths."""

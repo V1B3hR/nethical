@@ -16,7 +16,10 @@ def contextual_intent(text: str) -> str:
     # Whole-word negation detection
     if re.search(r"\b(?:not|don't|do\s+not)\b", t):
         return "negation"
-    if re.match(r"^(delete|remove|modify|change|update|connect|download|upload|request|fetch|send|execute|run|start)\b", t):
+    if re.match(
+        r"^(delete|remove|modify|change|update|connect|download|upload|request|fetch|send|execute|run|start)\b",
+        t,
+    ):
         return "command"
     if t.endswith("?"):
         return "question"
@@ -31,6 +34,7 @@ def contextual_intent(text: str) -> str:
 # filesystem_manipulation: Direct filesystem changes in critical directories or devices.
 # cloud_api_interaction: Potential cloud resource or IAM modifications.
 # sensitive_data_exposure: Attempts to read or dump confidential information.
+
 
 class SafetyViolationDetector(BaseDetector):
     """Detects safety constraint violations in agent actions (advanced version)."""

@@ -11,7 +11,15 @@ for AI agents, including:
 
 from typing import Any, Dict, Optional
 
-from .core.governance import SafetyGovernance, AgentAction as _AgentAction, SafetyViolation, JudgmentResult, MonitoringConfig, ActionType
+from .core.governance import (
+    SafetyGovernance,
+    AgentAction as _AgentAction,
+    SafetyViolation,
+    JudgmentResult,
+    MonitoringConfig,
+    ActionType,
+)
+
 
 def AgentAction(
     id: Optional[str] = None,
@@ -22,7 +30,7 @@ def AgentAction(
     content: Optional[str] = None,
     action_type: Optional[ActionType] = None,
     context: Optional[Dict[str, Any]] = None,
-    **kwargs: Any
+    **kwargs: Any,
 ) -> _AgentAction:
     """Compatibility wrapper for AgentAction that accepts both old and new APIs."""
     # Handle backward compatibility
@@ -34,7 +42,7 @@ def AgentAction(
         content = actual_action  # Use actual_action as content if no content provided
     if actual_action is not None and content == stated_intent:
         content = actual_action  # Prefer actual_action over stated_intent for content
-    
+
     # Set defaults for required fields
     if action_type is None:
         action_type = ActionType.RESPONSE
@@ -42,7 +50,7 @@ def AgentAction(
         content = stated_intent or actual_action or ""
     if context is None:
         context = {}
-    
+
     # Create agent action with new API
     agent_action = _AgentAction(
         action_id=action_id,
@@ -50,15 +58,22 @@ def AgentAction(
         action_type=action_type,
         content=content,
         context=context,
-        **kwargs
+        **kwargs,
     )
-    
+
     # Add compatibility attributes
     agent_action.id = action_id
     agent_action.stated_intent = stated_intent or content
     agent_action.actual_action = actual_action or content
-    
+
     return agent_action
 
+
 __version__ = "0.1.0"
-__all__ = ["SafetyGovernance", "AgentAction", "SafetyViolation", "JudgmentResult", "MonitoringConfig"]
+__all__ = [
+    "SafetyGovernance",
+    "AgentAction",
+    "SafetyViolation",
+    "JudgmentResult",
+    "MonitoringConfig",
+]

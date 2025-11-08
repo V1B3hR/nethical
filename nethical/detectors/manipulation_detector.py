@@ -1,4 +1,5 @@
 """Detector for manipulation techniques with advanced dark psychology patterns."""
+
 import re
 import uuid
 from typing import List, Optional, Dict, Tuple
@@ -27,178 +28,348 @@ class ManipulationDetector(BaseDetector):
         self.manipulation_patterns: Dict[str, List[str]] = {
             # CORE EMOTIONAL MANIPULATION
             "emotional_manipulation": [
-                "fear", "urgent", "emergency", "panic", "worry", "scared",
-                "guilt", "shame", "disappointed", "sad", "upset",
-                "anxious", "terrified", "afraid", "alarming", "distressing",
-                "you'll feel bad", "you will feel bad",
-                "if you cared", "as a good person", "you should be ashamed",
-                "the right thing to do", "think of the consequences",
-                "you wouldn't want that", "don't let everyone down",
-                "break your heart", "devastated", "crushed",
-                "you're breaking my heart", "this hurts me",
-                "i'm so disappointed in you", "how could you",
-                "after all i've sacrificed", "ungrateful",
-                "selfish", "heartless", "cold", "uncaring",
+                "fear",
+                "urgent",
+                "emergency",
+                "panic",
+                "worry",
+                "scared",
+                "guilt",
+                "shame",
+                "disappointed",
+                "sad",
+                "upset",
+                "anxious",
+                "terrified",
+                "afraid",
+                "alarming",
+                "distressing",
+                "you'll feel bad",
+                "you will feel bad",
+                "if you cared",
+                "as a good person",
+                "you should be ashamed",
+                "the right thing to do",
+                "think of the consequences",
+                "you wouldn't want that",
+                "don't let everyone down",
+                "break your heart",
+                "devastated",
+                "crushed",
+                "you're breaking my heart",
+                "this hurts me",
+                "i'm so disappointed in you",
+                "how could you",
+                "after all i've sacrificed",
+                "ungrateful",
+                "selfish",
+                "heartless",
+                "cold",
+                "uncaring",
             ],
-            
             # AUTHORITY & POWER ABUSE
             "authority_manipulation": [
-                "authority", "boss", "superior", "command", "order", "must",
-                "required", "mandatory", "compliance", "obey",
-                "official", "policy", "by decree", "per policy",
-                "security team", "it admin", "administrator",
-                "ceo", "cfo", "cto", "legal department", "compliance department",
-                "internal audit", "risk management", "chain of command",
-                "executive order", "company directive", "non-negotiable",
-                "standard operating procedure", "sop", "protocol",
-                "regulation", "directive", "authorized personnel",
+                "authority",
+                "boss",
+                "superior",
+                "command",
+                "order",
+                "must",
+                "required",
+                "mandatory",
+                "compliance",
+                "obey",
+                "official",
+                "policy",
+                "by decree",
+                "per policy",
+                "security team",
+                "it admin",
+                "administrator",
+                "ceo",
+                "cfo",
+                "cto",
+                "legal department",
+                "compliance department",
+                "internal audit",
+                "risk management",
+                "chain of command",
+                "executive order",
+                "company directive",
+                "non-negotiable",
+                "standard operating procedure",
+                "sop",
+                "protocol",
+                "regulation",
+                "directive",
+                "authorized personnel",
             ],
-            
             # SOCIAL INFLUENCE
             "social_proof": [
-                "everyone", "everybody", "all", "popular", "trending",
-                "majority", "consensus", "widely accepted",
-                "people are saying", "most people", "millions use",
-                "viral", "5-star", "five star", "testimonials", "best seller",
-                "award-winning", "as seen on", "industry standard",
-                "certified", "approved by", "backed by science",
-                "doctor recommended", "expert endorsed", "peer reviewed",
-                "trusted by millions", "globally recognized",
-                "market leader", "number one choice",
+                "everyone",
+                "everybody",
+                "all",
+                "popular",
+                "trending",
+                "majority",
+                "consensus",
+                "widely accepted",
+                "people are saying",
+                "most people",
+                "millions use",
+                "viral",
+                "5-star",
+                "five star",
+                "testimonials",
+                "best seller",
+                "award-winning",
+                "as seen on",
+                "industry standard",
+                "certified",
+                "approved by",
+                "backed by science",
+                "doctor recommended",
+                "expert endorsed",
+                "peer reviewed",
+                "trusted by millions",
+                "globally recognized",
+                "market leader",
+                "number one choice",
             ],
-            
             # URGENCY & SCARCITY
             "scarcity": [
-                "limited", "scarce", "rare", "exclusive", "only", "last",
-                "running out", "deadline", "expires", "while supplies last",
-                "limited time", "act now", "today only", "offer ends",
-                "offer ends soon", "don't miss out", "before it's too late",
-                "final chance", "ends tonight", "time-sensitive",
-                "going fast", "almost gone", "selling out",
-                "flash sale", "doorbuster", "clearance",
-                "last call", "final hours", "closing soon",
+                "limited",
+                "scarce",
+                "rare",
+                "exclusive",
+                "only",
+                "last",
+                "running out",
+                "deadline",
+                "expires",
+                "while supplies last",
+                "limited time",
+                "act now",
+                "today only",
+                "offer ends",
+                "offer ends soon",
+                "don't miss out",
+                "before it's too late",
+                "final chance",
+                "ends tonight",
+                "time-sensitive",
+                "going fast",
+                "almost gone",
+                "selling out",
+                "flash sale",
+                "doorbuster",
+                "clearance",
+                "last call",
+                "final hours",
+                "closing soon",
             ],
-            
             # RECIPROCITY & OBLIGATION
             "reciprocity": [
-                "favor", "owe", "return", "exchange", "give back",
-                "repay", "grateful", "appreciate", "thank you",
-                "do me a favor", "i'll owe you", "quid pro quo",
-                "i did this for you", "since i helped you",
+                "favor",
+                "owe",
+                "return",
+                "exchange",
+                "give back",
+                "repay",
+                "grateful",
+                "appreciate",
+                "thank you",
+                "do me a favor",
+                "i'll owe you",
+                "quid pro quo",
+                "i did this for you",
+                "since i helped you",
                 "after everything i've done for you",
-                "the least you can do", "you owe me",
-                "i went out of my way", "made sacrifices",
-                "i've always been there", "remember when i",
+                "the least you can do",
+                "you owe me",
+                "i went out of my way",
+                "made sacrifices",
+                "i've always been there",
+                "remember when i",
             ],
-            
             # LOVE BOMBING
             "love_bombing": [
-                "love bombing", "you're the only one", "you are the only one",
-                "soulmate", "meant to be", "perfect match", "destiny",
-                "i can't live without you", "can't live without you",
-                "unconditional love", "forever and always", "too good to be true",
-                "grand gesture", "shower you with gifts", "you're perfect",
-                "we were made for each other", "love at first sight",
-                "i'll take care of everything", "you complete me",
-                "never felt this way", "twin flame",
-                "you're my everything", "my whole world",
-                "soul connection", "divine timing", "universe brought us together",
-                "instant connection", "magnetic pull", "chemistry",
+                "love bombing",
+                "you're the only one",
+                "you are the only one",
+                "soulmate",
+                "meant to be",
+                "perfect match",
+                "destiny",
+                "i can't live without you",
+                "can't live without you",
+                "unconditional love",
+                "forever and always",
+                "too good to be true",
+                "grand gesture",
+                "shower you with gifts",
+                "you're perfect",
+                "we were made for each other",
+                "love at first sight",
+                "i'll take care of everything",
+                "you complete me",
+                "never felt this way",
+                "twin flame",
+                "you're my everything",
+                "my whole world",
+                "soul connection",
+                "divine timing",
+                "universe brought us together",
+                "instant connection",
+                "magnetic pull",
+                "chemistry",
             ],
-            
             # GASLIGHTING
             "gaslighting": [
-                "you're imagining things", "you are imagining things",
-                "that's not what happened", "that is not what happened",
-                "you're overreacting", "you are overreacting",
-                "you're being paranoid", "you are being paranoid",
-                "you're crazy", "you are crazy",
-                "making this up", "no one else thinks that",
-                "i never said that", "it's all in your head",
-                "you're misremembering", "you are misremembering",
-                "you always do this", "you never remember right",
-                "why are you making a scene", "you're too sensitive",
-                "that never happened", "you're delusional",
-                "you're being irrational", "calm down",
-                "you're hysterical", "stop being emotional",
-                "you're confusing things", "your memory is wrong",
-                "i have proof you're wrong", "everyone agrees with me",
+                "you're imagining things",
+                "you are imagining things",
+                "that's not what happened",
+                "that is not what happened",
+                "you're overreacting",
+                "you are overreacting",
+                "you're being paranoid",
+                "you are being paranoid",
+                "you're crazy",
+                "you are crazy",
+                "making this up",
+                "no one else thinks that",
+                "i never said that",
+                "it's all in your head",
+                "you're misremembering",
+                "you are misremembering",
+                "you always do this",
+                "you never remember right",
+                "why are you making a scene",
+                "you're too sensitive",
+                "that never happened",
+                "you're delusional",
+                "you're being irrational",
+                "calm down",
+                "you're hysterical",
+                "stop being emotional",
+                "you're confusing things",
+                "your memory is wrong",
+                "i have proof you're wrong",
+                "everyone agrees with me",
             ],
-            
             # THREATS & INTIMIDATION
             "threats_intimidation": [
-                "or else", "you'll regret", "you will regret",
-                "last warning", "final notice", "we will take action",
-                "legal action", "report you", "blacklist", "ban you",
-                "suspend your account", "shut you down", "consequences",
-                "this is your final chance", "comply or else",
-                "don't make me escalate this", "you've been warned",
-                "don't test me", "you don't want to see what happens",
-                "watch your back", "be careful", "you're playing with fire",
-                "i have connections", "i know people",
-                "make your life difficult", "ruin your reputation",
+                "or else",
+                "you'll regret",
+                "you will regret",
+                "last warning",
+                "final notice",
+                "we will take action",
+                "legal action",
+                "report you",
+                "blacklist",
+                "ban you",
+                "suspend your account",
+                "shut you down",
+                "consequences",
+                "this is your final chance",
+                "comply or else",
+                "don't make me escalate this",
+                "you've been warned",
+                "don't test me",
+                "you don't want to see what happens",
+                "watch your back",
+                "be careful",
+                "you're playing with fire",
+                "i have connections",
+                "i know people",
+                "make your life difficult",
+                "ruin your reputation",
             ],
-            
             # PHISHING & PRETEXTING
             "phishing_pretexting": [
-                "verify your account", "reset your password",
-                "suspicious activity", "confirm your identity",
-                "account locked", "unauthorized login", "security alert",
-                "click the link", "update your credentials",
-                "your account will be closed", "urgent verification",
-                "we detected unusual activity", "invoice attached",
-                "payment overdue", "shared folder", "action required",
-                "validate your information", "re-authenticate",
-                "security breach", "compromised account",
-                "immediate action needed", "confirm you're not a robot",
+                "verify your account",
+                "reset your password",
+                "suspicious activity",
+                "confirm your identity",
+                "account locked",
+                "unauthorized login",
+                "security alert",
+                "click the link",
+                "update your credentials",
+                "your account will be closed",
+                "urgent verification",
+                "we detected unusual activity",
+                "invoice attached",
+                "payment overdue",
+                "shared folder",
+                "action required",
+                "validate your information",
+                "re-authenticate",
+                "security breach",
+                "compromised account",
+                "immediate action needed",
+                "confirm you're not a robot",
             ],
-            
             # INCREMENTAL COMMITMENT
             "foot_in_the_door": [
-                "just a small favor", "just a quick question",
-                "only take a minute", "could you start by",
-                "since you've already", "now that we've started",
-                "as a first step", "just this once",
-                "one small thing", "tiny request",
-                "real quick", "won't take long",
-                "while you're at it", "since you're already here",
+                "just a small favor",
+                "just a quick question",
+                "only take a minute",
+                "could you start by",
+                "since you've already",
+                "now that we've started",
+                "as a first step",
+                "just this once",
+                "one small thing",
+                "tiny request",
+                "real quick",
+                "won't take long",
+                "while you're at it",
+                "since you're already here",
             ],
-            
             # CONTRAST MANIPULATION
             "door_in_the_face": [
-                "if you can't do that, maybe", "if you cannot do that, maybe",
-                "the least you can do", "bare minimum",
-                "at least do this", "okay then just",
-                "can you at least", "how about just",
-                "that's not too much to ask", "surely you can",
-                "come on, just", "fine, then",
+                "if you can't do that, maybe",
+                "if you cannot do that, maybe",
+                "the least you can do",
+                "bare minimum",
+                "at least do this",
+                "okay then just",
+                "can you at least",
+                "how about just",
+                "that's not too much to ask",
+                "surely you can",
+                "come on, just",
+                "fine, then",
             ],
-            
             # BINARY THINKING
             "false_dichotomy": [
                 "if you're not with us you're against us",
                 "there is no middle ground",
                 "you either care or you don't",
-                "black and white", "all or nothing",
-                "love me or leave me", "yes or no",
-                "it's that simple", "pick a side",
+                "black and white",
+                "all or nothing",
+                "love me or leave me",
+                "yes or no",
+                "it's that simple",
+                "pick a side",
                 "you're either part of the solution or the problem",
             ],
-            
             # FEAR UNCERTAINTY DOUBT
             "fud": [
                 "can you afford to ignore",
                 "imagine losing everything",
                 "what happens when it fails",
                 "the risks are too high",
-                "you'll lose out", "don't be left behind",
+                "you'll lose out",
+                "don't be left behind",
                 "what if something goes wrong",
                 "you could lose everything",
                 "think about the worst case",
                 "better safe than sorry",
                 "you never know what might happen",
             ],
-            
             # MORAL COERCION
             "moral_blackmail": [
                 "a good person would",
@@ -206,48 +377,63 @@ class ManipulationDetector(BaseDetector):
                 "do the right thing",
                 "what would your family think",
                 "you owe it to everyone",
-                "if you had a heart", "morally obligated",
+                "if you had a heart",
+                "morally obligated",
                 "your conscience should tell you",
-                "think about your soul", "karma will get you",
-                "god is watching", "what would jesus do",
+                "think about your soul",
+                "karma will get you",
+                "god is watching",
+                "what would jesus do",
                 "be a decent human being",
             ],
-            
             # FLATTERY & CHARM OFFENSIVE
             "flattery_charm": [
-                "you're the best", "you're brilliant", "you're exceptional",
-                "only you can handle this", "as our top performer",
-                "your work is incredible", "genius",
-                "you're amazing", "so talented", "uniquely qualified",
-                "natural born leader", "visionary",
-                "ahead of your time", "elite", "chosen one",
-                "you have a gift", "special abilities",
+                "you're the best",
+                "you're brilliant",
+                "you're exceptional",
+                "only you can handle this",
+                "as our top performer",
+                "your work is incredible",
+                "genius",
+                "you're amazing",
+                "so talented",
+                "uniquely qualified",
+                "natural born leader",
+                "visionary",
+                "ahead of your time",
+                "elite",
+                "chosen one",
+                "you have a gift",
+                "special abilities",
             ],
-            
             # SUNK COST FALLACY
             "sunk_cost": [
                 "we've already invested so much",
                 "don't waste what we've done",
                 "too late to turn back",
                 "we're in too deep",
-                "after all this time", "look how far we've come",
-                "think of all the effort", "all that work for nothing",
-                "point of no return", "can't quit now",
+                "after all this time",
+                "look how far we've come",
+                "think of all the effort",
+                "all that work for nothing",
+                "point of no return",
+                "can't quit now",
                 "we've come this far",
             ],
-            
             # COMMITMENT & CONSISTENCY
             "commitment_consistency": [
                 "you said earlier that you'd help",
                 "as you agreed before",
                 "be consistent with your commitment",
-                "you promised", "stick to your word",
+                "you promised",
+                "stick to your word",
                 "you're a person of your word",
-                "you always said", "remember what you told me",
+                "you always said",
+                "remember what you told me",
                 "don't go back on your word",
-                "your track record", "stay true to yourself",
+                "your track record",
+                "stay true to yourself",
             ],
-            
             # REVERSE PSYCHOLOGY
             "reverse_psychology": [
                 "i bet you can't",
@@ -268,7 +454,6 @@ class ManipulationDetector(BaseDetector):
                 "weak people give up",
                 "prove me wrong if you can",
             ],
-            
             # TRIANGULATION
             "triangulation": [
                 "they said you",
@@ -286,7 +471,6 @@ class ManipulationDetector(BaseDetector):
                 "behind your back",
                 "water cooler talk",
             ],
-            
             # PROJECTION
             "projection": [
                 "you're the one who",
@@ -301,7 +485,6 @@ class ManipulationDetector(BaseDetector):
                 "takes one to know one",
                 "check yourself",
             ],
-            
             # SILENT TREATMENT & WITHDRAWAL
             "silent_treatment": [
                 "i'm not talking to you",
@@ -317,7 +500,6 @@ class ManipulationDetector(BaseDetector):
                 "pretending you don't exist",
                 "acting like you're not here",
             ],
-            
             # WORD SALAD & CONFUSION
             "word_salad": [
                 "circular logic",
@@ -333,7 +515,6 @@ class ManipulationDetector(BaseDetector):
                 "you need higher intelligence",
                 "nuanced perspective",
             ],
-            
             # MOVING GOALPOSTS
             "moving_goalposts": [
                 "that's not good enough",
@@ -350,7 +531,6 @@ class ManipulationDetector(BaseDetector):
                 "new standards",
                 "changed my mind",
             ],
-            
             # PLAYING VICTIM
             "victimhood": [
                 "poor me",
@@ -367,7 +547,6 @@ class ManipulationDetector(BaseDetector):
                 "persecution complex",
                 "martyrdom",
             ],
-            
             # COVERT CONTRACTS
             "covert_contracts": [
                 "i expected you would",
@@ -383,7 +562,6 @@ class ManipulationDetector(BaseDetector):
                 "reading between the lines",
                 "obvious hint",
             ],
-            
             # SELECTIVE MEMORY
             "selective_memory": [
                 "i don't recall",
@@ -398,7 +576,6 @@ class ManipulationDetector(BaseDetector):
                 "my recollection differs",
                 "foggy memory",
             ],
-            
             # MINIMIZATION
             "minimization": [
                 "it's not a big deal",
@@ -415,7 +592,6 @@ class ManipulationDetector(BaseDetector):
                 "get over it",
                 "let it go",
             ],
-            
             # DEFLECTION
             "deflection": [
                 "what about when you",
@@ -431,7 +607,6 @@ class ManipulationDetector(BaseDetector):
                 "red herring",
                 "smoke and mirrors",
             ],
-            
             # DARVO
             "darvo": [
                 "i'm the real victim here",
@@ -446,7 +621,6 @@ class ManipulationDetector(BaseDetector):
                 "reverse victim and offender",
                 "you made me do this",
             ],
-            
             # NEGGING
             "negging": [
                 "you'd be prettier if",
@@ -462,7 +636,6 @@ class ManipulationDetector(BaseDetector):
                 "bold move",
                 "unconventional",
             ],
-            
             # ISOLATION TACTICS
             "isolation": [
                 "they're not good for you",
@@ -479,7 +652,6 @@ class ManipulationDetector(BaseDetector):
                 "poisoning your mind",
                 "negative influence",
             ],
-            
             # INTERMITTENT REINFORCEMENT
             "intermittent_reinforcement": [
                 "sometimes i'll",
@@ -495,7 +667,6 @@ class ManipulationDetector(BaseDetector):
                 "push and pull",
                 "keep you guessing",
             ],
-            
             # BOUNDARY VIOLATION
             "boundary_violation": [
                 "you're too sensitive about boundaries",
@@ -512,9 +683,7 @@ class ManipulationDetector(BaseDetector):
                 "you're no fun",
                 "loosen up",
             ],
-            
             # NEW ADVANCED TACTICS (2025)
-            
             # FUTURE FAKING
             "future_faking": [
                 "we'll get married soon",
@@ -531,7 +700,6 @@ class ManipulationDetector(BaseDetector):
                 "building our future",
                 "long term plan",
             ],
-            
             # HOOVERING
             "hoovering": [
                 "i miss you",
@@ -547,7 +715,6 @@ class ManipulationDetector(BaseDetector):
                 "i've been working on myself",
                 "therapy has helped me",
             ],
-            
             # BAITING
             "baiting": [
                 "you're so predictable",
@@ -561,7 +728,6 @@ class ManipulationDetector(BaseDetector):
                 "pushing your buttons",
                 "fishing for a reaction",
             ],
-            
             # STONEWALLING
             "stonewalling": [
                 "i don't want to talk about it",
@@ -575,7 +741,6 @@ class ManipulationDetector(BaseDetector):
                 "refusing to engage",
                 "conversation over",
             ],
-            
             # BREADCRUMBING
             "breadcrumbing": [
                 "maybe later",
@@ -589,7 +754,6 @@ class ManipulationDetector(BaseDetector):
                 "hope you're well",
                 "stringing along",
             ],
-            
             # SMEAR CAMPAIGN
             "smear_campaign": [
                 "everyone knows the truth about you",
@@ -603,7 +767,6 @@ class ManipulationDetector(BaseDetector):
                 "tarnishing your name",
                 "turning people against you",
             ],
-            
             # COGNITIVE DISSONANCE
             "cognitive_dissonance": [
                 "you love me but you're leaving",
@@ -616,7 +779,6 @@ class ManipulationDetector(BaseDetector):
                 "double standard",
                 "practice what you preach",
             ],
-            
             # WITHHOLDING
             "withholding": [
                 "you don't deserve to know",
@@ -630,7 +792,6 @@ class ManipulationDetector(BaseDetector):
                 "depriving you",
                 "punishing with silence",
             ],
-            
             # INFANTILIZATION
             "infantilization": [
                 "you're like a child",
@@ -641,10 +802,10 @@ class ManipulationDetector(BaseDetector):
                 "don't worry your pretty head",
                 "leave it to the adults",
                 "when you grow up",
-                "naive", "immature",
+                "naive",
+                "immature",
                 "treating you like a baby",
             ],
-            
             # POISONING THE WELL
             "poisoning_well": [
                 "before you hear from them",
@@ -1153,7 +1314,7 @@ class ManipulationDetector(BaseDetector):
             return []
 
         text_to_check = self._assemble_text(action)
-        
+
         # Skip processing if content is too large for performance
         if len(text_to_check) > 100000:  # 100KB limit for pattern matching
             return []
@@ -1228,9 +1389,6 @@ class ManipulationDetector(BaseDetector):
             violation_type=ViolationType.MANIPULATION,
             severity=severity,
             description=description,
-            evidence={
-                "manipulation_type": category,
-                "detected_keywords": distinct_keywords
-            },
-            timestamp=datetime.now(timezone.utc)
+            evidence={"manipulation_type": category, "detected_keywords": distinct_keywords},
+            timestamp=datetime.now(timezone.utc),
         )

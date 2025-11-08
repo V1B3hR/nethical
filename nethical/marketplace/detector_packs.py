@@ -20,7 +20,7 @@ import re
 from dataclasses import asdict, dataclass, field
 from datetime import datetime
 from enum import Enum
-from typing import Any, Dict, Iterable, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set, Tuple
 
 # Optional YAML support
 try:
@@ -35,6 +35,7 @@ logger = logging.getLogger(__name__)
 
 class Industry(Enum):
     """Industry categories."""
+
     FINANCIAL = "financial"
     HEALTHCARE = "healthcare"
     LEGAL = "legal"
@@ -70,6 +71,7 @@ class TemplateNotFoundError(RegistryError):
 @dataclass
 class DetectorPack:
     """Pre-built detector pack."""
+
     pack_id: str
     name: str
     description: str
@@ -91,7 +93,9 @@ class DetectorPack:
         if not self.name:
             raise RegistryError("DetectorPack.name must be provided.")
         if not self.detectors:
-            raise RegistryError("DetectorPack.detectors must contain at least one detector id/name.")
+            raise RegistryError(
+                "DetectorPack.detectors must contain at least one detector id/name."
+            )
         # Normalize tags and use_cases for consistency
         self.tags = {normalize_tag(t) for t in self.tags}
         self.use_cases = [normalize_tag(u) for u in self.use_cases]
@@ -142,6 +146,7 @@ class DetectorPack:
 @dataclass
 class IndustryPack:
     """Industry-specific detector pack."""
+
     industry: Industry
     packs: List[DetectorPack]
     compliance_standards: List[str] = field(default_factory=list)
@@ -159,6 +164,7 @@ class IndustryPack:
 @dataclass
 class UseCaseTemplate:
     """Template for specific use case."""
+
     template_id: str
     name: str
     description: str
@@ -316,7 +322,10 @@ class DetectorPackRegistry:
             List of all packs
         """
         # Return in deterministic order by name
-        return sorted(self._packs.values(), key=lambda p: (p.industry.value if p.industry else "", p.name.lower()))
+        return sorted(
+            self._packs.values(),
+            key=lambda p: (p.industry.value if p.industry else "", p.name.lower()),
+        )
 
     # ------------- Industry -------------
 
@@ -642,7 +651,10 @@ class DetectorPackRegistry:
                 "export-control-check",
                 "sensitive-drawing-detector",
             ],
-            configuration={"export_regimes": ["EAR", "ITAR"], "ip_keywords": ["confidential", "trade secret"]},
+            configuration={
+                "export_regimes": ["EAR", "ITAR"],
+                "ip_keywords": ["confidential", "trade secret"],
+            },
             industry=Industry.MANUFACTURING,
             use_cases=["ip-protection", "export-compliance", "design-security"],
             tags={"manufacturing", "ip", "compliance"},

@@ -65,6 +65,7 @@ if not logger.handlers:
 # -----------------------------------------------------------------------------
 class ModelStage(Enum):
     """Model lifecycle stages."""
+
     DEVELOPMENT = "development"
     STAGING = "staging"
     PRODUCTION = "production"
@@ -73,6 +74,7 @@ class ModelStage(Enum):
 
 class ModelStatus(Enum):
     """Model status."""
+
     ACTIVE = "active"
     DEPRECATED = "deprecated"
     FAILED = "failed"
@@ -107,6 +109,7 @@ class ValidationError(ModelRegistryError):
 @dataclass
 class ModelMetrics:
     """Model performance metrics (extend as needed)."""
+
     accuracy: Optional[float] = None
     precision: Optional[float] = None
     recall: Optional[float] = None
@@ -117,13 +120,13 @@ class ModelMetrics:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'accuracy': self.accuracy,
-            'precision': self.precision,
-            'recall': self.recall,
-            'f1_score': self.f1_score,
-            'auc_roc': self.auc_roc,
-            'loss': self.loss,
-            'custom_metrics': self.custom_metrics
+            "accuracy": self.accuracy,
+            "precision": self.precision,
+            "recall": self.recall,
+            "f1_score": self.f1_score,
+            "auc_roc": self.auc_roc,
+            "loss": self.loss,
+            "custom_metrics": self.custom_metrics,
         }
 
     def update(self, **metrics: float):
@@ -137,6 +140,7 @@ class ModelMetrics:
 @dataclass
 class ArtifactInfo:
     """Captured information about stored artifacts."""
+
     path: str
     is_dir: bool
     file_count: int
@@ -148,6 +152,7 @@ class ArtifactInfo:
 @dataclass
 class ModelVersion:
     """Model version metadata with lineage and environment metadata."""
+
     name: str
     version: str
     model_path: str
@@ -177,60 +182,62 @@ class ModelVersion:
 
     def to_dict(self) -> Dict[str, Any]:
         return {
-            'name': self.name,
-            'version': self.version,
-            'version_id': self.version_id,
-            'model_path': self.model_path,
-            'stage': self.stage.value,
-            'status': self.status.value,
-            'created_at': self.created_at.isoformat(),
-            'created_by': self.created_by,
-            'description': self.description,
-            'tags': self.tags,
-            'metrics': self.metrics.to_dict() if self.metrics else None,
-            'hyperparameters': self.hyperparameters,
-            'training_dataset': self.training_dataset,
-            'framework': self.framework,
-            'framework_version': self.framework_version,
-            'parent_version': self.parent_version,
-            'children': self.children,
-            'metadata': self.metadata,
-            'artifact': asdict(self.artifact) if self.artifact else None,
-            'environment': self.environment,
-            'model_signature': self.model_signature,
-            'deprecated_at': self.deprecated_at.isoformat() if self.deprecated_at else None,
-            'rollback_source': self.rollback_source,
+            "name": self.name,
+            "version": self.version,
+            "version_id": self.version_id,
+            "model_path": self.model_path,
+            "stage": self.stage.value,
+            "status": self.status.value,
+            "created_at": self.created_at.isoformat(),
+            "created_by": self.created_by,
+            "description": self.description,
+            "tags": self.tags,
+            "metrics": self.metrics.to_dict() if self.metrics else None,
+            "hyperparameters": self.hyperparameters,
+            "training_dataset": self.training_dataset,
+            "framework": self.framework,
+            "framework_version": self.framework_version,
+            "parent_version": self.parent_version,
+            "children": self.children,
+            "metadata": self.metadata,
+            "artifact": asdict(self.artifact) if self.artifact else None,
+            "environment": self.environment,
+            "model_signature": self.model_signature,
+            "deprecated_at": self.deprecated_at.isoformat() if self.deprecated_at else None,
+            "rollback_source": self.rollback_source,
         }
 
     @staticmethod
     def from_dict(data: Dict[str, Any]) -> "ModelVersion":
-        metrics = data.get('metrics')
+        metrics = data.get("metrics")
         mv_metrics = ModelMetrics(**metrics) if metrics else None
-        artifact_data = data.get('artifact')
+        artifact_data = data.get("artifact")
         artifact = ArtifactInfo(**artifact_data) if artifact_data else None
         return ModelVersion(
-            name=data['name'],
-            version=data['version'],
-            model_path=data['model_path'],
-            stage=ModelStage(data['stage']),
-            status=ModelStatus(data.get('status', ModelStatus.ACTIVE.value)),
-            created_at=datetime.fromisoformat(data['created_at']),
-            created_by=data.get('created_by'),
-            description=data.get('description'),
-            tags=data.get('tags', []),
+            name=data["name"],
+            version=data["version"],
+            model_path=data["model_path"],
+            stage=ModelStage(data["stage"]),
+            status=ModelStatus(data.get("status", ModelStatus.ACTIVE.value)),
+            created_at=datetime.fromisoformat(data["created_at"]),
+            created_by=data.get("created_by"),
+            description=data.get("description"),
+            tags=data.get("tags", []),
             metrics=mv_metrics,
-            hyperparameters=data.get('hyperparameters', {}),
-            training_dataset=data.get('training_dataset'),
-            framework=data.get('framework'),
-            framework_version=data.get('framework_version'),
-            parent_version=data.get('parent_version'),
-            children=data.get('children', []),
-            metadata=data.get('metadata', {}),
+            hyperparameters=data.get("hyperparameters", {}),
+            training_dataset=data.get("training_dataset"),
+            framework=data.get("framework"),
+            framework_version=data.get("framework_version"),
+            parent_version=data.get("parent_version"),
+            children=data.get("children", []),
+            metadata=data.get("metadata", {}),
             artifact=artifact,
-            environment=data.get('environment', {}),
-            model_signature=data.get('model_signature'),
-            deprecated_at=datetime.fromisoformat(data['deprecated_at']) if data.get('deprecated_at') else None,
-            rollback_source=data.get('rollback_source'),
+            environment=data.get("environment", {}),
+            model_signature=data.get("model_signature"),
+            deprecated_at=(
+                datetime.fromisoformat(data["deprecated_at"]) if data.get("deprecated_at") else None
+            ),
+            rollback_source=data.get("rollback_source"),
         )
 
 
@@ -329,7 +336,9 @@ class ModelRegistry:
         self.capture_environment = capture_environment
 
         self._load_registry()
-        logger.info("ModelRegistry initialized at %s (loaded=%d)", self.registry_dir, len(self.models))
+        logger.info(
+            "ModelRegistry initialized at %s (loaded=%d)", self.registry_dir, len(self.models)
+        )
 
     # ------------------------------------------------------------------
     # Event system
@@ -426,7 +435,9 @@ class ModelRegistry:
                     else:
                         raise VersionConflictError(f"Artifact directory exists: {dest_path}")
                 shutil.copytree(model_path, dest_path)
-                directory_hash, file_hashes, file_count, size_bytes = compute_directory_hash(dest_path)
+                directory_hash, file_hashes, file_count, size_bytes = compute_directory_hash(
+                    dest_path
+                )
                 artifact_info = ArtifactInfo(
                     path=str(dest_path),
                     is_dir=True,
@@ -578,7 +589,9 @@ class ModelRegistry:
             self._emit("deprecated", model)
             return model
 
-    def rollback_to(self, target_version_id: str, new_version: Optional[str] = None) -> ModelVersion:
+    def rollback_to(
+        self, target_version_id: str, new_version: Optional[str] = None
+    ) -> ModelVersion:
         """
         Create a new version based on an existing production (or other) version's artifact.
         Does NOT modify the source version.
@@ -609,7 +622,9 @@ class ModelRegistry:
             )
             registered.rollback_source = source.version_id
             self._save_metadata(registered)
-            logger.info("Created rollback version %s from %s", registered.version_id, target_version_id)
+            logger.info(
+                "Created rollback version %s from %s", registered.version_id, target_version_id
+            )
             self._emit("rollback", registered)
             return registered
 
@@ -630,7 +645,9 @@ class ModelRegistry:
                 candidates = [m for m in candidates if m.stage == stage]
             if not candidates:
                 return None
-            candidates.sort(key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True)
+            candidates.sort(
+                key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True
+            )
             return candidates[0] if latest else candidates
 
     def list_models(
@@ -654,7 +671,9 @@ class ModelRegistry:
                 models = [m for m in models if tag_set.issubset(m.tags)]
             if not include_archived:
                 models = [m for m in models if m.stage != ModelStage.ARCHIVED]
-            models.sort(key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True)
+            models.sort(
+                key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True
+            )
             return models
 
     def search(
@@ -672,6 +691,7 @@ class ModelRegistry:
         with self._lock:
             results = list(self.models.values())
             if metric_gt:
+
                 def metric_pass(m: ModelVersion) -> bool:
                     if not m.metrics:
                         return False
@@ -681,18 +701,23 @@ class ModelRegistry:
                         if val is None or val <= v:
                             return False
                     return True
+
                 results = [m for m in results if metric_pass(m)]
             if metadata_contains:
+
                 def meta_pass(m: ModelVersion) -> bool:
                     for k, v in metadata_contains.items():
                         if m.metadata.get(k) != v:
                             return False
                     return True
+
                 results = [m for m in results if meta_pass(m)]
             if name_pattern:
                 regex = re.compile(name_pattern)
                 results = [m for m in results if regex.search(m.name)]
-            results.sort(key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True)
+            results.sort(
+                key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True
+            )
             return results
 
     def compare_models(self, version_id1: str, version_id2: str) -> Dict[str, Any]:
@@ -700,9 +725,9 @@ class ModelRegistry:
             m1 = self._require_model(version_id1)
             m2 = self._require_model(version_id2)
             comparison = {
-                'model1': m1.to_dict(),
-                'model2': m2.to_dict(),
-                'metrics_comparison': {},
+                "model1": m1.to_dict(),
+                "model2": m2.to_dict(),
+                "metrics_comparison": {},
             }
 
             if m1.metrics and m2.metrics:
@@ -715,10 +740,10 @@ class ModelRegistry:
                     v1 = d1.get(k)
                     v2 = d2.get(k)
                     if v1 is not None and v2 is not None:
-                        comparison['metrics_comparison'][k] = {
-                            'model1': v1,
-                            'model2': v2,
-                            'diff': v2 - v1
+                        comparison["metrics_comparison"][k] = {
+                            "model1": v1,
+                            "model2": v2,
+                            "diff": v2 - v1,
                         }
                 # custom metrics
                 cm1 = d1.get("custom_metrics") or {}
@@ -727,10 +752,10 @@ class ModelRegistry:
                     v1 = cm1.get(ck)
                     v2 = cm2.get(ck)
                     if v1 is not None and v2 is not None:
-                        comparison['metrics_comparison'][f"custom:{ck}"] = {
-                            'model1': v1,
-                            'model2': v2,
-                            'diff': v2 - v1
+                        comparison["metrics_comparison"][f"custom:{ck}"] = {
+                            "model1": v1,
+                            "model2": v2,
+                            "diff": v2 - v1,
                         }
             return comparison
 
@@ -851,7 +876,9 @@ class ModelRegistry:
         logger.info("Exported registry metadata to %s", export_path)
         return export_path
 
-    def import_registry(self, import_path: Union[str, Path], merge: bool = True, overwrite: bool = False):
+    def import_registry(
+        self, import_path: Union[str, Path], merge: bool = True, overwrite: bool = False
+    ):
         with self._lock:
             with open(import_path) as f:
                 payload = json.load(f)
@@ -871,7 +898,9 @@ class ModelRegistry:
             )
 
     def _next_semver(self, name: str) -> str:
-        existing = [m.version for m in self.models.values() if m.name == name and is_semver(m.version)]
+        existing = [
+            m.version for m in self.models.values() if m.name == name and is_semver(m.version)
+        ]
         if not existing:
             return "0.1.0"
         existing.sort(key=self._version_sort_key)

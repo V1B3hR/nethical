@@ -31,7 +31,7 @@ import logging
 import os
 import tarfile
 import zipfile
-from dataclasses import dataclass, field, asdict
+from dataclasses import dataclass, field
 from datetime import datetime
 from enum import Enum
 from pathlib import Path
@@ -44,7 +44,7 @@ import pandas as pd
 # Logging Configuration
 # -----------------------------------------------------------------------------
 LOG_LEVEL = os.getenv("NETHICAL_PIPELINE_LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=LOG_LEVEL, format='[%(levelname)s] %(asctime)s %(name)s: %(message)s')
+logging.basicConfig(level=LOG_LEVEL, format="[%(levelname)s] %(asctime)s %(name)s: %(message)s")
 logger = logging.getLogger("nethical.data_pipeline")
 
 
@@ -61,6 +61,7 @@ class DataIngestionError(DataPipelineError):
 
 class DataValidationError(DataPipelineError):
     """Raised when validation fails."""
+
     def __init__(self, errors: List[str], message: str = "Data validation failed"):
         self.errors = errors
         super().__init__(f"{message}: {errors}")
@@ -102,6 +103,7 @@ class DataSchema:
     required_columns: subset of columns required to exist
     constraints: optional mapping of column -> {min, max, allowed_values, regex, nullable}
     """
+
     name: str
     version: str
     columns: Dict[str, str]
@@ -162,22 +164,26 @@ class DataSchema:
             for col, expected_type in self.columns.items():
                 other_type = other.columns.get(col)
                 if other_type and not self._type_compatible(other_type, expected_type):
-                    raise SchemaCompatibilityError(f"Strict mismatch on column '{col}' ({expected_type} vs {other_type})")
+                    raise SchemaCompatibilityError(
+                        f"Strict mismatch on column '{col}' ({expected_type} vs {other_type})"
+                    )
         else:
             missing_required = set(self.required_columns) - set(other.columns.keys())
             if missing_required:
-                raise SchemaCompatibilityError(f"Missing required columns: {sorted(missing_required)}")
+                raise SchemaCompatibilityError(
+                    f"Missing required columns: {sorted(missing_required)}"
+                )
             for col in self.required_columns:
                 if not self._type_compatible(other.columns[col], self.columns[col]):
                     raise SchemaCompatibilityError(f"Type mismatch for required column '{col}'")
 
     def _type_compatible(self, actual: str, expected: str) -> bool:
         type_map = {
-            'int64': {'int', 'integer', 'int64'},
-            'float64': {'float', 'float64', 'double'},
-            'object': {'str', 'string', 'object'},
-            'bool': {'bool', 'boolean'},
-            'datetime64': {'datetime', 'datetime64[ns]', 'timestamp'}
+            "int64": {"int", "integer", "int64"},
+            "float64": {"float", "float64", "double"},
+            "object": {"str", "string", "object"},
+            "bool": {"bool", "boolean"},
+            "datetime64": {"datetime", "datetime64[ns]", "timestamp"},
         }
         # Normalize
         actual_norm = actual.lower()
@@ -213,6 +219,7 @@ class DataSchema:
 @dataclass
 class DataVersion:
     """Data version metadata with lineage & transformation tracking."""
+
     version_id: str
     source: DataSource
     path: str
@@ -307,7 +314,9 @@ class DataPipeline:
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
-    def register_transformation(self, name: str, func: Callable[[pd.DataFrame], pd.DataFrame]) -> None:
+    def register_transformation(
+        self, name: str, func: Callable[[pd.DataFrame], pd.DataFrame]
+    ) -> None:
         if name in self._transform_registry:
             logger.warning(f"Overwriting transformation '{name}'")
         self._transform_registry[name] = func
@@ -346,7 +355,9 @@ class DataPipeline:
         if not allow_duplicate:
             existing = self._find_version_by_checksum(checksum)
             if existing:
-                logger.info(f"Duplicate ingestion detected. Reusing version_id={existing.version_id}")
+                logger.info(
+                    f"Duplicate ingestion detected. Reusing version_id={existing.version_id}"
+                )
                 return existing
 
         # Infer schema if absent
@@ -357,11 +368,15 @@ class DataPipeline:
         if enforce_compatibility_with:
             base_version = self.get_version(enforce_compatibility_with)
             if base_version is None:
-                raise DataVersionNotFoundError(f"Base version '{enforce_compatibility_with}' not found for compatibility check")
+                raise DataVersionNotFoundError(
+                    f"Base version '{enforce_compatibility_with}' not found for compatibility check"
+                )
             try:
                 base_version.schema.ensure_compatible(schema, strict=self.strict_schema)
             except SchemaCompatibilityError as e:
-                raise SchemaCompatibilityError(f"Schema incompatible with base version {enforce_compatibility_with}: {e}") from e
+                raise SchemaCompatibilityError(
+                    f"Schema incompatible with base version {enforce_compatibility_with}: {e}"
+                ) from e
 
         # Compose version_id
         version_id = self._generate_version_id(checksum)
@@ -406,7 +421,9 @@ class DataPipeline:
         logger.info(f"Ingestion complete. version_id={version_id} status={version.status.value}")
         return version
 
-    def validate_data(self, version_id: str, schema: Optional[DataSchema] = None, raise_on_fail: bool = False) -> tuple[bool, List[str]]:
+    def validate_data(
+        self, version_id: str, schema: Optional[DataSchema] = None, raise_on_fail: bool = False
+    ) -> tuple[bool, List[str]]:
         version = self._require_version(version_id)
         df = self._read_parquet(version.path)
 
@@ -423,7 +440,9 @@ class DataPipeline:
     def preprocess(
         self,
         version_id: str,
-        transformations: Optional[Iterable[Union[Callable[[pd.DataFrame], pd.DataFrame], str]]] = None,
+        transformations: Optional[
+            Iterable[Union[Callable[[pd.DataFrame], pd.DataFrame], str]]
+        ] = None,
         save: bool = True,
         materialize: bool = True,
         tag: Optional[str] = None,
@@ -452,12 +471,14 @@ class DataPipeline:
                 before_cols = set(df.columns)
                 df = func(df)
                 after_cols = set(df.columns)
-                applied.append({
-                    "name": name,
-                    "added_columns": sorted(list(after_cols - before_cols)),
-                    "removed_columns": sorted(list(before_cols - after_cols)),
-                    "timestamp": datetime.utcnow().isoformat()
-                })
+                applied.append(
+                    {
+                        "name": name,
+                        "added_columns": sorted(list(after_cols - before_cols)),
+                        "removed_columns": sorted(list(before_cols - after_cols)),
+                        "timestamp": datetime.utcnow().isoformat(),
+                    }
+                )
                 logger.info(f"Applied transformation: {name}")
 
         # Save processed artifact
@@ -485,7 +506,7 @@ class DataPipeline:
                     "columns": df.shape[1],
                     "column_names": list(df.columns),
                     "tag": tag,
-                    "derived_from": version_id
+                    "derived_from": version_id,
                 },
                 profile=self._basic_profile(df),
             )
@@ -504,7 +525,9 @@ class DataPipeline:
     def get_version(self, version_id: str) -> Optional[DataVersion]:
         return self.versions.get(version_id)
 
-    def list_versions(self, status: Optional[DataStatus] = None, limit: Optional[int] = None) -> List[DataVersion]:
+    def list_versions(
+        self, status: Optional[DataStatus] = None, limit: Optional[int] = None
+    ) -> List[DataVersion]:
         versions = list(self.versions.values())
         if status:
             versions = [v for v in versions if v.status == status]
@@ -601,7 +624,7 @@ class DataPipeline:
             version="1.0",
             columns=columns,
             required_columns=list(df.columns),
-            constraints={}
+            constraints={},
         )
 
     def _generate_version_id(self, checksum: str, suffix: Optional[str] = None) -> str:
@@ -743,10 +766,12 @@ def ingest_all(dataset_list_path=Path("datasets/datasets"), download_dir=Path("d
 if __name__ == "__main__":
     pipeline = DataPipeline(workspace_dir="data_workspace_demo", strict_schema=False)
     print(f"Pipeline initialized. Workspace={pipeline.workspace}")
+
     # Example transformation
     def drop_null_id(df: pd.DataFrame) -> pd.DataFrame:
         if "id" in df.columns:
             return df.dropna(subset=["id"])
         return df
+
     pipeline.register_transformation("drop_null_id", drop_null_id)
     # Additional demo usage could be scripted here.

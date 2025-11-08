@@ -4,4 +4,4 @@ from .taxonomy_api import TaxonomyAPI
 from .explainability_api import ExplainabilityAPI
 from .hitl_api import HITLReviewAPI
 
-__all__ = ['TaxonomyAPI', 'ExplainabilityAPI', 'HITLReviewAPI']
+__all__ = ["TaxonomyAPI", "ExplainabilityAPI", "HITLReviewAPI"]

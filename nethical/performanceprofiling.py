@@ -43,6 +43,7 @@ logger = logging.getLogger("nethical.performanceprofiling")
 @dataclass
 class ProfileResult:
     """Performance profile result"""
+
     function_name: str
     execution_time_ms: float
     call_count: int
@@ -65,6 +66,7 @@ class ProfileResult:
 @dataclass
 class Benchmark:
     """Performance benchmark"""
+
     name: str
     baseline_ms: float
     tolerance_pct: float = 10.0  # 10% tolerance by default
@@ -116,7 +118,9 @@ class Benchmark:
 class PerformanceProfiler:
     """Profile function and method performance"""
 
-    def __init__(self, results_dir: Union[str, Path] = "profiling_results", enabled: Optional[bool] = None):
+    def __init__(
+        self, results_dir: Union[str, Path] = "profiling_results", enabled: Optional[bool] = None
+    ):
         # Enable/disable can be controlled by env var, default enabled
         if enabled is None:
             env = os.getenv("NETHICAL_PROFILING", "1").strip()
@@ -160,6 +164,7 @@ class PerformanceProfiler:
             def my_function():
                 pass
         """
+
         def decorator(f: Callable) -> Callable:
             func_name = name or f.__name__
             is_async = asyncio.iscoroutinefunction(f)
@@ -169,6 +174,7 @@ class PerformanceProfiler:
                 return f
 
             if is_async:
+
                 @functools.wraps(f)
                 async def async_wrapper(*args, **kwargs):
                     start_ns = time.perf_counter_ns()
@@ -259,7 +265,9 @@ class PerformanceProfiler:
             )
             self._record_result(section_name, profile_result, execution_time)
 
-    def benchmark_function(self, func: Callable, iterations: int = 100, *args, **kwargs) -> Dict[str, Any]:
+    def benchmark_function(
+        self, func: Callable, iterations: int = 100, *args, **kwargs
+    ) -> Dict[str, Any]:
         """
         Benchmark a function by running it multiple times
 
@@ -296,7 +304,11 @@ class PerformanceProfiler:
 
         logger.info(
             "Results for %s: mean=%.2fms, median=%.2fms, p95=%.2fms, p99=%.2fms",
-            func_name, stats["mean_ms"], stats["median_ms"], stats["p95_ms"], stats["p99_ms"]
+            func_name,
+            stats["mean_ms"],
+            stats["median_ms"],
+            stats["p95_ms"],
+            stats["p99_ms"],
         )
 
         return stats
@@ -310,7 +322,9 @@ class PerformanceProfiler:
                 tolerance_pct=tolerance_pct,
             )
             self._save_benchmarks()
-        logger.info("Set benchmark '%s': %.2fms (tolerance: ±%.1f%%)", name, baseline_ms, tolerance_pct)
+        logger.info(
+            "Set benchmark '%s': %.2fms (tolerance: ±%.1f%%)", name, baseline_ms, tolerance_pct
+        )
 
     def get_results(self, function_name: Optional[str] = None) -> Dict[str, Any]:
         """Get profiling results"""
@@ -398,7 +412,9 @@ class PerformanceProfiler:
 
     # Internal helpers
 
-    def _extract_cprofile_stats(self, profiler: cProfile.Profile, top_n: int = 20) -> Dict[str, Any]:
+    def _extract_cprofile_stats(
+        self, profiler: cProfile.Profile, top_n: int = 20
+    ) -> Dict[str, Any]:
         """
         Extract a structured cProfile summary.
         Returns a dict with 'top' list and 'text' truncated representation.
@@ -411,17 +427,19 @@ class PerformanceProfiler:
         # ps.stats: {(filename, line, funcname): (cc, nc, tt, ct, callers)}
         entries = []
         for (filename, line, funcname), (cc, nc, tt, ct, callers) in ps.stats.items():
-            entries.append({
-                "file": filename,
-                "line": line,
-                "function": funcname,
-                "prim_calls": cc,
-                "total_calls": nc,
-                "tottime_s": tt,
-                "cumtime_s": ct,
-                "percall_tottime_ms": (tt / max(cc, 1)) * 1000.0,
-                "percall_cumtime_ms": (ct / max(nc, 1)) * 1000.0,
-            })
+            entries.append(
+                {
+                    "file": filename,
+                    "line": line,
+                    "function": funcname,
+                    "prim_calls": cc,
+                    "total_calls": nc,
+                    "tottime_s": tt,
+                    "cumtime_s": ct,
+                    "percall_tottime_ms": (tt / max(cc, 1)) * 1000.0,
+                    "percall_cumtime_ms": (ct / max(nc, 1)) * 1000.0,
+                }
+            )
 
         # Top by cumulative time
         entries.sort(key=lambda e: e["cumtime_s"], reverse=True)
@@ -432,7 +450,9 @@ class PerformanceProfiler:
             "text": text_output[:2000],  # Limit size to avoid bloating results
         }
 
-    def _record_result(self, func_name: str, profile_result: ProfileResult, execution_time: float) -> None:
+    def _record_result(
+        self, func_name: str, profile_result: ProfileResult, execution_time: float
+    ) -> None:
         """Thread-safe storage and regression checking"""
         with self._lock:
             if func_name not in self.results:
@@ -447,7 +467,10 @@ class PerformanceProfiler:
                 if is_regression:
                     logger.warning(
                         "Performance regression detected for %s: %.1f%% slower than baseline (%.2fms vs %.2fms)",
-                        func_name, pct_change, execution_time, benchmark.baseline_ms
+                        func_name,
+                        pct_change,
+                        execution_time,
+                        benchmark.baseline_ms,
                     )
                 # Persist benchmarks periodically
                 self._save_benchmarks()
@@ -473,7 +496,9 @@ class PerformanceProfiler:
                             tolerance_pct=bench_data.get("tolerance_pct", 10.0),
                             samples=[],  # Do not restore historical samples to keep file small
                             last_updated=datetime.fromisoformat(
-                                bench_data.get("last_updated", datetime.now(timezone.utc).isoformat())
+                                bench_data.get(
+                                    "last_updated", datetime.now(timezone.utc).isoformat()
+                                )
                             ),
                         )
             except Exception as e:
@@ -503,7 +528,13 @@ class PerformanceProfiler:
 _profiler = PerformanceProfiler()
 
 
-def profile(func: Optional[Callable] = None, *, name: Optional[str] = None, detailed: bool = False, metadata: Optional[Dict[str, Any]] = None):
+def profile(
+    func: Optional[Callable] = None,
+    *,
+    name: Optional[str] = None,
+    detailed: bool = False,
+    metadata: Optional[Dict[str, Any]] = None,
+):
     """Convenience decorator using global profiler"""
     return _profiler.profile(func, name=name, detailed=detailed, metadata=metadata)
 

@@ -10,15 +10,12 @@ from dataclasses import dataclass
 from enum import Enum
 from typing import (
     Any,
-    Awaitable,
     Callable,
     Deque,
     Dict,
     Hashable,
-    Iterable,
     List,
     Optional,
-    Sequence,
     Set,
     Tuple,
 )
@@ -31,6 +28,7 @@ from ..core.models import AgentAction, SafetyViolation  # type: ignore
 # ======================================================
 # Utility / Data Structures
 # ======================================================
+
 
 @dataclass(slots=True)
 class EvaluationContext:
@@ -64,6 +62,7 @@ class CircuitState(Enum):
 # Rolling Counter (time window)
 # ======================================================
 
+
 class RollingCounter:
     def __init__(self, window_sec: float = 300.0):
         self.window_sec = window_sec
@@ -93,18 +92,16 @@ class RollingCounter:
 # Cache Interface + In-Memory TTL Implementation
 # ======================================================
 
+
 class EvaluationCache(ABC):
     @abstractmethod
-    async def get(self, key: Hashable) -> Optional[EvaluationOutcome]:
-        ...
+    async def get(self, key: Hashable) -> Optional[EvaluationOutcome]: ...
 
     @abstractmethod
-    async def set(self, key: Hashable, value: EvaluationOutcome, ttl_s: Optional[float] = None):
-        ...
+    async def set(self, key: Hashable, value: EvaluationOutcome, ttl_s: Optional[float] = None): ...
 
     @abstractmethod
-    async def invalidate(self, key: Hashable):
-        ...
+    async def invalidate(self, key: Hashable): ...
 
 
 class InMemoryTTLCache(EvaluationCache):
@@ -156,6 +153,7 @@ class InMemoryTTLCache(EvaluationCache):
 # Advanced Base Monitor
 # ======================================================
 
+
 class AdvancedBaseMonitor(ABC):
     """
     Advanced monitoring base with:
@@ -168,11 +166,25 @@ class AdvancedBaseMonitor(ABC):
     """
 
     __slots__ = (
-        "name", "_enabled", "priority", "timeout", "strict_errors", "max_violations",
-        "_logger", "_cache", "_cache_ttl_s", "_metrics_lock", "_metrics",
-        "_hooks", "_circuit_state", "_circuit_fail_count", "_circuit_open_until",
-        "_circuit_threshold", "_circuit_cooldown_s", "_rolling_errors",
-        "_rolling_violations"
+        "name",
+        "_enabled",
+        "priority",
+        "timeout",
+        "strict_errors",
+        "max_violations",
+        "_logger",
+        "_cache",
+        "_cache_ttl_s",
+        "_metrics_lock",
+        "_metrics",
+        "_hooks",
+        "_circuit_state",
+        "_circuit_fail_count",
+        "_circuit_open_until",
+        "_circuit_threshold",
+        "_circuit_cooldown_s",
+        "_rolling_errors",
+        "_rolling_violations",
     )
 
     def __init__(
@@ -255,18 +267,24 @@ class AdvancedBaseMonitor(ABC):
         Main evaluation method returning structured outcome.
         """
         if not self._enabled:
-            return EvaluationOutcome([], 0.0, "none", cached=False, trace_id=trace_id or "", latency_ms=0.0)
+            return EvaluationOutcome(
+                [], 0.0, "none", cached=False, trace_id=trace_id or "", latency_ms=0.0
+            )
 
         now = time.time()
         if self._circuit_state == CircuitState.OPEN and now < self._circuit_open_until:
             # Circuit open: short-circuit
-            return EvaluationOutcome([], 0.0, "none", cached=False, trace_id=trace_id or "", latency_ms=0.0)
+            return EvaluationOutcome(
+                [], 0.0, "none", cached=False, trace_id=trace_id or "", latency_ms=0.0
+            )
         elif self._circuit_state == CircuitState.OPEN and now >= self._circuit_open_until:
             # Half-open trial attempt
             self._circuit_state = CircuitState.HALF_OPEN
 
         if not self.supports(action):
-            return EvaluationOutcome([], 0.0, "none", cached=False, trace_id=trace_id or "", latency_ms=0.0)
+            return EvaluationOutcome(
+                [], 0.0, "none", cached=False, trace_id=trace_id or "", latency_ms=0.0
+            )
 
         trace_id = trace_id or str(uuid.uuid4())
         ctx = EvaluationContext(
@@ -298,7 +316,9 @@ class AdvancedBaseMonitor(ABC):
             await self._run_hooks("error", ctx, "timeout")
             if self.strict_errors:
                 raise
-            return EvaluationOutcome([], 0.0, "none", cached=False, trace_id=trace_id, latency_ms=self._lat_ms(t0))
+            return EvaluationOutcome(
+                [], 0.0, "none", cached=False, trace_id=trace_id, latency_ms=self._lat_ms(t0)
+            )
         except Exception as ex:  # noqa: BLE001
             await self._metric_inc("errors")
             await self._record_failure("error")
@@ -306,7 +326,9 @@ class AdvancedBaseMonitor(ABC):
             if self.strict_errors:
                 raise
             self._logger.exception("Monitor %s failed: %s", self.name, ex)
-            return EvaluationOutcome([], 0.0, "none", cached=False, trace_id=trace_id, latency_ms=self._lat_ms(t0))
+            return EvaluationOutcome(
+                [], 0.0, "none", cached=False, trace_id=trace_id, latency_ms=self._lat_ms(t0)
+            )
 
         # Success resets circuit (if half-open or closed)
         self._reset_circuit()
@@ -428,7 +450,10 @@ class AdvancedBaseMonitor(ABC):
     async def _record_failure(self, _reason: str):
         self._circuit_fail_count += 1
         self._rolling_errors.add(1.0)
-        if self._circuit_state in (CircuitState.CLOSED, CircuitState.HALF_OPEN) and self._circuit_fail_count >= self._circuit_threshold:
+        if (
+            self._circuit_state in (CircuitState.CLOSED, CircuitState.HALF_OPEN)
+            and self._circuit_fail_count >= self._circuit_threshold
+        ):
             self._circuit_state = CircuitState.OPEN
             self._circuit_open_until = time.time() + self._circuit_cooldown_s
             self._logger.warning("Circuit opened for monitor %s", self.name)
@@ -463,6 +488,7 @@ class AdvancedBaseMonitor(ABC):
 # IntentDeviationMonitor (Converted)
 # ======================================================
 
+
 class IntentDeviationMonitor(AdvancedBaseMonitor):
     """
     Converted monitor that analyzes deviation between agent's 'intent'
@@ -474,32 +500,106 @@ class IntentDeviationMonitor(AdvancedBaseMonitor):
     """
 
     _DEFAULT_STOPWORDS: Set[str] = {
-        "the", "a", "an", "and", "or", "but",
-        "to", "of", "in", "on", "for", "with", "at", "by", "from",
-        "as", "is", "are", "was", "were", "be", "been", "being",
-        "that", "this", "these", "those", "it", "its", "into", "about",
-        "if", "then", "so", "than", "too", "very",
-        "can", "could", "should", "would", "will", "may", "might", "must",
-        "do", "does", "did", "not", "no", "yes"
+        "the",
+        "a",
+        "an",
+        "and",
+        "or",
+        "but",
+        "to",
+        "of",
+        "in",
+        "on",
+        "for",
+        "with",
+        "at",
+        "by",
+        "from",
+        "as",
+        "is",
+        "are",
+        "was",
+        "were",
+        "be",
+        "been",
+        "being",
+        "that",
+        "this",
+        "these",
+        "those",
+        "it",
+        "its",
+        "into",
+        "about",
+        "if",
+        "then",
+        "so",
+        "than",
+        "too",
+        "very",
+        "can",
+        "could",
+        "should",
+        "would",
+        "will",
+        "may",
+        "might",
+        "must",
+        "do",
+        "does",
+        "did",
+        "not",
+        "no",
+        "yes",
     }
 
     _HIGH_RISK_TOKENS: Set[str] = {
-        "delete", "drop", "truncate", "wipe", "erase", "format",
-        "shutdown", "kill", "terminate", "halt",
-        "leak", "exfiltrate", "steal", "exfil", "dump",
-        "chmod", "chown", "sudo", "root", "rm", "rmdir", "del",
-        "privilege", "escalate", "exploit", "backdoor",
-        "disable", "bypass", "ignore", "override",
-        "production", "prod", "database", "db",
-        "secrets", "secret", "token", "apikey", "api_key", "password", "passwd", "key",
+        "delete",
+        "drop",
+        "truncate",
+        "wipe",
+        "erase",
+        "format",
+        "shutdown",
+        "kill",
+        "terminate",
+        "halt",
+        "leak",
+        "exfiltrate",
+        "steal",
+        "exfil",
+        "dump",
+        "chmod",
+        "chown",
+        "sudo",
+        "root",
+        "rm",
+        "rmdir",
+        "del",
+        "privilege",
+        "escalate",
+        "exploit",
+        "backdoor",
+        "disable",
+        "bypass",
+        "ignore",
+        "override",
+        "production",
+        "prod",
+        "database",
+        "db",
+        "secrets",
+        "secret",
+        "token",
+        "apikey",
+        "api_key",
+        "password",
+        "passwd",
+        "key",
     }
 
     def __init__(
-        self,
-        *,
-        deviation_threshold: float = 0.35,
-        high_risk_weight: float = 0.25,
-        **kwargs
+        self, *, deviation_threshold: float = 0.35, high_risk_weight: float = 0.25, **kwargs
     ):
         super().__init__("intent_deviation_monitor", **kwargs)
         self.deviation_threshold = deviation_threshold
@@ -519,8 +619,12 @@ class IntentDeviationMonitor(AdvancedBaseMonitor):
         """
         action = ctx.action
         # Retrieve supposed declared intent from metadata or action attributes
-        declared_intent = getattr(action, "intent", None) or getattr(action, "goal", None) \
-            or ctx.metadata.get("declared_intent") or ""
+        declared_intent = (
+            getattr(action, "intent", None)
+            or getattr(action, "goal", None)
+            or ctx.metadata.get("declared_intent")
+            or ""
+        )
 
         # Action textual body
         body = getattr(action, "content", None) or getattr(action, "text", None) or ""
@@ -595,6 +699,7 @@ class IntentDeviationMonitor(AdvancedBaseMonitor):
                 # Last resort: create a lightweight stand-in object
                 class _FallbackViolation:
                     pass
+
                 v = _FallbackViolation()  # type: ignore[assignment]
 
             for k, val in kwargs.items():
@@ -608,6 +713,7 @@ class IntentDeviationMonitor(AdvancedBaseMonitor):
 # ======================================================
 # Backward Compatibility Adapter (Optional)
 # ======================================================
+
 
 class LegacyCompatMonitor(AdvancedBaseMonitor):
     """
