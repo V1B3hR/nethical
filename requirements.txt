@@ -18,8 +18,8 @@ pandas==2.3.3 --hash=sha256:3f195eca95bfaed0c325b3bece2900c672915b5f67f1e6a113bb
 PyYAML==6.0.3 --hash=sha256:6b4e9255e721e1d50cf1ba0186b9bfa16a23b39fe7951485c079111e2c2a38c8           # YAML parsing for configs and policies
 
 # Security (pinned to exact versions to satisfy the workflow check)
-cryptography==41.0.0 --hash=sha256:20c97af13bdb9d9c38e8c4e8dc0684c027bf15afc65c550ba9962d7cfbd1e8bb           # Cryptographic signature verification and X.509 certificate validation
-defusedxml==0.7.1 --hash=sha256:0bfd7ed1781f7e7f7cdd5c755bbd1367ac87d9e87b7dd5fda2469028f242b6dd           # Safe XML parsing to prevent XXE attacks
+cryptography==41.0.7  # or your required version
+defusedxml==0.7.1  # or your required version
 
 # Transitive dependencies (pinned for reproducibility)
 annotated-types==0.7.0 --hash=sha256:11e9b8bb496851c3e239bab0a7b0bbbb02eb4cbbb8ade32436050e5a92180aa0           # Pydantic annotations support
