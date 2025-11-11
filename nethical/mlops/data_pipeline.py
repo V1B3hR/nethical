@@ -32,7 +32,7 @@ import os
 import tarfile
 import zipfile
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, Iterable, List, Optional, Union
@@ -341,7 +341,7 @@ class DataPipeline:
         allow_duplicate: if False, reusing identical checksum returns existing version (idempotent)
         tag: optional label stored in metadata
         """
-        start = datetime.utcnow()
+        start = datetime.now(timezone.utc)
         logger.info(f"Ingesting data from {source} (type={source_type.value})")
 
         # Read data
@@ -396,7 +396,7 @@ class DataPipeline:
                 "rows": len(df),
                 "columns": len(df.columns),
                 "column_names": list(df.columns),
-                "ingest_duration_seconds": (datetime.utcnow() - start).total_seconds(),
+                "ingest_duration_seconds": (datetime.now(timezone.utc) - start).total_seconds(),
                 "tag": tag,
                 "source_reference": str(source),
             },
@@ -476,7 +476,7 @@ class DataPipeline:
                         "name": name,
                         "added_columns": sorted(list(after_cols - before_cols)),
                         "removed_columns": sorted(list(before_cols - after_cols)),
-                        "timestamp": datetime.utcnow().isoformat(),
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
                 )
                 logger.info(f"Applied transformation: {name}")
@@ -516,7 +516,7 @@ class DataPipeline:
         else:
             # Mutating metadata only on original version
             base_version.transformations.extend(applied)
-            base_version.metadata["last_preprocess_at"] = datetime.utcnow().isoformat()
+            base_version.metadata["last_preprocess_at"] = datetime.now(timezone.utc).isoformat()
             base_version.profile = self._basic_profile(df)
             self._save_version_metadata(base_version)
             logger.info(f"Updated version metadata without materialization: {version_id}")
@@ -628,7 +628,7 @@ class DataPipeline:
         )
 
     def _generate_version_id(self, checksum: str, suffix: Optional[str] = None) -> str:
-        base = f"v_{checksum[:10]}_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        base = f"v_{checksum[:10]}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
         if suffix:
             return f"{base}_{suffix}"
         return base
@@ -703,7 +703,7 @@ class DataPipeline:
     def _write_manifest(self) -> None:
         manifest_path = self.versions_dir / self.MANIFEST_FILENAME
         manifest = {
-            "updated_at": datetime.utcnow().isoformat(),
+            "updated_at": datetime.now(timezone.utc).isoformat(),
             "version_count": len(self.versions),
             "versions": [
                 {

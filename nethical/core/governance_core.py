@@ -16,7 +16,7 @@ import threading
 import time
 from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import (
@@ -487,8 +487,9 @@ class PersistenceManager:
             )
 
     def retention_cleanup(self):
-        cutoff = (datetime.utcnow() - timedelta(days=self.retention_days)).isoformat()
+        cutoff = (datetime.now(timezone.utc) - timedelta(days=self.retention_days)).isoformat()
         with self._lock, self._connect() as conn:
+            # Safe: table names are from hardcoded tuple, not user input
             for table in ("actions", "violations", "judgments"):
                 conn.execute(f"DELETE FROM {table} WHERE timestamp < ?", (cutoff,))
 
@@ -534,6 +535,7 @@ class PersistenceManager:
             return {}
 
         with self._lock, self._connect() as conn:
+            # Safe: placeholders is constructed from "?" * len(), not user input
             placeholders = ",".join("?" * len(action_ids))
             query = f"SELECT * FROM judgments WHERE action_id IN ({placeholders})"
             cursor = conn.execute(query, action_ids)
@@ -605,7 +607,7 @@ from .governance_evaluation import IntentDeviationMonitor, SafetyJudge
 class EnhancedSafetyGovernance:
     def __init__(self, config: Optional[MonitoringConfig] = None):
         self.config = config or MonitoringConfig()
-        self.start_time = datetime.utcnow()
+        self.start_time = datetime.now(timezone.utc)
         self.intent_monitor = IntentDeviationMonitor(self.config.intent_deviation_threshold)
         self.detectors: List[BaseDetector] = []
         self._initialize_detectors()
@@ -894,7 +896,7 @@ class EnhancedSafetyGovernance:
         self, action: AgentAction, judgment: JudgmentResult, level: str, count: int
     ):
         payload = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "action_id": action.action_id,
             "agent_id": action.agent_id,
             "decision": judgment.decision.value,
@@ -995,7 +997,7 @@ class EnhancedSafetyGovernance:
         }
 
     def get_system_metrics(self) -> Dict[str, Any]:
-        uptime = (datetime.utcnow() - self.start_time).total_seconds()
+        uptime = (datetime.now(timezone.utc) - self.start_time).total_seconds()
         timing_stats = {
             name: {
                 "count": len(times),
@@ -1031,7 +1033,7 @@ class EnhancedSafetyGovernance:
         include_violations: bool = True,
         include_judgments: bool = True,
     ) -> Dict[str, Any]:
-        out = {"exported_at": datetime.utcnow().isoformat()}
+        out = {"exported_at": datetime.now(timezone.utc).isoformat()}
         if include_actions:
             out["actions"] = [a.to_dict() for a in self.action_history]
         if include_violations:

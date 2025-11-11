@@ -37,6 +37,7 @@ Policy DSL Example:
 
 from __future__ import annotations
 
+import ast
 import json
 import logging
 import os
@@ -313,8 +314,9 @@ class RuleEvaluator:
                     if not key.startswith("_"):
                         namespace[key] = value
 
-            # Sanitize and evaluate condition
+            # Sanitize and evaluate condition using AST validation
             sanitized_condition = self._sanitize_condition(condition)
+            self._validate_ast_safety(sanitized_condition)
             result = eval(sanitized_condition, {"__builtins__": {}}, namespace)
 
             return bool(result)
@@ -344,6 +346,34 @@ class RuleEvaluator:
                 raise ValueError(f"Unsafe condition: contains '{pattern}'")
 
         return condition
+
+    def _validate_ast_safety(self, condition: str) -> None:
+        """
+        Validate condition using AST parsing to ensure only safe operations.
+        
+        Raises ValueError if unsafe AST nodes are detected.
+        """
+        try:
+            tree = ast.parse(condition, mode='eval')
+        except SyntaxError as e:
+            raise ValueError(f"Invalid condition syntax: {e}")
+        
+        # Define allowed AST node types for safe evaluation
+        allowed_nodes = (
+            ast.Expression, ast.Compare, ast.BoolOp, ast.UnaryOp, ast.BinOp,
+            ast.Name, ast.Constant, ast.Load, ast.Attribute, ast.Call,
+            ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
+            ast.And, ast.Or, ast.Not, ast.In, ast.NotIn, ast.Is, ast.IsNot,
+            ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod,
+            ast.List, ast.Tuple, ast.Dict, ast.Set
+        )
+        
+        for node in ast.walk(tree):
+            if not isinstance(node, allowed_nodes):
+                raise ValueError(
+                    f"Unsafe AST node detected: {node.__class__.__name__}. "
+                    f"Only safe comparison and boolean operations are allowed."
+                )
 
     @staticmethod
     def _contains(text: str, substring: str) -> bool:

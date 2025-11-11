@@ -8,7 +8,7 @@ regions without requiring raw data sharing.
 import logging
 from typing import Any, Dict, List, Optional
 from dataclasses import dataclass
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import defaultdict
 import statistics
 
@@ -115,7 +115,7 @@ class FederatedMetricsAggregator:
             logger.warning(f"Unknown region {region_id}, adding it")
             self.add_region(region_id)
 
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or datetime.now(timezone.utc)
 
         regional_metrics = RegionalMetrics(
             region_id=region_id,
@@ -152,7 +152,7 @@ class FederatedMetricsAggregator:
             Dictionary of aggregated metrics
         """
         regions = regions or self.regions
-        end_time = end_time or datetime.utcnow()
+        end_time = end_time or datetime.now(timezone.utc)
         start_time = start_time or (end_time - timedelta(seconds=self.aggregation_interval))
 
         # Collect metrics from regions
@@ -268,7 +268,7 @@ class FederatedMetricsAggregator:
         """
         percentiles = percentiles or [50, 90, 95, 99]
         regions = regions or self.regions
-        end_time = end_time or datetime.utcnow()
+        end_time = end_time or datetime.now(timezone.utc)
         start_time = start_time or (end_time - timedelta(seconds=self.aggregation_interval))
 
         # Collect all values
@@ -311,7 +311,7 @@ class FederatedMetricsAggregator:
         Returns:
             Dictionary mapping region_id to statistics
         """
-        end_time = end_time or datetime.utcnow()
+        end_time = end_time or datetime.now(timezone.utc)
         start_time = start_time or (end_time - timedelta(seconds=self.aggregation_interval))
 
         result = {}
@@ -364,7 +364,7 @@ class FederatedMetricsAggregator:
         if region_id not in self.regional_metrics:
             return
 
-        cutoff_time = datetime.utcnow() - timedelta(seconds=self.retention_period)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=self.retention_period)
 
         self.regional_metrics[region_id] = [
             rm for rm in self.regional_metrics[region_id] if rm.timestamp >= cutoff_time

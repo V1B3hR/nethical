@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from typing import Dict, Any, Optional, Callable, Iterable
-from datetime import datetime
+from datetime import datetime, timezone
 
 from nethical.core import IntegratedGovernance
 from nethical.hooks.interfaces import (
@@ -57,7 +57,7 @@ class HealthcareGuardrails:
     # ------------- internal helpers -------------
 
     def _timestamp(self) -> str:
-        return datetime.utcnow().isoformat(timespec="milliseconds") + "Z"
+        return datetime.now(timezone.utc).isoformat(timespec="milliseconds") + "Z"
 
     def _apply_allowlist(self, data: Dict[str, Any], allowlist: set[str]) -> Dict[str, Any]:
         if not allowlist:

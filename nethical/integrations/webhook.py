@@ -36,6 +36,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 from urllib import request, error
+from urllib.parse import urlparse
 from http.client import HTTPResponse
 from email.message import Message
 from concurrent.futures import ThreadPoolExecutor, as_completed
@@ -152,6 +153,8 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
             on_success: Callback invoked on successful delivery with WebhookDelivery
             on_failure: Callback invoked when delivery fails after retries with WebhookDelivery
         """
+        # Validate URL scheme for security
+        self._validate_url_scheme(url)
         self.url = url
         self.headers = dict(headers) if headers else {"Content-Type": "application/json"}
         self.timeout = timeout
@@ -178,6 +181,26 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
 
         # Retryable HTTP status codes
         self._retry_statuses = {408, 425, 429, 500, 502, 503, 504}
+
+    @staticmethod
+    def _validate_url_scheme(url: str) -> None:
+        """
+        Validate URL scheme to prevent SSRF attacks.
+        
+        Only http and https schemes are allowed.
+        
+        Args:
+            url: URL to validate
+            
+        Raises:
+            ValueError: If URL scheme is not http or https
+        """
+        parsed = urlparse(url)
+        if parsed.scheme not in ['http', 'https']:
+            raise ValueError(
+                f"Unsupported URL scheme: {parsed.scheme}. "
+                f"Only http and https are allowed."
+            )
 
     def _should_retry(
         self, status_code: Optional[int], err: Optional[BaseException], attempt: int

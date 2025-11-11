@@ -10,7 +10,7 @@ This module implements:
 import statistics
 from typing import Dict, List, Optional, Any, Deque
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from collections import deque
 from enum import Enum
 
@@ -129,7 +129,7 @@ class SLAMonitor:
             latency_ms: Latency in milliseconds
             timestamp: Optional timestamp (defaults to now)
         """
-        ts = timestamp or datetime.utcnow()
+        ts = timestamp or datetime.now(timezone.utc)
 
         self.latency_window.measurements.append(latency_ms)
         self.latency_window.timestamps.append(ts)
@@ -142,7 +142,7 @@ class SLAMonitor:
         if not self.latency_window.timestamps:
             return
 
-        cutoff = datetime.utcnow() - timedelta(seconds=self.window_size_seconds)
+        cutoff = datetime.now(timezone.utc) - timedelta(seconds=self.window_size_seconds)
 
         while self.latency_window.timestamps and self.latency_window.timestamps[0] < cutoff:
             self.latency_window.measurements.popleft()
@@ -205,7 +205,7 @@ class SLAMonitor:
         metrics = self.get_current_metrics()
 
         results = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "overall_status": SLAStatus.COMPLIANT,
             "metrics": metrics,
             "targets": {},
@@ -265,7 +265,7 @@ class SLAMonitor:
             elif status == SLAStatus.WARNING and results["overall_status"] == SLAStatus.COMPLIANT:
                 results["overall_status"] = SLAStatus.WARNING
 
-        self.last_breach_check = datetime.utcnow()
+        self.last_breach_check = datetime.now(timezone.utc)
 
         return results
 
@@ -281,7 +281,7 @@ class SLAMonitor:
         # Calculate uptime metrics
         total_measurements = metrics["sample_count"]
         breach_count = len(
-            [b for b in self.breaches if b.timestamp > datetime.utcnow() - timedelta(hours=24)]
+            [b for b in self.breaches if b.timestamp > datetime.now(timezone.utc) - timedelta(hours=24)]
         )
 
         # P95 specific check (primary SLA)
@@ -290,7 +290,7 @@ class SLAMonitor:
         p95_met = p95_actual <= p95_target
 
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "overall_status": compliance["overall_status"],
             "sla_met": p95_met,
             "p95_latency_ms": p95_actual,
@@ -316,7 +316,7 @@ class SLAMonitor:
         self.current_load_multiplier = multiplier
 
         self.load_history.append(
-            {"timestamp": datetime.utcnow().isoformat(), "multiplier": multiplier}
+            {"timestamp": datetime.now(timezone.utc).isoformat(), "multiplier": multiplier}
         )
 
     def validate_under_load(
@@ -354,7 +354,7 @@ class SLAMonitor:
         Returns:
             Breach summary
         """
-        cutoff = datetime.utcnow() - timedelta(hours=hours)
+        cutoff = datetime.now(timezone.utc) - timedelta(hours=hours)
         recent_breaches = [b for b in self.breaches if b.timestamp > cutoff]
 
         # Group by metric

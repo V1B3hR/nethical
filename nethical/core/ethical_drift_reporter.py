@@ -9,7 +9,7 @@ This module implements:
 import json
 from typing import Dict, List, Optional, Any, Tuple
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 from pathlib import Path
 
@@ -128,7 +128,7 @@ class EthicalDriftReporter:
             timestamp: Optional timestamp
         """
         if timestamp is None:
-            timestamp = datetime.utcnow()
+            timestamp = datetime.now(timezone.utc)
 
         if cohort not in self.cohort_profiles:
             self.cohort_profiles[cohort] = CohortProfile(cohort_id=cohort)
@@ -189,7 +189,7 @@ class EthicalDriftReporter:
         Returns:
             Ethical drift report
         """
-        report_id = f"drift_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+        report_id = f"drift_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
 
         # Select cohorts
         if cohorts is None:
@@ -403,7 +403,7 @@ class EthicalDriftReporter:
             Dashboard data with sampling coverage and exposure metrics
         """
         dashboard = {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "cohort_summary": {},
             "overall_stats": {
                 "total_cohorts": len(self.cohort_profiles),

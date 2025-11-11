@@ -29,7 +29,7 @@ Migration Guide:
 """
 
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import warnings
 
@@ -164,7 +164,7 @@ class Phase567IntegratedGovernance:
             "agent_id": agent_id,
             "action_id": action_id,
             "action_type": action_type,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "rule_risk_score": rule_risk_score,
             "rule_classification": rule_classification,
             "cohort": cohort,
@@ -350,7 +350,7 @@ class Phase567IntegratedGovernance:
         Returns:
             System status dictionary
         """
-        status = {"timestamp": datetime.utcnow().isoformat(), "components": {}}
+        status = {"timestamp": datetime.now(timezone.utc).isoformat(), "components": {}}
 
         # Shadow classifier status
         if self.shadow_classifier:
@@ -400,7 +400,7 @@ class Phase567IntegratedGovernance:
         lines = []
         lines.append("# Phase 5-7: ML & Anomaly Detection - Report")
         lines.append("")
-        lines.append(f"Generated: {datetime.utcnow().isoformat()}")
+        lines.append(f"Generated: {datetime.now(timezone.utc).isoformat()}")
         lines.append("")
 
         # System status

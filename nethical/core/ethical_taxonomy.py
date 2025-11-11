@@ -10,7 +10,7 @@ import json
 from pathlib import Path
 from typing import Dict, List, Optional, Any, Set
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from collections import defaultdict
 
 
@@ -302,7 +302,7 @@ class EthicalTaxonomy:
                 {"dimension": d, "usage_count": c} for d, c in sorted_dimensions[:5]
             ],
             "total_dimensions": len(self.dimensions),
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def add_mapping(

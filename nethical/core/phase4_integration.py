@@ -32,7 +32,7 @@ Migration Guide:
 """
 
 from typing import Dict, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 import time
 import warnings
 
@@ -142,7 +142,7 @@ class Phase4IntegratedGovernance:
 
         results = {
             "agent_id": agent_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "cohort": cohort,
         }
 
@@ -175,7 +175,7 @@ class Phase4IntegratedGovernance:
                 "event_id": f"evt_{int(time.time() * 1000000)}",
                 "agent_id": agent_id,
                 "cohort": cohort,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
                 "action_type": str(type(action).__name__),
                 "violation_detected": violation_detected,
                 "violation_type": violation_type,
@@ -354,7 +354,7 @@ class Phase4IntegratedGovernance:
         Returns:
             System status dictionary
         """
-        status = {"timestamp": datetime.utcnow().isoformat(), "components": {}}
+        status = {"timestamp": datetime.now(timezone.utc).isoformat(), "components": {}}
 
         # Merkle anchor status
         if self.merkle_anchor:
@@ -422,7 +422,7 @@ class Phase4IntegratedGovernance:
         lines = []
         lines.append("# Phase 4: Integrity & Ethics Operationalization - Report")
         lines.append("")
-        lines.append(f"Generated: {datetime.utcnow().isoformat()}")
+        lines.append(f"Generated: {datetime.now(timezone.utc).isoformat()}")
         lines.append("")
 
         # System status

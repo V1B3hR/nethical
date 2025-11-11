@@ -9,7 +9,7 @@ This module implements:
 
 from typing import Dict, Any, List
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -488,5 +488,5 @@ class TransparencyReportGenerator:
             "total_violations": total_violations,
             "violation_types": violation_types,
             "sample_explanations": explanations,
-            "generated_at": datetime.utcnow().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }

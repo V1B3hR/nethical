@@ -10,7 +10,7 @@ This module implements:
 from enum import Enum
 from dataclasses import dataclass, field
 from typing import Dict, List, Any, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 import math
 import json
 
@@ -173,7 +173,7 @@ class RiskEngine:
 
         # Update profile
         profile.current_score = new_score
-        profile.last_update = datetime.utcnow()
+        profile.last_update = datetime.now(timezone.utc)
         profile.violation_count += 1
         profile.total_actions += 1
 
@@ -191,7 +191,7 @@ class RiskEngine:
         if profile.current_score == 0.0:
             return 0.0
 
-        time_delta = datetime.utcnow() - profile.last_update
+        time_delta = datetime.now(timezone.utc) - profile.last_update
         hours_elapsed = time_delta.total_seconds() / 3600.0
 
         # Decay constant
@@ -225,7 +225,7 @@ class RiskEngine:
         recent_count = sum(
             1
             for ts, _ in profile.tier_history[-10:]
-            if (datetime.utcnow() - ts).total_seconds() < 3600
+            if (datetime.now(timezone.utc) - ts).total_seconds() < 3600
         )
 
         # Normalize to 0-1
@@ -233,7 +233,7 @@ class RiskEngine:
 
     def _calculate_recency_score(self, profile: RiskProfile) -> float:
         """Calculate recency-based risk component."""
-        time_since_last = (datetime.utcnow() - profile.last_update).total_seconds()
+        time_since_last = (datetime.now(timezone.utc) - profile.last_update).total_seconds()
 
         # Score decreases with time (recent = higher risk)
         # Max score at 0 seconds, min at 24 hours
@@ -247,7 +247,7 @@ class RiskEngine:
         new_tier = RiskTier.from_score(profile.current_score)
 
         if new_tier != profile.current_tier:
-            profile.tier_history.append((datetime.utcnow(), new_tier))
+            profile.tier_history.append((datetime.now(timezone.utc), new_tier))
             profile.current_tier = new_tier
 
             # Limit history size

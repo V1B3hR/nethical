@@ -7,7 +7,7 @@ advanced filtering, and analytics on audit logs and governance events.
 
 import logging
 from typing import Any, Dict, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 
 try:
     from elasticsearch import Elasticsearch
@@ -185,7 +185,7 @@ class ElasticsearchAuditStore:
         if not self.enabled:
             return False
 
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or datetime.now(timezone.utc)
 
         try:
             doc = {
@@ -242,7 +242,7 @@ class ElasticsearchAuditStore:
         if not self.enabled:
             return False
 
-        timestamp = timestamp or datetime.utcnow()
+        timestamp = timestamp or datetime.now(timezone.utc)
 
         try:
             doc = {

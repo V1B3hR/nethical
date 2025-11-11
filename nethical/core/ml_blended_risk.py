@@ -10,7 +10,7 @@ This module implements:
 
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional, Any, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import json
 
@@ -281,8 +281,8 @@ class MLBlendedRiskEngine:
 
         # Initialize decision
         decision = BlendedDecision(
-            decision_id=f"blend_{int(datetime.utcnow().timestamp() * 1000000)}",
-            timestamp=datetime.utcnow(),
+            decision_id=f"blend_{int(datetime.now(timezone.utc).timestamp() * 1000000)}",
+            timestamp=datetime.now(timezone.utc),
             agent_id=agent_id,
             action_id=action_id,
             rule_risk_score=rule_risk_score,

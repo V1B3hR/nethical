@@ -11,7 +11,7 @@ This provides a complete governance system with all features in a single interfa
 """
 
 from typing import Dict, List, Optional, Any
-from datetime import datetime
+from datetime import datetime, timezone
 from pathlib import Path
 import time
 
@@ -527,7 +527,7 @@ class IntegratedGovernance:
             if not quota_result["allowed"] and quota_result["decision"] == "BLOCK":
                 return {
                     "agent_id": agent_id,
-                    "timestamp": datetime.utcnow().isoformat(),
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
                     "decision": "BLOCK",
                     "reason": quota_result["reason"],
                     "quota_enforcement": quota_result,
@@ -557,7 +557,7 @@ class IntegratedGovernance:
 
         results = {
             "agent_id": agent_id,
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "region_id": effective_region,
             "logical_domain": effective_domain,
             "compliance_requirements": compliance_requirements or [],
@@ -660,7 +660,7 @@ class IntegratedGovernance:
                 "action": str(action),
                 "risk_score": risk_score,
                 "violation_detected": violation_detected,
-                "timestamp": datetime.utcnow().isoformat(),
+                "timestamp": datetime.now(timezone.utc).isoformat(),
             }
             self.merkle_anchor.add_event(event_data)
             results["phase4"]["merkle"] = {
@@ -767,7 +767,7 @@ class IntegratedGovernance:
             Status dictionary with all component states
         """
         return {
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "components_enabled": self.components_enabled,
             "phase3": {
                 "risk_engine": {
