@@ -293,7 +293,7 @@ pip list --outdated
 If you need assistance with any of these items:
 
 1. **Security Issues**: Consider security@nethical.ai or GitHub Security Advisories
-2. **Architecture Questions**: Review DEBUGGING_REPORT.md for context
+2. **Architecture Questions**: Review [docs/archive/](docs/archive/) for historical context
 3. **Testing**: All test files are in `tests/` directory
 4. **CI/CD**: GitHub Actions workflows in `.github/workflows/`
 
@@ -313,6 +313,6 @@ Create GitHub issues for tracking:
 
 ---
 
-**Last Updated**: 2025-11-08  
+**Last Updated**: 2024-11-11  
 **Review Completed By**: GitHub Copilot Agent  
-**Full Report**: See DEBUGGING_REPORT.md
+**Full Report**: Historical debugging reports available in [docs/archive/](docs/archive/)
