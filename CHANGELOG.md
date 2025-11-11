@@ -7,6 +7,41 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed - 2024-11-11 📚 **Repository Cleanup & Documentation Reorganization**
+
+#### Documentation Restructuring
+- **Cleaned Root Directory**: Reduced markdown files from 32 to 8 core files (75% reduction)
+  - Kept essential files: README.md, CONTRIBUTING.md, SECURITY.md, LICENSE, CHANGELOG.md, roadmap.md, advancedplan.md, AUDIT.md, NEXT_STEPS.md
+  - Removed 8 debugging/resolution files (DEBUGGING_REPORT.md, RESOLUTION_SUMMARY.md, etc.)
+  - Removed 2 temporary files (test_sso_CORRECTED.py, apply_pr88_fixes.sh)
+  
+- **Created Documentation Archive**: `docs/archive/`
+  - Moved 12 phase completion reports to organized archive
+  - Created comprehensive `IMPLEMENTATION_HISTORY.md` consolidating all phases
+  - Preserved historical documentation for audit purposes
+  
+- **Policy Files Organization**: Moved to `policies/` directory
+  - `correlation_rules.yaml`: Multi-agent correlation rules
+  - `ethics_taxonomy.json`: Ethical dimension taxonomy
+  - Updated code references with backward compatibility fallback
+  
+- **New Documentation**:
+  - `docs/INDEX.md`: Comprehensive documentation index with navigation
+  - `docs/ARCHITECTURE.md`: System architecture and design decisions
+  
+#### Code Updates
+- Updated `nethical/core/correlation_engine.py` to use `policies/correlation_rules.yaml`
+- Updated `nethical/core/ethical_taxonomy.py` to use `policies/ethics_taxonomy.json` with fallback
+- Updated `nethical/core/taxonomy_validator.py` to use `policies/ethics_taxonomy.json` with fallback
+- All updates maintain backward compatibility with existing paths
+
+#### Benefits
+- ✅ Professional repository structure
+- ✅ Easier navigation for new contributors
+- ✅ Single source of truth for documentation
+- ✅ Preserved historical records in organized archive
+- ✅ Improved discoverability and maintainability
+
 ### Added - 2025-11-08 🚀 **PHASE 6 COMPLETE**
 
 #### AI/ML Security Framework (`nethical/security/ai_ml_security.py`)
