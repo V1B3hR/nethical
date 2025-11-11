@@ -216,7 +216,15 @@ class IndustryTaxonomyManager:
         Args:
             base_taxonomy_path: Path to base taxonomy
         """
-        self.base_taxonomy_path = Path(base_taxonomy_path)
+        # Try policies directory first if relative path
+        path = Path(base_taxonomy_path)
+        if not path.is_absolute() and not path.exists():
+            # Try policies subdirectory
+            policies_path = Path(__file__).parent.parent.parent / "policies" / base_taxonomy_path
+            if policies_path.exists():
+                path = policies_path
+        
+        self.base_taxonomy_path = path
         self.validator = TaxonomyValidator()
         self.industry_taxonomies: Dict[str, Dict[str, Any]] = {}
         self._load_industry_taxonomies()

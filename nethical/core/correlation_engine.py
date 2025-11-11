@@ -75,7 +75,7 @@ class CorrelationEngine:
 
         # Load configuration
         if config_path is None:
-            config_path = Path(__file__).parent.parent.parent / "correlation_rules.yaml"
+            config_path = Path(__file__).parent.parent.parent / "policies" / "correlation_rules.yaml"
         self.config = self._load_config(config_path)
 
         # Agent activity windows

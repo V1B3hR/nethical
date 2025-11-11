@@ -56,7 +56,15 @@ class EthicalTaxonomy:
             taxonomy_path: Path to taxonomy configuration
             coverage_target: Target coverage percentage
         """
-        self.taxonomy_path = Path(taxonomy_path)
+        # Try policies directory first if relative path
+        path = Path(taxonomy_path)
+        if not path.is_absolute() and not path.exists():
+            # Try policies subdirectory
+            policies_path = Path(__file__).parent.parent.parent / "policies" / taxonomy_path
+            if policies_path.exists():
+                path = policies_path
+        
+        self.taxonomy_path = path
         self.coverage_target = coverage_target
 
         # Load taxonomy
