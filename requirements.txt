@@ -1,13 +1,13 @@
 # Core dependencies with pinned versions for security and reproducibility
 # Generated: 2025-10-26
-# Last updated: 2025-11-04
+# Last updated: 2025-11-11
 # To update: Review each dependency carefully and update version + hash
 # Hash verification provides supply chain security against tampering
 
 # Data validation and serialization
 pydantic==2.12.3 --hash=sha256:6986454a854bc3bc6e5443e1369e06a3a456af9d339eda45510f517d9ea5c6bf           # Core data models and validation
 pydantic-core==2.41.4 --hash=sha256:6916b9b7d134bff5440098a4deb80e4cb623e68974a87883299de9124126c2a8           # Low-level validation implementation
-typing-extensions==4.15.0 --hash=sha256:ee6fded77f7c18b8e06eaa6e101d774a1f83b9e7bf36228a78772b75f68733a2           # Typing backports for older Python versions
+typing-extensions==4.15.0 --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548           # Typing backports for older Python versions
 dataclasses-json==0.6.7 --hash=sha256:6a81bed0e6e0f2e86e1e4ae15b07010f0b22e1af19d8d9a1cb629a88f8208b65           # JSON serialization for dataclasses
 
 # Scientific computing and data processing
@@ -33,8 +33,8 @@ tzdata==2025.2 --hash=sha256:7ad4d39f2a0db3dc093f919666bc5deba904ca3815d6e8eae69
 
 # Optional performance dependencies (fully pinned for reproducibility)
 # To use, uncomment these lines as needed
-redis==4.0.0               # Redis client for caching and session storage
-psycopg2-binary==2.9.0     # PostgreSQL adapter for TimescaleDB
-elasticsearch==8.0.0       # Elasticsearch client for log storage
-numba==0.56.0              # JIT compilation for numerical operations
-torch==2.0.0               # PyTorch for ML models (GPU acceleration)
+# redis==4.0.0               # Redis client for caching and session storage
+# psycopg2-binary==2.9.0     # PostgreSQL adapter for TimescaleDB
+# elasticsearch==8.0.0       # Elasticsearch client for log storage
+# numba==0.56.0              # JIT compilation for numerical operations
+# torch==2.0.0               # PyTorch for ML models (GPU acceleration)
