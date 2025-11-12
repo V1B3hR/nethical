@@ -6,6 +6,8 @@ Hash verification provides supply chain security against tampering
 Data validation and serialization
 pydantic==2.12.3 --hash=sha256:6986454a854bc3bc6e5443e1369e06a3a456af9d339eda45510f517d9ea5c6bf # Core data models and validation pydantic-core==2.41.4 --hash=sha256:98f348cbb44fae6e9653c1055db7e29de67ea6a9ca03a5fa2c2e11a47cff0e47 # Low-level validation implementation (updated hash to match CI) typing-extensions==4.15.0 --hash=sha256:ee6fded77f7c18b8e06eaa6e101d774a1f83b9e7bf36228a78772b75f68733a2 # Typing backports for older Python versions dataclasses-json==0.6.7 --hash=sha256:6a81bed0e6e0f2e86e1e4ae15b07010f0b22e1af19d8d9a1cb629a88f8208b65 # JSON serialization for dataclasses
 
+typing-extensions==4.15.0 --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548 --hash=sha256:ee6fded77f7c18b8e06eaa6e101d774a1f83b9e7bf36228a78772b75f68733a2 # Allow wheel (CI) and sdist hashes
+
 Scientific computing and data processing
 numpy==1.26.4 --hash=sha256:24ed47a14f704cb93e7e3dd878f4c82d61124c2ab1ce62d058e4e134983fa5b0 # Numerical operations for ML and analytics pandas==2.3.3 --hash=sha256:3f195eca95bfaed0c325b3bece2900c672915b5f67f1e6a113bbc3aff4c2880c # Data manipulation and analysis
 
