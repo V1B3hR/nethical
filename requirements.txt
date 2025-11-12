@@ -1,33 +1,40 @@
-Core dependencies with pinned versions for security and reproducibility
-Generated: 2025-10-26
-Last updated: 2025-11-11
-To update: Review each dependency carefully and update version + hash
-Hash verification provides supply chain security against tampering
-Data validation and serialization
-pydantic==2.12.3 --hash=sha256:6986454a854bc3bc6e5443e1369e06a3a456af9d339eda45510f517d9ea5c6bf # Core data models and validation pydantic-core==2.41.4 --hash=sha256:98f348cbb44fae6e9653c1055db7e29de67ea6a9ca03a5fa2c2e11a47cff0e47 # Low-level validation implementation (updated hash to match CI) typing-extensions==4.15.0 --hash=sha256:ee6fded77f7c18b8e06eaa6e101d774a1f83b9e7bf36228a78772b75f68733a2 # Typing backports for older Python versions dataclasses-json==0.6.7 --hash=sha256:6a81bed0e6e0f2e86e1e4ae15b07010f0b22e1af19d8d9a1cb629a88f8208b65 # JSON serialization for dataclasses
+# Core dependencies with pinned versions for security and reproducibility
+# Generated: 2025-10-26
+# Last updated: 2025-11-04
+# To update: Review each dependency carefully and update version + hash
+# Hash verification provides supply chain security against tampering
 
-typing-extensions==4.15.0 --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548 --hash=sha256:ee6fded77f7c18b8e06eaa6e101d774a1f83b9e7bf36228a78772b75f68733a2
+# Data validation and serialization
+pydantic==2.12.3 --hash=sha256:6986454a854bc3bc6e5443e1369e06a3a456af9d339eda45510f517d9ea5c6bf           # Core data models and validation
+pydantic-core==2.41.4 --hash=sha256:6916b9b7d134bff5440098a4deb80e4cb623e68974a87883299de9124126c2a8           # Low-level validation implementation
+typing-extensions==4.15.0 --hash=sha256:f0fa19c6845758ab08074a0cfa8b7aecb71c999ca73d62883bc25cc018c4e548 --hash=sha256:ee6fded77f7c18b8e06eaa6e101d774a1f83b9e7bf36228a78772b75f68733a2           # Typing backports for older Python versions
+dataclasses-json==0.6.7 --hash=sha256:6a81bed0e6e0f2e86e1e4ae15b07010f0b22e1af19d8d9a1cb629a88f8208b65           # JSON serialization for dataclasses
 
-Scientific computing and data processing
-numpy==1.26.4 --hash=sha256:24ed47a14f704cb93e7e3dd878f4c82d61124c2ab1ce62d058e4e134983fa5b0 # Numerical operations for ML and analytics pandas==2.3.3 --hash=sha256:3f195eca95bfaed0c325b3bece2900c672915b5f67f1e6a113bbc3aff4c2880c # Data manipulation and analysis
+# Scientific computing and data processing
+numpy==1.26.4 --hash=sha256:24ed47a14f704cb93e7e3dd878f4c82d61124c2ab1ce62d058e4e134983fa5b0           # Numerical operations for ML and analytics
+pandas==2.3.3 --hash=sha256:3f195eca95bfaed0c325b3bece2900c672915b5f67f1e6a113bbc3aff4c2880c           # Data manipulation and analysis
 
-Configuration and data formats
-PyYAML==6.0.3 --hash=sha256:6b4e9255e721e1d50cf1ba0186b9bfa16a23b39fe7951485c079111e2c2a38c8 # YAML parsing for configs and policies
+# Configuration and data formats
+PyYAML==6.0.3 --hash=sha256:6b4e9255e721e1d50cf1ba0186b9bfa16a23b39fe7951485c079111e2c2a38c8           # YAML parsing for configs and policies
 
-Security (pinned to exact versions to satisfy the workflow check)
-cryptography==41.0.7 # or your required version defusedxml==0.7.1 # or your required version
+# Security (pinned to exact versions to satisfy the workflow check)
+cryptography==41.0.7  # or your required version
+defusedxml==0.7.1  # or your required version
 
-Transitive dependencies (pinned for reproducibility)
-annotated-types==0.7.0 --hash=sha256:11e9b8bb496851c3e239bab0a7b0bbbb02eb4cbbb8ade32436050e5a92180aa0 # Pydantic annotations support marshmallow==3.26.1 --hash=sha256:8157f97792b45e1a2eaf87b1fba36cedc7fd5f12b5aa7d7ac1fa152065174714 # Serialization/deserialization (dataclasses-json dep) typing-inspect==0.9.0 --hash=sha256:15a485b10794c8bbf3d3ffd8e452b1c81648b09a5d2c4f2bf281ddc574d8aa83 # Runtime type inspection typing-inspection==0.4.2 --hash=sha256:7d1e9b567215e0a3a645b5ac3bfb71826b135d07a6fc7f02a3ee10c6731237d7 # Type inspection utilities mypy-extensions==1.1.0 --hash=sha256:2267dee8b05e00a99a7fe8a8e7466e43bcfb0038e8a6f7efca1e1b835f2d674a # Mypy type checking extensions python-dateutil==2.9.0 --hash=sha256:39d9c7abfaab48a8bdb2f3790de792da179a21404de90500677bc3c39b836444 # Date/time utilities (pandas dep) pytz==2024.2 --hash=sha256:fa370d3ad0e36b3f5ec35c1adeeaa74cc0c96b687bbf9db5372db54d3aabe425 # Timezone database (pandas dep) tzdata==2025.2 --hash=sha256:7ad4d39f2a0db3dc093f919666bc5deba904ca3815d6e8eae6921e3d4e23404d # Timezone data (pandas dep)
+# Transitive dependencies (pinned for reproducibility)
+annotated-types==0.7.0 --hash=sha256:11e9b8bb496851c3e239bab0a7b0bbbb02eb4cbbb8ade32436050e5a92180aa0           # Pydantic annotations support
+marshmallow==3.26.1 --hash=sha256:8157f97792b45e1a2eaf87b1fba36cedc7fd5f12b5aa7d7ac1fa152065174714           # Serialization/deserialization (dataclasses-json dep)
+typing-inspect==0.9.0 --hash=sha256:15a485b10794c8bbf3d3ffd8e452b1c81648b09a5d2c4f2bf281ddc574d8aa83           # Runtime type inspection
+typing-inspection==0.4.2 --hash=sha256:7d1e9b567215e0a3a645b5ac3bfb71826b135d07a6fc7f02a3ee10c6731237d7           # Type inspection utilities
+mypy-extensions==1.1.0 --hash=sha256:2267dee8b05e00a99a7fe8a8e7466e43bcfb0038e8a6f7efca1e1b835f2d674a           # Mypy type checking extensions
+python-dateutil==2.9.0 --hash=sha256:39d9c7abfaab48a8bdb2f3790de792da179a21404de90500677bc1c39b836444           # Date/time utilities (pandas dep)
+pytz==2024.2 --hash=sha256:fa370d3ad0e36b3f5ec35c1adeeaa74cc0c96b687bbf9db5372db54d3aabe425           # Timezone database (pandas dep)
+tzdata==2025.2 --hash=sha256:7ad4d39f2a0db3dc093f919666bc5deba904ca3815d6e8eae6921e3d4e23404d           # Timezone data (pandas dep)
 
-Optional performance dependencies (fully pinned for reproducibility)
-To use, uncomment these lines as needed
-redis==4.0.0 --hash=sha256:...
-psycopg2-binary==2.9.0 --hash=sha256:...
-elasticsearch==8.0.0 --hash=sha256:...
-numba==0.56.0 --hash=sha256:...
-torch==2.0.0 --hash=sha256:...
-Notes:
-- This file is based on the repository requirements (ref: cc7c1a1d1ed7467e681b4c8fbed91c89b0947b2b).
-- The pydantic-core hash was updated to match the wheel observed by CI; if you prefer to re-generate hashes,
-run: pip download pydantic-core==2.41.4 && pip hash pydantic_core-2.41.4-*.whl
+# Optional performance dependencies (fully pinned for reproducibility)
+# To use, uncomment these lines as needed
+redis==4.0.0               # Redis client for caching and session storage
+psycopg2-binary==2.9.0     # PostgreSQL adapter for TimescaleDB
+elasticsearch==8.0.0       # Elasticsearch client for log storage
+numba==0.56.0              # JIT compilation for numerical operations
+torch==2.0.0               # PyTorch for ML models (GPU acceleration)
