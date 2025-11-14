@@ -21,7 +21,12 @@ jobs:
     name: Hash Drift Check and Auto-Fix
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      # Conditional checkout: for PRs use head.ref (source branch), else default
+      - name: Checkout (PR-aware)
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
 
       - name: Set up Python
         uses: actions/setup-python@v5
@@ -64,15 +69,32 @@ jobs:
             echo "drift=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Replace working copy with new hashed file (uncommitted)
+      - name: Replace working copy with new hashed file
         if: steps.check_diff.outputs.drift == 'true'
         run: mv new_requirements-hashed.txt requirements-hashed.txt
+
+      - name: Upload hashed file artifact (debug)
+        if: steps.check_diff.outputs.drift == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: hashed-lock
+          path: requirements-hashed.txt
 
       - name: Configure git user
         if: steps.check_diff.outputs.drift == 'true'
         run: |
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Ensure we are on a branch (PR only)
+        if: steps.check_diff.outputs.drift == 'true' && github.event_name == 'pull_request'
+        run: |
+          CURRENT_BRANCH=$(git rev-parse --abbrev-ref HEAD)
+          echo "Current branch: $CURRENT_BRANCH"
+          if [ "$CURRENT_BRANCH" = "HEAD" ]; then
+            echo "::error ::Still in detached HEAD; cannot commit directly."
+            exit 1
+          fi
 
       - name: Auto-commit to PR branch (same-repo PRs only)
         if: >
@@ -82,7 +104,7 @@ jobs:
         run: |
           git add requirements-hashed.txt
           git commit -m "chore: Auto-sync requirements-hashed.txt with requirements.txt"
-          git push
+          git push origin HEAD
 
       - name: Fail with guidance for forked PRs
         if: >
@@ -90,11 +112,11 @@ jobs:
           github.event_name == 'pull_request' &&
           github.event.pull_request.head.repo.full_name != github.repository
         run: |
-          echo "::error ::requirements-hashed.txt is out of sync with requirements.txt."
-          echo "Forked PR: please run locally:"
-          echo "  pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt"
-          echo "Commit the updated requirements-hashed.txt to your branch."
-          exit 1
+            echo "::error ::requirements-hashed.txt is out of sync with requirements.txt."
+            echo "Forked PR: run locally:"
+            echo "  pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt"
+            echo "Commit and push the updated requirements-hashed.txt."
+            exit 1
 
       - name: Auto-PR to update requirements-hashed.txt (push to main/develop)
         if: >
