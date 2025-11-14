@@ -1,0 +1,9 @@
+# AUTO-GENERATED LOCK FILE (pip-compile --generate-hashes)
+# DO NOT EDIT MANUALLY.
+# Source: requirements.txt
+#
+# To update:
+#   python -m pip install --upgrade pip pip-tools
+#   pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
+#
+# (File intentionally starts empty so CI can populate it on first run.)
