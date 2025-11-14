@@ -54,13 +54,10 @@ jobs:
         id: check_diff
         shell: bash
         run: |
-          # If there was no committed file, treat as drift
           if [ "${{ steps.save_committed.outputs.committed }}" != "true" ]; then
             echo "drift=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-
-          # Compare committed vs newly generated
           if ! diff -q committed_requirements-hashed.txt new_requirements-hashed.txt > /dev/null; then
             echo "drift=true" >> $GITHUB_OUTPUT
           else
@@ -69,8 +66,7 @@ jobs:
 
       - name: Replace working copy with new hashed file (uncommitted)
         if: steps.check_diff.outputs.drift == 'true'
-        run: |
-          mv new_requirements-hashed.txt requirements-hashed.txt
+        run: mv new_requirements-hashed.txt requirements-hashed.txt
 
       - name: Configure git user
         if: steps.check_diff.outputs.drift == 'true'
@@ -95,9 +91,9 @@ jobs:
           github.event.pull_request.head.repo.full_name != github.repository
         run: |
           echo "::error ::requirements-hashed.txt is out of sync with requirements.txt."
-          echo "For forked PRs we cannot push to your branch."
-          echo "Please run: pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt"
-          echo "Commit the updated requirements-hashed.txt to your PR branch."
+          echo "Forked PR: please run locally:"
+          echo "  pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt"
+          echo "Commit the updated requirements-hashed.txt to your branch."
           exit 1
 
       - name: Auto-PR to update requirements-hashed.txt (push to main/develop)
@@ -109,7 +105,7 @@ jobs:
           commit-message: "chore: Update requirements-hashed.txt [auto-sync]"
           title: "chore: Update requirements-hashed.txt [auto-sync]"
           body: |
-            This PR updates requirements-hashed.txt to sync with requirements.txt as detected by CI automation.
+            Automated sync of requirements-hashed.txt to requirements.txt.
           branch: hash-auto-update
           paths: |
             requirements-hashed.txt
