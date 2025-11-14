@@ -18,7 +18,7 @@ permissions:
 
 jobs:
   hash-drift-check:
-    name: Hash Drift Check and Auto-PR
+    name: Hash Drift Check and Auto-Fix
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -31,36 +31,79 @@ jobs:
       - name: Install pip-tools
         run: python -m pip install --upgrade pip pip-tools
 
-      - name: Save committed requirements-hashed.txt
-        if: always()
+      - name: Save committed requirements-hashed.txt (if present)
+        id: save_committed
         run: |
           if [ -f requirements-hashed.txt ]; then
             cp requirements-hashed.txt committed_requirements-hashed.txt
+            echo "committed=true" >> $GITHUB_OUTPUT
+          else
+            echo "committed=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Re-generate requirements-hashed.txt
+      - name: Re-generate requirements-hashed.txt (to temp)
         run: |
           if [ -f requirements.txt ]; then
-            pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
+            pip-compile --generate-hashes --output-file new_requirements-hashed.txt requirements.txt
+          else
+            echo "::error ::requirements.txt not found."
+            exit 1
           fi
 
-      - name: Check for drift
+      - name: Determine drift
         id: check_diff
+        shell: bash
         run: |
-          if [ -f committed_requirements-hashed.txt ] && [ -f requirements-hashed.txt ]; then
-            if ! diff -q committed_requirements-hashed.txt requirements-hashed.txt; then
-              echo "::error ::requirements-hashed.txt is out of sync with requirements.txt"
-              echo "drift=true" >> $GITHUB_OUTPUT
-              exit 1
-            else
-              echo "drift=false" >> $GITHUB_OUTPUT
-            fi
+          # If there was no committed file, treat as drift
+          if [ "${{ steps.save_committed.outputs.committed }}" != "true" ]; then
+            echo "drift=true" >> $GITHUB_OUTPUT
+            exit 0
+          fi
+
+          # Compare committed vs newly generated
+          if ! diff -q committed_requirements-hashed.txt new_requirements-hashed.txt > /dev/null; then
+            echo "drift=true" >> $GITHUB_OUTPUT
           else
             echo "drift=false" >> $GITHUB_OUTPUT
           fi
 
-      - name: Auto-PR to update requirements-hashed.txt
-        if: ${{ failure() && github.event_name == 'pull_request' }}
+      - name: Replace working copy with new hashed file (uncommitted)
+        if: steps.check_diff.outputs.drift == 'true'
+        run: |
+          mv new_requirements-hashed.txt requirements-hashed.txt
+
+      - name: Configure git user
+        if: steps.check_diff.outputs.drift == 'true'
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+      - name: Auto-commit to PR branch (same-repo PRs only)
+        if: >
+          steps.check_diff.outputs.drift == 'true' &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name == github.repository
+        run: |
+          git add requirements-hashed.txt
+          git commit -m "chore: Auto-sync requirements-hashed.txt with requirements.txt"
+          git push
+
+      - name: Fail with guidance for forked PRs
+        if: >
+          steps.check_diff.outputs.drift == 'true' &&
+          github.event_name == 'pull_request' &&
+          github.event.pull_request.head.repo.full_name != github.repository
+        run: |
+          echo "::error ::requirements-hashed.txt is out of sync with requirements.txt."
+          echo "For forked PRs we cannot push to your branch."
+          echo "Please run: pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt"
+          echo "Commit the updated requirements-hashed.txt to your PR branch."
+          exit 1
+
+      - name: Auto-PR to update requirements-hashed.txt (push to main/develop)
+        if: >
+          steps.check_diff.outputs.drift == 'true' &&
+          github.event_name != 'pull_request'
         uses: peter-evans/create-pull-request@v6
         with:
           commit-message: "chore: Update requirements-hashed.txt [auto-sync]"
@@ -71,10 +114,6 @@ jobs:
           paths: |
             requirements-hashed.txt
 
-      - name: Fail if drift detected (push to main/develop)
-        if: ${{ failure() && github.event_name != 'pull_request' }}
-        run: |
-          echo "::error ::requirements-hashed.txt drift detected. Run pip-compile --generate-hashes and re-commit the file."
-          exit 1
-
-  # SLSA compliance and other checks can be copied here if required
+      - name: No drift
+        if: steps.check_diff.outputs.drift == 'false'
+        run: echo "requirements-hashed.txt is in sync."
