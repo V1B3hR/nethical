@@ -1,6 +1,42 @@
-# Training & Testing Scripts
+# Scripts Directory
 
-This directory contains scripts for training and testing Nethical ML models according to the specifications in `TrainTestPipeline.md`.
+This directory contains scripts for training/testing Nethical ML models and managing project dependencies.
+
+## Dependency Management Scripts
+
+### regenerate_hashes.sh
+
+**Regenerate hashed requirements for supply chain security.**
+
+This script uses `pip-compile` to generate `requirements-hashed.txt` with SHA256 hashes for all dependencies, enabling hash verification during installation.
+
+**Usage:**
+
+```bash
+# From the repository root
+./scripts/regenerate_hashes.sh
+```
+
+**What it does:**
+1. Checks if pip-tools is installed (installs if needed)
+2. Runs `pip-compile --generate-hashes` on requirements.txt
+3. Verifies hash integrity
+4. Tests installation with --require-hashes
+
+**When to use:**
+- After updating versions in requirements.txt
+- When adding new dependencies
+- To fix hash drift detected by CI
+
+**Manual alternative:**
+```bash
+python -m pip install --upgrade pip pip-tools
+pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
+```
+
+## Training & Testing Scripts
+
+This section contains scripts for training and testing Nethical ML models according to the specifications in `TrainTestPipeline.md`.
 
 ## Directory Structure
 
