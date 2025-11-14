@@ -50,10 +50,12 @@ This project adheres to a code of conduct that all contributors are expected to 
 
 2. **Install dependencies**:
    ```bash
-   # Install core dependencies
-   pip install -r requirements.txt
+   # Option 1: Install with hash verification (recommended for security)
+   pip install --require-hashes -r requirements-hashed.txt
+   pip install -r requirements-dev.txt
    
-   # Install development dependencies
+   # Option 2: Install without hash verification
+   pip install -r requirements.txt
    pip install -r requirements-dev.txt
    
    # Install in editable mode
@@ -65,6 +67,34 @@ This project adheres to a code of conduct that all contributors are expected to 
    python -c "from nethical.core import IntegratedGovernance; print('Success!')"
    pytest tests/ -v
    ```
+
+### Dependency Management
+
+This project uses hashed requirements for supply chain security. All production dependencies must include SHA256 hashes for verification.
+
+**Updating dependencies:**
+
+1. **Edit `requirements.txt`** with the new package or version
+2. **Regenerate hashes**:
+   ```bash
+   ./scripts/regenerate_hashes.sh
+   ```
+   Or manually:
+   ```bash
+   python -m pip install --upgrade pip pip-tools
+   pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
+   ```
+3. **Test the installation**:
+   ```bash
+   pip install --require-hashes -r requirements-hashed.txt
+   ```
+4. **Commit both files**:
+   ```bash
+   git add requirements.txt requirements-hashed.txt
+   git commit -m "Update dependencies: [describe changes]"
+   ```
+
+**Note:** The CI workflow will automatically verify hash integrity and flag any drift between `requirements.txt` and `requirements-hashed.txt`.
 
 ## How to Contribute
 
