@@ -97,14 +97,18 @@ Phases 0-6 have been successfully completed, providing a comprehensive governanc
 | | 5C Multi-Tenant Separation | Formally verify non-interference | Isolation proofs & runtime tests |
 | 6 Coverage Expansion & Contestability | 6A Proof Debt Burn-Down | Increase property coverage, reduce admits | Coverage ≥70%, admitted critical=0 |
 | | 6B Appeals / Contestability Mechanism | Deterministic re-evaluation & diff artifact | appeals_process.md + CLI |
-| 7 Operational Reliability & Observability | 7A Runtime Invariants & Probes | Mirror formal invariants in production | Probe suite + anomaly alerts |
-| | 7B Governance Metrics Dashboard | Expose fairness, lineage, appeals KPIs | dashboards/ governance.json |
-| 8 Security & Adversarial Robustness | 8A Negative Properties & Misuse Constraints | Prove forbidden transitions | P-NONREP, negative invariants set |
-| | 8B Red-Team & Stress Simulation | Attack playbooks & resilience validation | red_team_playbook.md results |
-| 9 Deployment, Reproducibility & Transparency | 9A Supply Chain & Repro Builds | Deterministic build, SBOM, signing | release.sh + provenance attestations |
-| | 9B Audit Portal & Public Transparency | Human-facing decision & lineage explorer | audit_portal_spec.md & prototype |
-| 10 Sustainability & External Assurance | 10A Maintenance & KPI Monitoring | Ongoing proof integrity & ops KPIs | Automated reports + thresholds |
-| | 10B External Audits & Continuous Improvement | Third-party reviews, fairness re-cert | Audit reports & improvement backlog |
+| 7 Operational Reliability & Observability | 7A Runtime Invariants & Probes | Mirror formal invariants in production | Probe suite + anomaly alerts, SLO monitoring |
+| | 7B Governance Metrics Dashboard | Expose fairness, lineage, appeals KPIs | dashboards/governance.json + visualizations |
+| | 7C Observability Infrastructure | Production monitoring & alerting | Prometheus/Grafana integration, SLA tracking |
+| 8 Security & Adversarial Robustness | 8A Negative Properties & Misuse Constraints | Prove forbidden transitions & behaviors | P-NO-BACKDATE, P-NO-REPLAY, P-NO-PRIV-ESC, P-NO-DATA-LEAK, P-NO-TAMPER |
+| | 8B Red-Team & Stress Simulation | Attack playbooks & resilience validation | red_team_playbook.md + execution reports |
+| | 8C Misuse Testing Suite | Adversarial testing & fuzzing | tests/misuse/ + chaos engineering |
+| 9 Deployment, Reproducibility & Transparency | 9A Supply Chain & Repro Builds | Deterministic build, SBOM, signing, SLSA | release.sh + verify-repro.sh + provenance |
+| | 9B Audit Portal & Public Transparency | Human-facing decision & lineage explorer | audit_portal_spec.md + REST/GraphQL API |
+| | 9C Transparency Documentation | Public system documentation | Architecture docs + transparency reports |
+| 10 Sustainability & External Assurance | 10A Maintenance & KPI Monitoring | Ongoing proof integrity & ops KPIs | Automated reports + continuous monitoring |
+| | 10B External Audits & Certifications | Third-party reviews, compliance certs | Audit scope + ISO 27001/SOC 2/FedRAMP prep |
+| | 10C Fairness Recalibration & Long-term Planning | Quarterly fairness review & strategic roadmap | fairness_recalibration_report.md + 3-year plan |
 
 ---
 
@@ -132,12 +136,12 @@ Phases 0-6 have been successfully completed, providing a comprehensive governanc
 | 7–8 | Phase 4 | Component invariants; auth & multi-sig formalization | 60% critical modules have lemmas |
 | 9–10 | Phase 5 | System properties + initial fairness tests | Critical props proved; fairness test harness running |
 | 11–12 | Phase 6 | Coverage expansion + appeals mechanism | Coverage ≥70%; appeals CLI prototype |
-| 13–14 | Phase 7 | Runtime probes + governance metrics dashboard | Probe suite live; metrics JSON produced |
-| 15–16 | Phase 8 | Negative properties + red-team simulations | Attack scenarios cataloged; mitigations logged |
-| 17 | Phase 9A | Repro build, SBOM, signing & provenance gating | One-command reproducible release |
-| 18 | Phase 9B | Audit portal MVP & transparency doc | Portal serves decision traces |
-| 19 | Phase 10A | KPI automation & maintenance policies | Proof debt trend downward |
-| 20 | Phase 10B | External audit prep & fairness recalibration | Audit scope approved; backlog created |
+| 13–14 | Phase 7 | Runtime probes + governance metrics dashboard | Probe suite live; metrics dashboard operational; SLO monitoring active |
+| 15–16 | Phase 8 | Negative properties + red-team simulations | 6 negative properties proved; 50+ attack scenarios executed; misuse tests passing |
+| 17 | Phase 9A | Repro build, SBOM, signing & provenance gating | One-command reproducible release; SLSA Level 3; 100% artifact signing |
+| 18 | Phase 9B | Audit portal MVP & transparency doc | Portal serves decision traces; REST/GraphQL API live; public documentation published |
+| 19 | Phase 10A | KPI automation & maintenance policies | Proof debt trend downward; automated monitoring active; maintenance policy approved |
+| 20 | Phase 10B | External audit prep & fairness recalibration | Audit scope approved; fairness within thresholds; certification roadmap defined |
 
 (Adjust pacing based on team size & complexity.)
 
@@ -269,45 +273,247 @@ Success Criteria:
 
 ### Phase 7 ⏳ **PENDING**
 Objectives:
-- Deploy runtime invariants & governance metrics monitoring.
+- Deploy runtime invariants & governance metrics monitoring for operational reliability & observability.
+- Implement comprehensive runtime probes that mirror formal invariants in production.
+- Create governance metrics dashboard exposing fairness, lineage, and appeals KPIs.
 Deliverables:
-- [ ] probes/
-- [ ] dashboards/governance.json
-- [ ] SLO definitions
+- [ ] Runtime Probes Suite (probes/)
+  - [ ] Invariant monitoring probes (P-DET, P-TERM, P-ACYCLIC, P-AUD, P-NONREP)
+  - [ ] Governance property probes (P-MULTI-SIG, P-POL-LIN, P-DATA-MIN, P-TENANT-ISO)
+  - [ ] Anomaly detection and alert system
+  - [ ] Performance probes (latency, throughput, resource utilization)
+- [ ] Governance Metrics Dashboard (dashboards/)
+  - [ ] governance.json - Metrics configuration and schema
+  - [ ] Fairness metrics visualization (Statistical Parity, Disparate Impact, Equal Opportunity)
+  - [ ] Policy lineage tracking and visualization
+  - [ ] Appeals processing metrics and KPIs
+  - [ ] Audit log completeness and integrity metrics
+  - [ ] Real-time invariant violation tracking
+- [ ] Observability Infrastructure
+  - [ ] SLO definitions and monitoring
+  - [ ] SLA compliance tracking and reporting
+  - [ ] Alert configuration and escalation policies
+  - [ ] Integration with existing monitoring (Prometheus/Grafana)
+  - [ ] Custom metric exporters for governance KPIs
+- [ ] Documentation
+  - [ ] Runtime probes specification (docs/operations/runtime_probes.md)
+  - [ ] Dashboard configuration guide (docs/operations/governance_dashboard.md)
+  - [ ] SLO/SLA definitions (docs/operations/slo_definitions.md)
+  - [ ] Operational runbook (docs/operations/runbook.md)
 Success Criteria:
-- No unresolved runtime invariant violations in staging.
+- [ ] All critical invariants (P-DET, P-TERM, P-ACYCLIC, P-AUD) have runtime probes deployed
+- [ ] Governance dashboard displays real-time metrics with <5s latency
+- [ ] No unresolved runtime invariant violations in staging for 30 consecutive days
+- [ ] SLO compliance ≥99.9% for all critical paths
+- [ ] Alert false positive rate <5%
+- [ ] Dashboard accessibility meets WCAG 2.1 AA standards
 
 ### Phase 8 ⏳ **PENDING**
 Objectives:
-- Harden against adversarial strategies; formalize negative properties.
+- Harden system against adversarial strategies and sophisticated attack patterns.
+- Formalize negative properties proving what the system must NOT do.
+- Execute comprehensive red-team simulations and stress testing.
 Deliverables:
-- [ ] negative_properties.md
-- [ ] red_team_playbook.md
-- [ ] misuse_tests/
+- [ ] Negative Properties Specification (formal/phase8/)
+  - [ ] negative_properties.md - Formal specification of forbidden behaviors
+  - [ ] Prove P-NO-BACKDATE (audit logs cannot be backdated)
+  - [ ] Prove P-NO-REPLAY (replay attack prevention)
+  - [ ] Prove P-NO-PRIV-ESC (privilege escalation prevention)
+  - [ ] Prove P-NO-DATA-LEAK (cross-tenant data leakage prevention)
+  - [ ] Prove P-NO-TAMPER (policy tampering detection)
+  - [ ] Negative state transition specifications
+- [ ] Red Team Playbook (security/)
+  - [ ] red_team_playbook.md - Attack scenarios and procedures
+  - [ ] Attack vectors catalog (OWASP Top 10, MITRE ATT&CK)
+  - [ ] Adversarial input generation framework
+  - [ ] Policy evasion attempt scenarios
+  - [ ] Multi-step attack chains
+  - [ ] Insider threat simulations
+  - [ ] Supply chain attack scenarios
+- [ ] Misuse Testing Suite (tests/misuse/)
+  - [ ] Automated adversarial test cases
+  - [ ] Fuzzing infrastructure for policy engine
+  - [ ] Boundary condition testing
+  - [ ] Resource exhaustion tests
+  - [ ] Time-of-check-time-of-use (TOCTOU) tests
+  - [ ] Concurrency and race condition tests
+- [ ] Stress & Resilience Testing
+  - [ ] Load testing under adversarial conditions
+  - [ ] Chaos engineering scenarios
+  - [ ] Failover and recovery testing
+  - [ ] Byzantine fault tolerance validation
+- [ ] Documentation
+  - [ ] Attack surface analysis (docs/security/attack_surface.md)
+  - [ ] Mitigation strategy catalog (docs/security/mitigations.md)
+  - [ ] Red team report template (docs/security/red_team_report_template.md)
 Success Criteria:
-- All high-severity attack scenarios mitigated or backlog item with due date.
+- [ ] All 6 critical negative properties (P-NO-*) formally specified and verified
+- [ ] Red team playbook covers ≥50 distinct attack scenarios
+- [ ] Misuse test suite includes ≥100 adversarial test cases
+- [ ] All high-severity attack scenarios mitigated or accepted with documented risk
+- [ ] Zero successful privilege escalations in red team exercises
+- [ ] Zero cross-tenant data leakage in stress tests
+- [ ] System maintains availability >99% under adversarial load
+- [ ] Mean time to detect (MTTD) adversarial activity <5 minutes
 
 ### Phase 9 ⏳ **PENDING**
 Objectives:
-- Guarantee supply chain integrity & public transparency.
+- Guarantee end-to-end supply chain integrity and provenance.
+- Ensure reproducible builds with cryptographic verification.
+- Provide public transparency through comprehensive audit portal.
 Deliverables:
-- [ ] release.sh
-- [ ] verify-repro.sh
-- [ ] SBOM
-- [ ] signed artifacts
-- [ ] audit_portal_spec.md
+- [ ] Supply Chain & Reproducible Builds (deploy/)
+  - [ ] release.sh - Automated reproducible release script
+  - [ ] verify-repro.sh - Independent build verification script
+  - [ ] SBOM generation (Software Bill of Materials)
+    - [ ] CycloneDX format support
+    - [ ] SPDX format support
+    - [ ] Vulnerability scanning integration
+  - [ ] Artifact signing infrastructure
+    - [ ] Sigstore/cosign integration
+    - [ ] GPG signing for releases
+    - [ ] in-toto attestations
+    - [ ] SLSA provenance generation (Level 3+)
+  - [ ] Dependency pinning and hash verification
+  - [ ] Build environment containerization
+  - [ ] Supply chain attack detection
+- [ ] Audit Portal & Transparency (portal/)
+  - [ ] audit_portal_spec.md - Portal architecture and requirements
+  - [ ] Decision trace explorer
+    - [ ] Search and filter decisions by policy, agent, time
+    - [ ] Detailed decision breakdown with justifications
+    - [ ] Policy version lineage visualization
+  - [ ] Policy lineage viewer
+    - [ ] Hash chain visualization
+    - [ ] Multi-signature approval tracking
+    - [ ] Policy diff comparison tool
+  - [ ] Fairness metrics dashboard
+    - [ ] Statistical parity visualizations
+    - [ ] Protected attribute analysis
+    - [ ] Temporal fairness trends
+  - [ ] Audit log browser
+    - [ ] Merkle tree verification interface
+    - [ ] Tamper detection visualization
+    - [ ] Export and download capabilities
+  - [ ] Appeals tracking system
+    - [ ] Appeal submission and status
+    - [ ] Re-evaluation results display
+    - [ ] Resolution timeline tracking
+  - [ ] Public API endpoints
+    - [ ] REST API for programmatic access
+    - [ ] GraphQL API for flexible queries
+    - [ ] Rate limiting and authentication
+- [ ] Transparency Documentation
+  - [ ] Public transparency report template (docs/transparency/)
+  - [ ] System architecture documentation
+  - [ ] Data flow diagrams
+  - [ ] Privacy impact assessment
+  - [ ] Algorithm cards for ML models
+- [ ] Compliance & Attestation
+  - [ ] Build reproducibility attestation
+  - [ ] Security scanning reports
+  - [ ] Compliance certification documents
+  - [ ] Third-party audit integration
 Success Criteria:
-- Repro build digest stable; portal displays lineage & justification.
+- [ ] Reproducible build: 100% hash match across independent builds
+- [ ] SBOM generated for 100% of releases with zero critical vulnerabilities unaddressed
+- [ ] All release artifacts signed with valid signatures
+- [ ] SLSA Level 3 provenance available for all builds
+- [ ] Audit portal accessible with 99.9% uptime
+- [ ] Portal displays decision lineage for 100% of production decisions
+- [ ] Audit log completeness verification: 100% match with Merkle root
+- [ ] Public API response time: p95 <500ms
+- [ ] Portal load time: p95 <2 seconds
+- [ ] Transparency report published quarterly
+- [ ] Zero supply chain vulnerabilities exploited in production
 
 ### Phase 10 ⏳ **PENDING**
 Objectives:
-- Sustain assurance & initiate external validation.
+- Establish sustainable maintenance practices and continuous assurance.
+- Engage external auditors for independent validation.
+- Ensure long-term system reliability and ethical alignment.
 Deliverables:
-- [ ] maintenance_policy.md
-- [ ] audit_scope.md
-- [ ] fairness_recalibration_report.md
+- [ ] Maintenance & Sustainability (docs/operations/)
+  - [ ] maintenance_policy.md - Long-term maintenance strategy
+    - [ ] Proof maintenance procedures
+    - [ ] Code review and security patching cadence
+    - [ ] Dependency update policy
+    - [ ] Technical debt management
+    - [ ] Performance regression prevention
+  - [ ] KPI Monitoring & Automation
+    - [ ] Automated coverage tracking dashboard
+    - [ ] Proof debt trend analysis
+    - [ ] Fairness metric drift detection
+    - [ ] Compliance status monitoring
+    - [ ] SLA compliance tracking
+  - [ ] Continuous Improvement Process
+    - [ ] Monthly system health reports
+    - [ ] Quarterly fairness recalibration
+    - [ ] Annual security review cycle
+    - [ ] Stakeholder feedback integration
+  - [ ] Incident Response & Learning
+    - [ ] Post-incident review process
+    - [ ] Root cause analysis templates
+    - [ ] Lessons learned repository
+    - [ ] Preventive action tracking
+- [ ] External Audit & Assurance (audit/)
+  - [ ] audit_scope.md - External audit scope and requirements
+    - [ ] Formal verification audit
+    - [ ] Security architecture review
+    - [ ] Fairness assessment
+    - [ ] Compliance validation
+    - [ ] Penetration testing by third parties
+  - [ ] Audit Preparation Materials
+    - [ ] System documentation package
+    - [ ] Evidence collection procedures
+    - [ ] Access and credential management for auditors
+    - [ ] Audit trail export and verification tools
+  - [ ] Auditor Collaboration Framework
+    - [ ] Communication protocols
+    - [ ] Finding remediation workflow
+    - [ ] Dispute resolution process
+    - [ ] Re-audit procedures
+  - [ ] Certification & Accreditation
+    - [ ] ISO 27001 preparation materials
+    - [ ] SOC 2 Type II readiness assessment
+    - [ ] FedRAMP authorization package
+    - [ ] Industry-specific certifications (HIPAA, PCI-DSS)
+- [ ] Fairness Recalibration (governance/)
+  - [ ] fairness_recalibration_report.md - Quarterly fairness review
+    - [ ] Statistical parity analysis
+    - [ ] Disparate impact assessment
+    - [ ] Protected attribute drift analysis
+    - [ ] Threshold adjustment recommendations
+  - [ ] Bias Mitigation Updates
+    - [ ] New bias detection techniques
+    - [ ] Mitigation strategy effectiveness review
+    - [ ] Dataset rebalancing procedures
+    - [ ] Model retraining protocols
+- [ ] Long-Term Roadmap
+  - [ ] 3-year strategic plan
+  - [ ] Emerging threat landscape analysis
+  - [ ] Technology evolution assessment
+  - [ ] Regulatory change tracking
+  - [ ] Research partnership opportunities
+- [ ] Sustainability Metrics
+  - [ ] Resource efficiency tracking
+  - [ ] Carbon footprint assessment
+  - [ ] Infrastructure cost optimization
+  - [ ] Team training and development plan
 Success Criteria:
-- Proof coverage ≥85%; external audit scheduled; fairness metrics within tolerance.
+- [ ] Proof coverage maintained at ≥85% continuously
+- [ ] Admitted critical lemmas = 0 sustained for 90 days
+- [ ] External audit scheduled and scope approved by stakeholders
+- [ ] External audit findings: 0 critical, <5 high severity unresolved
+- [ ] Fairness metrics within defined thresholds (SP diff ≤0.10) for 90 consecutive days
+- [ ] Quarterly fairness recalibration completed on schedule
+- [ ] Maintenance policy reviewed and approved by technical steering committee
+- [ ] KPI automation: 100% of critical metrics tracked continuously
+- [ ] Incident response time: <15 minutes for critical issues
+- [ ] System uptime: ≥99.95% over 90-day period
+- [ ] At least one industry certification obtained or in progress (ISO 27001, SOC 2)
+- [ ] Documentation completeness: ≥95% of required artifacts ready for audit
+- [ ] Mean time to remediation (MTTR) for audit findings: <30 days
 
 ---
 
@@ -369,6 +575,13 @@ Success Criteria:
 | P-DATA-MIN | Compliance | Only whitelisted context fields accessed | Runtime enforcement + logs |
 | P-TENANT-ISO | Isolation | Cross-tenant influence forbidden | Formal non-interference proof |
 | P-JUST | Transparency | Decision justification completeness = 100% | Portal + verification script |
+| P-NO-BACKDATE | Integrity | Audit timestamps cannot be backdated | Runtime enforcement + Merkle verification |
+| P-NO-REPLAY | Security | Replay attack prevention | Nonce tracking + temporal validation |
+| P-NO-PRIV-ESC | Security | Privilege escalation forbidden | RBAC enforcement + audit logging |
+| P-NO-DATA-LEAK | Isolation | Cross-tenant data leakage prevention | Network segmentation + runtime checks |
+| P-NO-TAMPER | Integrity | Policy tampering detection | Hash verification + signature validation |
+| P-SLO-MET | Reliability | Service level objectives met | Runtime monitoring + alerting |
+| P-REPRO | Reproducibility | Build reproducibility guarantee | Hash-based verification + provenance |
 
 ---
 
@@ -401,10 +614,19 @@ Success Criteria:
 | BL-10 | AI/ML security (adversarial, poisoning, privacy) | 6A | High | ✅ Complete |
 | BL-11 | Quantum-resistant cryptography (Kyber, Dilithium) | 6B | High | ✅ Complete |
 | BL-12 | Runtime probes for invariants | 7A | High | ⏳ Pending |
-| BL-13 | Red-team playbook execution | 8B | Medium | ⏳ Pending |
-| BL-14 | Repro build script + SBOM | 9A | High | ⏳ Pending |
-| BL-15 | Audit portal MVP | 9B | Medium | ⏳ Pending |
-| BL-16 | Coverage dashboard automation | 6A/10A | High | ⏳ Pending |
+| BL-13 | Governance metrics dashboard | 7B | High | ⏳ Pending |
+| BL-14 | SLO definitions and monitoring | 7 | Medium | ⏳ Pending |
+| BL-15 | Negative properties specification | 8A | High | ⏳ Pending |
+| BL-16 | Red-team playbook and execution | 8B | High | ⏳ Pending |
+| BL-17 | Misuse testing suite | 8 | Medium | ⏳ Pending |
+| BL-18 | Reproducible build infrastructure | 9A | High | ⏳ Pending |
+| BL-19 | SBOM generation and signing | 9A | High | ⏳ Pending |
+| BL-20 | Audit portal MVP | 9B | High | ⏳ Pending |
+| BL-21 | Public transparency API | 9B | Medium | ⏳ Pending |
+| BL-22 | Maintenance policy and automation | 10A | High | ⏳ Pending |
+| BL-23 | External audit preparation | 10B | High | ⏳ Pending |
+| BL-24 | Fairness recalibration framework | 10 | Medium | ⏳ Pending |
+| BL-25 | Coverage dashboard automation | 10A | High | ⏳ Pending |
 
 ---
 
@@ -481,10 +703,22 @@ Success Criteria:
 - [x] Implement quantum-resistant cryptography (Kyber, Dilithium) ✅ **COMPLETE**
 
 ### Next Steps (Phases 7-10)
-- [ ] Phase 7: Runtime invariants & governance metrics dashboard (7A, 7B)
-- [ ] Phase 8: Negative properties & red-team simulations (8A, 8B)
-- [ ] Phase 9: Supply chain integrity & audit portal (9A, 9B)
-- [ ] Phase 10: External audits & continuous improvement (10A, 10B)
+- [ ] Phase 7: Operational Reliability & Observability
+  - [ ] 7A: Runtime invariants monitoring with probes suite
+  - [ ] 7B: Governance metrics dashboard (fairness, lineage, appeals KPIs)
+  - [ ] 7C: SLO/SLA definitions and monitoring infrastructure
+- [ ] Phase 8: Security & Adversarial Robustness
+  - [ ] 8A: Negative properties specification and formal verification
+  - [ ] 8B: Red-team playbook development and execution
+  - [ ] 8C: Comprehensive misuse testing suite
+- [ ] Phase 9: Deployment, Reproducibility & Transparency
+  - [ ] 9A: Supply chain integrity (reproducible builds, SBOM, signing, SLSA provenance)
+  - [ ] 9B: Audit portal for public transparency (decision traces, policy lineage, appeals)
+  - [ ] 9C: Transparency documentation and public API
+- [ ] Phase 10: Sustainability & External Assurance
+  - [ ] 10A: Maintenance policy, KPI automation, continuous improvement
+  - [ ] 10B: External audit preparation, scope definition, and execution
+  - [ ] 10C: Fairness recalibration and long-term sustainability metrics
 
 ---
 
