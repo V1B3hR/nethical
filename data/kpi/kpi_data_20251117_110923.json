@@ -1,0 +1,95 @@
+{
+  "timestamp": "2025-11-17T11:09:23.721160",
+  "values": {
+    "proof_coverage": {
+      "value": 87.5,
+      "target": 85.0,
+      "unit": "percent",
+      "status": "yellow"
+    },
+    "admitted_critical_lemmas": {
+      "value": 0,
+      "target": 0,
+      "unit": "count",
+      "status": "green"
+    },
+    "determinism_violations": {
+      "value": 0,
+      "target": 0,
+      "unit": "count",
+      "status": "green"
+    },
+    "fairness_sp_diff": {
+      "value": 0.08,
+      "target": 0.1,
+      "unit": "ratio",
+      "status": "green"
+    },
+    "appeal_resolution_time": {
+      "value": 48.0,
+      "target": 72.0,
+      "unit": "hours",
+      "status": "green"
+    },
+    "system_uptime": {
+      "value": 99.97,
+      "target": 99.95,
+      "unit": "percent",
+      "status": "red"
+    },
+    "mttr_critical": {
+      "value": 25.0,
+      "target": 30.0,
+      "unit": "minutes",
+      "status": "green"
+    },
+    "security_vulnerabilities_critical": {
+      "value": 0,
+      "target": 0,
+      "unit": "count",
+      "status": "green"
+    },
+    "security_vulnerabilities_high": {
+      "value": 0,
+      "target": 0,
+      "unit": "count",
+      "status": "green"
+    },
+    "test_pass_rate": {
+      "value": 99.5,
+      "target": 99.0,
+      "unit": "percent",
+      "status": "red"
+    },
+    "lineage_chain_verification": {
+      "value": 100.0,
+      "target": 100.0,
+      "unit": "percent",
+      "status": "green"
+    },
+    "sbom_generation_success": {
+      "value": 100.0,
+      "target": 100.0,
+      "unit": "percent",
+      "status": "green"
+    },
+    "technical_debt_critical": {
+      "value": 0,
+      "target": 0,
+      "unit": "count",
+      "status": "green"
+    },
+    "performance_p95_latency": {
+      "value": 180.0,
+      "target": 200.0,
+      "unit": "milliseconds",
+      "status": "green"
+    },
+    "audit_log_integrity": {
+      "value": 100.0,
+      "target": 100.0,
+      "unit": "percent",
+      "status": "green"
+    }
+  }
+}
