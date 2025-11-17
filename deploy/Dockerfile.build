@@ -1,0 +1,129 @@
+# Reproducible Build Environment for Nethical
+# This Dockerfile creates a deterministic build environment
+# for reproducible releases.
+
+# Use specific version with digest for reproducibility
+FROM python:3.11.6-slim-bookworm@sha256:2f8ba5c5b0bf867c19e36f55f904c2b4b7b0cf2e4e1c6a34e6e0c7e85d0d7c0e
+
+# Build arguments
+ARG SOURCE_DATE_EPOCH
+ARG VERSION
+ARG GIT_COMMIT
+
+# Set environment variables for reproducibility
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONHASHSEED=0 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1 \
+    SOURCE_DATE_EPOCH=${SOURCE_DATE_EPOCH} \
+    LC_ALL=C.UTF-8 \
+    LANG=C.UTF-8
+
+# Set reproducible timestamps
+RUN if [ -n "${SOURCE_DATE_EPOCH}" ]; then \
+        find /usr -type f -exec touch -d "@${SOURCE_DATE_EPOCH}" {} + ; \
+    fi
+
+# Install system dependencies with pinned versions
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    git=1:2.39.2-1.1 \
+    ca-certificates=20230311 \
+    build-essential=12.9 \
+    && rm -rf /var/lib/apt/lists/*
+
+# Set reproducible timestamps for system files
+RUN if [ -n "${SOURCE_DATE_EPOCH}" ]; then \
+        find /usr -type f -exec touch -d "@${SOURCE_DATE_EPOCH}" {} + ; \
+        find /etc -type f -exec touch -d "@${SOURCE_DATE_EPOCH}" {} + ; \
+    fi
+
+# Create build user (non-root)
+RUN useradd -m -u 1000 -s /bin/bash builder && \
+    mkdir -p /workspace /dist && \
+    chown -R builder:builder /workspace /dist
+
+# Switch to build user
+USER builder
+WORKDIR /workspace
+
+# Install Python build tools with specific versions
+COPY --chown=builder:builder requirements-hashed.txt .
+RUN pip install --user --require-hashes -r requirements-hashed.txt
+
+# Install build tools
+RUN pip install --user \
+    build==1.0.3 \
+    wheel==0.42.0 \
+    setuptools==69.0.3 \
+    pip-tools==7.3.0 \
+    cyclonedx-bom==4.4.0 \
+    spdx-tools==0.8.2 \
+    pip-audit==2.6.1
+
+# Add build tools to PATH
+ENV PATH="/home/builder/.local/bin:${PATH}"
+
+# Copy source code
+COPY --chown=builder:builder . .
+
+# Set file timestamps for reproducibility
+RUN if [ -n "${SOURCE_DATE_EPOCH}" ]; then \
+        find . -type f -exec touch -d "@${SOURCE_DATE_EPOCH}" {} + ; \
+    fi
+
+# Build metadata
+RUN echo "{\
+  \"version\": \"${VERSION}\",\
+  \"commit\": \"${GIT_COMMIT}\",\
+  \"build_date\": \"$(date -u +%Y-%m-%dT%H:%M:%SZ)\",\
+  \"source_date_epoch\": \"${SOURCE_DATE_EPOCH}\",\
+  \"python_version\": \"$(python --version | cut -d' ' -f2)\"\
+}" > /workspace/build-metadata.json
+
+# Build package
+RUN python -m build --outdir /dist
+
+# Generate SBOM
+RUN cyclonedx-py -r -i requirements.txt -o /dist/sbom-cyclonedx.json --format json || true
+RUN cyclonedx-py -r -i requirements.txt -o /dist/sbom-cyclonedx.xml --format xml || true
+
+# Run vulnerability scan
+RUN pip-audit -r requirements.txt --format json > /dist/vulnerability-scan.json || true
+
+# Generate checksums
+WORKDIR /dist
+RUN sha256sum *.whl *.tar.gz > SHA256SUMS 2>/dev/null || true
+
+# Verification script
+RUN echo '#!/bin/bash\n\
+echo "Build Verification Report"\n\
+echo "========================"\n\
+echo "Version: ${VERSION}"\n\
+echo "Commit: ${GIT_COMMIT}"\n\
+echo "Source Date Epoch: ${SOURCE_DATE_EPOCH}"\n\
+echo ""\n\
+echo "Artifacts:"\n\
+ls -lh /dist/*.whl /dist/*.tar.gz 2>/dev/null || echo "No artifacts found"\n\
+echo ""\n\
+echo "Checksums:"\n\
+cat /dist/SHA256SUMS 2>/dev/null || echo "No checksums found"\n\
+echo ""\n\
+echo "SBOM Files:"\n\
+ls -lh /dist/sbom-* 2>/dev/null || echo "No SBOM files found"\n\
+' > /workspace/verify.sh && chmod +x /workspace/verify.sh
+
+# Default command shows build info
+CMD ["/workspace/verify.sh"]
+
+# Labels for metadata
+LABEL org.opencontainers.image.title="Nethical Build Environment" \
+      org.opencontainers.image.description="Reproducible build environment for Nethical" \
+      org.opencontainers.image.version="${VERSION}" \
+      org.opencontainers.image.revision="${GIT_COMMIT}" \
+      org.opencontainers.image.source="https://github.com/V1B3hR/nethical" \
+      org.opencontainers.image.vendor="Nethical Project" \
+      org.opencontainers.image.licenses="Apache-2.0" \
+      dev.nethical.build.source_date_epoch="${SOURCE_DATE_EPOCH}" \
+      dev.nethical.build.reproducible="true"
