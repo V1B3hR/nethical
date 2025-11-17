@@ -411,15 +411,18 @@ class KPIMonitor:
         warning = kpi_def["threshold_warning"]
         critical = kpi_def["threshold_critical"]
         
-        # Determine if higher or lower is better based on target/thresholds
-        if target <= critical:  # Lower is better (e.g., latency, violations)
+        # Determine if higher or lower is better based on relationship between
+        # warning and critical thresholds
+        # If warning > critical/target, lower is better (e.g., latency, violations)
+        # If warning < critical/target, higher is better (e.g., uptime, coverage)
+        if warning > critical:  # Lower is better (warning is worse than critical)
             if value <= target:
                 return "green"
             elif value <= warning:
                 return "yellow"
             else:
                 return "red"
-        else:  # Higher is better (e.g., uptime, coverage)
+        else:  # Higher is better (warning is worse than critical)
             if value >= target:
                 return "green"
             elif value >= warning:
