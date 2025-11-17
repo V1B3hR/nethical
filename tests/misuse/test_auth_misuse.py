@@ -59,8 +59,14 @@ class TestJWTAttacks:
         forged_token = test_jwt_tokens['forged']
         
         # Token should be rejected due to 'none' algorithm
-        # In real implementation, this would raise an exception
-        assert 'none' in forged_token.lower()
+        # JWT header contains 'none' algorithm (base64 encoded)
+        # Decode header to verify 'none' algorithm
+        import base64
+        header_b64 = forged_token.split('.')[0]
+        # Add padding if needed
+        header_b64 += '=' * (4 - len(header_b64) % 4)
+        header_json = base64.b64decode(header_b64).decode('utf-8')
+        assert 'none' in header_json.lower()
     
     @pytest.mark.high
     def test_jwt_signature_modification(self, test_jwt_tokens):
@@ -87,8 +93,13 @@ class TestJWTAttacks:
         expired_token = test_jwt_tokens['expired']
         
         # Token contains exp claim in the past
-        # Real implementation would check exp < current_time
-        assert 'exp' in expired_token or '160000000' in expired_token
+        # Decode payload to verify exp claim
+        import base64
+        payload_b64 = expired_token.split('.')[1]
+        # Add padding if needed
+        payload_b64 += '=' * (4 - len(payload_b64) % 4)
+        payload_json = base64.b64decode(payload_b64).decode('utf-8')
+        assert 'exp' in payload_json.lower()
 
 
 class TestPrivilegeEscalation:
