@@ -90,7 +90,29 @@ Nethical serves as a guardian layer for AI systems, continuously monitoring agen
   - PQC migration roadmap (5 phases, 31 months)
 - **427 tests passing** across all phases
 - Ready for DoD (IL4/IL5), FedRAMP High, HIPAA, PCI-DSS
-- See [advancedplan.md](advancedplan.md) for complete roadmap
+
+### Next: Phases 7-10 (Operational Excellence & External Assurance) 🎯
+- **Phase 7** (Planned): Operational Reliability & Observability
+  - Runtime invariant probes mirroring formal specifications
+  - Governance metrics dashboard (fairness, lineage, appeals KPIs)
+  - SLO/SLA monitoring and alerting infrastructure
+- **Phase 8** (Planned): Security & Adversarial Robustness
+  - Negative properties specification (P-NO-BACKDATE, P-NO-REPLAY, P-NO-PRIV-ESC, P-NO-DATA-LEAK, P-NO-TAMPER)
+  - Comprehensive red-team playbook with 50+ attack scenarios
+  - Misuse testing suite and chaos engineering
+- **Phase 9** (Planned): Deployment, Reproducibility & Transparency
+  - Reproducible builds with SLSA Level 3 provenance
+  - SBOM generation and artifact signing
+  - Public audit portal (decision traces, policy lineage, appeals tracking)
+  - Transparency API (REST/GraphQL)
+- **Phase 10** (Planned): Sustainability & External Assurance
+  - Maintenance policy and KPI automation
+  - External audit preparation (ISO 27001, SOC 2, FedRAMP)
+  - Quarterly fairness recalibration
+  - Long-term sustainability metrics
+
+- See [nethicalplan.md](nethicalplan.md) for complete governance roadmap
+- See [advancedplan.md](advancedplan.md) for security enhancement details
 
 ## 🚀 Quick Start
 
