@@ -1,0 +1,409 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "title": "Nethical Governance Metrics Dashboard Configuration",
+  "description": "Configuration schema for governance metrics visualization and monitoring",
+  "version": "1.0.0",
+  
+  "metrics": {
+    "fairness": {
+      "statistical_parity": {
+        "name": "Statistical Parity",
+        "description": "Measures whether protected and unprotected groups receive positive outcomes at similar rates",
+        "formula": "P(decision=allow|protected) - P(decision=allow|unprotected)",
+        "threshold": 0.10,
+        "unit": "difference",
+        "severity_levels": {
+          "healthy": {"min": -0.10, "max": 0.10},
+          "warning": {"min": -0.20, "max": 0.20},
+          "critical": {"min": -1.0, "max": 1.0}
+        },
+        "visualization": {
+          "type": "line_chart",
+          "refresh_interval_seconds": 300,
+          "aggregation": "1h"
+        }
+      },
+      
+      "disparate_impact": {
+        "name": "Disparate Impact Ratio",
+        "description": "Ratio of positive outcome rates between protected and unprotected groups",
+        "formula": "P(decision=allow|protected) / P(decision=allow|unprotected)",
+        "threshold_min": 0.80,
+        "threshold_max": 1.25,
+        "unit": "ratio",
+        "severity_levels": {
+          "healthy": {"min": 0.80, "max": 1.25},
+          "warning": {"min": 0.70, "max": 1.40},
+          "critical": {"min": 0.0, "max": 10.0}
+        },
+        "visualization": {
+          "type": "gauge",
+          "refresh_interval_seconds": 300,
+          "aggregation": "1h"
+        }
+      },
+      
+      "equal_opportunity": {
+        "name": "Equal Opportunity",
+        "description": "Measures whether true positive rates are similar across groups",
+        "formula": "TPR(protected) - TPR(unprotected)",
+        "threshold": 0.10,
+        "unit": "difference",
+        "severity_levels": {
+          "healthy": {"min": -0.10, "max": 0.10},
+          "warning": {"min": -0.20, "max": 0.20},
+          "critical": {"min": -1.0, "max": 1.0}
+        },
+        "visualization": {
+          "type": "bar_chart",
+          "refresh_interval_seconds": 300,
+          "aggregation": "1h"
+        }
+      },
+      
+      "protected_attributes": [
+        "age",
+        "gender",
+        "race",
+        "ethnicity",
+        "disability",
+        "national_origin",
+        "religion"
+      ]
+    },
+    
+    "policy_lineage": {
+      "chain_integrity": {
+        "name": "Policy Lineage Chain Integrity",
+        "description": "Validates hash chain integrity for all active policies",
+        "metrics": {
+          "total_policies": {"type": "counter"},
+          "verified_chains": {"type": "counter"},
+          "broken_chains": {"type": "counter"},
+          "integrity_rate": {"type": "percentage", "formula": "verified_chains / total_policies"}
+        },
+        "threshold": 1.0,
+        "visualization": {
+          "type": "status_indicator",
+          "refresh_interval_seconds": 60
+        }
+      },
+      
+      "version_tracking": {
+        "name": "Policy Version Tracking",
+        "description": "Tracks policy version history and changes",
+        "metrics": {
+          "total_versions": {"type": "counter"},
+          "active_policies": {"type": "counter"},
+          "recent_changes_24h": {"type": "counter"},
+          "average_versions_per_policy": {"type": "average"}
+        },
+        "visualization": {
+          "type": "timeline",
+          "refresh_interval_seconds": 300
+        }
+      },
+      
+      "multi_sig_compliance": {
+        "name": "Multi-Signature Compliance",
+        "description": "Tracks compliance with multi-signature requirements",
+        "metrics": {
+          "total_changes": {"type": "counter"},
+          "properly_signed": {"type": "counter"},
+          "compliance_rate": {"type": "percentage"}
+        },
+        "threshold": 1.0,
+        "visualization": {
+          "type": "pie_chart",
+          "refresh_interval_seconds": 300
+        }
+      }
+    },
+    
+    "appeals_processing": {
+      "appeal_volume": {
+        "name": "Appeal Volume",
+        "description": "Tracks number of appeals over time",
+        "metrics": {
+          "total_appeals": {"type": "counter"},
+          "pending_appeals": {"type": "gauge"},
+          "resolved_appeals": {"type": "counter"},
+          "appeals_per_day": {"type": "rate"}
+        },
+        "visualization": {
+          "type": "line_chart",
+          "refresh_interval_seconds": 60
+        }
+      },
+      
+      "resolution_time": {
+        "name": "Appeal Resolution Time",
+        "description": "Measures time to resolve appeals",
+        "metrics": {
+          "median_hours": {"type": "percentile", "percentile": 50},
+          "p95_hours": {"type": "percentile", "percentile": 95},
+          "p99_hours": {"type": "percentile", "percentile": 99}
+        },
+        "slo_target_hours": 72,
+        "visualization": {
+          "type": "histogram",
+          "refresh_interval_seconds": 300
+        }
+      },
+      
+      "resolution_outcomes": {
+        "name": "Appeal Resolution Outcomes",
+        "description": "Distribution of appeal outcomes",
+        "categories": [
+          "upheld",
+          "overturned",
+          "modified",
+          "withdrawn"
+        ],
+        "visualization": {
+          "type": "pie_chart",
+          "refresh_interval_seconds": 300
+        }
+      }
+    },
+    
+    "audit_log": {
+      "completeness": {
+        "name": "Audit Log Completeness",
+        "description": "Validates all decisions are audited",
+        "metrics": {
+          "total_decisions": {"type": "counter"},
+          "audited_decisions": {"type": "counter"},
+          "completeness_rate": {"type": "percentage"}
+        },
+        "threshold": 1.0,
+        "visualization": {
+          "type": "gauge",
+          "refresh_interval_seconds": 60
+        }
+      },
+      
+      "integrity": {
+        "name": "Audit Log Integrity",
+        "description": "Validates Merkle tree and signature integrity",
+        "metrics": {
+          "merkle_root_valid": {"type": "boolean"},
+          "signature_valid": {"type": "boolean"},
+          "last_verification": {"type": "timestamp"},
+          "verification_failures": {"type": "counter"}
+        },
+        "visualization": {
+          "type": "status_indicator",
+          "refresh_interval_seconds": 60
+        }
+      },
+      
+      "retention": {
+        "name": "Audit Log Retention",
+        "description": "Monitors audit log storage and retention",
+        "metrics": {
+          "total_entries": {"type": "counter"},
+          "oldest_entry_days": {"type": "gauge"},
+          "storage_size_gb": {"type": "gauge"}
+        },
+        "retention_days": 2555,
+        "visualization": {
+          "type": "line_chart",
+          "refresh_interval_seconds": 3600
+        }
+      }
+    },
+    
+    "invariant_violations": {
+      "determinism": {
+        "name": "P-DET Violations",
+        "description": "Non-deterministic decision detection",
+        "probe": "P-DET-Determinism",
+        "threshold": 0,
+        "visualization": {
+          "type": "alert_stream",
+          "refresh_interval_seconds": 30
+        }
+      },
+      
+      "termination": {
+        "name": "P-TERM Violations",
+        "description": "Evaluation timeout detection",
+        "probe": "P-TERM-Termination",
+        "threshold": 0,
+        "visualization": {
+          "type": "alert_stream",
+          "refresh_interval_seconds": 30
+        }
+      },
+      
+      "acyclicity": {
+        "name": "P-ACYCLIC Violations",
+        "description": "Policy dependency cycle detection",
+        "probe": "P-ACYCLIC-Acyclicity",
+        "threshold": 0,
+        "visualization": {
+          "type": "alert_stream",
+          "refresh_interval_seconds": 300
+        }
+      },
+      
+      "audit": {
+        "name": "P-AUD Violations",
+        "description": "Incomplete audit entries",
+        "probe": "P-AUD-AuditCompleteness",
+        "threshold": 0,
+        "visualization": {
+          "type": "alert_stream",
+          "refresh_interval_seconds": 60
+        }
+      },
+      
+      "non_repudiation": {
+        "name": "P-NONREP Violations",
+        "description": "Signature/integrity failures",
+        "probe": "P-NONREP-NonRepudiation",
+        "threshold": 0,
+        "visualization": {
+          "type": "alert_stream",
+          "refresh_interval_seconds": 300
+        }
+      }
+    }
+  },
+  
+  "slo_definitions": {
+    "governance_dashboard_latency": {
+      "name": "Dashboard Query Latency",
+      "target": "< 5s",
+      "target_ms": 5000,
+      "measurement": "p95",
+      "evaluation_period": "5m"
+    },
+    
+    "invariant_probe_availability": {
+      "name": "Probe Availability",
+      "target": ">= 99.9%",
+      "target_percentage": 99.9,
+      "evaluation_period": "30d"
+    },
+    
+    "alert_false_positive_rate": {
+      "name": "Alert False Positive Rate",
+      "target": "< 5%",
+      "target_percentage": 5.0,
+      "evaluation_period": "7d"
+    },
+    
+    "audit_completeness": {
+      "name": "Audit Log Completeness",
+      "target": "= 100%",
+      "target_percentage": 100.0,
+      "evaluation_period": "1d"
+    }
+  },
+  
+  "dashboard_layout": {
+    "sections": [
+      {
+        "id": "overview",
+        "title": "Governance Overview",
+        "panels": [
+          "system_health",
+          "active_alerts",
+          "slo_compliance"
+        ]
+      },
+      {
+        "id": "fairness",
+        "title": "Fairness Metrics",
+        "panels": [
+          "statistical_parity",
+          "disparate_impact",
+          "equal_opportunity",
+          "protected_attribute_analysis"
+        ]
+      },
+      {
+        "id": "policy_lineage",
+        "title": "Policy Lineage & Integrity",
+        "panels": [
+          "chain_integrity",
+          "version_tracking",
+          "multi_sig_compliance",
+          "policy_timeline"
+        ]
+      },
+      {
+        "id": "appeals",
+        "title": "Appeals Processing",
+        "panels": [
+          "appeal_volume",
+          "resolution_time",
+          "resolution_outcomes",
+          "pending_appeals_list"
+        ]
+      },
+      {
+        "id": "audit",
+        "title": "Audit & Compliance",
+        "panels": [
+          "audit_completeness",
+          "audit_integrity",
+          "audit_retention",
+          "recent_audit_entries"
+        ]
+      },
+      {
+        "id": "invariants",
+        "title": "Runtime Invariants",
+        "panels": [
+          "determinism_violations",
+          "termination_violations",
+          "acyclicity_violations",
+          "audit_violations",
+          "non_repudiation_violations"
+        ]
+      }
+    ]
+  },
+  
+  "accessibility": {
+    "wcag_version": "2.1",
+    "conformance_level": "AA",
+    "features": {
+      "keyboard_navigation": true,
+      "screen_reader_support": true,
+      "high_contrast_mode": true,
+      "text_alternatives": true,
+      "color_contrast_ratio": "4.5:1",
+      "focus_indicators": true,
+      "aria_labels": true
+    }
+  },
+  
+  "export_formats": [
+    "json",
+    "csv",
+    "pdf"
+  ],
+  
+  "notification_channels": [
+    {
+      "type": "email",
+      "severity_levels": ["critical", "warning"]
+    },
+    {
+      "type": "slack",
+      "severity_levels": ["critical"]
+    },
+    {
+      "type": "pagerduty",
+      "severity_levels": ["critical"]
+    },
+    {
+      "type": "webhook",
+      "severity_levels": ["critical", "warning", "info"]
+    }
+  ]
+}
