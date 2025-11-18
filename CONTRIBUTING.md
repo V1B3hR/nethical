@@ -167,6 +167,68 @@ mypy nethical/
 - **Constants**: UPPER_SNAKE_CASE (e.g., `MAX_VIOLATIONS`)
 - **Private members**: Prefix with underscore (e.g., `_internal_method`)
 
+### Security Best Practices
+
+When writing code that interacts with the system or external processes, follow these security guidelines:
+
+#### Subprocess Security
+
+**NEVER use `shell=True` with `subprocess.run()` or related functions.** This is a critical security vulnerability that can lead to shell injection attacks.
+
+**❌ UNSAFE - Do not do this:**
+```python
+import subprocess
+
+# BAD: Vulnerable to shell injection
+user_input = "file.txt; rm -rf /"
+subprocess.run(f"cat {user_input}", shell=True)  # DANGEROUS!
+```
+
+**✅ SAFE - Do this instead:**
+```python
+import subprocess
+
+# GOOD: Use list-of-arguments form
+user_input = "file.txt"
+subprocess.run(["cat", user_input], capture_output=True, text=True)
+```
+
+**Key principles:**
+- Always pass commands as a list of arguments: `["command", "arg1", "arg2"]`
+- Never use `shell=True` unless absolutely necessary and you have sanitized all inputs
+- If you must use `shell=True`, use `shlex.quote()` to escape all user-provided values
+- Prefer Python libraries over shelling out when possible
+
+#### External Tool Checks
+
+When checking if external tools are available, use `shutil.which()` instead of `os.system()` or `subprocess.run()`:
+
+**✅ SAFE:**
+```python
+import shutil
+
+# Check if tool exists
+if shutil.which("nmap"):
+    print("nmap is available")
+else:
+    print("nmap not found")
+```
+
+**❌ UNSAFE:**
+```python
+import os
+
+# Don't use os.system for checks
+os.system("command -v nmap")  # AVOID
+```
+
+#### Input Validation
+
+- Always validate and sanitize user inputs
+- Use type hints and runtime validation (e.g., Pydantic)
+- Reject unexpected input rather than trying to sanitize it
+- Use allowlists rather than denylists when possible
+
 ## Testing Guidelines
 
 ### Running Tests
@@ -413,7 +475,7 @@ Contributors are recognized through:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
+By contributing, you agree that your contributions will be licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Questions?
 
