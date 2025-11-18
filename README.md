@@ -175,6 +175,43 @@ Run the unified demo:
 python examples/basic/unified_governance_demo.py
 ```
 
+### Command-Line Interface
+
+Nethical now includes a CLI for top-level automation:
+
+```bash
+# Scan an agent with default settings
+python nethical.py --target agent_123 --scan
+
+# Process a specific action
+python nethical.py --target agent_456 --action "process user request" --cohort production
+
+# Use a configuration file (YAML or INI)
+python nethical.py --config config/example_config.yaml
+
+# Override config file settings with CLI args
+python nethical.py --config config/example_config.yaml --target agent_789 --scan
+
+# Enable all governance features
+python nethical.py --target agent_123 --scan --enable-all
+
+# Use custom wordlist for scanning
+python nethical.py --target agent_123 --scan --wordlist /path/to/wordlist.txt
+
+# Verbose output
+python nethical.py --target agent_123 --scan --verbose
+```
+
+**Configuration Files:**
+
+Nethical supports both YAML and INI configuration files for repeatable deployments. Configuration files can specify all CLI options plus advanced governance settings. CLI arguments always override file settings.
+
+Example configuration files are provided:
+- `config/example_config.yaml` - YAML format with comprehensive options
+- `config/example_config.ini` - INI format with common settings
+
+See the configuration files for detailed documentation of available options.
+
 ## 🧩 Privacy & Data Handling (F3)
 
 New privacy controls and data-handling features:

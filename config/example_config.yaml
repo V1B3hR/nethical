@@ -1,0 +1,106 @@
+# Nethical Configuration Example (YAML)
+# 
+# This file demonstrates the configuration options available for the Nethical
+# AI Safety Governance System. You can use this as a template for your own
+# configuration files.
+#
+# Usage:
+#   python nethical.py --config config/example_config.yaml
+#
+# Note: Command-line arguments will override settings in this file.
+
+# Target agent to scan or monitor
+target: agent_example_001
+
+# Action to process (if not scanning)
+# action: "Process user request"
+
+# Agent cohort for fairness sampling
+cohort: production
+
+# Storage directory for governance data
+storage_dir: ./nethical_data
+
+# Wordlist file for scanning (optional)
+# wordlist: /path/to/wordlist.txt
+
+# Enable scanning mode
+scan: false
+
+# Governance feature flags
+# Set to true to enable specific governance features
+governance:
+  # Phase 3: Risk Engine and Performance Optimization
+  enable_performance_optimization: true
+  
+  # Phase 4: Integrity and Audit
+  enable_merkle_anchoring: true
+  enable_quarantine: true
+  enable_ethical_taxonomy: true
+  enable_sla_monitoring: true
+  
+  # Phases 5-7: ML and Anomaly Detection
+  enable_shadow_mode: true
+  enable_ml_blending: true
+  enable_anomaly_detection: true
+  
+  # Phases 8-9: Human-in-the-Loop and Optimization
+  auto_escalate_on_block: true
+  auto_escalate_on_low_confidence: true
+  
+  # Privacy and Regional Settings
+  region_id: us-east-1
+  logical_domain: production
+  data_residency_policy: US_CCPA
+  
+  # Privacy mode: "none", "differential", or "standard"
+  privacy_mode: standard
+  
+  # Differential privacy epsilon (lower = more privacy)
+  epsilon: 1.0
+  
+  # Redaction policy: "none", "standard", or "strict"
+  redaction_policy: standard
+
+# Advanced Configuration Options (optional)
+# Uncomment and customize as needed
+
+# monitoring:
+#   intent_deviation_threshold: 0.8
+#   enable_ethical_monitoring: true
+#   enable_safety_monitoring: true
+#   enable_manipulation_detection: true
+#   max_violation_history: 1000
+
+# risk_engine:
+#   decay_rate: 0.1
+#   window_size: 100
+#   thresholds:
+#     low: 0.3
+#     medium: 0.6
+#     high: 0.8
+
+# sla:
+#   triage_sla_seconds: 3600
+#   labeling_sla_seconds: 7200
+#   resolution_sla_seconds: 86400
+
+# ml:
+#   shadow_threshold: 0.5
+#   blend_weight_rule: 0.6
+#   blend_weight_ml: 0.4
+#   anomaly_threshold: 0.7
+
+# Example use cases:
+#
+# 1. Basic scan with default settings:
+#    python nethical.py --config config/example_config.yaml --scan
+#
+# 2. Process specific action:
+#    python nethical.py --config config/example_config.yaml --action "User login"
+#
+# 3. Override target from config:
+#    python nethical.py --config config/example_config.yaml --target agent_999 --scan
+#
+# 4. Enable all features via CLI:
+#    python nethical.py --config config/example_config.yaml --enable-all --scan
