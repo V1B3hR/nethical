@@ -13,12 +13,28 @@ analyzing, and governing information security tasks.
 With automation, integrated reporting, and a straightforward interface, nethical makes cybersecurity more accessible while enforcing a strong ethics-first approach. 
 My belief is that by combining automation, AI, and solid principles, we can improve safety, transparency, and effectiveness in digital investigations.
 
+---
+
+## 🆕 v2.0 Highlights (2025)
+
+**Version 2.0 brings major internal and usability improvements:**
+
+- Full modular configuration via a `Config` class (OpenAI/API selection, wordlists, tokens, etc).
+- Per-scan results are saved in individual timestamped directories for forensic soundness, with structured outputs.
+- **Scan History:** All runs are now logged per user in `~/.nethical_history.jsonl`.
+- Enhanced AI-powered reporting: CVSS-scored Markdown vulnerability reports, plus optional HTML exports.
+- Improved error handling, banner warnings, and legitimacy confirmation prompt.
+- User input validation hardened across all scan and utility options.
+- Much more robust scan orchestration—menu and command logic upgraded for clarity and future extensibility.
+- MIT License confirmed (see end of file and LICENSE for details).
+
+---
 
 ## What’s New
 
 Since the last update, Nethical has advanced in several important ways:
 
-- ✅ **Quality Metrics Achieved**: All quality metric targets reached - False Positive Rate <5%, False Negative Rate <8%, Detection Recall >95%, Detection Precision >95%, Human Agreement >90%, SLA Compliance >99%.
+- ✅ **Quality Metrics Achieved**: All quality metric targets reached - False Positive Rate <5%, False Negative Rate <8%, Detection Recall >95%, Detection Precision >95%, Human Agreement >90%, SLA Co[...]
 - ✅ Unified Integrated Governance: New `IntegratedGovernance` consolidates Phases 3, 4, 5–7, and 8–9 into a single interface.
 - ✅ Phase 4 Features Implemented: Merkle anchoring, policy diff auditing, quarantine mode, ethical taxonomy, SLA monitoring.
 - ✅ Privacy & Data Handling (F3): Differential privacy, redaction pipeline, data minimization, and federated analytics with regions/domains.
@@ -34,9 +50,11 @@ Since the last update, Nethical has advanced in several important ways:
 
 Legacy integration classes (Phase3/4/5–7/8–9) are still available but deprecated in favor of `IntegratedGovernance`.
 
+---
+
 ## 🎯 What is Nethical?
 
-Nethical serves as a guardian layer for AI systems, continuously monitoring agent behavior to ensure safe, ethical, and transparent operations. It acts as a real-time safety net that can detect, evaluate, and respond to risky or non-compliant behaviors while providing clear explanations, audit trails, and pathways for human oversight.
+Nethical serves as a guardian layer for AI systems, continuously monitoring agent behavior to ensure safe, ethical, and transparent operations. It acts as a real-time safety net that can detect, evalu[...]
 
 ### Main Purpose
 
@@ -45,6 +63,8 @@ Nethical serves as a guardian layer for AI systems, continuously monitoring agen
 - Safety Enforcement: Preventing harmful or dangerous behaviors
 - Transparency: Clear insights into decision-making processes
 - Trust Building: Confidence via robust oversight and auditability
+
+---
 
 ## ✨ Key Features
 
@@ -122,7 +142,8 @@ Nethical serves as a guardian layer for AI systems, continuously monitoring agen
 
 - **AI-Powered Security Analysis & Executive Reporting**
   - [NEW] Integrated OpenAI GPT-based summary and recommendation engine.
-    - Reads scan outputs, analyzes with AI, produces a **professional Markdown report**.
+    - Reads scan outputs, analyzes with AI, produces a **professional Markdown report (CVSS-scored)**.
+    - Optional: Save report as HTML for sharing.
     - Report includes an executive summary, technical breakdown (ports/services, web vulns, interesting files), and prioritizes actionable remediations.
     - Suits both technical and non-technical stakeholders.
   - Transparency and explainability: all analyzed raw data included for auditability.
@@ -132,6 +153,7 @@ Nethical serves as a guardian layer for AI systems, continuously monitoring agen
   - All actions and automation are designed to support responsible, legal, and ethical testing only.
   - Traceability by design—timestamped sessions, preserved logs, reproducible workflow.
   - User guidance and controls included to prevent accidental or unethical use.
+  - **All scan activity is logged in**: `~/.nethical_history.jsonl`
 
 - **Interactive, User-Friendly CLI**
   - Step-by-step prompts, colored output, error catching, and clear instructions.
@@ -140,6 +162,8 @@ Nethical serves as a guardian layer for AI systems, continuously monitoring agen
 
 - See [nethicalplan.md](nethicalplan.md) for complete governance roadmap
 - See [advancedplan.md](advancedplan.md) for security enhancement details
+
+---
 
 ## Why nethical?
 
@@ -153,7 +177,7 @@ Nethical serves as a guardian layer for AI systems, continuously monitoring agen
   Orchestrates multiple best-in-class open-source tools seamlessly. Greatly reduces manual, repetitive effort.
 
 - **Ethical Commitment:**  
-  Built by an infosec enthusiast with a belief in responsible, principled, and legal cybersecurity. With nethical, you are encouraged (and expected!) to act in ways that protect others, respect privacy, and contribute positively to digital ecosystems.
+  Built by an infosec enthusiast with a belief in responsible, principled, and legal cybersecurity. With nethical, you are encouraged (and expected!) to act in ways that protect others, respect privac[...]
 
 ---
 
@@ -210,12 +234,15 @@ python nethical.py
   1. Nmap Full Scan (All Ports)
   2. Nmap Quick Scan (Top 1000 Ports)
   3. Nikto Web Vulnerability Scan
-  4. Dirb Web Directory Scan
+  4. Dirb Web Directory Scan (custom wordlist optional)
   5. Sublist3r Subdomain Enumeration
   6. Run All Scans (Recommended)
-  8. Generate AI Summary Report [NEW]
-  9. Exit
+  8. Generate AI Security Report (CVSS, Markdown/HTML)
+  9. View Scan History
+  0. Exit
   ```
+- Per-scan results are saved in a new, timestamped directory for each run.
+- **Scan history** is viewable via option 9—shows last 10 activities, status, and more.
 - To generate an AI Markdown report, run one or more scans first, then select option 8 and provide your OpenAI API key.
 
 ---
@@ -227,7 +254,7 @@ python nethical.py
 
 ```
 ### Executive Summary
-Several high and medium risk issues were identified. Open SSH and HTTP ports provide potential entry points. Outdated Apache version with public vulnerabilities is running. Sensitive directories were found and should be secured.
+Several high and medium risk issues were identified. Open SSH and HTTP ports provide potential entry points. Outdated Apache version with public vulnerabilities is running. Sensitive directories were [...]
 
 ### Open Ports Analysis (from Nmap)
 - 22/tcp (SSH) – Secure if strong credentials, but exposed
@@ -262,7 +289,26 @@ Several high and medium risk issues were identified. Open SSH and HTTP ports pro
 
 ## License
 
-[MIT](LICENSE)
+**MIT License** — see [LICENSE](LICENSE) for full terms.
+
+```
+MIT License
+
+Permission is hereby granted, free of charge, to any person obtaining a copy
+of this software and associated documentation files (the "Software"), to deal
+in the Software without restriction, including without limitation the rights
+to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
+copies of the Software, and to permit persons to whom the Software is
+furnished to do so, subject to the following conditions:
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
+IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
+FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
+AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
+LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
+OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
+SOFTWARE.
+```
 
 ---
 
@@ -370,7 +416,7 @@ MIT License — see [LICENSE](LICENSE).
 ---
 
 **Documentation Last Updated**: November 4, 2025  
-**Version**: 0.1.0  
+**Version**: 2.0  
 **Repository**: [github.com/V1B3hR/nethical](https://github.com/V1B3hR/nethical)
 
 Nethical — Ensuring AI agents operate safely, ethically, and transparently. 🔒
