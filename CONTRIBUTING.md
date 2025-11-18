@@ -413,7 +413,7 @@ Contributors are recognized through:
 
 ## License
 
-By contributing, you agree that your contributions will be licensed under the GNU General Public License v3.0. See [LICENSE](LICENSE) for details.
+By contributing, you agree that your contributions will be licensed under the MIT License. See [LICENSE](LICENSE) for details.
 
 ## Questions?
 

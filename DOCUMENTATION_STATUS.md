@@ -17,11 +17,11 @@ This document provides a comprehensive status of all documentation in the Nethic
 | README.md | ✅ Current | 2025-11-04 | All examples verified, references checked |
 | CHANGELOG.md | ✅ Current | 2025-11-04 | Includes recent updates |
 | CONTRIBUTING.md | ✅ New | 2025-11-04 | Comprehensive contribution guide |
-| LICENSE | ✅ Current | - | GPL v3.0 |
+| LICENSE | ✅ Current | - | MIT License |
 | roadmap.md | ✅ Updated | 2025-11-04 | Status markers accurate |
 | requirements.txt | ✅ Documented | 2025-11-04 | Inline comments added |
 | requirements-dev.txt | ✅ Current | - | Development dependencies |
-| pyproject.toml | ✅ Fixed | 2025-11-04 | License corrected to GPL v3 |
+| pyproject.toml | ✅ Fixed | 2025-11-04 | License updated to MIT |
 | SECURITY.md | ✅ Current | - | Security policy |
 
 ### ✅ Implementation Documentation (docs/implementation/)
@@ -124,9 +124,9 @@ All 24 implementation guides are present and current:
 - Versions synchronized across all files
 
 ### ✅ License Consistency
-- [x] LICENSE file: GNU GPL v3.0
-- [x] pyproject.toml: GNU GPL v3.0
-- [x] README.md: GNU GPL v3.0
+- [x] LICENSE file: MIT License
+- [x] pyproject.toml: MIT License
+- [x] README.md: MIT License
 - License information consistent
 
 ## Known Gaps & Future Work

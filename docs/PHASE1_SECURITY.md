@@ -510,4 +510,4 @@ For implementation support, security architecture review, or compliance gap anal
 
 ## License
 
-This implementation is part of NETHICAL and follows the repository's GPL-3.0 license.
+This implementation is part of NETHICAL and follows the repository's MIT License.

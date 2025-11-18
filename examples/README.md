@@ -170,4 +170,4 @@ We welcome example contributions! If you have a use case or feature demonstratio
 
 ## License
 
-All examples are part of the Nethical project and are licensed under GNU General Public License v3.0.
+All examples are part of the Nethical project and are licensed under the MIT License.
