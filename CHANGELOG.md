@@ -7,6 +7,68 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added - 2025-11-18 🚀 **LICENSE CHANGE & CLI ENHANCEMENTS**
+
+#### License Change to MIT
+- **Changed license from GPL-3.0 to MIT License**
+  - Updated LICENSE file with MIT license text
+  - Updated all documentation references (README.md, CONTRIBUTING.md, examples/README.md)
+  - Updated pyproject.toml license classifier
+  - Updated DOCUMENTATION_STATUS.md and docs/PHASE1_SECURITY.md
+  - More permissive license for broader adoption and commercial use
+
+#### Command-Line Interface (CLI)
+- **New nethical.py main entry point** for top-level automation
+  - Full argparse integration with comprehensive help
+  - Support for `--target`, `--scan`, `--action`, `--cohort`, `--wordlist`, `--config` arguments
+  - Verbose mode with `--verbose` flag
+  - Version information with `--version`
+  
+- **Configuration file support** for repeatable deployments
+  - YAML format support (`config/example_config.yaml`)
+  - INI format support (`config/example_config.ini`)
+  - CLI arguments override file settings (precedence: CLI > config file > defaults)
+  - Comprehensive example configurations with inline documentation
+  
+- **Scanning functionality**
+  - Scan agents with default test actions
+  - Custom wordlist support for testing specific actions
+  - Summary output with risk scores
+  
+- **Action processing**
+  - Process individual actions through governance pipeline
+  - Display risk scores, Merkle events, and blended risk assessments
+  - Cohort-based fairness sampling
+
+#### Security Enhancements
+- **Added security best practices to CONTRIBUTING.md**
+  - Subprocess security guidelines (never use `shell=True`)
+  - External tool check best practices (use `shutil.which()`)
+  - Input validation recommendations
+  - Code examples for safe and unsafe patterns
+  
+- **Code audit results**
+  - Verified all existing `subprocess.run()` calls already use secure list-of-arguments form
+  - No `shell=True` usage found in codebase
+  - No unsafe `os.system()` or `command -v` usage for tool checks
+
+#### Documentation
+- **README.md updated** with CLI usage section
+  - Command examples for common use cases
+  - Configuration file documentation
+  - Quick start with CLI
+  
+- **Example configuration files** with comprehensive documentation
+  - `config/example_config.yaml`: Full governance feature configuration
+  - `config/example_config.ini`: Alternative INI format
+  - Inline comments explaining all options
+  - Multiple example use cases
+
+### Changed - 2025-11-18
+- License changed from GNU General Public License v3.0 to MIT License
+- All license references updated across documentation
+- Security best practices formalized in contribution guidelines
+
 ### Planned - 2025-11-16 📋 **PHASES 7-10 ROADMAP**
 
 #### Phase 7: Operational Reliability & Observability (Planned)
