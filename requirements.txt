@@ -4,6 +4,17 @@
 #   1. Edit versions here.
 #   2. Run: pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
 #   3. Commit both files.
+#
+# To regenerate the lock file locally:
+#   pip install pip-tools
+#   pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
+
+# Web server framework (optional - for API server)
+fastapi==0.121.0
+uvicorn==0.38.0
+# Note: sse-starlette was removed due to incompatible starlette version requirements.
+# fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
+# SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
 pydantic==2.12.3
@@ -31,6 +42,10 @@ mypy-extensions==1.1.0
 python-dateutil==2.9.0.post0
 pytz==2024.2
 tzdata==2025.2
+# Pin starlette to the range fastapi 0.121.0 supports for reproducibility and security.
+# This explicit pin ensures builds remain consistent even if fastapi's range allows
+# multiple versions. Update this when updating fastapi.
+starlette>=0.40.0,<0.50.0
 
 # Optional LangChain integration (uncomment if needed; then re-run pip-compile)
 # langchain>=0.1.0
