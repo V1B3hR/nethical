@@ -484,34 +484,38 @@ class MCPServer:
             "isError": False,
         }
     
+    import logging
+
+# ... other imports ...
+
+class MCPServer:
+    # ... existing code ...
+
     async def _handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
-        """Handle incoming MCP message."""
         msg_id = message.get("id")
-        method = message.get("method")
-        params = message.get("params", {})
-        
         try:
-            if method == "initialize":
-                result = await self._handle_initialize(params)
-            elif method == "tools/list":
+            method = message.get("method")
+            params = message.get("params", {})
+            if method == "tools/list":
                 result = await self._handle_list_tools(params)
             elif method == "tools/call":
                 result = await self._handle_call_tool(params)
             else:
                 raise ValueError(f"Unknown method: {method}")
-            
             return {
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "result": result,
             }
         except Exception as e:
+            # Log full traceback for internal diagnostics (server-side only)
+            logging.error("Exception in _handle_message:", exc_info=True)
             return {
                 "jsonrpc": "2.0",
                 "id": msg_id,
                 "error": {
                     "code": -32603,
-                    "message": str(e),
+                    "message": "An internal error occurred.",
                 },
             }
     
