@@ -30,6 +30,7 @@ Example usage:
 
 from typing import Dict, Any, Optional
 from nethical.core.integrated_governance import IntegratedGovernance
+from ._decision_logic import compute_decision, format_violations_for_response
 
 
 # Singleton governance instance
@@ -141,49 +142,21 @@ def handle_nethical_tool(
             context=context,
         )
         
-        # Compute decision based on governance results
-        # The process_action returns phase results, not a direct decision
-        decision = result.get("decision")
-        if decision is None:
-            # Compute decision from risk score and other indicators
-            risk_score = result.get("phase3", {}).get("risk_score", 0.0)
-            pii_detection = result.get("pii_detection", {})
-            pii_risk = pii_detection.get("pii_risk_score", 0.0)
-            violations = result.get("phase3", {}).get("correlations", [])
-            quarantined = result.get("phase4", {}).get("quarantined", False)
-            
-            # Decision logic based on risk thresholds
-            if quarantined:
-                decision = "TERMINATE"
-            elif risk_score >= 0.9 or pii_risk >= 0.9:
-                decision = "TERMINATE"
-            elif risk_score >= 0.7 or pii_risk >= 0.7:
-                decision = "BLOCK"
-            elif risk_score >= 0.5 or pii_risk >= 0.5 or len(violations) > 0:
-                decision = "RESTRICT"
-            else:
-                decision = "ALLOW"
+        # Compute decision from governance results
+        decision, reason, violations = compute_decision(result)
         
         # Build response for Claude
         response = {
             "decision": decision,
+            "reason": reason,
             "agent_id": agent_id,
             "timestamp": result.get("timestamp"),
             "risk_score": result.get("phase3", {}).get("risk_score", 0.0),
         }
         
-        # Add explanation based on decision
-        if decision == "ALLOW":
-            response["reason"] = "Action evaluated as safe and compliant"
-        elif decision == "RESTRICT":
-            response["reason"] = "Action requires restrictions or modifications"
-            response["restrictions"] = result.get("restrictions", [])
-        elif decision == "BLOCK":
-            response["reason"] = "Action blocked due to safety or ethical concerns"
-            response["violations"] = result.get("violations", [])
-        elif decision == "TERMINATE":
-            response["reason"] = "Critical violation detected - action terminated"
-            response["violations"] = result.get("violations", [])
+        # Add violations if present
+        if violations:
+            response["violations"] = format_violations_for_response(violations)
         
         # Add PII information if detected
         pii_detection = result.get("pii_detection")

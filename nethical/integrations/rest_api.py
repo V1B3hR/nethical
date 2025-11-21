@@ -54,6 +54,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
 from nethical.core.integrated_governance import IntegratedGovernance
+from ._decision_logic import compute_decision, format_violations_for_response
 
 
 # Global governance instance
@@ -197,17 +198,12 @@ async def health_check():
     if governance is None:
         raise HTTPException(status_code=503, detail="Governance system not initialized")
     
-    # Get component status safely
-    components = {}
-    if hasattr(governance, 'components_enabled'):
-        components = governance.components_enabled
-    
     return HealthResponse(
         status="healthy",
         version="1.0.0",
         timestamp=datetime.now(timezone.utc).isoformat(),
         governance_enabled=True,
-        components=components
+        components=governance.components_enabled
     )
 
 
@@ -258,51 +254,23 @@ async def evaluate_action(request: EvaluateRequest) -> EvaluateResponse:
             context=request.context or {},
         )
         
-        # Compute decision based on governance results
-        # The process_action returns phase results, not a direct decision
-        decision = result.get("decision")
-        if decision is None:
-            # Compute decision from risk score and other indicators
-            risk_score = result.get("phase3", {}).get("risk_score", 0.0)
-            pii_detection = result.get("pii_detection", {})
-            pii_risk = pii_detection.get("pii_risk_score", 0.0)
-            violations = result.get("phase3", {}).get("correlations", [])
-            quarantined = result.get("phase4", {}).get("quarantined", False)
-            
-            # Decision logic based on risk thresholds
-            if quarantined:
-                decision = "TERMINATE"
-            elif risk_score >= 0.9 or pii_risk >= 0.9:
-                decision = "TERMINATE"
-            elif risk_score >= 0.7 or pii_risk >= 0.7:
-                decision = "BLOCK"
-            elif risk_score >= 0.5 or pii_risk >= 0.5 or len(violations) > 0:
-                decision = "RESTRICT"
-            else:
-                decision = "ALLOW"
+        # Compute decision from governance results
+        decision, reason, violations = compute_decision(result)
         
         # Build response
         response_data = {
             "decision": decision,
+            "reason": reason,
             "agent_id": request.agent_id,
             "timestamp": result.get("timestamp", datetime.now(timezone.utc).isoformat()),
             "risk_score": result.get("phase3", {}).get("risk_score"),
         }
         
-        # Add reason based on decision
-        if decision == "ALLOW":
-            response_data["reason"] = "Action evaluated as safe and compliant"
-        elif decision == "RESTRICT":
-            response_data["reason"] = "Action requires restrictions or modifications"
-            response_data["metadata"] = {"restrictions": result.get("restrictions", [])}
-        elif decision == "BLOCK":
-            response_data["reason"] = "Action blocked due to safety or ethical concerns"
-            response_data["metadata"] = {"violations": result.get("violations", [])}
-        elif decision == "TERMINATE":
-            response_data["reason"] = "Critical violation detected - action terminated"
-            response_data["metadata"] = {"violations": result.get("violations", [])}
-        else:
-            response_data["reason"] = "Unknown decision status"
+        # Add violations if present
+        if violations:
+            response_data["metadata"] = {
+                "violations": format_violations_for_response(violations)
+            }
         
         # Add PII information if detected
         pii_detection = result.get("pii_detection")

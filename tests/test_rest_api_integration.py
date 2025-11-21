@@ -17,10 +17,6 @@ def test_client():
         yield client
 
 
-# For backwards compatibility with existing tests
-client = None
-
-
 class TestHealthEndpoint:
     """Test health check endpoint."""
     
