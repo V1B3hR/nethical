@@ -21,9 +21,14 @@ WEAK_HASH_PATTERNS = [
 ]
 
 INSECURE_CRYPTO_PATTERNS = [
-    (r'\bDES\b', "Use of insecure DES encryption"),
-    (r'\bRC4\b', "Use of insecure RC4 encryption"),
+    # Context-aware patterns to avoid false positives
+    (r'(?:from|import)\s+.*\bDES\b|Cipher\s*\.\s*DES|DES\s*\.\s*new', "Use of insecure DES encryption"),
+    (r'(?:from|import)\s+.*\bRC4\b|Cipher\s*\.\s*RC4|RC4\s*\.\s*new', "Use of insecure RC4 encryption"),
     (r'MODE_ECB|\.ECB\b', "Use of insecure ECB mode"),
+]
+
+# Note: random.random() for security is a common issue but less severe than broken crypto
+WEAK_RANDOM_PATTERNS = [
     (r'random\.random\(\)', "Use of non-cryptographic random for security"),
 ]
 
@@ -85,6 +90,18 @@ def evaluate_code(code: str) -> List[Finding]:
                 findings.append(Finding(
                     severity="MEDIUM",
                     category="insecure_crypto",
+                    message=message,
+                    line=i,
+                    code_snippet=line.strip()
+                ))
+    
+    # Check for weak random (lower severity)
+    for pattern, message in WEAK_RANDOM_PATTERNS:
+        for i, line in enumerate(lines, 1):
+            if re.search(pattern, line, re.IGNORECASE):
+                findings.append(Finding(
+                    severity="LOW",
+                    category="weak_random",
                     message=message,
                     line=i,
                     code_snippet=line.strip()

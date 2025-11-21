@@ -15,6 +15,7 @@ from ..models import ToolDefinition, ToolParameter, Finding
 
 
 # PII detection patterns
+# Order matters: more specific patterns first to avoid conflicts
 PII_PATTERNS = [
     (
         r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b',
@@ -23,13 +24,13 @@ PII_PATTERNS = [
         "email"
     ),
     (
-        r'\b\d{3}-\d{2}-\d{4}\b',
+        r'\b\d{3}-\d{2}-\d{4}\b',  # SSN format: XXX-XX-XXXX (more specific, checked first)
         "Social Security Number (SSN) detected",
         "HIGH",
         "ssn"
     ),
     (
-        r'\b\d{3}[-.]?\d{3}[-.]?\d{4}\b',
+        r'\b(?:\d{3}[-.]?\d{4}|\d{10})\b',  # Phone: XXX-XXXX or XXXXXXXXXX (10 digits, excludes SSN pattern)
         "Phone number detected",
         "MEDIUM",
         "phone"
@@ -41,7 +42,7 @@ PII_PATTERNS = [
         "credit_card"
     ),
     (
-        r'\b(?:\d{1,3}\.){3}\d{1,3}\b',
+        r'\b(?:(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\.){3}(?:25[0-5]|2[0-4][0-9]|[01]?[0-9][0-9]?)\b',
         "IP address detected",
         "LOW",
         "ip_address"
@@ -85,7 +86,11 @@ def check_pii(text: str) -> List[Finding]:
                 # Mask the detected PII in the snippet
                 matched_text = match.group()
                 if category in ["email", "ssn", "credit_card"]:
-                    masked = matched_text[:3] + "***" + matched_text[-3:]
+                    # Safe masking: handle short strings
+                    if len(matched_text) <= 6:
+                        masked = matched_text[0] + "***" if len(matched_text) > 0 else "***"
+                    else:
+                        masked = matched_text[:3] + "***" + matched_text[-3:]
                 else:
                     masked = matched_text
                 

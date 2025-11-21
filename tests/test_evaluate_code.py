@@ -86,7 +86,7 @@ token = random.random()
 """
         findings = evaluate_code(code)
         assert len(findings) > 0
-        assert any(f.severity == "MEDIUM" for f in findings)
+        assert any(f.severity == "LOW" for f in findings)
 
 
 class TestHardcodedSecrets:
