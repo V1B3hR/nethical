@@ -183,11 +183,14 @@ def handle_nethical_tool(
         
     except Exception as e:
         # Fallback to safe blocking on errors
+        from datetime import datetime, timezone
         return {
             "decision": "BLOCK",
             "reason": f"Error during evaluation: {str(e)}",
             "error": type(e).__name__,
             "agent_id": agent_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "risk_score": 1.0,  # Maximum risk on error
         }
 
 

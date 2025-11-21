@@ -309,6 +309,7 @@ async def evaluate_action(request: EvaluateRequest) -> EvaluateResponse:
             reason=f"Error during evaluation: {str(e)[:100]}",
             agent_id=request.agent_id,
             timestamp=datetime.now(timezone.utc).isoformat(),
+            risk_score=1.0,  # Maximum risk on error
             metadata={"error_type": type(e).__name__}
         )
 
