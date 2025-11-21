@@ -32,6 +32,10 @@ python-dateutil==2.9.0.post0
 pytz==2024.2
 tzdata==2025.2
 
+# Optional LangChain integration (uncomment if needed; then re-run pip-compile)
+# langchain>=0.1.0
+# langchain-core>=0.1.0
+
 # Optional performance dependencies (uncomment if needed; then re-run pip-compile)
 # redis==4.0.0
 # psycopg2-binary==2.9.0
