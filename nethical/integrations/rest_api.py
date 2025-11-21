@@ -88,9 +88,11 @@ app = FastAPI(
 )
 
 # Add CORS middleware to allow cross-origin requests
+# WARNING: In production, replace ["*"] with specific allowed origins
+# Example: allow_origins=["https://yourdomain.com", "https://app.yourdomain.com"]
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, specify allowed origins
+    allow_origins=["*"],  # Development only - configure for production!
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -195,12 +197,17 @@ async def health_check():
     if governance is None:
         raise HTTPException(status_code=503, detail="Governance system not initialized")
     
+    # Get component status safely
+    components = {}
+    if hasattr(governance, 'components_enabled'):
+        components = governance.components_enabled
+    
     return HealthResponse(
         status="healthy",
         version="1.0.0",
         timestamp=datetime.now(timezone.utc).isoformat(),
         governance_enabled=True,
-        components=governance.components_enabled if hasattr(governance, 'components_enabled') else {}
+        components=components
     )
 
 
@@ -251,8 +258,28 @@ async def evaluate_action(request: EvaluateRequest) -> EvaluateResponse:
             context=request.context or {},
         )
         
-        # Extract decision
-        decision = result.get("decision", "BLOCK")
+        # Compute decision based on governance results
+        # The process_action returns phase results, not a direct decision
+        decision = result.get("decision")
+        if decision is None:
+            # Compute decision from risk score and other indicators
+            risk_score = result.get("phase3", {}).get("risk_score", 0.0)
+            pii_detection = result.get("pii_detection", {})
+            pii_risk = pii_detection.get("pii_risk_score", 0.0)
+            violations = result.get("phase3", {}).get("correlations", [])
+            quarantined = result.get("phase4", {}).get("quarantined", False)
+            
+            # Decision logic based on risk thresholds
+            if quarantined:
+                decision = "TERMINATE"
+            elif risk_score >= 0.9 or pii_risk >= 0.9:
+                decision = "TERMINATE"
+            elif risk_score >= 0.7 or pii_risk >= 0.7:
+                decision = "BLOCK"
+            elif risk_score >= 0.5 or pii_risk >= 0.5 or len(violations) > 0:
+                decision = "RESTRICT"
+            else:
+                decision = "ALLOW"
         
         # Build response
         response_data = {
