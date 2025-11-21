@@ -255,44 +255,45 @@ class MCPServer:
                 action_type=action_type,
                 context=context,
             )
-        except TypeError as e:
-            # Workaround for pre-existing datetime timezone bug in risk_engine.py
-            # Provide a simplified evaluation when full governance system fails
-            if "can't subtract offset-naive and offset-aware datetimes" in str(e):
-                # Perform basic checks without risk engine
-                pii_matches = self.pii_detector.detect_all(str(action))
-                pii_risk = self.pii_detector.calculate_pii_risk_score(pii_matches) if pii_matches else 0.0
-                
-                # Simple heuristic decision
-                if pii_risk > 0.7:
-                    decision = "BLOCK"
-                    reason = "High PII risk detected"
-                elif pii_risk > 0.4:
-                    decision = "RESTRICT"
-                    reason = "Moderate PII risk detected"
-                else:
-                    decision = "ALLOW"
-                    reason = "No significant issues detected (simplified check)"
-                
-                result = {
-                    "decision": decision,
-                    "reason": reason,
-                    "agent_id": agent_id,
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                    "pii_matches": [
-                        {
-                            "pii_type": match.pii_type.value,
-                            "text": match.text,
-                            "confidence": match.confidence
-                        }
-                        for match in pii_matches
-                    ],
-                    "pii_risk": pii_risk,
-                    "audit_id": f"simplified_{agent_id}_{datetime.now(timezone.utc).timestamp()}",
-                    "note": "Simplified evaluation due to governance system issue. Full risk assessment unavailable."
-                }
+        except (TypeError, AttributeError) as e:
+            # Fallback to simplified evaluation if governance system encounters errors
+            # This ensures the MCP server remains functional even if the full governance
+            # pipeline has issues (e.g., datetime bugs, missing dependencies, etc.)
+            # TODO: Once governance system issues are resolved, consider making this stricter
+            
+            # Perform basic checks without full governance pipeline
+            pii_matches = self.pii_detector.detect_all(str(action))
+            pii_risk = self.pii_detector.calculate_pii_risk_score(pii_matches) if pii_matches else 0.0
+            
+            # Simple heuristic decision
+            if pii_risk > 0.7:
+                decision = "BLOCK"
+                reason = "High PII risk detected"
+            elif pii_risk > 0.4:
+                decision = "RESTRICT"
+                reason = "Moderate PII risk detected"
             else:
-                raise
+                decision = "ALLOW"
+                reason = "No significant issues detected (simplified check)"
+            
+            result = {
+                "decision": decision,
+                "reason": reason,
+                "agent_id": agent_id,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "pii_matches": [
+                    {
+                        "pii_type": match.pii_type.value,
+                        "text": match.text,
+                        "confidence": match.confidence
+                    }
+                    for match in pii_matches
+                ],
+                "pii_risk": pii_risk,
+                "audit_id": f"simplified_{agent_id}_{datetime.now(timezone.utc).timestamp()}",
+                "note": f"Simplified evaluation due to governance system error: {str(e)[:100]}",
+                "error_type": type(e).__name__
+            }
         
         # Extract decision
         decision = result.get("decision", "BLOCK")
@@ -381,8 +382,11 @@ class MCPServer:
         risk_score = self.pii_detector.calculate_pii_risk_score(pii_matches)
         response_text += f"\n**Overall PII Risk Score:** {risk_score:.2f}\n"
         
-        if redact and hasattr(self.pii_detector, 'redact_text'):
-            redacted = self.pii_detector.redact_text(text, pii_matches)
+        if redact:
+            # Simple redaction implementation: replace PII with [REDACTED]
+            redacted = text
+            for match in sorted(pii_matches, key=lambda m: m.start, reverse=True):
+                redacted = redacted[:match.start] + "[REDACTED]" + redacted[match.end:]
             response_text += f"\n## Redacted Text:\n```\n{redacted}\n```\n"
         
         return {
@@ -513,7 +517,8 @@ class MCPServer:
     
     async def sse_endpoint(self, request: Request) -> StreamingResponse:
         """SSE endpoint for MCP communication."""
-        client_id = str(id(request))
+        import uuid
+        client_id = f"client_{uuid.uuid4().hex[:12]}"
         queue = asyncio.Queue()
         self.client_queues[client_id] = queue
         

@@ -3,6 +3,9 @@
 import pytest
 import json
 import asyncio
+import tempfile
+import shutil
+from pathlib import Path
 from unittest.mock import Mock, AsyncMock, patch
 
 from nethical.mcp_server import (
@@ -13,12 +16,27 @@ from nethical.mcp_server import (
 )
 
 
+@pytest.fixture
+def temp_storage_dir():
+    """Create a temporary directory for test storage."""
+    temp_dir = tempfile.mkdtemp(prefix="test_mcp_")
+    yield temp_dir
+    # Cleanup after test
+    shutil.rmtree(temp_dir, ignore_errors=True)
+
+
+@pytest.fixture
+def mcp_server(temp_storage_dir):
+    """Create an MCP server instance for testing."""
+    return MCPServer(storage_dir=temp_storage_dir)
+
+
 class TestMCPServer:
     """Test suite for MCP server."""
 
-    def test_initialization(self):
+    def test_initialization(self, mcp_server):
         """Test that MCP server initializes correctly."""
-        server = MCPServer(storage_dir="./test_mcp_data")
+        server = mcp_server
 
         # Verify governance system is initialized
         assert server.governance is not None
@@ -32,9 +50,9 @@ class TestMCPServer:
         assert "check_violations" in tool_names
         assert "get_system_status" in tool_names
 
-    def test_tool_definitions(self):
+    def test_tool_definitions(self, mcp_server):
         """Test that tools are properly defined."""
-        server = MCPServer(storage_dir="./test_mcp_data2")
+        server = mcp_server
 
         # Check evaluate_action tool
         eval_tool = next(t for t in server.tools if t.name == "evaluate_action")
@@ -50,9 +68,9 @@ class TestMCPServer:
         assert "text" in pii_tool.parameters
         assert pii_tool.parameters["text"].required is True
 
-    def test_create_tool_definitions(self):
+    def test_create_tool_definitions(self, mcp_server):
         """Test MCP-compliant tool definition generation."""
-        server = MCPServer(storage_dir="./test_mcp_data3")
+        server = mcp_server
         tool_defs = server._create_tool_definitions()
 
         assert len(tool_defs) > 0
@@ -67,9 +85,9 @@ class TestMCPServer:
         assert "properties" in first_tool["inputSchema"]
 
     @pytest.mark.asyncio
-    async def test_handle_initialize(self):
+    async def test_handle_initialize(self, temp_storage_dir):
         """Test initialize message handling."""
-        server = MCPServer(storage_dir="./test_mcp_data4")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         result = await server._handle_initialize({})
 
@@ -80,9 +98,9 @@ class TestMCPServer:
         assert "tools" in result["capabilities"]
 
     @pytest.mark.asyncio
-    async def test_handle_list_tools(self):
+    async def test_handle_list_tools(self, temp_storage_dir):
         """Test tools/list message handling."""
-        server = MCPServer(storage_dir="./test_mcp_data5")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         result = await server._handle_list_tools({})
 
@@ -96,9 +114,9 @@ class TestMCPServer:
             assert "inputSchema" in tool
 
     @pytest.mark.asyncio
-    async def test_tool_evaluate_action_success(self):
+    async def test_tool_evaluate_action_success(self, temp_storage_dir):
         """Test evaluate_action tool execution."""
-        server = MCPServer(storage_dir="./test_mcp_data6")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {
             "action": "print('Hello, world!')",
@@ -115,9 +133,9 @@ class TestMCPServer:
         assert result["isError"] is False
 
     @pytest.mark.asyncio
-    async def test_tool_evaluate_action_missing_params(self):
+    async def test_tool_evaluate_action_missing_params(self, temp_storage_dir):
         """Test evaluate_action with missing required parameters."""
-        server = MCPServer(storage_dir="./test_mcp_data7")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         # Missing action
         args = {"agent_id": "test_agent"}
@@ -131,9 +149,9 @@ class TestMCPServer:
         assert result["isError"] is True
 
     @pytest.mark.asyncio
-    async def test_tool_check_pii_no_pii(self):
+    async def test_tool_check_pii_no_pii(self, temp_storage_dir):
         """Test check_pii tool with text containing no PII."""
-        server = MCPServer(storage_dir="./test_mcp_data8")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {"text": "This is a simple test message with no sensitive data."}
 
@@ -144,9 +162,9 @@ class TestMCPServer:
         assert "No PII detected" in result["content"][0]["text"]
 
     @pytest.mark.asyncio
-    async def test_tool_check_pii_with_email(self):
+    async def test_tool_check_pii_with_email(self, temp_storage_dir):
         """Test check_pii tool with text containing email."""
-        server = MCPServer(storage_dir="./test_mcp_data9")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {"text": "Contact me at john.doe@example.com for more info."}
 
@@ -159,9 +177,9 @@ class TestMCPServer:
         assert "email" in text.lower()
 
     @pytest.mark.asyncio
-    async def test_tool_check_pii_missing_params(self):
+    async def test_tool_check_pii_missing_params(self, temp_storage_dir):
         """Test check_pii with missing required parameters."""
-        server = MCPServer(storage_dir="./test_mcp_data10")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {}
         result = await server._tool_check_pii(args)
@@ -170,9 +188,9 @@ class TestMCPServer:
         assert "required" in result["content"][0]["text"].lower()
 
     @pytest.mark.asyncio
-    async def test_tool_check_violations_no_violations(self):
+    async def test_tool_check_violations_no_violations(self, temp_storage_dir):
         """Test check_violations with clean content."""
-        server = MCPServer(storage_dir="./test_mcp_data11")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {"content": "This is a normal message with no violations."}
 
@@ -183,9 +201,9 @@ class TestMCPServer:
         assert "No violations" in result["content"][0]["text"]
 
     @pytest.mark.asyncio
-    async def test_tool_check_violations_harmful_content(self):
+    async def test_tool_check_violations_harmful_content(self, temp_storage_dir):
         """Test check_violations with harmful content."""
-        server = MCPServer(storage_dir="./test_mcp_data12")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {"content": "Here's how to exploit the system and attack users."}
 
@@ -197,9 +215,9 @@ class TestMCPServer:
         assert "violation" in text.lower()
 
     @pytest.mark.asyncio
-    async def test_tool_check_violations_with_pii(self):
+    async def test_tool_check_violations_with_pii(self, temp_storage_dir):
         """Test check_violations detecting privacy violations."""
-        server = MCPServer(storage_dir="./test_mcp_data13")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {
             "content": "My email is test@example.com and SSN is 123-45-6789",
@@ -214,9 +232,9 @@ class TestMCPServer:
         assert "privacy" in text.lower() or "PII" in text
 
     @pytest.mark.asyncio
-    async def test_tool_get_system_status(self):
+    async def test_tool_get_system_status(self, temp_storage_dir):
         """Test get_system_status tool."""
-        server = MCPServer(storage_dir="./test_mcp_data14")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         result = await server._tool_get_system_status({})
 
@@ -227,9 +245,9 @@ class TestMCPServer:
         assert "Components" in text
 
     @pytest.mark.asyncio
-    async def test_handle_call_tool(self):
+    async def test_handle_call_tool(self, temp_storage_dir):
         """Test tools/call message handling."""
-        server = MCPServer(storage_dir="./test_mcp_data15")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         # Test valid tool call
         params = {
@@ -249,9 +267,9 @@ class TestMCPServer:
             await server._handle_call_tool(params)
 
     @pytest.mark.asyncio
-    async def test_handle_message_initialize(self):
+    async def test_handle_message_initialize(self, temp_storage_dir):
         """Test full message handling for initialize."""
-        server = MCPServer(storage_dir="./test_mcp_data16")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         message = {
             "jsonrpc": "2.0",
@@ -268,9 +286,9 @@ class TestMCPServer:
         assert "protocolVersion" in response["result"]
 
     @pytest.mark.asyncio
-    async def test_handle_message_list_tools(self):
+    async def test_handle_message_list_tools(self, temp_storage_dir):
         """Test full message handling for list_tools."""
-        server = MCPServer(storage_dir="./test_mcp_data17")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         message = {
             "jsonrpc": "2.0",
@@ -287,9 +305,9 @@ class TestMCPServer:
         assert "tools" in response["result"]
 
     @pytest.mark.asyncio
-    async def test_handle_message_call_tool(self):
+    async def test_handle_message_call_tool(self, temp_storage_dir):
         """Test full message handling for call_tool."""
-        server = MCPServer(storage_dir="./test_mcp_data18")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         message = {
             "jsonrpc": "2.0",
@@ -308,9 +326,9 @@ class TestMCPServer:
         assert "result" in response
 
     @pytest.mark.asyncio
-    async def test_handle_message_error(self):
+    async def test_handle_message_error(self, temp_storage_dir):
         """Test error handling in message processing."""
-        server = MCPServer(storage_dir="./test_mcp_data19")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         message = {
             "jsonrpc": "2.0",
@@ -327,9 +345,9 @@ class TestMCPServer:
         assert "code" in response["error"]
         assert "message" in response["error"]
 
-    def test_create_app(self):
+    def test_create_app(self, temp_storage_dir):
         """Test FastAPI app creation."""
-        app = create_app(storage_dir="./test_mcp_data20")
+        app = create_app(storage_dir=temp_storage_dir)
 
         assert app is not None
         assert app.title == "Nethical MCP Server"
@@ -345,9 +363,9 @@ class TestMCPIntegration:
     """Integration tests for MCP server with real governance system."""
 
     @pytest.mark.asyncio
-    async def test_evaluate_action_with_governance(self):
+    async def test_evaluate_action_with_governance(self, temp_storage_dir):
         """Test evaluate_action integrates with governance system."""
-        server = MCPServer(storage_dir="./test_mcp_integration1")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {
             "action": "SELECT * FROM users WHERE admin = 1",
@@ -370,9 +388,9 @@ class TestMCPIntegration:
         assert "Audit" in text
 
     @pytest.mark.asyncio
-    async def test_check_pii_comprehensive(self):
+    async def test_check_pii_comprehensive(self, temp_storage_dir):
         """Test PII detection with multiple PII types."""
-        server = MCPServer(storage_dir="./test_mcp_integration2")
+        server = MCPServer(storage_dir=temp_storage_dir)
 
         args = {
             "text": (

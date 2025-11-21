@@ -250,9 +250,15 @@ ssn = "123-45-6789"
 if __name__ == "__main__":
     try:
         main()
-    except requests.exceptions.ConnectionError:
+    except requests.exceptions.ConnectionError as e:
         print("Error: Could not connect to Nethical MCP server.")
-        print("Please ensure the server is running on http://localhost:8000")
+        # Extract base URL from client if available
+        try:
+            client = NethicalMCPClient()
+            server_url = client.base_url
+        except:
+            server_url = "http://localhost:8000"
+        print(f"Please ensure the server is running on {server_url}")
         print("\nStart the server with:")
         print("  python -m nethical.mcp_server")
     except Exception as e:
