@@ -1,0 +1,41 @@
+name: Nethical Ethics Checker
+description: Real-time ethics and security gating for GitHub Copilot suggestions using Nethical MCP server
+version: 1.0.0
+
+# MCP server configuration
+server:
+  type: mcp
+  url: http://localhost:8000
+  endpoints:
+    sse: /sse
+    invoke: /invoke
+    health: /health
+
+# Tools available through this agent
+tools:
+  - name: evaluate_code
+    description: Scan code suggestions for security issues (weak hashing, insecure crypto, hardcoded secrets)
+    trigger: on_suggestion
+    severity_threshold: HIGH
+    action: block
+
+  - name: check_pii
+    description: Scan code suggestions for PII (emails, SSNs, phone numbers)
+    trigger: on_suggestion
+    severity_threshold: HIGH
+    action: warn
+
+# Agent behavior
+behavior:
+  auto_check: true
+  real_time_gating: true
+  audit_all_invocations: true
+
+# Usage instructions
+usage: |
+  This agent automatically checks GitHub Copilot suggestions for:
+  1. Security issues (weak crypto, hardcoded secrets)
+  2. PII exposure (emails, SSNs, phone numbers, credit cards)
+  
+  Suggestions with HIGH severity findings are automatically blocked.
+  All checks are logged to the audit/ directory for review.

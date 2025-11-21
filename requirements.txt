@@ -22,6 +22,11 @@ PyYAML==6.0.3
 cryptography==41.0.7
 defusedxml==0.7.1
 
+# MCP Server dependencies
+fastapi==0.115.0
+uvicorn==0.32.0
+sse-starlette==2.2.1
+
 # Transitive/supporting (explicitly pinned to keep lock stable)
 annotated-types==0.7.0
 marshmallow==3.26.1

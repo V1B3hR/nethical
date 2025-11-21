@@ -398,6 +398,191 @@ Test results tracked in `tests/adversarial/` with continuous refinement.
 
 See [GitHub Issues](https://github.com/V1B3hR/nethical/issues) for detailed roadmap.
 
+---
+
+## 🔌 Model Context Protocol (MCP) Server
+
+Nethical now includes a **Model Context Protocol (MCP) server** that exposes ethics checking tools for real-time gating and auditing of GitHub Copilot (or other MCP-capable LLM) suggestions.
+
+### Architecture
+
+The MCP server is a FastAPI-based service that provides:
+- **SSE endpoint** (`/sse`) for streaming MCP events (tool_list, tool_result, error, audit_log)
+- **Invocation endpoint** (`/invoke`) for clients to request `list_tools` or `call_tool` actions
+- **Health endpoint** (`/health`) for monitoring server status
+
+### Available Tools
+
+1. **evaluate_code**: Scans code snippets for security and ethical issues
+   - Detects weak hashing algorithms (MD5, SHA1)
+   - Identifies insecure cryptographic functions (DES, RC4, ECB mode)
+   - Finds hardcoded secrets (passwords, API keys, tokens, AWS credentials)
+   - Returns `BLOCK` status for HIGH severity findings
+
+2. **check_pii**: Scans text for Personally Identifiable Information
+   - Detects email addresses, SSNs, phone numbers
+   - Identifies credit card numbers and IP addresses
+   - Returns `BLOCK` status for HIGH severity findings (emails, SSNs, credit cards)
+
+### Setup and Usage
+
+#### 1. Install Dependencies
+
+```bash
+pip install -r requirements.txt
+```
+
+#### 2. Start the MCP Server
+
+```bash
+uvicorn server.mcp_server:app --host 0.0.0.0 --port 8000
+```
+
+Or run directly:
+```bash
+python -m server.mcp_server
+```
+
+#### 3. Test the Server
+
+**Open SSE stream:**
+```bash
+curl -N http://localhost:8000/sse
+```
+
+**Check health:**
+```bash
+curl http://localhost:8000/health
+```
+
+**Invoke a tool:**
+```bash
+curl -X POST http://localhost:8000/invoke \
+  -H 'Content-Type: application/json' \
+  -d '{
+    "type": "call_tool",
+    "tool": "evaluate_code",
+    "arguments": {
+      "code": "import hashlib\nprint(hashlib.md5(b\"x\").hexdigest())"
+    }
+  }'
+```
+
+### VS Code Integration
+
+The repository includes a `.vscode/mcp.json` configuration file for VS Code MCP client integration:
+
+```json
+{
+  "mcpServers": {
+    "nethical": {
+      "command": "uvicorn",
+      "args": ["server.mcp_server:app", "--host", "127.0.0.1", "--port", "8000"]
+    }
+  }
+}
+```
+
+### GitHub Copilot Integration
+
+A configuration file at `.github/agents/nethical.yml` enables GitHub Copilot to use Nethical for real-time suggestion gating:
+
+```yaml
+name: Nethical Ethics Checker
+tools:
+  - evaluate_code: Scan code for security issues
+  - check_pii: Scan for PII exposure
+behavior:
+  auto_check: true
+  real_time_gating: true
+```
+
+### Audit Logging
+
+All tool invocations are automatically logged to the `audit/` directory with:
+- Unique audit ID matching the tool_result event
+- Timestamp and tool name
+- Full arguments and findings
+- Status (ALLOW/BLOCK) and summary
+
+Example audit file (`audit/<uuid>.json`):
+```json
+{
+  "audit_id": "a1b2c3d4-...",
+  "timestamp": "2025-11-21T11:30:00.000Z",
+  "tool": "evaluate_code",
+  "arguments": {"code": "..."},
+  "status": "BLOCK",
+  "findings": [...],
+  "findings_count": 1,
+  "summary": "Found 1 issue(s): 1 HIGH"
+}
+```
+
+### Extending the MCP Server
+
+To add new tools:
+
+1. Create a new file in `server/tools/your_tool.py`
+2. Define the tool function that returns `List[Finding]`
+3. Create a `get_tool_definition()` function
+4. Export as `your_tool_tool = {"definition": ..., "function": ...}`
+5. Register in `server/mcp_server.py` TOOLS dictionary
+
+Example structure:
+```python
+from ..models import ToolDefinition, ToolParameter, Finding
+
+def get_tool_definition() -> ToolDefinition:
+    return ToolDefinition(
+        name="your_tool",
+        description="What your tool does",
+        parameters=[ToolParameter(name="input", type="string", required=True)]
+    )
+
+def your_tool(input: str) -> List[Finding]:
+    # Your detection logic here
+    return findings
+
+your_tool_tool = {"definition": get_tool_definition(), "function": your_tool}
+```
+
+### Future Enhancements
+
+Documented for future implementation:
+- **Authentication**: Add API key or token authentication for `/invoke` endpoint
+- **Expanded Detection Rules**: 
+  - Entropy-based secret detection
+  - Bias language detection
+  - License compliance checking
+- **Database Persistence**: Store audit logs in a database for querying and analysis
+- **Advanced PII Detection**: More PII types and configurable detection rules
+- **Custom Policies**: User-defined security and ethics policies
+
+### Testing
+
+The MCP server includes comprehensive tests:
+
+```bash
+# Run evaluate_code tests
+pytest tests/test_evaluate_code.py -v
+
+# Run check_pii tests
+pytest tests/test_check_pii.py -v
+
+# Run all MCP tests
+pytest tests/test_evaluate_code.py tests/test_check_pii.py -v
+```
+
+All tests validate:
+- Tool definitions and parameters
+- Detection accuracy for various patterns
+- Proper severity assignment
+- Line numbers and code snippets in findings
+- Clean code produces no false positives
+
+---
+
 ## 🤝 Contributing
 
 Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for detailed guidelines on:
