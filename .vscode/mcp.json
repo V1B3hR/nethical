@@ -1,0 +1,16 @@
+{
+  "mcpServers": {
+    "nethical": {
+      "command": "uvicorn",
+      "args": [
+        "server.mcp_server:app",
+        "--host",
+        "127.0.0.1",
+        "--port",
+        "8000"
+      ],
+      "env": {},
+      "description": "Nethical MCP server for ethics checking and PII detection"
+    }
+  }
+}
