@@ -42,7 +42,9 @@ mypy-extensions==1.1.0
 python-dateutil==2.9.0.post0
 pytz==2024.2
 tzdata==2025.2
-# Pin starlette to the range fastapi 0.121.0 supports for reproducibility and security
+# Pin starlette to the range fastapi 0.121.0 supports for reproducibility and security.
+# This explicit pin ensures builds remain consistent even if fastapi's range allows
+# multiple versions. Update this when updating fastapi.
 starlette>=0.40.0,<0.50.0
 
 # Optional LangChain integration (uncomment if needed; then re-run pip-compile)
