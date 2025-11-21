@@ -72,8 +72,8 @@ class TestNethicalGuardToolCore:
         result = {
             "phase3": {"risk_score": 0.2, "risk_tier": "LOW"},
             "phase4": {},
-            "phase6": {},
-            "phase8": {},
+            "phase567": {},
+            "phase89": {},
         }
 
         decision = tool._make_decision(result)
@@ -91,8 +91,8 @@ class TestNethicalGuardToolCore:
         result = {
             "phase3": {"risk_score": 0.5, "risk_tier": "MEDIUM"},
             "phase4": {},
-            "phase6": {},
-            "phase8": {},
+            "phase567": {},
+            "phase89": {},
         }
 
         decision = tool._make_decision(result)
@@ -108,8 +108,8 @@ class TestNethicalGuardToolCore:
         result = {
             "phase3": {"risk_score": 0.9, "risk_tier": "CRITICAL"},
             "phase4": {},
-            "phase6": {},
-            "phase8": {},
+            "phase567": {},
+            "phase89": {},
         }
 
         decision = tool._make_decision(result)
@@ -137,8 +137,8 @@ class TestNethicalGuardToolCore:
         result = {
             "phase3": {"risk_score": 0.5},
             "phase4": {"quarantined": True},
-            "phase6": {},
-            "phase8": {},
+            "phase567": {},
+            "phase89": {},
         }
 
         decision = tool._make_decision(result)
@@ -154,8 +154,8 @@ class TestNethicalGuardToolCore:
         result = {
             "phase3": {"risk_score": 0.6},
             "phase4": {},
-            "phase6": {},
-            "phase8": {"escalated": True, "escalation_reason": "High risk action"},
+            "phase567": {},
+            "phase89": {"escalated": True, "escalation_reason": "High risk action"},
         }
 
         decision = tool._make_decision(result)
@@ -170,7 +170,7 @@ class TestNethicalGuardToolCore:
         result = {
             "phase3": {"risk_score": 0.8, "risk_tier": "HIGH"},
             "phase4": {"ethical_tags": ["privacy", "safety"]},
-            "phase8": {"escalation_reason": "Potential violation"},
+            "phase89": {"escalation_reason": "Potential violation"},
         }
 
         response = tool._format_simple_response("BLOCK", result)
@@ -194,8 +194,8 @@ class TestNethicalGuardToolCore:
         mock_governance.process_action.return_value = {
             "phase3": {"risk_score": 0.3, "risk_tier": "LOW"},
             "phase4": {},
-            "phase6": {},
-            "phase8": {},
+            "phase567": {},
+            "phase89": {},
         }
 
         # Run evaluation
@@ -255,12 +255,12 @@ class TestNethicalGuardToolCore:
         assert tool.warn_threshold == 0.5
 
         # Test WARN decision with custom thresholds
-        result = {"phase3": {"risk_score": 0.6}, "phase4": {}, "phase6": {}, "phase8": {}}
+        result = {"phase3": {"risk_score": 0.6}, "phase4": {}, "phase567": {}, "phase89": {}}
         decision = tool._make_decision(result)
         assert decision == "WARN"
 
         # Test BLOCK decision with custom thresholds
-        result = {"phase3": {"risk_score": 0.85}, "phase4": {}, "phase6": {}, "phase8": {}}
+        result = {"phase3": {"risk_score": 0.85}, "phase4": {}, "phase567": {}, "phase89": {}}
         decision = tool._make_decision(result)
         assert decision == "BLOCK"
 
@@ -335,8 +335,8 @@ class TestChainGuards:
         tool.governance.process_action.return_value = {
             "phase3": {"risk_score": 0.2, "risk_tier": "LOW"},
             "phase4": {},
-            "phase6": {},
-            "phase8": {},
+            "phase567": {},
+            "phase89": {},
         }
 
         result = chain_guards(tool, "Test action", "test_agent", None)
@@ -381,8 +381,8 @@ class TestChainGuards:
         tool.governance.process_action.return_value = {
             "phase3": {"risk_score": 0.2, "risk_tier": "LOW"},
             "phase4": {},
-            "phase6": {},
-            "phase8": {},
+            "phase567": {},
+            "phase89": {},
         }
 
         llama = Mock(spec=LlamaGuardChain)

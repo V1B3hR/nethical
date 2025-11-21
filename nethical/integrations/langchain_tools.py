@@ -255,21 +255,26 @@ class NethicalGuardTool(BaseTool):
         if phase3_data:
             risk_score = phase3_data.get("risk_score", 0.0)
 
-        # Check Phase 6 ML blending results if available
-        phase6_data = result.get("phase6", {})
-        if phase6_data and "ml_blended_decision" in phase6_data:
-            ml_decision = phase6_data["ml_blended_decision"].get("final_decision")
-            if ml_decision:
-                return ml_decision.upper()
+        # Check Phase 5-7 ML blending results if available
+        phase567_data = result.get("phase567", {})
+        if phase567_data:
+            # Check blended decision if available
+            blended_data = phase567_data.get("blended", {})
+            if blended_data:
+                zone = blended_data.get("zone", "")
+                if zone == "HIGH_RISK":
+                    return "BLOCK"
+                elif zone == "GRAY":
+                    return "WARN"
 
         # Check Phase 4 quarantine status
         phase4_data = result.get("phase4", {})
         if phase4_data and phase4_data.get("quarantined", False):
             return "BLOCK"
 
-        # Check Phase 8 escalation
-        phase8_data = result.get("phase8", {})
-        if phase8_data and phase8_data.get("escalated", False):
+        # Check Phase 8-9 escalation
+        phase89_data = result.get("phase89", {})
+        if phase89_data and phase89_data.get("escalated", False):
             return "ESCALATE"
 
         # Default decision based on risk score thresholds
@@ -306,9 +311,9 @@ class NethicalGuardTool(BaseTool):
                 reason_parts.append(f"Ethical Tags: {', '.join(tags)}")
 
         # Add escalation reason if escalated
-        phase8_data = result.get("phase8", {})
-        if phase8_data and phase8_data.get("escalation_reason"):
-            reason_parts.append(f"Reason: {phase8_data['escalation_reason']}")
+        phase89_data = result.get("phase89", {})
+        if phase89_data and phase89_data.get("escalation_reason"):
+            reason_parts.append(f"Reason: {phase89_data['escalation_reason']}")
 
         return " | ".join(reason_parts)
 
