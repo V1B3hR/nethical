@@ -165,6 +165,74 @@ Nethical serves as a guardian layer for AI systems, continuously monitoring agen
 
 ---
 
+## 🔌 LLM Integrations
+
+Nethical provides two integration methods for Large Language Models:
+
+### 1. Claude/Anthropic Integration
+Use Nethical as a native tool in Claude's function calling:
+
+```python
+from anthropic import Anthropic
+from nethical.integrations.claude_tools import get_nethical_tool, handle_nethical_tool
+
+client = Anthropic(api_key="your-api-key")
+tools = [get_nethical_tool()]
+
+# Claude can now call nethical_guard to check actions
+response = client.messages.create(
+    model="claude-3-5-sonnet-20241022",
+    tools=tools,
+    messages=[{"role": "user", "content": "Check if this is safe: ..."}]
+)
+```
+
+**Install**: `pip install anthropic`
+
+### 2. REST API Integration
+HTTP endpoint for any LLM (OpenAI, Gemini, LLaMA, etc.):
+
+```bash
+# Start server
+python -m nethical.integrations.rest_api
+```
+
+```python
+# Python client
+import requests
+
+response = requests.post(
+    "http://localhost:8000/evaluate",
+    json={"action": "Generate code", "agent_id": "my-llm"}
+)
+decision = response.json()["decision"]  # ALLOW, RESTRICT, BLOCK, or TERMINATE
+```
+
+```javascript
+// JavaScript client
+const response = await fetch('http://localhost:8000/evaluate', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ action: 'Access database', agent_id: 'my-app' })
+});
+const result = await response.json();
+```
+
+**Install**: `pip install fastapi uvicorn`
+
+**Both integrations provide:**
+- Safety and ethics evaluation
+- PII detection (10+ types)
+- Risk scoring (0.0-1.0)
+- Audit trail generation
+- Four decision types: ALLOW, RESTRICT, BLOCK, TERMINATE
+
+**Documentation**: See [nethical/integrations/README.md](nethical/integrations/README.md) for complete guide  
+**Examples**: See [examples/integrations/](examples/integrations/) for working examples  
+**Tests**: 48 integration tests covering both methods
+
+---
+
 ## Why nethical?
 
 - **Governance:**  
