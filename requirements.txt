@@ -47,6 +47,9 @@ tzdata==2025.2
 # multiple versions. Update this when updating fastapi.
 starlette>=0.40.0,<0.50.0
 
+# LLM Integration SDKs (optional - for specific integrations)
+anthropic>=0.40.0  # For Claude/Anthropic integration
+
 # Optional LangChain integration (uncomment if needed; then re-run pip-compile)
 # langchain>=0.1.0
 # langchain-core>=0.1.0
