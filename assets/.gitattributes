@@ -1,0 +1,2 @@
+# Treat PNG files as binary
+*.png binary
