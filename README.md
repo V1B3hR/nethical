@@ -1,4 +1,10 @@
+![Nethical Banner](assets/nethical_banner.png)
+
 # Nethical 🔒
+
+<p align="center">
+  <img src="assets/nethical_logo.png" alt="Nethical Logo" width="200"/>
+</p>
 
 Safety, Ethics and More for AI Agents
 
