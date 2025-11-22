@@ -2,6 +2,8 @@
 
 Complete guide for registering Nethical with LLM marketplaces, plugin directories, and AI platform registries.
 
+> **📋 Branding Assets:** Before submitting to any marketplace, review the [Marketplace Branding Guidelines](marketplace/README.md) for official logos, banners, and usage instructions.
+
 ## Table of Contents
 
 - [Overview](#overview)
@@ -27,6 +29,7 @@ Nethical provides manifests and specifications for easy registration with major 
 - ✅ **Trust Signals**: Official listing provides credibility
 - 🔄 **Auto-Updates**: Marketplace can notify users of updates
 - 📊 **Analytics**: Track usage and adoption metrics
+- 🎨 **Consistent Branding**: Official logo and banner assets ensure professional presentation
 
 ## Available Marketplaces
 
