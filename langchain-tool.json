@@ -1,0 +1,212 @@
+{
+  "name": "nethical",
+  "display_name": "Nethical AI Safety Guard",
+  "version": "1.0.0",
+  "description": "Real-time AI safety and ethics governance for LangChain applications. Provides comprehensive safety checks, PII detection, risk scoring, and compliance validation.",
+  "tool_type": "langchain_tool",
+  "author": "Nethical Team",
+  "license": "MIT",
+  "homepage": "https://github.com/V1B3hR/nethical",
+  "repository": "https://github.com/V1B3hR/nethical",
+  "documentation": "https://github.com/V1B3hR/nethical/blob/main/docs/langchain_integration.md",
+  "support_email": "support@nethical.dev",
+  "langchain_integration": {
+    "type": "custom_tool",
+    "base_class": "BaseTool",
+    "supports_async": true,
+    "supports_callbacks": true,
+    "supports_memory": true,
+    "integration_methods": [
+      "as_tool",
+      "as_chain",
+      "as_agent_tool",
+      "as_retriever_tool"
+    ]
+  },
+  "installation": {
+    "python": {
+      "package": "nethical",
+      "command": "pip install nethical langchain",
+      "import_path": "nethical.integrations.langchain_tools"
+    }
+  },
+  "usage": {
+    "basic_example": {
+      "description": "Basic LangChain tool integration",
+      "code": "from langchain.tools import StructuredTool\nfrom nethical.integrations.langchain_tools import NethicalTool\n\ntool = NethicalTool()\nagent = initialize_agent([tool], llm, agent=AgentType.ZERO_SHOT_REACT_DESCRIPTION)"
+    },
+    "chain_example": {
+      "description": "Use Nethical in a LangChain chain",
+      "code": "from nethical.integrations.langchain_tools import create_nethical_chain\n\nchain = create_nethical_chain()\nresult = chain.run('Check if this action is safe')"
+    }
+  },
+  "features": {
+    "safety_evaluation": {
+      "enabled": true,
+      "description": "Real-time safety checks for LLM actions"
+    },
+    "pii_detection": {
+      "enabled": true,
+      "supported_types": [
+        "email",
+        "ssn",
+        "credit_card",
+        "phone",
+        "ip_address",
+        "passport",
+        "driver_license",
+        "medical_record",
+        "bank_account",
+        "tax_id"
+      ]
+    },
+    "risk_scoring": {
+      "enabled": true,
+      "range": "0.0-1.0",
+      "threshold_configurable": true
+    },
+    "audit_logging": {
+      "enabled": true,
+      "immutable": true,
+      "merkle_anchoring": true
+    },
+    "compliance_checks": {
+      "enabled": true,
+      "standards": [
+        "OWASP LLM Top 10",
+        "GDPR",
+        "CCPA",
+        "HIPAA",
+        "NIST AI RMF"
+      ]
+    }
+  },
+  "tool_definition": {
+    "name": "nethical_guard",
+    "description": "Evaluate actions for safety, ethical compliance, and security risks. Use before executing high-risk operations.",
+    "args_schema": {
+      "action": {
+        "type": "string",
+        "description": "The action or content to evaluate",
+        "required": true
+      },
+      "agent_id": {
+        "type": "string",
+        "description": "Identifier for the AI agent",
+        "default": "langchain"
+      },
+      "action_type": {
+        "type": "string",
+        "description": "Type of action",
+        "enum": [
+          "query",
+          "code_generation",
+          "command",
+          "data_access",
+          "tool_call",
+          "user_input",
+          "generated_content"
+        ],
+        "default": "query"
+      }
+    },
+    "return_schema": {
+      "decision": {
+        "type": "string",
+        "enum": ["ALLOW", "RESTRICT", "BLOCK", "TERMINATE"]
+      },
+      "reason": {
+        "type": "string"
+      },
+      "risk_score": {
+        "type": "number",
+        "min": 0.0,
+        "max": 1.0
+      },
+      "pii_detected": {
+        "type": "boolean"
+      },
+      "pii_types": {
+        "type": "array",
+        "items": {
+          "type": "string"
+        }
+      }
+    }
+  },
+  "integration_patterns": [
+    {
+      "name": "Pre-execution Guard",
+      "description": "Check actions before LLM execution",
+      "use_case": "Prevent harmful or unauthorized actions"
+    },
+    {
+      "name": "Output Filter",
+      "description": "Validate LLM outputs before returning",
+      "use_case": "Filter unsafe or non-compliant content"
+    },
+    {
+      "name": "Bidirectional Guard",
+      "description": "Check both inputs and outputs",
+      "use_case": "Complete protection for sensitive applications"
+    },
+    {
+      "name": "Agent Tool",
+      "description": "Use as a tool in LangChain agents",
+      "use_case": "Let agents self-check before actions"
+    }
+  ],
+  "compatibility": {
+    "langchain_versions": [">=0.1.0"],
+    "python_versions": [">=3.8"],
+    "supported_models": [
+      "OpenAI GPT-3.5/4",
+      "Anthropic Claude",
+      "Google PaLM/Gemini",
+      "Hugging Face models",
+      "Azure OpenAI",
+      "Cohere",
+      "Custom models"
+    ]
+  },
+  "performance": {
+    "latency": {
+      "p50": "50-100ms",
+      "p95": "150-300ms",
+      "p99": "300-500ms"
+    },
+    "throughput": "1000+ requests/second",
+    "async_supported": true
+  },
+  "configuration": {
+    "customizable_thresholds": true,
+    "custom_policies": true,
+    "custom_detectors": true,
+    "storage_backend": "configurable",
+    "observability": {
+      "metrics": true,
+      "tracing": true,
+      "logging": true
+    }
+  },
+  "tags": [
+    "langchain",
+    "safety",
+    "security",
+    "ethics",
+    "governance",
+    "compliance",
+    "pii-detection",
+    "risk-assessment",
+    "tool",
+    "chain",
+    "agent"
+  ],
+  "metadata": {
+    "created_at": "2025-11-22T20:00:00Z",
+    "updated_at": "2025-11-22T20:00:00Z",
+    "category": "safety_and_security",
+    "platform": "langchain",
+    "language": "python"
+  }
+}
