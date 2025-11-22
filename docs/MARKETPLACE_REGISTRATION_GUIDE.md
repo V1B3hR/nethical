@@ -5,6 +5,7 @@ Complete guide for registering Nethical with LLM marketplaces, plugin directorie
 ## Table of Contents
 
 - [Overview](#overview)
+- [Branding Assets](#branding-assets)
 - [Available Marketplaces](#available-marketplaces)
 - [Registration Workflows](#registration-workflows)
 - [Manifest Files](#manifest-files)
@@ -27,6 +28,28 @@ Nethical provides manifests and specifications for easy registration with major 
 - ✅ **Trust Signals**: Official listing provides credibility
 - 🔄 **Auto-Updates**: Marketplace can notify users of updates
 - 📊 **Analytics**: Track usage and adoption metrics
+
+## Branding Assets
+
+Official Nethical branding assets are available for use in marketplace submissions, plugin development, and documentation.
+
+### Available Assets
+
+- **Banner** (`assets/nethical_banner.png`): 1050x300px - For repository headers and marketplace listings
+- **Logo** (`assets/nethical_logo.png`): 256x256px - For plugin icons and thumbnails
+
+**📖 Complete Usage Guide**: See [docs/marketplace/README.md](marketplace/README.md) for:
+- Detailed usage guidelines
+- Markdown and HTML snippets
+- Marketplace-specific requirements
+- Brand colors and styling
+- Resizing instructions
+
+Most marketplaces require:
+- **Plugin Icon**: 256x256 logo (PNG with transparency)
+- **Featured Image**: 1050x300 banner (PNG)
+
+Use these assets consistently across all marketplace submissions to maintain brand recognition.
 
 ## Available Marketplaces
 
