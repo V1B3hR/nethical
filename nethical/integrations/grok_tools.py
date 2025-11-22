@@ -6,17 +6,17 @@ and ethical compliance.
 
 Usage:
     from nethical.integrations.grok_tools import get_nethical_tool, handle_nethical_tool
-    
+
     # Get tool definition for Grok
     tools = [get_nethical_tool()]
-    
+
     # Use in Grok API call
     # (Example - adapt to actual xAI API when available)
     response = grok_client.chat(
         messages=[{"role": "user", "content": "Check if this is safe: ..."}],
         tools=tools
     )
-    
+
     # Handle tool calls
     for tool_call in response.tool_calls:
         if tool_call.name == "nethical_guard":
@@ -26,7 +26,7 @@ Usage:
 Installation:
     # xAI API client (when available)
     # pip install xai-sdk
-    
+
     # Or use REST API for Grok
     pip install requests
 
@@ -52,10 +52,10 @@ _governance: Optional[IntegratedGovernance] = None
 
 def get_governance_instance(**kwargs) -> IntegratedGovernance:
     """Get or create the governance instance.
-    
+
     Args:
         **kwargs: Configuration options for IntegratedGovernance
-        
+
     Returns:
         IntegratedGovernance instance
     """
@@ -74,13 +74,13 @@ def get_governance_instance(**kwargs) -> IntegratedGovernance:
 
 def get_nethical_tool() -> Dict[str, Any]:
     """Get Nethical tool definition for Grok.
-    
+
     This returns a tool/function definition that can be passed to Grok's
     function calling API.
-    
+
     Returns:
         Dict containing the tool definition in Grok's format
-        
+
     Example:
         tools = [get_nethical_tool()]
         response = grok_client.chat(messages=messages, tools=tools)
@@ -102,12 +102,12 @@ def get_nethical_tool() -> Dict[str, Any]:
                 "properties": {
                     "action": {
                         "type": "string",
-                        "description": "The action, code, or content to evaluate for safety and ethics"
+                        "description": "The action, code, or content to evaluate for safety and ethics",
                     },
                     "agent_id": {
                         "type": "string",
                         "description": "Identifier for the AI agent (e.g., 'grok-1', 'my-agent')",
-                        "default": "grok"
+                        "default": "grok",
                     },
                     "action_type": {
                         "type": "string",
@@ -119,37 +119,36 @@ def get_nethical_tool() -> Dict[str, Any]:
                             "data_access",
                             "tool_call",
                             "user_input",
-                            "generated_content"
+                            "generated_content",
                         ],
-                        "default": "query"
+                        "default": "query",
                     },
                     "context": {
                         "type": "object",
                         "description": "Additional context about the action (optional)",
-                        "additionalProperties": True
-                    }
+                        "additionalProperties": True,
+                    },
                 },
-                "required": ["action"]
-            }
-        }
+                "required": ["action"],
+            },
+        },
     }
 
 
 def handle_nethical_tool(
-    tool_input: Dict[str, Any],
-    governance: Optional[IntegratedGovernance] = None
+    tool_input: Dict[str, Any], governance: Optional[IntegratedGovernance] = None
 ) -> Dict[str, Any]:
     """Handle a Nethical tool call from Grok.
-    
+
     This processes a tool call from Grok and returns the evaluation result.
-    
+
     Args:
         tool_input: Tool input from Grok containing action details
         governance: Optional governance instance (uses default if not provided)
-        
+
     Returns:
         Dict containing evaluation results with decision, reason, and metadata
-        
+
     Example:
         result = handle_nethical_tool({
             "action": "Delete all user data",
@@ -161,13 +160,13 @@ def handle_nethical_tool(
     """
     if governance is None:
         governance = get_governance_instance()
-    
+
     # Extract parameters
     action = tool_input.get("action", "")
     agent_id = tool_input.get("agent_id", "grok")
     action_type = tool_input.get("action_type", "query")
     context = tool_input.get("context", {})
-    
+
     # Validate input
     if not action:
         return {
@@ -175,22 +174,19 @@ def handle_nethical_tool(
             "reason": "Empty action provided",
             "agent_id": agent_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "error": "action is required"
+            "error": "action is required",
         }
-    
+
     try:
         # Process through governance
         result = governance.process_action(
-            action=action,
-            agent_id=agent_id,
-            action_type=action_type,
-            context=context
+            action=action, agent_id=agent_id, action_type=action_type, context=context
         )
-        
+
         # Extract key information
         decision_str = compute_decision(result)
         violations = result.get("violations", [])
-        
+
         # Build response
         response = {
             "decision": decision_str,
@@ -202,18 +198,18 @@ def handle_nethical_tool(
             "pii_types": result.get("pii_types", []),
             "violations": format_violations_for_response(violations),
             "audit_id": result.get("audit_id"),
-            "metadata": result.get("metadata", {})
+            "metadata": result.get("metadata", {}),
         }
-        
+
         return response
-        
+
     except Exception as e:
         return {
             "decision": "BLOCK",
             "reason": f"Evaluation error: {str(e)}",
             "agent_id": agent_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -222,23 +218,23 @@ def evaluate_action(
     agent_id: str = "grok",
     action_type: str = "query",
     context: Optional[Dict[str, Any]] = None,
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> str:
     """Simplified evaluation function that returns just the decision.
-    
+
     This is a convenience function for quick checks when you only need
     the decision (ALLOW, RESTRICT, BLOCK, or TERMINATE).
-    
+
     Args:
         action: The action to evaluate
         agent_id: Agent identifier (default: "grok")
         action_type: Type of action (default: "query")
         context: Additional context (optional)
         governance: Optional governance instance
-        
+
     Returns:
         Decision string: "ALLOW", "RESTRICT", "BLOCK", or "TERMINATE"
-        
+
     Example:
         decision = evaluate_action("Generate a report", agent_id="grok-1")
         if decision != "ALLOW":
@@ -249,62 +245,55 @@ def evaluate_action(
             "action": action,
             "agent_id": agent_id,
             "action_type": action_type,
-            "context": context or {}
+            "context": context or {},
         },
-        governance=governance
+        governance=governance,
     )
     return result["decision"]
 
 
 # Convenience functions for common patterns
 
+
 def check_user_input(
     user_input: str,
     agent_id: str = "grok",
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> Dict[str, Any]:
     """Check user input before processing.
-    
+
     Args:
         user_input: User's input text
         agent_id: Agent identifier
         governance: Optional governance instance
-        
+
     Returns:
         Evaluation result dict
     """
     return handle_nethical_tool(
-        {
-            "action": user_input,
-            "agent_id": agent_id,
-            "action_type": "user_input"
-        },
-        governance=governance
+        {"action": user_input, "agent_id": agent_id, "action_type": "user_input"},
+        governance=governance,
     )
 
 
 def check_generated_content(
     content: str,
     agent_id: str = "grok",
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> Dict[str, Any]:
     """Check generated content before returning to user.
-    
+
     Args:
         content: Generated content to check
         agent_id: Agent identifier
         governance: Optional governance instance
-        
+
     Returns:
         Evaluation result dict
     """
     return handle_nethical_tool(
-        {
-            "action": content,
-            "agent_id": agent_id,
-            "action_type": "generated_content"
-        },
-        governance=governance
+        {"action": content, "agent_id": agent_id, "action_type": "generated_content"},
+        governance=governance,
     )
 
 
@@ -312,16 +301,16 @@ def check_code_generation(
     code: str,
     language: str = "python",
     agent_id: str = "grok",
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> Dict[str, Any]:
     """Check generated code before execution.
-    
+
     Args:
         code: Generated code to check
         language: Programming language
         agent_id: Agent identifier
         governance: Optional governance instance
-        
+
     Returns:
         Evaluation result dict
     """
@@ -330,9 +319,9 @@ def check_code_generation(
             "action": code,
             "agent_id": agent_id,
             "action_type": "code_generation",
-            "context": {"language": language}
+            "context": {"language": language},
         },
-        governance=governance
+        governance=governance,
     )
 
 
@@ -340,16 +329,16 @@ def check_tool_call(
     tool_name: str,
     tool_args: Dict[str, Any],
     agent_id: str = "grok",
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> Dict[str, Any]:
     """Check tool/function call before execution.
-    
+
     Args:
         tool_name: Name of the tool/function
         tool_args: Arguments for the tool
         agent_id: Agent identifier
         governance: Optional governance instance
-        
+
     Returns:
         Evaluation result dict
     """
@@ -359,10 +348,7 @@ def check_tool_call(
             "action": action_description,
             "agent_id": agent_id,
             "action_type": "tool_call",
-            "context": {
-                "tool_name": tool_name,
-                "tool_args": tool_args
-            }
+            "context": {"tool_name": tool_name, "tool_args": tool_args},
         },
-        governance=governance
+        governance=governance,
     )

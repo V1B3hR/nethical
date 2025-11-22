@@ -7,17 +7,17 @@ and ethical compliance.
 Usage:
     from nethical.integrations.gemini_tools import get_nethical_tool, handle_nethical_tool
     import google.generativeai as genai
-    
+
     # Configure Gemini
     genai.configure(api_key="your-api-key")
-    
+
     # Get tool definition for Gemini
     tools = [get_nethical_tool()]
-    
+
     # Use in Gemini API call
     model = genai.GenerativeModel('gemini-pro', tools=tools)
     response = model.generate_content("Check if this is safe: ...")
-    
+
     # Handle tool calls
     for part in response.parts:
         if hasattr(part, 'function_call'):
@@ -49,10 +49,10 @@ _governance: Optional[IntegratedGovernance] = None
 
 def get_governance_instance(**kwargs) -> IntegratedGovernance:
     """Get or create the governance instance.
-    
+
     Args:
         **kwargs: Configuration options for IntegratedGovernance
-        
+
     Returns:
         IntegratedGovernance instance
     """
@@ -71,13 +71,13 @@ def get_governance_instance(**kwargs) -> IntegratedGovernance:
 
 def get_nethical_tool() -> Dict[str, Any]:
     """Get Nethical tool definition for Gemini.
-    
+
     This returns a tool/function definition that can be passed to Gemini's
     function calling API.
-    
+
     Returns:
         Dict containing the tool definition in Gemini's format
-        
+
     Example:
         import google.generativeai as genai
         tools = [get_nethical_tool()]
@@ -100,11 +100,11 @@ def get_nethical_tool() -> Dict[str, Any]:
                     "properties": {
                         "action": {
                             "type": "string",
-                            "description": "The action, code, or content to evaluate for safety and ethics"
+                            "description": "The action, code, or content to evaluate for safety and ethics",
                         },
                         "agent_id": {
                             "type": "string",
-                            "description": "Identifier for the AI agent (e.g., 'gemini-pro', 'my-agent')"
+                            "description": "Identifier for the AI agent (e.g., 'gemini-pro', 'my-agent')",
                         },
                         "action_type": {
                             "type": "string",
@@ -116,36 +116,35 @@ def get_nethical_tool() -> Dict[str, Any]:
                                 "data_access",
                                 "tool_call",
                                 "user_input",
-                                "generated_content"
-                            ]
+                                "generated_content",
+                            ],
                         },
                         "context": {
                             "type": "object",
-                            "description": "Additional context about the action (optional)"
-                        }
+                            "description": "Additional context about the action (optional)",
+                        },
                     },
-                    "required": ["action"]
-                }
+                    "required": ["action"],
+                },
             }
         ]
     }
 
 
 def handle_nethical_tool(
-    tool_input: Dict[str, Any],
-    governance: Optional[IntegratedGovernance] = None
+    tool_input: Dict[str, Any], governance: Optional[IntegratedGovernance] = None
 ) -> Dict[str, Any]:
     """Handle a Nethical tool call from Gemini.
-    
+
     This processes a tool call from Gemini and returns the evaluation result.
-    
+
     Args:
         tool_input: Tool input from Gemini containing action details
         governance: Optional governance instance (uses default if not provided)
-        
+
     Returns:
         Dict containing evaluation results with decision, reason, and metadata
-        
+
     Example:
         result = handle_nethical_tool({
             "action": "Delete all user data",
@@ -157,13 +156,13 @@ def handle_nethical_tool(
     """
     if governance is None:
         governance = get_governance_instance()
-    
+
     # Extract parameters
     action = tool_input.get("action", "")
     agent_id = tool_input.get("agent_id", "gemini")
     action_type = tool_input.get("action_type", "query")
     context = tool_input.get("context", {})
-    
+
     # Validate input
     if not action:
         return {
@@ -171,22 +170,19 @@ def handle_nethical_tool(
             "reason": "Empty action provided",
             "agent_id": agent_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "error": "action is required"
+            "error": "action is required",
         }
-    
+
     try:
         # Process through governance
         result = governance.process_action(
-            action=action,
-            agent_id=agent_id,
-            action_type=action_type,
-            context=context
+            action=action, agent_id=agent_id, action_type=action_type, context=context
         )
-        
+
         # Extract key information
         decision_str = compute_decision(result)
         violations = result.get("violations", [])
-        
+
         # Build response
         response = {
             "decision": decision_str,
@@ -198,18 +194,18 @@ def handle_nethical_tool(
             "pii_types": result.get("pii_types", []),
             "violations": format_violations_for_response(violations),
             "audit_id": result.get("audit_id"),
-            "metadata": result.get("metadata", {})
+            "metadata": result.get("metadata", {}),
         }
-        
+
         return response
-        
+
     except Exception as e:
         return {
             "decision": "BLOCK",
             "reason": f"Evaluation error: {str(e)}",
             "agent_id": agent_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "error": str(e)
+            "error": str(e),
         }
 
 
@@ -218,23 +214,23 @@ def evaluate_action(
     agent_id: str = "gemini",
     action_type: str = "query",
     context: Optional[Dict[str, Any]] = None,
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> str:
     """Simplified evaluation function that returns just the decision.
-    
+
     This is a convenience function for quick checks when you only need
     the decision (ALLOW, RESTRICT, BLOCK, or TERMINATE).
-    
+
     Args:
         action: The action to evaluate
         agent_id: Agent identifier (default: "gemini")
         action_type: Type of action (default: "query")
         context: Additional context (optional)
         governance: Optional governance instance
-        
+
     Returns:
         Decision string: "ALLOW", "RESTRICT", "BLOCK", or "TERMINATE"
-        
+
     Example:
         decision = evaluate_action("Generate a report", agent_id="gemini-pro")
         if decision != "ALLOW":
@@ -245,62 +241,55 @@ def evaluate_action(
             "action": action,
             "agent_id": agent_id,
             "action_type": action_type,
-            "context": context or {}
+            "context": context or {},
         },
-        governance=governance
+        governance=governance,
     )
     return result["decision"]
 
 
 # Convenience functions for common patterns
 
+
 def check_user_input(
     user_input: str,
     agent_id: str = "gemini",
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> Dict[str, Any]:
     """Check user input before processing.
-    
+
     Args:
         user_input: User's input text
         agent_id: Agent identifier
         governance: Optional governance instance
-        
+
     Returns:
         Evaluation result dict
     """
     return handle_nethical_tool(
-        {
-            "action": user_input,
-            "agent_id": agent_id,
-            "action_type": "user_input"
-        },
-        governance=governance
+        {"action": user_input, "agent_id": agent_id, "action_type": "user_input"},
+        governance=governance,
     )
 
 
 def check_generated_content(
     content: str,
     agent_id: str = "gemini",
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> Dict[str, Any]:
     """Check generated content before returning to user.
-    
+
     Args:
         content: Generated content to check
         agent_id: Agent identifier
         governance: Optional governance instance
-        
+
     Returns:
         Evaluation result dict
     """
     return handle_nethical_tool(
-        {
-            "action": content,
-            "agent_id": agent_id,
-            "action_type": "generated_content"
-        },
-        governance=governance
+        {"action": content, "agent_id": agent_id, "action_type": "generated_content"},
+        governance=governance,
     )
 
 
@@ -308,16 +297,16 @@ def check_code_generation(
     code: str,
     language: str = "python",
     agent_id: str = "gemini",
-    governance: Optional[IntegratedGovernance] = None
+    governance: Optional[IntegratedGovernance] = None,
 ) -> Dict[str, Any]:
     """Check generated code before execution.
-    
+
     Args:
         code: Generated code to check
         language: Programming language
         agent_id: Agent identifier
         governance: Optional governance instance
-        
+
     Returns:
         Evaluation result dict
     """
@@ -326,28 +315,27 @@ def check_code_generation(
             "action": code,
             "agent_id": agent_id,
             "action_type": "code_generation",
-            "context": {"language": language}
+            "context": {"language": language},
         },
-        governance=governance
+        governance=governance,
     )
 
 
 def create_gemini_function_response(
-    function_call_id: str,
-    result: Dict[str, Any]
+    function_call_id: str, result: Dict[str, Any]
 ) -> Dict[str, Any]:
     """Create a properly formatted function response for Gemini.
-    
+
     Use this to send the Nethical evaluation result back to Gemini
     as a function response.
-    
+
     Args:
         function_call_id: The ID from the function call
         result: Result from handle_nethical_tool
-        
+
     Returns:
         Formatted function response for Gemini
-        
+
     Example:
         # After receiving function call from Gemini
         result = handle_nethical_tool(function_call.args)
@@ -357,39 +345,35 @@ def create_gemini_function_response(
         )
         # Send response back to Gemini
     """
-    return {
-        "function_response": {
-            "name": "nethical_guard",
-            "response": result
-        }
-    }
+    return {"function_response": {"name": "nethical_guard", "response": result}}
 
 
 # Example integration pattern for Gemini
+
 
 def safe_gemini_chat(
     prompt: str,
     model_name: str = "gemini-pro",
     check_input: bool = True,
-    check_output: bool = True
+    check_output: bool = True,
 ) -> str:
     """Example safe chat function with Gemini using Nethical.
-    
+
     This demonstrates a complete integration pattern with both input
     and output checking.
-    
+
     Args:
         prompt: User's prompt
         model_name: Gemini model name
         check_input: Whether to check input (default: True)
         check_output: Whether to check output (default: True)
-        
+
     Returns:
         Safe response from Gemini or error message
-        
+
     Note:
         Requires google-generativeai package and GOOGLE_API_KEY
-        
+
     Example:
         response = safe_gemini_chat(
             "Tell me about AI safety",
@@ -400,13 +384,13 @@ def safe_gemini_chat(
         import google.generativeai as genai
     except ImportError:
         return "Error: google-generativeai package not installed. Run: pip install google-generativeai"
-    
+
     # Check input if requested
     if check_input:
         input_check = check_user_input(prompt, agent_id=model_name)
         if input_check["decision"] != "ALLOW":
             return f"Input blocked: {input_check['reason']}"
-    
+
     # Generate response from Gemini
     try:
         model = genai.GenerativeModel(model_name)
@@ -414,11 +398,11 @@ def safe_gemini_chat(
         output = response.text
     except Exception as e:
         return f"Gemini error: {str(e)}"
-    
+
     # Check output if requested
     if check_output:
         output_check = check_generated_content(output, agent_id=model_name)
         if output_check["decision"] != "ALLOW":
             return f"Output blocked: {output_check['reason']}"
-    
+
     return output
