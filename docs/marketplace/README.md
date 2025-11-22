@@ -201,7 +201,7 @@ For branding questions or custom asset requests:
 
 ## Version History
 
-- **v1.0** (2025-01-22): Initial branding assets and guidelines
+- **v1.0** (2025-11-22): Initial branding assets and guidelines
   - Created official logo (512x512)
   - Created official banner (1200x300)
   - Established usage guidelines
