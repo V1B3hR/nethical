@@ -1,0 +1,176 @@
+{
+  "manifest_version": "1.0",
+  "name": "nethical",
+  "display_name": "Nethical AI Safety Guard",
+  "description": "Real-time AI safety and ethics governance for Grok. Evaluates actions for compliance, detects PII, calculates risk scores, and ensures ethical operation. Provides comprehensive protection against OWASP LLM Top 10 vulnerabilities.",
+  "version": "1.0.0",
+  "author": "Nethical Team",
+  "license": "MIT",
+  "homepage": "https://github.com/V1B3hR/nethical",
+  "repository": "https://github.com/V1B3hR/nethical",
+  "documentation": "https://github.com/V1B3hR/nethical/blob/main/README.md",
+  "support_email": "support@nethical.dev",
+  "api": {
+    "type": "function_calling",
+    "base_url": "https://api.nethical.dev",
+    "openapi_spec": "https://api.nethical.dev/openapi.yaml",
+    "functions": [
+      {
+        "name": "nethical_guard",
+        "description": "Evaluate an action, code, or content for safety, ethical compliance, and security risks. Use this to check user inputs, generated content, data access requests, code generation, or tool calls before execution. Returns ALLOW, RESTRICT, BLOCK, or TERMINATE with reasoning, risk score, and PII detection.",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "description": "The action, code, or content to evaluate for safety and ethics",
+              "required": true
+            },
+            "agent_id": {
+              "type": "string",
+              "description": "Identifier for the AI agent (e.g., 'grok-1', 'my-agent')",
+              "default": "grok"
+            },
+            "action_type": {
+              "type": "string",
+              "description": "Type of action being evaluated",
+              "enum": [
+                "query",
+                "code_generation",
+                "command",
+                "data_access",
+                "tool_call",
+                "user_input",
+                "generated_content"
+              ],
+              "default": "query"
+            },
+            "context": {
+              "type": "object",
+              "description": "Additional context about the action (optional)",
+              "additionalProperties": true
+            }
+          },
+          "required": ["action"]
+        },
+        "returns": {
+          "type": "object",
+          "properties": {
+            "decision": {
+              "type": "string",
+              "enum": ["ALLOW", "RESTRICT", "BLOCK", "TERMINATE"],
+              "description": "Decision result for the action"
+            },
+            "reason": {
+              "type": "string",
+              "description": "Explanation for the decision"
+            },
+            "risk_score": {
+              "type": "number",
+              "minimum": 0.0,
+              "maximum": 1.0,
+              "description": "Risk score from 0.0 (safe) to 1.0 (dangerous)"
+            },
+            "pii_detected": {
+              "type": "boolean",
+              "description": "Whether personally identifiable information was detected"
+            },
+            "pii_types": {
+              "type": "array",
+              "items": {
+                "type": "string",
+                "enum": [
+                  "email",
+                  "ssn",
+                  "credit_card",
+                  "phone",
+                  "ip_address",
+                  "passport",
+                  "driver_license",
+                  "medical_record",
+                  "bank_account",
+                  "tax_id"
+                ]
+              },
+              "description": "Types of PII detected in the action"
+            },
+            "violations": {
+              "type": "array",
+              "items": {
+                "type": "object"
+              },
+              "description": "List of safety or ethical violations detected"
+            },
+            "audit_id": {
+              "type": "string",
+              "description": "Unique identifier for audit trail"
+            }
+          }
+        }
+      }
+    ]
+  },
+  "capabilities": {
+    "safety_checks": true,
+    "pii_detection": true,
+    "risk_scoring": true,
+    "audit_logging": true,
+    "quota_management": true,
+    "compliance_validation": true
+  },
+  "compliance": {
+    "standards": [
+      "OWASP LLM Top 10",
+      "GDPR",
+      "CCPA",
+      "HIPAA",
+      "NIST AI RMF",
+      "DoD AI Ethical Principles"
+    ],
+    "certifications": [],
+    "privacy_policy": "https://github.com/V1B3hR/nethical/blob/main/docs/privacy/PRIVACY_POLICY.md",
+    "terms_of_service": "https://github.com/V1B3hR/nethical/blob/main/LICENSE"
+  },
+  "security": {
+    "authentication": "optional",
+    "encryption": "tls",
+    "data_retention": "configurable",
+    "audit_trail": "immutable",
+    "sbom_available": true
+  },
+  "integration": {
+    "sdk": {
+      "python": "pip install nethical",
+      "rest_api": "https://api.nethical.dev"
+    },
+    "examples": {
+      "basic_check": "https://github.com/V1B3hR/nethical/blob/main/examples/integrations/grok_example.py",
+      "advanced_usage": "https://github.com/V1B3hR/nethical/blob/main/docs/EXTERNAL_INTEGRATIONS_GUIDE.md"
+    },
+    "quickstart": "https://github.com/V1B3hR/nethical#quick-start"
+  },
+  "use_cases": [
+    "Pre-flight safety checks for user inputs",
+    "Post-generation content validation",
+    "Real-time PII detection and redaction",
+    "Risk assessment for tool/function calls",
+    "Compliance validation for enterprise AI",
+    "Audit trail generation for AI decisions",
+    "Protection against prompt injection attacks",
+    "Defense against jailbreak attempts",
+    "Resource exhaustion prevention",
+    "Multi-step attack pattern detection"
+  ],
+  "tags": [
+    "safety",
+    "security",
+    "ethics",
+    "governance",
+    "compliance",
+    "pii-detection",
+    "risk-assessment",
+    "audit",
+    "llm-security",
+    "ai-safety"
+  ]
+}
