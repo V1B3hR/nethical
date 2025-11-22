@@ -1,0 +1,218 @@
+{
+  "bomFormat": "CycloneDX",
+  "specVersion": "1.5",
+  "serialNumber": "urn:uuid:3e671687-395b-41f5-a30f-a58921a69b79",
+  "version": 1,
+  "metadata": {
+    "timestamp": "2025-11-22T20:00:00Z",
+    "tools": [
+      {
+        "vendor": "Nethical Team",
+        "name": "Nethical SBOM Generator",
+        "version": "1.0.0"
+      }
+    ],
+    "component": {
+      "type": "application",
+      "bom-ref": "nethical@0.1.0",
+      "name": "nethical",
+      "version": "0.1.0",
+      "description": "Safety governance system for AI agents with universal LLM and MCP integration",
+      "licenses": [
+        {
+          "license": {
+            "id": "MIT"
+          }
+        }
+      ],
+      "supplier": {
+        "name": "Nethical Team",
+        "url": ["https://github.com/V1B3hR/nethical"]
+      },
+      "purl": "pkg:github/V1B3hR/nethical@0.1.0"
+    }
+  },
+  "components": [
+    {
+      "type": "library",
+      "bom-ref": "pydantic@2.0.0",
+      "name": "pydantic",
+      "version": "2.0.0",
+      "description": "Data validation using Python type hints",
+      "licenses": [{"license": {"id": "MIT"}}],
+      "purl": "pkg:pypi/pydantic@2.0.0"
+    },
+    {
+      "type": "library",
+      "bom-ref": "numpy@1.24.0",
+      "name": "numpy",
+      "version": "1.24.0",
+      "description": "Fundamental package for array computing in Python",
+      "licenses": [{"license": {"id": "BSD-3-Clause"}}],
+      "purl": "pkg:pypi/numpy@1.24.0"
+    },
+    {
+      "type": "library",
+      "bom-ref": "pandas@2.0.0",
+      "name": "pandas",
+      "version": "2.0.0",
+      "description": "Powerful data structures for data analysis",
+      "licenses": [{"license": {"id": "BSD-3-Clause"}}],
+      "purl": "pkg:pypi/pandas@2.0.0"
+    },
+    {
+      "type": "library",
+      "bom-ref": "dataclasses-json@0.5.0",
+      "name": "dataclasses-json",
+      "version": "0.5.0",
+      "description": "Easily serialize dataclasses to and from JSON",
+      "licenses": [{"license": {"id": "MIT"}}],
+      "purl": "pkg:pypi/dataclasses-json@0.5.0"
+    },
+    {
+      "type": "library",
+      "bom-ref": "typing-extensions@4.0.0",
+      "name": "typing-extensions",
+      "version": "4.0.0",
+      "description": "Backported and Experimental Type Hints for Python",
+      "licenses": [{"license": {"id": "PSF-2.0"}}],
+      "purl": "pkg:pypi/typing-extensions@4.0.0"
+    },
+    {
+      "type": "framework",
+      "bom-ref": "integration-claude",
+      "name": "claude-tools",
+      "version": "1.0.0",
+      "description": "Anthropic Claude integration for Nethical",
+      "group": "nethical.integrations"
+    },
+    {
+      "type": "framework",
+      "bom-ref": "integration-grok",
+      "name": "grok-tools",
+      "version": "1.0.0",
+      "description": "xAI Grok integration for Nethical",
+      "group": "nethical.integrations"
+    },
+    {
+      "type": "framework",
+      "bom-ref": "integration-gemini",
+      "name": "gemini-tools",
+      "version": "1.0.0",
+      "description": "Google Gemini integration for Nethical",
+      "group": "nethical.integrations"
+    },
+    {
+      "type": "framework",
+      "bom-ref": "integration-rest-api",
+      "name": "rest-api",
+      "version": "1.0.0",
+      "description": "REST API integration for universal LLM support",
+      "group": "nethical.integrations"
+    },
+    {
+      "type": "framework",
+      "bom-ref": "integration-langchain",
+      "name": "langchain-tools",
+      "version": "1.0.0",
+      "description": "LangChain integration for Nethical",
+      "group": "nethical.integrations"
+    },
+    {
+      "type": "framework",
+      "bom-ref": "integration-ml-platforms",
+      "name": "ml-platforms",
+      "version": "1.0.0",
+      "description": "ML platform integrations (HuggingFace, AutoGen, etc.)",
+      "group": "nethical.integrations"
+    },
+    {
+      "type": "framework",
+      "bom-ref": "integration-ray-serve",
+      "name": "ray-serve-connector",
+      "version": "1.0.0",
+      "description": "Ray Serve integration for Nethical",
+      "group": "nethical.integrations"
+    }
+  ],
+  "dependencies": [
+    {
+      "ref": "nethical@0.1.0",
+      "dependsOn": [
+        "pydantic@2.0.0",
+        "numpy@1.24.0",
+        "pandas@2.0.0",
+        "dataclasses-json@0.5.0",
+        "typing-extensions@4.0.0",
+        "integration-claude",
+        "integration-grok",
+        "integration-gemini",
+        "integration-rest-api",
+        "integration-langchain",
+        "integration-ml-platforms",
+        "integration-ray-serve"
+      ]
+    }
+  ],
+  "vulnerabilities": [],
+  "externalReferences": [
+    {
+      "type": "website",
+      "url": "https://github.com/V1B3hR/nethical"
+    },
+    {
+      "type": "issue-tracker",
+      "url": "https://github.com/V1B3hR/nethical/issues"
+    },
+    {
+      "type": "vcs",
+      "url": "https://github.com/V1B3hR/nethical.git"
+    },
+    {
+      "type": "documentation",
+      "url": "https://github.com/V1B3hR/nethical/tree/main/docs"
+    },
+    {
+      "type": "distribution",
+      "url": "https://pypi.org/project/nethical/"
+    },
+    {
+      "type": "release-notes",
+      "url": "https://github.com/V1B3hR/nethical/releases"
+    }
+  ],
+  "properties": [
+    {
+      "name": "integrations:llm:platforms",
+      "value": "OpenAI, Anthropic Claude, xAI Grok, Google Gemini, Meta LLaMA, Custom LLMs"
+    },
+    {
+      "name": "integrations:mcp:platforms",
+      "value": "LangChain, HuggingFace, AutoGen, Ray Serve, MLflow, SageMaker, Azure ML, Vertex AI, Weights & Biases, Databricks"
+    },
+    {
+      "name": "compliance:standards",
+      "value": "OWASP LLM Top 10, GDPR, CCPA, HIPAA, NIST AI RMF, DoD AI Ethical Principles"
+    },
+    {
+      "name": "security:features",
+      "value": "PII Detection, Risk Scoring, Audit Trails, Merkle Anchoring, Quota Enforcement"
+    },
+    {
+      "name": "manifests:available",
+      "value": "openapi.yaml, ai-plugin.json, grok-manifest.json, gemini-manifest.json, langchain-tool.json, huggingface-tool.yaml, autogen-manifest.json, mlflow-integration.yaml, enterprise-mcp-integrations.yaml"
+    },
+    {
+      "name": "api:rest:endpoint",
+      "value": "https://api.nethical.dev"
+    },
+    {
+      "name": "api:openapi:version",
+      "value": "3.1.0"
+    },
+    {
+      "name": "deployment:methods",
+      "value": "pip, docker, kubernetes"
+    }
+  ]
+}
