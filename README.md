@@ -233,6 +233,127 @@ const result = await response.json();
 
 ---
 
+## 🌐 Universal LLM & MCP Discoverability
+
+Nethical is designed for **plug-and-play** integration with **ALL major LLMs and AI platforms**. We provide comprehensive manifests, specifications, and connectors for instant discoverability.
+
+### Supported LLM Platforms
+
+| Platform | Integration Method | Status | Manifest |
+|----------|-------------------|--------|----------|
+| **OpenAI (GPT-4, GPT-3.5, ChatGPT)** | REST API, Plugin | ✅ Ready | `ai-plugin.json`, `openapi.yaml` |
+| **Anthropic Claude** | Function Calling | ✅ Ready | `ai-plugin.json` |
+| **xAI Grok** | Function Calling | ✅ Ready | `grok-manifest.json` |
+| **Google Gemini** | Function Calling | ✅ Ready | `gemini-manifest.json` |
+| **Meta LLaMA** | REST API | ✅ Ready | `openapi.yaml` |
+| **Custom LLMs** | REST API | ✅ Ready | `openapi.yaml` |
+
+### Supported MCP & AI Platforms
+
+| Platform | Type | Status | Manifest |
+|----------|------|--------|----------|
+| **LangChain** | Agent Framework | ✅ Ready | `langchain-tool.json` |
+| **HuggingFace** | ML Platform | ✅ Ready | `huggingface-tool.yaml` |
+| **AutoGen** | Multi-Agent | ✅ Ready | `autogen-manifest.json` |
+| **Ray Serve** | Model Serving | ✅ Ready | Python SDK |
+| **MLflow** | MLOps | ✅ Ready | `mlflow-integration.yaml` |
+| **AWS SageMaker** | Cloud ML | 📋 Stub | `enterprise-mcp-integrations.yaml` |
+| **Azure ML** | Cloud ML | 📋 Stub | `enterprise-mcp-integrations.yaml` |
+| **Google Vertex AI** | Cloud ML | 📋 Stub | `enterprise-mcp-integrations.yaml` |
+| **Weights & Biases** | Experiment Tracking | 📋 Stub | `enterprise-mcp-integrations.yaml` |
+| **Databricks** | Data Platform | 📋 Stub | `enterprise-mcp-integrations.yaml` |
+
+### Quick Integration Examples
+
+**OpenAI with REST API:**
+```python
+import openai
+from nethical.integrations import evaluate_action
+
+if evaluate_action(prompt, agent_id="gpt-4") == "ALLOW":
+    response = openai.ChatCompletion.create(model="gpt-4", messages=messages)
+```
+
+**Claude with Function Calling:**
+```python
+from anthropic import Anthropic
+from nethical.integrations.claude_tools import get_nethical_tool
+
+tools = [get_nethical_tool()]
+response = client.messages.create(model="claude-3-5-sonnet-20241022", tools=tools, ...)
+```
+
+**Grok with Function Calling:**
+```python
+from nethical.integrations.grok_tools import get_nethical_tool
+
+tools = [get_nethical_tool()]
+# Use with xAI Grok client when available
+```
+
+**Gemini with Function Calling:**
+```python
+import google.generativeai as genai
+from nethical.integrations.gemini_tools import get_nethical_tool
+
+tools = [get_nethical_tool()]
+model = genai.GenerativeModel('gemini-pro', tools=tools)
+```
+
+**LangChain Integration:**
+```python
+from nethical.integrations.langchain_tools import NethicalTool
+
+tool = NethicalTool()
+agent = initialize_agent([tool, *other_tools], llm, ...)
+```
+
+**HuggingFace Pipeline:**
+```python
+from transformers import pipeline
+from nethical.integrations.ml_platforms import wrap_hf_pipeline
+
+pipe = pipeline("text-generation", model="gpt2")
+safe_pipe = wrap_hf_pipeline(pipe)
+```
+
+**AutoGen Multi-Agent:**
+```python
+from nethical.integrations.ml_platforms import wrap_autogen_agent
+
+safe_agent = wrap_autogen_agent(agent, check_messages=True)
+```
+
+### Plugin Marketplace Registration
+
+Nethical is ready for registration with major LLM marketplaces:
+
+- **OpenAI ChatGPT Plugin Store**: Use `ai-plugin.json` + `openapi.yaml`
+- **Anthropic Claude**: Function calling with `claude_tools` module
+- **xAI Grok Marketplace**: Use `grok-manifest.json` (when available)
+- **Google Gemini**: Function declarations with `gemini_tools` module
+- **LangChain Hub**: Publish with `langchain-tool.json`
+- **HuggingFace Spaces**: Deploy with `huggingface-tool.yaml`
+
+### Documentation & Guides
+
+- 📖 **[LLM Integration Guide](docs/LLM_INTEGRATION_GUIDE.md)** - Complete guide for all LLM platforms
+- 🔧 **[MCP Platform Integration Guide](docs/MCP_PLATFORM_INTEGRATION_GUIDE.md)** - MLOps and AI platform integrations
+- 🏪 **[Marketplace Registration Guide](docs/MARKETPLACE_REGISTRATION_GUIDE.md)** - Step-by-step registration workflows
+- 📋 **[OpenAPI Specification](openapi.yaml)** - Full REST API documentation
+- 🔌 **[Integration Examples](examples/integrations/)** - Working code examples
+
+### Key Benefits
+
+✅ **Universal Compatibility** - Works with ANY LLM or AI platform  
+✅ **Instant Plug-and-Play** - Pre-built manifests and connectors  
+✅ **Marketplace Ready** - Submit to plugin directories today  
+✅ **Enterprise Ready** - Support for AWS, Azure, GCP platforms  
+✅ **Future Proof** - Extensible architecture for new platforms  
+✅ **Compliance Built-In** - OWASP LLM Top 10, GDPR, HIPAA, NIST coverage  
+
+---
+
 ## Why nethical?
 
 - **Governance:**  
