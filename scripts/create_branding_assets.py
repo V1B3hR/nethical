@@ -12,6 +12,61 @@ Required dimensions:
 
 from PIL import Image, ImageDraw, ImageFont
 import os
+import sys
+
+
+def find_font(font_name, size, fallback_default=True):
+    """
+    Find a font across different operating systems.
+
+    Args:
+        font_name: Name/style of font (e.g., 'bold', 'regular')
+        size: Font size
+        fallback_default: Whether to fall back to default font if not found
+
+    Returns:
+        ImageFont object
+    """
+    # Common font paths across different operating systems
+    font_paths = []
+
+    if sys.platform == "win32":
+        # Windows font locations
+        font_paths = [
+            "C:\\Windows\\Fonts\\arial.ttf",
+            "C:\\Windows\\Fonts\\arialbd.ttf",
+            "C:\\Windows\\Fonts\\segoeui.ttf",
+            "C:\\Windows\\Fonts\\segoeuib.ttf",
+        ]
+    elif sys.platform == "darwin":
+        # macOS font locations
+        font_paths = [
+            "/System/Library/Fonts/Helvetica.ttc",
+            "/System/Library/Fonts/SFNSText.ttf",
+            "/Library/Fonts/Arial.ttf",
+            "/System/Library/Fonts/Supplemental/Arial.ttf",
+        ]
+    else:
+        # Linux font locations
+        font_paths = [
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf",
+            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Regular.ttf",
+            "/usr/share/fonts/truetype/liberation/LiberationSans-Bold.ttf",
+        ]
+
+    # Try to load each font in order
+    for font_path in font_paths:
+        try:
+            return ImageFont.truetype(font_path, size)
+        except (OSError, IOError):
+            continue
+
+    # Fall back to default font if requested
+    if fallback_default:
+        return ImageFont.load_default()
+
+    raise RuntimeError(f"Could not find suitable font for {font_name}")
 
 
 def create_banner_placeholder(output_path, width=1050, height=300):
@@ -32,17 +87,9 @@ def create_banner_placeholder(output_path, width=1050, height=300):
     text = "NETHICAL"
     subtext = "AI Safety & Ethics Governance"
 
-    # Try to use a default font, fall back to default if not available
-    try:
-        font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", 60
-        )
-        subfont = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf", 24
-        )
-    except Exception:
-        font = ImageFont.load_default()
-        subfont = ImageFont.load_default()
+    # Load fonts using cross-platform helper
+    font = find_font("bold", 60)
+    subfont = find_font("regular", 24)
 
     # Calculate text position (centered)
     bbox = draw.textbbox((0, 0), text, font=font)
@@ -89,12 +136,7 @@ def create_logo_placeholder(output_path, size=256):
     )
 
     # Draw "N" letter
-    try:
-        font = ImageFont.truetype(
-            "/usr/share/fonts/truetype/dejavu/DejaVuSans-Bold.ttf", size // 3
-        )
-    except Exception:
-        font = ImageFont.load_default()
+    font = find_font("bold", size // 3)
 
     text = "N"
     bbox = draw.textbbox((0, 0), text, font=font)
