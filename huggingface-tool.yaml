@@ -1,0 +1,247 @@
+name: nethical
+display_name: Nethical AI Safety Guard
+version: 1.0.0
+description: |
+  Real-time AI safety and ethics governance for HuggingFace models and pipelines.
+  Provides comprehensive safety checks, PII detection, risk scoring, and compliance
+  validation for inference endpoints, transformers, and spaces.
+
+author: Nethical Team
+license: MIT
+homepage: https://github.com/V1B3hR/nethical
+repository: https://github.com/V1B3hR/nethical
+documentation: https://github.com/V1B3hR/nethical/blob/main/docs/EXTERNAL_INTEGRATIONS_GUIDE.md
+support_email: support@nethical.dev
+
+huggingface_integration:
+  type: inference_middleware
+  compatible_with:
+    - transformers
+    - inference_api
+    - spaces
+    - pipelines
+    - endpoints
+  
+  integration_methods:
+    - pre_inference_hook
+    - post_inference_hook
+    - pipeline_wrapper
+    - spaces_middleware
+  
+  api_type: rest_api
+  rest_endpoint: https://api.nethical.dev/evaluate
+  openapi_spec: https://api.nethical.dev/openapi.yaml
+
+installation:
+  python:
+    package: nethical
+    command: pip install nethical transformers
+    import_path: nethical.integrations.ml_platforms
+
+  space_requirements:
+    - python>=3.8
+    - nethical>=0.1.0
+    - fastapi
+    - uvicorn
+
+usage_examples:
+  basic_pipeline:
+    description: Wrap HuggingFace pipeline with Nethical
+    code: |
+      from transformers import pipeline
+      from nethical.integrations.ml_platforms import wrap_hf_pipeline
+      
+      pipe = pipeline("text-generation", model="gpt2")
+      safe_pipe = wrap_hf_pipeline(pipe)
+      
+      result = safe_pipe("Generate code to...")
+      # Automatically checked for safety
+
+  inference_api:
+    description: Use with HuggingFace Inference API
+    code: |
+      from huggingface_hub import InferenceClient
+      from nethical.integrations.ml_platforms import check_with_nethical
+      
+      client = InferenceClient()
+      
+      # Check before inference
+      if check_with_nethical(prompt):
+          result = client.text_generation(prompt)
+
+  gradio_space:
+    description: Integrate with Gradio Spaces
+    code: |
+      import gradio as gr
+      from nethical.integrations.ml_platforms import create_gradio_wrapper
+      
+      def model_fn(text):
+          # Your model logic
+          return output
+      
+      safe_fn = create_gradio_wrapper(model_fn)
+      gr.Interface(fn=safe_fn, ...).launch()
+
+features:
+  safety_evaluation:
+    enabled: true
+    description: Real-time safety checks for model inputs/outputs
+    
+  pii_detection:
+    enabled: true
+    supported_types:
+      - email
+      - ssn
+      - credit_card
+      - phone
+      - ip_address
+      - passport
+      - driver_license
+      - medical_record
+      - bank_account
+      - tax_id
+    redaction_available: true
+    
+  risk_scoring:
+    enabled: true
+    range: 0.0-1.0
+    threshold_configurable: true
+    
+  audit_logging:
+    enabled: true
+    immutable: true
+    merkle_anchoring: true
+    
+  compliance_checks:
+    enabled: true
+    standards:
+      - OWASP LLM Top 10
+      - GDPR
+      - CCPA
+      - HIPAA
+      - NIST AI RMF
+      - EU AI Act (preliminary)
+
+use_cases:
+  - name: Input Validation
+    description: Validate user inputs before model inference
+    benefit: Prevents prompt injection and malicious inputs
+    
+  - name: Output Filtering
+    description: Filter model outputs for safety and compliance
+    benefit: Ensures generated content is safe for users
+    
+  - name: PII Protection
+    description: Detect and redact PII in inputs/outputs
+    benefit: Maintains privacy and regulatory compliance
+    
+  - name: Risk Assessment
+    description: Calculate risk scores for model operations
+    benefit: Enable risk-based decision making
+    
+  - name: Audit Trail
+    description: Generate immutable logs of all interactions
+    benefit: Support compliance audits and investigations
+    
+  - name: Enterprise Deployment
+    description: Add governance to production HF endpoints
+    benefit: Enterprise-ready safety and compliance
+
+integration_patterns:
+  - name: Pre-inference Guard
+    description: Check inputs before model inference
+    implementation: Middleware or wrapper function
+    
+  - name: Post-inference Filter
+    description: Validate outputs before returning
+    implementation: Response processing hook
+    
+  - name: Bidirectional Protection
+    description: Guard both inputs and outputs
+    implementation: Combined pre/post hooks
+    
+  - name: Spaces Middleware
+    description: Add to Gradio/Streamlit Spaces
+    implementation: Decorator or middleware layer
+
+compatibility:
+  transformers_versions: [">=4.0.0"]
+  python_versions: [">=3.8"]
+  supported_model_types:
+    - text-generation
+    - text2text-generation
+    - text-classification
+    - question-answering
+    - summarization
+    - translation
+    - conversational
+    - custom
+
+performance:
+  latency:
+    p50: 50-100ms
+    p95: 150-300ms
+    p99: 300-500ms
+  throughput: 1000+ requests/second
+  async_supported: true
+  batch_processing: true
+
+configuration:
+  customizable_thresholds: true
+  custom_policies: true
+  custom_detectors: true
+  storage_backend: configurable
+  observability:
+    metrics: true
+    tracing: true
+    logging: true
+  deployment:
+    cloud: true
+    on_premise: true
+    edge: false
+
+security:
+  authentication:
+    supported_methods: [none, api_key, bearer_token]
+    default: none
+  encryption: tls_1_3
+  data_retention:
+    configurable: true
+    default_period: 30_days
+    maximum_period: 365_days
+  vulnerability_scanning: true
+  sbom_available: true
+
+compliance:
+  standards:
+    - OWASP LLM Top 10
+    - GDPR
+    - CCPA
+    - HIPAA
+    - NIST AI RMF
+    - EU AI Act (preliminary)
+  certifications: []
+  privacy_policy: https://github.com/V1B3hR/nethical/blob/main/docs/privacy/PRIVACY_POLICY.md
+  terms_of_service: https://github.com/V1B3hR/nethical/blob/main/LICENSE
+
+tags:
+  - huggingface
+  - transformers
+  - safety
+  - security
+  - ethics
+  - governance
+  - compliance
+  - pii-detection
+  - risk-assessment
+  - inference
+  - pipeline
+  - spaces
+
+metadata:
+  created_at: "2025-11-22T20:00:00Z"
+  updated_at: "2025-11-22T20:00:00Z"
+  category: safety_and_security
+  platform: huggingface
+  language: python
+  framework: transformers

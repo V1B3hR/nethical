@@ -1,0 +1,278 @@
+name: nethical
+display_name: Nethical AI Safety Guard
+version: 1.0.0
+description: |
+  Real-time AI safety and ethics governance for MLflow model registry and serving.
+  Provides comprehensive safety checks, PII detection, risk scoring, and compliance
+  validation for ML models throughout the MLOps lifecycle.
+
+author: Nethical Team
+license: MIT
+homepage: https://github.com/V1B3hR/nethical
+repository: https://github.com/V1B3hR/nethical
+documentation: https://github.com/V1B3hR/nethical/blob/main/docs/EXTERNAL_INTEGRATIONS_GUIDE.md
+support_email: support@nethical.dev
+
+mlflow_integration:
+  type: model_wrapper
+  compatible_versions: [">=2.0.0"]
+  integration_points:
+    - model_wrapper
+    - scoring_server_middleware
+    - deployment_guard
+    - artifact_validation
+  
+  flavors:
+    - python_function
+    - sklearn
+    - pytorch
+    - tensorflow
+    - transformers
+    - custom
+
+installation:
+  python:
+    package: nethical
+    command: pip install nethical mlflow
+    import_path: nethical.integrations.ml_platforms
+
+usage_examples:
+  model_logging:
+    description: Log model with Nethical wrapper
+    code: |
+      import mlflow
+      from nethical.integrations.ml_platforms import wrap_mlflow_model
+      
+      # Train your model
+      model = train_model()
+      
+      # Wrap with Nethical
+      safe_model = wrap_mlflow_model(model)
+      
+      # Log to MLflow
+      mlflow.sklearn.log_model(safe_model, "safe_model")
+
+  model_serving:
+    description: Serve model with safety checks
+    code: |
+      # In your MLflow model definition
+      import mlflow.pyfunc
+      from nethical.integrations.ml_platforms import NethicalModelWrapper
+      
+      class SafeModel(mlflow.pyfunc.PythonModel):
+          def __init__(self):
+              self.wrapper = NethicalModelWrapper()
+          
+          def predict(self, context, model_input):
+              # Check input
+              if not self.wrapper.check_input(model_input):
+                  return {"error": "Input blocked"}
+              
+              # Get prediction
+              prediction = self.model.predict(model_input)
+              
+              # Check output
+              if not self.wrapper.check_output(prediction):
+                  return {"error": "Output blocked"}
+              
+              return prediction
+
+  deployment_hook:
+    description: Add deployment validation hook
+    code: |
+      from nethical.integrations.ml_platforms import create_mlflow_hook
+      
+      # Create deployment hook
+      hook = create_mlflow_hook()
+      
+      # Use in deployment
+      mlflow.deployments.create(
+          name="my-model",
+          model_uri=model_uri,
+          config={"hooks": [hook]}
+      )
+
+features:
+  model_validation:
+    enabled: true
+    description: Validate models before deployment
+    
+  input_output_checking:
+    enabled: true
+    description: Check model inputs/outputs for safety
+    
+  pii_detection:
+    enabled: true
+    supported_types:
+      - email
+      - ssn
+      - credit_card
+      - phone
+      - ip_address
+      - passport
+      - driver_license
+      - medical_record
+      - bank_account
+      - tax_id
+    redaction_available: true
+    
+  risk_scoring:
+    enabled: true
+    range: 0.0-1.0
+    per_prediction: true
+    aggregate_metrics: true
+    
+  audit_logging:
+    enabled: true
+    immutable: true
+    merkle_anchoring: true
+    mlflow_tracking: true
+    
+  compliance_checks:
+    enabled: true
+    standards:
+      - OWASP LLM Top 10
+      - GDPR
+      - CCPA
+      - HIPAA
+      - NIST AI RMF
+      - Model Card reporting
+
+mlflow_features:
+  model_registry:
+    validation_on_registration: true
+    version_tagging: true
+    stage_transition_guards: true
+    
+  tracking:
+    safety_metrics: true
+    risk_score_logging: true
+    pii_detection_metrics: true
+    
+  deployment:
+    pre_deployment_validation: true
+    runtime_monitoring: true
+    rollback_on_violations: true
+
+use_cases:
+  - name: Model Validation
+    description: Validate models before production deployment
+    benefit: Prevent unsafe models from reaching production
+    
+  - name: Runtime Monitoring
+    description: Monitor model predictions in real-time
+    benefit: Detect and block unsafe outputs
+    
+  - name: PII Protection
+    description: Detect and redact PII in training/inference data
+    benefit: Maintain data privacy and compliance
+    
+  - name: Risk Assessment
+    description: Calculate risk scores for model predictions
+    benefit: Enable risk-based decision making
+    
+  - name: Audit Trail
+    description: Track all model operations and decisions
+    benefit: Support compliance audits and debugging
+    
+  - name: Lifecycle Governance
+    description: Govern models throughout MLOps lifecycle
+    benefit: End-to-end safety and compliance
+
+integration_patterns:
+  - name: Model Wrapper
+    description: Wrap models with safety checks
+    stage: Training/Registry
+    
+  - name: Serving Middleware
+    description: Add middleware to MLflow serving
+    stage: Deployment/Inference
+    
+  - name: Deployment Hook
+    description: Validate before deployment
+    stage: Deployment
+    
+  - name: Tracking Integration
+    description: Log safety metrics to MLflow
+    stage: All stages
+
+compatibility:
+  mlflow_versions: [">=2.0.0"]
+  python_versions: [">=3.8"]
+  deployment_targets:
+    - local
+    - cloud
+    - kubernetes
+    - sagemaker
+    - azureml
+    - databricks
+  
+  model_frameworks:
+    - scikit-learn
+    - pytorch
+    - tensorflow
+    - transformers
+    - xgboost
+    - lightgbm
+    - custom
+
+performance:
+  latency:
+    overhead_per_prediction: 10-50ms
+    p95: 100-200ms
+  throughput: 1000+ predictions/second
+  async_supported: true
+  batch_processing: true
+
+configuration:
+  per_model_settings: true
+  global_policies: true
+  custom_thresholds: true
+  custom_detectors: true
+  observability:
+    mlflow_metrics: true
+    custom_metrics: true
+    alerting: true
+
+security:
+  authentication:
+    supported_methods: [none, api_key, mlflow_auth]
+    default: mlflow_auth
+  encryption: tls_1_3
+  data_retention:
+    configurable: true
+    default_period: 90_days
+  vulnerability_scanning: true
+  sbom_available: true
+
+compliance:
+  standards:
+    - OWASP LLM Top 10
+    - GDPR
+    - CCPA
+    - HIPAA
+    - NIST AI RMF
+    - Model Card standards
+  model_documentation: true
+  bias_detection: true
+  fairness_metrics: true
+
+tags:
+  - mlflow
+  - mlops
+  - model-serving
+  - safety
+  - security
+  - governance
+  - compliance
+  - pii-detection
+  - risk-assessment
+  - model-registry
+
+metadata:
+  created_at: "2025-11-22T20:00:00Z"
+  updated_at: "2025-11-22T20:00:00Z"
+  category: safety_and_security
+  platform: mlflow
+  language: python
+  framework: mlflow

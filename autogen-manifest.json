@@ -1,0 +1,241 @@
+{
+  "name": "nethical",
+  "display_name": "Nethical AI Safety Guard",
+  "version": "1.0.0",
+  "description": "Real-time AI safety and ethics governance for Microsoft AutoGen multi-agent systems. Provides comprehensive safety checks, PII detection, risk scoring, and compliance validation for autonomous agents.",
+  "manifest_version": "1.0",
+  "author": "Nethical Team",
+  "license": "MIT",
+  "homepage": "https://github.com/V1B3hR/nethical",
+  "repository": "https://github.com/V1B3hR/nethical",
+  "documentation": "https://github.com/V1B3hR/nethical/blob/main/docs/EXTERNAL_INTEGRATIONS_GUIDE.md",
+  "support_email": "support@nethical.dev",
+  "autogen_integration": {
+    "type": "agent_middleware",
+    "compatible_versions": [">=0.2.0"],
+    "integration_points": [
+      "message_filter",
+      "function_call_guard",
+      "agent_wrapper",
+      "conversation_monitor"
+    ],
+    "supports": {
+      "conversable_agent": true,
+      "assistant_agent": true,
+      "user_proxy_agent": true,
+      "group_chat": true,
+      "custom_agents": true
+    }
+  },
+  "installation": {
+    "python": {
+      "package": "nethical",
+      "command": "pip install nethical pyautogen",
+      "import_path": "nethical.integrations.ml_platforms"
+    }
+  },
+  "usage": {
+    "agent_wrapper": {
+      "description": "Wrap AutoGen agents with Nethical safety checks",
+      "code": "from autogen import AssistantAgent\nfrom nethical.integrations.ml_platforms import wrap_autogen_agent\n\nagent = AssistantAgent('assistant')\nsafe_agent = wrap_autogen_agent(agent)\n# All agent actions now checked for safety"
+    },
+    "message_filter": {
+      "description": "Filter messages in AutoGen conversations",
+      "code": "from nethical.integrations.ml_platforms import create_nethical_filter\n\nfilter_fn = create_nethical_filter()\nuser_proxy.register_reply(AssistantAgent, filter_fn)"
+    },
+    "function_guard": {
+      "description": "Guard function calls in AutoGen",
+      "code": "from nethical.integrations.ml_platforms import guard_function_call\n\n@guard_function_call\ndef sensitive_function(args):\n    # Function execution guarded by Nethical\n    pass"
+    }
+  },
+  "features": {
+    "agent_monitoring": {
+      "enabled": true,
+      "description": "Monitor all agent actions in multi-agent systems"
+    },
+    "message_filtering": {
+      "enabled": true,
+      "description": "Filter messages between agents for safety"
+    },
+    "function_call_guarding": {
+      "enabled": true,
+      "description": "Check function calls before execution"
+    },
+    "pii_detection": {
+      "enabled": true,
+      "supported_types": [
+        "email",
+        "ssn",
+        "credit_card",
+        "phone",
+        "ip_address",
+        "passport",
+        "driver_license",
+        "medical_record",
+        "bank_account",
+        "tax_id"
+      ],
+      "redaction_available": true
+    },
+    "risk_scoring": {
+      "enabled": true,
+      "range": "0.0-1.0",
+      "per_agent": true,
+      "aggregate": true
+    },
+    "audit_logging": {
+      "enabled": true,
+      "immutable": true,
+      "merkle_anchoring": true,
+      "conversation_tracking": true
+    },
+    "compliance_checks": {
+      "enabled": true,
+      "standards": [
+        "OWASP LLM Top 10",
+        "GDPR",
+        "CCPA",
+        "HIPAA",
+        "NIST AI RMF"
+      ]
+    }
+  },
+  "integration_patterns": [
+    {
+      "name": "Agent Wrapper",
+      "description": "Wrap individual agents with safety checks",
+      "use_case": "Add safety to specific high-risk agents",
+      "complexity": "low"
+    },
+    {
+      "name": "Message Filter",
+      "description": "Filter all messages in conversations",
+      "use_case": "Monitor multi-agent communications",
+      "complexity": "medium"
+    },
+    {
+      "name": "Function Guard",
+      "description": "Guard function/tool calls",
+      "use_case": "Protect against unsafe function execution",
+      "complexity": "low"
+    },
+    {
+      "name": "Group Chat Monitor",
+      "description": "Monitor entire group chat conversations",
+      "use_case": "Enterprise multi-agent orchestration",
+      "complexity": "high"
+    }
+  ],
+  "use_cases": [
+    {
+      "title": "Multi-Agent Safety",
+      "description": "Ensure all agents in a system operate safely",
+      "benefit": "Prevents coordinated unsafe behaviors"
+    },
+    {
+      "title": "Function Call Protection",
+      "description": "Guard function/tool calls before execution",
+      "benefit": "Prevents unauthorized or dangerous operations"
+    },
+    {
+      "title": "Inter-Agent Communication",
+      "description": "Monitor and filter agent-to-agent messages",
+      "benefit": "Detect manipulation or adversarial patterns"
+    },
+    {
+      "title": "Compliance Monitoring",
+      "description": "Ensure multi-agent systems meet compliance",
+      "benefit": "Enterprise-ready governance"
+    },
+    {
+      "title": "Audit Trail",
+      "description": "Track all agent actions and decisions",
+      "benefit": "Full accountability and traceability"
+    }
+  ],
+  "compatibility": {
+    "autogen_versions": [">=0.2.0"],
+    "python_versions": [">=3.8"],
+    "supported_agents": [
+      "ConversableAgent",
+      "AssistantAgent",
+      "UserProxyAgent",
+      "GroupChat",
+      "Custom Agents"
+    ],
+    "llm_backends": [
+      "OpenAI",
+      "Azure OpenAI",
+      "Anthropic Claude",
+      "Google PaLM",
+      "Custom LLMs"
+    ]
+  },
+  "performance": {
+    "latency": {
+      "per_message": "50-100ms",
+      "per_function_call": "50-150ms"
+    },
+    "throughput": "1000+ checks/second",
+    "async_supported": true,
+    "batch_processing": true
+  },
+  "configuration": {
+    "per_agent_settings": true,
+    "global_policies": true,
+    "custom_thresholds": true,
+    "custom_detectors": true,
+    "observability": {
+      "metrics": true,
+      "tracing": true,
+      "logging": true,
+      "conversation_replay": true
+    }
+  },
+  "security": {
+    "authentication": {
+      "supported_methods": ["none", "api_key", "bearer_token"],
+      "default": "none"
+    },
+    "encryption": "tls_1_3",
+    "data_retention": {
+      "configurable": true,
+      "default_period": "30_days"
+    },
+    "vulnerability_scanning": true,
+    "sbom_available": true
+  },
+  "compliance": {
+    "standards": [
+      "OWASP LLM Top 10",
+      "GDPR",
+      "CCPA",
+      "HIPAA",
+      "NIST AI RMF",
+      "DoD AI Ethical Principles"
+    ],
+    "privacy_policy": "https://github.com/V1B3hR/nethical/blob/main/docs/privacy/PRIVACY_POLICY.md",
+    "terms_of_service": "https://github.com/V1B3hR/nethical/blob/main/LICENSE"
+  },
+  "tags": [
+    "autogen",
+    "microsoft",
+    "multi-agent",
+    "safety",
+    "security",
+    "ethics",
+    "governance",
+    "compliance",
+    "pii-detection",
+    "risk-assessment",
+    "agent-monitoring"
+  ],
+  "metadata": {
+    "created_at": "2025-11-22T20:00:00Z",
+    "updated_at": "2025-11-22T20:00:00Z",
+    "category": "safety_and_security",
+    "platform": "autogen",
+    "language": "python",
+    "framework": "pyautogen"
+  }
+}

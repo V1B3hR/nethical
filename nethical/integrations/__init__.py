@@ -3,7 +3,9 @@
 This package provides integration wrappers for various LLM platforms and external systems:
 
 - Claude (Anthropic): Tool-based integration for Claude's function calling
-- REST API: HTTP endpoint for any LLM that can make REST calls (OpenAI, Gemini, etc.)
+- Grok (xAI): Function calling integration for Grok models
+- Gemini (Google): Function calling integration for Gemini models
+- REST API: HTTP endpoint for any LLM that can make REST calls (OpenAI, LLaMA, etc.)
 - Logging connectors, webhooks, ML platforms, and LangChain (legacy)
 
 Usage Examples:
@@ -14,7 +16,19 @@ Usage Examples:
     tools = [get_nethical_tool()]
     # Use with Anthropic client...
 
-2. REST API:
+2. Grok Integration:
+    from nethical.integrations.grok_tools import get_nethical_tool, handle_nethical_tool
+    
+    tools = [get_nethical_tool()]
+    # Use with xAI client...
+
+3. Gemini Integration:
+    from nethical.integrations.gemini_tools import get_nethical_tool, handle_nethical_tool
+    
+    tools = [get_nethical_tool()]
+    # Use with Google Generative AI client...
+
+4. REST API:
     # Start server
     python -m nethical.integrations.rest_api
     
@@ -22,7 +36,7 @@ Usage Examples:
     from nethical.integrations.rest_api import app
     # Use with uvicorn...
 
-3. Simple evaluation:
+5. Simple evaluation:
     from nethical.integrations.claude_tools import evaluate_action
     
     decision = evaluate_action("Write code to delete files")
@@ -61,7 +75,37 @@ try:
 except ImportError:
     REST_API_AVAILABLE = False
 
-__all__.extend(["CLAUDE_AVAILABLE", "REST_API_AVAILABLE", "get_integration_info"])
+try:
+    from .grok_tools import (
+        get_nethical_tool as get_grok_tool,
+        handle_nethical_tool as handle_grok_tool,
+        evaluate_action as evaluate_grok_action,
+    )
+    GROK_AVAILABLE = True
+    __all__.extend([
+        "get_grok_tool",
+        "handle_grok_tool",
+        "evaluate_grok_action",
+    ])
+except ImportError:
+    GROK_AVAILABLE = False
+
+try:
+    from .gemini_tools import (
+        get_nethical_tool as get_gemini_tool,
+        handle_nethical_tool as handle_gemini_tool,
+        evaluate_action as evaluate_gemini_action,
+    )
+    GEMINI_AVAILABLE = True
+    __all__.extend([
+        "get_gemini_tool",
+        "handle_gemini_tool",
+        "evaluate_gemini_action",
+    ])
+except ImportError:
+    GEMINI_AVAILABLE = False
+
+__all__.extend(["CLAUDE_AVAILABLE", "REST_API_AVAILABLE", "GROK_AVAILABLE", "GEMINI_AVAILABLE", "get_integration_info"])
 
 
 def get_integration_info() -> Dict[str, Any]:
@@ -74,11 +118,36 @@ def get_integration_info() -> Dict[str, Any]:
         "claude": {
             "available": CLAUDE_AVAILABLE,
             "setup": "pip install anthropic",
-            "docs": "See nethical.integrations.claude_tools"
+            "docs": "See nethical.integrations.claude_tools",
+            "manifest": "ai-plugin.json"
+        },
+        "grok": {
+            "available": GROK_AVAILABLE,
+            "setup": "pip install xai-sdk (when available) or use REST API",
+            "docs": "See nethical.integrations.grok_tools",
+            "manifest": "grok-manifest.json"
+        },
+        "gemini": {
+            "available": GEMINI_AVAILABLE,
+            "setup": "pip install google-generativeai",
+            "docs": "See nethical.integrations.gemini_tools",
+            "manifest": "gemini-manifest.json"
         },
         "rest_api": {
             "available": REST_API_AVAILABLE,
             "setup": "pip install fastapi uvicorn",
+            "docs": "See nethical.integrations.rest_api",
+            "openapi": "openapi.yaml"
+        },
+        "openai": {
+            "available": True,
+            "setup": "Use REST API endpoint",
+            "docs": "See nethical.integrations.rest_api",
+            "manifest": "ai-plugin.json"
+        },
+        "llama": {
+            "available": True,
+            "setup": "Use REST API endpoint",
             "docs": "See nethical.integrations.rest_api"
         }
     }

@@ -1,0 +1,363 @@
+openapi: 3.1.0
+info:
+  title: Nethical Governance API
+  description: |
+    REST API for AI safety and ethics governance system. Nethical provides real-time
+    oversight and judgment for AI agent actions, ensuring safety, ethical compliance,
+    and transparency.
+    
+    ## Key Features
+    - **Real-time Safety Checks**: Evaluate AI actions before execution
+    - **PII Detection**: Automatic detection and redaction of sensitive data
+    - **Risk Scoring**: Calculate risk scores for actions (0.0-1.0)
+    - **Compliance**: OWASP LLM Top 10, GDPR, HIPAA, NIST AI RMF coverage
+    - **Audit Trails**: Immutable logging with Merkle anchoring
+    - **Quota Management**: Rate limiting and resource protection
+    
+    ## Integration Examples
+    Works with all major LLMs:
+    - OpenAI (GPT-4, GPT-3.5)
+    - Anthropic Claude
+    - Google Gemini
+    - Meta LLaMA
+    - xAI Grok
+    - Any custom LLM via HTTP
+    
+  version: 1.0.0
+  contact:
+    name: Nethical Team
+    url: https://github.com/V1B3hR/nethical
+    email: support@nethical.dev
+  license:
+    name: MIT
+    url: https://github.com/V1B3hR/nethical/blob/main/LICENSE
+
+servers:
+  - url: http://localhost:8000
+    description: Local development server
+  - url: https://api.nethical.dev
+    description: Production server (example)
+
+tags:
+  - name: Evaluation
+    description: Action evaluation endpoints
+  - name: Health
+    description: Health check and status endpoints
+
+paths:
+  /evaluate:
+    post:
+      tags:
+        - Evaluation
+      summary: Evaluate an action for safety and ethics
+      description: |
+        Process an AI action through Nethical's governance system and receive
+        a decision (ALLOW, RESTRICT, BLOCK, or TERMINATE) with detailed reasoning.
+        
+        Use this endpoint to check:
+        - User inputs before sending to LLM
+        - LLM outputs before showing to users
+        - Tool/function calls before execution
+        - Data access requests
+        - Code generation outputs
+        
+      operationId: evaluateAction
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/EvaluateRequest'
+            examples:
+              code_generation:
+                summary: Code generation check
+                value:
+                  action: "Write a function to process user emails"
+                  agent_id: "gpt-4"
+                  action_type: "code_generation"
+                  context:
+                    language: "python"
+              data_access:
+                summary: Data access check
+                value:
+                  action: "SELECT * FROM users WHERE email LIKE '%@example.com'"
+                  agent_id: "claude-3"
+                  action_type: "data_access"
+              user_query:
+                summary: User query check
+                value:
+                  action: "Tell me how to hack into a system"
+                  agent_id: "llama-2"
+                  action_type: "user_query"
+      responses:
+        '200':
+          description: Successfully evaluated action
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/EvaluateResponse'
+              examples:
+                allowed:
+                  summary: Action allowed
+                  value:
+                    decision: "ALLOW"
+                    reason: "Action is safe and compliant"
+                    agent_id: "gpt-4"
+                    timestamp: "2025-11-22T20:00:00Z"
+                    risk_score: 0.15
+                    pii_detected: false
+                    quota_allowed: true
+                blocked:
+                  summary: Action blocked
+                  value:
+                    decision: "BLOCK"
+                    reason: "Potential security violation detected"
+                    agent_id: "claude-3"
+                    timestamp: "2025-11-22T20:00:00Z"
+                    risk_score: 0.85
+                    pii_detected: true
+                    pii_types: ["email", "ssn"]
+                    quota_allowed: true
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+        '503':
+          description: Service unavailable
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /health:
+    get:
+      tags:
+        - Health
+      summary: Health check endpoint
+      description: Check the health status of the Nethical governance system
+      operationId: healthCheck
+      responses:
+        '200':
+          description: System is healthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/HealthResponse'
+              example:
+                status: "healthy"
+                version: "1.0.0"
+                timestamp: "2025-11-22T20:00:00Z"
+                governance_enabled: true
+                components:
+                  risk_engine: true
+                  pii_detector: true
+                  quota_enforcer: true
+                  audit_logger: true
+        '503':
+          description: System is unhealthy
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /:
+    get:
+      tags:
+        - Health
+      summary: API information
+      description: Get basic information about the API and available endpoints
+      operationId: apiInfo
+      responses:
+        '200':
+          description: API information
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: "Nethical Governance API"
+                  version:
+                    type: string
+                    example: "1.0.0"
+                  description:
+                    type: string
+                    example: "REST API for AI safety and ethics governance"
+                  endpoints:
+                    type: object
+                    additionalProperties:
+                      type: string
+
+components:
+  schemas:
+    EvaluateRequest:
+      type: object
+      required:
+        - action
+      properties:
+        action:
+          type: string
+          description: The action, code, or content to evaluate
+          minLength: 1
+          maxLength: 50000
+          example: "Write a function to process user emails"
+        agent_id:
+          type: string
+          description: Identifier for the AI agent or user
+          default: "unknown"
+          example: "gpt-4"
+        action_type:
+          type: string
+          description: "Type of action: code_generation, query, command, data_access, etc."
+          default: "query"
+          example: "code_generation"
+          enum:
+            - query
+            - code_generation
+            - command
+            - data_access
+            - tool_call
+            - user_input
+            - generated_content
+        context:
+          type: object
+          description: Additional context about the action
+          additionalProperties: true
+          example:
+            language: "python"
+            environment: "production"
+
+    EvaluateResponse:
+      type: object
+      required:
+        - decision
+        - reason
+        - agent_id
+        - timestamp
+      properties:
+        decision:
+          type: string
+          description: Decision result
+          enum:
+            - ALLOW
+            - RESTRICT
+            - BLOCK
+            - TERMINATE
+          example: "ALLOW"
+        reason:
+          type: string
+          description: Explanation for the decision
+          example: "Action is safe and compliant"
+        agent_id:
+          type: string
+          description: Agent identifier
+          example: "gpt-4"
+        timestamp:
+          type: string
+          format: date-time
+          description: ISO 8601 timestamp of evaluation
+          example: "2025-11-22T20:00:00Z"
+        risk_score:
+          type: number
+          format: float
+          description: Risk score (0.0-1.0)
+          minimum: 0.0
+          maximum: 1.0
+          example: 0.15
+        pii_detected:
+          type: boolean
+          description: Whether PII was detected in the action
+          example: false
+        pii_types:
+          type: array
+          description: Types of PII detected
+          items:
+            type: string
+            enum:
+              - email
+              - ssn
+              - credit_card
+              - phone
+              - ip_address
+              - passport
+              - driver_license
+              - medical_record
+              - bank_account
+              - tax_id
+          example: []
+        quota_allowed:
+          type: boolean
+          description: Whether quota limits were respected
+          example: true
+        audit_id:
+          type: string
+          description: Audit trail identifier
+          example: "audit_12345"
+        metadata:
+          type: object
+          description: Additional metadata from evaluation
+          additionalProperties: true
+
+    HealthResponse:
+      type: object
+      required:
+        - status
+        - version
+        - timestamp
+        - governance_enabled
+        - components
+      properties:
+        status:
+          type: string
+          enum:
+            - healthy
+            - degraded
+            - unhealthy
+          example: "healthy"
+        version:
+          type: string
+          example: "1.0.0"
+        timestamp:
+          type: string
+          format: date-time
+          example: "2025-11-22T20:00:00Z"
+        governance_enabled:
+          type: boolean
+          example: true
+        components:
+          type: object
+          description: Status of individual components
+          additionalProperties:
+            type: boolean
+          example:
+            risk_engine: true
+            pii_detector: true
+            quota_enforcer: true
+            audit_logger: true
+
+    ErrorResponse:
+      type: object
+      required:
+        - detail
+      properties:
+        detail:
+          type: string
+          description: Error message
+          example: "Governance system not initialized"
+
+  securitySchemes:
+    ApiKeyAuth:
+      type: apiKey
+      in: header
+      name: X-API-Key
+      description: API key for authentication (optional, for production use)
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token for authentication (optional, for production use)
+
+security: []  # No security required by default; add as needed in production

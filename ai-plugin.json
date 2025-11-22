@@ -1,0 +1,18 @@
+{
+  "schema_version": "v1",
+  "name_for_human": "Nethical AI Safety Guard",
+  "name_for_model": "nethical",
+  "description_for_human": "Real-time AI safety and ethics governance. Checks actions for compliance, detects PII, calculates risk scores, and ensures ethical operation.",
+  "description_for_model": "Nethical provides comprehensive AI safety and ethics governance. Use this plugin to evaluate AI actions, user inputs, or generated content for safety, ethical compliance, and security risks. It detects PII, calculates risk scores, enforces ethical constraints, and maintains audit trails. Always check high-risk actions (data access, code generation, sensitive operations) before execution. Returns ALLOW, RESTRICT, BLOCK, or TERMINATE with detailed reasoning.",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "openapi",
+    "url": "https://api.nethical.dev/openapi.yaml",
+    "is_user_authenticated": false
+  },
+  "logo_url": "https://raw.githubusercontent.com/V1B3hR/nethical/main/docs/assets/nethical-logo.png",
+  "contact_email": "support@nethical.dev",
+  "legal_info_url": "https://github.com/V1B3hR/nethical/blob/main/LICENSE"
+}

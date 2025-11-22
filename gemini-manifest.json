@@ -1,0 +1,182 @@
+{
+  "manifest_version": "1.0",
+  "name": "nethical",
+  "display_name": "Nethical AI Safety Guard",
+  "description": "Real-time AI safety and ethics governance for Google Gemini. Evaluates actions for compliance, detects PII, calculates risk scores, and ensures ethical operation. Provides comprehensive protection against OWASP LLM Top 10 vulnerabilities.",
+  "version": "1.0.0",
+  "author": "Nethical Team",
+  "license": "MIT",
+  "homepage": "https://github.com/V1B3hR/nethical",
+  "repository": "https://github.com/V1B3hR/nethical",
+  "documentation": "https://github.com/V1B3hR/nethical/blob/main/README.md",
+  "support_email": "support@nethical.dev",
+  "gemini_integration": {
+    "type": "function_calling",
+    "compatible_models": [
+      "gemini-pro",
+      "gemini-pro-vision",
+      "gemini-ultra"
+    ],
+    "api_version": "v1",
+    "function_name": "nethical_guard",
+    "function_description": "Evaluate actions for safety, ethical compliance, and security risks"
+  },
+  "api": {
+    "type": "function_calling",
+    "base_url": "https://api.nethical.dev",
+    "openapi_spec": "https://api.nethical.dev/openapi.yaml",
+    "rest_endpoint": "https://api.nethical.dev/evaluate"
+  },
+  "capabilities": {
+    "safety_checks": true,
+    "pii_detection": true,
+    "risk_scoring": true,
+    "audit_logging": true,
+    "quota_management": true,
+    "compliance_validation": true,
+    "real_time_evaluation": true,
+    "multi_language_support": true
+  },
+  "pii_detection": {
+    "supported_types": [
+      "email",
+      "ssn",
+      "credit_card",
+      "phone",
+      "ip_address",
+      "passport",
+      "driver_license",
+      "medical_record",
+      "bank_account",
+      "tax_id"
+    ],
+    "redaction_available": true,
+    "configurable_policies": true
+  },
+  "compliance": {
+    "standards": [
+      "OWASP LLM Top 10",
+      "GDPR",
+      "CCPA",
+      "HIPAA",
+      "NIST AI RMF",
+      "DoD AI Ethical Principles",
+      "EU AI Act (preliminary)"
+    ],
+    "certifications": [],
+    "privacy_policy": "https://github.com/V1B3hR/nethical/blob/main/docs/privacy/PRIVACY_POLICY.md",
+    "terms_of_service": "https://github.com/V1B3hR/nethical/blob/main/LICENSE",
+    "data_processing_agreement": "https://github.com/V1B3hR/nethical/blob/main/docs/compliance/DPA.md"
+  },
+  "security": {
+    "authentication": {
+      "supported_methods": ["none", "api_key", "bearer_token"],
+      "default": "none"
+    },
+    "encryption": "tls_1_3",
+    "data_retention": {
+      "configurable": true,
+      "default_period": "30_days",
+      "maximum_period": "365_days"
+    },
+    "audit_trail": {
+      "enabled": true,
+      "immutable": true,
+      "merkle_anchoring": true
+    },
+    "sbom_available": true,
+    "vulnerability_scanning": true
+  },
+  "integration": {
+    "sdk": {
+      "python": {
+        "install": "pip install nethical",
+        "import": "from nethical.integrations.gemini_tools import get_nethical_tool, handle_nethical_tool"
+      },
+      "rest_api": {
+        "endpoint": "https://api.nethical.dev/evaluate",
+        "method": "POST",
+        "authentication": "optional"
+      }
+    },
+    "examples": {
+      "basic_integration": "https://github.com/V1B3hR/nethical/blob/main/examples/integrations/gemini_example.py",
+      "advanced_usage": "https://github.com/V1B3hR/nethical/blob/main/docs/EXTERNAL_INTEGRATIONS_GUIDE.md",
+      "function_calling": "https://github.com/V1B3hR/nethical/blob/main/examples/integrations/gemini_function_calling.py"
+    },
+    "quickstart": "https://github.com/V1B3hR/nethical#quick-start",
+    "migration_guide": "https://github.com/V1B3hR/nethical/blob/main/docs/migration/GEMINI_MIGRATION.md"
+  },
+  "use_cases": [
+    {
+      "title": "Pre-flight Input Validation",
+      "description": "Check user inputs before sending to Gemini",
+      "benefit": "Prevents malicious prompts and jailbreak attempts"
+    },
+    {
+      "title": "Post-generation Content Filtering",
+      "description": "Validate Gemini outputs before showing to users",
+      "benefit": "Ensures generated content is safe and compliant"
+    },
+    {
+      "title": "PII Detection & Redaction",
+      "description": "Automatically detect and redact sensitive information",
+      "benefit": "Protects user privacy and ensures GDPR/HIPAA compliance"
+    },
+    {
+      "title": "Risk Assessment",
+      "description": "Calculate risk scores for AI-generated actions",
+      "benefit": "Enables risk-based decision making and alerting"
+    },
+    {
+      "title": "Audit Trail Generation",
+      "description": "Create immutable logs of all AI interactions",
+      "benefit": "Supports compliance audits and incident investigation"
+    },
+    {
+      "title": "Multi-step Attack Detection",
+      "description": "Identify coordinated attack patterns across requests",
+      "benefit": "Prevents sophisticated adversarial attacks"
+    }
+  ],
+  "performance": {
+    "latency": {
+      "p50": "50-100ms",
+      "p95": "150-300ms",
+      "p99": "300-500ms"
+    },
+    "throughput": "1000+ requests/second",
+    "availability": "99.9% uptime SLA",
+    "scalability": "Horizontal scaling supported"
+  },
+  "configuration": {
+    "customizable_thresholds": true,
+    "custom_policies": true,
+    "custom_detectors": true,
+    "plugin_system": true,
+    "webhook_notifications": true
+  },
+  "tags": [
+    "google",
+    "gemini",
+    "safety",
+    "security",
+    "ethics",
+    "governance",
+    "compliance",
+    "pii-detection",
+    "risk-assessment",
+    "audit",
+    "llm-security",
+    "ai-safety",
+    "function-calling"
+  ],
+  "metadata": {
+    "created_at": "2025-11-22T20:00:00Z",
+    "updated_at": "2025-11-22T20:00:00Z",
+    "category": "safety_and_security",
+    "platform": "google_gemini",
+    "language": "python",
+    "framework": "google-generativeai"
+  }
+}
