@@ -13,6 +13,17 @@ BASE_DIR = Path(__file__).parent.parent
 class TestManifestValidation:
     """Test suite for validating all manifest files."""
 
+    # Constants
+    EXPECTED_PROJECT_NAME = "nethical"
+
+    @staticmethod
+    def _check_api_config(api_data, require_url=True):
+        """Helper method to validate API configuration."""
+        assert "type" in api_data
+        if require_url:
+            # Check for either 'url' or 'base_url' field
+            assert "url" in api_data or "base_url" in api_data
+
     def test_ai_plugin_json_valid(self):
         """Test that ai-plugin.json is valid JSON."""
         manifest_path = BASE_DIR / "ai-plugin.json"
@@ -30,10 +41,8 @@ class TestManifestValidation:
         assert "auth" in data
         assert "api" in data
 
-        # Check API configuration
-        api = data["api"]
-        assert "type" in api
-        assert "url" in api
+        # Check API configuration using helper
+        self._check_api_config(data["api"])
 
     def test_grok_manifest_json_valid(self):
         """Test that grok-manifest.json is valid JSON."""
@@ -51,9 +60,9 @@ class TestManifestValidation:
         assert "version" in data
         assert "api" in data
 
-        # Check API configuration
+        # Check API configuration using helper (Grok has base_url, not url)
         api = data["api"]
-        assert "type" in api
+        self._check_api_config(api, require_url=True)
         assert "functions" in api
         assert len(api["functions"]) > 0
 
@@ -270,7 +279,7 @@ class TestManifestValidation:
                 with open(path) as f:
                     data = loader(f)
                 assert (
-                    data.get("name") == "nethical"
+                    data.get("name") == self.EXPECTED_PROJECT_NAME
                 ), f"{path.name} has inconsistent name"
 
 

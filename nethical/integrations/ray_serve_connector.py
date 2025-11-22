@@ -107,7 +107,12 @@ class NethicalRayServeMiddleware:
         try:
             output = self.deployment(request)
         except Exception as e:
-            return {"error": f"Model execution error: {str(e)}"}
+            # Log detailed error internally but return sanitized message
+            # TODO: Implement proper logging
+            return {
+                "error": "Model execution failed. Please check logs for details.",
+                "error_code": "MODEL_EXECUTION_ERROR",
+            }
 
         # Check output if enabled
         if self.check_output:

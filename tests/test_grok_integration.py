@@ -58,7 +58,12 @@ class TestGrokIntegration:
         assert "Empty action" in result["reason"]
 
     def test_handle_nethical_tool_with_context(self):
-        """Test tool handling with context."""
+        """Test tool handling with context.
+
+        Note: Metadata presence depends on successful governance evaluation.
+        If the underlying governance system encounters errors (e.g., datetime issues),
+        the response may only contain decision and error fields.
+        """
         result = handle_nethical_tool(
             {
                 "action": "print('Hello')",
@@ -69,8 +74,7 @@ class TestGrokIntegration:
         )
 
         assert "decision" in result
-        # Metadata may or may not be present depending on whether evaluation succeeded
-        # If there's an error, we just check that the decision is made
+        # Always check that a decision was made, even if metadata is absent due to errors
 
     def test_evaluate_action(self):
         """Test simplified evaluate_action function."""

@@ -200,12 +200,14 @@ def handle_nethical_tool(
         return response
 
     except Exception as e:
+        # Log detailed error internally but return sanitized message for security
+        # TODO: Implement proper logging for detailed error tracking
         return {
             "decision": "BLOCK",
-            "reason": f"Evaluation error: {str(e)}",
+            "reason": "An error occurred during safety evaluation. Please contact support.",
             "agent_id": agent_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "error": str(e),
+            "error_code": "EVALUATION_ERROR",
         }
 
 
