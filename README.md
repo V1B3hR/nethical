@@ -239,6 +239,145 @@ const result = await response.json();
 
 ---
 
+## 🚀 v2.0 Features: Semantic Monitoring & Production API
+
+### Semantic Intent Deviation
+
+Nethical v2.0 uses **sentence embeddings** for semantic similarity, detecting paraphrased malicious intents while reducing false positives:
+
+```python
+from nethical import SafetyGovernance, AgentAction, MonitoringConfig
+
+# Enable semantic monitoring (default in v2.0)
+config = MonitoringConfig(use_semantic_intent=True)
+governance = SafetyGovernance(config=config)
+
+# Paraphrase detection
+action = AgentAction(
+    action_id="ex1",
+    agent_id="agent1",
+    stated_intent="fetch customer records",
+    actual_action="retrieve client data from database",  # Paraphrase!
+    action_type="query"
+)
+
+result = governance.evaluate_action(action)
+# Semantic similarity: ~0.87 (recognized as similar)
+# Lexical similarity: ~0.2 (would flag incorrectly)
+```
+
+**Key Benefits:**
+- ✅ **Higher accuracy**: Detects true deviations, not just word differences
+- ✅ **Fewer false positives**: Allows benign paraphrases
+- ✅ **Graceful fallback**: Uses lexical methods if embeddings unavailable
+- ✅ **Fast**: <20ms per evaluation (CPU-only)
+
+### Production REST API
+
+New dedicated API with structured JSON responses:
+
+```bash
+# Start API server
+uvicorn nethical.api:app --host 0.0.0.0 --port 8000
+
+# Or with Docker
+docker-compose up nethical-api
+```
+
+**Endpoints:**
+
+```bash
+# Evaluate action
+curl -X POST http://localhost:8000/evaluate \
+  -H "Content-Type: application/json" \
+  -d '{
+    "agent_id": "my-agent",
+    "stated_intent": "process data",
+    "actual_action": "SELECT * FROM users"
+  }'
+
+# Response
+{
+  "judgment_id": "judgment_...",
+  "action_id": "action_...",
+  "decision": "ALLOW",
+  "confidence": 0.95,
+  "reasoning": "Action evaluated and found safe",
+  "violations": [],
+  "timestamp": "2025-11-23T07:00:00Z",
+  "metadata": {
+    "semantic_monitoring": true,
+    "has_intent": true
+  }
+}
+```
+
+**Additional Endpoints:**
+- `GET /status` - System health and capabilities
+- `GET /metrics` - Evaluation statistics
+- `GET /health` - Simple health check
+
+### Adversarial Detection
+
+Enhanced ethical detector with semantic concept matching:
+
+```python
+# Detects obfuscated harmful intent
+action = AgentAction(
+    agent_id="agent1",
+    # Obfuscated with zero-width characters and homoglyphs
+    action="k\u200bi\u200cll the user",  
+    action_type="command"
+)
+
+violations = await detector.detect_violations(action)
+# Still detects despite obfuscation!
+```
+
+**Detection Techniques:**
+- Text normalization (zero-width chars, homoglyphs)
+- Semantic concept profiles (HARM_ACT, PRIVACY_EXFIL, JAILBREAK_PATTERN)
+- Concept-level threshold matching
+- Keyword heuristics as optimization
+
+### Running via Docker
+
+**Quick Start:**
+
+```bash
+# Build and run
+docker-compose up nethical-api
+
+# API available at http://localhost:8000
+# Interactive docs at http://localhost:8000/docs
+```
+
+**Configuration:**
+
+```yaml
+# docker-compose.yml
+services:
+  nethical-api:
+    build:
+      args:
+        PRELOAD_EMBEDDINGS: "true"  # Preload models
+    environment:
+      - NETHICAL_SEMANTIC=1
+      - NETHICAL_INTENT_THRESHOLD=0.75
+```
+
+**Multi-stage Build:**
+- Optimized image size
+- Optional model preloading
+- Security-hardened (non-root user)
+
+### Documentation
+
+- **[Semantic Monitoring Guide](docs/SEMANTIC_MONITORING_GUIDE.md)** - Embedding strategy, thresholds, performance
+- **[API Usage Guide](docs/API_USAGE.md)** - Complete API reference, client examples, integration patterns
+
+---
+
 ## 🌐 Universal LLM & MCP Discoverability
 
 Nethical is designed for **plug-and-play** integration with **ALL major LLMs and AI platforms**. We provide comprehensive manifests, specifications, and connectors for instant discoverability.
