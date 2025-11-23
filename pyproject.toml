@@ -26,3 +26,37 @@ test = [
 
 [project.urls]
 Homepage = "https://github.com/V1B3hR/nethical"
+[tool.setuptools]
+include-package-data = true
+license-files = ["LICENSE"]
+py-modules = ["nethical_cli"]
+
+[tool.setuptools.packages.find]
+include = ["nethical*"]
+exclude = ["tests*", "examples*"]
+
+[tool.black]
+line-length = 88
+target-version = ["py38", "py39", "py310", "py311", "py312"]
+
+[tool.mypy]
+python_version = "3.8"
+warn_return_any = true
+warn_unused_configs = true
+disallow_untyped_defs = true
+ignore_missing_imports = true
+
+[tool.flake8]
+max-line-length = 88
+extend-ignore = [
+    "E203",  # whitespace before ':', compatible with Black
+    "W503",  # line break before binary operator, compatible with Black
+]
+exclude = [".git", "__pycache__", ".venv", "venv", "build", "dist"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = ["test_*.py"]
+python_classes = ["Test*"]
+python_functions = ["test_*"]
+asyncio_mode = "auto"
