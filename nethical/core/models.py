@@ -575,6 +575,12 @@ class MonitoringConfig(_BaseModel):
         default=True, description="Enable real-time processing"
     )
     enable_async_processing: bool = Field(default=True, description="Enable async processing")
+    
+    # Semantic monitoring (v2.0)
+    use_semantic_intent: bool = Field(
+        default=True, 
+        description="Use semantic similarity for intent deviation (fallback to lexical if unavailable)"
+    )
 
     # Performance settings
     max_violation_history: int = Field(default=10000, gt=0, description="Max violations to retain")

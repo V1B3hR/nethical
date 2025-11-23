@@ -1,13 +1,20 @@
 version: '3.8'
 
 services:
-  nethical:
+  # v2.0: Main Nethical API service with semantic monitoring
+  nethical-api:
     build:
       context: .
       dockerfile: Dockerfile
-    image: nethical:latest
-    container_name: nethical-governance
+      args:
+        PRELOAD_EMBEDDINGS: "true"  # Preload models to reduce cold start
+    image: nethical:v2.0
+    container_name: nethical-api
     environment:
+      # v2.0: Semantic monitoring
+      - NETHICAL_SEMANTIC=1
+      - NETHICAL_INTENT_THRESHOLD=0.75
+      
       # Storage and data
       - NETHICAL_STORAGE_DIR=/data/nethical
       - NETHICAL_REGION_ID=us-east-1
@@ -31,7 +38,7 @@ services:
       # OpenTelemetry
       - OTEL_EXPORTER=otlp
       - OTEL_EXPORTER_OTLP_ENDPOINT=http://otel-collector:4318
-      - OTEL_SERVICE_NAME=nethical
+      - OTEL_SERVICE_NAME=nethical-api
       
     volumes:
       - nethical-data:/data
@@ -43,11 +50,11 @@ services:
       - nethical-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "python", "-c", "import nethical; print('healthy')"]
+      test: ["CMD", "python", "-c", "import requests; requests.get('http://localhost:8000/health', timeout=2)"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 10s
+      start_period: 15s
 
   # Optional: Redis for caching and persistence
   redis:
