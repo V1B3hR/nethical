@@ -4,6 +4,7 @@ Advanced IntentDeviationMonitor with integrated logging & optional OpenTelemetry
 Features:
 - Pluggable lexical metrics
 - Optional embeddings & NLI (lazy loaded)
+- **v2.0: Semantic intent deviation using sentence-transformers with graceful fallback**
 - Risk taxonomy & deviation profiling
 - Dynamic weighting & threshold adaptation
 - Structured logging hooks
@@ -20,6 +21,7 @@ Environment Variables (optional):
     NETHICAL_ENABLE_OTEL=1        Enable OTEL initialization
     OTEL_EXPORTER=console|otlp    Select exporter (default console)
     LOG_LEVEL=DEBUG|INFO|...      Logging level (default INFO)
+    NETHICAL_SEMANTIC=1           Force enable semantic monitoring (default: auto-detect)
 
 Optional Dependencies:
     sentence-transformers

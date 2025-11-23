@@ -11,6 +11,7 @@ Advanced improvements:
 - Detailed audit trail with explainability metrics
 - Support for multi-language detection patterns
 - Machine learning integration hooks for adaptive learning
+- v2.0: Adversarial detection with text normalization and semantic concepts
 """
 
 import re
@@ -22,6 +23,15 @@ from collections import defaultdict
 
 from ..core.governance import BaseDetector
 from ..core.models import AgentAction, SafetyViolation, ViolationType, Severity
+
+# v2.0: Import semantic functions at module level for efficiency
+try:
+    from ..core.semantics import get_concept_similarity, is_semantic_available
+    SEMANTICS_AVAILABLE = True
+except ImportError:
+    SEMANTICS_AVAILABLE = False
+    get_concept_similarity = None
+    is_semantic_available = None
 
 
 class ContextType(Enum):
@@ -142,14 +152,36 @@ class EthicalViolationDetector(BaseDetector):
         "argues",
     ]
 
+    # v2.0: Semantic concept profiles for adversarial detection
+    SEMANTIC_CONCEPTS = {
+        "HARM_ACT": "instructions to harm a person physically or emotionally",
+        "PRIVACY_EXFIL": "steps to extract private or confidential information",
+        "DECEPTION_ADV": "techniques to deceive or mislead users",
+        "DISCRIMINATION": "content that discriminates based on protected characteristics",
+        "JAILBREAK_PATTERN": "instructions to bypass system restrictions or ignore safety guidelines",
+        "COVERT_HARM": "subtle or disguised harmful intent hidden in benign language",
+    }
+    
+    # Concept-specific thresholds
+    CONCEPT_THRESHOLDS = {
+        "HARM_ACT": 0.75,
+        "PRIVACY_EXFIL": 0.72,
+        "DECEPTION_ADV": 0.70,
+        "DISCRIMINATION": 0.73,
+        "JAILBREAK_PATTERN": 0.68,
+        "COVERT_HARM": 0.65,
+    }
+
     def __init__(
         self,
         ethical_patterns: Optional[Dict[str, ViolationPattern]] = None,
         negation_window_chars: int = 48,
         min_confidence_threshold: float = 0.6,
-        enable_semantic_matching: bool = False,
+        enable_semantic_matching: bool = True,  # v2.0: Enabled by default
         enable_clustering: bool = True,
         violation_history_size: int = 100,
+        enable_adversarial_detection: bool = True,  # v2.0: New parameter
+        max_semantic_input_length: int = 2048,  # v2.0: Prevent excessive RAM
     ):
         super().__init__("Enhanced Ethical Violation Detector")
 
@@ -157,6 +189,8 @@ class EthicalViolationDetector(BaseDetector):
         self.enable_semantic_matching = enable_semantic_matching
         self.enable_clustering = enable_clustering
         self.negation_window_chars = max(16, int(negation_window_chars))
+        self.enable_adversarial_detection = enable_adversarial_detection
+        self.max_semantic_input_length = max_semantic_input_length
 
         # Historical tracking for pattern detection
         self.violation_history: List[Tuple[str, float]] = []  # (category, timestamp)
@@ -487,23 +521,105 @@ class EthicalViolationDetector(BaseDetector):
     def _compile_regex_list(cues: List[str]) -> Pattern:
         """Compile a list of strings into a single regex pattern."""
         return re.compile(r"\b(" + "|".join(map(re.escape, cues)) + r")\b", flags=re.IGNORECASE)
+    
+    def _normalize_text_adversarial(self, text: str) -> str:
+        """Normalize text to handle adversarial obfuscation techniques (v2.0).
+        
+        Strips common obfuscation patterns:
+        - Zero-width characters
+        - Basic homoglyphs (Latin lookalikes)
+        
+        Args:
+            text: Input text to normalize
+            
+        Returns:
+            Normalized text
+        """
+        import unicodedata
+        
+        # Remove zero-width characters
+        text = text.replace('\u200b', '').replace('\u200c', '').replace('\u200d', '')
+        text = text.replace('\ufeff', '')  # Zero-width no-break space
+        
+        # Normalize unicode (NFD then NFC to handle accents)
+        text = unicodedata.normalize('NFKD', text)
+        text = ''.join(c for c in text if not unicodedata.combining(c))
+        text = unicodedata.normalize('NFC', text)
+        
+        # Basic homoglyph replacement (common ones)
+        homoglyphs = {
+            'а': 'a', 'е': 'e', 'о': 'o', 'р': 'p', 'с': 'c', 'х': 'x',  # Cyrillic to Latin
+            'ѕ': 's', 'і': 'i', 'ј': 'j', 'ӏ': 'l',
+            '０': '0', '１': '1', '２': '2', '３': '3', '４': '4',  # Fullwidth to ASCII
+            '５': '5', '６': '6', '７': '7', '８': '8', '９': '9',
+        }
+        for hg, normal in homoglyphs.items():
+            text = text.replace(hg, normal)
+        
+        return text
+    
+    def _check_semantic_concepts(self, text: str) -> List[Tuple[str, float]]:
+        """Check text against semantic concept profiles for adversarial detection (v2.0).
+        
+        Uses embeddings to detect paraphrased or obfuscated harmful intent.
+        Only runs if action length > threshold or keywords absent (optimization).
+        
+        Args:
+            text: Text to analyze
+            
+        Returns:
+            List of (concept_name, similarity_score) tuples for violations
+        """
+        if not self.enable_adversarial_detection or not self.enable_semantic_matching:
+            return []
+        
+        # Check if semantic functions are available (imported at module level)
+        if not SEMANTICS_AVAILABLE or not is_semantic_available or not get_concept_similarity:
+            return []
+        
+        # Limit input length for performance
+        if len(text) > self.max_semantic_input_length:
+            text = text[:self.max_semantic_input_length]
+        
+        try:
+            if not is_semantic_available():
+                return []
+            
+            violations = []
+            for concept_name, concept_phrase in self.SEMANTIC_CONCEPTS.items():
+                threshold = self.CONCEPT_THRESHOLDS.get(concept_name, 0.70)
+                similarity = get_concept_similarity(text, concept_phrase)
+                
+                if similarity > threshold:
+                    violations.append((concept_name, similarity))
+            
+            return violations
+            
+        except Exception as e:
+            # Semantic layer failure shouldn't break detection
+            import logging
+            logging.getLogger(__name__).debug(f"Semantic concept check failed: {e}")
+            return []
 
     async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
-        """Detect ethical violations with advanced context analysis."""
+        """Detect ethical violations with advanced context analysis (v2.0: includes adversarial detection)."""
         if not self.enabled or not action:
             return []
 
         try:
             text_to_check = self._compose_text(action)
-            sentences = self._split_into_sentences(text_to_check)
+            
+            # v2.0: Normalize for adversarial obfuscation
+            normalized_text = self._normalize_text_adversarial(text_to_check)
+            sentences = self._split_into_sentences(normalized_text)
 
             all_matches: Dict[str, List[MatchContext]] = defaultdict(list)
 
-            # Detect matches for each category
+            # Detect matches for each category (using normalized text)
             for category_key, pattern_obj in self.violation_patterns.items():
                 try:
                     matches = self._detect_category_matches(
-                        text_to_check, sentences, category_key, pattern_obj
+                        normalized_text, sentences, category_key, pattern_obj
                     )
                     if matches:
                         all_matches[category_key] = matches
@@ -531,13 +647,36 @@ class EthicalViolationDetector(BaseDetector):
                 pattern_obj = self.violation_patterns[category_key]
                 try:
                     violation = self._create_violation(
-                        action, category_key, pattern_obj, matches, text_to_check
+                        action, category_key, pattern_obj, matches, normalized_text
                     )
                     if violation:
                         violations.append(violation)
                 except Exception:
                     # Skip this violation if creation fails
                     continue
+            
+            # v2.0: Check semantic concepts if no strong keyword matches or text is substantial
+            if len(normalized_text) > 50 and (not violations or len(normalized_text) > 200):
+                semantic_violations = self._check_semantic_concepts(normalized_text)
+                for concept_name, similarity in semantic_violations:
+                    # Create semantic violation
+                    try:
+                        violation = SafetyViolation(
+                            id=str(uuid.uuid4()),
+                            action_id=getattr(action, "action_id", "unknown"),
+                            violation_type=ViolationType.ETHICAL,
+                            severity=Severity.HIGH,
+                            description=f"Semantic concept violation: {concept_name}",
+                            evidence={
+                                "similarity": float(similarity),
+                                "concept": concept_name,
+                                "concept_phrase": self.SEMANTIC_CONCEPTS[concept_name],
+                                "detection_method": "semantic_embedding",
+                            },
+                        )
+                        violations.append(violation)
+                    except Exception:
+                        continue
 
             # Update violation history for temporal analysis
             try:
