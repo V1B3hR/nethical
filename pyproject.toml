@@ -1,86 +1,28 @@
-[build-system]
-requires = ["setuptools>=68", "wheel"]
-build-backend = "setuptools.build_meta"
+# Relevant excerpt with added cachetools + httpx test dependency
 
 [project]
 name = "nethical"
-version = "0.1.0"
-description = "Safety governance system for AI agents"
-readme = { file = "README.md", content-type = "text/markdown" }
-requires-python = ">=3.8"
-license = { file = "LICENSE" }
-authors = [{ name = "Nethical Team" }]
-keywords = ["ai", "safety", "governance", "agents", "moderation", "compliance"]
-classifiers = [
-    "Development Status :: 3 - Alpha",
-    "Intended Audience :: Developers",
-    "License :: OSI Approved :: MIT License",
-    "Operating System :: OS Independent",
-    "Programming Language :: Python :: 3 :: Only",
-    "Programming Language :: Python :: 3.8",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
-    "Programming Language :: Python :: 3.11",
-    "Programming Language :: Python :: 3.12",
-    "Typing :: Typed",
-]
+version = "2.2.0"
+description = "Safety, ethics and more"
+requires-python = ">=3.10"
+
 dependencies = [
-    "pydantic>=2.0.0",
-    "typing-extensions>=4.0.0; python_version < '3.11'",
-    "dataclasses-json>=0.5.0",
     "numpy>=1.24.0",
-    "pandas>=2.0.0",
-    "sentence-transformers>=2.2.0",
+    "scikit-learn>=1.3.0",
+    "scipy>=1.11.0",
+    "pydantic>=2.6.1",
     "fastapi>=0.110.0",
     "uvicorn[standard]>=0.27.0",
     "cachetools>=5.0.0",
+    "sentence-transformers>=2.2.0",
+]
+
+[project.optional-dependencies]
+test = [
+    "pytest>=8.0.0",
+    "pytest-asyncio>=0.23.0",
+    "httpx>=0.27.0",
 ]
 
 [project.urls]
 Homepage = "https://github.com/V1B3hR/nethical"
-Repository = "https://github.com/V1B3hR/nethical"
-Issues = "https://github.com/V1B3hR/nethical/issues"
-
-[project.optional-dependencies]
-dev = [
-    "pytest>=7.0.0",
-    "pytest-asyncio>=0.21.0",
-    "black>=23.0.0",
-    "flake8>=6.0.0",
-    "mypy>=1.0.0",
-    "httpx>=0.25.0",
-]
-
-[tool.setuptools]
-include-package-data = true
-license-files = ["LICENSE"]
-
-[tool.setuptools.packages.find]
-include = ["nethical*"]
-exclude = ["tests*", "examples*"]
-
-[tool.black]
-line-length = 88
-target-version = ["py38", "py39", "py310", "py311", "py312"]
-
-[tool.mypy]
-python_version = "3.8"
-warn_return_any = true
-warn_unused_configs = true
-disallow_untyped_defs = true
-ignore_missing_imports = true
-
-[tool.flake8]
-max-line-length = 88
-extend-ignore = [
-    "E203",  # whitespace before ':', compatible with Black
-    "W503",  # line break before binary operator, compatible with Black
-]
-exclude = [".git", "__pycache__", ".venv", "venv", "build", "dist"]
-
-[tool.pytest.ini_options]
-testpaths = ["tests"]
-python_files = ["test_*.py"]
-python_classes = ["Test*"]
-python_functions = ["test_*"]
-asyncio_mode = "auto"
