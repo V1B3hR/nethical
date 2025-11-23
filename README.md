@@ -274,7 +274,7 @@ result = governance.evaluate_action(action)
 
 ### Production REST API
 
-New dedicated API with structured JSON responses:
+New dedicated API with structured JSON responses, rate limiting, and authentication:
 
 ```bash
 # Start API server
@@ -282,14 +282,27 @@ uvicorn nethical.api:app --host 0.0.0.0 --port 8000
 
 # Or with Docker
 docker-compose up nethical-api
+
+# With authentication (optional)
+NETHICAL_API_KEYS=your_key_1,your_key_2 uvicorn nethical.api:app --port 8000
 ```
 
 **Endpoints:**
 
 ```bash
-# Evaluate action
+# Evaluate action (basic)
 curl -X POST http://localhost:8000/evaluate \
   -H "Content-Type: application/json" \
+  -d '{
+    "agent_id": "my-agent",
+    "stated_intent": "process data",
+    "actual_action": "SELECT * FROM users"
+  }'
+
+# Evaluate action (with authentication)
+curl -X POST http://localhost:8000/evaluate \
+  -H "Content-Type: application/json" \
+  -H "X-API-Key: your_key_1" \
   -d '{
     "agent_id": "my-agent",
     "stated_intent": "process data",
@@ -307,7 +320,12 @@ curl -X POST http://localhost:8000/evaluate \
   "timestamp": "2025-11-23T07:00:00Z",
   "metadata": {
     "semantic_monitoring": true,
-    "has_intent": true
+    "has_intent": true,
+    "rate_limit": {
+      "limit": 100,
+      "remaining": 95,
+      "reset": 1732347600
+    }
   }
 }
 ```
@@ -316,6 +334,13 @@ curl -X POST http://localhost:8000/evaluate \
 - `GET /status` - System health and capabilities
 - `GET /metrics` - Evaluation statistics
 - `GET /health` - Simple health check
+
+**Security Features (v2.1):**
+- **Rate Limiting**: Per-identity request limits (default: 5 req/sec burst, 100 req/min sustained)
+- **Authentication**: Optional API key authentication via `X-API-Key` or `Authorization: Bearer` header
+- **Input Validation**: Maximum 4096 characters for intent + action combined
+- **Concurrency Control**: Limits concurrent evaluations to prevent overload
+- **Timeout Guards**: Prevents runaway evaluations (default: 30 second timeout)
 
 ### Adversarial Detection
 
@@ -371,10 +396,67 @@ services:
 - Optional model preloading
 - Security-hardened (non-root user)
 
+### API Configuration
+
+Configure the API using environment variables:
+
+**Authentication:**
+```bash
+# Optional: Set API keys for authentication
+export NETHICAL_API_KEYS=key1,key2,key3
+
+# If not set, API runs in permissive mode (no auth required)
+# Rate limiting still applies based on IP address
+```
+
+**Rate Limiting:**
+```bash
+# Burst rate (requests per second)
+export NETHICAL_RATE_BURST=5
+
+# Sustained rate (requests per minute)  
+export NETHICAL_RATE_SUSTAINED=100
+
+# Requests exceeding these limits receive HTTP 429
+```
+
+**Input Validation:**
+```bash
+# Maximum characters for intent + action combined
+export NETHICAL_MAX_INPUT_SIZE=4096
+
+# Requests exceeding this limit receive HTTP 413
+```
+
+**Concurrency & Performance:**
+```bash
+# Maximum concurrent evaluations
+export NETHICAL_MAX_CONCURRENCY=100
+
+# Evaluation timeout (seconds)
+export NETHICAL_EVAL_TIMEOUT=30
+
+# Semantic cache size (number of entries)
+export NETHICAL_CACHE_MAXSIZE=20000
+
+# Semantic cache TTL (seconds)
+export NETHICAL_CACHE_TTL=600
+```
+
+**CORS:**
+```bash
+# Allowed origins (comma-separated)
+export NETHICAL_CORS_ALLOW_ORIGINS=https://yourdomain.com,https://app.yourdomain.com
+
+# Or allow all (development only)
+export NETHICAL_CORS_ALLOW_ORIGINS=*
+```
+
 ### Documentation
 
 - **[Semantic Monitoring Guide](docs/SEMANTIC_MONITORING_GUIDE.md)** - Embedding strategy, thresholds, performance
 - **[API Usage Guide](docs/API_USAGE.md)** - Complete API reference, client examples, integration patterns
+- **[Threshold Calibration Guide](docs/SEMANTIC_THRESHOLD_CALIBRATION.md)** - Step-by-step threshold tuning, suggested defaults, drift monitoring
 
 ---
 
