@@ -53,14 +53,7 @@ dev = [
 [tool.setuptools]
 include-package-data = true
 license-files = ["LICENSE"]
-packages = [
-  "nethical",
-  # add each subpackage explicitly if you have them, e.g.:
-  # "nethical.api",
-  # "nethical.utils",
-]
-# If you keep a top-level module, you still need py-modules:
-# py-modules = ["nethical_cli"]
+py-modules = ["nethical_cli"]
 
 [tool.setuptools.packages.find]
 include = ["nethical*"]
