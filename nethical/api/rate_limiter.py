@@ -37,7 +37,8 @@ class TokenBucketLimiter:
         self.config = config or RateLimitConfig()
         
         # Per-identity buckets: identity -> deque of timestamps
-        self._buckets: Dict[str, deque] = defaultdict(lambda: deque(maxlen=self.config.requests_per_minute))
+        # Note: We don't set maxlen here as we manually manage the sliding window
+        self._buckets: Dict[str, deque] = defaultdict(lambda: deque())
         self._locks: Dict[str, asyncio.Lock] = defaultdict(asyncio.Lock)
         
         # Last cleanup time

@@ -75,8 +75,9 @@ class AuthManager:
         """
         if api_key and (self._permissive_mode or api_key in self._api_keys):
             # Use hash of API key for privacy in logs
+            # Using full SHA256 hash to avoid collision attacks
             import hashlib
-            key_hash = hashlib.sha256(api_key.encode()).hexdigest()[:16]
+            key_hash = hashlib.sha256(api_key.encode()).hexdigest()
             return f"key:{key_hash}"
         
         return f"ip:{client_ip}"

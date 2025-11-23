@@ -294,11 +294,19 @@ def extract_api_key(
 
 
 def get_client_ip(request: Request) -> str:
-    """Extract client IP from request, handling proxies."""
+    """
+    Extract client IP from request, handling proxies.
+    
+    SECURITY NOTE: X-Forwarded-For can be spoofed by clients. In production,
+    ensure your reverse proxy/load balancer strips untrusted X-Forwarded-For
+    headers and sets it correctly. Or configure trusted proxy IPs and validate.
+    """
     # Check X-Forwarded-For header (from proxies/load balancers)
+    # IMPORTANT: Only trust this if behind a trusted proxy that sets it correctly
     forwarded = request.headers.get("X-Forwarded-For")
     if forwarded:
         # Take first IP in chain
+        # TODO: In production, validate against trusted proxy list
         return forwarded.split(",")[0].strip()
     
     # Fallback to direct client

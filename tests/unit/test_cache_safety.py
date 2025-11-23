@@ -247,7 +247,7 @@ class TestCacheSingleFlight:
         
         compute_counts = {}
         
-        async def make_compute_fn(key):
+        def make_compute_fn(key):
             async def compute():
                 compute_counts[key] = compute_counts.get(key, 0) + 1
                 await asyncio.sleep(0.05)
@@ -259,7 +259,7 @@ class TestCacheSingleFlight:
         for i in range(5):
             intent = f"intent_{i}"
             action = f"action_{i}"
-            compute_fn = await make_compute_fn(i)
+            compute_fn = make_compute_fn(i)
             tasks.append(cache.get_or_compute(intent, action, compute_fn))
         
         results = await asyncio.gather(*tasks)
