@@ -1,14 +1,13 @@
 from setuptools import setup, find_packages
 
 setup(
-    name="sqlinjectiondetector",
-    version="0.1.0",
-    description="Detects potential SQL injection patterns in actions",
-    author="Nethical Team",
-    packages=find_packages(),
-    install_requires=[
-        "nethical>=0.1.0",
-    ],
+    # ... other metadata ...
+    packages=find_packages(include=[
+        'cli', 'data', 'audit', 'probes', 'models', 'portal', 'assets', 'deploy',
+        'config', 'formal', 'policies', 'training', 'nethical', 'datasets',
+        'security', 'dashboards', 'taxonomies', 'governance'
+    ]),
+),
     extras_require={
         "dev": [
             "pytest>=7.0.0",
