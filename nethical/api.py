@@ -476,12 +476,6 @@ async def evaluate(
                     detail=f"Evaluation timeout after {EVAL_TIMEOUT}s. Please retry with simpler input.",
                     headers={"Retry-After": "10"}
                 )
-        
-        # Convert result to response model
-        judgment_id = getattr(result, 'judgment_id', f"judgment_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}")
-        decision = str(getattr(result, 'decision', 'ALLOW')).upper()
-        confidence = float(getattr(result, 'confidence', 0.9))
-        reasoning = str(getattr(result, 'reasoning', 'Action evaluated'))
             
             # Convert result to response model
             judgment_id = getattr(result, 'judgment_id', f"judgment_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}")
