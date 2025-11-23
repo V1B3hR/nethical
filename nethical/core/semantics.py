@@ -17,7 +17,7 @@ from __future__ import annotations
 import logging
 import threading
 from functools import lru_cache
-from typing import Optional, Tuple
+from typing import Any, Optional, Tuple
 import warnings
 
 logger = logging.getLogger(__name__)
@@ -64,7 +64,7 @@ class SentenceTransformerWrapper:
                 logger.error(f"Failed to load sentence-transformers model: {e}")
                 raise
                 
-    def encode(self, texts: list[str] | str, **kwargs) -> any:
+    def encode(self, texts: list[str] | str, **kwargs) -> Any:
         """Encode text(s) into embeddings.
         
         Args:
@@ -112,7 +112,7 @@ def get_embedding_model() -> Optional[SentenceTransformerWrapper]:
             return None
 
 
-def cosine_similarity(vec_a: any, vec_b: any) -> float:
+def cosine_similarity(vec_a: Any, vec_b: Any) -> float:
     """Compute cosine similarity between two vectors.
     
     Args:

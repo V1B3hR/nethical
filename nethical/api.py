@@ -93,10 +93,15 @@ app = FastAPI(
 )
 
 # Configure CORS for integration scenarios
-# SECURITY: Update allow_origins for production deployments
+# SECURITY WARNING: This allows all origins for development/demo purposes
+# For production, configure specific allowed origins:
+# allow_origins=["https://yourdomain.com", "https://app.yourdomain.com"]
+# Or set via environment variable: NETHICAL_ALLOWED_ORIGINS
+import os
+allowed_origins = os.getenv("NETHICAL_ALLOWED_ORIGINS", "*").split(",")
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # TODO: Configure for production
+    allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],

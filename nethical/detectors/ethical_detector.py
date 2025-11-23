@@ -11,6 +11,7 @@ Advanced improvements:
 - Detailed audit trail with explainability metrics
 - Support for multi-language detection patterns
 - Machine learning integration hooks for adaptive learning
+- v2.0: Adversarial detection with text normalization and semantic concepts
 """
 
 import re
@@ -22,6 +23,15 @@ from collections import defaultdict
 
 from ..core.governance import BaseDetector
 from ..core.models import AgentAction, SafetyViolation, ViolationType, Severity
+
+# v2.0: Import semantic functions at module level for efficiency
+try:
+    from ..core.semantics import get_concept_similarity, is_semantic_available
+    SEMANTICS_AVAILABLE = True
+except ImportError:
+    SEMANTICS_AVAILABLE = False
+    get_concept_similarity = None
+    is_semantic_available = None
 
 
 class ContextType(Enum):
@@ -563,13 +573,15 @@ class EthicalViolationDetector(BaseDetector):
         if not self.enable_adversarial_detection or not self.enable_semantic_matching:
             return []
         
+        # Check if semantic functions are available (imported at module level)
+        if not SEMANTICS_AVAILABLE or not is_semantic_available or not get_concept_similarity:
+            return []
+        
         # Limit input length for performance
         if len(text) > self.max_semantic_input_length:
             text = text[:self.max_semantic_input_length]
         
         try:
-            from ..core.semantics import get_concept_similarity, is_semantic_available
-            
             if not is_semantic_available():
                 return []
             

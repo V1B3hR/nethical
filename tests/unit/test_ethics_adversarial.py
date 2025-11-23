@@ -225,7 +225,7 @@ class TestBackwardCompatibility:
             metadata={},
         )
         
-        violations = await self.detector.detect_violations(action)
+        violations = await detector.detect_violations(action)
         # Benign query should have no violations
         assert len(violations) == 0
     
