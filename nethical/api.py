@@ -1,455 +1,402 @@
-"""Main REST API for Nethical v2.0 - Production-ready evaluation endpoints.
+"""
+Nethical Governance API (Improved v2.2)
 
-This module provides FastAPI endpoints for remote evaluation of agent actions
-with structured JudgmentResult responses. Designed for integration with external
-platforms (LangChain, MCP, OpenAI tool wrappers).
+Adds:
+    - Rate limit headers on ALL evaluate responses
+    - Burst limit exposure
+    - Input parameter/context size validation
+    - Semantic cache integration
+    - Evaluation duration header (X-Eval-Duration-ms)
+    - Reloadable authentication (requires updated AuthManager)
+    - More detailed /status config snapshot
+    - Robust error stratification
 
-Endpoints:
-    POST /evaluate - Evaluate an action and return structured judgment
-    GET /status - Get governance system status
-    GET /metrics - Get violation and judgment metrics
-
-Usage:
-    # Start the server
-    uvicorn nethical.api:app --host 0.0.0.0 --port 8000
-    
-    # Or with auto-reload during development
-    uvicorn nethical.api:app --reload --port 8000
+Environment variables documented inline.
 """
 
 from __future__ import annotations
 
+import os
+import asyncio
 import logging
+import json
+import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Header, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
-# Import governance system
 try:
-    from nethical.core.integrated_governance import IntegratedGovernance
+    from nethical.core.integrated import IntegratedGovernance
     from nethical.core.models import AgentAction, MonitoringConfig
-    INTEGRATED_GOVERNANCE_AVAILABLE = True
 except ImportError:
-    try:
-        from nethical.core.governance import SafetyGovernance as IntegratedGovernance
-        from nethical.core.governance import AgentAction, MonitoringConfig
-        INTEGRATED_GOVERNANCE_AVAILABLE = False
-    except ImportError:
-        IntegratedGovernance = None
-        AgentAction = None
-        MonitoringConfig = None
+    IntegratedGovernance = None
+    AgentAction = None
+    MonitoringConfig = None
+
+from nethical.api.rate_limiter import TokenBucketLimiter, RateLimitConfig
+from nethical.api.auth import AuthManager
+try:
+    from nethical.api.semantic_cache import SemanticCache
+except ImportError:
+    SemanticCache = None
 
 logger = logging.getLogger(__name__)
 
-# Global governance instance
 governance: Optional[IntegratedGovernance] = None
+rate_limiter: Optional[TokenBucketLimiter] = None
+auth_manager: Optional[AuthManager] = None
+concurrency_semaphore: Optional[asyncio.Semaphore] = None
+semantic_cache: Optional[SemanticCache] = None
 
+# Configuration
+MAX_INPUT_SIZE = int(os.getenv("NETHICAL_MAX_INPUT_SIZE", "4096"))
+MAX_CONCURRENCY = int(os.getenv("NETHICAL_MAX_CONCURRENCY", "100"))
+EVAL_TIMEOUT = int(os.getenv("NETHICAL_EVAL_TIMEOUT", "30"))
+MAX_PARAM_KEYS = int(os.getenv("NETHICAL_MAX_PARAM_KEYS", "100"))
+MAX_CONTEXT_SIZE = int(os.getenv("NETHICAL_MAX_CONTEXT_SIZE", "10000"))
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    """Application lifespan manager for initialization and cleanup."""
-    global governance
-    
+    global governance, rate_limiter, auth_manager, concurrency_semaphore, semantic_cache
     try:
-        if IntegratedGovernance is None:
-            logger.error("Governance system not available - check imports")
-            raise RuntimeError("Governance system not available")
-            
-        # Initialize governance with semantic monitoring enabled by default
-        config = MonitoringConfig(use_semantic_intent=True) if MonitoringConfig else None
-        
-        if INTEGRATED_GOVERNANCE_AVAILABLE:
-            governance = IntegratedGovernance(
-                storage_dir="./nethical_api_data",
-                enable_performance_optimization=True,
-                enable_merkle_anchoring=True,
-                enable_ethical_taxonomy=True,
-                enable_sla_monitoring=True,
+        if IntegratedGovernance:
+            config = MonitoringConfig(use_semantic_intent=True, enable_timings=True)
+            governance = IntegratedGovernance(config=config)
+            logger.info("Governance initialized")
+        else:
+            logger.warning("IntegratedGovernance unavailable - running degraded")
+
+        rate_config = RateLimitConfig(
+            requests_per_second=float(os.getenv("NETHICAL_RATE_BURST", "5.0")),
+            requests_per_minute=int(os.getenv("NETHICAL_RATE_SUSTAINED", "100"))
+        )
+        rate_limiter = TokenBucketLimiter(config=rate_config)
+
+        auth_manager = AuthManager()
+        if auth_manager.is_permissive():
+            logger.warning("PERMISSIVE MODE active")
+
+        concurrency_semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
+
+        if SemanticCache:
+            semantic_cache = SemanticCache(
+                maxsize=int(os.getenv("NETHICAL_CACHE_MAXSIZE", "20000")),
+                ttl=int(os.getenv("NETHICAL_CACHE_TTL", "600")),
+                model_version="v2"
             )
         else:
-            # Fallback to basic SafetyGovernance
-            governance = IntegratedGovernance(config=config)
-            
-        logger.info("Nethical v2.0 governance system initialized with semantic monitoring")
+            logger.warning("SemanticCache unavailable")
+
         yield
-        
-    except Exception as e:
-        logger.error(f"Failed to initialize governance: {e}")
-        raise
     finally:
-        logger.info("Nethical governance system shutting down")
+        logger.info("API shutdown")
 
-
-# Create FastAPI app
 app = FastAPI(
-    title="Nethical v2.0 Governance API",
-    description="Production-ready REST API for AI safety and ethics governance with semantic monitoring",
-    version="2.0.0",
-    lifespan=lifespan,
+    title="Nethical Governance API",
+    version="2.2.0",
+    description="Production API for AI safety and ethics governance",
+    lifespan=lifespan
 )
 
-# Configure CORS for integration scenarios
-# SECURITY WARNING: This allows all origins for development/demo purposes
-# For production, configure specific allowed origins:
-# allow_origins=["https://yourdomain.com", "https://app.yourdomain.com"]
-# Or set via environment variable: NETHICAL_ALLOWED_ORIGINS
-import os
-allowed_origins = os.getenv("NETHICAL_ALLOWED_ORIGINS", "*").split(",")
+allowed_origins_str = os.getenv("NETHICAL_CORS_ALLOW_ORIGINS", "*")
+allowed_origins = allowed_origins_str.split(",") if allowed_origins_str != "*" else ["*"]
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"],
+    allow_headers=["*"]
 )
 
-
-# ============================================================================
-# Request/Response Models
-# ============================================================================
-
 class EvaluateRequest(BaseModel):
-    """Request model for action evaluation."""
-    
-    id: Optional[str] = Field(
-        default=None,
-        description="Optional action ID (auto-generated if not provided)"
-    )
-    agent_id: str = Field(
-        ...,
-        description="Agent identifier",
-        min_length=1,
-        max_length=256
-    )
-    stated_intent: Optional[str] = Field(
-        default=None,
-        description="The stated intent or goal of the action"
-    )
-    actual_action: str = Field(
-        ...,
-        description="The actual action, code, or content to evaluate",
-        min_length=1,
-        max_length=50000
-    )
-    context: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Additional context about the action"
-    )
-    parameters: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Additional parameters for evaluation"
-    )
-    
-    model_config = {
-        "json_schema_extra": {
-            "examples": [
-                {
-                    "agent_id": "gpt-4-agent",
-                    "stated_intent": "Process user data",
-                    "actual_action": "SELECT * FROM users WHERE email LIKE '%@example.com'",
-                    "context": {"operation": "database_query"},
-                    "parameters": {"strict_mode": True}
-                }
-            ]
-        }
-    }
-
+    id: Optional[str] = Field(None)
+    agent_id: str
+    stated_intent: Optional[str] = None
+    actual_action: str
+    context: Optional[Dict[str, Any]] = None
+    parameters: Optional[Dict[str, Any]] = None
 
 class JudgmentResult(BaseModel):
-    """Structured judgment result from evaluation."""
-    
-    judgment_id: str = Field(..., description="Unique judgment identifier")
-    action_id: str = Field(..., description="Action identifier")
-    decision: str = Field(
-        ..., 
-        description="Decision: ALLOW, WARN, BLOCK, QUARANTINE, ESCALATE, or TERMINATE"
-    )
-    confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence score")
-    reasoning: str = Field(..., description="Explanation for the decision")
-    violations: List[Dict[str, Any]] = Field(
-        default_factory=list,
-        description="List of detected violations"
-    )
-    timestamp: str = Field(..., description="ISO 8601 timestamp")
-    risk_score: Optional[float] = Field(
-        default=None,
-        ge=0.0,
-        le=1.0,
-        description="Overall risk score"
-    )
-    modifications: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Suggested modifications if applicable"
-    )
-    metadata: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Additional metadata from evaluation"
-    )
-
+    judgment_id: str
+    action_id: str
+    decision: str
+    confidence: float
+    reasoning: str
+    violations: List[Dict[str, Any]]
+    timestamp: str
+    risk_score: Optional[float] = None
+    modifications: Optional[Dict[str, Any]] = None
+    metadata: Dict[str, Any]
 
 class StatusResponse(BaseModel):
-    """Governance system status response."""
-    
-    status: str = Field(..., description="System status: healthy, degraded, or unhealthy")
-    version: str = Field(..., description="API version")
-    timestamp: str = Field(..., description="Current timestamp")
-    semantic_monitoring: bool = Field(..., description="Whether semantic monitoring is enabled")
-    semantic_available: bool = Field(..., description="Whether semantic models are available")
-    components: Dict[str, bool] = Field(
-        default_factory=dict,
-        description="Status of various components"
-    )
-
+    status: str
+    version: str
+    timestamp: str
+    semantic_monitoring: bool
+    semantic_available: bool
+    components: Dict[str, Any]
+    config: Dict[str, Any]
 
 class MetricsResponse(BaseModel):
-    """System metrics response."""
-    
-    total_evaluations: int = Field(..., description="Total number of evaluations")
-    total_violations: int = Field(..., description="Total violations detected")
-    violation_by_type: Dict[str, int] = Field(
-        default_factory=dict,
-        description="Violations grouped by type"
-    )
-    decisions_by_type: Dict[str, int] = Field(
-        default_factory=dict,
-        description="Decisions grouped by type"
-    )
-    avg_confidence: Optional[float] = Field(
-        default=None,
-        description="Average confidence score"
-    )
-    timestamp: str = Field(..., description="Metrics timestamp")
+    metrics: Dict[str, Any]
+    timestamp: str
 
+def extract_api_key(
+    x_api_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None)
+) -> Optional[str]:
+    if x_api_key:
+        return x_api_key
+    if authorization and authorization.startswith("Bearer "):
+        return authorization[7:]
+    return None
 
-# ============================================================================
-# API Endpoints
-# ============================================================================
+def get_client_ip(request: Request) -> str:
+    forwarded = request.headers.get("X-Forwarded-For")
+    if forwarded:
+        return forwarded.split(",")[0].strip()
+    if request.client:
+        return request.client.host
+    return "unknown"
+
+def validate_payload(eval_request: EvaluateRequest) -> None:
+    total_len = len(eval_request.actual_action) + len(eval_request.stated_intent or "")
+    if total_len > MAX_INPUT_SIZE:
+        raise HTTPException(413, f"Input too large: {total_len} chars (max {MAX_INPUT_SIZE})")
+    if eval_request.parameters and len(eval_request.parameters) > MAX_PARAM_KEYS:
+        raise HTTPException(413, f"Too many parameter keys ({len(eval_request.parameters)} > {MAX_PARAM_KEYS})")
+    if eval_request.context:
+        try:
+            serialized = json.dumps(eval_request.context)
+        except Exception:
+            serialized = str(eval_request.context)
+        if len(serialized) > MAX_CONTEXT_SIZE:
+            raise HTTPException(413, f"Context too large ({len(serialized)} > {MAX_CONTEXT_SIZE})")
+
+async def compute_semantic_similarity(intent: Optional[str], action: str) -> float:
+    if not intent:
+        return 0.5
+    intent_tokens = set(intent.lower().split())
+    action_tokens = set(action.lower().split())
+    if not intent_tokens or not action_tokens:
+        return 0.0
+    overlap = len(intent_tokens & action_tokens) / len(intent_tokens | action_tokens)
+    return max(0.0, min(1.0, overlap))
 
 @app.get("/")
 async def root():
-    """Root endpoint with API information."""
     return {
-        "name": "Nethical v2.0 Governance API",
-        "version": "2.0.0",
-        "description": "Production-ready REST API for AI safety and ethics governance",
+        "name": "Nethical Governance API",
+        "version": "2.2.0",
         "features": [
-            "Semantic intent deviation monitoring",
-            "Adversarial prompt detection",
-            "Real-time safety evaluation",
-            "Structured judgment results"
+            "Semantic monitoring",
+            "Adversarial detection",
+            "Rate limiting & auth",
+            "Input validation",
+            "Concurrency control",
+            "Semantic cache"
         ],
         "endpoints": {
-            "evaluate": "POST /evaluate - Evaluate an action",
-            "status": "GET /status - System status",
-            "metrics": "GET /metrics - System metrics",
-            "docs": "GET /docs - Interactive API documentation"
+            "evaluate": "POST /evaluate",
+            "status": "GET /status",
+            "metrics": "GET /metrics",
+            "docs": "GET /docs"
         }
     }
 
-
 @app.post("/evaluate", response_model=JudgmentResult)
-async def evaluate(request: EvaluateRequest) -> JudgmentResult:
-    """Evaluate an action for ethical compliance and safety.
-    
-    This endpoint processes actions through Nethical's governance system with
-    semantic monitoring enabled. Returns a structured judgment with decision,
-    confidence, and detailed violation information.
-    
-    Args:
-        request: EvaluateRequest with action details
-        
-    Returns:
-        JudgmentResult with decision and evaluation details
-        
-    Raises:
-        HTTPException: If governance system is unavailable or evaluation fails
-    """
-    if governance is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Governance system not initialized"
-        )
-    
-    try:
-        # Create action object
-        action_id = request.id or f"action_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}"
-        
-        # Build action - handle both IntegratedGovernance and basic SafetyGovernance
-        if hasattr(governance, 'process_action'):
-            # IntegratedGovernance interface
-            result = governance.process_action(
-                action=request.actual_action,
-                agent_id=request.agent_id,
-                action_type=request.parameters.get("action_type", "query") if request.parameters else "query",
-                stated_intent=request.stated_intent,
-                context=request.context or {}
-            )
-        else:
-            # Basic SafetyGovernance interface
-            action = AgentAction(
-                action_id=action_id,
-                agent_id=request.agent_id,
-                action_type=request.parameters.get("action_type", "query") if request.parameters else "query",
-                content=request.actual_action,
-                metadata=request.parameters or {},
-                context=request.context or {},
-                intent=request.stated_intent,
-            )
-            result = governance.evaluate_action(action)
-        
-        # Convert result to response model
-        judgment_id = getattr(result, 'judgment_id', f"judgment_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}")
-        decision = str(getattr(result, 'decision', 'ALLOW')).upper()
-        confidence = float(getattr(result, 'confidence', 0.9))
-        reasoning = str(getattr(result, 'reasoning', 'Action evaluated'))
-        
-        # Extract violations
-        violations_list = []
-        violations = getattr(result, 'violations', [])
-        for v in violations:
-            violations_list.append({
-                "id": getattr(v, 'id', ''),
-                "type": str(getattr(v, 'violation_type', '')),
-                "severity": str(getattr(v, 'severity', '')),
-                "description": str(getattr(v, 'description', '')),
-                "evidence": dict(getattr(v, 'evidence', {}))
-            })
-        
-        # Build response
-        return JudgmentResult(
-            judgment_id=judgment_id,
-            action_id=action_id,
-            decision=decision,
-            confidence=confidence,
-            reasoning=reasoning,
-            violations=violations_list,
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            risk_score=float(getattr(result, 'risk_score', 0.0)) if hasattr(result, 'risk_score') else None,
-            modifications=dict(getattr(result, 'modifications', {})) if hasattr(result, 'modifications') else None,
-            metadata={
-                "semantic_monitoring": True,
-                "agent_id": request.agent_id,
-                "has_intent": request.stated_intent is not None,
-            }
-        )
-        
-    except Exception as e:
-        logger.error(f"Evaluation failed: {e}", exc_info=True)
-        raise HTTPException(
-            status_code=500,
-            detail=f"Evaluation failed: {str(e)}"
-        )
+async def evaluate(
+    eval_request: EvaluateRequest,
+    request: Request,
+    response: Response,
+    x_api_key: Optional[str] = Header(None),
+    authorization: Optional[str] = Header(None)
+) -> JudgmentResult:
+    start = time.perf_counter()
 
+    if governance is None or rate_limiter is None or auth_manager is None:
+        raise HTTPException(503, "Service unavailable - not fully initialized")
+
+    api_key = extract_api_key(x_api_key, authorization)
+    client_ip = get_client_ip(request)
+
+    if not auth_manager.is_permissive():
+        if not api_key or not auth_manager.validate_key(api_key):
+            raise HTTPException(
+                401,
+                "Unauthorized - valid API key required",
+                headers={"WWW-Authenticate": "Bearer"}
+            )
+
+    identity = auth_manager.extract_identity(api_key, client_ip)
+
+    allowed, retry_after, rate_info = await rate_limiter.is_allowed(identity)
+    if not allowed:
+        headers = {
+            "X-RateLimit-Limit": str(rate_info["limit"]),
+            "X-RateLimit-Burst-Limit": str(rate_info["burst_limit"]),
+            "X-RateLimit-Remaining": str(rate_info["remaining"]),
+            "X-RateLimit-Reset": str(rate_info["reset"]),
+            "Retry-After": str(int(retry_after)) if retry_after else "60"
+        }
+        raise HTTPException(429, "Rate limit exceeded", headers=headers)
+
+    validate_payload(eval_request)
+
+    if concurrency_semaphore is None:
+        raise HTTPException(503, "Concurrency control not initialized")
+
+    async with concurrency_semaphore:
+        try:
+            action_id = eval_request.id or f"action_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}"
+            async def do_eval():
+                if hasattr(governance, "process_action"):
+                    return governance.process_action(
+                        action=eval_request.actual_action,
+                        agent_id=eval_request.agent_id,
+                        action_type=eval_request.parameters.get("action_type", "query") if eval_request.parameters else "query",
+                        stated_intent=eval_request.stated_intent,
+                        context=eval_request.context or {}
+                    )
+                else:
+                    action = AgentAction(
+                        action_id=action_id,
+                        agent_id=eval_request.agent_id,
+                        action_type=eval_request.parameters.get("action_type", "query") if eval_request.parameters else "query",
+                        content=eval_request.actual_action,
+                        metadata=eval_request.parameters or {},
+                        context=eval_request.context or {},
+                        intent=eval_request.stated_intent,
+                    )
+                    return governance.evaluate_action(action)
+
+            try:
+                result = await asyncio.wait_for(do_eval(), timeout=EVAL_TIMEOUT)
+            except asyncio.TimeoutError:
+                raise HTTPException(503, f"Evaluation timeout after {EVAL_TIMEOUT}s", headers={"Retry-After": "10"})
+
+            similarity = None
+            if eval_request.stated_intent:
+                if semantic_cache:
+                    async def compute_fn():
+                        return await compute_semantic_similarity(eval_request.stated_intent, eval_request.actual_action)
+                    similarity = await semantic_cache.get_or_compute(
+                        eval_request.stated_intent,
+                        eval_request.actual_action,
+                        compute_fn,
+                        config_params={"model_version": "v2"}
+                    )
+                else:
+                    similarity = await compute_semantic_similarity(eval_request.stated_intent, eval_request.actual_action)
+
+            judgment_id = getattr(result, "judgment_id", f"judgment_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}")
+            decision = str(getattr(result, "decision", "ALLOW")).upper()
+            confidence = float(getattr(result, "confidence", 0.9))
+            reasoning = str(getattr(result, "reasoning", "Action evaluated"))
+
+            violations_out = []
+            for v in getattr(result, "violations", []):
+                violations_out.append({
+                    "id": getattr(v, "id", ""),
+                    "type": str(getattr(v, "violation_type", "")),
+                    "severity": str(getattr(v, "severity", "")),
+                    "description": str(getattr(v, "description", "")),
+                    "evidence": dict(getattr(v, "evidence", {}))
+                })
+
+            # Success headers
+            response.headers["X-RateLimit-Limit"] = str(rate_info["limit"])
+            response.headers["X-RateLimit-Burst-Limit"] = str(rate_info["burst_limit"])
+            response.headers["X-RateLimit-Remaining"] = str(rate_info["remaining"])
+            response.headers["X-RateLimit-Reset"] = str(rate_info["reset"])
+            duration_ms = int((time.perf_counter() - start) * 1000)
+            response.headers["X-Eval-Duration-ms"] = str(duration_ms)
+
+            metadata = {
+                "semantic_monitoring": True,
+                "agent_id": eval_request.agent_id,
+                "has_intent": eval_request.stated_intent is not None,
+                "rate_limit": rate_info,
+                "similarity_cached": bool(semantic_cache),
+                "intent_action_similarity": similarity
+            }
+
+            logger.info(
+                "Evaluate identity=%s decision=%s confidence=%.3f violations=%d duration_ms=%d",
+                identity, decision, confidence, len(violations_out), duration_ms
+            )
+
+            return JudgmentResult(
+                judgment_id=judgment_id,
+                action_id=action_id,
+                decision=decision,
+                confidence=confidence,
+                reasoning=reasoning,
+                violations=violations_out,
+                timestamp=datetime.now(timezone.utc).isoformat(),
+                risk_score=float(getattr(result, "risk_score", 0.0)) if hasattr(result, "risk_score") else None,
+                modifications=dict(getattr(result, "modifications", {})) if hasattr(result, "modifications") else None,
+                metadata=metadata
+            )
+        except HTTPException:
+            raise
+        except Exception as e:
+            logger.error("Evaluation failure identity=%s error=%s", identity, e, exc_info=True)
+            raise HTTPException(500, f"Evaluation failed: {e}")
 
 @app.get("/status", response_model=StatusResponse)
 async def status() -> StatusResponse:
-    """Get governance system status and health information.
-    
-    Returns:
-        StatusResponse with system status and component health
-    """
     if governance is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Governance system not initialized"
-        )
-    
-    try:
-        # Check semantic availability
-        try:
-            from nethical.core.semantics import is_semantic_available
-            semantic_available = is_semantic_available()
-        except ImportError:
-            semantic_available = False
-        
-        # Get component status
-        components = {}
-        if hasattr(governance, 'components_enabled'):
-            components = governance.components_enabled
-        else:
-            components = {
-                "ethical_monitoring": True,
-                "safety_monitoring": True,
-                "intent_monitoring": True,
-            }
-        
-        return StatusResponse(
-            status="healthy",
-            version="2.0.0",
-            timestamp=datetime.now(timezone.utc).isoformat(),
-            semantic_monitoring=True,
-            semantic_available=semantic_available,
-            components=components
-        )
-        
-    except Exception as e:
-        logger.error(f"Status check failed: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Status check failed: {str(e)}"
-        )
+        raise HTTPException(503, "Governance not initialized")
+    semantic_available = hasattr(governance, "process_action")
+    components = {
+        "governance": governance is not None,
+        "rate_limiter": rate_limiter is not None,
+        "auth_manager": auth_manager is not None,
+        "concurrency_control": concurrency_semaphore is not None,
+        "semantic_cache": semantic_cache is not None,
+    }
+    auth_stats = auth_manager.get_stats() if auth_manager else {}
+    rate_stats = rate_limiter.get_stats() if rate_limiter else {}
+    cache_stats = semantic_cache.get_stats() if semantic_cache else {}
 
+    config_snapshot = {
+        "max_input_size": MAX_INPUT_SIZE,
+        "max_concurrency": MAX_CONCURRENCY,
+        "eval_timeout_sec": EVAL_TIMEOUT,
+        "rate_burst": os.getenv("NETHICAL_RATE_BURST", "5"),
+        "rate_sustained": os.getenv("NETHICAL_RATE_SUSTAINED", "100"),
+        "cache_enabled": semantic_cache is not None,
+        "cache_maxsize": cache_stats.get("maxsize") if cache_stats else None,
+        "cache_ttl": cache_stats.get("ttl") if cache_stats else None,
+        "permissive_auth": auth_stats.get("permissive_mode"),
+        "configured_keys": auth_stats.get("configured_keys"),
+    }
+
+    components["rate_limiter_stats"] = rate_stats
+    components["auth_stats"] = auth_stats
+    components["cache_stats"] = cache_stats
+
+    return StatusResponse(
+        status="healthy",
+        version="2.2.0",
+        timestamp=datetime.now(timezone.utc).isoformat(),
+        semantic_monitoring=True,
+        semantic_available=semantic_available,
+        components=components,
+        config=config_snapshot
+    )
 
 @app.get("/metrics", response_model=MetricsResponse)
 async def metrics() -> MetricsResponse:
-    """Get governance system metrics.
-    
-    Returns:
-        MetricsResponse with evaluation and violation statistics
-    """
-    if governance is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Governance system not initialized"
-        )
-    
-    try:
-        # Get metrics from governance system
-        if hasattr(governance, 'get_system_metrics'):
-            sys_metrics = governance.get_system_metrics()
-            
-            return MetricsResponse(
-                total_evaluations=sys_metrics.get('total_actions', 0),
-                total_violations=sys_metrics.get('total_violations', 0),
-                violation_by_type=sys_metrics.get('violations_by_type', {}),
-                decisions_by_type=sys_metrics.get('decisions_by_type', {}),
-                avg_confidence=sys_metrics.get('avg_confidence'),
-                timestamp=datetime.now(timezone.utc).isoformat()
-            )
-        else:
-            # Minimal metrics if not available
-            return MetricsResponse(
-                total_evaluations=0,
-                total_violations=0,
-                violation_by_type={},
-                decisions_by_type={},
-                timestamp=datetime.now(timezone.utc).isoformat()
-            )
-            
-    except Exception as e:
-        logger.error(f"Metrics retrieval failed: {e}")
-        raise HTTPException(
-            status_code=500,
-            detail=f"Metrics retrieval failed: {str(e)}"
-        )
-
-
-# ============================================================================
-# Health Check (for load balancers / orchestrators)
-# ============================================================================
-
-@app.get("/health")
-async def health():
-    """Simple health check endpoint for load balancers."""
-    if governance is None:
-        raise HTTPException(status_code=503, detail="Service unavailable")
-    return {"status": "healthy"}
-
-
-if __name__ == "__main__":
-    import uvicorn
-    uvicorn.run(app, host="0.0.0.0", port=8000)
+    metric_blob = {
+        "violations_total": 0,
+        "judgments_total": 0,
+        "cache_hit_rate": (semantic_cache.get_stats().get("hit_rate_percent") if semantic_cache else None),
+        "active_identities": (rate_limiter.get_stats().get("active_identities") if rate_limiter else None),
+    }
+    return MetricsResponse(metrics=metric_blob, timestamp=datetime.now(timezone.utc).isoformat())
