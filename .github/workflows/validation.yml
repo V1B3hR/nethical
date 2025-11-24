@@ -1,0 +1,238 @@
+name: Nethical Validation Plan
+
+on:
+  schedule:
+    # Daily: security quick scan, latency SLO checks
+    - cron: '0 6 * * *'  # 6 AM UTC daily
+  push:
+    branches: [main, develop]
+    paths:
+      - 'nethical/**'
+      - 'tests/validation/**'
+      - 'validation_config.yaml'
+      - 'run_validation.py'
+  pull_request:
+    branches: [main, develop]
+  workflow_dispatch:
+    inputs:
+      suites:
+        description: 'Validation suites to run (comma-separated)'
+        required: false
+        default: 'all'
+      full_run:
+        description: 'Run full validation (including slow tests)'
+        required: false
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  validation:
+    name: Run Validation Suite
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+          cache: 'pip'
+      
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install -r requirements.txt
+          pip install pytest pytest-asyncio pytest-cov pytest-json-report scipy pyyaml
+          pip install -e .
+      
+      - name: Create validation reports directory
+        run: mkdir -p validation_reports
+      
+      - name: Run Ethics Benchmark
+        run: |
+          pytest tests/validation/test_ethics_benchmark.py -v \
+            --json-report --json-report-file=validation_reports/ethics_benchmark.json
+        continue-on-error: true
+      
+      - name: Run Drift Detection
+        run: |
+          pytest tests/validation/test_drift_detection.py -v \
+            --json-report --json-report-file=validation_reports/drift_detection.json
+        continue-on-error: true
+      
+      - name: Run Performance Validation
+        run: |
+          pytest tests/validation/test_performance_validation.py -v \
+            --json-report --json-report-file=validation_reports/performance.json
+        continue-on-error: true
+      
+      - name: Run Data Integrity Validation
+        run: |
+          pytest tests/validation/test_data_integrity.py -v \
+            --json-report --json-report-file=validation_reports/integrity.json
+        continue-on-error: true
+      
+      - name: Run Explainability Validation
+        run: |
+          pytest tests/validation/test_explainability.py -v \
+            --json-report --json-report-file=validation_reports/explainability.json
+        continue-on-error: true
+      
+      - name: Generate Validation Report
+        run: |
+          python run_validation.py --output validation_reports/validation.json
+        continue-on-error: true
+      
+      - name: Upload Validation Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: validation-results
+          path: validation_reports/
+          retention-days: 30
+        if: always()
+      
+      - name: Parse Validation Results
+        id: parse_results
+        run: |
+          if [ -f validation_reports/validation.json ]; then
+            OVERALL_STATUS=$(python -c "import json; data=json.load(open('validation_reports/validation.json')); print(data.get('summary', {}).get('overall_status', 'unknown'))")
+            PASSED=$(python -c "import json; data=json.load(open('validation_reports/validation.json')); print(data.get('summary', {}).get('passed_suites', 0))")
+            FAILED=$(python -c "import json; data=json.load(open('validation_reports/validation.json')); print(data.get('summary', {}).get('failed_suites', 0))")
+            SUCCESS_RATE=$(python -c "import json; data=json.load(open('validation_reports/validation.json')); print(f\"{data.get('summary', {}).get('success_rate', 0):.1%}\")")
+            
+            echo "status=$OVERALL_STATUS" >> $GITHUB_OUTPUT
+            echo "passed=$PASSED" >> $GITHUB_OUTPUT
+            echo "failed=$FAILED" >> $GITHUB_OUTPUT
+            echo "success_rate=$SUCCESS_RATE" >> $GITHUB_OUTPUT
+          else
+            echo "status=unknown" >> $GITHUB_OUTPUT
+            echo "passed=0" >> $GITHUB_OUTPUT
+            echo "failed=0" >> $GITHUB_OUTPUT
+            echo "success_rate=0%" >> $GITHUB_OUTPUT
+          fi
+        continue-on-error: true
+      
+      - name: Comment on PR
+        if: github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let summary = '## 📊 Validation Results\n\n';
+            
+            try {
+              const data = JSON.parse(fs.readFileSync('validation_reports/validation.json', 'utf8'));
+              const s = data.summary;
+              
+              summary += `| Metric | Value |\n`;
+              summary += `|--------|-------|\n`;
+              summary += `| Overall Status | ${s.overall_status === 'passed' ? '✅ PASSED' : '❌ FAILED'} |\n`;
+              summary += `| Total Suites | ${s.total_suites} |\n`;
+              summary += `| Passed | ${s.passed_suites} |\n`;
+              summary += `| Failed | ${s.failed_suites} |\n`;
+              summary += `| Success Rate | ${(s.success_rate * 100).toFixed(1)}% |\n`;
+              summary += `| Duration | ${s.total_duration_seconds.toFixed(1)}s |\n\n`;
+              
+              // Add threshold checks
+              if (data.threshold_checks) {
+                summary += `### Threshold Checks\n\n`;
+                const checks = data.threshold_checks.checks;
+                for (const [suite, passed] of Object.entries(checks)) {
+                  summary += `- ${passed ? '✅' : '❌'} ${suite}\n`;
+                }
+              }
+              
+              // Add suite details
+              summary += `\n### Suite Details\n\n`;
+              for (const [name, result] of Object.entries(data.suites)) {
+                const status = result.status === 'passed' ? '✅' : '❌';
+                summary += `- ${status} **${name}**: ${result.status} (${result.duration_seconds.toFixed(1)}s)\n`;
+              }
+              
+            } catch (e) {
+              summary += `⚠️  Could not parse validation results: ${e.message}\n`;
+            }
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: summary
+            });
+        continue-on-error: true
+      
+      - name: Create Issue on Failure
+        if: steps.parse_results.outputs.status == 'failed' && github.event_name == 'schedule'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            
+            let body = '## 🚨 Validation Suite Failed\n\n';
+            body += `**Run Date**: ${new Date().toISOString()}\n\n`;
+            
+            try {
+              const data = JSON.parse(fs.readFileSync('validation_reports/validation.json', 'utf8'));
+              
+              body += `### Summary\n\n`;
+              body += `- Success Rate: ${(data.summary.success_rate * 100).toFixed(1)}%\n`;
+              body += `- Failed Suites: ${data.summary.failed_suites}\n`;
+              body += `- Error Suites: ${data.summary.error_suites}\n\n`;
+              
+              body += `### Failed Checks\n\n`;
+              if (data.threshold_checks && data.threshold_checks.failed_checks.length > 0) {
+                for (const check of data.threshold_checks.failed_checks) {
+                  body += `- ❌ ${check}\n`;
+                }
+              }
+              
+              body += `\n### Actions Required\n\n`;
+              body += `1. Review validation artifacts\n`;
+              body += `2. Investigate failed test suites\n`;
+              body += `3. Address threshold violations\n`;
+              body += `4. Re-run validation after fixes\n\n`;
+              
+              body += `**Workflow Run**: ${context.serverUrl}/${context.repo.owner}/${context.repo.repo}/actions/runs/${context.runId}\n`;
+              
+            } catch (e) {
+              body += `⚠️  Could not parse validation results: ${e.message}\n`;
+            }
+            
+            // Check if similar issue already exists
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              state: 'open',
+              labels: 'validation-failure',
+              per_page: 1
+            });
+            
+            // Only create if no open validation failure issue exists
+            if (issues.data.length === 0) {
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: `Validation Suite Failed - ${new Date().toISOString().split('T')[0]}`,
+                body: body,
+                labels: ['validation-failure', 'automated']
+              });
+            }
+        continue-on-error: true
+      
+      - name: Validation Summary
+        run: |
+          echo "### Validation Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Status**: ${{ steps.parse_results.outputs.status }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Passed Suites**: ${{ steps.parse_results.outputs.passed }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Failed Suites**: ${{ steps.parse_results.outputs.failed }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Success Rate**: ${{ steps.parse_results.outputs.success_rate }}" >> $GITHUB_STEP_SUMMARY
+        if: always()
