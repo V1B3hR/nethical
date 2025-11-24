@@ -623,15 +623,33 @@ class IntegratedGovernance:
             )
 
         # Run violation detection asynchronously
-        try:
-            # Create event loop if needed
-            loop = asyncio.get_event_loop()
-        except RuntimeError:
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
+        # Use a dedicated helper to handle event loop properly
+        def run_async_evaluation():
+            """Helper to run async evaluation in a safe way"""
+            try:
+                # Check if there's already a running loop
+                asyncio.get_running_loop()
+                # We're in an async context - this shouldn't happen for process_action
+                # Fall back to creating a new loop
+                raise RuntimeError("Cannot use run_until_complete in async context")
+            except RuntimeError:
+                # No running loop, safe to use run_until_complete
+                pass
+            
+            # Get or create event loop
+            try:
+                loop = asyncio.get_event_loop()
+                if loop.is_closed():
+                    loop = asyncio.new_event_loop()
+                    asyncio.set_event_loop(loop)
+            except RuntimeError:
+                loop = asyncio.new_event_loop()
+                asyncio.set_event_loop(loop)
+            
+            return loop.run_until_complete(self.safety_governance.evaluate_action(action_obj))
         
         # Evaluate the action for violations
-        judgment = loop.run_until_complete(self.safety_governance.evaluate_action(action_obj))
+        judgment = run_async_evaluation()
         
         # Extract violation information
         detected_violations = judgment.violations
