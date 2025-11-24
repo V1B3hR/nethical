@@ -42,26 +42,26 @@
 - [ ] Projection for 12 months < budget threshold
 
 ## 8. Plugin Trust
-- [ ] Signature verification enforced
-- [ ] Trust score gating (threshold ≥80)
-- [ ] Vulnerability scan per plugin load
+- [x] Signature verification enforced
+- [x] Trust score gating (threshold ≥80)
+- [x] Vulnerability scan per plugin load
 
 ## 9. Human Review
-- [ ] Review queue SLA dashboard live
-- [ ] Feedback taxonomy coverage report
-- [ ] Reviewer drift metrics < 5%
+- [x] Review queue SLA dashboard live
+- [x] Feedback taxonomy coverage report
+- [x] Reviewer drift metrics < 5%
 
 ## 10. Transparency
-- [ ] Quarterly transparency report auto-generated
-- [ ] Public methodology (risk scoring, detection)
-- [ ] Anchored Merkle roots registry
+- [x] Quarterly transparency report auto-generated
+- [x] Public methodology (risk scoring, detection)
+- [x] Anchored Merkle roots registry
 
 ## 11. Release & Change
-- [ ] Versioned policy pack
-- [ ] Rollback procedure tested
-- [ ] Canary deployment config
+- [x] Versioned policy pack
+- [x] Rollback procedure tested
+- [x] Canary deployment config
 
 ## 12. Compliance
-- [ ] Data residency mapping
-- [ ] GDPR / CCPA data flow diagram
-- [ ] Access request / deletion workflow tested
+- [x] Data residency mapping
+- [x] GDPR / CCPA data flow diagram
+- [x] Access request / deletion workflow tested
