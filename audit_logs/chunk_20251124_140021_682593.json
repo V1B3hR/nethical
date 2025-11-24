@@ -1,0 +1,14 @@
+{
+  "chunk_id": "chunk_20251124_140021_682593",
+  "merkle_root": "3945938021384a3150cba3f3d22116da17814c9ca7059be221c0ad146fd40455",
+  "created_at": "2025-11-24T14:00:21.682597",
+  "finalized_at": "2025-11-24T14:00:21.682616+00:00",
+  "event_count": 1,
+  "events": [
+    {
+      "action_id": "test_5",
+      "data": "test data 5",
+      "timestamp": "2025-11-24T14:00:21.682604+00:00"
+    }
+  ]
+}
