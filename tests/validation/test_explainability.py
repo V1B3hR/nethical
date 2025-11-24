@@ -42,21 +42,26 @@ class ExplainabilityValidator:
         
         for action in actions:
             start_time = time.perf_counter()
-            result = governance.process_action(action_id.split("_")[-2] if "_" in action_id else "test_agent", action_text)
+            action_text = action.action if hasattr(action, 'action') else str(action)
+            result = governance.process_action(
+                agent_id="explain_tester",
+                action=action_text
+            )
             elapsed = time.perf_counter() - start_time
             
             # Check if result has explanation/reasoning
             has_explanation = bool(
-                result.reasoning or 
-                getattr(result, 'explanation', None) or
-                len(result.violations) > 0  # Violations provide implicit explanation
+                result.get("reasoning") or 
+                result.get("explanation") or
+                result.get("violation_detected", False)
             )
             
             if has_explanation:
                 explained_actions += 1
                 latencies.append(elapsed)
             else:
-                missing_explanations.append(action.action_id)
+                action_id = action.action_id if hasattr(action, 'action_id') else "unknown"
+                missing_explanations.append(action_id)
         
         coverage = explained_actions / total_actions if total_actions > 0 else 0.0
         avg_latency = sum(latencies) / len(latencies) if latencies else 0.0
@@ -131,7 +136,7 @@ def test_explanation_coverage(governance, validator):
         AgentAction(
             action_id=f"coverage_test_{i}",
             agent_id="explain_tester",
-            content=action_text,
+            action=action_text,
             action_type="query"
         )
         for i, action_text in enumerate([
@@ -223,14 +228,17 @@ def test_explanation_quality(governance, validator):
     print(f"\nExplanation Quality Test:")
     
     for action_text, expected_type in test_cases:
-        # Using string action
-        
-        result = governance.process_action(action_id.split("_")[-2] if "_" in action_id else "test_agent", action_text)
+        result = governance.process_action(
+            agent_id="quality_tester",
+            action=action_text
+        )
         
         # Get reasoning
-        reasoning = result.reasoning or ""
-        if not reasoning and result.violations:
-            reasoning = f"Violations detected: {', '.join([v.violation_type for v in result.violations])}"
+        reasoning = result.get("reasoning", "")
+        violations = result.get("violations", [])
+        if not reasoning and violations:
+            violation_types = [v.get("violation_type", "unknown") if isinstance(v, dict) else str(v) for v in violations]
+            reasoning = f"Violations detected: {', '.join(violation_types)}"
         
         quality = validator.validate_explanation_quality(reasoning)
         quality_scores.append(quality["score"])
@@ -248,30 +256,41 @@ def test_explanation_quality(governance, validator):
 def test_explanation_completeness(governance):
     """Test that explanations are complete and informative"""
     # Test action that should trigger clear explanation
-    # Using string action
+    action_text = "Access user database without authorization"
     
-    result = governance.process_action(action_id.split("_")[-2] if "_" in action_id else "test_agent", action_text)
+    result = governance.process_action(
+        agent_id="completeness_tester",
+        action=action_text
+    )
     
     # Check for explanation components
-    has_decision = result.decision is not None
-    has_reasoning = bool(result.reasoning)
-    has_violations = len(result.violations) > 0
+    has_decision = result.get("decision") is not None
+    has_reasoning = bool(result.get("reasoning"))
+    violations = result.get("violations", [])
+    has_violations = len(violations) > 0
     
     # If violations, check they have details
     violation_details_complete = True
-    if result.violations:
-        for violation in result.violations:
-            if not (violation.violation_type and violation.severity):
-                violation_details_complete = False
-                break
+    if violations:
+        for violation in violations:
+            if isinstance(violation, dict):
+                if not (violation.get("violation_type") and violation.get("severity")):
+                    violation_details_complete = False
+                    break
+            else:
+                # If not dict, assume it's an object with attributes
+                if not (hasattr(violation, 'violation_type') and hasattr(violation, 'severity')):
+                    violation_details_complete = False
+                    break
     
     print(f"\nExplanation Completeness Test:")
     print(f"  Has Decision: {has_decision}")
     print(f"  Has Reasoning: {has_reasoning}")
     print(f"  Has Violations: {has_violations}")
     print(f"  Violation Details Complete: {violation_details_complete}")
-    print(f"  Decision: {result.decision}")
-    print(f"  Reasoning: {result.reasoning[:100] if result.reasoning else 'None'}...")
+    print(f"  Decision: {result.get('decision')}")
+    reasoning_text = result.get("reasoning", "")
+    print(f"  Reasoning: {reasoning_text[:100] if reasoning_text else 'None'}...")
     
     assert has_decision, "Missing decision"
     assert has_reasoning or has_violations, "Missing explanation (no reasoning or violations)"
@@ -333,9 +352,11 @@ def test_generate_explainability_report(governance, validator, tmp_path):
     
     quality_scores = []
     for action_text, _ in quality_test_actions:
-        # Using string action
-        result = governance.process_action(action_id.split("_")[-2] if "_" in action_id else "test_agent", action_text)
-        reasoning = result.reasoning or ""
+        result = governance.process_action(
+            agent_id="report_agent",
+            action=action_text
+        )
+        reasoning = result.get("reasoning", "")
         quality = validator.validate_explanation_quality(reasoning)
         quality_scores.append(quality["score"])
     

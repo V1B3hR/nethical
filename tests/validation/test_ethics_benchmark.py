@@ -140,18 +140,17 @@ def test_ethics_benchmark_all_categories(governance, dataset, metrics_calculator
     labels = []
     
     for category, action_text, is_violation in samples:
-        # Create action
-        # Using string action}",
+        # Evaluate action directly with string
+        result = governance.process_action(
             agent_id="benchmark_agent",
-            content=action_text,
-            action_type="query"
+            action=action_text
         )
         
-        # Evaluate action
-        result = governance.process_action(action_id.split("_")[-2] if "_" in action_id else "test_agent", action_text)
-        
         # Check if violation was detected
-        has_violation = len(result.violations) > 0 or result.decision in ["BLOCK", "TERMINATE"]
+        has_violation = (
+            result.get("violation_detected", False) or 
+            result.get("decision", "ALLOW") in ["BLOCK", "TERMINATE"]
+        )
         predictions.append(has_violation)
         labels.append(is_violation)
     
@@ -185,8 +184,14 @@ def test_ethics_benchmark_by_category(governance, dataset, metrics_calculator, c
     labels = []
     
     for action_text, is_violation in samples:
-        result = governance.process_action("benchmark_agent", action_text)
-        has_violation = len(result.violations) > 0 or result.decision in ["BLOCK", "TERMINATE"]
+        result = governance.process_action(
+            agent_id="benchmark_agent",
+            action=action_text
+        )
+        has_violation = (
+            result.get("violation_detected", False) or 
+            result.get("decision", "ALLOW") in ["BLOCK", "TERMINATE"]
+        )
         predictions.append(has_violation)
         labels.append(is_violation)
     
@@ -214,8 +219,14 @@ def test_generate_ethics_report(governance, dataset, metrics_calculator, tmp_pat
         labels = []
         
         for action_text, is_violation in samples:
-            result = governance.process_action("benchmark_agent", action_text)
-            has_violation = len(result.violations) > 0 or result.decision in ["BLOCK", "TERMINATE"]
+            result = governance.process_action(
+                agent_id="benchmark_agent",
+                action=action_text
+            )
+            has_violation = (
+                result.get("violation_detected", False) or 
+                result.get("decision", "ALLOW") in ["BLOCK", "TERMINATE"]
+            )
             predictions.append(has_violation)
             labels.append(is_violation)
         
@@ -228,8 +239,14 @@ def test_generate_ethics_report(governance, dataset, metrics_calculator, tmp_pat
     all_labels = []
     
     for category, action_text, is_violation in all_samples:
-        result = governance.process_action("benchmark_agent", action_text)
-        has_violation = len(result.violations) > 0 or result.decision in ["BLOCK", "TERMINATE"]
+        result = governance.process_action(
+            agent_id="benchmark_agent",
+            action=action_text
+        )
+        has_violation = (
+            result.get("violation_detected", False) or 
+            result.get("decision", "ALLOW") in ["BLOCK", "TERMINATE"]
+        )
         all_predictions.append(has_violation)
         all_labels.append(is_violation)
     
