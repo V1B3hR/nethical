@@ -1,0 +1,337 @@
+---
+# Istio Service Mesh Configuration for Nethical
+# Implements mTLS between all internal services
+
+# PeerAuthentication - Enforce strict mTLS
+apiVersion: security.istio.io/v1beta1
+kind: PeerAuthentication
+metadata:
+  name: default
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  mtls:
+    mode: STRICT
+
+---
+# DestinationRule - Configure mTLS for all services
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nethical-mtls
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  host: "*.nethical.svc.cluster.local"
+  trafficPolicy:
+    tls:
+      mode: ISTIO_MUTUAL
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+      http:
+        http1MaxPendingRequests: 100
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 2
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 30s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+
+---
+# AuthorizationPolicy - Default deny-all
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: default-deny-all
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  {}
+
+---
+# AuthorizationPolicy - Allow ingress to API
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-ingress-to-api
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  selector:
+    matchLabels:
+      app: nethical
+      component: api
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        namespaces: ["ingress-nginx"]
+    to:
+    - operation:
+        methods: ["GET", "POST", "PUT", "DELETE"]
+        paths: ["/api/*", "/health", "/metrics"]
+        ports: ["8000"]
+
+---
+# AuthorizationPolicy - Allow Nethical to Redis
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-nethical-to-redis
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  selector:
+    matchLabels:
+      app: redis
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/nethical/sa/nethical"]
+    to:
+    - operation:
+        ports: ["6379"]
+
+---
+# AuthorizationPolicy - Allow Nethical to PostgreSQL
+apiVersion: security.istio.io/v1beta1
+kind: AuthorizationPolicy
+metadata:
+  name: allow-nethical-to-db
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  selector:
+    matchLabels:
+      app: postgresql
+  action: ALLOW
+  rules:
+  - from:
+    - source:
+        principals: ["cluster.local/ns/nethical/sa/nethical"]
+    to:
+    - operation:
+        ports: ["5432"]
+
+---
+# RequestAuthentication - JWT validation at mesh level
+apiVersion: security.istio.io/v1beta1
+kind: RequestAuthentication
+metadata:
+  name: nethical-jwt
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  selector:
+    matchLabels:
+      app: nethical
+      component: api
+  jwtRules:
+  - issuer: "https://nethical.example.com"
+    jwksUri: "https://nethical.example.com/.well-known/jwks.json"
+    audiences:
+    - "nethical-api"
+    forwardOriginalToken: true
+
+---
+# VirtualService - Traffic management
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nethical-api
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  hosts:
+  - nethical.nethical.svc.cluster.local
+  http:
+  - match:
+    - uri:
+        prefix: "/api"
+    - uri:
+        prefix: "/health"
+    - uri:
+        prefix: "/metrics"
+    timeout: 30s
+    retries:
+      attempts: 3
+      perTryTimeout: 10s
+      retryOn: 5xx,reset,connect-failure,refused-stream
+    route:
+    - destination:
+        host: nethical.nethical.svc.cluster.local
+        port:
+          number: 8000
+      weight: 100
+    headers:
+      request:
+        add:
+          X-Request-ID: "%REQ(X-REQUEST-ID)%"
+      response:
+        add:
+          Strict-Transport-Security: "max-age=31536000; includeSubDomains"
+          X-Content-Type-Options: "nosniff"
+          X-Frame-Options: "DENY"
+          X-XSS-Protection: "1; mode=block"
+
+---
+# Gateway - Ingress gateway configuration
+apiVersion: networking.istio.io/v1beta1
+kind: Gateway
+metadata:
+  name: nethical-gateway
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  selector:
+    istio: ingressgateway
+  servers:
+  - port:
+      number: 443
+      name: https
+      protocol: HTTPS
+    tls:
+      mode: SIMPLE
+      credentialName: nethical-tls
+    hosts:
+    - "nethical.example.com"
+  - port:
+      number: 80
+      name: http
+      protocol: HTTP
+    hosts:
+    - "nethical.example.com"
+    tls:
+      httpsRedirect: true
+
+---
+# Sidecar - Resource optimization
+apiVersion: networking.istio.io/v1beta1
+kind: Sidecar
+metadata:
+  name: nethical-sidecar
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  workloadSelector:
+    labels:
+      app: nethical
+  egress:
+  - hosts:
+    - "./*"  # Same namespace
+    - "monitoring/*"  # Monitoring namespace
+    - "kube-system/*"  # DNS
+  outboundTrafficPolicy:
+    mode: REGISTRY_ONLY
+
+---
+# Telemetry - Enhanced observability
+apiVersion: telemetry.istio.io/v1alpha1
+kind: Telemetry
+metadata:
+  name: nethical-telemetry
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: service-mesh
+spec:
+  metrics:
+  - providers:
+    - name: prometheus
+    dimensions:
+      request_protocol: request.protocol | "unknown"
+      response_code: response.code | 0
+      source_workload: source.workload.name | "unknown"
+      destination_workload: destination.workload.name | "unknown"
+  accessLogging:
+  - providers:
+    - name: envoy
+  tracing:
+  - providers:
+    - name: zipkin
+    randomSamplingPercentage: 10.0
+    customTags:
+      environment:
+        literal:
+          value: "production"
+
+---
+# Alternative: Linkerd ServiceProfile
+# Uncomment if using Linkerd instead of Istio
+# apiVersion: linkerd.io/v1alpha2
+# kind: ServiceProfile
+# metadata:
+#   name: nethical.nethical.svc.cluster.local
+#   namespace: nethical
+# spec:
+#   routes:
+#   - name: GET /api/evaluate
+#     condition:
+#       method: GET
+#       pathRegex: /api/evaluate
+#     timeout: 30s
+#     retries:
+#       budget: 0.2
+#       limit: 3
+#   - name: POST /api/evaluate
+#     condition:
+#       method: POST
+#       pathRegex: /api/evaluate
+#     timeout: 30s
+#     isRetryable: false
+
+---
+# Alternative: Linkerd Server
+# Uncomment if using Linkerd instead of Istio
+# apiVersion: policy.linkerd.io/v1beta1
+# kind: Server
+# metadata:
+#   name: nethical-api
+#   namespace: nethical
+# spec:
+#   podSelector:
+#     matchLabels:
+#       app: nethical
+#       component: api
+#   port: 8000
+#   proxyProtocol: HTTP/1
+
+---
+# Alternative: Linkerd ServerAuthorization
+# Uncomment if using Linkerd instead of Istio
+# apiVersion: policy.linkerd.io/v1beta1
+# kind: ServerAuthorization
+# metadata:
+#   name: nethical-api-ingress
+#   namespace: nethical
+# spec:
+#   server:
+#     name: nethical-api
+#   client:
+#     meshTLS:
+#       serviceAccounts:
+#       - name: ingress-nginx
+#         namespace: ingress-nginx

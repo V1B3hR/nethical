@@ -1,0 +1,326 @@
+---
+# WAF Configuration for Nethical
+# Protects against prompt injection, payload size attacks, and common web vulnerabilities
+
+# ConfigMap with ModSecurity rules for NGINX Ingress
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-waf-rules
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: waf
+data:
+  # Custom ModSecurity rules for AI/LLM security
+  custom-modsec-rules.conf: |
+    # Enable ModSecurity
+    SecRuleEngine On
+    SecRequestBodyAccess On
+    SecResponseBodyAccess On
+    SecAuditEngine RelevantOnly
+    SecAuditLog /var/log/modsec_audit.log
+    
+    # Request body size limits
+    SecRequestBodyLimit 1048576
+    SecRequestBodyNoFilesLimit 131072
+    SecRequestBodyInMemoryLimit 131072
+    
+    # Response body size limits
+    SecResponseBodyLimit 524288
+    SecResponseBodyLimitAction Reject
+    
+    # ===================================
+    # Prompt Injection Detection Rules
+    # ===================================
+    
+    # Rule 1: Detect attempts to ignore previous instructions
+    SecRule REQUEST_BODY "@rx (?i)(ignore|disregard|forget|dismiss).{0,50}(previous|above|prior|earlier).{0,50}(instruction|prompt|rule|directive|command)" \
+        "id:1001,\
+        phase:2,\
+        block,\
+        t:none,t:lowercase,\
+        msg:'Prompt Injection Detected: Ignore Previous Instructions',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:CRITICAL,\
+        tag:'prompt-injection',\
+        tag:'OWASP_LLM01'"
+    
+    # Rule 2: Detect role manipulation attempts
+    SecRule REQUEST_BODY "@rx (?i)(you are now|act as|pretend to be|become|transform into).{0,50}(admin|root|superuser|developer|jailbreak)" \
+        "id:1002,\
+        phase:2,\
+        block,\
+        t:none,t:lowercase,\
+        msg:'Prompt Injection Detected: Role Manipulation',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:CRITICAL,\
+        tag:'prompt-injection',\
+        tag:'OWASP_LLM01'"
+    
+    # Rule 3: Detect system prompt extraction attempts
+    SecRule REQUEST_BODY "@rx (?i)(show|reveal|display|print|output).{0,50}(system prompt|initial prompt|instructions|configuration|settings)" \
+        "id:1003,\
+        phase:2,\
+        block,\
+        t:none,t:lowercase,\
+        msg:'Prompt Injection Detected: System Prompt Extraction',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:HIGH,\
+        tag:'prompt-injection',\
+        tag:'OWASP_LLM01'"
+    
+    # Rule 4: Detect delimiter/boundary confusion
+    SecRule REQUEST_BODY "@rx (?i)(---|===|###|\[SYSTEM\]|\[USER\]|\[ASSISTANT\]|<\|im_start\|>|<\|im_end\|>)" \
+        "id:1004,\
+        phase:2,\
+        block,\
+        t:none,\
+        msg:'Prompt Injection Detected: Delimiter Confusion',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:HIGH,\
+        tag:'prompt-injection',\
+        tag:'delimiter-attack'"
+    
+    # Rule 5: Detect jailbreak keywords
+    SecRule REQUEST_BODY "@rx (?i)(DAN|DUDE|jailbreak|evil mode|developer mode|god mode|bypass restrictions|no rules|without limitations)" \
+        "id:1005,\
+        phase:2,\
+        block,\
+        t:none,t:lowercase,\
+        msg:'Prompt Injection Detected: Jailbreak Attempt',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:CRITICAL,\
+        tag:'jailbreak',\
+        tag:'OWASP_LLM01'"
+    
+    # Rule 6: Detect encoding bypass attempts
+    SecRule REQUEST_BODY "@rx (?i)(base64|rot13|hex|unicode|urlencode|\\\\x[0-9a-f]{2}|%[0-9a-f]{2}){3,}" \
+        "id:1006,\
+        phase:2,\
+        deny,status:400,\
+        t:none,t:lowercase,\
+        msg:'Potential Encoding Bypass Detected',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:MEDIUM,\
+        tag:'encoding-bypass'"
+    
+    # Rule 7: Detect SQL injection patterns in prompts
+    SecRule REQUEST_BODY "@rx (?i)(union.*select|insert.*into|delete.*from|drop.*table|exec.*xp_cmdshell|';.*--)" \
+        "id:1007,\
+        phase:2,\
+        block,\
+        t:none,t:lowercase,\
+        msg:'SQL Injection Pattern Detected in Prompt',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:HIGH,\
+        tag:'sqli',\
+        tag:'OWASP_LLM02'"
+    
+    # Rule 8: Detect XSS patterns in prompts
+    SecRule REQUEST_BODY "@rx (?i)(<script|javascript:|onerror=|onload=|<iframe|<embed|<object)" \
+        "id:1008,\
+        phase:2,\
+        block,\
+        t:none,t:lowercase,\
+        msg:'XSS Pattern Detected in Prompt',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:HIGH,\
+        tag:'xss',\
+        tag:'OWASP_LLM02'"
+    
+    # Rule 9: Detect excessive repetition (token exhaustion attack)
+    SecRule REQUEST_BODY "@rx (.{20,})\1{10,}" \
+        "id:1009,\
+        phase:2,\
+        deny,status:400,\
+        t:none,\
+        msg:'Excessive Repetition Detected (Token Exhaustion Attack)',\
+        logdata:'Pattern length detected',\
+        severity:MEDIUM,\
+        tag:'resource-exhaustion',\
+        tag:'OWASP_LLM04'"
+    
+    # Rule 10: Detect PII extraction attempts
+    SecRule REQUEST_BODY "@rx (?i)(give me|show me|list|enumerate).{0,50}(credit card|ssn|social security|password|api key|secret|token|private key)" \
+        "id:1010,\
+        phase:2,\
+        block,\
+        t:none,t:lowercase,\
+        msg:'PII Extraction Attempt Detected',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:CRITICAL,\
+        tag:'pii-extraction',\
+        tag:'OWASP_LLM06'"
+    
+    # Rule 11: Rate limiting based on request patterns
+    SecAction "id:1011,\
+        phase:1,\
+        nolog,\
+        pass,\
+        initcol:ip=%{REMOTE_ADDR},\
+        setvar:ip.request_count=+1,\
+        expirevar:ip.request_count=60"
+    
+    SecRule IP:REQUEST_COUNT "@gt 100" \
+        "id:1012,\
+        phase:1,\
+        deny,status:429,\
+        msg:'Rate limit exceeded: %{ip.request_count} requests in 60 seconds',\
+        tag:'rate-limiting'"
+    
+    # Rule 12: Detect model manipulation attempts
+    SecRule REQUEST_BODY "@rx (?i)(temperature|top_p|max_tokens|frequency_penalty|presence_penalty).{0,20}([=:])\s*[0-9.]+" \
+        "id:1013,\
+        phase:2,\
+        deny,status:400,\
+        t:none,t:lowercase,\
+        msg:'Model Parameter Manipulation Detected',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:MEDIUM,\
+        tag:'model-manipulation'"
+    
+    # Rule 13: Detect context window exhaustion
+    SecRule REQUEST_BODY "@ge 100000" \
+        "id:1014,\
+        phase:2,\
+        deny,status:413,\
+        msg:'Request body too large (Context Window Exhaustion Attack)',\
+        severity:MEDIUM,\
+        tag:'resource-exhaustion'"
+    
+    # Rule 14: Detect Unicode/homograph attacks
+    SecRule REQUEST_BODY "@rx [\x{0400}-\x{04FF}\x{0370}-\x{03FF}]{5,}" \
+        "id:1015,\
+        phase:2,\
+        deny,status:400,\
+        t:none,\
+        msg:'Potential Homograph/Unicode Attack Detected',\
+        severity:MEDIUM,\
+        tag:'homograph-attack'"
+    
+    # Rule 15: Detect indirect prompt injection via URLs
+    SecRule REQUEST_BODY "@rx (?i)(fetch|curl|wget|download|load|import).{0,50}(http|https|ftp)://[^\s]+" \
+        "id:1016,\
+        phase:2,\
+        deny,status:400,\
+        t:none,t:lowercase,\
+        msg:'Indirect Prompt Injection via URL Detected',\
+        logdata:'Matched Data: %{MATCHED_VAR}',\
+        severity:HIGH,\
+        tag:'indirect-injection',\
+        tag:'OWASP_LLM01'"
+
+---
+# Ingress with WAF annotations
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nethical-waf
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: waf
+  annotations:
+    # Enable ModSecurity WAF
+    nginx.ingress.kubernetes.io/enable-modsecurity: "true"
+    nginx.ingress.kubernetes.io/enable-owasp-modsecurity-crs: "true"
+    nginx.ingress.kubernetes.io/modsecurity-snippet: |
+      Include /etc/nginx/modsecurity/custom-modsec-rules.conf
+      SecRuleEngine On
+    
+    # Request size limits
+    nginx.ingress.kubernetes.io/proxy-body-size: "1m"
+    nginx.ingress.kubernetes.io/client-body-buffer-size: "128k"
+    
+    # Rate limiting
+    nginx.ingress.kubernetes.io/limit-rps: "10"
+    nginx.ingress.kubernetes.io/limit-burst-multiplier: "2"
+    nginx.ingress.kubernetes.io/limit-connections: "20"
+    
+    # Timeout configuration
+    nginx.ingress.kubernetes.io/proxy-connect-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-send-timeout: "30"
+    nginx.ingress.kubernetes.io/proxy-read-timeout: "30"
+    
+    # Security headers
+    nginx.ingress.kubernetes.io/configuration-snippet: |
+      more_set_headers "X-Frame-Options: DENY";
+      more_set_headers "X-Content-Type-Options: nosniff";
+      more_set_headers "X-XSS-Protection: 1; mode=block";
+      more_set_headers "Referrer-Policy: strict-origin-when-cross-origin";
+      more_set_headers "Permissions-Policy: geolocation=(), microphone=(), camera=()";
+      more_set_headers "Content-Security-Policy: default-src 'self'; script-src 'self'; style-src 'self' 'unsafe-inline'; img-src 'self' data:;";
+      more_set_headers "Strict-Transport-Security: max-age=31536000; includeSubDomains; preload";
+    
+    # CORS (if needed)
+    nginx.ingress.kubernetes.io/enable-cors: "true"
+    nginx.ingress.kubernetes.io/cors-allow-methods: "GET, POST, PUT, DELETE, OPTIONS"
+    nginx.ingress.kubernetes.io/cors-allow-origin: "https://nethical.example.com"
+    nginx.ingress.kubernetes.io/cors-allow-credentials: "true"
+    
+    # TLS configuration
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/ssl-protocols: "TLSv1.2 TLSv1.3"
+    nginx.ingress.kubernetes.io/ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+spec:
+  ingressClassName: nginx
+  tls:
+  - hosts:
+    - nethical.example.com
+    secretName: nethical-tls
+  rules:
+  - host: nethical.example.com
+    http:
+      paths:
+      - path: /
+        pathType: Prefix
+        backend:
+          service:
+            name: nethical
+            port:
+              number: 8000
+
+---
+# ConfigMap for additional NGINX configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nginx-configuration
+  namespace: ingress-nginx
+  labels:
+    app.kubernetes.io/name: ingress-nginx
+    app.kubernetes.io/component: controller
+data:
+  # Global rate limiting
+  limit-rate: "100k"
+  limit-rate-after: "10m"
+  
+  # Connection limits
+  limit-req-status-code: "429"
+  
+  # Buffer sizes
+  client-body-buffer-size: "128k"
+  client-header-buffer-size: "1k"
+  large-client-header-buffers: "4 8k"
+  
+  # Timeouts
+  client-body-timeout: "30"
+  client-header-timeout: "30"
+  keepalive-timeout: "65"
+  send-timeout: "30"
+  
+  # Security
+  hide-headers: "Server,X-Powered-By"
+  ssl-protocols: "TLSv1.2 TLSv1.3"
+  ssl-ciphers: "ECDHE-ECDSA-AES128-GCM-SHA256:ECDHE-RSA-AES128-GCM-SHA256:ECDHE-ECDSA-AES256-GCM-SHA384:ECDHE-RSA-AES256-GCM-SHA384"
+  ssl-prefer-server-ciphers: "true"
+  
+  # ModSecurity
+  enable-modsecurity: "true"
+  enable-owasp-modsecurity-crs: "true"
+  
+  # Logging
+  log-format-upstream: '{"time": "$time_iso8601", "remote_addr": "$remote_addr", "request_id": "$req_id", "remote_user": "$remote_user", "bytes_sent": $bytes_sent, "request_time": $request_time, "status": $status, "host": "$host", "request_proto": "$server_protocol", "path": "$uri", "request_query": "$args", "request_length": $request_length, "method": "$request_method", "http_referrer": "$http_referer", "http_user_agent": "$http_user_agent", "upstream_addr": "$upstream_addr", "upstream_status": "$upstream_status", "upstream_response_time": "$upstream_response_time"}'

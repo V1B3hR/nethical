@@ -1,0 +1,297 @@
+---
+# Default Deny-All Network Policy
+# Implements zero-trust network segmentation
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: default-deny-all
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector: {}
+  policyTypes:
+  - Ingress
+  - Egress
+
+---
+# Allow DNS Resolution
+# Required for service discovery
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-dns-egress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector: {}
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    - podSelector:
+        matchLabels:
+          k8s-app: kube-dns
+    ports:
+    - protocol: UDP
+      port: 53
+    - protocol: TCP
+      port: 53
+
+---
+# Allow Ingress to Nethical API
+# Only from ingress controller
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nethical-api-ingress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: nethical
+      component: api
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: ingress-nginx
+      podSelector:
+        matchLabels:
+          app.kubernetes.io/name: ingress-nginx
+    ports:
+    - protocol: TCP
+      port: 8000
+
+---
+# Allow Egress to Redis
+# For caching and session storage
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nethical-redis-egress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: nethical
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: redis
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# Allow Egress to PostgreSQL
+# For database operations
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nethical-db-egress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: nethical
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: postgresql
+    ports:
+    - protocol: TCP
+      port: 5432
+
+---
+# Allow Internal API Communication
+# Between Nethical service pods
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nethical-internal-traffic
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: nethical
+  policyTypes:
+  - Ingress
+  - Egress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nethical
+    ports:
+    - protocol: TCP
+      port: 8000
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: nethical
+    ports:
+    - protocol: TCP
+      port: 8000
+
+---
+# Allow Egress to OpenTelemetry Collector
+# For observability and monitoring
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nethical-otel-egress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: nethical
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - podSelector:
+        matchLabels:
+          app: otel-collector
+    ports:
+    - protocol: TCP
+      port: 4318  # OTLP HTTP
+    - protocol: TCP
+      port: 4317  # OTLP gRPC
+
+---
+# Allow Egress to Prometheus
+# For metrics push
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nethical-prometheus-egress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: nethical
+  policyTypes:
+  - Egress
+  egress:
+  - to:
+    - namespaceSelector:
+        matchLabels:
+          name: monitoring
+      podSelector:
+        matchLabels:
+          app: prometheus
+    ports:
+    - protocol: TCP
+      port: 9090
+
+---
+# Redis Ingress Policy
+# Only from Nethical API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-ingress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: redis
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: redis
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nethical
+    ports:
+    - protocol: TCP
+      port: 6379
+
+---
+# PostgreSQL Ingress Policy
+# Only from Nethical API
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: postgresql-ingress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: postgresql
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: postgresql
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - podSelector:
+        matchLabels:
+          app: nethical
+    ports:
+    - protocol: TCP
+      port: 5432
+
+---
+# Allow Health Check Probes
+# Kubernetes liveness/readiness probes
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: allow-health-checks
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: network-security
+spec:
+  podSelector:
+    matchLabels:
+      app: nethical
+  policyTypes:
+  - Ingress
+  ingress:
+  - from:
+    - namespaceSelector:
+        matchLabels:
+          name: kube-system
+    ports:
+    - protocol: TCP
+      port: 8000

@@ -1,0 +1,241 @@
+name: Vulnerability SLA Enforcement
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+  push:
+    branches: [main, develop]
+    paths:
+      - 'requirements.txt'
+      - 'requirements-hashed.txt'
+      - 'pyproject.toml'
+      - 'package*.json'
+
+permissions:
+  contents: read
+  issues: write
+  security-events: write
+
+jobs:
+  scan-and-enforce-sla:
+    name: Scan Vulnerabilities and Enforce SLA
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Trivy
+        run: |
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install trivy
+      
+      - name: Scan filesystem for vulnerabilities
+        run: |
+          trivy fs --severity CRITICAL,HIGH --format json --output vulns.json . || true
+      
+      - name: Check vulnerability SLA compliance
+        id: sla_check
+        run: |
+          python scripts/check-vuln-sla.py vulns.json || echo "sla_breach=true" >> $GITHUB_OUTPUT
+        continue-on-error: true
+      
+      - name: Upload vulnerability report
+        uses: actions/upload-artifact@v4
+        with:
+          name: vulnerability-report
+          path: vulns.json
+        if: always()
+      
+      - name: Parse vulnerability counts
+        id: parse_vulns
+        run: |
+          CRITICAL=$(jq '[.Results[].Vulnerabilities[] | select(.Severity=="CRITICAL")] | length' vulns.json)
+          HIGH=$(jq '[.Results[].Vulnerabilities[] | select(.Severity=="HIGH")] | length' vulns.json)
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "high=$HIGH" >> $GITHUB_OUTPUT
+      
+      - name: Create or update SLA breach issue
+        if: steps.sla_check.outcome == 'failure'
+        uses: actions/github-script@v7
+        env:
+          CRITICAL_COUNT: ${{ steps.parse_vulns.outputs.critical }}
+          HIGH_COUNT: ${{ steps.parse_vulns.outputs.high }}
+        with:
+          script: |
+            const fs = require('fs');
+            const vulns = JSON.parse(fs.readFileSync('vulns.json', 'utf8'));
+            
+            // Find existing SLA breach issue
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['security', 'sla-breach'],
+              state: 'open'
+            });
+            
+            const critical = process.env.CRITICAL_COUNT || 0;
+            const high = process.env.HIGH_COUNT || 0;
+            
+            const body = `## 🚨 Vulnerability SLA Breach Detected
+            
+            **Critical vulnerabilities:** ${critical}
+            **High vulnerabilities:** ${high}
+            
+            ### SLA Policy
+            - Critical vulnerabilities must be resolved within 24 hours
+            - High vulnerabilities must be resolved within 72 hours
+            
+            ### Action Required
+            1. Review the vulnerability report in the workflow artifacts
+            2. Update affected dependencies or apply patches
+            3. Re-run the vulnerability scan to verify fixes
+            4. This issue will auto-close when SLA compliance is restored
+            
+            ### Scan Details
+            - **Workflow Run:** [#${context.runNumber}](${context.payload.repository.html_url}/actions/runs/${context.runId})
+            - **Commit:** ${context.sha.substring(0, 7)}
+            - **Branch:** ${context.ref.replace('refs/heads/', '')}
+            - **Timestamp:** ${new Date().toISOString()}
+            
+            ### Next Steps
+            Run \`python scripts/check-vuln-sla.py vulns.json\` locally for detailed analysis.
+            `;
+            
+            if (issues.data.length > 0) {
+              // Update existing issue
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: body
+              });
+              
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issues.data[0].number,
+                body: `🔄 SLA breach still detected in workflow run #${context.runNumber}`
+              });
+            } else {
+              // Create new issue
+              await github.rest.issues.create({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                title: '🚨 Vulnerability SLA Breach - Immediate Action Required',
+                body: body,
+                labels: ['security', 'sla-breach', 'priority:high']
+              });
+            }
+      
+      - name: Close SLA breach issue if resolved
+        if: steps.sla_check.outcome == 'success'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const issues = await github.rest.issues.listForRepo({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              labels: ['security', 'sla-breach'],
+              state: 'open'
+            });
+            
+            for (const issue of issues.data) {
+              await github.rest.issues.createComment({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                body: '✅ SLA compliance restored. All critical and high vulnerabilities have been addressed within SLA timelines.'
+              });
+              
+              await github.rest.issues.update({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                issue_number: issue.number,
+                state: 'closed'
+              });
+            }
+      
+      - name: Send Slack notification on SLA breach
+        if: steps.sla_check.outcome == 'failure' && secrets.SLACK_WEBHOOK_URL != ''
+        run: |
+          CRITICAL=${{ steps.parse_vulns.outputs.critical }}
+          HIGH=${{ steps.parse_vulns.outputs.high }}
+          
+          curl -X POST ${{ secrets.SLACK_WEBHOOK_URL }} \
+            -H 'Content-Type: application/json' \
+            -d "{
+              \"text\": \"🚨 Vulnerability SLA Breach\",
+              \"blocks\": [
+                {
+                  \"type\": \"header\",
+                  \"text\": {
+                    \"type\": \"plain_text\",
+                    \"text\": \"🚨 Vulnerability SLA Breach Detected\"
+                  }
+                },
+                {
+                  \"type\": \"section\",
+                  \"fields\": [
+                    {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"*Critical:*\n$CRITICAL vulnerabilities\"
+                    },
+                    {
+                      \"type\": \"mrkdwn\",
+                      \"text\": \"*High:*\n$HIGH vulnerabilities\"
+                    }
+                  ]
+                },
+                {
+                  \"type\": \"section\",
+                  \"text\": {
+                    \"type\": \"mrkdwn\",
+                    \"text\": \"*Repository:* ${{ github.repository }}\n*Branch:* ${{ github.ref_name }}\n*Run:* <${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}|#${{ github.run_number }}>\n\n⚠️ Immediate action required to maintain security posture.\"
+                  }
+                }
+              ]
+            }"
+        continue-on-error: true
+      
+      - name: Fail workflow if SLA breach
+        if: steps.sla_check.outcome == 'failure'
+        run: |
+          echo "::error::Vulnerability SLA breach detected. Please address critical/high vulnerabilities."
+          exit 1
+
+  container-scan:
+    name: Container Image Vulnerability Scan
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Build container image
+        run: |
+          docker build -t nethical:test .
+      
+      - name: Scan container image
+        run: |
+          docker run --rm -v /var/run/docker.sock:/var/run/docker.sock \
+            aquasec/trivy image --severity CRITICAL,HIGH --format json \
+            --output /tmp/container-vulns.json nethical:test || true
+      
+      - name: Check container vulnerability SLA
+        run: |
+          python scripts/check-vuln-sla.py /tmp/container-vulns.json
+        continue-on-error: true
+      
+      - name: Upload container vulnerability report
+        uses: actions/upload-artifact@v4
+        with:
+          name: container-vulnerability-report
+          path: /tmp/container-vulns.json
+        if: always()
