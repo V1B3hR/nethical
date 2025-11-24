@@ -264,11 +264,8 @@ class PluginTrustSystem:
         # Get plugin stats from community
         plugin_stats = self.community.get_plugin_stats(plugin_id)
         
-        # Get contributor stats if available
-        submissions = [
-            s for s in self.community._submissions.values()
-            if s.plugin_id == plugin_id
-        ]
+        # Get contributor stats if available using public API
+        submissions = self.community.list_submissions(plugin_id=plugin_id)
         
         if not submissions:
             logger.warning(f"No submission data for {plugin_id}, using minimal score")
