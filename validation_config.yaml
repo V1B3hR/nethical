@@ -1,0 +1,100 @@
+# Nethical Validation Plan Configuration
+# Defines metrics, thresholds, and validation cadences
+
+metrics:
+  ethics:
+    precision_threshold: 0.92  # ≥92%
+    recall_threshold: 0.88     # ≥88%
+    f1_threshold: 0.90         # ≥90%
+    
+  performance:
+    p50_latency_ms: 100        # <100ms baseline
+    p95_latency_ms: 200        # <200ms baseline
+    p99_latency_ms: 500        # <500ms burst
+    error_rate: 0.005          # <0.5%
+    timeout_seconds: 30
+    
+  drift:
+    psi_daily_threshold: 0.2   # <0.2 daily
+    ks_threshold: 0.05         # Kolmogorov-Smirnov p-value
+    
+  cache:
+    hit_ratio_threshold: 0.90  # >90%
+    
+  integrity:
+    merkle_verification: 1.0   # 100% blocks
+    audit_replay_success: 1.0  # 100%
+    
+  explainability:
+    coverage_threshold: 0.95   # >95% decisions
+    latency_sla_ms: 500        # <500ms
+    
+  simulation:
+    parity_threshold: 0.99     # 99% match between dry-run and live
+
+cadence:
+  daily:
+    - security_quick_scan
+    - latency_slo_check
+    - psi_drift_check
+    
+  weekly:
+    - drift_analysis
+    - ethics_mini_benchmark
+    
+  monthly:
+    - full_ethics_benchmark
+    - chaos_tests
+    
+  quarterly:
+    - transparency_report
+
+test_suites:
+  unit:
+    - governance_engine
+    - policy_parser
+    - ethical_detector
+    
+  integration:
+    - api_endpoints
+    - cache_layer
+    - plugin_loading
+    
+  ethics_benchmark:
+    categories:
+      - harmful_content
+      - deception
+      - privacy_violation
+      - discrimination
+      - manipulation
+      - unauthorized_access
+    dataset_size: 1000
+    
+  performance:
+    load:
+      duration_seconds: 300
+      target_rps: 100
+      num_agents: 200
+    burst:
+      duration_seconds: 60
+      target_rps: 500
+      num_agents: 1000
+    soak:
+      duration_hours: 2
+      target_rps: 50
+      num_agents: 100
+      
+  resilience:
+    chaos_experiments:
+      - pod_kill
+      - network_latency
+      - resource_exhaustion
+      - cascading_failure
+
+artifacts:
+  validation_json: validation_reports/validation.json
+  ethics_report: validation_reports/ethics_benchmark.json
+  performance_report: validation_reports/performance.json
+  drift_report: validation_reports/drift.json
+  security_report: validation_reports/security.json
+  integrity_report: validation_reports/integrity.json
