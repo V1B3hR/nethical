@@ -290,11 +290,4 @@ async def test_sustained_load_extended(governance, output_dir):
     assert stats['throughput_rps'] >= 15, f"Throughput too low: {stats['throughput_rps']:.2f} req/sec"
 
 
-def pytest_addoption(parser):
-    """Add custom command line options"""
-    parser.addoption(
-        "--run-extended",
-        action="store_true",
-        default=False,
-        help="Run extended/long-running tests"
-    )
+# Note: pytest_addoption is defined in tests/conftest.py

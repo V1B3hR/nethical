@@ -17,7 +17,7 @@ import tempfile
 import shutil
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any
+from typing import Dict, Any, Tuple
 
 
 class BackupRestoreMetrics:
@@ -127,7 +127,7 @@ class BackupRestoreEngine:
         self.simulation_mode = simulation_mode
         self.metrics = BackupRestoreMetrics()
     
-    async def create_backup(self, data_dir: Path, backup_dir: Path) -> tuple[bool, float]:
+    async def create_backup(self, data_dir: Path, backup_dir: Path) -> Tuple[bool, float]:
         """
         Create backup of data directory
         
@@ -189,7 +189,7 @@ class BackupRestoreEngine:
             })
             return False, elapsed
     
-    async def restore_backup(self, backup_dir: Path, restore_dir: Path) -> tuple[bool, float]:
+    async def restore_backup(self, backup_dir: Path, restore_dir: Path) -> Tuple[bool, float]:
         """
         Restore from backup
         

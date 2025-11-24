@@ -412,11 +412,4 @@ async def test_soak_2hour(governance, output_dir):
     assert success_pass, f"Success rate too low: {stats['success_rate']*100:.2f}%"
 
 
-def pytest_addoption(parser):
-    """Add custom command line options"""
-    parser.addoption(
-        "--run-soak",
-        action="store_true",
-        default=False,
-        help="Run 2-hour soak test"
-    )
+# Note: pytest_addoption is defined in tests/conftest.py

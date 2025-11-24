@@ -13,6 +13,11 @@ from datetime import datetime
 from typing import Dict, Any, List
 
 
+# Constants
+BUDGET_THRESHOLD_USD = 50.00  # Monthly budget threshold
+BUDGET_THRESHOLD_WARNING_PCT = 0.1  # Warn if cost exceeds 10% of threshold
+
+
 class StorageProjection:
     """Calculate storage projections"""
     
@@ -319,8 +324,8 @@ def test_budget_threshold(projection, cost_structure, output_dir):
     print(f"\nCost report saved: {cost_file}")
     
     # Validate well under budget
-    assert final_cost < budget_threshold * 0.1, \
-        f"Month 12 cost too high: ${final_cost:.2f} (threshold: ${budget_threshold:.2f})"
+    assert final_cost < budget_threshold * BUDGET_THRESHOLD_WARNING_PCT, \
+        f"Month 12 cost too high: ${final_cost:.2f} (expected < ${budget_threshold * BUDGET_THRESHOLD_WARNING_PCT:.2f})"
     
     print(f"\n✅ Budget threshold validated (${final_cost:.2f} < ${budget_threshold:.2f})")
 

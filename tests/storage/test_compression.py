@@ -133,39 +133,67 @@ class CompressionMetrics:
 
 
 def compress_lz4_simulated(data: bytes) -> bytes:
-    """Simulate LZ4 compression (2:1 ratio)"""
-    # LZ4 typically achieves 2:1 for text data
-    # Simulate by taking first half of gzip output
+    """
+    Simulate LZ4 compression (2:1 ratio)
+    
+    Note: This creates a synthetic compressed representation with target ratio.
+    In production, use actual LZ4 library. This is for testing compression
+    ratio calculations.
+    """
+    # Use gzip for realistic compression, then pad to achieve target 2:1 ratio
     compressed = gzip.compress(data, compresslevel=1)
-    # Adjust to simulate 2:1 ratio
     target_size = len(data) // 2
-    return compressed[:target_size] if len(compressed) > target_size else compressed
+    
+    # Pad or truncate to achieve target ratio for testing
+    if len(compressed) > target_size:
+        # Add marker to indicate this is test data
+        return b'LZ4_SIM:' + compressed[:target_size - 8]
+    else:
+        # Pad with zeros to simulate target ratio
+        return compressed + b'\x00' * (target_size - len(compressed))
 
 
 def compress_zstd_simulated(data: bytes, level: int = 3) -> bytes:
-    """Simulate ZSTD compression"""
-    # ZSTD level 3 typically achieves 4-6:1 for text data
-    # Simulate using zlib with appropriate compression
+    """
+    Simulate ZSTD compression
+    
+    Note: This creates a synthetic compressed representation with target ratio.
+    In production, use actual zstandard library.
+    """
     if level <= 5:
         # Normal ZSTD (5:1)
         compressed = zlib.compress(data, level=6)
         target_size = len(data) // 5
+        marker = b'ZSTD_SIM:'
     else:
         # Max ZSTD (10:1)
         compressed = zlib.compress(data, level=9)
         target_size = len(data) // 10
+        marker = b'ZSTD_MAX:'
     
-    return compressed[:target_size] if len(compressed) > target_size else compressed
+    # Adjust to target size
+    if len(compressed) > target_size:
+        return marker + compressed[:target_size - len(marker)]
+    else:
+        return compressed + b'\x00' * (target_size - len(compressed))
 
 
 def compress_lzma_simulated(data: bytes) -> bytes:
-    """Simulate LZMA compression (15:1 ratio)"""
+    """
+    Simulate LZMA compression (15:1 ratio)
+    
+    Note: This creates a synthetic compressed representation with target ratio.
+    In production, use actual lzma library.
+    """
     import lzma
-    # LZMA can achieve very high compression ratios
     compressed = lzma.compress(data, preset=9)
-    # Adjust to simulate 15:1 ratio
     target_size = len(data) // 15
-    return compressed[:target_size] if len(compressed) > target_size else compressed
+    
+    # Adjust to target size
+    if len(compressed) > target_size:
+        return b'LZMA_SIM:' + compressed[:target_size - 9]
+    else:
+        return compressed + b'\x00' * (target_size - len(compressed))
 
 
 @pytest.fixture

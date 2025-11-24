@@ -18,7 +18,7 @@ import time
 import json
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Tuple
 import subprocess
 
 
@@ -162,7 +162,7 @@ class ChaosEngine:
                 })
                 return False
     
-    async def check_pod_ready(self, namespace: str, label_selector: str, timeout: int = 60) -> tuple[bool, float]:
+    async def check_pod_ready(self, namespace: str, label_selector: str, timeout: int = 60) -> Tuple[bool, float]:
         """
         Check if pod with label selector is ready
         
@@ -238,7 +238,7 @@ class ChaosEngine:
             })
             return False, elapsed
     
-    async def simulate_region_failover(self) -> tuple[bool, float]:
+    async def simulate_region_failover(self) -> Tuple[bool, float]:
         """
         Simulate region failover
         
