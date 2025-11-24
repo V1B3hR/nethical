@@ -124,7 +124,14 @@ class SafetyJudge(BaseJudge):
     ) -> str:
         """Generate reasoning for the judgment decision."""
         if not violations:
-            return "No violations detected. Action approved."
+            # Enhanced reasoning for ALLOW decisions with no violations
+            reasoning_parts = [
+                "No safety, ethical, or policy violations detected.",
+                f"Risk score: {risk_score:.2f} (within acceptable thresholds).",
+                "Action approved for execution.",
+                "Continued monitoring in place to ensure ongoing compliance."
+            ]
+            return " ".join(reasoning_parts)
 
         violation_summary = self._summarize_violations(violations)
 
