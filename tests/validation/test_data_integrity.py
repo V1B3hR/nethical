@@ -299,13 +299,12 @@ def test_integrity_with_merkle_anchor(merkle_anchor):
     roots = []
     for data in test_data:
         data_json = json.dumps(data, sort_keys=True)
-        # Use add_event instead of anchor
-        merkle_anchor.add_event(data_json)
-    
-    # Finalize to get root
-    root = merkle_anchor.finalize_chunk()
-    if root:
-        roots.append(root)
+        # Use add_event to add the data
+        merkle_anchor.add_event(data)
+        # Finalize to get root for this data
+        root = merkle_anchor.finalize_chunk()
+        if root:
+            roots.append(root)
     
     print(f"\nMerkle Anchor Integrity Test:")
     print(f"  Blocks Anchored: {len(roots)}")

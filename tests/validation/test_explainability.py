@@ -23,6 +23,27 @@ class ExplainabilityValidator:
     """Validate explainability coverage and quality"""
     
     @staticmethod
+    def extract_violation_types(violations: List) -> List[str]:
+        """
+        Extract violation types from violations list that may contain dicts or objects
+        
+        Args:
+            violations: List of violations (can be dicts or objects)
+            
+        Returns:
+            List of violation type strings
+        """
+        violation_types = []
+        for v in violations:
+            if isinstance(v, dict):
+                violation_types.append(v.get("violation_type", "unknown"))
+            elif hasattr(v, 'violation_type'):
+                violation_types.append(v.violation_type)
+            else:
+                violation_types.append(str(v))
+        return violation_types
+    
+    @staticmethod
     def check_explanation_coverage(actions: List[AgentAction], 
                                    governance: IntegratedGovernance) -> Dict:
         """
@@ -237,7 +258,7 @@ def test_explanation_quality(governance, validator):
         reasoning = result.get("reasoning", "")
         violations = result.get("violations", [])
         if not reasoning and violations:
-            violation_types = [v.get("violation_type", "unknown") if isinstance(v, dict) else str(v) for v in violations]
+            violation_types = validator.extract_violation_types(violations)
             reasoning = f"Violations detected: {', '.join(violation_types)}"
         
         quality = validator.validate_explanation_quality(reasoning)
