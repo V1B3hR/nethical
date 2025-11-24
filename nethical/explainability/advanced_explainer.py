@@ -54,6 +54,16 @@ class CounterfactualExplanation:
 class AdvancedExplainer:
     """Advanced explainability tools for governance decisions."""
     
+    # Constants for maintainability
+    SHAP_SCALING_FACTOR = 2.0  # Scale factor for SHAP value normalization
+    MAX_VIOLATIONS_FOR_NORMALIZATION = 5.0  # Cap for violation count normalization
+    
+    # Impact thresholds for visualization color coding
+    HIGH_RISK_THRESHOLD = 0.15  # Red: Strong risk contribution
+    MEDIUM_RISK_THRESHOLD = 0.05  # Orange: Moderate risk contribution
+    MEDIUM_SAFETY_THRESHOLD = -0.05  # Light green: Moderate safety signal
+    HIGH_SAFETY_THRESHOLD = -0.15  # Green: Strong safety signal
+    
     def __init__(self):
         """Initialize the advanced explainer."""
         # Feature weights for importance calculation
@@ -148,10 +158,10 @@ class AdvancedExplainer:
             # For other features, compare to baseline 0.5
             if feature_name == "violation_count":
                 # Violations always contribute to risk (no negative baseline comparison)
-                shap_value = normalized_value * weight * 2
+                shap_value = normalized_value * weight * self.SHAP_SCALING_FACTOR
             else:
                 # SHAP value is the contribution relative to baseline
-                shap_value = (normalized_value - 0.5) * weight * 2  # Scale to meaningful range
+                shap_value = (normalized_value - 0.5) * weight * self.SHAP_SCALING_FACTOR
             
             shap_values[feature_name] = shap_value
         
@@ -375,8 +385,8 @@ class AdvancedExplainer:
             Normalized value between 0 and 1
         """
         if feature_name == "violation_count":
-            # Cap at 5 violations for normalization
-            return min(value / 5.0, 1.0)
+            # Cap at MAX_VIOLATIONS_FOR_NORMALIZATION for normalization
+            return min(value / self.MAX_VIOLATIONS_FOR_NORMALIZATION, 1.0)
         elif feature_name in ["risk_score", "pii_risk", "ethical_score", "quota_pressure"]:
             # Already in 0-1 range
             return min(max(value, 0.0), 1.0)
@@ -492,13 +502,13 @@ class AdvancedExplainer:
         Returns:
             Color name or hex code
         """
-        if impact > 0.15:
+        if impact > self.HIGH_RISK_THRESHOLD:
             return "red"  # High risk contribution
-        elif impact > 0.05:
+        elif impact > self.MEDIUM_RISK_THRESHOLD:
             return "orange"  # Medium risk contribution
-        elif impact < -0.15:
+        elif impact < self.HIGH_SAFETY_THRESHOLD:
             return "green"  # Strong safety signal
-        elif impact < -0.05:
+        elif impact < self.MEDIUM_SAFETY_THRESHOLD:
             return "lightgreen"  # Medium safety signal
         else:
             return "gray"  # Neutral

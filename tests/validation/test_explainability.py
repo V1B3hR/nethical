@@ -469,8 +469,8 @@ def test_generate_explainability_report(governance, validator, tmp_path):
         "average_ms": avg_latency_ms,
         "p95_ms": p95_latency,
         "p99_ms": p99_latency,
-        "sla_met": latency_threshold_met,
-        "threshold_met": latency_threshold_met  # Add for consistent compliance checking
+        "sla_met": latency_threshold_met,  # Domain-specific field for latency tests
+        "threshold_met": latency_threshold_met  # Unified field for overall compliance checking
     }
     
     # Test quality
