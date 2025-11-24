@@ -1,0 +1,88 @@
+(* Nethical Policy Language Grammar (EBNF)
+   This grammar defines the structure of policy rules for the Nethical governance system.
+   Policies are typically authored in YAML but follow this formal structure.
+*)
+
+(* Root Policy Structure *)
+policy = metadata, defaults?, rules, region_overlays? ;
+
+metadata = "metadata:", name, version, description? ;
+name = "name:", string ;
+version = "version:", semantic_version ;
+description = "description:", string ;
+
+defaults = "defaults:", default_decision, deny_overrides?, strict? ;
+default_decision = "decision:", decision_value ;
+deny_overrides = "deny_overrides:", boolean ;
+strict = "strict:", boolean ;
+
+(* Rules *)
+rules = "rules:", rule_list ;
+rule_list = rule, { rule } ;
+
+rule = rule_metadata, condition, action, halt_on_match? ;
+
+rule_metadata = "id:", identifier, 
+                "enabled:", boolean,
+                "priority:", integer ;
+
+condition = "when:", ( simple_condition | compound_condition ) ;
+
+simple_condition = comparison_expr | existence_expr | regex_expr ;
+
+compound_condition = all_condition | any_condition | not_condition ;
+all_condition = "all:", "[", condition_list, "]" ;
+any_condition = "any:", "[", condition_list, "]" ;
+not_condition = "not:", condition ;
+condition_list = condition, { ",", condition } ;
+
+(* Expressions *)
+comparison_expr = path, operator, value ;
+existence_expr = "exists:", path | "missing:", path ;
+regex_expr = path, "matches:", regex_pattern ;
+
+operator = "==" | "!=" | ">" | ">=" | "<" | "<=" | "in" | "contains" | "startswith" | "endswith" ;
+
+path = identifier, { ".", ( identifier | array_index ) } ;
+array_index = "[", integer, "]" ;
+
+(* Actions *)
+action = "action:", decision_action, add_disclaimer?, escalate?, tags? ;
+decision_action = "decision:", decision_value ;
+add_disclaimer = "add_disclaimer:", ( string | string_list ) ;
+escalate = "escalate:", ( boolean | string ) ;
+tags = "tags:", string_list ;
+
+halt_on_match = "halt_on_match:", boolean ;
+
+(* Region Overlays *)
+region_overlays = "region_overlays:", region_map ;
+region_map = region_entry, { region_entry } ;
+region_entry = region_name, ":", overlay_spec ;
+overlay_spec = defaults? | rules? ;
+
+(* Decision Values *)
+decision_value = "ALLOW" | "DENY" | "RESTRICT" | "WARN" | "AUDIT" | "QUARANTINE" ;
+
+(* Regions *)
+region_name = "US" | "EU" | "APAC" | "GLOBAL" | identifier ;
+
+(* Primitive Types *)
+identifier = letter, { letter | digit | "_" } ;
+string = '"', { character }, '"' ;
+string_list = "[", string, { ",", string }, "]" ;
+integer = digit, { digit } ;
+boolean = "true" | "false" ;
+semantic_version = integer, ".", integer, ".", integer ;
+regex_pattern = string ;
+
+letter = "a" | "b" | "c" | "d" | "e" | "f" | "g" | "h" | "i" | "j" | "k" | "l" | "m" |
+         "n" | "o" | "p" | "q" | "r" | "s" | "t" | "u" | "v" | "w" | "x" | "y" | "z" |
+         "A" | "B" | "C" | "D" | "E" | "F" | "G" | "H" | "I" | "J" | "K" | "L" | "M" |
+         "N" | "O" | "P" | "Q" | "R" | "S" | "T" | "U" | "V" | "W" | "X" | "Y" | "Z" ;
+
+digit = "0" | "1" | "2" | "3" | "4" | "5" | "6" | "7" | "8" | "9" ;
+
+character = letter | digit | " " | "!" | "#" | "$" | "%" | "&" | "'" | "(" | ")" |
+            "*" | "+" | "," | "-" | "." | "/" | ":" | ";" | "<" | "=" | ">" | "?" |
+            "@" | "[" | "\\" | "]" | "^" | "_" | "`" | "{" | "|" | "}" | "~" ;
