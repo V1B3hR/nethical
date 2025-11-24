@@ -229,7 +229,7 @@ This comprehensive checklist ensures Nethical meets world-class operational, sec
 
 This checklist integrates with:
 
-- **[Validation Plan](./Validation_plan.md)**: References test suites, metrics, and cadence defined in validation plan
+- **[Validation Plan](../VALIDATION_PLAN.md)**: References test suites, metrics, and cadence defined in validation plan
 - **[Security Hardening Guide](./SECURITY_HARDENING_GUIDE.md)**: Security items detail-mapped to hardening controls
 - **[Ethics Validation Framework](./ETHICS_VALIDATION_FRAMEWORK.md)**: Ethics/safety items reference validation methodology
 - **[Benchmark Plan](./BENCHMARK_PLAN.md)**: Performance items tied to benchmark scenarios and acceptance criteria
