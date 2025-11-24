@@ -13,10 +13,19 @@ Thresholds:
 
 import pytest
 import time
+import logging
 from typing import Dict, List
 import json
+from datetime import datetime
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.core.models import AgentAction
+
+# Configure logging for detailed diagnostics
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 class ExplainabilityValidator:
@@ -152,6 +161,10 @@ def validator():
 
 def test_explanation_coverage(governance, validator):
     """Test that >95% of decisions have explanations"""
+    logger.info("=" * 80)
+    logger.info("EXPLAINABILITY TEST - Coverage")
+    logger.info("=" * 80)
+    
     # Create diverse test actions
     test_actions = [
         AgentAction(
@@ -184,15 +197,56 @@ def test_explanation_coverage(governance, validator):
         ])
     ]
     
+    logger.info(f"Testing explanation coverage with {len(test_actions)} diverse actions")
+    
     result = validator.check_explanation_coverage(test_actions, governance)
+    
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  Total Actions: {result['total_actions']}")
+    logger.info(f"  Explained Actions: {result['explained_actions']}")
+    logger.info(f"  Coverage: {result['coverage']:.2%} (threshold: >95%)")
+    logger.info(f"  Average Latency: {result['average_latency'] * 1000:.2f}ms")
+    logger.info(f"  Min Latency: {min(result['latencies']) * 1000:.2f}ms" if result['latencies'] else "  N/A")
+    logger.info(f"  Max Latency: {max(result['latencies']) * 1000:.2f}ms" if result['latencies'] else "  N/A")
+    
+    if result['missing_explanations']:
+        logger.warning(f"\n{len(result['missing_explanations'])} actions without explanations:")
+        for action_id in result['missing_explanations'][:10]:
+            logger.warning(f"  - {action_id}")
     
     print(f"\nExplanation Coverage Test:")
     print(f"  Total Actions: {result['total_actions']}")
     print(f"  Explained Actions: {result['explained_actions']}")
-    print(f"  Coverage: {result['coverage']:.2%}")
+    print(f"  Coverage: {result['coverage']:.2%} {'✓' if result['coverage'] > 0.95 else '✗'}")
     print(f"  Average Latency: {result['average_latency'] * 1000:.2f}ms")
+    print(f"  Missing Explanations: {len(result['missing_explanations'])}")
     
-    assert result["coverage"] > 0.95, f"Coverage {result['coverage']:.2%} below 95% threshold"
+    if result["coverage"] <= 0.95:
+        logger.error("=" * 80)
+        logger.error("COVERAGE THRESHOLD NOT MET")
+        logger.error("=" * 80)
+        logger.error(f"Coverage {result['coverage']:.2%} below 95% threshold")
+        logger.error(f"Missing explanations for {len(result['missing_explanations'])} actions")
+        logger.error("\nDebugging steps:")
+        logger.error("1. Review actions missing explanations (listed above)")
+        logger.error("2. Check governance decision logic for explanation generation")
+        logger.error("3. Verify all code paths return reasoning or explanation")
+        logger.error("4. Ensure violation_detected flag is properly set")
+        logger.error("5. Review IntegratedGovernance.process_action() return structure")
+        logger.error("\nTo reproduce specific action:")
+        if result['missing_explanations']:
+            logger.error(f"  action_id = '{result['missing_explanations'][0]}'")
+            logger.error("  result = governance.process_action(agent_id='test', action=action)")
+            logger.error("  print(result)")
+    
+    assert result["coverage"] > 0.95, (
+        f"Coverage {result['coverage']:.2%} below 95% threshold.\n"
+        f"  Explained: {result['explained_actions']}/{result['total_actions']}\n"
+        f"  Missing explanations: {len(result['missing_explanations'])} actions\n"
+        f"  Sample missing: {result['missing_explanations'][:3]}\n"
+        f"  Review logs above for detailed analysis"
+    )
 
 
 def test_explanation_latency_sla(governance, validator):

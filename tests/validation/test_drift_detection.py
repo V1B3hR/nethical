@@ -12,10 +12,18 @@ Thresholds:
 
 import pytest
 import numpy as np
+import logging
 from scipy import stats
 from typing import List, Dict, Tuple
 import json
 from datetime import datetime, timedelta
+
+# Configure logging for detailed diagnostics
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 class DriftDetector:
@@ -152,18 +160,52 @@ def simulator():
 
 def test_psi_no_drift(detector, simulator):
     """Test PSI with no drift"""
+    logger.info("=" * 80)
+    logger.info("DRIFT DETECTION TEST - No Drift Expected")
+    logger.info("=" * 80)
+    
     reference = simulator.generate_baseline_distribution()
     current = simulator.generate_similar_distribution()
     
+    logger.info(f"Reference distribution: mean={reference.mean():.4f}, std={reference.std():.4f}, size={len(reference)}")
+    logger.info(f"Current distribution: mean={current.mean():.4f}, std={current.std():.4f}, size={len(current)}")
+    
     result = detector.detect_drift(reference, current)
     
-    print(f"\nNo Drift Test:")
-    print(f"  PSI: {result['psi']:.4f}")
-    print(f"  KS p-value: {result['ks_p_value']:.4f}")
-    print(f"  Drift Detected: {result['drift_detected']}")
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  PSI: {result['psi']:.4f} (threshold: <0.2)")
+    logger.info(f"  KS Statistic: {result['ks_statistic']:.4f}")
+    logger.info(f"  KS p-value: {result['ks_p_value']:.4f} (threshold: >0.05)")
+    logger.info(f"  PSI Drift: {'YES' if result['psi_drift'] else 'NO'}")
+    logger.info(f"  KS Drift: {'YES' if result['ks_drift'] else 'NO'}")
+    logger.info(f"  Overall Drift: {'DETECTED' if result['drift_detected'] else 'NOT DETECTED'}")
     
-    assert result["psi"] < 0.2, f"PSI {result['psi']:.4f} exceeds threshold"
-    assert not result["drift_detected"], "Drift incorrectly detected"
+    print(f"\nNo Drift Test:")
+    print(f"  PSI: {result['psi']:.4f} {'✓' if result['psi'] < 0.2 else '✗'}")
+    print(f"  KS p-value: {result['ks_p_value']:.4f} {'✓' if result['ks_p_value'] > 0.05 else '✗'}")
+    print(f"  Drift Detected: {result['drift_detected']} {'✓ (correct)' if not result['drift_detected'] else '✗ (false positive)'}")
+    
+    if result["drift_detected"]:
+        logger.error("FALSE POSITIVE: Drift detected when none expected")
+        logger.error("Reproduction steps:")
+        logger.error("1. Check that both distributions use same parameters")
+        logger.error("2. Verify random seed differences are minimal")
+        logger.error("3. Review PSI and KS threshold values")
+        logger.error(f"4. Current PSI={result['psi']:.4f}, KS p-value={result['ks_p_value']:.4f}")
+    
+    assert result["psi"] < 0.2, (
+        f"PSI {result['psi']:.4f} exceeds threshold of 0.2.\n"
+        f"  This indicates false positive drift detection.\n"
+        f"  Expected: PSI < 0.2 for similar distributions\n"
+        f"  Reference mean: {reference.mean():.4f}, Current mean: {current.mean():.4f}"
+    )
+    assert not result["drift_detected"], (
+        f"Drift incorrectly detected (false positive).\n"
+        f"  PSI: {result['psi']:.4f}, KS p-value: {result['ks_p_value']:.4f}\n"
+        f"  Both distributions should be similar\n"
+        f"  Check threshold sensitivity"
+    )
 
 
 def test_psi_moderate_drift(detector, simulator):

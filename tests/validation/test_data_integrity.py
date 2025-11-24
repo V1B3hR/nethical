@@ -14,11 +14,19 @@ Thresholds:
 import pytest
 import hashlib
 import json
+import logging
 from typing import List, Dict, Tuple
 from datetime import datetime
 from nethical.core.audit_merkle import MerkleAnchor
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.core.models import AgentAction
+
+# Configure logging for detailed diagnostics
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 class IntegrityValidator:
@@ -174,10 +182,15 @@ def merkle_anchor():
 
 def test_merkle_chain_continuity(integrity_validator, merkle_anchor):
     """Test Merkle chain continuity validation"""
+    logger.info("=" * 80)
+    logger.info("DATA INTEGRITY TEST - Merkle Chain Continuity")
+    logger.info("=" * 80)
+    
     # Create sample audit trail
     audit_trail = []
     previous_root = None
     
+    logger.info("Creating test audit trail with 10 blocks")
     for i in range(10):
         entry = {
             "block_id": i,
@@ -191,18 +204,56 @@ def test_merkle_chain_continuity(integrity_validator, merkle_anchor):
         
         audit_trail.append(entry)
         previous_root = entry["merkle_root"]
+        logger.debug(f"  Block {i}: root={entry['merkle_root'][:16]}...")
     
     # Verify chain
+    logger.info("Verifying chain integrity...")
     result = integrity_validator.verify_merkle_chain(audit_trail)
+    
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  Total Blocks: {result['total_blocks']}")
+    logger.info(f"  Verified Blocks: {result['verified_blocks']}")
+    logger.info(f"  Verification Rate: {result['verification_rate']:.2%} (threshold: 100%)")
+    logger.info(f"  Chain Valid: {result['chain_valid']}")
+    
+    if result['issues']:
+        logger.error(f"\n{len(result['issues'])} issues found:")
+        for issue in result['issues']:
+            logger.error(f"  - {issue}")
     
     print(f"\nMerkle Chain Continuity Test:")
     print(f"  Total Blocks: {result['total_blocks']}")
     print(f"  Verified Blocks: {result['verified_blocks']}")
-    print(f"  Verification Rate: {result['verification_rate']:.2%}")
-    print(f"  Chain Valid: {result['chain_valid']}")
+    print(f"  Verification Rate: {result['verification_rate']:.2%} {'✓' if result['verification_rate'] == 1.0 else '✗'}")
+    print(f"  Chain Valid: {result['chain_valid']} {'✓' if result['chain_valid'] else '✗'}")
     
-    assert result["verification_rate"] == 1.0, "Not all blocks verified"
-    assert result["chain_valid"], "Chain integrity compromised"
+    if not result['chain_valid']:
+        logger.error("=" * 80)
+        logger.error("CHAIN INTEGRITY COMPROMISED")
+        logger.error("=" * 80)
+        logger.error("Issues detected in Merkle chain:")
+        for issue in result['issues']:
+            logger.error(f"  {issue}")
+        logger.error("\nDebugging steps:")
+        logger.error("1. Review the specific blocks listed in issues above")
+        logger.error("2. Check merkle root generation logic")
+        logger.error("3. Verify chain linkage (previous_root references)")
+        logger.error("4. Ensure no tampering in audit trail")
+        logger.error("\nTo reproduce:")
+        logger.error("  pytest tests/validation/test_data_integrity.py::test_merkle_chain_continuity -v -s")
+    
+    assert result["verification_rate"] == 1.0, (
+        f"Not all blocks verified: {result['verified_blocks']}/{result['total_blocks']}\n"
+        f"  Issues: {result['issues']}\n"
+        f"  This indicates problems in Merkle root generation or validation"
+    )
+    assert result["chain_valid"], (
+        f"Chain integrity compromised.\n"
+        f"  Issues found: {len(result['issues'])}\n"
+        f"  Details: {result['issues']}\n"
+        f"  Review audit trail for tampering or corruption"
+    )
 
 
 def test_merkle_chain_break_detection(integrity_validator):
