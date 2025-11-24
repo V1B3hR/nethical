@@ -83,14 +83,17 @@ locust -f scripts/benchmark/locust/agent_scenarios.py \
 
 **Purpose**: Policy-specific evaluation and complex workflow testing.
 
+**Note**: See `tests/validation/test_performance_validation.py` for actual performance testing implementation.
+
 **Features**:
 - Policy impact measurement
 - Multi-step decision flows
 - Custom metrics (cache hit, policy evaluation time)
 - Integration with Nethical internals
 
-**Usage**:
+**Usage** (Example):
 ```bash
+# Reference implementation - adapt to your testing needs
 python scripts/benchmark/policy_impact.py \
   --policy-file policies/production_v1.yaml \
   --scenario escalation_surge \
@@ -174,6 +177,8 @@ spec:
 
 **Objective**: Establish performance baseline under normal operating conditions.
 
+**Note**: The following scenarios are reference implementations. Actual benchmark scripts should be created in `scripts/benchmark/` directory. See existing workflows in `.github/workflows/performance.yml` and `performance-regression.yml` for current performance testing approach.
+
 **Profile**:
 - **RPS**: 1,000 requests/second
 - **Duration**: 30 minutes
@@ -181,7 +186,7 @@ spec:
 - **Payload**: 1KB average (typical agent action context)
 - **Cache State**: Warm (90% hit ratio target)
 
-**k6 Script**:
+**k6 Script** (Reference Example):
 
 ```javascript
 // scripts/benchmark/k6/baseline_test.js
@@ -257,10 +262,10 @@ export default function () {
 - **Payload**: 10KB average (large text with potential PII)
 - **Detection Load**: High (multiple PII types per request)
 
-**Locust Script**:
+**Locust Script** (Reference Example):
 
 ```python
-# scripts/benchmark/locust/pii_heavy.py
+# Example: scripts/benchmark/locust/pii_heavy.py
 from locust import HttpUser, task, between
 import json
 import random
@@ -325,10 +330,10 @@ class PIIHeavyUser(HttpUser):
   - 5% audit log query
 - **Payload**: Variable (0.5KB - 10KB)
 
-**k6 Script**:
+**k6 Script** (Reference Example):
 
 ```javascript
-// scripts/benchmark/k6/mixed_traffic.js
+// Example: scripts/benchmark/k6/mixed_traffic.js
 import http from 'k6/http';
 import { check } from 'k6';
 import { SharedArray } from 'k6/data';
@@ -426,10 +431,10 @@ export function queryAudit() {
 - **Queue Depth**: 0 → 5,000+ items
 - **Reviewer Actions**: 10 concurrent reviewers processing queue
 
-**Custom Harness**:
+**Custom Harness** (Reference Example):
 
 ```python
-# scripts/benchmark/escalation_surge.py
+# Example: scripts/benchmark/escalation_surge.py
 import asyncio
 import aiohttp
 import time
@@ -536,10 +541,10 @@ if __name__ == '__main__':
   - 15% download/install simulation
 - **Catalog Size**: 10,000+ plugins
 
-**k6 Script**:
+**k6 Script** (Reference Example):
 
 ```javascript
-// scripts/benchmark/k6/marketplace.js
+// Example: scripts/benchmark/k6/marketplace.js
 import http from 'k6/http';
 import { check } from 'k6';
 
@@ -826,8 +831,10 @@ GET,/api/v1/policy/active,50000,10,45,48,20,450,256,83.33,0.02,45,50,55,60,70,80
 **Purpose**: Quick sanity check for regressions  
 **Schedule**: Daily at 2:00 AM UTC
 
+**Note**: See actual implementation in `.github/workflows/performance.yml` for current automated performance testing.
+
 ```yaml
-# .github/workflows/nightly-pulse.yml
+# Example: .github/workflows/nightly-pulse.yml
 name: Nightly Performance Pulse
 on:
   schedule:
@@ -1281,7 +1288,7 @@ jobs:
 
 This benchmark plan integrates with:
 
-- **[Validation Plan](./Validation_plan.md)**: References performance thresholds (p95 <200ms, p99 <500ms, error rate <0.5%)
+- **[Validation Plan](../VALIDATION_PLAN.md)**: References performance thresholds (p95 <200ms, p99 <500ms, error rate <0.5%)
 - **[Production Readiness Checklist](./PRODUCTION_READINESS_CHECKLIST.md)**: Performance & resilience section validated by benchmark results
 - **[Security Hardening Guide](./SECURITY_HARDENING_GUIDE.md)**: Security overhead measured in performance benchmarks
 - **[Ethics Validation Framework](./ETHICS_VALIDATION_FRAMEWORK.md)**: Ethics evaluation latency benchmarked

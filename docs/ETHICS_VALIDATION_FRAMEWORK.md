@@ -183,6 +183,8 @@ Ethics Violations
 
 ### Dataset Structure
 
+**Note**: This is the recommended structure for ethics datasets. The current repository uses inline test datasets in `tests/validation/test_ethics_benchmark.py`. For production use, datasets should be organized as follows:
+
 ```
 datasets/ethics/
 ├── v1.0/
@@ -352,8 +354,10 @@ Optimize detection thresholds to maximize F1 score while satisfying per-category
 
 **Stage 1: Grid Search** (Coarse)
 
+**Note**: The following is a reference implementation. For actual usage, adapt this code to your specific evaluation framework.
+
 ```python
-# scripts/ethics/tune_thresholds.py
+# Example: scripts/ethics/tune_thresholds.py (reference implementation)
 import numpy as np
 from sklearn.metrics import precision_recall_fscore_support, confusion_matrix
 
@@ -452,7 +456,11 @@ optimal_thresholds = dict(zip(CATEGORIES, result.x))
 
 ### Tuning Workflow
 
+**Note**: These commands are reference examples. Actual implementation should be adapted to your testing framework. See `tests/validation/test_ethics_benchmark.py` for working examples.
+
 ```bash
+# Example workflow (adapt paths and scripts to your implementation):
+
 # 1. Collect validation predictions
 python scripts/ethics/evaluate.py \
   --dataset datasets/ethics/v1.0/validation/ \
@@ -529,10 +537,10 @@ PSI = Σ (actual_% - expected_%) × ln(actual_% / expected_%)
 - 0.1 ≤ PSI < 0.2: Moderate shift (investigate)
 - PSI ≥ 0.2: Significant shift (recalibrate)
 
-**Implementation**:
+**Implementation** (Reference Example):
 
 ```python
-# scripts/ethics/monitor_drift.py
+# Example: scripts/ethics/monitor_drift.py
 import numpy as np
 
 def calculate_psi(expected_scores, actual_scores, bins=10):
@@ -565,7 +573,7 @@ if psi_daily > 0.2:
 
 **Null Hypothesis**: Baseline and current distributions are from same distribution.
 
-**Implementation**:
+**Implementation** (Reference Example):
 
 ```python
 from scipy.stats import ks_2samp
@@ -694,8 +702,10 @@ Detection → Confidence Score → Route Decision
 
 ### Feedback Processing Pipeline
 
+**Note**: Reference implementation for feedback processing system.
+
 ```python
-# scripts/ethics/process_feedback.py
+# Example: scripts/ethics/process_feedback.py
 
 def process_monthly_feedback(feedback_file, output_dir):
     """
@@ -764,10 +774,10 @@ def process_monthly_feedback(feedback_file, output_dir):
 3. **Drift Detection**: Monitor per-reviewer agreement trends
    - Flagstray outliers for retraining
 
-**Implementation**:
+**Implementation** (Reference Example):
 
 ```python
-# scripts/ethics/reviewer_calibration.py
+# Example: scripts/ethics/reviewer_calibration.py
 from sklearn.metrics import cohen_kappa_score
 
 def calculate_inter_rater_agreement(annotations_df):
@@ -1099,7 +1109,7 @@ if "FAIL" in regression_results.values():
 
 This ethics validation framework integrates with:
 
-- **[Validation Plan](./Validation_plan.md)**: References ethics benchmark thresholds and cadence (weekly mini, monthly full)
+- **[Validation Plan](../VALIDATION_PLAN.md)**: References ethics benchmark thresholds and cadence (weekly mini, monthly full)
 - **[Production Readiness Checklist](./PRODUCTION_READINESS_CHECKLIST.md)**: Ethics & safety section validates against this framework
 - **[Security Hardening Guide](./SECURITY_HARDENING_GUIDE.md)**: Audit integrity controls support dataset governance
 - **[Benchmark Plan](./BENCHMARK_PLAN.md)**: Ethics evaluation latency measured in performance benchmarks

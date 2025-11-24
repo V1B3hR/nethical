@@ -88,10 +88,12 @@ This comprehensive guide defines mandatory security controls, implementation pat
 
 **Objective**: Comprehensive bill of materials for all dependencies and artifacts.
 
-**Implementation**:
+**Implementation** (Reference Example):
+
+**Note**: See actual implementation in `.github/workflows/sbom-sign.yml` for current SBOM generation process.
 
 ```yaml
-# .github/workflows/sbom.yml
+# Example: .github/workflows/sbom.yml
 name: SBOM Generation
 on:
   push:
@@ -155,10 +157,12 @@ grype sbom:sbom.spdx.json --fail-on critical
 
 **Objective**: Cryptographic verification of container image authenticity and integrity.
 
-**Implementation**:
+**Implementation** (Reference Example):
+
+**Note**: This is a reference implementation. Adapt to your specific container registry and signing workflow.
 
 ```yaml
-# .github/workflows/container-sign.yml
+# Example: .github/workflows/container-sign.yml
 name: Sign Container Images
 on:
   push:
@@ -241,10 +245,12 @@ spec:
 - 🔄 Hermetic builds: In progress (isolated build environment)
 - 🔄 Non-falsifiable provenance: Keyless signing with Sigstore
 
-**Implementation**:
+**Implementation** (Reference Example):
+
+**Note**: SLSA provenance generation requires specific build pipeline configuration. This is a reference implementation.
 
 ```yaml
-# .github/workflows/slsa-build.yml
+# Example: .github/workflows/slsa-build.yml
 name: SLSA Build Provenance
 on:
   release:
@@ -324,10 +330,12 @@ EXPOSE 8000
 CMD ["uvicorn", "nethical.api.main:app", "--host", "0.0.0.0", "--port", "8000"]
 ```
 
-**Kubernetes Configuration**:
+**Kubernetes Configuration** (Reference Example):
+
+**Note**: See `deploy/kubernetes/` directory for actual Kubernetes configurations. This is a reference example for deployment security context.
 
 ```yaml
-# deploy/kubernetes/deployment.yaml
+# Example: deploy/kubernetes/deployment.yaml
 apiVersion: apps/v1
 kind: Deployment
 metadata:
@@ -1260,8 +1268,10 @@ async def rate_limit_middleware(request: Request, call_next):
 
 **GitHub Actions Workflow**:
 
+**Note**: See actual implementation in `.github/workflows/security.yml` for current security scanning process.
+
 ```yaml
-# .github/workflows/security-scan.yml
+# Example: .github/workflows/security-scan.yml
 name: Security Scanning
 on:
   schedule:
@@ -1340,10 +1350,12 @@ jobs:
 
 ### Automated SLA Monitoring
 
-**Script**:
+**Script** (Reference Implementation):
+
+**Note**: This is a reference implementation. See `.github/workflows/vuln-sla.yml` for actual SLA enforcement workflow.
 
 ```python
-# scripts/check-vuln-sla.py
+# Example: scripts/check-vuln-sla.py
 #!/usr/bin/env python3
 import json
 import sys
@@ -1403,8 +1415,10 @@ if __name__ == '__main__':
 
 **GitHub Actions Integration**:
 
+**Note**: See actual implementation in `.github/workflows/vuln-sla.yml` for current SLA enforcement process.
+
 ```yaml
-# .github/workflows/vuln-sla-enforcement.yml
+# Example: .github/workflows/vuln-sla-enforcement.yml
 name: Vulnerability SLA Enforcement
 on:
   schedule:
@@ -1652,7 +1666,7 @@ repos:
 
 This security hardening guide integrates with:
 
-- **[Validation Plan](./Validation_plan.md)**: Security test suites (SAST, DAST, dependency audit) reference validation metrics and cadence
+- **[Validation Plan](../VALIDATION_PLAN.md)**: Security test suites (SAST, DAST, dependency audit) reference validation metrics and cadence
 - **[Production Readiness Checklist](./PRODUCTION_READINESS_CHECKLIST.md)**: Security checklist items detail-mapped to controls in this guide
 - **[Ethics Validation Framework](./ETHICS_VALIDATION_FRAMEWORK.md)**: Audit integrity and plugin trust controls support ethics governance
 - **[Benchmark Plan](./BENCHMARK_PLAN.md)**: Security overhead measured in performance benchmarks

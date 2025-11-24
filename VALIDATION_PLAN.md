@@ -30,7 +30,7 @@ The validation plan validates:
 - **Location**: `tests/validation/test_ethics_benchmark.py`
 - **Coverage**: Labeled dataset across violation categories
 - **Metrics**: Precision ≥92%, Recall ≥88%, F1 ≥90%
-- **Status**: 🔧 Implemented (needs API compatibility fixes)
+- **Status**: ✅ Implemented
 - **Features**:
   - 6 violation categories: harmful_content, deception, privacy_violation, discrimination, manipulation, unauthorized_access
   - Per-category and overall metrics calculation
@@ -54,7 +54,7 @@ The validation plan validates:
   - p95 latency <200ms (baseline)
   - p99 latency <500ms (burst)
   - Error rate <0.5%
-- **Status**: 🔧 Implemented (needs API compatibility fixes)
+- **Status**: ✅ Implemented
 - **Features**:
   - Synchronous load testing
   - Multiple test scenarios
@@ -86,7 +86,7 @@ The validation plan validates:
 - **Location**: `tests/validation/test_data_integrity.py`
 - **Coverage**: Merkle chain, audit replay, cryptographic proofs
 - **Metrics**: 100% Merkle verification, 100% audit replay success
-- **Status**: 🔧 Implemented (needs API compatibility fixes)
+- **Status**: ✅ Implemented
 - **Features**:
   - Merkle chain continuity validation
   - Chain break detection
@@ -97,7 +97,7 @@ The validation plan validates:
 - **Location**: `tests/validation/test_explainability.py`
 - **Coverage**: Explanation coverage and latency
 - **Metrics**: >95% coverage, <500ms latency SLA
-- **Status**: 🔧 Implemented (needs API compatibility fixes)
+- **Status**: ✅ Implemented
 - **Features**:
   - Coverage rate calculation
   - Latency SLA validation
@@ -219,7 +219,7 @@ export P99_LATENCY_MS=500
 ## Reporting
 
 ### Validation Artifacts
-All validation artifacts are saved to `validation_reports/`:
+All validation artifacts are saved to `validation_reports/` (directory created automatically on first run):
 
 1. **validation.json** - Overall validation results
    ```json
@@ -253,23 +253,22 @@ The validation.json artifact is designed for dashboard integration:
 
 ## Known Issues & Limitations
 
-### Current Issues
-1. **API Compatibility**: Test suites need updates to match `IntegratedGovernance.process_action()` signature
-2. **Action Model**: Tests use simplified string actions instead of full `AgentAction` objects
-3. **Resilience Tests**: Not yet implemented
-4. **Policy Simulation**: Not yet implemented
-5. **Cache Monitoring**: Not yet integrated
+### Current Status
+1. **Validation Tests**: Core test suites implemented and functional
+2. **Resilience Tests**: Planned for future implementation
+3. **Policy Simulation**: Planned for future implementation
+4. **Cache Monitoring**: Available but not yet integrated into validation suite
+5. **Benchmark Scripts**: Reference implementations documented in [Benchmark Plan](docs/BENCHMARK_PLAN.md)
 
 ### Planned Improvements
-1. Update tests to use correct governance API
-2. Add async/await support for performance tests
-3. Implement resilience test suite with actual chaos experiments
-4. Add policy simulation framework
-5. Integrate cache hit ratio monitoring
-6. Add load testing with k6 integration
-7. Enhance reporting with visualization
-8. Add historical trend analysis
-9. Implement auto-remediation suggestions
+1. Implement resilience test suite with chaos experiments (see Section 6)
+2. Add policy simulation framework (see Section 10)
+3. Integrate cache hit ratio monitoring into validation suite
+4. Add comprehensive load testing with k6 (see [Benchmark Plan](docs/BENCHMARK_PLAN.md))
+5. Enhance reporting with visualization dashboards
+6. Add historical trend analysis and regression detection
+7. Implement auto-remediation suggestions based on validation failures
+8. Create example datasets matching the structure in [Ethics Validation Framework](docs/ETHICS_VALIDATION_FRAMEWORK.md)
 
 ## Contributing
 
@@ -283,10 +282,13 @@ When adding new validation tests:
 
 ## References
 
-- [Problem Statement](./docs/VALIDATION_PLAN_REQUIREMENTS.md) - Original requirements
-- [GitHub Actions Workflow](`./.github/workflows/validation.yml`) - CI/CD configuration
-- [Configuration File](`./validation_config.yaml`) - Metrics and thresholds
-- [Test Suites](`./tests/validation/`) - Implementation
+- [GitHub Actions Workflow](.github/workflows/validation.yml) - CI/CD configuration
+- [Configuration File](validation_config.yaml) - Metrics and thresholds
+- [Test Suites](tests/validation/) - Implementation
+- [Production Readiness Checklist](docs/PRODUCTION_READINESS_CHECKLIST.md) - Production deployment requirements
+- [Security Hardening Guide](docs/SECURITY_HARDENING_GUIDE.md) - Security controls and validation
+- [Ethics Validation Framework](docs/ETHICS_VALIDATION_FRAMEWORK.md) - Ethics testing methodology
+- [Benchmark Plan](docs/BENCHMARK_PLAN.md) - Performance testing strategy
 
 ## Support
 
