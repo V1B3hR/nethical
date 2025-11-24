@@ -1,0 +1,237 @@
+---
+# AppArmor Profile for Nethical
+# This profile restricts file system access and capabilities for enhanced security
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-apparmor-profile
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: security
+data:
+  nethical-profile: |
+    #include <tunables/global>
+    
+    profile nethical-restricted flags=(attach_disconnected,mediate_deleted) {
+      #include <abstractions/base>
+      #include <abstractions/python>
+      
+      # Deny network access by default
+      deny network,
+      
+      # Allow specific network protocols
+      network inet stream,
+      network inet6 stream,
+      network inet dgram,
+      network inet6 dgram,
+      
+      # Allow binding to non-privileged ports
+      network inet tcp,
+      network inet6 tcp,
+      
+      # File system access
+      # Application directory - read only
+      /app/** r,
+      
+      # Python and libraries - read only
+      /usr/lib/python3*/** r,
+      /usr/local/lib/python3*/** r,
+      /usr/bin/python3* ix,
+      
+      # Required system libraries
+      /lib/** rm,
+      /usr/lib/** rm,
+      /lib64/** rm,
+      
+      # Configuration files - read only
+      /app/config/** r,
+      /app/correlation_rules.yaml r,
+      /app/ethics_taxonomy.json r,
+      
+      # Data directory - read/write
+      /data/** rw,
+      /data/ rw,
+      
+      # Temporary directory - read/write
+      /tmp/** rw,
+      /tmp/ rw,
+      
+      # Process-specific temporary files
+      owner /tmp/** rw,
+      
+      # Allow reading /proc for process information
+      /proc/ r,
+      /proc/sys/kernel/random/uuid r,
+      /proc/cpuinfo r,
+      /proc/meminfo r,
+      /proc/loadavg r,
+      /proc/self/** r,
+      /proc/sys/net/** r,
+      
+      # Allow reading system information
+      /sys/devices/system/cpu/** r,
+      /sys/devices/system/node/** r,
+      
+      # DNS resolution
+      /etc/resolv.conf r,
+      /etc/hosts r,
+      /etc/nsswitch.conf r,
+      /etc/gai.conf r,
+      /run/systemd/resolve/stub-resolv.conf r,
+      
+      # SSL/TLS certificates
+      /etc/ssl/certs/** r,
+      /etc/pki/tls/certs/** r,
+      /usr/share/ca-certificates/** r,
+      
+      # Timezone information
+      /etc/localtime r,
+      /usr/share/zoneinfo/** r,
+      
+      # User and group information
+      /etc/passwd r,
+      /etc/group r,
+      
+      # Python package information
+      /home/nethical/.local/** r,
+      /root/.local/** r,
+      
+      # Deny dangerous operations
+      deny /sys/kernel/security/** rw,
+      deny /sys/firmware/** rw,
+      deny /proc/sys/kernel/core_pattern w,
+      deny /proc/kcore r,
+      deny /proc/kallsyms r,
+      deny /boot/** r,
+      deny /dev/mem rw,
+      deny /dev/kmem rw,
+      deny /dev/port rw,
+      
+      # Deny access to other containers/processes
+      deny /proc/[0-9]*/mem rw,
+      deny /proc/[0-9]*/fd/** rw,
+      
+      # Deny privileged operations
+      deny capability sys_admin,
+      deny capability sys_module,
+      deny capability sys_rawio,
+      deny capability sys_ptrace,
+      deny capability sys_boot,
+      deny capability mac_admin,
+      deny capability mac_override,
+      
+      # Allow required capabilities
+      capability net_bind_service,
+      capability setuid,
+      capability setgid,
+      capability dac_override,
+      capability fowner,
+      capability chown,
+      capability fsetid,
+      
+      # Signal permissions
+      signal receive peer=unconfined,
+      signal send peer=nethical-restricted,
+      
+      # Unix domain sockets
+      unix (bind, listen) type=stream,
+      unix (bind, listen) type=dgram,
+      unix (connect, send, receive) type=stream,
+      unix (connect, send, receive) type=dgram,
+      
+      # Ptrace (deny by default for security)
+      deny ptrace,
+      
+      # Mount (deny)
+      deny mount,
+      deny remount,
+      deny umount,
+      
+      # Module loading (deny)
+      deny /sys/module/** w,
+    }
+
+---
+# DaemonSet to load AppArmor profile on nodes
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: apparmor-loader
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: security
+spec:
+  selector:
+    matchLabels:
+      app: apparmor-loader
+  template:
+    metadata:
+      labels:
+        app: apparmor-loader
+    spec:
+      hostPID: true
+      hostNetwork: true
+      initContainers:
+      - name: apparmor-loader
+        image: ubuntu:22.04
+        command:
+        - /bin/bash
+        - -c
+        - |
+          set -e
+          # Check if AppArmor is available
+          if [ ! -d /sys/kernel/security/apparmor ]; then
+            echo "AppArmor not available on this node"
+            exit 0
+          fi
+          
+          # Install apparmor utilities
+          apt-get update && apt-get install -y apparmor-utils
+          
+          # Load profile
+          apparmor_parser -r -W /profiles/nethical-profile
+          
+          # Verify profile is loaded
+          if aa-status | grep -q nethical-restricted; then
+            echo "AppArmor profile loaded successfully"
+          else
+            echo "Failed to load AppArmor profile"
+            exit 1
+          fi
+        securityContext:
+          privileged: true
+        volumeMounts:
+        - name: apparmor-profiles
+          mountPath: /profiles
+          readOnly: true
+        - name: sys-kernel-security
+          mountPath: /sys/kernel/security
+        - name: etc-apparmor
+          mountPath: /etc/apparmor.d
+      containers:
+      - name: pause
+        image: gcr.io/google_containers/pause:latest
+        resources:
+          requests:
+            cpu: 10m
+            memory: 16Mi
+          limits:
+            cpu: 20m
+            memory: 32Mi
+      volumes:
+      - name: apparmor-profiles
+        configMap:
+          name: nethical-apparmor-profile
+      - name: sys-kernel-security
+        hostPath:
+          path: /sys/kernel/security
+          type: Directory
+      - name: etc-apparmor
+        hostPath:
+          path: /etc/apparmor.d
+          type: DirectoryOrCreate
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule

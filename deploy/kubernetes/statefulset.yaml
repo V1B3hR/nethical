@@ -20,19 +20,36 @@ spec:
         app.kubernetes.io/name: nethical
         app.kubernetes.io/component: governance
         app.kubernetes.io/version: "0.1.0"
+        app: nethical
+        component: api
       annotations:
         prometheus.io/scrape: "true"
         prometheus.io/port: "8888"
         prometheus.io/path: "/metrics"
+        # AppArmor profile
+        container.apparmor.security.beta.kubernetes.io/nethical: localhost/nethical-restricted
     spec:
+      serviceAccountName: nethical
       securityContext:
         runAsNonRoot: true
         runAsUser: 1000
         fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
       containers:
       - name: nethical
         image: nethical:latest
         imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 1000
+          capabilities:
+            drop:
+            - ALL
+            add:
+            - NET_BIND_SERVICE
         ports:
         - name: http
           containerPort: 8000
@@ -49,6 +66,10 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
+        - name: tmp
+          mountPath: /tmp
+        - name: cache
+          mountPath: /root/.cache
         - name: policies
           mountPath: /app/correlation_rules.yaml
           subPath: correlation_rules.yaml
@@ -98,6 +119,10 @@ spec:
       - name: policies
         configMap:
           name: nethical-policies
+      - name: tmp
+        emptyDir: {}
+      - name: cache
+        emptyDir: {}
   volumeClaimTemplates:
   - metadata:
       name: data
