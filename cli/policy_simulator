@@ -74,12 +74,15 @@ def load_test_cases(file_path: str) -> List[Dict[str, Any]]:
         raise ValueError("Invalid test case format. Expected list or dict with 'test_cases' key")
 
 
-def simulate_policy(policy_file: str, input_file: str, region: str = "GLOBAL", 
+def simulate_policy(policy_file: str, input_file: str, region: str = "US", 
                    output_format: str = "text", verbose: bool = False) -> Dict[str, Any]:
     """Simulate policy evaluation against test inputs."""
     
-    # Load policy
-    region_enum = Region[region.upper()]
+    # Load policy - default to US if region not found
+    try:
+        region_enum = Region[region.upper()]
+    except KeyError:
+        region_enum = Region.US
     engine = PolicyEngine.load(policy_file, region_enum)
     
     # Load test cases
@@ -127,10 +130,14 @@ def simulate_policy(policy_file: str, input_file: str, region: str = "GLOBAL",
 
 
 def dry_run_diff(old_policy: str, new_policy: str, test_cases_file: str,
-                region: str = "GLOBAL", output_format: str = "text") -> Dict[str, Any]:
+                region: str = "US", output_format: str = "text") -> Dict[str, Any]:
     """Compare outcomes between old and new policy versions."""
     
-    region_enum = Region[region.upper()]
+    # Default to US if region not found
+    try:
+        region_enum = Region[region.upper()]
+    except KeyError:
+        region_enum = Region.US
     
     # Load both policies
     old_engine = PolicyEngine.load(old_policy, region_enum)
@@ -265,8 +272,8 @@ def main():
     simulate_parser = subparsers.add_parser('simulate', help='Simulate policy evaluation')
     simulate_parser.add_argument('policy_file', help='Path to policy file')
     simulate_parser.add_argument('input_file', help='Path to test cases file')
-    simulate_parser.add_argument('--region', default='GLOBAL', 
-                                help='Region to simulate (default: GLOBAL)')
+    simulate_parser.add_argument('--region', default='US', 
+                                help='Region to simulate (default: US)')
     simulate_parser.add_argument('--format', choices=['text', 'json', 'yaml'], 
                                 default='text', help='Output format')
     simulate_parser.add_argument('--verbose', action='store_true',
@@ -279,8 +286,8 @@ def main():
     dryrun_parser.add_argument('old_policy', help='Path to old policy file')
     dryrun_parser.add_argument('new_policy', help='Path to new policy file')
     dryrun_parser.add_argument('test_cases', help='Path to test cases file')
-    dryrun_parser.add_argument('--region', default='GLOBAL',
-                              help='Region to compare (default: GLOBAL)')
+    dryrun_parser.add_argument('--region', default='US',
+                              help='Region to compare (default: US)')
     dryrun_parser.add_argument('--format', choices=['text', 'json', 'yaml'],
                               default='text', help='Output format')
     dryrun_parser.add_argument('--output', help='Output file (default: stdout)')

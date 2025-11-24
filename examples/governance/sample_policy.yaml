@@ -1,0 +1,78 @@
+# Sample policy file demonstrating policy structure
+metadata:
+  name: "sample_governance_policy"
+  version: "1.0.0"
+  description: "Sample policy for testing"
+
+defaults:
+  decision: ALLOW
+  deny_overrides: true
+  strict: false
+
+rules:
+  - id: anti-manipulation
+    enabled: true
+    priority: 100
+    when:
+      any:
+        - "manipulation.override_attempt == true"
+        - exists: "manipulation.vector"
+    action:
+      decision: DENY
+      add_disclaimer: "Manipulative content detected"
+      escalate: true
+      tags: ["manipulation", "security"]
+    halt_on_match: true
+  
+  - id: pii-protection
+    enabled: true
+    priority: 80
+    when:
+      all:
+        - "contains_pii == true"
+        - "user_role != admin"
+    action:
+      decision: RESTRICT
+      add_disclaimer: "PII access requires elevated permissions"
+      tags: ["privacy", "compliance"]
+  
+  - id: sql-injection-warning
+    enabled: true
+    priority: 60
+    when:
+      "pattern_match == sql_injection"
+    action:
+      decision: WARN
+      add_disclaimer: "Potential SQL injection detected"
+      escalate: false
+      tags: ["security", "injection"]
+  
+  - id: admin-bypass
+    enabled: true
+    priority: 50
+    when:
+      all:
+        - "user_role == admin"
+        - "authentication_level == mfa"
+    action:
+      decision: ALLOW
+      tags: ["admin", "authenticated"]
+
+region_overlays:
+  EU:
+    defaults:
+      decision: RESTRICT
+    rules:
+      - id: gdpr-compliance
+        enabled: true
+        priority: 110
+        when:
+          "contains_pii == true"
+        action:
+          decision: DENY
+          add_disclaimer: "GDPR: PII access requires explicit consent"
+          tags: ["gdpr", "privacy"]
+  
+  US:
+    defaults:
+      decision: ALLOW
