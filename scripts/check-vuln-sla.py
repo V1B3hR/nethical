@@ -125,11 +125,18 @@ def parse_vulnerability_file(filepath: str) -> Tuple[List[Dict], str]:
         print(f"{RED}Error: Invalid JSON in '{filepath}': {e}{NC}")
         sys.exit(1)
     
-    # Try different formats
-    for parser in [check_trivy_format, check_npm_audit_format, check_generic_format]:
-        vulns, format_name = parser(data)
-        if vulns:
-            return vulns, format_name
+    # Try different formats, prioritizing by confidence
+    # First check for Trivy format (most specific)
+    if 'Results' in data and any('Vulnerabilities' in r for r in data.get('Results', [])):
+        return check_trivy_format(data)
+    
+    # Check for npm audit format
+    if 'vulnerabilities' in data and isinstance(data['vulnerabilities'], dict):
+        return check_npm_audit_format(data)
+    
+    # Fall back to generic format
+    if isinstance(data, list):
+        return check_generic_format(data)
     
     return [], 'Unknown'
 

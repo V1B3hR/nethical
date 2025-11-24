@@ -94,17 +94,26 @@ fi
 # Test 4: Should be able to reach allowed services (Redis)
 echo -e "${BOLD}Test 4: Redis access (should work if Redis is deployed)${NC}"
 if kubectl get service redis -n "$NAMESPACE" &> /dev/null; then
-    # Create a temporary pod with proper labels
+    # Get the actual service name and port
+    REDIS_SERVICE=$(kubectl get service -n "$NAMESPACE" -l app=redis -o jsonpath='{.items[0].metadata.name}' 2>/dev/null || echo "redis")
+    REDIS_PORT=$(kubectl get service "$REDIS_SERVICE" -n "$NAMESPACE" -o jsonpath='{.spec.ports[0].port}' 2>/dev/null || echo "6379")
+    
+    # Create a temporary pod with proper labels and cleanup function
+    cleanup_labels() {
+        kubectl label pod network-test app- --overwrite > /dev/null 2>&1 || true
+    }
+    trap cleanup_labels EXIT
+    
     kubectl label pod network-test app=nethical --overwrite > /dev/null 2>&1
     
-    if kubectl exec network-test -n "$NAMESPACE" -- timeout 5 nc -zv redis.nethical.svc.cluster.local 6379 2>&1 | grep -q "succeeded"; then
+    if kubectl exec network-test -n "$NAMESPACE" -- timeout 5 nc -zv "$REDIS_SERVICE.$NAMESPACE.svc.cluster.local" "$REDIS_PORT" 2>&1 | grep -q "succeeded"; then
         print_status "PASS" "Redis access allowed for labeled pod"
     else
         print_status "FAIL" "Redis access blocked (check network policy)"
     fi
     
-    # Remove label
-    kubectl label pod network-test app- --overwrite > /dev/null 2>&1
+    cleanup_labels
+    trap - EXIT
 else
     print_status "INFO" "Redis service not deployed, skipping test"
 fi
