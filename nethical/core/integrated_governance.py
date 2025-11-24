@@ -663,12 +663,12 @@ class IntegratedGovernance:
             ),
             # Add violation detection results
             "violation_detected": violation_detected,
-            "decision": decision.value if decision else "ALLOW",
+            "decision": decision.value.upper() if decision else "ALLOW",
             "violations": [
                 {
                     "violation_id": v.violation_id,
-                    "violation_type": v.violation_type.value,
-                    "severity": v.severity.value,
+                    "violation_type": v.violation_type.value if hasattr(v.violation_type, 'value') else str(v.violation_type),
+                    "severity": v.severity.value if hasattr(v.severity, 'value') else str(v.severity),
                     "description": v.description,
                     "confidence": v.confidence,
                     "detector_name": v.detector_name,
@@ -687,7 +687,9 @@ class IntegratedGovernance:
         violation_score = 0.0
         if violation_detected and violation_severity:
             severity_map = {"low": 0.25, "medium": 0.5, "high": 0.75, "critical": 1.0}
-            violation_score = severity_map.get(violation_severity.lower(), 0.5)
+            # Convert to string if needed and normalize
+            severity_str = str(violation_severity).lower() if violation_severity else "medium"
+            violation_score = severity_map.get(severity_str, 0.5)
 
         action_context = {"cohort": cohort, "has_violation": violation_detected}
 

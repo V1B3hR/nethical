@@ -93,8 +93,8 @@ class EthicalViolationDetector(BaseDetector):
             # Harmful content
             "harm", "hurt", "damage", "injury", "kill", "attack", "assault", "abuse",
             "violent", "violence", "weapon", "destroy", "threat", "murder", "endanger",
-            # Discrimination and bias
-            "discrimination", "bias", "unfair", "prejudice", "stereotype", "marginalize",
+            # Discrimination and bias (use stems for matching variations)
+            "discriminat", "bias", "unfair", "prejudice", "stereotype", "marginaliz",
             "exclude", "racist", "sexist",
             # Deception and manipulation
             "deceive", "mislead", "manipulate", "coerce", "exploit", "trick", "fool",
@@ -126,9 +126,35 @@ class EthicalViolationDetector(BaseDetector):
         from .governance_core import Severity, ViolationType, SubMission
 
         text = action.content.lower()
-        # Increase weight per keyword and lower threshold for better sensitivity
-        score = sum(0.25 for k in self.ethical_keywords if k in text)
+        
+        # Check for educational/legitimate contexts that should reduce false positives
+        educational_indicators = [
+            "educational", "education", "explain", "discuss", "historical", "history",
+            "learn", "teaching", "best practices", "security", "fictional", "story",
+            "authorized", "proper credentials", "legitimate", "approved"
+        ]
+        has_educational_context = any(indicator in text for indicator in educational_indicators)
+        
+        # Increase weight per keyword using smart matching
+        score = 0.0
+        for keyword in self.ethical_keywords:
+            # For single words, use word boundary matching
+            # For phrases, use simple substring matching
+            if ' ' in keyword:
+                # Multi-word phrase - use substring
+                if keyword in text:
+                    score += 0.25
+            else:
+                # Single word - use word start boundary for stemming support
+                # This matches "discriminat" with "discriminating", "discrimination", etc.
+                if re.search(r'\b' + re.escape(keyword), text):
+                    score += 0.25
         score = min(score, 1.0)
+        
+        # Reduce score if educational context detected
+        if has_educational_context:
+            score = score * 0.6  # Reduce by 40%
+        
         violations: List[Any] = []
         if score > 0.2:  # Lower threshold for better detection
             violations.append(
