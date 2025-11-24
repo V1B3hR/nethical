@@ -1,0 +1,332 @@
+#!/usr/bin/env python3
+"""Policy Simulator & Dry-Run CLI Tool
+
+This tool allows testing policy rules against sample inputs before deployment.
+Supports dry-run mode to preview policy changes without applying them.
+
+Usage:
+    policy_simulator simulate <policy_file> <input_file> [options]
+    policy_simulator dry-run <old_policy> <new_policy> <test_cases> [options]
+
+Commands:
+    simulate    Test a policy against input scenarios
+    dry-run     Compare policy outcomes between old and new versions
+"""
+
+import sys
+import json
+import yaml
+import argparse
+from pathlib import Path
+from typing import Dict, Any, List, Tuple
+from datetime import datetime
+
+# Add parent directory to path for imports
+sys.path.insert(0, str(Path(__file__).parent.parent))
+
+from nethical.policy.engine import PolicyEngine
+from nethical.hooks.interfaces import Region
+
+
+def load_yaml_or_json(file_path: str) -> Dict[str, Any]:
+    """Load data from YAML or JSON file."""
+    path = Path(file_path)
+    
+    if not path.exists():
+        raise FileNotFoundError(f"File not found: {file_path}")
+    
+    with open(path, 'r') as f:
+        if path.suffix in ['.json']:
+            return json.load(f)
+        elif path.suffix in ['.yaml', '.yml']:
+            return yaml.safe_load(f)
+        else:
+            # Try JSON first, then YAML
+            content = f.read()
+            try:
+                return json.loads(content)
+            except:
+                return yaml.safe_load(content)
+
+
+def load_test_cases(file_path: str) -> List[Dict[str, Any]]:
+    """Load test cases from file.
+    
+    Expected format:
+    {
+      "test_cases": [
+        {
+          "name": "Test case 1",
+          "input": { ... },
+          "expected_decision": "ALLOW"
+        },
+        ...
+      ]
+    }
+    """
+    data = load_yaml_or_json(file_path)
+    
+    if isinstance(data, dict) and 'test_cases' in data:
+        return data['test_cases']
+    elif isinstance(data, list):
+        return data
+    else:
+        raise ValueError("Invalid test case format. Expected list or dict with 'test_cases' key")
+
+
+def simulate_policy(policy_file: str, input_file: str, region: str = "GLOBAL", 
+                   output_format: str = "text", verbose: bool = False) -> Dict[str, Any]:
+    """Simulate policy evaluation against test inputs."""
+    
+    # Load policy
+    region_enum = Region[region.upper()]
+    engine = PolicyEngine.load(policy_file, region_enum)
+    
+    # Load test cases
+    test_cases = load_test_cases(input_file)
+    
+    results = {
+        "policy_file": policy_file,
+        "region": region,
+        "timestamp": datetime.utcnow().isoformat(),
+        "total_cases": len(test_cases),
+        "passed": 0,
+        "failed": 0,
+        "results": []
+    }
+    
+    for i, test_case in enumerate(test_cases):
+        case_name = test_case.get('name', f"Test case {i+1}")
+        input_data = test_case.get('input', {})
+        expected = test_case.get('expected_decision')
+        
+        # Evaluate
+        outcome = engine.evaluate(input_data)
+        actual_decision = outcome.get('final_decision')
+        
+        # Check if matches expected
+        passed = True
+        if expected and actual_decision != expected:
+            passed = False
+        
+        if passed:
+            results['passed'] += 1
+        else:
+            results['failed'] += 1
+        
+        result_entry = {
+            "name": case_name,
+            "passed": passed,
+            "input": input_data if verbose else f"<{len(str(input_data))} chars>",
+            "outcome": outcome,
+            "expected": expected
+        }
+        results['results'].append(result_entry)
+    
+    return results
+
+
+def dry_run_diff(old_policy: str, new_policy: str, test_cases_file: str,
+                region: str = "GLOBAL", output_format: str = "text") -> Dict[str, Any]:
+    """Compare outcomes between old and new policy versions."""
+    
+    region_enum = Region[region.upper()]
+    
+    # Load both policies
+    old_engine = PolicyEngine.load(old_policy, region_enum)
+    new_engine = PolicyEngine.load(new_policy, region_enum)
+    
+    # Load test cases
+    test_cases = load_test_cases(test_cases_file)
+    
+    diff_results = {
+        "old_policy": old_policy,
+        "new_policy": new_policy,
+        "region": region,
+        "timestamp": datetime.utcnow().isoformat(),
+        "total_cases": len(test_cases),
+        "unchanged": 0,
+        "changed": 0,
+        "changes": []
+    }
+    
+    for i, test_case in enumerate(test_cases):
+        case_name = test_case.get('name', f"Test case {i+1}")
+        input_data = test_case.get('input', {})
+        
+        # Evaluate with both policies
+        old_outcome = old_engine.evaluate(input_data)
+        new_outcome = new_engine.evaluate(input_data)
+        
+        old_decision = old_outcome.get('final_decision')
+        new_decision = new_outcome.get('final_decision')
+        
+        changed = old_decision != new_decision
+        
+        if changed:
+            diff_results['changed'] += 1
+            change_entry = {
+                "name": case_name,
+                "old_decision": old_decision,
+                "new_decision": new_decision,
+                "old_matched_rules": old_outcome.get('matched_rules', []),
+                "new_matched_rules": new_outcome.get('matched_rules', []),
+                "impact": "HIGHER_RESTRICTION" if _is_more_restrictive(old_decision, new_decision) else "LOWER_RESTRICTION"
+            }
+            diff_results['changes'].append(change_entry)
+        else:
+            diff_results['unchanged'] += 1
+    
+    return diff_results
+
+
+def _is_more_restrictive(old: str, new: str) -> bool:
+    """Determine if new decision is more restrictive than old."""
+    restriction_order = ["ALLOW", "WARN", "AUDIT", "RESTRICT", "QUARANTINE", "DENY"]
+    try:
+        old_idx = restriction_order.index(old)
+        new_idx = restriction_order.index(new)
+        return new_idx > old_idx
+    except ValueError:
+        return False
+
+
+def format_output(data: Dict[str, Any], format_type: str) -> str:
+    """Format output based on requested format."""
+    if format_type == "json":
+        return json.dumps(data, indent=2)
+    elif format_type == "yaml":
+        return yaml.dump(data, default_flow_style=False)
+    else:  # text
+        return format_text_output(data)
+
+
+def format_text_output(data: Dict[str, Any]) -> str:
+    """Format results as human-readable text."""
+    lines = []
+    
+    if 'policy_file' in data:  # simulate results
+        lines.append("=" * 60)
+        lines.append("POLICY SIMULATION RESULTS")
+        lines.append("=" * 60)
+        lines.append(f"Policy: {data['policy_file']}")
+        lines.append(f"Region: {data['region']}")
+        lines.append(f"Timestamp: {data['timestamp']}")
+        lines.append(f"\nTotal cases: {data['total_cases']}")
+        lines.append(f"Passed: {data['passed']}")
+        lines.append(f"Failed: {data['failed']}")
+        lines.append("\n" + "-" * 60)
+        
+        for result in data['results']:
+            status = "✓ PASS" if result['passed'] else "✗ FAIL"
+            lines.append(f"\n{status} {result['name']}")
+            lines.append(f"  Decision: {result['outcome']['final_decision']}")
+            if result['expected']:
+                lines.append(f"  Expected: {result['expected']}")
+            if result['outcome'].get('matched_rules'):
+                lines.append(f"  Matched rules: {len(result['outcome']['matched_rules'])}")
+    
+    elif 'old_policy' in data:  # dry-run diff results
+        lines.append("=" * 60)
+        lines.append("POLICY DRY-RUN DIFF")
+        lines.append("=" * 60)
+        lines.append(f"Old policy: {data['old_policy']}")
+        lines.append(f"New policy: {data['new_policy']}")
+        lines.append(f"Region: {data['region']}")
+        lines.append(f"Timestamp: {data['timestamp']}")
+        lines.append(f"\nTotal cases: {data['total_cases']}")
+        lines.append(f"Unchanged: {data['unchanged']}")
+        lines.append(f"Changed: {data['changed']}")
+        
+        if data['changes']:
+            lines.append("\n" + "-" * 60)
+            lines.append("CHANGES DETECTED:")
+            lines.append("-" * 60)
+            
+            for change in data['changes']:
+                lines.append(f"\n{change['name']}")
+                lines.append(f"  Old: {change['old_decision']} → New: {change['new_decision']}")
+                lines.append(f"  Impact: {change['impact']}")
+    
+    return "\n".join(lines)
+
+
+def main():
+    """Main CLI entry point."""
+    parser = argparse.ArgumentParser(
+        description="Policy Simulator & Dry-Run Tool",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=__doc__
+    )
+    
+    subparsers = parser.add_subparsers(dest='command', help='Commands')
+    
+    # Simulate command
+    simulate_parser = subparsers.add_parser('simulate', help='Simulate policy evaluation')
+    simulate_parser.add_argument('policy_file', help='Path to policy file')
+    simulate_parser.add_argument('input_file', help='Path to test cases file')
+    simulate_parser.add_argument('--region', default='GLOBAL', 
+                                help='Region to simulate (default: GLOBAL)')
+    simulate_parser.add_argument('--format', choices=['text', 'json', 'yaml'], 
+                                default='text', help='Output format')
+    simulate_parser.add_argument('--verbose', action='store_true',
+                                help='Show full input data in results')
+    simulate_parser.add_argument('--output', help='Output file (default: stdout)')
+    
+    # Dry-run command
+    dryrun_parser = subparsers.add_parser('dry-run', 
+                                         help='Compare old vs new policy outcomes')
+    dryrun_parser.add_argument('old_policy', help='Path to old policy file')
+    dryrun_parser.add_argument('new_policy', help='Path to new policy file')
+    dryrun_parser.add_argument('test_cases', help='Path to test cases file')
+    dryrun_parser.add_argument('--region', default='GLOBAL',
+                              help='Region to compare (default: GLOBAL)')
+    dryrun_parser.add_argument('--format', choices=['text', 'json', 'yaml'],
+                              default='text', help='Output format')
+    dryrun_parser.add_argument('--output', help='Output file (default: stdout)')
+    
+    args = parser.parse_args()
+    
+    if not args.command:
+        parser.print_help()
+        return 1
+    
+    try:
+        if args.command == 'simulate':
+            results = simulate_policy(
+                args.policy_file,
+                args.input_file,
+                args.region,
+                args.format,
+                args.verbose
+            )
+        elif args.command == 'dry-run':
+            results = dry_run_diff(
+                args.old_policy,
+                args.new_policy,
+                args.test_cases,
+                args.region,
+                args.format
+            )
+        
+        # Format and output
+        output = format_output(results, args.format)
+        
+        if args.output:
+            with open(args.output, 'w') as f:
+                f.write(output)
+            print(f"Results written to {args.output}")
+        else:
+            print(output)
+        
+        return 0
+        
+    except Exception as e:
+        print(f"Error: {e}", file=sys.stderr)
+        import traceback
+        traceback.print_exc()
+        return 1
+
+
+if __name__ == '__main__':
+    sys.exit(main())
