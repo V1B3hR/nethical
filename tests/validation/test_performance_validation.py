@@ -304,7 +304,9 @@ def test_error_rate_baseline(load_tester):
         # Analyze failure patterns
         error_types = {}
         for detail in failure_details:
-            error_type = type(detail['error']).__name__ if 'error' in detail else 'Unknown'
+            # Extract error type from the error string (first word typically)
+            error_msg = detail.get('error', 'Unknown')
+            error_type = error_msg.split(':')[0] if ':' in error_msg else error_msg.split()[0] if error_msg.split() else 'Unknown'
             error_types[error_type] = error_types.get(error_type, 0) + 1
         
         logger.warning("\nFailure breakdown by type:")

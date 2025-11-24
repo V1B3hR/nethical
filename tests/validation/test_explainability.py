@@ -19,6 +19,7 @@ import json
 from datetime import datetime
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.core.models import AgentAction
+from .test_utils import extract_action_content
 
 # Configure logging for detailed diagnostics
 logging.basicConfig(
@@ -72,10 +73,8 @@ class ExplainabilityValidator:
         
         for action in actions:
             start_time = time.perf_counter()
-            # Extract content from AgentAction
-            action_text = action.content if hasattr(action, 'content') else (
-                action.action if hasattr(action, 'action') else str(action)
-            )
+            # Extract content using utility function
+            action_text = extract_action_content(action)
             result = governance.process_action(
                 agent_id="explain_tester",
                 action=action_text

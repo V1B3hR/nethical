@@ -20,6 +20,7 @@ from datetime import datetime
 from nethical.core.audit_merkle import MerkleAnchor
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.core.models import AgentAction
+from .test_utils import extract_action_content
 
 # Configure logging for detailed diagnostics
 logging.basicConfig(
@@ -104,10 +105,8 @@ class IntegrityValidator:
         
         for i, action in enumerate(actions):
             try:
-                # Re-evaluate action - extract content from AgentAction
-                action_content = action.content if hasattr(action, 'content') else (
-                    action.action if hasattr(action, 'action') else str(action)
-                )
+                # Re-evaluate action - extract content using utility function
+                action_content = extract_action_content(action)
                 result = governance.process_action(
                     agent_id="test_agent",
                     action=action_content
