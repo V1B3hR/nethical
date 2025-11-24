@@ -176,3 +176,7 @@ logs/external_logs.jsonl
 # Backup files
 *.bak
 *_original.py.bak
+
+# Validation reports and artifacts
+validation_reports/
+*.json-report
