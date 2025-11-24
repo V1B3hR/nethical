@@ -104,10 +104,13 @@ class IntegrityValidator:
         
         for i, action in enumerate(actions):
             try:
-                # Re-evaluate action as string
+                # Re-evaluate action - extract content from AgentAction
+                action_content = action.content if hasattr(action, 'content') else (
+                    action.action if hasattr(action, 'action') else str(action)
+                )
                 result = governance.process_action(
                     agent_id="test_agent",
-                    action=action.action if hasattr(action, 'action') else str(action)
+                    action=action_content
                 )
                 replayed += 1
             except Exception as e:
@@ -290,28 +293,75 @@ def test_merkle_chain_break_detection(integrity_validator):
 
 def test_audit_replay_verification(integrity_validator, governance):
     """Test audit trail replay verification"""
+    logger.info("=" * 80)
+    logger.info("DATA INTEGRITY TEST - Audit Replay Verification")
+    logger.info("=" * 80)
+    
     # Create test actions
     test_actions = [
         AgentAction(
             action_id=f"replay_test_{i}",
             agent_id="test_agent",
-            action=f"Test action {i}",
+            content=f"Test action {i}",
             action_type="query"
         )
         for i in range(20)
     ]
     
+    logger.info(f"Testing replay of {len(test_actions)} actions")
+    
     # Replay actions
     result = integrity_validator.replay_audit_trail(test_actions, governance)
+    
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  Total Actions: {result['total_actions']}")
+    logger.info(f"  Replayed Actions: {result['replayed_actions']}")
+    logger.info(f"  Replay Rate: {result['replay_rate']:.2%} (threshold: ≥95%)")
+    logger.info(f"  Replay Successful: {result['replay_successful']}")
+    
+    if result['mismatches']:
+        logger.warning(f"\n{len(result['mismatches'])} replay mismatches:")
+        for mismatch in result['mismatches'][:5]:
+            logger.warning(f"  {mismatch}")
     
     print(f"\nAudit Replay Verification:")
     print(f"  Total Actions: {result['total_actions']}")
     print(f"  Replayed Actions: {result['replayed_actions']}")
-    print(f"  Replay Rate: {result['replay_rate']:.2%}")
-    print(f"  Replay Successful: {result['replay_successful']}")
+    print(f"  Replay Rate: {result['replay_rate']:.2%} {'✓' if result['replay_rate'] >= 0.95 else '✗'}")
+    print(f"  Replay Successful: {result['replay_successful']} {'✓' if result['replay_successful'] else '✗'}")
+    print(f"  Mismatches: {len(result['mismatches'])}")
     
-    assert result["replay_rate"] >= 0.95, "Replay rate below 95%"
-    assert result["replay_successful"], "Replay had mismatches"
+    if not result["replay_successful"]:
+        logger.error("=" * 80)
+        logger.error("AUDIT REPLAY FAILED")
+        logger.error("=" * 80)
+        logger.error("Some actions could not be replayed successfully")
+        logger.error(f"Success rate: {result['replay_rate']:.2%}")
+        logger.error(f"Failed actions: {len(result['mismatches'])}")
+        logger.error("\nDebugging steps:")
+        logger.error("1. Review mismatch details logged above")
+        logger.error("2. Check for non-deterministic behavior in governance")
+        logger.error("3. Verify action serialization/deserialization")
+        logger.error("4. Ensure all action fields are preserved")
+        logger.error("5. Look for state dependencies that affect replay")
+        logger.error("\nTo reproduce specific action:")
+        if result['mismatches']:
+            logger.error(f"  First mismatch: {result['mismatches'][0]}")
+    
+    assert result["replay_rate"] >= 0.95, (
+        f"Replay rate {result['replay_rate']:.2%} below 95% threshold.\n"
+        f"  Replayed: {result['replayed_actions']}/{result['total_actions']}\n"
+        f"  Mismatches: {len(result['mismatches'])}\n"
+        f"  Sample: {result['mismatches'][:2] if result['mismatches'] else []}\n"
+        f"  Review logs above for detailed mismatch analysis"
+    )
+    assert result["replay_successful"], (
+        f"Replay had {len(result['mismatches'])} mismatches.\n"
+        f"  This indicates non-deterministic behavior or state dependencies.\n"
+        f"  All actions should be reproducible for audit purposes.\n"
+        f"  Review mismatch details in logs above"
+    )
 
 
 def test_cryptographic_proof_validation(integrity_validator):
@@ -409,7 +459,7 @@ def test_generate_integrity_report(integrity_validator, governance, merkle_ancho
         AgentAction(
             action_id=f"report_test_{i}",
             agent_id="report_agent",
-            action=f"Report test {i}",
+            content=f"Report test {i}",
             action_type="query"
         )
         for i in range(30)

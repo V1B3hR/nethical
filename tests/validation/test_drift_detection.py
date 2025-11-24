@@ -225,18 +225,55 @@ def test_psi_moderate_drift(detector, simulator):
 
 def test_psi_significant_drift(detector, simulator):
     """Test PSI with significant drift"""
+    logger.info("=" * 80)
+    logger.info("DRIFT DETECTION TEST - Significant Drift Expected")
+    logger.info("=" * 80)
+    
     reference = simulator.generate_baseline_distribution()
     current = simulator.generate_drifted_distribution()
     
+    logger.info(f"Reference distribution: mean={reference.mean():.4f}, std={reference.std():.4f}")
+    logger.info(f"Current distribution: mean={current.mean():.4f}, std={current.std():.4f}")
+    logger.info(f"Distribution shift: {abs(current.mean() - reference.mean()):.4f}")
+    
     result = detector.detect_drift(reference, current)
     
-    print(f"\nSignificant Drift Test:")
-    print(f"  PSI: {result['psi']:.4f}")
-    print(f"  KS p-value: {result['ks_p_value']:.4f}")
-    print(f"  Drift Detected: {result['drift_detected']}")
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  PSI: {result['psi']:.4f} (threshold: >0.2 for significant drift)")
+    logger.info(f"  KS Statistic: {result['ks_statistic']:.4f}")
+    logger.info(f"  KS p-value: {result['ks_p_value']:.4f}")
+    logger.info(f"  Drift Detected: {'YES' if result['drift_detected'] else 'NO'}")
     
-    assert result["psi"] > 0.2, f"PSI {result['psi']:.4f} should exceed threshold"
-    assert result["drift_detected"], "Significant drift not detected"
+    print(f"\nSignificant Drift Test:")
+    print(f"  PSI: {result['psi']:.4f} {'✓' if result['psi'] > 0.2 else '✗'}")
+    print(f"  KS p-value: {result['ks_p_value']:.4f}")
+    print(f"  Drift Detected: {result['drift_detected']} {'✓ (correct)' if result['drift_detected'] else '✗ (missed)'}")
+    
+    if not result["drift_detected"]:
+        logger.error("=" * 80)
+        logger.error("DRIFT NOT DETECTED (False Negative)")
+        logger.error("=" * 80)
+        logger.error("Significant drift was not detected when it should have been")
+        logger.error(f"PSI: {result['psi']:.4f}, KS p-value: {result['ks_p_value']:.4f}")
+        logger.error("\nDebugging steps:")
+        logger.error("1. Review threshold values (PSI > 0.2, KS p-value < 0.05)")
+        logger.error("2. Verify drift simulation is creating actual differences")
+        logger.error("3. Check if thresholds need adjustment for sensitivity")
+        logger.error(f"4. Distribution means: ref={reference.mean():.4f}, cur={current.mean():.4f}")
+    
+    assert result["psi"] > 0.2, (
+        f"PSI {result['psi']:.4f} should exceed threshold of 0.2.\n"
+        f"  This indicates drift detection is not sensitive enough.\n"
+        f"  Reference mean: {reference.mean():.4f}, Current mean: {current.mean():.4f}\n"
+        f"  Consider lowering threshold or improving drift simulation"
+    )
+    assert result["drift_detected"], (
+        f"Significant drift not detected (false negative).\n"
+        f"  PSI: {result['psi']:.4f}, KS p-value: {result['ks_p_value']:.4f}\n"
+        f"  Both metrics should indicate drift\n"
+        f"  Review detection logic and thresholds"
+    )
 
 
 def test_ks_test_no_drift(detector, simulator):

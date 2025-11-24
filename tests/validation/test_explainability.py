@@ -72,7 +72,10 @@ class ExplainabilityValidator:
         
         for action in actions:
             start_time = time.perf_counter()
-            action_text = action.action if hasattr(action, 'action') else str(action)
+            # Extract content from AgentAction
+            action_text = action.content if hasattr(action, 'content') else (
+                action.action if hasattr(action, 'action') else str(action)
+            )
             result = governance.process_action(
                 agent_id="explain_tester",
                 action=action_text
@@ -170,7 +173,7 @@ def test_explanation_coverage(governance, validator):
         AgentAction(
             action_id=f"coverage_test_{i}",
             agent_id="explain_tester",
-            action=action_text,
+            content=action_text,
             action_type="query"
         )
         for i, action_text in enumerate([
@@ -251,16 +254,22 @@ def test_explanation_coverage(governance, validator):
 
 def test_explanation_latency_sla(governance, validator):
     """Test that explanations are provided within SLA"""
+    logger.info("=" * 80)
+    logger.info("EXPLAINABILITY TEST - Latency SLA")
+    logger.info("=" * 80)
+    
     # Create test actions
     test_actions = [
         AgentAction(
             action_id=f"latency_test_{i}",
             agent_id="latency_tester",
-            action=f"Test action {i} for latency measurement",
+            content=f"Test action {i} for latency measurement",
             action_type="query"
         )
         for i in range(50)
     ]
+    
+    logger.info(f"Testing explanation latency with {len(test_actions)} actions")
     
     result = validator.check_explanation_coverage(test_actions, governance)
     
@@ -268,24 +277,69 @@ def test_explanation_latency_sla(governance, validator):
     latencies_ms = [l * 1000 for l in result["latencies"]]
     avg_latency_ms = result["average_latency"] * 1000
     max_latency_ms = max(latencies_ms) if latencies_ms else 0
+    min_latency_ms = min(latencies_ms) if latencies_ms else 0
     
     # Calculate percentiles
     if latencies_ms:
         latencies_sorted = sorted(latencies_ms)
+        p50_latency = latencies_sorted[int(len(latencies_sorted) * 0.50)]
         p95_latency = latencies_sorted[int(len(latencies_sorted) * 0.95)]
         p99_latency = latencies_sorted[int(len(latencies_sorted) * 0.99)]
     else:
-        p95_latency = 0
-        p99_latency = 0
+        p50_latency = p95_latency = p99_latency = 0
+    
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  Samples: {len(latencies_ms)}")
+    logger.info(f"  Min Latency: {min_latency_ms:.2f}ms")
+    logger.info(f"  P50 Latency: {p50_latency:.2f}ms")
+    logger.info(f"  Average Latency: {avg_latency_ms:.2f}ms (SLO: <500ms)")
+    logger.info(f"  P95 Latency: {p95_latency:.2f}ms (SLO: <500ms)")
+    logger.info(f"  P99 Latency: {p99_latency:.2f}ms")
+    logger.info(f"  Max Latency: {max_latency_ms:.2f}ms")
+    
+    # Identify slow requests
+    slow_requests = [l for l in latencies_ms if l > 500]
+    if slow_requests:
+        logger.warning(f"\n{len(slow_requests)} requests exceeded 500ms SLA:")
+        logger.warning(f"  Slowest: {max(slow_requests):.2f}ms")
+        logger.warning(f"  Average of slow: {sum(slow_requests)/len(slow_requests):.2f}ms")
     
     print(f"\nExplanation Latency SLA Test:")
-    print(f"  Average Latency: {avg_latency_ms:.2f}ms")
-    print(f"  P95 Latency: {p95_latency:.2f}ms")
-    print(f"  P99 Latency: {p99_latency:.2f}ms")
+    print(f"  Average Latency: {avg_latency_ms:.2f}ms {'✓' if avg_latency_ms < 500 else '✗'}")
+    print(f"  P95 Latency: {p95_latency:.2f}ms {'✓' if p95_latency < 500 else '✗'}")
+    print(f"  P99 Latency: {p99_latency:.2f}ms {'✓' if p99_latency < 500 else '✗'}")
     print(f"  Max Latency: {max_latency_ms:.2f}ms")
+    print(f"  Slow Requests (>500ms): {len(slow_requests)}")
     
-    assert avg_latency_ms < 500, f"Average latency {avg_latency_ms:.2f}ms exceeds 500ms SLA"
-    assert p95_latency < 500, f"P95 latency {p95_latency:.2f}ms exceeds 500ms SLA"
+    if avg_latency_ms >= 500 or p95_latency >= 500:
+        logger.error("=" * 80)
+        logger.error("LATENCY SLA VIOLATION")
+        logger.error("=" * 80)
+        logger.error(f"Explanation latency exceeds 500ms SLA")
+        logger.error(f"Average: {avg_latency_ms:.2f}ms, P95: {p95_latency:.2f}ms")
+        logger.error("\nDebugging steps:")
+        logger.error("1. Profile explanation generation logic")
+        logger.error("2. Check for expensive operations (DB queries, API calls)")
+        logger.error("3. Review reasoning/explanation construction")
+        logger.error("4. Consider caching frequently used explanations")
+        logger.error("5. Optimize violation detection and formatting")
+        logger.error(f"6. {len(slow_requests)} requests took >500ms")
+        logger.error("\nTo reproduce:")
+        logger.error("  pytest tests/validation/test_explainability.py::test_explanation_latency_sla -v -s")
+    
+    assert avg_latency_ms < 500, (
+        f"Average latency {avg_latency_ms:.2f}ms exceeds 500ms SLA.\n"
+        f"  P50: {p50_latency:.2f}ms, P95: {p95_latency:.2f}ms, P99: {p99_latency:.2f}ms\n"
+        f"  Slow requests: {len(slow_requests)}/{len(latencies_ms)}\n"
+        f"  Review logs above for latency analysis"
+    )
+    assert p95_latency < 500, (
+        f"P95 latency {p95_latency:.2f}ms exceeds 500ms SLA.\n"
+        f"  This means 5% of requests are too slow.\n"
+        f"  Max: {max_latency_ms:.2f}ms\n"
+        f"  Consider optimizing slow code paths"
+    )
 
 
 def test_explanation_quality(governance, validator):
@@ -386,7 +440,7 @@ def test_generate_explainability_report(governance, validator, tmp_path):
         AgentAction(
             action_id=f"report_test_{i}",
             agent_id="report_agent",
-            action=f"Test action {i}",
+            content=f"Test action {i}",
             action_type="query"
         )
         for i in range(100)
