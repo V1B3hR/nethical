@@ -15,11 +15,20 @@ Thresholds:
 import pytest
 import time
 import asyncio
+import logging
 from statistics import mean, median, quantiles
 from typing import List, Dict
 import json
+from datetime import datetime
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.core.models import AgentAction
+
+# Configure logging for detailed diagnostics
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 class PerformanceMetrics:
@@ -104,6 +113,9 @@ class LoadTester:
         
         latencies = []
         failures = 0
+        failure_details = []
+        
+        logger.debug(f"Starting load test with {num_requests} requests")
         
         for i in range(num_requests):
             action_text = test_actions[i % len(test_actions)]
@@ -116,9 +128,21 @@ class LoadTester:
                 )
                 elapsed = time.perf_counter() - start_time
                 latencies.append(elapsed)
+                
+                # Log slow requests
+                if elapsed > 0.5:  # >500ms
+                    logger.warning(f"Slow request #{i + 1}: {elapsed * 1000:.2f}ms for action '{action_text}'")
             except Exception as e:
                 failures += 1
-                print(f"Request {i} failed: {e}")
+                elapsed = time.perf_counter() - start_time
+                failure_info = {
+                    "request_id": i + 1,
+                    "action": action_text,
+                    "error": str(e),
+                    "elapsed_ms": elapsed * 1000
+                }
+                failure_details.append(failure_info)
+                logger.error(f"Request {i + 1} failed: {e}")
         
         metrics = PerformanceMetrics.calculate_latency_metrics(latencies)
         error_rate = PerformanceMetrics.calculate_error_rate(num_requests, failures)
@@ -128,7 +152,8 @@ class LoadTester:
             "successful_requests": len(latencies),
             "failed_requests": failures,
             "error_rate": error_rate,
-            "latency_metrics": metrics
+            "latency_metrics": metrics,
+            "failure_details": failure_details
         }
 
 
@@ -167,16 +192,68 @@ def test_baseline_latency_p50(load_tester):
 
 def test_baseline_latency_p95(load_tester):
     """Test p95 latency under baseline load"""
+    logger.info("=" * 80)
+    logger.info("PERFORMANCE TEST - Baseline P95 Latency")
+    logger.info("=" * 80)
+    logger.info("Testing 200 requests to measure p95 latency against 200ms SLO")
+    
+    start_time = time.time()
     result = load_tester.run_synchronous_load_test(num_requests=200)
+    total_duration = time.time() - start_time
     
     p95_ms = result["latency_metrics"]["p95"] * 1000
+    p99_ms = result["latency_metrics"]["p99"] * 1000
+    mean_ms = result["latency_metrics"]["mean"] * 1000
+    max_ms = result["latency_metrics"]["max"] * 1000
+    
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  Total Duration: {total_duration:.2f}s")
+    logger.info(f"  Total Requests: {result['total_requests']}")
+    logger.info(f"  Successful: {result['successful_requests']}")
+    logger.info(f"  Failed: {result['failed_requests']}")
+    logger.info(f"  Error Rate: {result['error_rate']:.2%}")
+    logger.info(f"  Mean Latency: {mean_ms:.2f}ms")
+    logger.info(f"  P50 Latency: {result['latency_metrics']['p50'] * 1000:.2f}ms")
+    logger.info(f"  P95 Latency: {p95_ms:.2f}ms (SLO: <200ms)")
+    logger.info(f"  P99 Latency: {p99_ms:.2f}ms")
+    logger.info(f"  Max Latency: {max_ms:.2f}ms")
+    logger.info(f"  Throughput: {result['successful_requests'] / total_duration:.2f} req/s")
     
     print(f"\nBaseline P95 Latency Test:")
-    print(f"  P95: {p95_ms:.2f}ms")
-    print(f"  P99: {result['latency_metrics']['p99'] * 1000:.2f}ms")
-    print(f"  Max: {result['latency_metrics']['max'] * 1000:.2f}ms")
+    print(f"  P95: {p95_ms:.2f}ms {'✓' if p95_ms < 200 else '✗'}")
+    print(f"  P99: {p99_ms:.2f}ms")
+    print(f"  Max: {max_ms:.2f}ms")
+    print(f"  Error Rate: {result['error_rate']:.2%}")
     
-    assert p95_ms < 200, f"P95 latency {p95_ms:.2f}ms exceeds 200ms baseline SLO"
+    if result["failed_requests"] > 0:
+        logger.warning(f"\n{result['failed_requests']} requests failed:")
+        for failure in result.get("failure_details", [])[:5]:
+            logger.warning(
+                f"  Request #{failure['request_id']}: {failure['error']} "
+                f"(after {failure['elapsed_ms']:.2f}ms)"
+            )
+    
+    if p95_ms >= 200:
+        logger.error("=" * 80)
+        logger.error("SLO VIOLATION DETECTED")
+        logger.error("=" * 80)
+        logger.error(f"P95 latency {p95_ms:.2f}ms exceeds 200ms baseline SLO")
+        logger.error("Debugging steps:")
+        logger.error("1. Check system resource utilization during test")
+        logger.error("2. Review governance processing logic for bottlenecks")
+        logger.error("3. Profile slow requests (see warnings above)")
+        logger.error("4. Consider optimizing risk calculation or caching")
+        logger.error("5. Verify database/storage performance")
+        logger.error("\nTo reproduce:")
+        logger.error("  pytest tests/validation/test_performance_validation.py::test_baseline_latency_p95 -v -s")
+    
+    assert p95_ms < 200, (
+        f"P95 latency {p95_ms:.2f}ms exceeds 200ms baseline SLO.\n"
+        f"  Mean: {mean_ms:.2f}ms, P99: {p99_ms:.2f}ms, Max: {max_ms:.2f}ms\n"
+        f"  Successful requests: {result['successful_requests']}/{result['total_requests']}\n"
+        f"  See logs above for detailed analysis and debugging steps"
+    )
 
 
 def test_burst_latency_p99(load_tester):
@@ -196,14 +273,67 @@ def test_burst_latency_p99(load_tester):
 
 def test_error_rate_baseline(load_tester):
     """Test error rate under baseline load"""
+    logger.info("=" * 80)
+    logger.info("PERFORMANCE TEST - Error Rate")
+    logger.info("=" * 80)
+    logger.info("Testing 200 requests to measure error rate against 0.5% SLO")
+    
     result = load_tester.run_synchronous_load_test(num_requests=200)
     
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  Total Requests: {result['total_requests']}")
+    logger.info(f"  Successful: {result['successful_requests']}")
+    logger.info(f"  Failed: {result['failed_requests']}")
+    logger.info(f"  Error Rate: {result['error_rate']:.2%} (SLO: <0.5%)")
+    
     print(f"\nError Rate Test:")
-    print(f"  Error Rate: {result['error_rate']:.2%}")
+    print(f"  Error Rate: {result['error_rate']:.2%} {'✓' if result['error_rate'] < 0.005 else '✗'}")
     print(f"  Failed Requests: {result['failed_requests']}")
     print(f"  Total Requests: {result['total_requests']}")
     
-    assert result["error_rate"] < 0.005, f"Error rate {result['error_rate']:.2%} exceeds 0.5% SLO"
+    if result['failed_requests'] > 0:
+        logger.warning(f"\n{result['failed_requests']} requests failed:")
+        failure_details = result.get('failure_details', [])
+        for detail in failure_details[:10]:
+            logger.warning(
+                f"  Request #{detail['request_id']}: {detail['error']} "
+                f"(action: {detail['action'][:30]}...)"
+            )
+        
+        # Analyze failure patterns
+        error_types = {}
+        for detail in failure_details:
+            # Extract error type from the error string (first word typically)
+            error_msg = detail.get('error', 'Unknown')
+            error_type = error_msg.split(':')[0] if ':' in error_msg else error_msg.split()[0] if error_msg.split() else 'Unknown'
+            error_types[error_type] = error_types.get(error_type, 0) + 1
+        
+        logger.warning("\nFailure breakdown by type:")
+        for error_type, count in error_types.items():
+            logger.warning(f"  {error_type}: {count}")
+    
+    if result["error_rate"] >= 0.005:
+        logger.error("=" * 80)
+        logger.error("ERROR RATE SLO VIOLATION")
+        logger.error("=" * 80)
+        logger.error(f"Error rate {result['error_rate']:.2%} exceeds 0.5% SLO")
+        logger.error(f"Failed requests: {result['failed_requests']}/{result['total_requests']}")
+        logger.error("\nDebugging steps:")
+        logger.error("1. Review error types and patterns (logged above)")
+        logger.error("2. Check for resource exhaustion (memory, connections)")
+        logger.error("3. Verify error handling in governance processing")
+        logger.error("4. Look for timeout or crash conditions")
+        logger.error("5. Check system logs for underlying issues")
+        logger.error("\nTo reproduce:")
+        logger.error("  pytest tests/validation/test_performance_validation.py::test_error_rate_baseline -v -s")
+    
+    assert result["error_rate"] < 0.005, (
+        f"Error rate {result['error_rate']:.2%} exceeds 0.5% SLO.\n"
+        f"  Failed: {result['failed_requests']}/{result['total_requests']} requests\n"
+        f"  Review failure details in logs above for error patterns\n"
+        f"  Common causes: resource exhaustion, timeout, invalid input"
+    )
 
 
 def test_sustained_load_performance(load_tester):

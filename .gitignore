@@ -180,3 +180,4 @@ logs/external_logs.jsonl
 # Validation reports and artifacts
 validation_reports/
 *.json-report
+audit_logs/

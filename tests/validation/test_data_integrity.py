@@ -14,11 +14,20 @@ Thresholds:
 import pytest
 import hashlib
 import json
+import logging
 from typing import List, Dict, Tuple
 from datetime import datetime
 from nethical.core.audit_merkle import MerkleAnchor
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.core.models import AgentAction
+from .test_utils import extract_action_content
+
+# Configure logging for detailed diagnostics
+logging.basicConfig(
+    level=logging.INFO,
+    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+)
+logger = logging.getLogger(__name__)
 
 
 class IntegrityValidator:
@@ -96,10 +105,11 @@ class IntegrityValidator:
         
         for i, action in enumerate(actions):
             try:
-                # Re-evaluate action as string
+                # Re-evaluate action - extract content using utility function
+                action_content = extract_action_content(action)
                 result = governance.process_action(
                     agent_id="test_agent",
-                    action=action.action if hasattr(action, 'action') else str(action)
+                    action=action_content
                 )
                 replayed += 1
             except Exception as e:
@@ -174,10 +184,15 @@ def merkle_anchor():
 
 def test_merkle_chain_continuity(integrity_validator, merkle_anchor):
     """Test Merkle chain continuity validation"""
+    logger.info("=" * 80)
+    logger.info("DATA INTEGRITY TEST - Merkle Chain Continuity")
+    logger.info("=" * 80)
+    
     # Create sample audit trail
     audit_trail = []
     previous_root = None
     
+    logger.info("Creating test audit trail with 10 blocks")
     for i in range(10):
         entry = {
             "block_id": i,
@@ -191,18 +206,56 @@ def test_merkle_chain_continuity(integrity_validator, merkle_anchor):
         
         audit_trail.append(entry)
         previous_root = entry["merkle_root"]
+        logger.debug(f"  Block {i}: root={entry['merkle_root'][:16]}...")
     
     # Verify chain
+    logger.info("Verifying chain integrity...")
     result = integrity_validator.verify_merkle_chain(audit_trail)
+    
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  Total Blocks: {result['total_blocks']}")
+    logger.info(f"  Verified Blocks: {result['verified_blocks']}")
+    logger.info(f"  Verification Rate: {result['verification_rate']:.2%} (threshold: 100%)")
+    logger.info(f"  Chain Valid: {result['chain_valid']}")
+    
+    if result['issues']:
+        logger.error(f"\n{len(result['issues'])} issues found:")
+        for issue in result['issues']:
+            logger.error(f"  - {issue}")
     
     print(f"\nMerkle Chain Continuity Test:")
     print(f"  Total Blocks: {result['total_blocks']}")
     print(f"  Verified Blocks: {result['verified_blocks']}")
-    print(f"  Verification Rate: {result['verification_rate']:.2%}")
-    print(f"  Chain Valid: {result['chain_valid']}")
+    print(f"  Verification Rate: {result['verification_rate']:.2%} {'✓' if result['verification_rate'] == 1.0 else '✗'}")
+    print(f"  Chain Valid: {result['chain_valid']} {'✓' if result['chain_valid'] else '✗'}")
     
-    assert result["verification_rate"] == 1.0, "Not all blocks verified"
-    assert result["chain_valid"], "Chain integrity compromised"
+    if not result['chain_valid']:
+        logger.error("=" * 80)
+        logger.error("CHAIN INTEGRITY COMPROMISED")
+        logger.error("=" * 80)
+        logger.error("Issues detected in Merkle chain:")
+        for issue in result['issues']:
+            logger.error(f"  {issue}")
+        logger.error("\nDebugging steps:")
+        logger.error("1. Review the specific blocks listed in issues above")
+        logger.error("2. Check merkle root generation logic")
+        logger.error("3. Verify chain linkage (previous_root references)")
+        logger.error("4. Ensure no tampering in audit trail")
+        logger.error("\nTo reproduce:")
+        logger.error("  pytest tests/validation/test_data_integrity.py::test_merkle_chain_continuity -v -s")
+    
+    assert result["verification_rate"] == 1.0, (
+        f"Not all blocks verified: {result['verified_blocks']}/{result['total_blocks']}\n"
+        f"  Issues: {result['issues']}\n"
+        f"  This indicates problems in Merkle root generation or validation"
+    )
+    assert result["chain_valid"], (
+        f"Chain integrity compromised.\n"
+        f"  Issues found: {len(result['issues'])}\n"
+        f"  Details: {result['issues']}\n"
+        f"  Review audit trail for tampering or corruption"
+    )
 
 
 def test_merkle_chain_break_detection(integrity_validator):
@@ -239,28 +292,75 @@ def test_merkle_chain_break_detection(integrity_validator):
 
 def test_audit_replay_verification(integrity_validator, governance):
     """Test audit trail replay verification"""
+    logger.info("=" * 80)
+    logger.info("DATA INTEGRITY TEST - Audit Replay Verification")
+    logger.info("=" * 80)
+    
     # Create test actions
     test_actions = [
         AgentAction(
             action_id=f"replay_test_{i}",
             agent_id="test_agent",
-            action=f"Test action {i}",
+            content=f"Test action {i}",
             action_type="query"
         )
         for i in range(20)
     ]
     
+    logger.info(f"Testing replay of {len(test_actions)} actions")
+    
     # Replay actions
     result = integrity_validator.replay_audit_trail(test_actions, governance)
+    
+    logger.info("-" * 80)
+    logger.info("Results:")
+    logger.info(f"  Total Actions: {result['total_actions']}")
+    logger.info(f"  Replayed Actions: {result['replayed_actions']}")
+    logger.info(f"  Replay Rate: {result['replay_rate']:.2%} (threshold: ≥95%)")
+    logger.info(f"  Replay Successful: {result['replay_successful']}")
+    
+    if result['mismatches']:
+        logger.warning(f"\n{len(result['mismatches'])} replay mismatches:")
+        for mismatch in result['mismatches'][:5]:
+            logger.warning(f"  {mismatch}")
     
     print(f"\nAudit Replay Verification:")
     print(f"  Total Actions: {result['total_actions']}")
     print(f"  Replayed Actions: {result['replayed_actions']}")
-    print(f"  Replay Rate: {result['replay_rate']:.2%}")
-    print(f"  Replay Successful: {result['replay_successful']}")
+    print(f"  Replay Rate: {result['replay_rate']:.2%} {'✓' if result['replay_rate'] >= 0.95 else '✗'}")
+    print(f"  Replay Successful: {result['replay_successful']} {'✓' if result['replay_successful'] else '✗'}")
+    print(f"  Mismatches: {len(result['mismatches'])}")
     
-    assert result["replay_rate"] >= 0.95, "Replay rate below 95%"
-    assert result["replay_successful"], "Replay had mismatches"
+    if not result["replay_successful"]:
+        logger.error("=" * 80)
+        logger.error("AUDIT REPLAY FAILED")
+        logger.error("=" * 80)
+        logger.error("Some actions could not be replayed successfully")
+        logger.error(f"Success rate: {result['replay_rate']:.2%}")
+        logger.error(f"Failed actions: {len(result['mismatches'])}")
+        logger.error("\nDebugging steps:")
+        logger.error("1. Review mismatch details logged above")
+        logger.error("2. Check for non-deterministic behavior in governance")
+        logger.error("3. Verify action serialization/deserialization")
+        logger.error("4. Ensure all action fields are preserved")
+        logger.error("5. Look for state dependencies that affect replay")
+        logger.error("\nTo reproduce specific action:")
+        if result['mismatches']:
+            logger.error(f"  First mismatch: {result['mismatches'][0]}")
+    
+    assert result["replay_rate"] >= 0.95, (
+        f"Replay rate {result['replay_rate']:.2%} below 95% threshold.\n"
+        f"  Replayed: {result['replayed_actions']}/{result['total_actions']}\n"
+        f"  Mismatches: {len(result['mismatches'])}\n"
+        f"  Sample: {result['mismatches'][:2] if result['mismatches'] else []}\n"
+        f"  Review logs above for detailed mismatch analysis"
+    )
+    assert result["replay_successful"], (
+        f"Replay had {len(result['mismatches'])} mismatches.\n"
+        f"  This indicates non-deterministic behavior or state dependencies.\n"
+        f"  All actions should be reproducible for audit purposes.\n"
+        f"  Review mismatch details in logs above"
+    )
 
 
 def test_cryptographic_proof_validation(integrity_validator):
@@ -358,7 +458,7 @@ def test_generate_integrity_report(integrity_validator, governance, merkle_ancho
         AgentAction(
             action_id=f"report_test_{i}",
             agent_id="report_agent",
-            action=f"Report test {i}",
+            content=f"Report test {i}",
             action_type="query"
         )
         for i in range(30)
