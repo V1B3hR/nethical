@@ -8,9 +8,9 @@ Scripts for validating, calibrating, and monitoring ethics detection quality acr
 
 ## Current Status
 
-**Status**: 🔧 In Development
+**Status**: 📋 Planned (Placeholder Directory)
 
-The ethics scripts referenced in `docs/ETHICS_VALIDATION_FRAMEWORK.md` are reference implementations. This directory is a placeholder for actual script development.
+The ethics scripts referenced in `docs/ETHICS_VALIDATION_FRAMEWORK.md` are reference implementations and examples. This directory serves as a placeholder for future script development. Working ethics validation tests currently exist in `tests/validation/test_ethics_benchmark.py`.
 
 ## Quick Start with Existing Tests
 
