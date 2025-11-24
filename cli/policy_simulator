@@ -45,7 +45,7 @@ def load_yaml_or_json(file_path: str) -> Dict[str, Any]:
             content = f.read()
             try:
                 return json.loads(content)
-            except:
+            except (json.JSONDecodeError, ValueError):
                 return yaml.safe_load(content)
 
 

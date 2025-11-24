@@ -131,7 +131,12 @@ class ThresholdVersionManager:
         Args:
             storage_dir: Directory to store threshold versions
         """
-        self.storage_dir = Path(storage_dir)
+        self.storage_dir = Path(storage_dir).resolve()
+        # Validate path doesn't escape expected boundaries
+        if not str(self.storage_dir).startswith(str(Path.cwd().resolve())):
+            # Allow absolute paths in /tmp for testing
+            if not str(self.storage_dir).startswith('/tmp'):
+                raise ValueError(f"Storage directory must be within current directory: {storage_dir}")
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         
         self.versions: Dict[str, ThresholdConfig] = {}
