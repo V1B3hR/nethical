@@ -311,8 +311,11 @@ class AdvancedExplainer:
             features["ethical_score"] = 0.0
         
         # Extract quota pressure
-        quota_enforcement = judgment_data.get("quota_enforcement", {})
-        features["quota_pressure"] = quota_enforcement.get("backpressure_level", 0.0)
+        quota_enforcement = judgment_data.get("quota_enforcement")
+        if quota_enforcement and isinstance(quota_enforcement, dict):
+            features["quota_pressure"] = quota_enforcement.get("backpressure_level", 0.0)
+        else:
+            features["quota_pressure"] = 0.0
         
         return features
     
