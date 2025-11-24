@@ -176,7 +176,7 @@ autoscaling:
 - **Scope**: Container images, filesystem, dependencies
 - **Policy**: CI pipeline fails on CRITICAL or HIGH vulnerabilities
 - **Frequency**: 
-  - On build (every PR/push)
+  - On every build (every PR/push)
   - Daily scheduled scans
   - On base image updates
 
@@ -239,8 +239,9 @@ autoscaling:
 **Configuration**: Documented in `ARCHITECTURE.md` section 5
 
 **Existing Implementation**:
-- API authentication framework in place
-- FastAPI security integration
+- API authentication framework in `nethical/api/` (FastAPI with security dependencies)
+- JWT/OAuth integration ready in `nethical.api` module
+- Service mesh mTLS configuration in `deploy/helm/nethical/` templates
 
 #### 2.6 WAF Rules (Prompt Injection / Oversized Payload)
 **Status**: ✅ Fully Implemented
@@ -350,13 +351,16 @@ Implementation summary documenting:
 
 ### Security Scanning Results
 ```bash
-# All security checks passing in CI:
-✅ Bandit SAST scan
-✅ Semgrep SAST scan  
-✅ Trivy vulnerability scan
-✅ CodeQL analysis
-✅ Dependency review
-✅ Secret scanning (TruffleHog)
+# Security checks configured in CI (some set to warn-only via continue-on-error):
+✅ Bandit SAST scan - Configured to report issues
+✅ Semgrep SAST scan - Configured to report issues
+✅ Trivy vulnerability scan - Blocks on Critical/High in production
+✅ CodeQL analysis - Runs security-extended queries
+✅ Dependency review - Fails on moderate+ in PRs
+✅ Secret scanning (TruffleHog) - Configured for verified secrets
+
+Note: Some scans use continue-on-error for non-blocking reporting. Production 
+deployments enforce strict blocking on Critical/High vulnerabilities.
 ```
 
 ### Build Status

@@ -262,9 +262,9 @@ tiers:
     cost: $0.004/GB-month
     
   archive:
-    description: Long-term retention (1-7 years)
+    description: Long-term retention (1-7 years for compliance)
     storage_class: Glacier Deep Archive
-    retention: 2190 days
+    retention: 2190 days (approximately 6 years after 1st year)
     cost: $0.00099/GB-month
 ```
 
@@ -290,7 +290,8 @@ tiers:
     {
       "Id": "ExpireAfter7Years",
       "Status": "Enabled",
-      "Expiration": {"Days": 2555}
+      "Expiration": {"Days": 2555},
+      "Comment": "2555 days = 7 years retention for compliance"
     }
   ]
 }
@@ -614,14 +615,16 @@ class PromptInjectionDetector:
 ### Current Capacity
 
 ```yaml
-current_deployment:
-  regions: 20 (global coverage)
-  instances_per_region: 5-30 (auto-scaled)
-  total_capacity:
-    sustained_rps: 10,000
-    peak_rps: 50,000+
-    concurrent_agents: 100,000
-    storage: 1B+ actions
+architecture_design:
+  deployment_model: Multi-region capable
+  regional_support: 20 regions documented (see LONG_TERM_SCALABILITY_SUMMARY.md)
+  auto_scaling: 5-30 replicas per deployment based on load
+  
+target_capacity:
+  sustained_rps: 10,000
+  peak_rps: 50,000+
+  concurrent_agents: 100,000
+  storage: 1B+ actions (multi-tier)
 ```
 
 ### Performance Targets
