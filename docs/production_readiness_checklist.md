@@ -1,30 +1,30 @@
 # Nethical Production Readiness Checklist
 
 ## 1. Architecture
-- [ ] Stateless API layer horizontally scalable
-- [ ] Externalized DB (Postgres) with automated backups + PITR
-- [ ] Redis cluster with auth + TLS
-- [ ] Object storage for cold/archival audit tiers
+- [x] Stateless API layer horizontally scalable
+- [x] Externalized DB (Postgres) with automated backups + PITR
+- [x] Redis cluster with auth + TLS
+- [x] Object storage for cold/archival audit tiers
 
 ## 2. Security
-- [ ] SBOM generated per build (CycloneDX)
-- [ ] Dependency audit pass (no Critical)
-- [ ] Image scanning (Trivy) clean (Critical/High blocked)
-- [ ] Secrets externalized (Vault / KMS)
-- [ ] mTLS or JWT validated at gateway
-- [ ] WAF rules (prompt injection / oversized payload) enabled
+- [x] SBOM generated per build (CycloneDX)
+- [x] Dependency audit pass (no Critical)
+- [x] Image scanning (Trivy) clean (Critical/High blocked)
+- [x] Secrets externalized (Vault / KMS)
+- [x] mTLS or JWT validated at gateway
+- [x] WAF rules (prompt injection / oversized payload) enabled
 
 ## 3. Governance & Ethics
-- [ ] Policy grammar (EBNF) published
-- [ ] Policy simulator & dry-run diff CLI
-- [ ] Baseline ethics benchmark (precision/recall)
-- [ ] Threshold configuration versioned
+- [x] Policy grammar (EBNF) published
+- [x] Policy simulator & dry-run diff CLI
+- [x] Baseline ethics benchmark (precision/recall)
+- [x] Threshold configuration versioned
 
 ## 4. Observability
-- [ ] Metrics: actions_total, latency histograms, violations_total
-- [ ] Tracing: 10% sample baseline, 100% errors
-- [ ] Log sanitization (PII redaction)
-- [ ] Alert rules: latency, error rate, drift, quota saturation
+- [x] Metrics: actions_total, latency histograms, violations_total
+- [x] Tracing: 10% sample baseline, 100% errors
+- [x] Log sanitization (PII redaction)
+- [x] Alert rules: latency, error rate, drift, quota saturation
 
 ## 5. Performance
 - [ ] Sustained load test artifact (report & raw metrics)
