@@ -47,6 +47,11 @@ from .data_minimization import DataMinimization
 # F2: Plugin Interface imports
 from .plugin_interface import get_plugin_manager
 
+# Governance/Safety imports
+from .governance_core import EnhancedSafetyGovernance, AgentAction, Decision
+from .models import AgentAction as ModelsAgentAction
+import asyncio
+
 # Resource Management imports
 try:
     from ..quotas import QuotaEnforcer, QuotaConfig
@@ -167,6 +172,17 @@ class IntegratedGovernance:
         # Initialize regional policy configurations
         if data_residency_policy:
             self._load_regional_policy(data_residency_policy)
+
+        # ==================== Core Governance & Violation Detection ====================
+        # Initialize the enhanced safety governance for violation detection
+        from .governance_core import MonitoringConfig
+        safety_storage = storage_path / "safety_governance"
+        safety_storage.mkdir(parents=True, exist_ok=True)
+        safety_config = MonitoringConfig(
+            enable_persistence=True,
+            db_path=str(safety_storage / "governance_data.sqlite")
+        )
+        self.safety_governance = EnhancedSafetyGovernance(config=safety_config)
 
         # ==================== Phase 3 Components ====================
         self.risk_engine = RiskEngine(redis_client=redis_client, key_prefix="nethical:risk")
@@ -555,6 +571,79 @@ class IntegratedGovernance:
         if effective_region:
             residency_validation = self.validate_data_residency(effective_region)
 
+        # ==================== Core Violation Detection ====================
+        # Import ActionType enum
+        from .governance_core import ActionType
+        
+        # Convert action type string to enum
+        action_type_enum = ActionType.QUERY
+        if action_type:
+            action_type_str = action_type.upper()
+            if hasattr(ActionType, action_type_str):
+                action_type_enum = getattr(ActionType, action_type_str)
+        
+        # Convert action to AgentAction format if it's a string
+        if isinstance(action, str):
+            # Create an AgentAction object from string
+            action_obj = AgentAction(
+                action_id=action_id or f"action_{agent_id}_{int(time.time() * 1000)}",
+                agent_id=agent_id,
+                content=action,
+                action_type=action_type_enum,
+                timestamp=datetime.now(timezone.utc)
+            )
+        elif hasattr(action, 'content'):
+            # Already an AgentAction-like object
+            # Handle action_type conversion
+            existing_action_type = getattr(action, 'action_type', None)
+            if isinstance(existing_action_type, str):
+                existing_action_type_str = existing_action_type.upper()
+                if hasattr(ActionType, existing_action_type_str):
+                    existing_action_type = getattr(ActionType, existing_action_type_str)
+                else:
+                    existing_action_type = action_type_enum
+            elif existing_action_type is None:
+                existing_action_type = action_type_enum
+                
+            action_obj = AgentAction(
+                action_id=getattr(action, 'action_id', action_id or f"action_{agent_id}_{int(time.time() * 1000)}"),
+                agent_id=agent_id,
+                content=action.content,
+                action_type=existing_action_type,
+                timestamp=getattr(action, 'timestamp', datetime.now(timezone.utc))
+            )
+        else:
+            # Convert any other format to AgentAction
+            action_obj = AgentAction(
+                action_id=action_id or f"action_{agent_id}_{int(time.time() * 1000)}",
+                agent_id=agent_id,
+                content=str(action),
+                action_type=action_type_enum,
+                timestamp=datetime.now(timezone.utc)
+            )
+
+        # Run violation detection asynchronously
+        try:
+            # Create event loop if needed
+            loop = asyncio.get_event_loop()
+        except RuntimeError:
+            loop = asyncio.new_event_loop()
+            asyncio.set_event_loop(loop)
+        
+        # Evaluate the action for violations
+        judgment = loop.run_until_complete(self.safety_governance.evaluate_action(action_obj))
+        
+        # Extract violation information
+        detected_violations = judgment.violations
+        decision = judgment.decision
+        violation_detected = len(detected_violations) > 0
+        
+        # Determine violation type and severity from detected violations
+        if detected_violations:
+            # Use the most severe violation
+            violation_type = detected_violations[0].violation_type.value if not violation_type else violation_type
+            violation_severity = detected_violations[0].severity.value if not violation_severity else violation_severity
+
         results = {
             "agent_id": agent_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -572,6 +661,22 @@ class IntegratedGovernance:
                 if self.pii_detector
                 else None
             ),
+            # Add violation detection results
+            "violation_detected": violation_detected,
+            "decision": decision.value if decision else "ALLOW",
+            "violations": [
+                {
+                    "violation_id": v.violation_id,
+                    "violation_type": v.violation_type.value,
+                    "severity": v.severity.value,
+                    "description": v.description,
+                    "confidence": v.confidence,
+                    "detector_name": v.detector_name,
+                }
+                for v in detected_violations
+            ],
+            "reasoning": judgment.reasoning,
+            "confidence": judgment.confidence,
             "phase3": {},
             "phase4": {},
             "phase567": {},

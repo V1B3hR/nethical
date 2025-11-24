@@ -22,10 +22,12 @@ if TYPE_CHECKING:
     from .governance_core import (
         SafetyViolation,
     )
-    from .governance_evaluation import (
-        looks_like_base64,
-        might_be_rot13,
-    )
+
+# Import utility functions for runtime use (not just type checking)
+from .governance_evaluation import (
+    looks_like_base64,
+    might_be_rot13,
+)
 
 
 # ========================== Base Detector ==========================
@@ -88,22 +90,20 @@ class EthicalViolationDetector(BaseDetector):
     def __init__(self, external_keywords: Optional[Iterable[str]] = None):
         super().__init__("EthicalViolationDetector")
         base_keywords = {
-            "harm",
-            "hurt",
-            "damage",
-            "injury",
-            "discrimination",
-            "bias",
-            "unfair",
-            "prejudice",
-            "stereotype",
-            "marginalize",
-            "exclude",
-            "deceive",
-            "mislead",
-            "manipulate",
-            "coerce",
-            "exploit",
+            # Harmful content
+            "harm", "hurt", "damage", "injury", "kill", "attack", "assault", "abuse",
+            "violent", "violence", "weapon", "destroy", "threat", "murder", "endanger",
+            # Discrimination and bias
+            "discrimination", "bias", "unfair", "prejudice", "stereotype", "marginalize",
+            "exclude", "racist", "sexist",
+            # Deception and manipulation
+            "deceive", "mislead", "manipulate", "coerce", "exploit", "trick", "fool",
+            "fake", "false", "lie", "fraud", "scam", "phishing", "deceptive",
+            # Privacy violations
+            "password", "credential", "unauthorized", "privacy", "personal data",
+            "collect data", "extract", "leak", "breach", "spy", "track",
+            # Manipulation
+            "emotional manipulation", "coerce", "pressure", "force", "blackmail",
         }
         if external_keywords:
             base_keywords.update(external_keywords)
@@ -126,10 +126,11 @@ class EthicalViolationDetector(BaseDetector):
         from .governance_core import Severity, ViolationType, SubMission
 
         text = action.content.lower()
-        score = sum(0.12 for k in self.ethical_keywords if k in text)
+        # Increase weight per keyword and lower threshold for better sensitivity
+        score = sum(0.25 for k in self.ethical_keywords if k in text)
         score = min(score, 1.0)
         violations: List[Any] = []
-        if score > 0.5:
+        if score > 0.2:  # Lower threshold for better detection
             violations.append(
                 self._new_violation(
                     action,
@@ -247,6 +248,12 @@ class ManipulationDetector(BaseDetector):
             "prize": 0.3,
             "free": 0.2,
             "guarantee": 0.3,
+            # Enhanced manipulation detection
+            "emotional manipulation": 0.7,
+            "manipulat": 0.5,  # catches manipulate, manipulation, etc.
+            "coerce": 0.6,
+            "deceptive": 0.6,
+            "marketing claim": 0.4,
         }
         if extra_indicators:
             base.update(extra_indicators)
@@ -264,7 +271,7 @@ class ManipulationDetector(BaseDetector):
                 found.append(k)
         score = min(score, 1.0)
         violations: List[SafetyViolation] = []
-        if score > 0.5:
+        if score > 0.4:  # Lower threshold for better detection
             violations.append(
                 self._new_violation(
                     action,
@@ -729,25 +736,38 @@ class DataPoisoningDetector(BaseDetector):
 
 
 class UnauthorizedAccessDetector(BaseDetector):
-    """Placeholder: flags phrases suggesting misuse of privileges."""
+    """Detects phrases suggesting unauthorized access or privilege misuse."""
 
     def __init__(self):
         super().__init__("UnauthorizedAccessDetector")
+        self.unauthorized_keywords = {
+            "bypass login", "bypass authentication", "bypass auth", "bypass security",
+            "unauthorized access", "without permission", "without authorization",
+            "restricted database", "restricted access", "privilege escalation",
+            "admin rights", "root access", "sudo without", "crack password",
+            "bypass firewall", "circumvent security", "exploit vulnerability"
+        }
 
     async def detect_violations(self, action: Any) -> List[Any]:
         from .governance_core import Severity, ViolationType, SubMission
 
-        if "bypass login" in action.content.lower():
-            return [
-                self._new_violation(
-                    action,
-                    ViolationType.UNAUTHORIZED_ACCESS,
-                    Severity.CRITICAL,
-                    "Potential unauthorized access attempt (stub)",
-                    0.8,
-                    ["Phrase: bypass login"],
-                    ["Block attempt", "Alert security"],
-                    SubMission.PRIVILEGE_MISUSE,
+        text_lower = action.content.lower()
+        violations = []
+        
+        for keyword in self.unauthorized_keywords:
+            if keyword in text_lower:
+                violations.append(
+                    self._new_violation(
+                        action,
+                        ViolationType.UNAUTHORIZED_ACCESS,
+                        Severity.CRITICAL,
+                        f"Potential unauthorized access attempt: {keyword}",
+                        0.85,
+                        [f"Keyword detected: {keyword}"],
+                        ["Block attempt", "Alert security"],
+                        SubMission.PRIVILEGE_MISUSE,
+                    )
                 )
-            ]
-        return []
+                break  # Only report once per action
+        
+        return violations
