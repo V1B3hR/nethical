@@ -18,7 +18,7 @@ import json
 import logging
 
 from nethical.explainability.transparency_report import TransparencyReportGenerator, TransparencyReport
-from nethical.storage.tamper_store import TamperStore, Anchor
+from nethical.storage.tamper_store import TamperEvidentOfflineStore, Anchor
 
 logger = logging.getLogger(__name__)
 
@@ -82,9 +82,7 @@ class MerkleRootsRegistry:
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         
         # Initialize tamper store
-        self.tamper_store = TamperStore(
-            storage_path=str(self.storage_dir / "merkle_chain.jsonl")
-        )
+        self.tamper_store = TamperEvidentOfflineStore()
         
         # Anchor history
         self._anchors: List[Anchor] = []
@@ -137,7 +135,7 @@ class MerkleRootsRegistry:
             "timestamp": datetime.now(timezone.utc).isoformat()
         }
         
-        leaf_hash = self.tamper_store.append(payload, correlation_id=correlation_id)
+        leaf_hash = self.tamper_store.append_event(payload, correlation_id=correlation_id)
         
         logger.info(f"Registered event {event_type} with leaf hash {leaf_hash}")
         return leaf_hash
@@ -159,7 +157,7 @@ class MerkleRootsRegistry:
         Returns:
             Anchor object
         """
-        root = self.tamper_store.get_root()
+        root = self.tamper_store.root()
         if not root:
             raise ValueError("No events to anchor")
         
@@ -211,21 +209,26 @@ class MerkleRootsRegistry:
         
         return anchors
     
-    def verify_event(self, event_index: int) -> bool:
+    def verify_event(self, event_seq: int) -> bool:
         """
         Verify an event's inclusion in the Merkle tree.
         
         Args:
-            event_index: Index of the event
+            event_seq: Sequence number of the event (1-based)
         
         Returns:
             True if verification succeeds
         """
         try:
-            proof = self.tamper_store.prove(event_index)
-            return self.tamper_store.verify(event_index, proof)
+            proof_data = self.tamper_store.prove(event_seq)
+            # Verify using the leaf, proof, and root
+            leaf = proof_data["leaf"]
+            proof = proof_data["proof"]
+            root = proof_data["root"]
+            computed_root = self.tamper_store._merkle.verify(leaf, proof, root)
+            return computed_root == root
         except Exception as e:
-            logger.error(f"Verification failed for event {event_index}: {e}")
+            logger.error(f"Verification failed for event {event_seq}: {e}")
             return False
     
     def get_statistics(self) -> Dict[str, Any]:
@@ -233,7 +236,7 @@ class MerkleRootsRegistry:
         return {
             "total_events": self.tamper_store.size(),
             "total_anchors": len(self._anchors),
-            "current_root": self.tamper_store.get_root(),
+            "current_root": self.tamper_store.root(),
             "latest_anchor": self._anchors[-1].to_record() if self._anchors else None,
             "timestamp": datetime.now(timezone.utc).isoformat()
         }

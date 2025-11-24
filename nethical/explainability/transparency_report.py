@@ -68,7 +68,8 @@ class TransparencyReportGenerator:
         Returns:
             A TransparencyReport with complete analysis
         """
-        now = datetime.now()
+        from datetime import timezone
+        now = datetime.now(timezone.utc)
         period_start = now - timedelta(days=period_days)
 
         # Filter data to period
@@ -359,16 +360,24 @@ class TransparencyReportGenerator:
 
     def _parse_timestamp(self, timestamp: Any) -> Optional[datetime]:
         """Parse timestamp from various formats."""
+        from datetime import timezone
         if isinstance(timestamp, datetime):
+            # Ensure timezone-aware
+            if timestamp.tzinfo is None:
+                return timestamp.replace(tzinfo=timezone.utc)
             return timestamp
         elif isinstance(timestamp, str):
             try:
-                return datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                dt = datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
+                # Ensure timezone-aware
+                if dt.tzinfo is None:
+                    return dt.replace(tzinfo=timezone.utc)
+                return dt
             except (ValueError, AttributeError):
                 return None
         elif isinstance(timestamp, (int, float)):
             try:
-                return datetime.fromtimestamp(timestamp)
+                return datetime.fromtimestamp(timestamp, tz=timezone.utc)
             except (ValueError, OSError):
                 return None
         return None
