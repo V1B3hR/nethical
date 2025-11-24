@@ -464,11 +464,13 @@ def test_generate_explainability_report(governance, validator, tmp_path):
         "threshold_met": coverage_result["coverage"] > 0.95
     }
     
+    latency_threshold_met = avg_latency_ms < 500 and p95_latency < 500
     report["tests"]["latency"] = {
         "average_ms": avg_latency_ms,
         "p95_ms": p95_latency,
         "p99_ms": p99_latency,
-        "sla_met": avg_latency_ms < 500 and p95_latency < 500
+        "sla_met": latency_threshold_met,
+        "threshold_met": latency_threshold_met  # Add for consistent compliance checking
     }
     
     # Test quality
@@ -495,7 +497,7 @@ def test_generate_explainability_report(governance, validator, tmp_path):
         "threshold_met": avg_quality >= 0.80
     }
     
-    # Overall compliance
+    # Overall compliance - check threshold_met for all tests
     report["overall_compliance"] = all(
         test.get("threshold_met", False)
         for test in report["tests"].values()

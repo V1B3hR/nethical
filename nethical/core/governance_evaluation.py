@@ -186,7 +186,13 @@ class SafetyJudge:
         from .governance_core import Decision, Severity
 
         if not violations:
-            return Decision.ALLOW, 1.0, "No violations"
+            # Enhanced reasoning for ALLOW decisions with no violations
+            reasoning = (
+                "No safety, ethical, or policy violations detected. "
+                "Action evaluated as safe and compliant with all governance policies. "
+                "Action approved for execution with continued monitoring."
+            )
+            return Decision.ALLOW, 1.0, reasoning
         max_sev = max(v.severity.value for v in violations)
         avg_conf = sum(v.confidence for v in violations) / len(violations)
         if max_sev >= Severity.EMERGENCY.value:
