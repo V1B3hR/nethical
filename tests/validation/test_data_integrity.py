@@ -96,11 +96,15 @@ class IntegrityValidator:
         
         for i, action in enumerate(actions):
             try:
-                # Re-evaluate action
-                result = governance.process_action(action_id.split("_")[-2] if "_" in action_id else "test_agent", action_text)
+                # Re-evaluate action as string
+                result = governance.process_action(
+                    agent_id="test_agent",
+                    action=action.action if hasattr(action, 'action') else str(action)
+                )
                 replayed += 1
             except Exception as e:
-                mismatches.append(f"Action {i} ({action.action_id}): Replay failed - {str(e)}")
+                action_id = action.action_id if hasattr(action, 'action_id') else str(i)
+                mismatches.append(f"Action {i} ({action_id}): Replay failed - {str(e)}")
         
         return {
             "total_actions": len(actions),
@@ -295,8 +299,12 @@ def test_integrity_with_merkle_anchor(merkle_anchor):
     roots = []
     for data in test_data:
         data_json = json.dumps(data, sort_keys=True)
-        root = merkle_anchor.anchor(data_json.encode())
-        roots.append(root)
+        # Use add_event to add the data
+        merkle_anchor.add_event(data)
+        # Finalize to get root for this data
+        root = merkle_anchor.finalize_chunk()
+        if root:
+            roots.append(root)
     
     print(f"\nMerkle Anchor Integrity Test:")
     print(f"  Blocks Anchored: {len(roots)}")

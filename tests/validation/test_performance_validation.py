@@ -107,11 +107,13 @@ class LoadTester:
         
         for i in range(num_requests):
             action_text = test_actions[i % len(test_actions)]
-            # Using string action
             
             start_time = time.perf_counter()
             try:
-                result = self.governance.process_action(action)
+                result = self.governance.process_action(
+                    agent_id="load_tester",
+                    action=action_text
+                )
                 elapsed = time.perf_counter() - start_time
                 latencies.append(elapsed)
             except Exception as e:
