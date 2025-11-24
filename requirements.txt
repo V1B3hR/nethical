@@ -10,15 +10,15 @@
 #   pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
 
 # Web server framework (optional - for API server)
-fastapi==0.121.0
+fastapi==0.121.3
 uvicorn==0.38.0
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
-pydantic==2.12.3
-pydantic-core==2.41.4
+pydantic==2.12.4
+pydantic-core==2.41.5
 typing-extensions==4.15.0
 dataclasses-json==0.6.7
 
@@ -45,7 +45,7 @@ tzdata==2025.2
 # Pin starlette to the range fastapi 0.121.0 supports for reproducibility and security.
 # This explicit pin ensures builds remain consistent even if fastapi's range allows
 # multiple versions. Update this when updating fastapi.
-starlette>=0.40.0,<0.50.0
+starlette>=0.40.0,<0.51.0
 
 # LLM Integration SDKs (optional - for specific integrations)
 anthropic>=0.40.0  # For Claude/Anthropic integration
