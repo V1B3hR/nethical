@@ -14,9 +14,9 @@ annotated-types==0.7.0 \
     # via
     #   -r requirements.txt
     #   pydantic
-anthropic==0.74.1 \
-    --hash=sha256:04c087b2751385c524f6d332d066a913870e4de8b3e335fb0a0c595f1f88dc6e \
-    --hash=sha256:b07b998d1cee7f41d9f02530597d7411672b362cc2417760a40c0167b81c6e65
+anthropic==0.75.0 \
+    --hash=sha256:e8607422f4ab616db2ea5baacc215dd5f028da99ce2f022e33c7c535b29f3dfb \
+    --hash=sha256:ea8317271b6c15d80225a9f3c670152746e88805a7a61e14d4a374577164965b
     # via -r requirements.txt
 anyio==4.11.0 \
     --hash=sha256:0287e96f4d26d4149305414d4e3bc32f0dcd0862365a4bddea19d7a1ec38c4fc \
@@ -162,9 +162,9 @@ docstring-parser==0.17.0 \
     --hash=sha256:583de4a309722b3315439bb31d64ba3eebada841f2e2cee23b99df001434c912 \
     --hash=sha256:cf2569abd23dce8099b300f9b4fa8191e9582dda731fd533daf54c4551658708
     # via anthropic
-fastapi==0.121.3 \
-    --hash=sha256:0055bc24fe53e56a40e9e0ad1ae2baa81622c406e548e501e717634e2dfbc40b \
-    --hash=sha256:0c78fc87587fcd910ca1bbf5bc8ba37b80e119b388a7206b39f0ecc95ebf53e9
+fastapi==0.122.0 \
+    --hash=sha256:a456e8915dfc6c8914a50d9651133bd47ec96d331c5b44600baa635538a30d67 \
+    --hash=sha256:cd9b5352031f93773228af8b4c443eedc2ac2aa74b27780387b853c3726fb94b
     # via -r requirements.txt
 h11==0.16.0 \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \
