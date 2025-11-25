@@ -154,6 +154,21 @@ from .secret_management import (
     SecretManagementSystem,
 )
 
+# Regulatory Compliance Framework (EU AI Act, UK Law, US Standards)
+from .regulatory_compliance import (
+    AIRiskLevel,
+    RegulatoryFramework,
+    ComplianceStatus as RegulatoryComplianceStatus,
+    ControlCategory,
+    RegulatoryRequirement,
+    RegulatoryMapping,
+    EUAIActCompliance,
+    UKLawCompliance,
+    USStandardsCompliance,
+    RegulatoryMappingGenerator,
+    generate_regulatory_mapping_table,
+)
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -276,4 +291,16 @@ __all__ = [
     "SecretRotationManager",
     "VaultIntegration",
     "SecretManagementSystem",
+    # Regulatory Compliance Framework
+    "AIRiskLevel",
+    "RegulatoryFramework",
+    "RegulatoryComplianceStatus",
+    "ControlCategory",
+    "RegulatoryRequirement",
+    "RegulatoryMapping",
+    "EUAIActCompliance",
+    "UKLawCompliance",
+    "USStandardsCompliance",
+    "RegulatoryMappingGenerator",
+    "generate_regulatory_mapping_table",
 ]

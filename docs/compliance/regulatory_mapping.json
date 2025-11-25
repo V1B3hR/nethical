@@ -1,0 +1,882 @@
+{
+  "metadata": {
+    "generated_at": "2025-11-25T23:13:00.965066+00:00",
+    "generator_version": "1.0.0",
+    "total_requirements": 40,
+    "frameworks": [
+      "eu_ai_act",
+      "uk_gdpr",
+      "uk_dpa_2018",
+      "uk_nhs_dspt",
+      "us_nist_ai_rmf",
+      "us_hipaa",
+      "us_soc2",
+      "us_nist_800_53"
+    ]
+  },
+  "summary": {
+    "by_framework": {
+      "eu_ai_act": 14,
+      "uk_gdpr": 7,
+      "uk_dpa_2018": 2,
+      "uk_nhs_dspt": 5,
+      "us_nist_ai_rmf": 8,
+      "us_soc2": 4
+    },
+    "by_category": {
+      "risk_management": 10,
+      "data_governance": 5,
+      "fairness": 1,
+      "technical_documentation": 1,
+      "audit_logging": 1,
+      "transparency": 4,
+      "human_oversight": 3,
+      "security": 6,
+      "privacy": 4,
+      "incident_response": 3,
+      "access_control": 2
+    },
+    "by_status": {
+      "pending_review": 40
+    }
+  },
+  "requirements": [
+    {
+      "id": "EU-AI-9.1",
+      "framework": "eu_ai_act",
+      "article": "Article 9",
+      "title": "Risk Management System",
+      "description": "Establish, implement, document and maintain a risk management system",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/risk_engine.py",
+        "nethical/core/governance.py"
+      ],
+      "test_evidence": [
+        "tests/test_governance_features.py"
+      ],
+      "documentation": [
+        "docs/compliance/NIST_RMF_MAPPING.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-9.2",
+      "framework": "eu_ai_act",
+      "article": "Article 9",
+      "title": "Risk Identification and Analysis",
+      "description": "Identification and analysis of known and foreseeable risks",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/anomaly_detector.py",
+        "nethical/core/ml_blended_risk.py"
+      ],
+      "test_evidence": [
+        "tests/test_anomaly_classifier.py"
+      ],
+      "documentation": [
+        "docs/security/threat_model.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-9.3",
+      "framework": "eu_ai_act",
+      "article": "Article 9",
+      "title": "Risk Mitigation Measures",
+      "description": "Adoption of suitable risk management measures",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/quarantine.py",
+        "nethical/policy/engine.py"
+      ],
+      "test_evidence": [
+        "tests/test_phase3.py"
+      ],
+      "documentation": [
+        "docs/security/mitigations.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-10.1",
+      "framework": "eu_ai_act",
+      "article": "Article 10",
+      "title": "Training Data Governance",
+      "description": "Training, validation and testing data sets shall be subject to data governance",
+      "category": "data_governance",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/data_minimization.py",
+        "nethical/security/data_compliance.py"
+      ],
+      "test_evidence": [
+        "tests/test_privacy_features.py"
+      ],
+      "documentation": [
+        "docs/privacy/DPIA_template.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-10.2",
+      "framework": "eu_ai_act",
+      "article": "Article 10",
+      "title": "Data Quality and Bias Mitigation",
+      "description": "Data sets shall be relevant, representative, free of errors and complete",
+      "category": "fairness",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/fairness_sampler.py"
+      ],
+      "test_evidence": [
+        "tests/test_regionalization.py"
+      ],
+      "documentation": [
+        "governance/fairness_recalibration_report.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-11.1",
+      "framework": "eu_ai_act",
+      "article": "Article 11",
+      "title": "Technical Documentation",
+      "description": "Technical documentation shall be drawn up before placing on market",
+      "category": "technical_documentation",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [],
+      "test_evidence": [],
+      "documentation": [
+        "ARCHITECTURE.md",
+        "docs/API_USAGE.md",
+        "docs/EXPLAINABILITY_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-12.1",
+      "framework": "eu_ai_act",
+      "article": "Article 12",
+      "title": "Automatic Logging",
+      "description": "High-risk AI systems shall allow for automatic recording of events (logs)",
+      "category": "audit_logging",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/audit_logging.py",
+        "nethical/core/audit_merkle.py"
+      ],
+      "test_evidence": [
+        "tests/test_train_audit_logging.py"
+      ],
+      "documentation": [
+        "docs/AUDIT_LOGGING_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-13.1",
+      "framework": "eu_ai_act",
+      "article": "Article 13",
+      "title": "Transparency and Information",
+      "description": "Design and develop in such a way as to ensure operation is sufficiently transparent",
+      "category": "transparency",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/explainability/transparency_report.py",
+        "nethical/explainability/quarterly_transparency.py"
+      ],
+      "test_evidence": [
+        "tests/test_explainability/"
+      ],
+      "documentation": [
+        "docs/transparency/"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-13.2",
+      "framework": "eu_ai_act",
+      "article": "Article 13",
+      "title": "Instructions for Use",
+      "description": "Accompanied by instructions for use in an appropriate digital format",
+      "category": "transparency",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [],
+      "test_evidence": [],
+      "documentation": [
+        "README.md",
+        "docs/API_USAGE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-14.1",
+      "framework": "eu_ai_act",
+      "article": "Article 14",
+      "title": "Human Oversight Design",
+      "description": "Design and develop with appropriate human-machine interface tools",
+      "category": "human_oversight",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/human_feedback.py",
+        "nethical/governance/human_review.py"
+      ],
+      "test_evidence": [
+        "tests/test_governance_features.py"
+      ],
+      "documentation": [
+        "docs/governance/governance_drivers.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-14.2",
+      "framework": "eu_ai_act",
+      "article": "Article 14",
+      "title": "Human Oversight Capabilities",
+      "description": "Enable human oversight to fully understand AI capabilities and limitations",
+      "category": "human_oversight",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/explainability/decision_explainer.py"
+      ],
+      "test_evidence": [
+        "tests/test_advanced_explainability.py"
+      ],
+      "documentation": [
+        "docs/ADVANCED_EXPLAINABILITY_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-15.1",
+      "framework": "eu_ai_act",
+      "article": "Article 15",
+      "title": "Accuracy",
+      "description": "Achieve appropriate level of accuracy specified in instructions for use",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/governance/ethics_benchmark.py"
+      ],
+      "test_evidence": [
+        "tests/test_performance_benchmarks.py"
+      ],
+      "documentation": [
+        "docs/BENCHMARK_PLAN.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-15.2",
+      "framework": "eu_ai_act",
+      "article": "Article 15",
+      "title": "Robustness",
+      "description": "Be resilient regarding errors, faults, or inconsistencies",
+      "category": "security",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/ai_ml_security.py"
+      ],
+      "test_evidence": [
+        "tests/adversarial/"
+      ],
+      "documentation": [
+        "docs/security/AI_ML_SECURITY_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "EU-AI-15.3",
+      "framework": "eu_ai_act",
+      "article": "Article 15",
+      "title": "Cybersecurity",
+      "description": "Resilient against attempts to exploit system vulnerabilities",
+      "category": "security",
+      "mandatory": true,
+      "high_risk_only": true,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/threat_modeling.py",
+        "nethical/security/penetration_testing.py"
+      ],
+      "test_evidence": [
+        "tests/test_phase5_penetration_testing.py",
+        "tests/test_phase5_threat_modeling.py"
+      ],
+      "documentation": [
+        "docs/SECURITY_HARDENING_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-GDPR-5",
+      "framework": "uk_gdpr",
+      "article": "Article 5",
+      "title": "Principles of Processing",
+      "description": "Lawfulness, fairness, transparency, purpose limitation, data minimization",
+      "category": "privacy",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/data_minimization.py",
+        "nethical/core/redaction_pipeline.py"
+      ],
+      "test_evidence": [
+        "tests/test_privacy_features.py"
+      ],
+      "documentation": [
+        "docs/privacy/DPIA_template.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-GDPR-6",
+      "framework": "uk_gdpr",
+      "article": "Article 6",
+      "title": "Lawful Basis for Processing",
+      "description": "Processing shall have lawful basis (consent, contract, legal obligation, etc.)",
+      "category": "privacy",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/data_compliance.py"
+      ],
+      "test_evidence": [
+        "tests/test_privacy_features.py"
+      ],
+      "documentation": [
+        "docs/privacy/DPIA_template.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-GDPR-12-22",
+      "framework": "uk_gdpr",
+      "article": "Articles 12-22",
+      "title": "Data Subject Rights",
+      "description": "Right to access, rectification, erasure, restriction, portability, objection",
+      "category": "privacy",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/data_compliance.py"
+      ],
+      "test_evidence": [
+        "tests/test_privacy_features.py"
+      ],
+      "documentation": [
+        "docs/privacy/DSR_runbook.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-GDPR-25",
+      "framework": "uk_gdpr",
+      "article": "Article 25",
+      "title": "Data Protection by Design and Default",
+      "description": "Implement appropriate technical and organisational measures",
+      "category": "privacy",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/differential_privacy.py"
+      ],
+      "test_evidence": [
+        "tests/test_privacy_features.py"
+      ],
+      "documentation": [
+        "docs/F3_PRIVACY_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-GDPR-32",
+      "framework": "uk_gdpr",
+      "article": "Article 32",
+      "title": "Security of Processing",
+      "description": "Implement appropriate technical and organisational security measures",
+      "category": "security",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/encryption.py",
+        "nethical/security/auth.py"
+      ],
+      "test_evidence": [
+        "tests/test_security_hardening.py"
+      ],
+      "documentation": [
+        "docs/SECURITY_HARDENING_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-GDPR-33-34",
+      "framework": "uk_gdpr",
+      "article": "Articles 33-34",
+      "title": "Breach Notification",
+      "description": "Notify supervisory authority and data subjects of personal data breaches",
+      "category": "incident_response",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/soc_integration.py"
+      ],
+      "test_evidence": [
+        "tests/test_phase4_operational_security.py"
+      ],
+      "documentation": [
+        "docs/security/red_team_report_template.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-GDPR-35",
+      "framework": "uk_gdpr",
+      "article": "Article 35",
+      "title": "Data Protection Impact Assessment",
+      "description": "Carry out DPIA for high-risk processing operations",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [],
+      "test_evidence": [],
+      "documentation": [
+        "docs/privacy/DPIA_template.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-DPA-35",
+      "framework": "uk_dpa_2018",
+      "article": "Section 35",
+      "title": "Law Enforcement Processing Principles",
+      "description": "Specific requirements for law enforcement data processing",
+      "category": "data_governance",
+      "mandatory": false,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/policy/engine.py"
+      ],
+      "test_evidence": [
+        "tests/test_phase3.py"
+      ],
+      "documentation": [
+        "policies/common/data_classification.yaml"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "UK-DPA-64",
+      "framework": "uk_dpa_2018",
+      "article": "Section 64",
+      "title": "Automated Decision-Making",
+      "description": "Rights related to automated decision-making and profiling",
+      "category": "transparency",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/explainability/decision_explainer.py"
+      ],
+      "test_evidence": [
+        "tests/test_advanced_explainability.py"
+      ],
+      "documentation": [
+        "docs/EXPLAINABILITY_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NHS-DSPT-1",
+      "framework": "uk_nhs_dspt",
+      "article": "Standard 1",
+      "title": "Personal Confidential Data",
+      "description": "Staff ensure personal confidential data is handled appropriately",
+      "category": "data_governance",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/redaction_pipeline.py"
+      ],
+      "test_evidence": [
+        "tests/test_privacy_features.py"
+      ],
+      "documentation": [
+        "docs/privacy/DPIA_template.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NHS-DSPT-3",
+      "framework": "uk_nhs_dspt",
+      "article": "Standard 3",
+      "title": "Security Training",
+      "description": "All staff complete annual data security awareness training",
+      "category": "security",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [],
+      "test_evidence": [],
+      "documentation": [
+        "docs/TRAINING_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NHS-DSPT-7",
+      "framework": "uk_nhs_dspt",
+      "article": "Standard 7",
+      "title": "Managing Access to Data and Systems",
+      "description": "Robust access controls and authentication",
+      "category": "access_control",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/rbac.py",
+        "nethical/security/auth.py"
+      ],
+      "test_evidence": [
+        "tests/test_security_hardening.py"
+      ],
+      "documentation": [
+        "docs/security/SSO_SAML_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NHS-DSPT-8",
+      "framework": "uk_nhs_dspt",
+      "article": "Standard 8",
+      "title": "Unsupported Systems",
+      "description": "No unsupported operating systems, software or internet browsers",
+      "category": "security",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [],
+      "test_evidence": [],
+      "documentation": [
+        "docs/SUPPLY_CHAIN_SECURITY_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NHS-DSPT-10",
+      "framework": "uk_nhs_dspt",
+      "article": "Standard 10",
+      "title": "Accountable Suppliers",
+      "description": "IT suppliers are held accountable via contracts",
+      "category": "data_governance",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [],
+      "test_evidence": [],
+      "documentation": [
+        "docs/SUPPLY_CHAIN_SECURITY_GUIDE.md",
+        "SBOM.json"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NIST-RMF-GV1",
+      "framework": "us_nist_ai_rmf",
+      "article": "GOVERN 1",
+      "title": "Governance Policies and Procedures",
+      "description": "Policies and procedures are in place to govern AI risk management",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/governance.py",
+        "nethical/policy/engine.py"
+      ],
+      "test_evidence": [
+        "tests/test_governance_features.py"
+      ],
+      "documentation": [
+        "docs/governance/governance_drivers.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NIST-RMF-GV2",
+      "framework": "us_nist_ai_rmf",
+      "article": "GOVERN 2",
+      "title": "Accountability Structures",
+      "description": "Accountability structures are in place for AI risk management",
+      "category": "human_oversight",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/governance/human_review.py"
+      ],
+      "test_evidence": [
+        "tests/test_integrated_governance.py"
+      ],
+      "documentation": [
+        "docs/compliance/NIST_RMF_MAPPING.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NIST-RMF-MP1",
+      "framework": "us_nist_ai_rmf",
+      "article": "MAP 1",
+      "title": "Context Establishment",
+      "description": "Context is established and understood",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/fairness_sampler.py"
+      ],
+      "test_evidence": [
+        "tests/test_regionalization.py"
+      ],
+      "documentation": [
+        "docs/REGIONAL_DEPLOYMENT_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NIST-RMF-MP3",
+      "framework": "us_nist_ai_rmf",
+      "article": "MAP 3",
+      "title": "AI Capabilities and Limitations",
+      "description": "AI capabilities and limitations are understood",
+      "category": "transparency",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/explainability/decision_explainer.py"
+      ],
+      "test_evidence": [
+        "tests/test_advanced_explainability.py"
+      ],
+      "documentation": [
+        "docs/EXPLAINABILITY_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NIST-RMF-MS1",
+      "framework": "us_nist_ai_rmf",
+      "article": "MEASURE 1",
+      "title": "Risk Measurement",
+      "description": "Appropriate methods and metrics are identified and applied",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/risk_engine.py",
+        "nethical/core/ml_blended_risk.py"
+      ],
+      "test_evidence": [
+        "tests/test_performance_benchmarks.py"
+      ],
+      "documentation": [
+        "docs/BENCHMARK_PLAN.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NIST-RMF-MS2",
+      "framework": "us_nist_ai_rmf",
+      "article": "MEASURE 2",
+      "title": "AI Testing",
+      "description": "AI systems are evaluated for trustworthy characteristics",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/governance/ethics_benchmark.py"
+      ],
+      "test_evidence": [
+        "tests/adversarial/",
+        "tests/test_performance_benchmarks.py"
+      ],
+      "documentation": [
+        "docs/Benchmark_plan.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NIST-RMF-MG1",
+      "framework": "us_nist_ai_rmf",
+      "article": "MANAGE 1",
+      "title": "Risk Response",
+      "description": "AI risks based on assessments are prioritized, responded to and managed",
+      "category": "risk_management",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/quarantine.py"
+      ],
+      "test_evidence": [
+        "tests/test_phase3.py"
+      ],
+      "documentation": [
+        "docs/security/mitigations.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "NIST-RMF-MG3",
+      "framework": "us_nist_ai_rmf",
+      "article": "MANAGE 3",
+      "title": "Incident Response",
+      "description": "AI system incident response procedures are established",
+      "category": "incident_response",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/soc_integration.py"
+      ],
+      "test_evidence": [
+        "tests/test_phase4_operational_security.py"
+      ],
+      "documentation": [
+        "docs/security/red_team_report_template.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "SOC2-CC6.1",
+      "framework": "us_soc2",
+      "article": "CC6.1",
+      "title": "Logical Access Security",
+      "description": "Logical access security software, infrastructure, and architectures",
+      "category": "access_control",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/rbac.py",
+        "nethical/security/auth.py"
+      ],
+      "test_evidence": [
+        "tests/test_security_hardening.py"
+      ],
+      "documentation": [
+        "docs/security/SSO_SAML_GUIDE.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "SOC2-CC6.6",
+      "framework": "us_soc2",
+      "article": "CC6.6",
+      "title": "Security Monitoring",
+      "description": "System intrusion detection and response procedures",
+      "category": "security",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/anomaly_detection.py"
+      ],
+      "test_evidence": [
+        "tests/test_phase4_operational_security.py"
+      ],
+      "documentation": [
+        "docs/security/threat_model.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "SOC2-CC7.1",
+      "framework": "us_soc2",
+      "article": "CC7.1",
+      "title": "Change Management",
+      "description": "Configuration changes are managed through change management process",
+      "category": "data_governance",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/core/policy_diff.py",
+        "nethical/policy/release_management.py"
+      ],
+      "test_evidence": [
+        "tests/test_train_governance.py"
+      ],
+      "documentation": [
+        "docs/versioning.md"
+      ],
+      "remediation_notes": ""
+    },
+    {
+      "id": "SOC2-CC7.4",
+      "framework": "us_soc2",
+      "article": "CC7.4",
+      "title": "Incident Response",
+      "description": "Incident response procedures are established",
+      "category": "incident_response",
+      "mandatory": true,
+      "high_risk_only": false,
+      "status": "pending_review",
+      "code_modules": [
+        "nethical/security/soc_integration.py"
+      ],
+      "test_evidence": [
+        "tests/test_phase4_operational_security.py"
+      ],
+      "documentation": [
+        "docs/security/red_team_report_template.md"
+      ],
+      "remediation_notes": ""
+    }
+  ]
+}
