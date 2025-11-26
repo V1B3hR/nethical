@@ -169,31 +169,102 @@ class PKICertificateValidator:
             return False
 
     async def _validate_certificate_chain(self, cert: x509.Certificate) -> bool:
-        """Validate certificate chain against trusted CAs"""
-        # Stub: In production, validate against trusted_ca_certs
-        # This would involve building and validating the certificate chain
+        """
+        Validate certificate chain against trusted CAs.
+
+        WARNING: This is a STUB implementation that always returns True.
+        For production use, implement actual certificate chain validation
+        using the trusted_ca_certs provided in __init__.
+
+        TODO: Implement certificate chain building and validation using
+        cryptography library's certificate verification.
+        """
+        import warnings
+        warnings.warn(
+            "PKICertificateValidator._validate_certificate_chain is a stub. "
+            "Certificate chain validation is not performed. "
+            "Implement proper validation for production use.",
+            UserWarning,
+            stacklevel=3,
+        )
+        log.warning(
+            "Certificate chain validation is STUBBED (always returns True). "
+            "This is NOT suitable for production use."
+        )
         return True
 
     async def _check_crl(self, cert: x509.Certificate) -> bool:
-        """Check Certificate Revocation List"""
-        # Stub: In production, fetch and check CRL
-        # This would involve fetching the CRL from the certificate's CRL distribution points
+        """
+        Check Certificate Revocation List.
+
+        WARNING: This is a STUB implementation that always returns True.
+        For production use, implement actual CRL checking by fetching
+        the CRL from the certificate's CRL distribution points.
+
+        TODO: Implement CRL fetching and checking.
+        """
+        import warnings
+        warnings.warn(
+            "PKICertificateValidator._check_crl is a stub. "
+            "CRL checking is not performed. "
+            "Implement proper CRL validation for production use.",
+            UserWarning,
+            stacklevel=3,
+        )
+        log.warning(
+            "CRL checking is STUBBED (always returns True). "
+            "This is NOT suitable for production use."
+        )
         return True
 
     async def _check_ocsp(self, cert: x509.Certificate) -> bool:
-        """Check OCSP (Online Certificate Status Protocol)"""
-        # Stub: In production, perform OCSP stapling check
-        # This would involve contacting the OCSP responder specified in the certificate
+        """
+        Check OCSP (Online Certificate Status Protocol).
+
+        WARNING: This is a STUB implementation that always returns True.
+        For production use, implement actual OCSP checking by contacting
+        the OCSP responder specified in the certificate.
+
+        TODO: Implement OCSP stapling check.
+        """
+        import warnings
+        warnings.warn(
+            "PKICertificateValidator._check_ocsp is a stub. "
+            "OCSP checking is not performed. "
+            "Implement proper OCSP validation for production use.",
+            UserWarning,
+            stacklevel=3,
+        )
+        log.warning(
+            "OCSP checking is STUBBED (always returns True). "
+            "This is NOT suitable for production use."
+        )
         return True
 
     def extract_user_info(self, certificate: bytes) -> Dict[str, str]:
         """
-        Extract user information from certificate
+        Extract user information from certificate.
+
+        WARNING: This is a STUB implementation that returns mock data.
+        For production use, implement actual certificate parsing.
+
+        TODO: Parse certificate and extract subject info (CN, email, O, etc.)
 
         Returns:
             Dictionary with subject DN, email, CN, etc.
         """
-        # Stub: In production, parse certificate and extract subject info
+        import warnings
+        warnings.warn(
+            "PKICertificateValidator.extract_user_info is a stub. "
+            "Returns mock data, not actual certificate info. "
+            "Implement proper extraction for production use.",
+            UserWarning,
+            stacklevel=2,
+        )
+        log.warning(
+            "extract_user_info is STUBBED (returns mock data). "
+            "This is NOT suitable for production use."
+        )
         return {
             "common_name": "user@example.gov",
             "email": "user@example.gov",
@@ -464,7 +535,10 @@ class LDAPConnector:
 
     async def authenticate(self, username: str, password: str) -> bool:
         """
-        Authenticate user against LDAP/AD
+        Authenticate user against LDAP/AD.
+
+        WARNING: This is a STUB implementation that only checks password length.
+        For production use, implement actual LDAP authentication using ldap3.
 
         Args:
             username: Username or email
@@ -472,32 +546,56 @@ class LDAPConnector:
 
         Returns:
             True if authentication successful
+
+        Raises:
+            NotImplementedError: If called in production mode (when production_mode=True)
         """
-        # Stub: In production, use ldap3 library
+        import warnings
+        warnings.warn(
+            "LDAPConnector.authenticate is a STUB implementation that accepts any 8+ character password. "
+            "This creates a CRITICAL security vulnerability in production. "
+            "Install ldap3 library (pip install ldap3) and implement proper LDAP authentication "
+            "before production deployment.",
+            UserWarning,
+            stacklevel=2,
+        )
+        log.warning(
+            "LDAP authentication is STUBBED (accepts any 8+ char password). "
+            "This is NOT suitable for production use. "
+            "Implement actual LDAP authentication using ldap3 library: pip install ldap3"
+        )
+
+        # Stub implementation - accepts any password with 8+ characters
+        # In production, use ldap3 library:
         # from ldap3 import Server, Connection, ALL
         # server = Server(self.server_url, get_info=ALL)
         # conn = Connection(server, user=f"cn={username},{self.base_dn}",
         #                   password=password)
         # return conn.bind()
 
-        log.info(f"LDAP authentication for user {username} (stub)")
-        # Stub implementation - in production, use ldap3 library
-        # For testing: Accept passwords that match a simple pattern (minimum 8 chars)
-        # Do not log or expose password
         if password is None:
             return False
-        # Simple validation for stub - production would use actual LDAP
+        # STUB: Simple length check - NOT SECURE FOR PRODUCTION
         return len(password) >= 8
 
     async def get_user_groups(self, username: str) -> List[str]:
         """
-        Get user's group memberships
+        Get user's group memberships.
+
+        WARNING: This is a STUB implementation that returns mock data.
+        For production use, implement actual LDAP group lookup.
 
         Returns:
             List of group DNs or names
         """
-        # Stub: In production, query LDAP for memberOf attribute
-        log.info(f"Fetching groups for user {username} (stub)")
+        import warnings
+        warnings.warn(
+            "LDAPConnector.get_user_groups is a stub that returns mock data. "
+            "Implement actual LDAP group lookup for production use.",
+            UserWarning,
+            stacklevel=2,
+        )
+        log.warning(f"LDAP get_user_groups is STUBBED (returns mock data) for user {username}")
         return ["cn=Users,dc=example,dc=gov", "cn=Developers,dc=example,dc=gov"]
 
     async def get_clearance_level(self, username: str) -> ClearanceLevel:

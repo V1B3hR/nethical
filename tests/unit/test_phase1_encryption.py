@@ -206,22 +206,33 @@ class TestMilitaryGradeEncryption:
         assert decrypted == plaintext
     
     @pytest.mark.asyncio
-    async def test_decrypt_with_different_aad(self):
-        """Test decryption with different AAD (stub implementation note)"""
+    async def test_decrypt_with_different_aad_fails(self):
+        """Test decryption with different AAD raises ValueError"""
         encryption = MilitaryGradeEncryption()
         plaintext = b"Secret message"
         aad = b"correct_aad"
         
         encrypted = await encryption.encrypt(plaintext, additional_data=aad)
         
-        # Note: Stub implementation doesn't fully validate AAD in tag
-        # In production with cryptography library, this would fail
-        # For now, we just verify the API accepts AAD parameter
-        try:
+        # With proper AES-GCM, wrong AAD should cause authentication failure
+        with pytest.raises(ValueError, match="Authentication tag verification failed"):
             await encryption.decrypt(encrypted, additional_data=b"wrong_aad")
-        except ValueError:
-            # Expected in production implementation
-            pass
+    
+    @pytest.mark.asyncio
+    async def test_tampered_ciphertext_fails(self):
+        """Test decryption of tampered ciphertext raises ValueError"""
+        encryption = MilitaryGradeEncryption()
+        plaintext = b"Secret message"
+        
+        encrypted = await encryption.encrypt(plaintext)
+        
+        # Tamper with the ciphertext
+        tampered_ciphertext = bytes([b ^ 0xFF for b in encrypted.ciphertext])
+        encrypted.ciphertext = tampered_ciphertext
+        
+        # With proper AES-GCM, tampered ciphertext should cause authentication failure
+        with pytest.raises(ValueError, match="Authentication tag verification failed"):
+            await encryption.decrypt(encrypted)
     
     @pytest.mark.asyncio
     async def test_encrypt_governance_decision(self):

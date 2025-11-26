@@ -2,24 +2,31 @@
 JWT-based Authentication System for Nethical
 
 This module provides:
-- JWT token generation and validation
+- JWT token generation and validation (using PyJWT library)
 - API key management
 - Authentication middleware
 - Token refresh mechanism
 - Multi-factor authentication support (stub for future implementation)
+
+Security Notes:
+- JWT tokens are signed using HS256 with HMAC-SHA256
+- Revoked tokens are stored in-memory; use Redis/database for production persistence
+- Secret key should be provided explicitly; auto-generated keys are not persisted
 """
 
 from __future__ import annotations
 
 import hashlib
 import hmac
-import json
 import logging
 import secrets
+import warnings
 from datetime import datetime, timedelta, timezone
-from typing import Dict, Optional, Any, Tuple
+from typing import Dict, Optional, Any, Tuple, Callable
 from dataclasses import dataclass, field
 from enum import Enum
+
+import jwt
 
 __all__ = [
     "AuthenticationError",
@@ -122,8 +129,14 @@ class AuthManager:
     Authentication Manager
 
     Handles JWT tokens and API keys for authentication.
-    Note: This is a basic implementation. For production, consider using
-    a proper JWT library like PyJWT and a secure secret management system.
+    Uses PyJWT library for secure JWT encoding/decoding.
+
+    Security Notes:
+        - Revoked tokens are stored in-memory by default. For production,
+          provide a `revocation_store` callback or use Redis/database.
+        - Secret key auto-generation is NOT recommended for production.
+          Always provide an explicit secret key.
+        - All previously issued tokens become invalid if the secret key changes.
     """
 
     def __init__(
@@ -131,112 +144,139 @@ class AuthManager:
         secret_key: Optional[str] = None,
         access_token_expiry: timedelta = timedelta(hours=1),
         refresh_token_expiry: timedelta = timedelta(days=7),
+        revocation_store: Optional[Callable[[str], None]] = None,
+        revocation_checker: Optional[Callable[[str], bool]] = None,
     ):
         """
         Initialize Authentication Manager
 
         Args:
-            secret_key: Secret key for signing tokens (generated if not provided)
+            secret_key: Secret key for signing tokens. If not provided, a random
+                       key is generated with a security warning.
             access_token_expiry: Expiry time for access tokens
             refresh_token_expiry: Expiry time for refresh tokens
+            revocation_store: Optional callback to store revoked token JTIs
+                             for persistence (e.g., Redis, database)
+            revocation_checker: Optional callback to check if a JTI is revoked
+                               in persistent storage
+
+        Security Warning:
+            If secret_key is not provided, tokens will be invalidated on restart.
         """
-        self.secret_key = secret_key or secrets.token_urlsafe(32)
+        if secret_key is None:
+            self.secret_key = secrets.token_urlsafe(32)
+            warnings.warn(
+                "AuthManager initialized without explicit secret_key. "
+                "Auto-generated key will be lost on restart, invalidating all tokens. "
+                "For production, always provide an explicit secret_key.",
+                UserWarning,
+                stacklevel=2,
+            )
+            log.warning(
+                "AuthManager: No secret_key provided. Auto-generated key will "
+                "not persist across restarts. Provide explicit key for production."
+            )
+        else:
+            self.secret_key = secret_key
+
         self.access_token_expiry = access_token_expiry
         self.refresh_token_expiry = refresh_token_expiry
 
-        # Storage for API keys and revoked tokens
+        # Storage for API keys and revoked tokens (in-memory)
         self.api_keys: Dict[str, APIKey] = {}
-        self.revoked_tokens: set[str] = set()  # JTI of revoked tokens
+        self._revoked_tokens: set[str] = set()  # JTI of revoked tokens (in-memory)
+
+        # Optional persistent storage callbacks
+        self._revocation_store = revocation_store
+        self._revocation_checker = revocation_checker
+
+        if not revocation_store:
+            log.warning(
+                "AuthManager: Token revocation storage is in-memory only. "
+                "Revoked tokens will be lost on restart. For production, "
+                "provide revocation_store and revocation_checker callbacks."
+            )
 
         log.info("AuthManager initialized")
 
+    @property
+    def revoked_tokens(self) -> set[str]:
+        """Backward-compatible access to revoked tokens (in-memory)."""
+        return self._revoked_tokens
+
+    def _is_token_revoked(self, jti: str) -> bool:
+        """Check if a token is revoked (checks both in-memory and persistent storage)."""
+        if jti in self._revoked_tokens:
+            return True
+        if self._revocation_checker:
+            return self._revocation_checker(jti)
+        return False
+
+    def _store_revocation(self, jti: str) -> None:
+        """Store a revoked token JTI in both in-memory and persistent storage."""
+        self._revoked_tokens.add(jti)
+        if self._revocation_store:
+            self._revocation_store(jti)
+
     def _encode_token(self, payload: TokenPayload) -> str:
         """
-        Encode a JWT token (simplified implementation)
+        Encode a JWT token using PyJWT library.
 
-        Note: This is a basic implementation for demonstration.
-        In production, use a proper JWT library like PyJWT.
+        Uses HS256 (HMAC with SHA-256) algorithm for signing.
+
+        Args:
+            payload: Token payload to encode
+
+        Returns:
+            Encoded JWT token string
         """
-        # Create token parts
-        header = {"alg": "HS256", "typ": "JWT"}
-
-        # Base64 encode (URL-safe)
-        import base64
-
-        header_b64 = (
-            base64.urlsafe_b64encode(json.dumps(header, separators=(",", ":")).encode())
-            .decode()
-            .rstrip("=")
+        return jwt.encode(
+            payload.to_dict(),
+            self.secret_key,
+            algorithm="HS256",
         )
-
-        payload_b64 = (
-            base64.urlsafe_b64encode(json.dumps(payload.to_dict(), separators=(",", ":")).encode())
-            .decode()
-            .rstrip("=")
-        )
-
-        # Create signature
-        message = f"{header_b64}.{payload_b64}"
-        signature = hmac.new(self.secret_key.encode(), message.encode(), hashlib.sha256).digest()
-
-        signature_b64 = base64.urlsafe_b64encode(signature).decode().rstrip("=")
-
-        return f"{message}.{signature_b64}"
 
     def _decode_token(self, token: str) -> TokenPayload:
         """
-        Decode and verify a JWT token (simplified implementation)
+        Decode and verify a JWT token using PyJWT library.
 
-        Note: This is a basic implementation for demonstration.
-        In production, use a proper JWT library like PyJWT.
+        Verifies signature using HS256 algorithm and checks expiry/revocation.
+
+        Args:
+            token: JWT token string
+
+        Returns:
+            Decoded TokenPayload
+
+        Raises:
+            TokenExpiredError: If token has expired
+            InvalidTokenError: If token is invalid or revoked
         """
-        import base64
-
         try:
-            # Split token
-            parts = token.split(".")
-            if len(parts) != 3:
-                raise InvalidTokenError("Invalid token format")
-
-            header_b64, payload_b64, signature_b64 = parts
-
-            # Verify signature
-            message = f"{header_b64}.{payload_b64}"
-            expected_signature = hmac.new(
-                self.secret_key.encode(), message.encode(), hashlib.sha256
-            ).digest()
-
-            # Add padding if needed
-            padding = 4 - len(signature_b64) % 4
-            if padding != 4:
-                signature_b64 += "=" * padding
-
-            actual_signature = base64.urlsafe_b64decode(signature_b64)
-
-            if not hmac.compare_digest(expected_signature, actual_signature):
-                raise InvalidTokenError("Invalid signature")
-
-            # Decode payload
-            padding = 4 - len(payload_b64) % 4
-            if padding != 4:
-                payload_b64 += "=" * padding
-
-            payload_json = base64.urlsafe_b64decode(payload_b64).decode()
-            payload_data = json.loads(payload_json)
+            # Decode and verify the token with PyJWT
+            # This automatically verifies the signature and expiry
+            payload_data = jwt.decode(
+                token,
+                self.secret_key,
+                algorithms=["HS256"],
+                options={
+                    "require": ["sub", "type", "iat", "exp", "jti"],
+                },
+            )
 
             payload = TokenPayload.from_dict(payload_data)
 
             # Check if token is revoked
-            if payload.jti in self.revoked_tokens:
+            if self._is_token_revoked(payload.jti):
                 raise InvalidTokenError("Token has been revoked")
-
-            # Check expiry
-            if payload.is_expired():
-                raise TokenExpiredError(f"Token expired at {payload.expires_at}")
 
             return payload
 
-        except (ValueError, KeyError, json.JSONDecodeError) as e:
+        except jwt.ExpiredSignatureError:
+            raise TokenExpiredError("Token has expired")
+        except jwt.InvalidTokenError as e:
+            raise InvalidTokenError(f"Invalid token: {e}")
+        except (ValueError, KeyError) as e:
             raise InvalidTokenError(f"Failed to decode token: {e}")
 
     def create_access_token(
@@ -309,12 +349,15 @@ class AuthManager:
         """
         Revoke a token
 
+        The token JTI is stored in both in-memory and persistent storage
+        (if revocation_store callback was provided).
+
         Args:
             token: JWT token string to revoke
         """
         try:
             payload = self._decode_token(token)
-            self.revoked_tokens.add(payload.jti)
+            self._store_revocation(payload.jti)
             log.info(f"Revoked token {payload.jti} for user {payload.user_id}")
         except (TokenExpiredError, InvalidTokenError):
             # Already invalid, just log

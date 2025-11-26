@@ -390,17 +390,27 @@ class MilitaryGradeEncryption:
         additional_data: Optional[bytes],
     ) -> Tuple[bytes, bytes]:
         """
-        Encrypt with AES-GCM (stub implementation)
+        Encrypt with AES-256-GCM using the cryptography library.
 
-        In production, use cryptography library:
-        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        Uses FIPS 140-2 compliant AES-GCM authenticated encryption.
+
+        Args:
+            key: 256-bit encryption key
+            nonce: 96-bit nonce (12 bytes)
+            plaintext: Data to encrypt
+            additional_data: Additional authenticated data (AAD)
+
+        Returns:
+            Tuple of (ciphertext, authentication_tag)
         """
-        # Stub: XOR-based encryption for demonstration
-        # In production, replace with actual AES-GCM implementation
-        ciphertext = bytes([b ^ key[i % len(key)] for i, b in enumerate(plaintext)])
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 
-        # Generate authentication tag
-        tag = hmac.new(key, ciphertext + nonce, hashlib.sha256).digest()[:16]
+        aesgcm = AESGCM(key)
+        # AESGCM.encrypt returns ciphertext + tag (tag is last 16 bytes)
+        ciphertext_with_tag = aesgcm.encrypt(nonce, plaintext, additional_data)
+        # Split ciphertext and tag (GCM tag is always 16 bytes)
+        ciphertext = ciphertext_with_tag[:-16]
+        tag = ciphertext_with_tag[-16:]
 
         return ciphertext, tag
 
@@ -456,17 +466,35 @@ class MilitaryGradeEncryption:
         additional_data: Optional[bytes],
     ) -> bytes:
         """
-        Decrypt with AES-GCM (stub implementation)
+        Decrypt with AES-256-GCM using the cryptography library.
 
-        In production, use cryptography library.
+        Uses FIPS 140-2 compliant AES-GCM authenticated decryption.
+
+        Args:
+            key: 256-bit encryption key
+            nonce: 96-bit nonce (12 bytes)
+            ciphertext: Encrypted data
+            tag: 128-bit authentication tag (16 bytes)
+            additional_data: Additional authenticated data (AAD)
+
+        Returns:
+            Decrypted plaintext
+
+        Raises:
+            ValueError: If authentication tag verification fails
         """
-        # Verify authentication tag
-        expected_tag = hmac.new(key, ciphertext + nonce, hashlib.sha256).digest()[:16]
-        if not hmac.compare_digest(tag, expected_tag):
-            raise ValueError("Authentication tag verification failed")
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        from cryptography.exceptions import InvalidTag
 
-        # Decrypt (stub: XOR-based)
-        plaintext = bytes([b ^ key[i % len(key)] for i, b in enumerate(ciphertext)])
+        aesgcm = AESGCM(key)
+        # AESGCM.decrypt expects ciphertext + tag concatenated
+        ciphertext_with_tag = ciphertext + tag
+
+        try:
+            plaintext = aesgcm.decrypt(nonce, ciphertext_with_tag, additional_data)
+            return plaintext
+        except InvalidTag:
+            raise ValueError("Authentication tag verification failed")
 
         return plaintext
 

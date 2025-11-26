@@ -9,22 +9,31 @@ Multi-layered defense against sophisticated attacks:
 - Behavioral analysis
 - Zero-trust input processing
 
+Security Features:
+- Regex timeout protection against ReDoS attacks
+- Context-aware output sanitization (HTML encoding vs removal)
+- PII detection and redaction
+
 Protects against:
 - Adversarial attacks
 - Prompt injection
 - Data exfiltration
 - Code injection
 - PII leakage
+- ReDoS (Regular Expression Denial of Service)
 """
 
 from __future__ import annotations
 
+import html
 import logging
 import re
+import signal
+from contextlib import contextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Any, Set
+from typing import Dict, List, Optional, Any, Set, Callable
 
 __all__ = [
     "ValidationResult",
@@ -33,9 +42,86 @@ __all__ = [
     "ThreatIntelligenceDB",
     "BehavioralAnalyzer",
     "AdversarialInputDefense",
+    "RegexTimeoutError",
 ]
 
 log = logging.getLogger(__name__)
+
+
+# Regex timeout protection for ReDoS attacks
+class RegexTimeoutError(Exception):
+    """Raised when a regex operation times out (potential ReDoS attack)"""
+
+
+# Maximum input length for regex operations to prevent ReDoS
+MAX_REGEX_INPUT_LENGTH = 10000
+REGEX_TIMEOUT_SECONDS = 2
+
+
+def _timeout_handler(signum, frame):
+    """Signal handler for regex timeout."""
+    raise RegexTimeoutError("Regex operation timed out - possible ReDoS attack")
+
+
+@contextmanager
+def regex_timeout(seconds: int = REGEX_TIMEOUT_SECONDS):
+    """
+    Context manager for regex operations with timeout protection.
+
+    Note: Uses SIGALRM, so only works on Unix-like systems.
+    On Windows, the timeout is not enforced but input length limits still apply.
+    """
+    import sys
+    if sys.platform == "win32":
+        # Windows doesn't support SIGALRM; just yield
+        yield
+        return
+
+    old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+    signal.alarm(seconds)
+    try:
+        yield
+    finally:
+        signal.alarm(0)
+        signal.signal(signal.SIGALRM, old_handler)
+
+
+def safe_regex_search(
+    pattern: str,
+    content: str,
+    flags: int = 0,
+    timeout: int = REGEX_TIMEOUT_SECONDS,
+    max_length: int = MAX_REGEX_INPUT_LENGTH,
+) -> Optional[re.Match]:
+    """
+    Safely execute regex search with timeout and length limits.
+
+    Args:
+        pattern: Regex pattern
+        content: String to search
+        flags: Regex flags
+        timeout: Timeout in seconds
+        max_length: Maximum content length to process
+
+    Returns:
+        Match object or None
+
+    Raises:
+        RegexTimeoutError: If regex operation times out
+    """
+    # Truncate very long inputs to prevent ReDoS
+    if len(content) > max_length:
+        log.warning(
+            f"Input truncated from {len(content)} to {max_length} chars for regex safety"
+        )
+        content = content[:max_length]
+
+    try:
+        with regex_timeout(timeout):
+            return re.search(pattern, content, flags)
+    except RegexTimeoutError:
+        log.warning(f"Regex pattern timed out (possible ReDoS): {pattern[:50]}...")
+        raise
 
 
 class ThreatLevel(str, Enum):
@@ -197,21 +283,61 @@ class SemanticAnomalyDetector:
         return len(suspicious_in_content - suspicious_in_intent) > 0
 
     def _is_obfuscated(self, content: str) -> bool:
-        """Detect obfuscated content"""
+        """
+        Detect obfuscated content using safe regex patterns.
+
+        Uses ReDoS-safe patterns with limited quantifiers.
+        """
         # Check for common obfuscation techniques
+        # Note: Patterns are designed to avoid ReDoS by:
+        # 1. Using possessive quantifiers where possible
+        # 2. Limiting repetition counts
+        # 3. Using atomic groups
         obfuscation_indicators = [
-            # Unicode tricks
+            # Unicode tricks (safe pattern)
             r"[\u200b-\u200f\u202a-\u202e]",  # Zero-width and directional chars
-            # Excessive encoding
-            r"(%[0-9a-f]{2}){5,}",  # URL encoding chains
-            r"(&#x?[0-9a-f]+;){5,}",  # HTML entity chains
-            # Base64-like patterns
-            r"[A-Za-z0-9+/]{50,}={0,2}",
+            # Excessive encoding (limited repetition to avoid ReDoS)
+            r"(?:%[0-9a-fA-F]{2}){5,20}",  # URL encoding chains (max 20 to avoid ReDoS)
+            r"(?:&#x?[0-9a-fA-F]+;){5,20}",  # HTML entity chains (max 20)
+            # Base64-like patterns (use length check instead of regex for safety)
         ]
 
+        # First, check for base64-like strings using simple character counting
+        # instead of a potentially vulnerable regex
+        if self._has_base64_like_content(content):
+            return True
+
         for pattern in obfuscation_indicators:
-            if re.search(pattern, content):
+            try:
+                if safe_regex_search(pattern, content):
+                    return True
+            except RegexTimeoutError:
+                # If regex times out, treat as suspicious
+                log.warning(
+                    f"Regex timeout during obfuscation check for pattern "
+                    f"{pattern[:20]}... - treating as suspicious"
+                )
                 return True
+
+        return False
+
+    def _has_base64_like_content(self, content: str, min_length: int = 50) -> bool:
+        """
+        Check for base64-like content using character analysis instead of regex.
+
+        This is safer than using regex patterns that could be vulnerable to ReDoS.
+        """
+        # Look for long alphanumeric strings
+        current_length = 0
+        base64_chars = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
+
+        for char in content:
+            if char in base64_chars:
+                current_length += 1
+                if current_length >= min_length:
+                    return True
+            else:
+                current_length = 0
 
         return False
 
@@ -687,10 +813,98 @@ class AdversarialInputDefense:
         for pattern, replacement in code_patterns.items():
             sanitized = re.sub(pattern, replacement, sanitized, flags=re.IGNORECASE)
 
-        # Remove dangerous characters
-        dangerous_chars = ["<", ">", "'", '"', "`"]
-        for char in dangerous_chars:
-            sanitized = sanitized.replace(char, "")
+        # Context-aware sanitization: Use HTML encoding instead of removal
+        # This preserves legitimate content like mathematical expressions
+        sanitized = self._html_encode_dangerous_chars(sanitized)
+
+        return sanitized
+
+    def _html_encode_dangerous_chars(self, content: str) -> str:
+        """
+        HTML-encode potentially dangerous characters instead of removing them.
+
+        This preserves legitimate content like mathematical expressions (a < b),
+        quotes in text, etc., while preventing XSS attacks.
+
+        Args:
+            content: Content to encode
+
+        Returns:
+            HTML-encoded content
+        """
+        # Use html.escape for XSS protection while preserving content
+        # escape quotes=True to also escape ' and "
+        return html.escape(content, quote=True)
+
+    async def sanitize_for_html(self, content: str) -> str:
+        """
+        Sanitize content for HTML output context.
+
+        Uses HTML encoding to preserve content while preventing XSS.
+
+        Args:
+            content: Content to sanitize
+
+        Returns:
+            HTML-safe sanitized content
+        """
+        # First, redact PII
+        sanitized = await self.sanitize_output(content)
+        return sanitized
+
+    async def sanitize_for_json(self, content: str) -> str:
+        """
+        Sanitize content for JSON output context.
+
+        Escapes JSON special characters.
+
+        Args:
+            content: Content to sanitize
+
+        Returns:
+            JSON-safe sanitized content
+        """
+        import json
+        # PII redaction first
+        pii_patterns = {
+            r"\b\d{3}-\d{2}-\d{4}\b": "[SSN-REDACTED]",
+            r"\b\d{16}\b": "[CARD-REDACTED]",
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b": "[EMAIL-REDACTED]",
+        }
+        sanitized = content
+        for pattern, replacement in pii_patterns.items():
+            sanitized = re.sub(pattern, replacement, sanitized)
+
+        # JSON encoding handles escaping
+        return json.dumps(sanitized)[1:-1]  # Strip surrounding quotes
+
+    async def sanitize_for_plaintext(self, content: str) -> str:
+        """
+        Sanitize content for plaintext output (no HTML/code injection concern).
+
+        Only removes control characters and redacts PII.
+
+        Args:
+            content: Content to sanitize
+
+        Returns:
+            Plaintext-safe sanitized content
+        """
+        # PII redaction
+        pii_patterns = {
+            r"\b\d{3}-\d{2}-\d{4}\b": "[SSN-REDACTED]",
+            r"\b\d{16}\b": "[CARD-REDACTED]",
+            r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b": "[EMAIL-REDACTED]",
+        }
+        sanitized = content
+        for pattern, replacement in pii_patterns.items():
+            sanitized = re.sub(pattern, replacement, sanitized)
+
+        # Remove control characters (except newline, tab)
+        sanitized = ''.join(
+            char for char in sanitized
+            if char in '\n\t' or (ord(char) >= 32 and ord(char) < 127) or ord(char) >= 160
+        )
 
         return sanitized
 

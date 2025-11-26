@@ -102,8 +102,25 @@ app = FastAPI(
     lifespan=lifespan
 )
 
+# CORS Configuration
+# Security Warning: Wildcard CORS (*) should not be used in production
 allowed_origins_str = os.getenv("NETHICAL_CORS_ALLOW_ORIGINS", "*")
 allowed_origins = allowed_origins_str.split(",") if allowed_origins_str != "*" else ["*"]
+
+if "*" in allowed_origins:
+    import warnings
+    warnings.warn(
+        "CORS is configured with wildcard (*) origins. "
+        "This is a security risk in production. "
+        "Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. "
+        "Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com",
+        UserWarning,
+    )
+    logger.warning(
+        "CORS SECURITY WARNING: Wildcard origins (*) configured. "
+        "Set NETHICAL_CORS_ALLOW_ORIGINS for production security."
+    )
+
 app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
@@ -163,6 +180,27 @@ def get_client_ip(request: Request) -> str:
         return request.client.host
     return "unknown"
 
+def get_request_id(request: Request) -> str:
+    """
+    Extract or generate a request ID for distributed tracing.
+
+    Checks for X-Request-ID header (standard) or X-Correlation-ID (alternative).
+    If not present, generates a new UUID.
+
+    Args:
+        request: FastAPI request object
+
+    Returns:
+        Request ID string for correlation
+    """
+    import uuid
+    request_id = (
+        request.headers.get("X-Request-ID") or
+        request.headers.get("X-Correlation-ID") or
+        str(uuid.uuid4())
+    )
+    return request_id
+
 def validate_payload(eval_request: EvaluateRequest) -> None:
     total_len = len(eval_request.actual_action) + len(eval_request.stated_intent or "")
     if total_len > MAX_INPUT_SIZE:
@@ -217,6 +255,10 @@ async def evaluate(
     authorization: Optional[str] = Header(None)
 ) -> JudgmentResult:
     start = time.perf_counter()
+
+    # Get or generate request ID for distributed tracing
+    request_id = get_request_id(request)
+    response.headers["X-Request-ID"] = request_id
 
     if governance is None or rate_limiter is None or auth_manager is None:
         raise HTTPException(503, "Service unavailable - not fully initialized")
@@ -322,12 +364,13 @@ async def evaluate(
                 "has_intent": eval_request.stated_intent is not None,
                 "rate_limit": rate_info,
                 "similarity_cached": bool(semantic_cache),
-                "intent_action_similarity": similarity
+                "intent_action_similarity": similarity,
+                "request_id": request_id,
             }
 
             logger.info(
-                "Evaluate identity=%s decision=%s confidence=%.3f violations=%d duration_ms=%d",
-                identity, decision, confidence, len(violations_out), duration_ms
+                "Evaluate request_id=%s identity=%s decision=%s confidence=%.3f violations=%d duration_ms=%d",
+                request_id, identity, decision, confidence, len(violations_out), duration_ms
             )
 
             return JudgmentResult(
@@ -345,7 +388,7 @@ async def evaluate(
         except HTTPException:
             raise
         except Exception as e:
-            logger.error("Evaluation failure identity=%s error=%s", identity, e, exc_info=True)
+            logger.error("Evaluation failure request_id=%s identity=%s error=%s", request_id, identity, e, exc_info=True)
             raise HTTPException(500, f"Evaluation failed: {e}")
 
 @app.get("/status", response_model=StatusResponse)

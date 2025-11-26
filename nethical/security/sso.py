@@ -7,12 +7,17 @@ This module provides Single Sign-On (SSO) and SAML 2.0 authentication support:
 - Identity Provider (IdP) configuration
 - User attribute mapping
 
+Security Features:
+- CSRF protection via state parameter validation in OAuth flow
+- JWT signature verification for OIDC ID tokens
+
 Dependencies:
     - python3-saml (for SAML support)
     - requests-oauthlib (for OAuth/OIDC)
+    - PyJWT (for ID token verification)
 
 For production deployment:
-1. Install dependencies: pip install python3-saml requests-oauthlib
+1. Install dependencies: pip install python3-saml requests-oauthlib PyJWT
 2. Configure IdP metadata and certificates
 3. Set up SP entity ID and endpoints
 4. Map SAML attributes to user profiles
@@ -21,11 +26,12 @@ For production deployment:
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
-from typing import Dict, Optional, List, Any
+import secrets
+from datetime import datetime, timedelta, timezone
+from typing import Dict, Optional, List, Any, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
-from urllib.parse import urljoin
+from urllib.parse import urljoin, parse_qs, urlparse
 
 __all__ = [
     "SSOProvider",
@@ -122,6 +128,10 @@ class SSOManager:
     For production, use established libraries like:
     - python3-saml for SAML 2.0
     - authlib for OAuth/OIDC
+
+    Security Features:
+    - CSRF protection via state parameter validation
+    - JWT signature verification for OIDC tokens
     """
 
     def __init__(self, base_url: str = "https://nethical.local"):
@@ -134,6 +144,8 @@ class SSOManager:
         self.base_url = base_url
         self.configs: Dict[str, SSOConfig] = {}
         self.saml_auth = None
+        # Store pending OAuth states for CSRF validation
+        self._pending_oauth_states: Dict[str, Dict[str, Any]] = {}
         log.info(f"SSOManager initialized with base_url: {base_url}")
 
     def configure_saml(
@@ -353,16 +365,16 @@ class SSOManager:
 
     def initiate_oauth_login(
         self, config_name: str = "default", state: Optional[str] = None
-    ) -> str:
+    ) -> Tuple[str, str]:
         """
         Initiate OAuth 2.0 / OIDC login flow
 
         Args:
             config_name: SSO configuration name
-            state: Optional state parameter for CSRF protection
+            state: Optional state parameter for CSRF protection (auto-generated if not provided)
 
         Returns:
-            OAuth authorization URL
+            Tuple of (authorization_url, state) - state must be validated in callback
 
         Raises:
             SSOError: If configuration not found
@@ -376,6 +388,16 @@ class SSOManager:
         if not oauth_cfg:
             raise SSOError("Configuration is not for OAuth/OIDC")
 
+        # Generate secure state for CSRF protection if not provided
+        if state is None:
+            state = secrets.token_urlsafe(32)
+
+        # Store state for validation in callback (with expiry)
+        self._pending_oauth_states[state] = {
+            "config_name": config_name,
+            "created_at": datetime.now(timezone.utc),
+        }
+
         try:
             from requests_oauthlib import OAuth2Session
 
@@ -385,39 +407,46 @@ class SSOManager:
                 scope=oauth_cfg["scope"],
             )
 
-            authorization_url, state = oauth.authorization_url(
+            authorization_url, returned_state = oauth.authorization_url(
                 oauth_cfg["authorization_url"],
                 state=state,
             )
 
             log.info(f"OAuth login initiated for config '{config_name}'")
-            return authorization_url
+            return authorization_url, state
 
         except ImportError:
             log.warning("requests-oauthlib not installed, returning stub URL")
-            return (
+            stub_url = (
                 f"{oauth_cfg['authorization_url']}?"
                 f"client_id={oauth_cfg['client_id']}&"
                 f"redirect_uri={oauth_cfg['redirect_uri']}&"
                 f"response_type=code&"
-                f"scope=openid+email+profile"
+                f"scope=openid+email+profile&"
+                f"state={state}"
             )
+            return stub_url, state
 
     def handle_oauth_callback(
-        self, authorization_response: str, config_name: str = "default"
+        self,
+        authorization_response: str,
+        config_name: str = "default",
+        expected_state: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Handle OAuth callback and exchange code for token
 
         Args:
-            authorization_response: Full callback URL with code
+            authorization_response: Full callback URL with code and state
             config_name: SSO configuration name
+            expected_state: State parameter to validate for CSRF protection
+                          (if not provided, extracts from authorization_response)
 
         Returns:
             User information dictionary
 
         Raises:
-            SSOError: If token exchange or userinfo fails
+            SSOError: If token exchange, state validation, or userinfo fails
         """
         if config_name not in self.configs:
             raise SSOError(f"SSO configuration '{config_name}' not found")
@@ -427,6 +456,31 @@ class SSOManager:
 
         if not oauth_cfg:
             raise SSOError("Configuration is not for OAuth/OIDC")
+
+        # Extract state from callback URL if not provided
+        parsed_url = urlparse(authorization_response)
+        query_params = parse_qs(parsed_url.query)
+        callback_state = query_params.get("state", [None])[0]
+
+        if expected_state is None:
+            expected_state = callback_state
+
+        # CSRF validation: Verify state parameter
+        if not expected_state or expected_state not in self._pending_oauth_states:
+            log.error("OAuth callback: Invalid or missing state parameter (CSRF check failed)")
+            raise SSOError("Invalid state parameter - possible CSRF attack")
+
+        # Check state expiry (15 minutes)
+        state_info = self._pending_oauth_states.pop(expected_state)
+        state_age = datetime.now(timezone.utc) - state_info["created_at"]
+        if state_age > timedelta(minutes=15):
+            log.error("OAuth callback: State parameter expired")
+            raise SSOError("State parameter expired - please restart login flow")
+
+        # Verify callback state matches expected state
+        if callback_state != expected_state:
+            log.error("OAuth callback: State mismatch (CSRF check failed)")
+            raise SSOError("State parameter mismatch - possible CSRF attack")
 
         try:
             from requests_oauthlib import OAuth2Session
@@ -447,10 +501,12 @@ class SSOManager:
             if oauth_cfg.get("userinfo_url"):
                 userinfo = oauth.get(oauth_cfg["userinfo_url"]).json()
             else:
-                # Decode ID token for OIDC
-                import jwt
-
-                userinfo = jwt.decode(token["id_token"], options={"verify_signature": False})
+                # Decode ID token for OIDC - WITH signature verification
+                userinfo = self._verify_and_decode_id_token(
+                    token["id_token"],
+                    oauth_cfg,
+                    config_name,
+                )
 
             log.info(f"OAuth callback processed for user {userinfo.get('sub')}")
             return userinfo
@@ -462,6 +518,74 @@ class SSOManager:
                 "email": "demo@example.com",
                 "name": "Demo User",
             }
+
+    def _verify_and_decode_id_token(
+        self,
+        id_token: str,
+        oauth_cfg: Dict[str, Any],
+        config_name: str,
+    ) -> Dict[str, Any]:
+        """
+        Verify and decode an OIDC ID token with signature verification.
+
+        Args:
+            id_token: JWT ID token
+            oauth_cfg: OAuth configuration
+            config_name: Configuration name
+
+        Returns:
+            Decoded token payload
+
+        Raises:
+            SSOError: If token verification fails
+        """
+        import jwt
+        from jwt import PyJWKClient
+
+        try:
+            # Get JWKS URL from OAuth config or construct from issuer
+            jwks_url = oauth_cfg.get("jwks_url")
+            issuer = oauth_cfg.get("issuer")
+
+            if jwks_url:
+                # Fetch signing keys from JWKS endpoint
+                jwk_client = PyJWKClient(jwks_url)
+                signing_key = jwk_client.get_signing_key_from_jwt(id_token)
+
+                # Decode and verify the token
+                decoded = jwt.decode(
+                    id_token,
+                    signing_key.key,
+                    algorithms=["RS256", "ES256"],
+                    audience=oauth_cfg["client_id"],
+                    issuer=issuer,
+                    options={
+                        "verify_signature": True,
+                        "verify_aud": True,
+                        "verify_iss": bool(issuer),
+                        "verify_exp": True,
+                    },
+                )
+            else:
+                # If no JWKS URL, log warning and verify claims only
+                log.warning(
+                    f"OAuth config '{config_name}' has no jwks_url configured. "
+                    "ID token signature verification is skipped. "
+                    "Configure jwks_url for production security."
+                )
+                decoded = jwt.decode(
+                    id_token,
+                    options={
+                        "verify_signature": False,
+                        "verify_exp": True,
+                    },
+                )
+
+            return decoded
+
+        except jwt.InvalidTokenError as e:
+            log.error(f"ID token verification failed: {e}")
+            raise SSOError(f"ID token verification failed: {e}")
 
     def get_config(self, config_name: str) -> Optional[SSOConfig]:
         """
