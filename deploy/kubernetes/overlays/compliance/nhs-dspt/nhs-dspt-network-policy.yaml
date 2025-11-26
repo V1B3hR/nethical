@@ -1,0 +1,123 @@
+---
+# NHS DSPT Network Policy
+# Implements network security controls for NHS environments
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nhs-dspt-default-deny
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: nhs-dspt
+  annotations:
+    description: "NHS DSPT Standard 9: Default deny all traffic"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# Allow ingress from NHS Spine connectivity
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nhs-dspt-api-ingress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: nhs-dspt
+  annotations:
+    description: "NHS DSPT: Allow ingress from authorized NHS networks"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: nethical
+  policyTypes:
+    - Ingress
+  ingress:
+    # NHS network ingress (N3/HSCN)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network-policy: nhs-spine-allowed
+        - ipBlock:
+            cidr: 10.0.0.0/8  # NHS internal network range (example)
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Ingress controller (with TLS termination)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network-policy: ingress-allowed
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Health checks
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: 8000
+
+---
+# Restrict egress for NHS compliance
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: nhs-dspt-api-egress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: nhs-dspt
+  annotations:
+    description: "NHS DSPT Standard 9: Restrict egress to approved destinations"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: nethical
+  policyTypes:
+    - Egress
+  egress:
+    # DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Internal database
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Redis cache
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # Audit logging
+    - to:
+        - podSelector:
+            matchLabels:
+              app: otel-collector
+      ports:
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 4317

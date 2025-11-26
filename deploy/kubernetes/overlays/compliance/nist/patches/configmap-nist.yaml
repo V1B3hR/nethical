@@ -1,0 +1,33 @@
+---
+# NIST ConfigMap Patch
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-config
+  namespace: nethical
+data:
+  # NIST 800-53 Compliance Settings
+  NETHICAL_COMPLIANCE_FRAMEWORK: "nist-800-53"
+  NETHICAL_IMPACT_LEVEL: "moderate"
+  
+  # Access Control (AC)
+  NETHICAL_SESSION_TIMEOUT_SECONDS: "900"
+  NETHICAL_LOCKOUT_THRESHOLD: "3"
+  NETHICAL_LOCKOUT_DURATION_SECONDS: "1800"
+  NETHICAL_MFA_REQUIRED: "true"
+  
+  # Audit and Accountability (AU)
+  NETHICAL_AUDIT_ENABLED: "true"
+  NETHICAL_AUDIT_RETENTION_YEARS: "7"
+  NETHICAL_AUDIT_TAMPER_PROOF: "true"
+  NETHICAL_MERKLE_ANCHORING: "true"
+  
+  # System and Communications Protection (SC)
+  NETHICAL_ENCRYPTION_AT_REST: "true"
+  NETHICAL_ENCRYPTION_IN_TRANSIT: "true"
+  NETHICAL_TLS_MIN_VERSION: "1.2"
+  NETHICAL_ENCRYPTION_ALGORITHM: "aes-256-gcm"
+  
+  # Configuration Management (CM)
+  NETHICAL_CONFIGURATION_BASELINE: "hardened"
+  NETHICAL_LEAST_FUNCTIONALITY: "true"

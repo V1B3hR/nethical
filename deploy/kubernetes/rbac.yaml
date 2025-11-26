@@ -1,0 +1,265 @@
+---
+# Advanced RBAC Configuration for Nethical
+# Implements enterprise-grade role-based access control
+
+# ClusterRole for Nethical Administrators
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: nethical-admin
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+rules:
+  # Full access to nethical namespace resources
+  - apiGroups: [""]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["apps"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["batch"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["*"]
+    verbs: ["*"]
+  - apiGroups: ["policy"]
+    resources: ["*"]
+    verbs: ["*"]
+  # External Secrets management
+  - apiGroups: ["external-secrets.io"]
+    resources: ["*"]
+    verbs: ["*"]
+
+---
+# Role for Nethical Operators
+# Day-to-day operations without destructive capabilities
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nethical-operator
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+rules:
+  # Read access to most resources
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "persistentvolumeclaims", "events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets", "deployments"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["jobs", "cronjobs"]
+    verbs: ["get", "list", "watch"]
+  # Pod operations (restart, logs, exec)
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["delete"]  # For restart
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+  - apiGroups: [""]
+    resources: ["pods/exec"]
+    verbs: ["create"]
+  # Scale operations
+  - apiGroups: ["apps"]
+    resources: ["statefulsets/scale"]
+    verbs: ["get", "patch"]
+  # Rollout operations
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["patch"]
+  # HPA management
+  - apiGroups: ["autoscaling"]
+    resources: ["horizontalpodautoscalers"]
+    verbs: ["get", "list", "watch", "patch"]
+
+---
+# Role for Nethical Auditors
+# Read-only access for compliance auditing
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nethical-auditor
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+rules:
+  # Read-only access to all resources
+  - apiGroups: [""]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["batch"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["networking.k8s.io"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["policy"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["rbac.authorization.k8s.io"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  # External Secrets (read-only)
+  - apiGroups: ["external-secrets.io"]
+    resources: ["*"]
+    verbs: ["get", "list", "watch"]
+  # Pod logs for audit
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+
+---
+# Role for Nethical Developers
+# Limited access for development and debugging
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nethical-developer
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+rules:
+  # Read access to non-sensitive resources
+  - apiGroups: [""]
+    resources: ["pods", "services", "configmaps", "events"]
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets", "deployments"]
+    verbs: ["get", "list", "watch"]
+  # Pod logs
+  - apiGroups: [""]
+    resources: ["pods/log"]
+    verbs: ["get", "list"]
+  # Port forwarding (for local debugging)
+  - apiGroups: [""]
+    resources: ["pods/portforward"]
+    verbs: ["create"]
+  # No access to secrets
+
+---
+# Role for Nethical Viewers
+# Minimal read-only access
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: nethical-viewer
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+rules:
+  # Minimal read access
+  - apiGroups: [""]
+    resources: ["pods", "services"]
+    verbs: ["get", "list"]
+  - apiGroups: ["apps"]
+    resources: ["statefulsets"]
+    verbs: ["get", "list"]
+
+---
+# ClusterRoleBinding for Administrators
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: nethical-admin-binding
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: nethical-admin
+subjects:
+  # Replace with your admin group
+  - kind: Group
+    name: nethical-admins
+    apiGroup: rbac.authorization.k8s.io
+
+---
+# RoleBinding for Operators
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nethical-operator-binding
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nethical-operator
+subjects:
+  - kind: Group
+    name: nethical-operators
+    apiGroup: rbac.authorization.k8s.io
+
+---
+# RoleBinding for Auditors
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nethical-auditor-binding
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nethical-auditor
+subjects:
+  - kind: Group
+    name: nethical-auditors
+    apiGroup: rbac.authorization.k8s.io
+  - kind: Group
+    name: compliance-team
+    apiGroup: rbac.authorization.k8s.io
+
+---
+# RoleBinding for Developers
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nethical-developer-binding
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nethical-developer
+subjects:
+  - kind: Group
+    name: nethical-developers
+    apiGroup: rbac.authorization.k8s.io
+
+---
+# RoleBinding for Viewers
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: nethical-viewer-binding
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: rbac
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: nethical-viewer
+subjects:
+  - kind: Group
+    name: nethical-viewers
+    apiGroup: rbac.authorization.k8s.io

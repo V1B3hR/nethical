@@ -1,0 +1,43 @@
+---
+# FIPS StatefulSet Patch
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        compliance.nethical.io/framework: "fips"
+        compliance.nethical.io/fips-mode: "enforced"
+    spec:
+      containers:
+        - name: nethical
+          # Use FIPS-validated container image
+          # Note: Replace with your FIPS-validated image tag
+          # image: nethical:0.1.0-fips
+          env:
+            # FIPS mode configuration
+            - name: NETHICAL_FIPS_MODE
+              value: "true"
+            - name: NETHICAL_CRYPTO_MODULE
+              value: "fips-validated"
+            - name: NETHICAL_ENCRYPTION_ALGORITHM
+              value: "aes-256-gcm"
+            - name: NETHICAL_HASH_ALGORITHM
+              value: "sha-256"
+            - name: NETHICAL_TLS_MIN_VERSION
+              value: "1.2"
+            - name: OPENSSL_FIPS
+              value: "1"
+            - name: GOFIPS
+              value: "1"
+          volumeMounts:
+            - name: fips-config
+              mountPath: /app/config/fips
+              readOnly: true
+      volumes:
+        - name: fips-config
+          configMap:
+            name: nethical-fips-config

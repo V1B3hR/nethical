@@ -1,0 +1,42 @@
+---
+# EU MDR StatefulSet Patch
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        compliance.nethical.io/framework: "eu-mdr"
+        compliance.nethical.io/sector: "medical-devices"
+    spec:
+      containers:
+        - name: nethical
+          env:
+            # EU MDR configuration
+            - name: NETHICAL_COMPLIANCE_MODE
+              value: "eu-mdr"
+            - name: NETHICAL_SECTOR
+              value: "medical-devices"
+            - name: NETHICAL_JURISDICTION
+              value: "eu"
+            - name: NETHICAL_GDPR_MODE
+              value: "true"
+            - name: NETHICAL_AUDIT_RETENTION_YEARS
+              value: "10"
+            - name: NETHICAL_ALGORITHM_TRANSPARENCY
+              value: "true"
+            - name: NETHICAL_EXPLAINABILITY
+              value: "true"
+            - name: NETHICAL_VIGILANCE_REPORTING
+              value: "true"
+          volumeMounts:
+            - name: eu-mdr-config
+              mountPath: /app/config/eu-mdr
+              readOnly: true
+      volumes:
+        - name: eu-mdr-config
+          configMap:
+            name: nethical-eu-mdr-config

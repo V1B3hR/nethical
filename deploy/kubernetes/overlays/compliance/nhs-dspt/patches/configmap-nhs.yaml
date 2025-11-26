@@ -1,0 +1,38 @@
+---
+# NHS DSPT ConfigMap Patch
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-config
+  namespace: nethical
+data:
+  # NHS DSPT Compliance Settings
+  NETHICAL_COMPLIANCE_FRAMEWORK: "nhs-dspt"
+  NETHICAL_JURISDICTION: "uk"
+  NETHICAL_DATA_RESIDENCY: "uk"
+  
+  # UK GDPR Settings
+  NETHICAL_GDPR_MODE: "uk"
+  NETHICAL_DATA_RETENTION_DAYS: "2555"
+  NETHICAL_RIGHT_TO_ERASURE: "true"
+  NETHICAL_DATA_PORTABILITY: "true"
+  
+  # Security Settings (Standard 9)
+  NETHICAL_ENCRYPTION_AT_REST: "true"
+  NETHICAL_ENCRYPTION_IN_TRANSIT: "true"
+  NETHICAL_TLS_MIN_VERSION: "1.2"
+  
+  # Access Controls (Standard 4)
+  NETHICAL_MFA_REQUIRED: "true"
+  NETHICAL_SESSION_TIMEOUT_SECONDS: "900"
+  NETHICAL_ACCESS_REVIEWS_ENABLED: "true"
+  
+  # Audit Controls
+  NETHICAL_AUDIT_ENABLED: "true"
+  NETHICAL_AUDIT_RETENTION_DAYS: "2555"
+  NETHICAL_AUDIT_TAMPER_PROOF: "true"
+  
+  # Privacy Settings
+  NETHICAL_PRIVACY_MODE: "strict"
+  NETHICAL_PII_DETECTION: "true"
+  NETHICAL_REDACTION_POLICY: "nhs"

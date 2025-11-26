@@ -1,0 +1,85 @@
+---
+# EKS IAM Roles for Service Accounts (IRSA) Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: eks-irsa-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: aws
+data:
+  # Instructions for setting up IRSA
+  setup-instructions: |
+    # 1. Create OIDC provider for EKS cluster
+    eksctl utils associate-iam-oidc-provider \
+      --cluster CLUSTER_NAME \
+      --approve
+    
+    # 2. Create IAM policy for Nethical
+    cat > nethical-policy.json << EOF
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "secretsmanager:GetSecretValue",
+            "secretsmanager:DescribeSecret"
+          ],
+          "Resource": "arn:aws:secretsmanager:REGION:ACCOUNT_ID:secret:nethical/*"
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "kms:Decrypt",
+            "kms:GenerateDataKey"
+          ],
+          "Resource": "arn:aws:kms:REGION:ACCOUNT_ID:key/*",
+          "Condition": {
+            "StringEquals": {
+              "kms:ViaService": "secretsmanager.REGION.amazonaws.com"
+            }
+          }
+        },
+        {
+          "Effect": "Allow",
+          "Action": [
+            "logs:CreateLogStream",
+            "logs:PutLogEvents"
+          ],
+          "Resource": "arn:aws:logs:REGION:ACCOUNT_ID:log-group:/aws/eks/nethical:*"
+        }
+      ]
+    }
+    EOF
+    
+    aws iam create-policy \
+      --policy-name NethicalPolicy \
+      --policy-document file://nethical-policy.json
+    
+    # 3. Create IAM role with trust policy for EKS OIDC
+    eksctl create iamserviceaccount \
+      --name nethical \
+      --namespace nethical \
+      --cluster CLUSTER_NAME \
+      --attach-policy-arn arn:aws:iam::ACCOUNT_ID:policy/NethicalPolicy \
+      --approve \
+      --override-existing-serviceaccounts
+    
+  # AWS Secrets Manager SecretStore configuration
+  external-secrets-aws.yaml: |
+    apiVersion: external-secrets.io/v1beta1
+    kind: SecretStore
+    metadata:
+      name: aws-secrets-manager
+      namespace: nethical
+    spec:
+      provider:
+        aws:
+          service: SecretsManager
+          region: "YOUR_REGION"  # e.g., us-east-1
+          auth:
+            jwt:
+              serviceAccountRef:
+                name: nethical

@@ -1,0 +1,24 @@
+# FERPA Compliance Overlay
+# Implements Family Educational Rights and Privacy Act requirements
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-ferpa
+
+resources:
+  - ../base
+  - ferpa-config.yaml
+
+patches:
+  - path: patches/statefulset-ferpa.yaml
+  - path: patches/configmap-ferpa.yaml
+
+commonLabels:
+  compliance.nethical.io/framework: ferpa
+  compliance.nethical.io/sector: education
+
+commonAnnotations:
+  compliance.nethical.io/ferpa-version: "2024"
+  compliance.nethical.io/student-data-protection: "enabled"
+  compliance.nethical.io/directory-information: "configurable"

@@ -1,0 +1,25 @@
+# NIST 800-53 Compliance Overlay
+# Implements NIST Special Publication 800-53 security controls
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-nist
+
+resources:
+  - ../base
+  - nist-controls-config.yaml
+  - nist-audit-policy.yaml
+
+patches:
+  - path: patches/statefulset-nist.yaml
+  - path: patches/configmap-nist.yaml
+
+commonLabels:
+  compliance.nethical.io/framework: nist-800-53
+  compliance.nethical.io/sector: government
+
+commonAnnotations:
+  compliance.nethical.io/nist-revision: "5"
+  compliance.nethical.io/impact-level: "moderate"
+  compliance.nethical.io/fedramp: "ready"

@@ -1,0 +1,125 @@
+---
+# FERPA Configuration
+# Family Educational Rights and Privacy Act requirements
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-ferpa-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: ferpa
+data:
+  ferpa-config.yaml: |
+    version: "1.0"
+    compliance_framework: "FERPA"
+    
+    # Education Records Protection
+    education_records:
+      protected: true
+      definition: |
+        Records directly related to a student that are maintained 
+        by an educational agency or institution
+      
+      # Types of protected records
+      protected_record_types:
+        - student_grades
+        - transcripts
+        - class_lists
+        - student_course_schedules
+        - student_financial_information
+        - student_discipline_records
+        - special_education_records
+        - student_health_records
+        
+      # Personally Identifiable Information (PII)
+      pii_elements:
+        - student_name
+        - parent_name
+        - student_address
+        - personal_identifier
+        - social_security_number
+        - student_id
+        - date_of_birth
+        - place_of_birth
+        - mothers_maiden_name
+        - biometric_record
+        - other_direct_identifiers
+        - indirect_identifiers
+        
+    # Directory Information (can be disclosed without consent)
+    directory_information:
+      configurable: true
+      default_included:
+        - student_name
+        - address
+        - telephone_number
+        - email_address
+        - date_of_birth
+        - major_field_of_study
+        - enrollment_status
+        - dates_of_attendance
+        - degrees_received
+        - honors_received
+        - participation_activities
+      opt_out_enabled: true
+      
+    # Access Controls
+    access_controls:
+      legitimate_educational_interest:
+        required: true
+        documentation: required
+        
+      school_official_access:
+        enabled: true
+        roles:
+          - teacher
+          - administrator
+          - counselor
+          - staff_with_educational_interest
+          
+      parent_access:
+        enabled: true
+        conditions:
+          - student_under_18: true
+          - student_dependent: true
+          
+      student_access:
+        enabled: true
+        conditions:
+          - student_over_18: true
+          - enrolled_in_postsecondary: true
+          
+      third_party_access:
+        consent_required: true
+        exceptions:
+          - school_officials
+          - authorized_representatives
+          - financial_aid_purposes
+          - accrediting_organizations
+          - health_safety_emergency
+          - judicial_order
+          
+    # Consent Requirements
+    consent:
+      written_consent_required: true
+      consent_elements:
+        - records_to_be_disclosed
+        - purpose_of_disclosure
+        - party_receiving_information
+        
+    # Audit Trail Requirements
+    audit_requirements:
+      disclosure_logging: true
+      log_retention: "permanent"
+      log_contents:
+        - party_requesting_records
+        - legitimate_interest
+        - date_of_disclosure
+        - records_disclosed
+        
+    # Data Retention
+    retention:
+      education_records: "permanent_or_until_no_longer_needed"
+      access_logs: "permanent"
+      consent_records: "permanent"

@@ -1,0 +1,141 @@
+# Blue-Green Deployment Values
+# For zero-downtime deployments with instant rollback
+
+# Blue deployment configuration (stable/current)
+blue:
+  enabled: true
+  replicaCount: 5
+  image:
+    repository: nethical
+    tag: "0.1.0"  # Current stable version
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  podLabels:
+    deployment-slot: blue
+    version: "0.1.0"
+
+# Green deployment configuration (new version)
+green:
+  enabled: true
+  replicaCount: 5
+  image:
+    repository: nethical
+    tag: "0.2.0"  # New version being deployed
+  resources:
+    limits:
+      cpu: 2000m
+      memory: 4Gi
+    requests:
+      cpu: 500m
+      memory: 1Gi
+  podLabels:
+    deployment-slot: green
+    version: "0.2.0"
+
+# Active deployment (which slot receives traffic)
+activeSlot: blue  # Change to 'green' to switch traffic
+
+# Rollback settings
+rollback:
+  enabled: true
+  automatic: true
+  threshold:
+    errorRate: 5  # Rollback if error rate exceeds 5%
+    latencyP99: 500  # Rollback if p99 latency exceeds 500ms
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  # Selector switches between blue and green
+  selector:
+    deployment-slot: blue  # Matches activeSlot
+
+# Ingress configuration
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+  hosts:
+    - host: nethical.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+  tls:
+    - secretName: nethical-tls
+      hosts:
+        - nethical.example.com
+
+# Persistence (shared between blue and green)
+persistence:
+  enabled: true
+  size: 100Gi
+  storageClass: "fast-ssd"
+
+# Nethical configuration (shared)
+nethical:
+  regionId: "us-east-1"
+  logicalDomain: "production"
+  enableMerkle: true
+  enableQuarantine: true
+  enableQuota: true
+  enableOtel: true
+  requestsPerSecond: 500.0
+  maxPayloadBytes: 1000000
+  privacyMode: "differential"
+  epsilon: 0.5
+  redactionPolicy: "aggressive"
+
+# Pod security
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: false
+  allowPrivilegeEscalation: false
+
+# Pod disruption budget (for each slot)
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 3
+
+# Autoscaling
+autoscaling:
+  enabled: true
+  minReplicas: 5
+  maxReplicas: 30
+  targetCPUUtilizationPercentage: 70
+  targetMemoryUtilizationPercentage: 80
+
+# Probes
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 30
+    timeoutSeconds: 5
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+    timeoutSeconds: 5
+    failureThreshold: 3
+  startup:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    timeoutSeconds: 5
+    failureThreshold: 30

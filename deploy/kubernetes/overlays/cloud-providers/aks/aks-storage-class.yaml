@@ -1,0 +1,47 @@
+---
+# AKS Storage Classes
+# Optimized for Azure managed disks
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nethical-premium-ssd
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: azure
+provisioner: disk.csi.azure.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  skuName: Premium_LRS
+  kind: Managed
+  # Enable encryption with Azure Key Vault
+  # diskEncryptionSetID: "/subscriptions/SUBSCRIPTION_ID/resourceGroups/RG_NAME/providers/Microsoft.Compute/diskEncryptionSets/DES_NAME"
+reclaimPolicy: Retain
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nethical-premium-zrs
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: azure
+provisioner: disk.csi.azure.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  skuName: Premium_ZRS
+  kind: Managed
+reclaimPolicy: Retain
+
+---
+# Snapshot Class for AKS
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: nethical-snapshot
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: azure
+driver: disk.csi.azure.com
+deletionPolicy: Retain

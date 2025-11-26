@@ -1,0 +1,29 @@
+---
+# FIPS ConfigMap Patch
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-config
+  namespace: nethical
+data:
+  # FIPS 140-3 Compliance Settings
+  NETHICAL_COMPLIANCE_FRAMEWORK: "fips"
+  NETHICAL_FIPS_MODE: "true"
+  
+  # Cryptographic Settings
+  NETHICAL_ENCRYPTION_ALGORITHM: "aes-256-gcm"
+  NETHICAL_HASH_ALGORITHM: "sha-256"
+  NETHICAL_SIGNATURE_ALGORITHM: "ecdsa-p384"
+  NETHICAL_KEY_DERIVATION: "hkdf-sha256"
+  
+  # TLS Settings
+  NETHICAL_TLS_MIN_VERSION: "1.2"
+  NETHICAL_TLS_MAX_VERSION: "1.3"
+  
+  # Key Management
+  NETHICAL_KEY_ROTATION_DAYS: "90"
+  NETHICAL_KEY_STORAGE: "encrypted"
+  
+  # Self-Tests
+  NETHICAL_FIPS_SELF_TEST: "true"
+  NETHICAL_FIPS_SELF_TEST_INTERVAL: "daily"

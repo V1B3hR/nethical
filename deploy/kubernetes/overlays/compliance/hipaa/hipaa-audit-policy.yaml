@@ -1,0 +1,144 @@
+---
+# HIPAA-Compliant Audit Logging Policy
+# Implements 45 CFR 164.312(b) - Audit Controls
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-hipaa-audit-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: audit
+    compliance.nethical.io/framework: hipaa
+data:
+  # Audit configuration for HIPAA compliance
+  audit-config.yaml: |
+    version: "1.0"
+    compliance_framework: "HIPAA"
+    
+    # 45 CFR 164.312(b) - Audit Controls
+    audit_controls:
+      enabled: true
+      retention_days: 2190  # 6 years (HIPAA requirement)
+      tamper_proof: true
+      merkle_anchoring: true
+      
+    # PHI Access Logging
+    phi_access_logging:
+      enabled: true
+      log_all_access: true
+      log_modifications: true
+      log_deletions: true
+      log_exports: true
+      include_user_identity: true
+      include_timestamp: true
+      include_workstation_id: true
+      
+    # Events to audit (minimum required by HIPAA)
+    auditable_events:
+      - type: "user_login"
+        severity: "info"
+        phi_relevant: true
+      - type: "user_logout"
+        severity: "info"
+        phi_relevant: true
+      - type: "phi_access"
+        severity: "info"
+        phi_relevant: true
+      - type: "phi_create"
+        severity: "notice"
+        phi_relevant: true
+      - type: "phi_modify"
+        severity: "notice"
+        phi_relevant: true
+      - type: "phi_delete"
+        severity: "warning"
+        phi_relevant: true
+      - type: "phi_export"
+        severity: "notice"
+        phi_relevant: true
+      - type: "authentication_failure"
+        severity: "warning"
+        phi_relevant: true
+      - type: "authorization_failure"
+        severity: "warning"
+        phi_relevant: true
+      - type: "security_incident"
+        severity: "critical"
+        phi_relevant: true
+      - type: "configuration_change"
+        severity: "notice"
+        phi_relevant: false
+      - type: "system_startup"
+        severity: "info"
+        phi_relevant: false
+      - type: "system_shutdown"
+        severity: "info"
+        phi_relevant: false
+        
+    # Audit log integrity
+    integrity:
+      hash_algorithm: "sha256"
+      signature_algorithm: "rsa-sha256"
+      merkle_tree: true
+      blockchain_anchoring: false
+      
+    # Alert thresholds
+    alerts:
+      - condition: "authentication_failures > 5 in 5m"
+        action: "alert_security_team"
+        severity: "high"
+      - condition: "phi_exports > 100 in 1h"
+        action: "alert_privacy_officer"
+        severity: "medium"
+      - condition: "after_hours_access"
+        action: "log_and_review"
+        severity: "low"
+        
+  # HIPAA Security Rule mapping
+  security-rule-mapping.yaml: |
+    # Mapping to 45 CFR 164.312 Technical Safeguards
+    technical_safeguards:
+      access_control:
+        # 164.312(a)(1) - Unique User Identification
+        unique_user_id:
+          implementation: "RBAC with unique user IDs"
+          status: "implemented"
+          
+        # 164.312(a)(2)(i) - Emergency Access Procedure
+        emergency_access:
+          implementation: "Break-glass procedure with audit"
+          status: "implemented"
+          
+        # 164.312(a)(2)(ii) - Automatic Logoff
+        automatic_logoff:
+          implementation: "Session timeout after 15 minutes"
+          status: "implemented"
+          
+        # 164.312(a)(2)(iv) - Encryption and Decryption
+        encryption:
+          implementation: "AES-256-GCM for data at rest"
+          status: "implemented"
+          
+      audit_controls:
+        # 164.312(b) - Audit Controls
+        audit_logging:
+          implementation: "Comprehensive audit logging"
+          status: "implemented"
+          
+      integrity:
+        # 164.312(c)(1) - Mechanism to Authenticate ePHI
+        authentication:
+          implementation: "SHA-256 checksums, Merkle trees"
+          status: "implemented"
+          
+      transmission_security:
+        # 164.312(e)(1) - Integrity Controls
+        integrity_controls:
+          implementation: "TLS 1.3 with HMAC"
+          status: "implemented"
+          
+        # 164.312(e)(2)(ii) - Encryption
+        encryption:
+          implementation: "TLS 1.3 for all transmissions"
+          status: "implemented"

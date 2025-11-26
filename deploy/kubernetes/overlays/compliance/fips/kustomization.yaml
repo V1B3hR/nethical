@@ -1,0 +1,24 @@
+# FIPS 140-2/140-3 Compliance Overlay
+# Implements Federal Information Processing Standards for cryptographic modules
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-fips
+
+resources:
+  - ../base
+  - fips-config.yaml
+
+patches:
+  - path: patches/statefulset-fips.yaml
+  - path: patches/configmap-fips.yaml
+
+commonLabels:
+  compliance.nethical.io/framework: fips
+  compliance.nethical.io/sector: government
+
+commonAnnotations:
+  compliance.nethical.io/fips-version: "140-3"
+  compliance.nethical.io/crypto-modules: "fips-validated"
+  compliance.nethical.io/encryption: "aes-256-gcm-fips"

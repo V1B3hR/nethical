@@ -1,0 +1,24 @@
+# AKS (Azure Kubernetes Service) Overlay
+# Optimized for Microsoft Azure
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-aks
+
+resources:
+  - ../../base
+  - aks-storage-class.yaml
+  - aks-workload-identity.yaml
+
+patches:
+  - path: patches/statefulset-aks.yaml
+  - path: patches/serviceaccount-aks.yaml
+
+commonLabels:
+  cloud.nethical.io/provider: azure
+  cloud.nethical.io/platform: aks
+
+commonAnnotations:
+  cloud.nethical.io/workload-identity: "enabled"
+  cloud.nethical.io/secret-manager: "azure"

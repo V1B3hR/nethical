@@ -1,0 +1,24 @@
+# EKS (Amazon Elastic Kubernetes Service) Overlay
+# Optimized for Amazon Web Services
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-eks
+
+resources:
+  - ../../base
+  - eks-storage-class.yaml
+  - eks-irsa.yaml
+
+patches:
+  - path: patches/statefulset-eks.yaml
+  - path: patches/serviceaccount-eks.yaml
+
+commonLabels:
+  cloud.nethical.io/provider: aws
+  cloud.nethical.io/platform: eks
+
+commonAnnotations:
+  cloud.nethical.io/irsa: "enabled"
+  cloud.nethical.io/secret-manager: "aws"

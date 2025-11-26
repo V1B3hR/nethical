@@ -1,0 +1,162 @@
+---
+# HIPAA-Compliant Network Policies
+# Implements network segmentation required by HIPAA Security Rule
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hipaa-default-deny
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: hipaa
+  annotations:
+    description: "HIPAA: Default deny all traffic - 45 CFR 164.312(e)"
+spec:
+  podSelector: {}
+  policyTypes:
+    - Ingress
+    - Egress
+
+---
+# Allow only authenticated and encrypted traffic
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hipaa-api-ingress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: hipaa
+  annotations:
+    description: "HIPAA: Allow ingress only from authorized sources with TLS"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: nethical
+  policyTypes:
+    - Ingress
+  ingress:
+    # Only allow traffic from ingress controller (must have TLS termination)
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              network-policy: ingress-allowed
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: ingress-nginx
+      ports:
+        - protocol: TCP
+          port: 8000
+    # Allow health checks from kubelet
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: TCP
+          port: 8000
+
+---
+# Restrict egress to only necessary services
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hipaa-api-egress
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: hipaa
+  annotations:
+    description: "HIPAA: Restrict egress to authorized destinations only"
+spec:
+  podSelector:
+    matchLabels:
+      app.kubernetes.io/name: nethical
+  policyTypes:
+    - Egress
+  egress:
+    # DNS resolution
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+        - podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - protocol: UDP
+          port: 53
+        - protocol: TCP
+          port: 53
+    # Database access (encrypted)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: postgresql
+      ports:
+        - protocol: TCP
+          port: 5432
+    # Redis access (encrypted)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: redis
+      ports:
+        - protocol: TCP
+          port: 6379
+    # OpenTelemetry collector (audit logs)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: otel-collector
+      ports:
+        - protocol: TCP
+          port: 4318
+        - protocol: TCP
+          port: 4317
+
+---
+# Isolate audit logging infrastructure
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: hipaa-audit-isolation
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: hipaa
+  annotations:
+    description: "HIPAA: Isolate audit logging for tamper protection"
+spec:
+  podSelector:
+    matchLabels:
+      app: audit-logger
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Only accept audit events from nethical pods
+    - from:
+        - podSelector:
+            matchLabels:
+              app.kubernetes.io/name: nethical
+      ports:
+        - protocol: TCP
+          port: 4318
+  egress:
+    # DNS only
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              kubernetes.io/metadata.name: kube-system
+      ports:
+        - protocol: UDP
+          port: 53
+    # Long-term storage (WORM)
+    - to:
+        - podSelector:
+            matchLabels:
+              app: audit-storage
+      ports:
+        - protocol: TCP
+          port: 443

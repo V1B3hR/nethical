@@ -1,0 +1,59 @@
+---
+# HIPAA StatefulSet Patch
+# Enhances security for PHI handling
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        compliance.nethical.io/framework: "hipaa"
+        compliance.nethical.io/phi-handling: "true"
+    spec:
+      # Enhanced security context for HIPAA
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+        - name: nethical
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: true
+            runAsNonRoot: true
+            runAsUser: 1000
+            capabilities:
+              drop:
+                - ALL
+          env:
+            # HIPAA-specific configuration
+            - name: NETHICAL_COMPLIANCE_MODE
+              value: "hipaa"
+            - name: NETHICAL_PHI_ENCRYPTION
+              value: "true"
+            - name: NETHICAL_ENCRYPTION_ALGORITHM
+              value: "aes-256-gcm"
+            - name: NETHICAL_AUDIT_RETENTION_DAYS
+              value: "2190"  # 6 years
+            - name: NETHICAL_SESSION_TIMEOUT
+              value: "900"  # 15 minutes
+            - name: NETHICAL_MERKLE_ANCHORING
+              value: "true"
+            - name: NETHICAL_PHI_ACCESS_LOGGING
+              value: "true"
+            - name: NETHICAL_EMERGENCY_ACCESS
+              value: "true"
+          # Additional volume mounts for HIPAA audit
+          volumeMounts:
+            - name: hipaa-audit-config
+              mountPath: /app/config/hipaa
+              readOnly: true
+      volumes:
+        - name: hipaa-audit-config
+          configMap:
+            name: nethical-hipaa-audit-config
