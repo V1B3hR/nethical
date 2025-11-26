@@ -5,6 +5,7 @@ This module provides comprehensive compliance capabilities for:
 - NIST 800-53 control mapping and validation
 - HIPAA Privacy Rule compliance
 - FedRAMP continuous monitoring
+- ISO/IEC 27001:2022 Annex A control mapping
 - Automated compliance reporting
 - Evidence collection for auditors
 """
@@ -357,6 +358,286 @@ class FedRAMPMonitor:
         }
 
 
+class ISO27001ControlMapper:
+    """Maps ISO/IEC 27001:2022 Annex A controls to system components"""
+
+    def __init__(self):
+        self.controls: Dict[str, ComplianceControl] = {}
+        self._initialize_controls()
+
+    def _initialize_controls(self):
+        """Initialize ISO 27001:2022 Annex A control definitions"""
+
+        # A.5 Organizational controls
+        self.controls["A.5.1"] = ComplianceControl(
+            id="A.5.1",
+            framework=ComplianceFramework.ISO_27001,
+            title="Policies for information security",
+            description="Information security policy and topic-specific policies shall be defined, approved by management, published, communicated to and acknowledged by relevant personnel and relevant interested parties, and reviewed at planned intervals and if significant changes occur.",
+            requirement="Documented information security policies",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["SECURITY.md", "docs/SECURITY_HARDENING_GUIDE.md"],
+        )
+
+        self.controls["A.5.7"] = ComplianceControl(
+            id="A.5.7",
+            framework=ComplianceFramework.ISO_27001,
+            title="Threat intelligence",
+            description="Information relating to information security threats shall be collected and analysed to produce threat intelligence.",
+            requirement="Threat modeling and intelligence gathering",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/security/threat_modeling.py", "docs/security/threat_model.md"],
+        )
+
+        self.controls["A.5.9"] = ComplianceControl(
+            id="A.5.9",
+            framework=ComplianceFramework.ISO_27001,
+            title="Inventory of information and other associated assets",
+            description="An inventory of information and other associated assets, including owners, shall be developed and maintained.",
+            requirement="Asset inventory and SBOM",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["SBOM.json", "docs/compliance/isms/asset_register.md"],
+        )
+
+        self.controls["A.5.12"] = ComplianceControl(
+            id="A.5.12",
+            framework=ComplianceFramework.ISO_27001,
+            title="Classification of information",
+            description="Information shall be classified according to the information security needs of the organization based on confidentiality, integrity, availability and relevant interested party requirements.",
+            requirement="Data classification scheme",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["policies/common/data_classification.yaml", "nethical/security/data_compliance.py"],
+        )
+
+        self.controls["A.5.15"] = ComplianceControl(
+            id="A.5.15",
+            framework=ComplianceFramework.ISO_27001,
+            title="Access control",
+            description="Rules to control physical and logical access to information and other associated assets shall be established and implemented based on business and information security requirements.",
+            requirement="RBAC implementation",
+            severity=ControlSeverity.CRITICAL,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/core/rbac.py", "nethical/security/auth.py"],
+        )
+
+        self.controls["A.5.24"] = ComplianceControl(
+            id="A.5.24",
+            framework=ComplianceFramework.ISO_27001,
+            title="Information security incident management planning and preparation",
+            description="The organization shall plan and prepare for managing information security incidents by defining, establishing and communicating information security incident management processes, roles and responsibilities.",
+            requirement="Incident response procedures",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["docs/compliance/INCIDENT_RESPONSE_POLICY.md", "nethical/security/soc_integration.py"],
+        )
+
+        self.controls["A.5.28"] = ComplianceControl(
+            id="A.5.28",
+            framework=ComplianceFramework.ISO_27001,
+            title="Collection of evidence",
+            description="The organization shall establish and implement procedures for the identification, collection, acquisition and preservation of evidence related to information security events.",
+            requirement="Evidence collection and audit trails",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/security/audit_logging.py", "nethical/core/audit_merkle.py"],
+        )
+
+        self.controls["A.5.34"] = ComplianceControl(
+            id="A.5.34",
+            framework=ComplianceFramework.ISO_27001,
+            title="Privacy and protection of PII",
+            description="The organization shall identify and meet the requirements regarding the preservation of privacy and protection of PII according to applicable laws and regulations and contractual requirements.",
+            requirement="PII detection and protection",
+            severity=ControlSeverity.CRITICAL,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/core/redaction_pipeline.py", "nethical/core/differential_privacy.py"],
+        )
+
+        # A.6 People controls
+        self.controls["A.6.3"] = ComplianceControl(
+            id="A.6.3",
+            framework=ComplianceFramework.ISO_27001,
+            title="Information security awareness, education and training",
+            description="Personnel of the organization and relevant interested parties shall receive appropriate information security awareness, education and training and regular updates of the organization's information security policy, topic-specific policies and procedures, as relevant for their job function.",
+            requirement="Security training documentation",
+            severity=ControlSeverity.MEDIUM,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["docs/TRAINING_GUIDE.md", "docs/SECURITY_HARDENING_GUIDE.md"],
+        )
+
+        # A.8 Technological controls
+        self.controls["A.8.2"] = ComplianceControl(
+            id="A.8.2",
+            framework=ComplianceFramework.ISO_27001,
+            title="Privileged access rights",
+            description="The allocation and use of privileged access rights shall be restricted and managed.",
+            requirement="Privilege management",
+            severity=ControlSeverity.CRITICAL,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/core/rbac.py"],
+        )
+
+        self.controls["A.8.5"] = ComplianceControl(
+            id="A.8.5",
+            framework=ComplianceFramework.ISO_27001,
+            title="Secure authentication",
+            description="Secure authentication technologies and procedures shall be implemented based on information access restrictions and the topic-specific policy on access control.",
+            requirement="MFA and SSO implementation",
+            severity=ControlSeverity.CRITICAL,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/security/mfa.py", "nethical/security/sso.py"],
+        )
+
+        self.controls["A.8.7"] = ComplianceControl(
+            id="A.8.7",
+            framework=ComplianceFramework.ISO_27001,
+            title="Protection against malware",
+            description="Protection against malware shall be implemented and supported by appropriate user awareness.",
+            requirement="Adversarial detection and input validation",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/detectors/", "nethical/security/input_validation.py"],
+        )
+
+        self.controls["A.8.8"] = ComplianceControl(
+            id="A.8.8",
+            framework=ComplianceFramework.ISO_27001,
+            title="Management of technical vulnerabilities",
+            description="Information about technical vulnerabilities of information systems in use shall be obtained, the organization's exposure to such vulnerabilities shall be evaluated and appropriate measures shall be taken.",
+            requirement="Vulnerability scanning and penetration testing",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/security/penetration_testing.py", "SBOM.json"],
+        )
+
+        self.controls["A.8.11"] = ComplianceControl(
+            id="A.8.11",
+            framework=ComplianceFramework.ISO_27001,
+            title="Data masking",
+            description="Data masking shall be used in accordance with the organization's topic-specific policy on access control and other related topic-specific policies, and business requirements, taking applicable legislation into consideration.",
+            requirement="PII redaction and differential privacy",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/core/redaction_pipeline.py", "nethical/core/differential_privacy.py"],
+        )
+
+        self.controls["A.8.15"] = ComplianceControl(
+            id="A.8.15",
+            framework=ComplianceFramework.ISO_27001,
+            title="Logging",
+            description="Logs that record activities, exceptions, faults and other relevant events shall be produced, stored, protected and analysed.",
+            requirement="Comprehensive audit logging with integrity protection",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/security/audit_logging.py", "nethical/core/audit_merkle.py"],
+        )
+
+        self.controls["A.8.16"] = ComplianceControl(
+            id="A.8.16",
+            framework=ComplianceFramework.ISO_27001,
+            title="Monitoring activities",
+            description="Networks, systems and applications shall be monitored for anomalous behaviour and appropriate actions taken to evaluate potential information security incidents.",
+            requirement="Real-time monitoring and anomaly detection",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/monitors/", "nethical/observability/", "nethical/core/anomaly_detector.py"],
+        )
+
+        self.controls["A.8.24"] = ComplianceControl(
+            id="A.8.24",
+            framework=ComplianceFramework.ISO_27001,
+            title="Use of cryptography",
+            description="Rules for the effective use of cryptography, including cryptographic key management, shall be defined and implemented.",
+            requirement="Encryption and cryptographic controls",
+            severity=ControlSeverity.CRITICAL,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/security/encryption.py", "nethical/security/quantum_crypto.py", "nethical/core/audit_merkle.py"],
+        )
+
+        self.controls["A.8.25"] = ComplianceControl(
+            id="A.8.25",
+            framework=ComplianceFramework.ISO_27001,
+            title="Secure development life cycle",
+            description="Rules for the secure development of software and systems shall be established and applied.",
+            requirement="Secure SDLC with security scanning",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=[".github/workflows/", "tests/adversarial/"],
+        )
+
+        self.controls["A.8.32"] = ComplianceControl(
+            id="A.8.32",
+            framework=ComplianceFramework.ISO_27001,
+            title="Change management",
+            description="Changes to information processing facilities and information systems shall be subject to change management procedures.",
+            requirement="Policy diff and release management",
+            severity=ControlSeverity.HIGH,
+            implementation_status=ComplianceStatus.COMPLIANT,
+            evidence=["nethical/core/policy_diff.py", "nethical/policy/release_management.py"],
+        )
+
+    def get_control(self, control_id: str) -> Optional[ComplianceControl]:
+        """Retrieve a specific control"""
+        return self.controls.get(control_id)
+
+    def get_controls_by_category(self, category: str) -> List[ComplianceControl]:
+        """Get all controls from a specific category (e.g., 'A.5', 'A.6', 'A.8')"""
+        return [control for control in self.controls.values() if control.id.startswith(category)]
+
+    def assess_control(
+        self,
+        control_id: str,
+        status: ComplianceStatus,
+        evidence: List[str],
+        assessor: str = "system",
+    ) -> bool:
+        """Assess a control's compliance status"""
+        control = self.controls.get(control_id)
+        if not control:
+            return False
+
+        control.implementation_status = status
+        control.evidence.extend(evidence)
+        control.last_assessed = datetime.now(timezone.utc)
+        control.assessor = assessor
+        return True
+
+    def get_compliance_summary(self) -> Dict[str, Any]:
+        """Generate a compliance summary for ISO 27001"""
+        total = len(self.controls)
+        compliant = sum(
+            1 for c in self.controls.values()
+            if c.implementation_status == ComplianceStatus.COMPLIANT
+        )
+        partial = sum(
+            1 for c in self.controls.values()
+            if c.implementation_status == ComplianceStatus.PARTIAL
+        )
+        non_compliant = sum(
+            1 for c in self.controls.values()
+            if c.implementation_status == ComplianceStatus.NON_COMPLIANT
+        )
+        not_applicable = sum(
+            1 for c in self.controls.values()
+            if c.implementation_status == ComplianceStatus.NOT_APPLICABLE
+        )
+
+        return {
+            "framework": "ISO/IEC 27001:2022",
+            "total_controls": total,
+            "compliant": compliant,
+            "partial": partial,
+            "non_compliant": non_compliant,
+            "not_applicable": not_applicable,
+            "compliance_score": (compliant / total * 100) if total > 0 else 0.0,
+            "assessed_at": datetime.now(timezone.utc).isoformat(),
+        }
+
+
 class ComplianceReportGenerator:
     """Automated compliance reporting"""
 
@@ -364,6 +645,7 @@ class ComplianceReportGenerator:
         self.nist_mapper = NIST80053ControlMapper()
         self.hipaa_validator = HIPAAComplianceValidator()
         self.fedramp_monitor = FedRAMPMonitor()
+        self.iso27001_mapper = ISO27001ControlMapper()
 
     def generate_report(
         self, framework: ComplianceFramework, scope: str = "full_system"
@@ -374,6 +656,8 @@ class ComplianceReportGenerator:
             controls = list(self.nist_mapper.controls.values())
         elif framework == ComplianceFramework.HIPAA:
             controls = list(self.hipaa_validator.rules.values())
+        elif framework == ComplianceFramework.ISO_27001:
+            controls = list(self.iso27001_mapper.controls.values())
         else:
             controls = []
 
