@@ -1,0 +1,40 @@
+---
+# FERPA StatefulSet Patch
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        compliance.nethical.io/framework: "ferpa"
+        compliance.nethical.io/sector: "education"
+    spec:
+      containers:
+        - name: nethical
+          env:
+            # FERPA configuration
+            - name: NETHICAL_COMPLIANCE_MODE
+              value: "ferpa"
+            - name: NETHICAL_SECTOR
+              value: "education"
+            - name: NETHICAL_STUDENT_DATA_PROTECTION
+              value: "true"
+            - name: NETHICAL_CONSENT_REQUIRED
+              value: "true"
+            - name: NETHICAL_DISCLOSURE_LOGGING
+              value: "true"
+            - name: NETHICAL_AUDIT_RETENTION
+              value: "permanent"
+            - name: NETHICAL_PII_DETECTION
+              value: "true"
+          volumeMounts:
+            - name: ferpa-config
+              mountPath: /app/config/ferpa
+              readOnly: true
+      volumes:
+        - name: ferpa-config
+          configMap:
+            name: nethical-ferpa-config

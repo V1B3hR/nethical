@@ -1,0 +1,156 @@
+---
+# NHS DSPT Configuration
+# Implements NHS Data Security and Protection Toolkit Standards 1-10
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-nhs-dspt-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/component: config
+    compliance.nethical.io/framework: nhs-dspt
+data:
+  nhs-dspt-config.yaml: |
+    version: "1.0"
+    compliance_framework: "NHS_DSPT"
+    
+    # Standard 1 - Personal Confidential Data
+    standard_1:
+      name: "Personal Confidential Data"
+      description: "Personal confidential data is only accessible to staff who need it"
+      controls:
+        - pii_access_control: true
+        - role_based_access: true
+        - minimum_necessary: true
+        - access_logging: true
+        
+    # Standard 2 - Staff Responsibilities
+    standard_2:
+      name: "Staff Responsibilities"
+      description: "Staff understand data handling responsibilities"
+      controls:
+        - security_awareness_training: required
+        - acceptable_use_policy: enforced
+        - confidentiality_agreements: required
+        
+    # Standard 3 - Training
+    standard_3:
+      name: "Training"
+      description: "Staff complete annual data security awareness training"
+      controls:
+        - annual_training: required
+        - training_records: maintained
+        - refresher_training: "12_months"
+        
+    # Standard 4 - Managing Access
+    standard_4:
+      name: "Managing Access"
+      description: "Personal confidential data can only be accessed by authorized staff"
+      controls:
+        - authentication:
+            type: "multi_factor"
+            factors: ["password", "totp"]
+        - authorization:
+            type: "rbac"
+            principle: "least_privilege"
+        - access_reviews:
+            frequency: "quarterly"
+        - joiner_mover_leaver: true
+        
+    # Standard 5 - Process Reviews
+    standard_5:
+      name: "Process Reviews"
+      description: "Processes are in place to manage data assets"
+      controls:
+        - asset_register: maintained
+        - data_flow_mapping: true
+        - supplier_assurance: true
+        - risk_assessments: quarterly
+        
+    # Standard 6 - Responding to Incidents
+    standard_6:
+      name: "Responding to Incidents"
+      description: "Cyber security incidents are identified and responded to"
+      controls:
+        - incident_response_plan: true
+        - breach_notification:
+            ico_notification: "72_hours"
+            affected_parties: "without_undue_delay"
+        - forensic_capability: true
+        - lessons_learned: true
+        
+    # Standard 7 - Continuity Planning
+    standard_7:
+      name: "Continuity Planning"
+      description: "IT recovery plan in place for data and system recovery"
+      controls:
+        - backup_strategy:
+            frequency: "daily"
+            retention: "30_days"
+            off_site: true
+            encrypted: true
+        - recovery_testing: quarterly
+        - rpo: "4_hours"
+        - rto: "24_hours"
+        
+    # Standard 8 - Unsupported Systems
+    standard_8:
+      name: "Unsupported Systems"
+      description: "No unsupported operating systems or software in use"
+      controls:
+        - software_inventory: maintained
+        - patch_management: automated
+        - vulnerability_scanning: weekly
+        - end_of_life_planning: true
+        
+    # Standard 9 - IT Protection
+    standard_9:
+      name: "IT Protection"
+      description: "Cyber security measures in place"
+      controls:
+        - firewalls: enabled
+        - antivirus: enabled
+        - intrusion_detection: enabled
+        - encryption_at_rest: true
+        - encryption_in_transit: true
+        - network_segmentation: true
+        
+    # Standard 10 - Accountable Suppliers
+    standard_10:
+      name: "Accountable Suppliers"
+      description: "IT suppliers are held accountable"
+      controls:
+        - supplier_security_review: required
+        - data_processing_agreements: required
+        - sub_processor_management: true
+        - supply_chain_security: sbom_required
+        
+  # UK GDPR compliance mapping
+  uk-gdpr-mapping.yaml: |
+    gdpr_principles:
+      lawfulness_fairness_transparency:
+        implementation: "Policy engine with explainable decisions"
+      purpose_limitation:
+        implementation: "Data classification and access controls"
+      data_minimisation:
+        implementation: "PII detection and redaction"
+      accuracy:
+        implementation: "Data validation and verification"
+      storage_limitation:
+        implementation: "Automated retention policies"
+      integrity_confidentiality:
+        implementation: "Encryption, access controls, audit logging"
+      accountability:
+        implementation: "Comprehensive audit trail with Merkle anchoring"
+        
+    data_subject_rights:
+      right_to_access:
+        implementation: "API endpoint for data access requests"
+        response_time: "30_days"
+      right_to_rectification:
+        implementation: "Data correction workflow"
+      right_to_erasure:
+        implementation: "Data deletion with verification"
+      right_to_data_portability:
+        implementation: "Export in machine-readable format"

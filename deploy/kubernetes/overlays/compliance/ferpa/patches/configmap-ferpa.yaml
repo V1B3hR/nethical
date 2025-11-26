@@ -1,0 +1,29 @@
+---
+# FERPA ConfigMap Patch
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-config
+  namespace: nethical
+data:
+  # FERPA Compliance Settings
+  NETHICAL_COMPLIANCE_FRAMEWORK: "ferpa"
+  NETHICAL_SECTOR: "education"
+  
+  # Student Data Protection
+  NETHICAL_STUDENT_DATA_PROTECTION: "true"
+  NETHICAL_PII_DETECTION: "true"
+  NETHICAL_CONSENT_REQUIRED: "true"
+  
+  # Access Controls
+  NETHICAL_LEGITIMATE_INTEREST_REQUIRED: "true"
+  NETHICAL_THIRD_PARTY_CONSENT: "true"
+  
+  # Audit Settings
+  NETHICAL_DISCLOSURE_LOGGING: "true"
+  NETHICAL_AUDIT_RETENTION: "permanent"
+  NETHICAL_AUDIT_TAMPER_PROOF: "true"
+  
+  # Privacy Settings
+  NETHICAL_PRIVACY_MODE: "strict"
+  NETHICAL_REDACTION_POLICY: "ferpa"

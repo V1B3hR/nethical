@@ -1,0 +1,58 @@
+---
+# GKE Workload Identity Configuration
+# Enables GCP IAM integration with Kubernetes service accounts
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: gke-workload-identity-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: gcp
+data:
+  # Instructions for setting up Workload Identity
+  setup-instructions: |
+    # 1. Enable Workload Identity on GKE cluster
+    gcloud container clusters update CLUSTER_NAME \
+      --workload-pool=PROJECT_ID.svc.id.goog
+    
+    # 2. Create GCP service account
+    gcloud iam service-accounts create nethical-sa \
+      --display-name="Nethical Service Account"
+    
+    # 3. Grant required roles to GCP service account
+    gcloud projects add-iam-policy-binding PROJECT_ID \
+      --member="serviceAccount:nethical-sa@PROJECT_ID.iam.gserviceaccount.com" \
+      --role="roles/secretmanager.secretAccessor"
+    
+    gcloud projects add-iam-policy-binding PROJECT_ID \
+      --member="serviceAccount:nethical-sa@PROJECT_ID.iam.gserviceaccount.com" \
+      --role="roles/cloudkms.cryptoKeyEncrypterDecrypter"
+    
+    gcloud projects add-iam-policy-binding PROJECT_ID \
+      --member="serviceAccount:nethical-sa@PROJECT_ID.iam.gserviceaccount.com" \
+      --role="roles/monitoring.metricWriter"
+    
+    # 4. Bind K8s service account to GCP service account
+    gcloud iam service-accounts add-iam-policy-binding \
+      nethical-sa@PROJECT_ID.iam.gserviceaccount.com \
+      --role="roles/iam.workloadIdentityUser" \
+      --member="serviceAccount:PROJECT_ID.svc.id.goog[nethical/nethical]"
+    
+  # GCP Secret Manager SecretStore configuration
+  external-secrets-gcp.yaml: |
+    apiVersion: external-secrets.io/v1beta1
+    kind: SecretStore
+    metadata:
+      name: gcp-secret-manager
+      namespace: nethical
+    spec:
+      provider:
+        gcpsm:
+          projectID: "YOUR_PROJECT_ID"  # Replace with your project ID
+          auth:
+            workloadIdentity:
+              clusterLocation: "YOUR_REGION"  # e.g., us-central1
+              clusterName: "YOUR_CLUSTER_NAME"
+              serviceAccountRef:
+                name: nethical

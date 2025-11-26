@@ -1,0 +1,108 @@
+# Canary Deployment Values
+# For gradual rollout with traffic splitting
+
+replicaCount: 3
+
+image:
+  repository: nethical
+  tag: "0.2.0-canary"  # New version being tested
+  pullPolicy: Always
+
+# Canary-specific settings
+canary:
+  enabled: true
+  weight: 10  # 10% of traffic goes to canary
+  
+  # Analysis configuration
+  analysis:
+    enabled: true
+    metrics:
+      - name: error-rate
+        threshold: 5  # Max 5% error rate
+        interval: 60s
+      - name: latency-p99
+        threshold: 500  # Max 500ms p99 latency
+        interval: 60s
+    successCondition: "result[0] >= 0.95"  # 95% success rate
+    
+  # Rollback configuration
+  autoRollback:
+    enabled: true
+    threshold: 3  # Rollback after 3 failed checks
+
+# Smaller resources for canary
+resources:
+  limits:
+    cpu: 1000m
+    memory: 2Gi
+  requests:
+    cpu: 250m
+    memory: 512Mi
+
+# Canary-specific labels
+podLabels:
+  deployment-type: canary
+  version: "0.2.0"
+
+# Annotations for traffic routing
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8888"
+  prometheus.io/path: "/metrics"
+  sidecar.istio.io/inject: "true"
+
+# Service configuration for canary
+service:
+  type: ClusterIP
+  port: 8000
+  labels:
+    deployment-type: canary
+
+# Ingress with traffic splitting
+ingress:
+  enabled: true
+  className: "nginx"
+  annotations:
+    nginx.ingress.kubernetes.io/canary: "true"
+    nginx.ingress.kubernetes.io/canary-weight: "10"
+  hosts:
+    - host: nethical.example.com
+      paths:
+        - path: /
+          pathType: Prefix
+
+# Persistence
+persistence:
+  enabled: true
+  size: 20Gi
+  storageClass: "fast-ssd"
+
+# Nethical configuration
+nethical:
+  regionId: "us-east-1"
+  logicalDomain: "canary"
+  enableMerkle: true
+  enableQuarantine: true
+  enableQuota: true
+  enableOtel: true
+
+# Pod disruption budget
+podDisruptionBudget:
+  enabled: true
+  minAvailable: 2
+
+# Probes
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 30
+    periodSeconds: 30
+  readiness:
+    enabled: true
+    initialDelaySeconds: 10
+    periodSeconds: 10
+  startup:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 5
+    failureThreshold: 30

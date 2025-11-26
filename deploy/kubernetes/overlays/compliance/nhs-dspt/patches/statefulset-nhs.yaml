@@ -1,0 +1,42 @@
+---
+# NHS DSPT StatefulSet Patch
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        compliance.nethical.io/framework: "nhs-dspt"
+        compliance.nethical.io/jurisdiction: "uk"
+    spec:
+      containers:
+        - name: nethical
+          env:
+            # NHS DSPT configuration
+            - name: NETHICAL_COMPLIANCE_MODE
+              value: "nhs-dspt"
+            - name: NETHICAL_JURISDICTION
+              value: "uk"
+            - name: NETHICAL_DATA_RESIDENCY
+              value: "uk"
+            - name: NETHICAL_GDPR_MODE
+              value: "uk"
+            - name: NETHICAL_ENCRYPTION_ALGORITHM
+              value: "aes-256-gcm"
+            - name: NETHICAL_AUDIT_RETENTION_DAYS
+              value: "2555"  # 7 years for NHS
+            - name: NETHICAL_SESSION_TIMEOUT
+              value: "900"
+            - name: NETHICAL_MFA_REQUIRED
+              value: "true"
+          volumeMounts:
+            - name: nhs-dspt-config
+              mountPath: /app/config/nhs-dspt
+              readOnly: true
+      volumes:
+        - name: nhs-dspt-config
+          configMap:
+            name: nethical-nhs-dspt-config

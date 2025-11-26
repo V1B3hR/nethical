@@ -1,0 +1,32 @@
+---
+# EU MDR ConfigMap Patch
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-config
+  namespace: nethical
+data:
+  # EU MDR Compliance Settings
+  NETHICAL_COMPLIANCE_FRAMEWORK: "eu-mdr"
+  NETHICAL_SECTOR: "medical-devices"
+  NETHICAL_JURISDICTION: "eu"
+  
+  # GDPR Settings
+  NETHICAL_GDPR_MODE: "true"
+  NETHICAL_DATA_RESIDENCY: "eu"
+  
+  # AI/ML Requirements
+  NETHICAL_ALGORITHM_TRANSPARENCY: "true"
+  NETHICAL_EXPLAINABILITY: "true"
+  NETHICAL_TRAINING_DATA_DOCUMENTATION: "true"
+  
+  # Audit Settings
+  NETHICAL_AUDIT_RETENTION_YEARS: "10"
+  NETHICAL_AUDIT_TAMPER_PROOF: "true"
+  
+  # Vigilance
+  NETHICAL_VIGILANCE_REPORTING: "true"
+  NETHICAL_INCIDENT_MONITORING: "true"
+  
+  # Quality Management
+  NETHICAL_ISO_13485_MODE: "true"

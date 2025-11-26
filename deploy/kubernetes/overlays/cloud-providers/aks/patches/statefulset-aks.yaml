@@ -1,0 +1,41 @@
+---
+# AKS StatefulSet Patch
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        cloud.nethical.io/provider: "azure"
+        cloud.nethical.io/platform: "aks"
+      labels:
+        azure.workload.identity/use: "true"
+    spec:
+      containers:
+        - name: nethical
+          env:
+            # Azure-specific configuration
+            - name: NETHICAL_CLOUD_PROVIDER
+              value: "azure"
+            - name: AZURE_CLIENT_ID
+              valueFrom:
+                configMapKeyRef:
+                  name: aks-config
+                  key: client-id
+                  optional: true
+            # Azure Key Vault integration
+            - name: NETHICAL_SECRET_BACKEND
+              value: "azure-key-vault"
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: nethical-premium-ssd
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi

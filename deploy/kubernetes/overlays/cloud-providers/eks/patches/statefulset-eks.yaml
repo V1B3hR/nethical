@@ -1,0 +1,42 @@
+---
+# EKS StatefulSet Patch
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        cloud.nethical.io/provider: "aws"
+        cloud.nethical.io/platform: "eks"
+    spec:
+      containers:
+        - name: nethical
+          env:
+            # AWS-specific configuration
+            - name: NETHICAL_CLOUD_PROVIDER
+              value: "aws"
+            - name: AWS_REGION
+              valueFrom:
+                configMapKeyRef:
+                  name: eks-config
+                  key: region
+                  optional: true
+            # AWS Secrets Manager integration
+            - name: NETHICAL_SECRET_BACKEND
+              value: "aws-secrets-manager"
+            # AWS SDK configuration
+            - name: AWS_STS_REGIONAL_ENDPOINTS
+              value: "regional"
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: nethical-gp3
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi

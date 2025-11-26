@@ -1,0 +1,45 @@
+---
+# GKE Storage Classes
+# Optimized for Google Cloud persistent storage
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nethical-ssd
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: gcp
+provisioner: pd.csi.storage.gke.io
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: pd-ssd
+  replication-type: regional-pd
+reclaimPolicy: Retain
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nethical-balanced
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: gcp
+provisioner: pd.csi.storage.gke.io
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: pd-balanced
+  replication-type: regional-pd
+reclaimPolicy: Retain
+
+---
+# Snapshot Class for GKE
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: nethical-snapshot
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: gcp
+driver: pd.csi.storage.gke.io
+deletionPolicy: Retain

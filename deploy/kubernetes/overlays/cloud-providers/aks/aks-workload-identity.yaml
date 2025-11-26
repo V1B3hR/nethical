@@ -1,0 +1,71 @@
+---
+# AKS Workload Identity Configuration
+# Enables Azure AD integration with Kubernetes service accounts
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: aks-workload-identity-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: azure
+data:
+  # Instructions for setting up Workload Identity
+  setup-instructions: |
+    # 1. Enable OIDC issuer on AKS cluster
+    az aks update \
+      --resource-group RESOURCE_GROUP \
+      --name CLUSTER_NAME \
+      --enable-oidc-issuer \
+      --enable-workload-identity
+    
+    # 2. Create Azure managed identity
+    az identity create \
+      --resource-group RESOURCE_GROUP \
+      --name nethical-identity
+    
+    # 3. Get identity details
+    export IDENTITY_CLIENT_ID=$(az identity show \
+      --resource-group RESOURCE_GROUP \
+      --name nethical-identity \
+      --query 'clientId' -o tsv)
+    
+    export IDENTITY_PRINCIPAL_ID=$(az identity show \
+      --resource-group RESOURCE_GROUP \
+      --name nethical-identity \
+      --query 'principalId' -o tsv)
+    
+    # 4. Grant Key Vault access
+    az keyvault set-policy \
+      --name KEY_VAULT_NAME \
+      --object-id $IDENTITY_PRINCIPAL_ID \
+      --secret-permissions get list \
+      --key-permissions get list decrypt
+    
+    # 5. Create federated credential
+    export AKS_OIDC_ISSUER=$(az aks show \
+      --resource-group RESOURCE_GROUP \
+      --name CLUSTER_NAME \
+      --query "oidcIssuerProfile.issuerUrl" -o tsv)
+    
+    az identity federated-credential create \
+      --name nethical-federated-cred \
+      --identity-name nethical-identity \
+      --resource-group RESOURCE_GROUP \
+      --issuer ${AKS_OIDC_ISSUER} \
+      --subject system:serviceaccount:nethical:nethical
+    
+  # Azure Key Vault SecretStore configuration
+  external-secrets-azure.yaml: |
+    apiVersion: external-secrets.io/v1beta1
+    kind: SecretStore
+    metadata:
+      name: azure-key-vault
+      namespace: nethical
+    spec:
+      provider:
+        azurekv:
+          vaultUrl: "https://YOUR_VAULT_NAME.vault.azure.net"
+          authType: WorkloadIdentity
+          serviceAccountRef:
+            name: nethical

@@ -1,0 +1,34 @@
+---
+# HIPAA ConfigMap Patch
+# Additional configuration for HIPAA compliance
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-config
+  namespace: nethical
+data:
+  # HIPAA Compliance Settings
+  NETHICAL_COMPLIANCE_FRAMEWORK: "hipaa"
+  NETHICAL_DATA_CLASSIFICATION: "phi"
+  
+  # Encryption Settings (45 CFR 164.312(a)(2)(iv))
+  NETHICAL_ENCRYPTION_AT_REST: "true"
+  NETHICAL_ENCRYPTION_IN_TRANSIT: "true"
+  NETHICAL_TLS_MIN_VERSION: "1.3"
+  
+  # Access Controls (45 CFR 164.312(a))
+  NETHICAL_SESSION_TIMEOUT_SECONDS: "900"
+  NETHICAL_MAX_LOGIN_ATTEMPTS: "3"
+  NETHICAL_LOCKOUT_DURATION_SECONDS: "1800"
+  
+  # Audit Controls (45 CFR 164.312(b))
+  NETHICAL_AUDIT_ENABLED: "true"
+  NETHICAL_AUDIT_RETENTION_DAYS: "2190"
+  NETHICAL_AUDIT_ALL_PHI_ACCESS: "true"
+  NETHICAL_AUDIT_TAMPER_PROOF: "true"
+  
+  # Privacy Settings
+  NETHICAL_PRIVACY_MODE: "strict"
+  NETHICAL_REDACTION_POLICY: "hipaa"
+  NETHICAL_PII_DETECTION: "true"
+  NETHICAL_PHI_DETECTION: "true"

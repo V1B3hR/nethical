@@ -224,3 +224,17 @@ extraVolumes: []
 extraVolumeMounts: []
 # - name: extra-volume
 #   mountPath: /extra-path
+
+# Network Policy configuration
+networkPolicy:
+  enabled: false
+  ingressNamespaceSelector:
+    network-policy: ingress-allowed
+  prometheusNamespaceSelector:
+    name: monitoring
+
+# Compliance configuration
+compliance:
+  enabled: false
+  framework: ""  # hipaa, nhs-dspt, fips, nist, ferpa, eu-mdr
+  # Framework-specific settings are applied via overlays

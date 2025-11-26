@@ -1,0 +1,24 @@
+# EU MDR Compliance Overlay
+# Implements EU Medical Device Regulation (2017/745) requirements
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-eu-mdr
+
+resources:
+  - ../base
+  - eu-mdr-config.yaml
+
+patches:
+  - path: patches/statefulset-eu-mdr.yaml
+  - path: patches/configmap-eu-mdr.yaml
+
+commonLabels:
+  compliance.nethical.io/framework: eu-mdr
+  compliance.nethical.io/sector: medical-devices
+
+commonAnnotations:
+  compliance.nethical.io/eu-mdr-version: "2017/745"
+  compliance.nethical.io/ai-as-medical-device: "enabled"
+  compliance.nethical.io/ce-marking: "required"

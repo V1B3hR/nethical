@@ -1,0 +1,108 @@
+---
+# FIPS 140-3 Configuration
+# Federal Information Processing Standards for cryptographic modules
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-fips-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: fips
+data:
+  fips-config.yaml: |
+    version: "1.0"
+    compliance_framework: "FIPS"
+    fips_version: "140-3"
+    
+    # FIPS 140-3 Security Levels
+    security_level: 2  # Level 2 provides tamper evidence
+    
+    # Approved Cryptographic Algorithms
+    cryptographic_algorithms:
+      symmetric_encryption:
+        - algorithm: "AES"
+          modes: ["GCM", "CCM", "CBC"]
+          key_sizes: [128, 192, 256]
+          approved: true
+          
+      hashing:
+        - algorithm: "SHA-2"
+          variants: ["SHA-256", "SHA-384", "SHA-512"]
+          approved: true
+        - algorithm: "SHA-3"
+          variants: ["SHA3-256", "SHA3-384", "SHA3-512"]
+          approved: true
+          
+      digital_signatures:
+        - algorithm: "RSA"
+          key_sizes: [2048, 3072, 4096]
+          approved: true
+        - algorithm: "ECDSA"
+          curves: ["P-256", "P-384", "P-521"]
+          approved: true
+        - algorithm: "EdDSA"
+          curves: ["Ed25519", "Ed448"]
+          approved: true
+          
+      key_agreement:
+        - algorithm: "ECDH"
+          curves: ["P-256", "P-384", "P-521"]
+          approved: true
+        - algorithm: "X25519"
+          approved: true
+          
+      key_derivation:
+        - algorithm: "HKDF"
+          hash: ["SHA-256", "SHA-384", "SHA-512"]
+          approved: true
+        - algorithm: "PBKDF2"
+          hash: ["SHA-256"]
+          iterations_min: 600000
+          approved: true
+          
+      random_number_generation:
+        - algorithm: "DRBG"
+          type: "CTR_DRBG"
+          approved: true
+          
+    # Non-approved algorithms (blocked)
+    blocked_algorithms:
+      - "MD5"
+      - "SHA-1"
+      - "DES"
+      - "3DES"
+      - "RC4"
+      - "RSA-1024"
+      
+    # TLS Configuration (FIPS-compliant)
+    tls_configuration:
+      min_version: "1.2"
+      max_version: "1.3"
+      cipher_suites_tls12:
+        - "TLS_ECDHE_RSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_ECDHE_RSA_WITH_AES_128_GCM_SHA256"
+        - "TLS_ECDHE_ECDSA_WITH_AES_256_GCM_SHA384"
+        - "TLS_ECDHE_ECDSA_WITH_AES_128_GCM_SHA256"
+      cipher_suites_tls13:
+        - "TLS_AES_256_GCM_SHA384"
+        - "TLS_AES_128_GCM_SHA256"
+        - "TLS_CHACHA20_POLY1305_SHA256"
+        
+    # Key Management
+    key_management:
+      key_generation: "hardware_rng"
+      key_storage: "encrypted"
+      key_rotation:
+        symmetric_keys: "90_days"
+        asymmetric_keys: "365_days"
+        signing_keys: "365_days"
+      key_destruction: "cryptographic_erase"
+      
+    # Self-Tests
+    self_tests:
+      power_up_tests: true
+      conditional_tests: true
+      periodic_tests:
+        enabled: true
+        interval: "daily"

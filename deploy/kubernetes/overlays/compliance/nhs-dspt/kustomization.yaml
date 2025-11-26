@@ -1,0 +1,27 @@
+# NHS Data Security and Protection Toolkit Overlay
+# Implements NHS DSPT standards for UK healthcare
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-nhs-dspt
+
+resources:
+  - ../base
+  - nhs-dspt-config.yaml
+  - nhs-dspt-network-policy.yaml
+
+patches:
+  - path: patches/statefulset-nhs.yaml
+  - path: patches/configmap-nhs.yaml
+
+commonLabels:
+  compliance.nethical.io/framework: nhs-dspt
+  compliance.nethical.io/sector: healthcare
+  compliance.nethical.io/jurisdiction: uk
+
+commonAnnotations:
+  compliance.nethical.io/nhs-dspt-version: "2024"
+  compliance.nethical.io/nhs-standards: "1-10"
+  compliance.nethical.io/gdpr-uk: "enabled"
+  compliance.nethical.io/audit-logging: "enabled"

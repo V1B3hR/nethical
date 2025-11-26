@@ -1,0 +1,26 @@
+# HIPAA Compliance Overlay for Nethical
+# Implements Health Insurance Portability and Accountability Act requirements
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-hipaa
+
+resources:
+  - ../base
+  - hipaa-audit-policy.yaml
+  - hipaa-network-policy.yaml
+
+patches:
+  - path: patches/statefulset-hipaa.yaml
+  - path: patches/configmap-hipaa.yaml
+
+commonLabels:
+  compliance.nethical.io/framework: hipaa
+  compliance.nethical.io/sector: healthcare
+
+commonAnnotations:
+  compliance.nethical.io/hipaa-version: "2024"
+  compliance.nethical.io/phi-handling: "enabled"
+  compliance.nethical.io/encryption: "aes-256-gcm"
+  compliance.nethical.io/audit-logging: "enabled"

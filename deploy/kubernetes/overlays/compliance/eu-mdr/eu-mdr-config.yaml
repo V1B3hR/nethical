@@ -1,0 +1,106 @@
+---
+# EU MDR Configuration
+# EU Medical Device Regulation (2017/745) requirements
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-eu-mdr-config
+  namespace: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    compliance.nethical.io/framework: eu-mdr
+data:
+  eu-mdr-config.yaml: |
+    version: "1.0"
+    compliance_framework: "EU_MDR"
+    regulation: "2017/745"
+    
+    # Classification (Annex VIII)
+    device_classification:
+      # AI/ML as Software as Medical Device (SaMD)
+      software_as_medical_device: true
+      risk_class: "IIa"  # Adjust based on intended purpose
+      
+      # Classification Rules
+      rules_applicable:
+        - rule_11: "Software for diagnosis or therapy"
+        
+    # General Safety and Performance Requirements (Annex I)
+    general_requirements:
+      chapter_i:  # General requirements
+        risk_management: true
+        benefit_risk_analysis: true
+        
+      chapter_ii:  # Performance and safety
+        performance_characteristics:
+          sensitivity: documented
+          specificity: documented
+          accuracy: documented
+          repeatability: documented
+          reproducibility: documented
+          
+        clinical_performance:
+          clinical_evidence: required
+          clinical_evaluation: required
+          
+    # Technical Documentation (Annex II)
+    technical_documentation:
+      device_description: required
+      design_specifications: required
+      manufacturing_information: required
+      safety_verification: required
+      clinical_evaluation_report: required
+      risk_management_file: required
+      
+    # Quality Management System (Article 10)
+    quality_management:
+      iso_13485_compliance: true
+      processes:
+        - design_controls
+        - risk_management
+        - clinical_evaluation
+        - post_market_surveillance
+        - vigilance
+        
+    # Post-Market Surveillance (Article 83-86)
+    post_market_surveillance:
+      plan_required: true
+      elements:
+        - systematic_data_collection
+        - incident_monitoring
+        - trend_analysis
+        - periodic_safety_update_reports
+        
+    # Vigilance (Article 87-92)
+    vigilance:
+      serious_incidents:
+        reporting_required: true
+        timeframe: "15_days"
+        field_safety_corrective_actions: true
+        
+    # AI/ML Specific Requirements
+    ai_ml_requirements:
+      algorithm_transparency: true
+      training_data_documentation: true
+      validation_documentation: true
+      continuous_learning:
+        change_control: required
+        revalidation: required
+      explainability: required
+      
+    # Data Protection
+    data_protection:
+      gdpr_compliance: true
+      pseudonymization: true
+      data_minimization: true
+      
+    # Audit Trail
+    audit_trail:
+      required: true
+      retention_years: 10  # MDR requires 10 years minimum
+      tamper_proof: true
+      contents:
+        - device_actions
+        - user_interactions
+        - system_changes
+        - performance_data

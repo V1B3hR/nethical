@@ -1,0 +1,44 @@
+---
+# NIST StatefulSet Patch
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        compliance.nethical.io/framework: "nist-800-53"
+        compliance.nethical.io/impact-level: "moderate"
+    spec:
+      containers:
+        - name: nethical
+          env:
+            # NIST 800-53 configuration
+            - name: NETHICAL_COMPLIANCE_MODE
+              value: "nist-800-53"
+            - name: NETHICAL_IMPACT_LEVEL
+              value: "moderate"
+            - name: NETHICAL_ENCRYPTION_ALGORITHM
+              value: "aes-256-gcm"
+            - name: NETHICAL_AUDIT_RETENTION_YEARS
+              value: "7"
+            - name: NETHICAL_SESSION_TIMEOUT
+              value: "900"
+            - name: NETHICAL_LOCKOUT_THRESHOLD
+              value: "3"
+            - name: NETHICAL_LOCKOUT_DURATION
+              value: "1800"
+            - name: NETHICAL_MFA_REQUIRED
+              value: "true"
+            - name: NETHICAL_MERKLE_ANCHORING
+              value: "true"
+          volumeMounts:
+            - name: nist-controls-config
+              mountPath: /app/config/nist
+              readOnly: true
+      volumes:
+        - name: nist-controls-config
+          configMap:
+            name: nethical-nist-controls-config

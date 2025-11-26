@@ -1,0 +1,48 @@
+---
+# GKE StatefulSet Patch
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nethical
+  namespace: nethical
+spec:
+  template:
+    metadata:
+      annotations:
+        cloud.nethical.io/provider: "gcp"
+        cloud.nethical.io/platform: "gke"
+    spec:
+      containers:
+        - name: nethical
+          env:
+            # GCP-specific configuration
+            - name: NETHICAL_CLOUD_PROVIDER
+              value: "gcp"
+            - name: NETHICAL_REGION
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['topology.kubernetes.io/region']
+            - name: NETHICAL_ZONE
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.annotations['topology.kubernetes.io/zone']
+            # GCP Secret Manager integration
+            - name: NETHICAL_SECRET_BACKEND
+              value: "gcp-secret-manager"
+            # GCP monitoring
+            - name: GOOGLE_CLOUD_PROJECT
+              valueFrom:
+                configMapKeyRef:
+                  name: gke-config
+                  key: project-id
+                  optional: true
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        storageClassName: nethical-ssd
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 50Gi

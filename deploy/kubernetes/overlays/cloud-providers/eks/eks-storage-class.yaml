@@ -1,0 +1,50 @@
+---
+# EKS Storage Classes
+# Optimized for AWS EBS volumes
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nethical-gp3
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: aws
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: gp3
+  iops: "3000"
+  throughput: "125"
+  encrypted: "true"
+  # KMS key for encryption (optional, uses AWS managed key if not specified)
+  # kmsKeyId: "arn:aws:kms:REGION:ACCOUNT_ID:key/KEY_ID"
+reclaimPolicy: Retain
+
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: nethical-io1
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: aws
+provisioner: ebs.csi.aws.com
+volumeBindingMode: WaitForFirstConsumer
+allowVolumeExpansion: true
+parameters:
+  type: io1
+  iopsPerGB: "50"
+  encrypted: "true"
+reclaimPolicy: Retain
+
+---
+# Snapshot Class for EKS
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: nethical-snapshot
+  labels:
+    app.kubernetes.io/name: nethical
+    cloud.nethical.io/provider: aws
+driver: ebs.csi.aws.com
+deletionPolicy: Retain
