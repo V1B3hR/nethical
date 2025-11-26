@@ -313,7 +313,10 @@ class SemanticAnomalyDetector:
                     return True
             except RegexTimeoutError:
                 # If regex times out, treat as suspicious
-                log.warning(f"Regex timeout during obfuscation check - treating as suspicious")
+                log.warning(
+                    f"Regex timeout during obfuscation check for pattern "
+                    f"{pattern[:20]}... - treating as suspicious"
+                )
                 return True
 
         return False

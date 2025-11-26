@@ -552,16 +552,17 @@ class LDAPConnector:
         """
         import warnings
         warnings.warn(
-            "LDAPConnector.authenticate is a stub that accepts any 8+ char password. "
-            "This is a security vulnerability in production. "
-            "Implement actual LDAP authentication for production use.",
+            "LDAPConnector.authenticate is a STUB implementation that accepts any 8+ character password. "
+            "This creates a CRITICAL security vulnerability in production. "
+            "Install ldap3 library (pip install ldap3) and implement proper LDAP authentication "
+            "before production deployment.",
             UserWarning,
             stacklevel=2,
         )
         log.warning(
             "LDAP authentication is STUBBED (accepts any 8+ char password). "
             "This is NOT suitable for production use. "
-            "Implement actual LDAP authentication using ldap3 library."
+            "Implement actual LDAP authentication using ldap3 library: pip install ldap3"
         )
 
         # Stub implementation - accepts any password with 8+ characters
