@@ -546,8 +546,10 @@ class MCPServer:
                         # Send keepalive
                         yield ": keepalive\n\n"
                     except Exception as e:
-                        # Log full error for internal diagnostics, return generic message to client
-                        logging.error("SSE event processing error: %s", e, exc_info=True)
+                        # Log error type and safe message for internal diagnostics
+                        # Avoid logging full exception details that might contain sensitive data
+                        error_type = type(e).__name__
+                        logging.error("SSE event processing error (type=%s): %s", error_type, str(e)[:200])
                         error_msg = {
                             "jsonrpc": "2.0",
                             "error": {

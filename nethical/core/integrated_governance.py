@@ -625,10 +625,6 @@ class IntegratedGovernance:
 
         # Run violation detection asynchronously
         # Use proper async handling based on current context
-        async def async_evaluate():
-            """Run evaluation in async context"""
-            return await self.safety_governance.evaluate_action(action_obj)
-        
         def sync_evaluate():
             """Run evaluation in sync context by creating a new event loop"""
             # Create a new loop in a thread-safe manner

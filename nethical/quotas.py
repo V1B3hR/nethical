@@ -342,10 +342,17 @@ def get_quota_enforcer(config: Optional[QuotaConfig] = None) -> QuotaEnforcer:
     return _global_enforcer
 
 
-def configure_quotas(config: QuotaConfig):
+def configure_quotas(config: QuotaConfig) -> QuotaEnforcer:
     """Configure the global quota enforcer.
     
     Thread-safe reconfiguration of the global enforcer.
+    Creates a new QuotaEnforcer with the provided config and sets it as the global instance.
+    
+    Args:
+        config: QuotaConfig with the desired settings
+        
+    Returns:
+        The newly configured global QuotaEnforcer instance
     """
     global _global_enforcer
     with _global_enforcer_lock:
