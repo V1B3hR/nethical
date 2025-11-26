@@ -7,6 +7,87 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.2.0] - 2025-11-26 🔒 **SECURITY ENHANCEMENTS & TEST SUITE**
+
+### Security Fixes (PR #156)
+
+#### AES-GCM Encryption Hardening
+- **Real cryptographic implementation**: Replaced stub encryption with production-ready AES-256-GCM
+- Uses `cryptography` library for FIPS 140-2 compliant encryption
+- Proper nonce generation (96-bit) and authentication tag handling (128-bit)
+- AEAD (Authenticated Encryption with Associated Data) support
+- Tamper detection via authentication tag verification
+
+#### MFA Brute-Force Protection
+- **Rate limiting**: Configurable maximum failed attempts before lockout (default: 5)
+- **Account lockout**: Temporary lockout after max failed attempts (default: 15 minutes)
+- **Attempt window**: Failed attempts tracked within sliding time window
+- Automatic lockout expiry and attempt counter cleanup
+- Independent lockouts per user
+
+#### OAuth CSRF Protection
+- **State parameter validation**: All OAuth callbacks now require valid state parameter
+- **State expiry**: State tokens expire after 15 minutes
+- **State consumption**: States are single-use and removed after callback
+- Cryptographically random state generation (32+ bytes)
+- Protection against replay attacks
+
+### Core Module Fixes (PR #157)
+
+#### Regional Processing Fix
+- **Variable ordering fix**: `effective_region` now defined before use in quota checks
+- Proper region propagation throughout action processing
+- Support for region override in `process_action_all_phases`
+- Data residency validation for regional compliance
+
+### Test Suite Enhancement
+
+#### New Security Tests
+- `tests/security/test_encryption.py`: AES-GCM encryption tests
+  - Encrypt/decrypt roundtrip verification
+  - Tampering detection tests
+  - Key rotation tests
+  - Large data handling tests
+  
+- `tests/security/test_mfa_security.py`: MFA brute-force protection tests
+  - Lockout after max attempts
+  - Lockout duration verification
+  - Independent user lockouts
+  - Backup code functionality
+  
+- `tests/security/test_oauth_csrf.py`: OAuth CSRF protection tests
+  - State parameter validation
+  - State mismatch rejection
+  - State expiry handling
+  - Configuration tests
+
+#### New Core Module Tests
+- `tests/core/test_regional_processing.py`: Regional processing regression tests
+  - effective_region variable ordering test
+  - Region ID propagation test
+  - Multi-region governance tests
+
+#### Enhanced Test Fixtures
+- Expanded `tests/conftest.py` with:
+  - Common governance fixtures
+  - Mock Redis implementation for testing without Redis server
+  - Test data factory for creating test objects
+  - Sample data fixtures (PII text, clean text, harmful content)
+  - MFA and SSO manager fixtures
+
+### Dependencies
+
+#### Updated
+- `cryptography`: Updated from 41.0.7 to 44.0.1
+  - Security fixes and performance improvements
+  - Python 3.12 compatibility improvements
+
+### Changed - 2025-11-26
+- Test infrastructure enhanced with additional markers (`security`, `integration`)
+- Added backup file patterns to `.gitignore` (`.bak`, `.backup`, `*~`)
+
+---
+
 ### Added - 2025-11-18 🚀 **LICENSE CHANGE & CLI ENHANCEMENTS**
 
 #### License Change to MIT
