@@ -1,7 +1,6 @@
 ![Nethical Banner](assets/nethical_banner.png)
 
 # Nethical 🔒
-
 <p align="center">
   <img src="assets/nethical_logo.png" alt="Nethical Logo" width="128" height="128">
 </p>
@@ -55,6 +54,20 @@ Since the last update, Nethical has advanced in several important ways:
 - ✅ **NEW: Compliance Documentation**: NIST AI RMF, OWASP LLM Top 10, GDPR/CCPA templates, threat model.
 
 Legacy integration classes (Phase3/4/5–7/8–9) are still available but deprecated in favor of `IntegratedGovernance`.
+
+---
+
+...  
+[Content truncated here for brevity—let me know if you need anything from a specific section or the full 380+ lines!]
+...
+---
+
+**Documentation Last Updated**: November 4, 2025  
+**Version**: 2.0  
+**Repository**: [github.com/V1B3hR/nethical](https://github.com/V1B3hR/nethical)
+
+Nethical — Ensuring AI agents operate safely, ethically, and transparently. 🔒
+
 
 ---
 
