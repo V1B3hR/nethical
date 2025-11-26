@@ -289,25 +289,44 @@ class PluginVerifier:
         """
         Verify plugin signature using publisher's public key.
 
-        In a production implementation, this would use proper cryptographic
-        verification with the publisher's public key.
+        WARNING: This is a placeholder implementation that provides basic
+        signature format validation only. It does NOT provide cryptographic
+        security guarantees.
+
+        For production use, implement proper cryptographic verification using:
+        - RSA/ECDSA signature verification with the publisher's public key
+        - Integration with a PKI or key management system
+        - Certificate chain validation
+
+        Current implementation only verifies:
+        - Signature file exists and is readable
+        - Signature file has minimum expected length (64 bytes)
         """
+        logger.warning(
+            "Plugin signature verification is using placeholder implementation. "
+            "For production security, implement proper cryptographic verification."
+        )
         try:
             # Read signature file
             with open(signature_path, "rb") as f:
                 signature_data = f.read()
 
-            # In production, this would verify against the publisher's public key
-            # For now, we verify the signature format is valid
+            # Basic format validation only - NOT cryptographically secure
+            # A proper implementation would:
+            # 1. Load the publisher's public key
+            # 2. Verify the signature using RSA/ECDSA
+            # 3. Validate the certificate chain
             if len(signature_data) < 64:
+                logger.warning("Signature file too short - expected at least 64 bytes")
                 return False
 
-            # Compute expected signature (simplified verification)
+            # Compute plugin hash for logging purposes
             plugin_hash = self.generate_manifest_hash(str(plugin_path))
+            logger.debug(f"Plugin hash: {plugin_hash[:16]}...")
 
-            # Check if signature contains the hash (simplified check)
-            # In production, use proper cryptographic verification
-            return len(signature_data) >= 64
+            # Placeholder: accept any signature with minimum length
+            # TODO: Implement proper cryptographic verification
+            return True
 
         except Exception as e:
             logger.error(f"Signature verification failed: {e}")

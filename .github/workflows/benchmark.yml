@@ -12,6 +12,10 @@ on:
         required: false
         default: '1000'
 
+permissions:
+  contents: read
+  pull-requests: write
+
 jobs:
   benchmark:
     name: Run Benchmarks
@@ -42,9 +46,9 @@ jobs:
       
       - name: Compare against baseline
         run: |
-          # Find the latest benchmark result
-          LATEST_RESULT=$(ls -t benchmark_results/*.json 2>/dev/null | head -1)
-          if [ -n "$LATEST_RESULT" ]; then
+          # Find the latest benchmark result using find for robustness
+          LATEST_RESULT=$(find benchmark_results -name '*.json' -type f -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)
+          if [ -n "$LATEST_RESULT" ] && [ -f "$LATEST_RESULT" ]; then
             python -m benchmarks.compare "$LATEST_RESULT" v2.2.0
           else
             echo "No benchmark results found"

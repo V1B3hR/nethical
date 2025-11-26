@@ -84,6 +84,11 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
 
     def _build_hsts_header(self) -> str:
         """Build the HSTS header value."""
+        # Validate max-age is a positive integer
+        if not isinstance(self.hsts_max_age, int) or self.hsts_max_age < 0:
+            raise ValueError(
+                f"hsts_max_age must be a non-negative integer, got {self.hsts_max_age}"
+            )
         parts = [f"max-age={self.hsts_max_age}"]
         if self.hsts_include_subdomains:
             parts.append("includeSubDomains")
