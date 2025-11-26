@@ -1,9 +1,9 @@
 apiVersion: v2
 name: nethical
-description: A Helm chart for Nethical - Safety governance system for AI agents
+description: AI Safety Governance Platform
 type: application
-version: 0.1.0
-appVersion: "0.1.0"
+version: 1.0.0
+appVersion: "2.3.0"
 keywords:
   - ai
   - safety

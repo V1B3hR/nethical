@@ -2,8 +2,12 @@
 # This is a YAML-formatted file.
 # Declare variables to be passed into your templates.
 
-# Number of replicas (for StatefulSet)
+# Number of replicas
 replicaCount: 1
+
+# Use StatefulSet instead of Deployment (for persistent storage)
+statefulSet:
+  enabled: true
 
 image:
   repository: nethical

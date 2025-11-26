@@ -1,5 +1,5 @@
 """
-Nethical Governance API (Improved v2.2)
+Nethical Governance API (Improved v2.3)
 
 Adds:
     - Rate limit headers on ALL evaluate responses
@@ -10,6 +10,8 @@ Adds:
     - Reloadable authentication (requires updated AuthManager)
     - More detailed /status config snapshot
     - Robust error stratification
+    - WebSocket streaming for real-time violations and metrics
+    - Health check endpoints (liveness, readiness, startup)
 
 Environment variables documented inline.
 """
@@ -23,9 +25,9 @@ import json
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Set
 
-from fastapi import FastAPI, HTTPException, Header, Request, Response
+from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -46,11 +48,18 @@ except ImportError:
 
 logger = logging.getLogger(__name__)
 
+# API version
+API_VERSION = "2.3.0"
+
 governance: Optional[IntegratedGovernance] = None
 rate_limiter: Optional[TokenBucketLimiter] = None
 auth_manager: Optional[AuthManager] = None
 concurrency_semaphore: Optional[asyncio.Semaphore] = None
 semantic_cache: Optional[SemanticCache] = None
+
+# Startup tracking
+startup_time: Optional[datetime] = None
+startup_complete: bool = False
 
 # Configuration
 MAX_INPUT_SIZE = int(os.getenv("NETHICAL_MAX_INPUT_SIZE", "4096"))
@@ -59,9 +68,44 @@ EVAL_TIMEOUT = int(os.getenv("NETHICAL_EVAL_TIMEOUT", "30"))
 MAX_PARAM_KEYS = int(os.getenv("NETHICAL_MAX_PARAM_KEYS", "100"))
 MAX_CONTEXT_SIZE = int(os.getenv("NETHICAL_MAX_CONTEXT_SIZE", "10000"))
 
+
+class ConnectionManager:
+    """Manages WebSocket connections for real-time streaming."""
+
+    def __init__(self) -> None:
+        self.active_connections: Set[WebSocket] = set()
+
+    async def connect(self, websocket: WebSocket) -> None:
+        """Accept and register a new WebSocket connection."""
+        await websocket.accept()
+        self.active_connections.add(websocket)
+
+    def disconnect(self, websocket: WebSocket) -> None:
+        """Remove a WebSocket connection."""
+        self.active_connections.discard(websocket)
+
+    async def broadcast(self, message: Dict[str, Any]) -> None:
+        """Broadcast a message to all connected clients."""
+        disconnected: Set[WebSocket] = set()
+        for connection in self.active_connections:
+            try:
+                await connection.send_json(message)
+            except Exception:
+                disconnected.add(connection)
+        # Clean up disconnected clients
+        self.active_connections -= disconnected
+
+
+# WebSocket connection managers
+violations_manager = ConnectionManager()
+metrics_manager = ConnectionManager()
+
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     global governance, rate_limiter, auth_manager, concurrency_semaphore, semantic_cache
+    global startup_time, startup_complete
+    startup_time = datetime.now(timezone.utc)
     try:
         if IntegratedGovernance:
             config = MonitoringConfig(use_semantic_intent=True, enable_timings=True)
@@ -91,13 +135,14 @@ async def lifespan(app: FastAPI):
         else:
             logger.warning("SemanticCache unavailable")
 
+        startup_complete = True
         yield
     finally:
         logger.info("API shutdown")
 
 app = FastAPI(
     title="Nethical Governance API",
-    version="2.2.0",
+    version=API_VERSION,
     description="Production API for AI safety and ethics governance",
     lifespan=lifespan
 )
@@ -229,19 +274,26 @@ async def compute_semantic_similarity(intent: Optional[str], action: str) -> flo
 async def root():
     return {
         "name": "Nethical Governance API",
-        "version": "2.2.0",
+        "version": API_VERSION,
         "features": [
             "Semantic monitoring",
             "Adversarial detection",
             "Rate limiting & auth",
             "Input validation",
             "Concurrency control",
-            "Semantic cache"
+            "Semantic cache",
+            "WebSocket streaming",
+            "Health checks"
         ],
         "endpoints": {
             "evaluate": "POST /evaluate",
             "status": "GET /status",
             "metrics": "GET /metrics",
+            "health_live": "GET /health/live",
+            "health_ready": "GET /health/ready",
+            "health_startup": "GET /health/startup",
+            "ws_violations": "WS /ws/violations",
+            "ws_metrics": "WS /ws/metrics",
             "docs": "GET /docs"
         }
     }
@@ -426,7 +478,7 @@ async def status() -> StatusResponse:
 
     return StatusResponse(
         status="healthy",
-        version="2.2.0",
+        version=API_VERSION,
         timestamp=datetime.now(timezone.utc).isoformat(),
         semantic_monitoring=True,
         semantic_available=semantic_available,
@@ -443,3 +495,143 @@ async def metrics() -> MetricsResponse:
         "active_identities": (rate_limiter.get_stats().get("active_identities") if rate_limiter else None),
     }
     return MetricsResponse(metrics=metric_blob, timestamp=datetime.now(timezone.utc).isoformat())
+
+
+# =============================================================================
+# Health Check Endpoints
+# =============================================================================
+
+
+@app.get("/health/live")
+async def liveness() -> Dict[str, str]:
+    """
+    Kubernetes liveness probe endpoint.
+    
+    Returns 200 if the service is alive and can respond to requests.
+    """
+    return {"status": "alive"}
+
+
+@app.get("/health/ready")
+async def readiness() -> Dict[str, Any]:
+    """
+    Kubernetes readiness probe endpoint.
+    
+    Returns 200 if the service is ready to accept traffic.
+    Checks that all required components are initialized.
+    """
+    checks = {
+        "governance": governance is not None,
+        "rate_limiter": rate_limiter is not None,
+        "auth_manager": auth_manager is not None,
+        "concurrency_control": concurrency_semaphore is not None,
+    }
+    
+    all_ready = all(checks.values())
+    
+    if not all_ready:
+        raise HTTPException(
+            status_code=503,
+            detail={"status": "not_ready", "checks": checks}
+        )
+    
+    return {
+        "status": "ready",
+        "checks": checks
+    }
+
+
+@app.get("/health/startup")
+async def startup() -> Dict[str, Any]:
+    """
+    Kubernetes startup probe endpoint.
+    
+    Returns 200 if the service has completed startup.
+    """
+    if not startup_complete:
+        raise HTTPException(
+            status_code=503,
+            detail={"status": "starting", "version": API_VERSION}
+        )
+    
+    uptime_seconds = None
+    if startup_time:
+        uptime_seconds = (datetime.now(timezone.utc) - startup_time).total_seconds()
+    
+    return {
+        "status": "started",
+        "version": API_VERSION,
+        "startup_time": startup_time.isoformat() if startup_time else None,
+        "uptime_seconds": uptime_seconds
+    }
+
+
+# =============================================================================
+# WebSocket Streaming Endpoints
+# =============================================================================
+
+
+@app.websocket("/ws/violations")
+async def violations_stream(websocket: WebSocket) -> None:
+    """
+    WebSocket endpoint for streaming violations in real-time.
+    
+    Clients can subscribe to receive violation events as they occur.
+    """
+    await violations_manager.connect(websocket)
+    try:
+        while True:
+            # Keep connection alive and wait for messages
+            data = await websocket.receive_text()
+            # Echo back any received messages as acknowledgment
+            await websocket.send_json({
+                "type": "ack",
+                "message": f"Received: {data}",
+                "timestamp": datetime.now(timezone.utc).isoformat()
+            })
+    except WebSocketDisconnect:
+        violations_manager.disconnect(websocket)
+        logger.info("Client disconnected from violations stream")
+    except Exception as e:
+        violations_manager.disconnect(websocket)
+        logger.error(f"WebSocket error in violations stream: {e}")
+
+
+@app.websocket("/ws/metrics")
+async def metrics_stream(websocket: WebSocket) -> None:
+    """
+    WebSocket endpoint for streaming metrics in real-time.
+    
+    Clients can subscribe to receive metric updates periodically.
+    """
+    await metrics_manager.connect(websocket)
+    try:
+        while True:
+            # Send metrics every 5 seconds
+            await asyncio.sleep(5)
+            
+            metric_data = {
+                "type": "metrics",
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "data": {
+                    "cache_hit_rate": (
+                        semantic_cache.get_stats().get("hit_rate_percent")
+                        if semantic_cache else None
+                    ),
+                    "active_identities": (
+                        rate_limiter.get_stats().get("active_identities")
+                        if rate_limiter else None
+                    ),
+                    "active_ws_connections": {
+                        "violations": len(violations_manager.active_connections),
+                        "metrics": len(metrics_manager.active_connections),
+                    }
+                }
+            }
+            await websocket.send_json(metric_data)
+    except WebSocketDisconnect:
+        metrics_manager.disconnect(websocket)
+        logger.info("Client disconnected from metrics stream")
+    except Exception as e:
+        metrics_manager.disconnect(websocket)
+        logger.error(f"WebSocket error in metrics stream: {e}")

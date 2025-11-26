@@ -1,0 +1,63 @@
+{
+  "benchmark_run": {
+    "timestamp": "2024-01-15T10:00:00+00:00",
+    "version": "v2.2.0",
+    "config": {
+      "name": "baseline",
+      "iterations": 1000,
+      "warmup_iterations": 100,
+      "concurrent_workers": 10,
+      "timeout_seconds": 60.0
+    }
+  },
+  "results": [
+    {
+      "name": "throughput",
+      "timestamp": "2024-01-15T10:01:00+00:00",
+      "total_iterations": 1000,
+      "successful_iterations": 998,
+      "failed_iterations": 2,
+      "total_duration_seconds": 10.5,
+      "avg_latency_ms": 8.5,
+      "p50_latency_ms": 7.2,
+      "p95_latency_ms": 15.3,
+      "p99_latency_ms": 22.1,
+      "min_latency_ms": 3.1,
+      "max_latency_ms": 45.2,
+      "throughput_rps": 95.04,
+      "errors": [],
+      "metadata": {
+        "config": {
+          "iterations": 1000,
+          "warmup_iterations": 100,
+          "concurrent_workers": 10,
+          "timeout_seconds": 60.0
+        }
+      }
+    },
+    {
+      "name": "latency",
+      "timestamp": "2024-01-15T10:02:00+00:00",
+      "total_iterations": 1000,
+      "successful_iterations": 1000,
+      "failed_iterations": 0,
+      "total_duration_seconds": 12.3,
+      "avg_latency_ms": 10.2,
+      "p50_latency_ms": 8.8,
+      "p95_latency_ms": 18.5,
+      "p99_latency_ms": 28.7,
+      "min_latency_ms": 4.2,
+      "max_latency_ms": 52.3,
+      "throughput_rps": 81.30,
+      "errors": [],
+      "metadata": {
+        "config": {
+          "iterations": 1000,
+          "warmup_iterations": 100,
+          "concurrent_workers": 10,
+          "timeout_seconds": 60.0
+        }
+      }
+    }
+  ]
+}
