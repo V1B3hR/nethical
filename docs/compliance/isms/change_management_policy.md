@@ -77,9 +77,9 @@ Changes shall be assessed for:
 
 | Category | Approver | SLA |
 |----------|----------|-----|
-| Standard | Automated/Team Lead | Immediate |
+| Standard | Automated/Team Lead | < 4 hours |
 | Normal | Code Review + Lead | 1-2 business days |
-| Emergency | On-call + Post-review | Immediate |
+| Emergency | On-call + Post-review | < 1 hour |
 
 ### 4.4 Implementation
 

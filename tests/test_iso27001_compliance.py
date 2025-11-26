@@ -8,14 +8,21 @@ compliance functionality for ISO 27001 certification support.
 import pytest
 from datetime import datetime, timezone
 
+from nethical.security.compliance import (
+    ISO27001ControlMapper,
+    ComplianceReportGenerator,
+    EvidenceCollector,
+    ComplianceStatus,
+    ComplianceFramework,
+    ControlSeverity,
+)
+
 
 class TestISO27001ControlMapper:
     """Tests for ISO 27001 Annex A control mapping."""
 
     def test_mapper_initialization(self):
         """Test that ISO27001ControlMapper initializes with controls."""
-        from nethical.security.compliance import ISO27001ControlMapper
-
         mapper = ISO27001ControlMapper()
         assert len(mapper.controls) > 0
         assert "A.5.1" in mapper.controls
@@ -23,11 +30,6 @@ class TestISO27001ControlMapper:
 
     def test_get_control(self):
         """Test retrieving a specific control."""
-        from nethical.security.compliance import (
-            ISO27001ControlMapper,
-            ComplianceFramework,
-        )
-
         mapper = ISO27001ControlMapper()
         control = mapper.get_control("A.5.1")
 
@@ -38,8 +40,6 @@ class TestISO27001ControlMapper:
 
     def test_get_control_not_found(self):
         """Test retrieving a non-existent control."""
-        from nethical.security.compliance import ISO27001ControlMapper
-
         mapper = ISO27001ControlMapper()
         control = mapper.get_control("A.99.99")
 
@@ -47,8 +47,6 @@ class TestISO27001ControlMapper:
 
     def test_get_controls_by_category(self):
         """Test retrieving controls by category."""
-        from nethical.security.compliance import ISO27001ControlMapper
-
         mapper = ISO27001ControlMapper()
 
         # Get organizational controls (A.5.x)
@@ -65,11 +63,6 @@ class TestISO27001ControlMapper:
 
     def test_assess_control(self):
         """Test assessing a control's compliance status."""
-        from nethical.security.compliance import (
-            ISO27001ControlMapper,
-            ComplianceStatus,
-        )
-
         mapper = ISO27001ControlMapper()
 
         result = mapper.assess_control(
@@ -88,11 +81,6 @@ class TestISO27001ControlMapper:
 
     def test_assess_control_not_found(self):
         """Test assessing a non-existent control."""
-        from nethical.security.compliance import (
-            ISO27001ControlMapper,
-            ComplianceStatus,
-        )
-
         mapper = ISO27001ControlMapper()
 
         result = mapper.assess_control(
@@ -105,8 +93,6 @@ class TestISO27001ControlMapper:
 
     def test_get_compliance_summary(self):
         """Test generating compliance summary."""
-        from nethical.security.compliance import ISO27001ControlMapper
-
         mapper = ISO27001ControlMapper()
         summary = mapper.get_compliance_summary()
 
@@ -120,11 +106,6 @@ class TestISO27001ControlMapper:
 
     def test_critical_controls_present(self):
         """Test that critical ISO 27001 controls are mapped."""
-        from nethical.security.compliance import (
-            ISO27001ControlMapper,
-            ControlSeverity,
-        )
-
         mapper = ISO27001ControlMapper()
 
         # Check access control (A.5.15)
@@ -148,11 +129,6 @@ class TestISO27001ReportGeneration:
 
     def test_generate_iso27001_report(self):
         """Test generating an ISO 27001 compliance report."""
-        from nethical.security.compliance import (
-            ComplianceReportGenerator,
-            ComplianceFramework,
-        )
-
         generator = ComplianceReportGenerator()
         report = generator.generate_report(ComplianceFramework.ISO_27001)
 
@@ -164,10 +140,6 @@ class TestISO27001ReportGeneration:
     def test_export_iso27001_report(self):
         """Test exporting ISO 27001 report to JSON."""
         import json
-        from nethical.security.compliance import (
-            ComplianceReportGenerator,
-            ComplianceFramework,
-        )
 
         generator = ComplianceReportGenerator()
         report = generator.generate_report(ComplianceFramework.ISO_27001)
@@ -185,8 +157,6 @@ class TestEvidenceCollection:
 
     def test_collect_evidence(self):
         """Test collecting evidence for a control."""
-        from nethical.security.compliance import EvidenceCollector
-
         collector = EvidenceCollector(storage_path="/tmp/test_compliance")
         evidence = collector.collect_evidence(
             control_id="A.8.15",
@@ -202,8 +172,6 @@ class TestEvidenceCollection:
 
     def test_get_evidence_by_control(self):
         """Test retrieving evidence by control ID."""
-        from nethical.security.compliance import EvidenceCollector
-
         collector = EvidenceCollector(storage_path="/tmp/test_compliance")
 
         # Collect multiple evidence items
@@ -231,8 +199,6 @@ class TestEvidenceCollection:
 
     def test_generate_evidence_package(self):
         """Test generating evidence package for auditor review."""
-        from nethical.security.compliance import EvidenceCollector
-
         collector = EvidenceCollector(storage_path="/tmp/test_compliance")
 
         # Collect evidence
@@ -262,14 +228,6 @@ class TestISO27001Integration:
 
     def test_full_compliance_workflow(self):
         """Test complete compliance workflow from assessment to report."""
-        from nethical.security.compliance import (
-            ISO27001ControlMapper,
-            ComplianceReportGenerator,
-            EvidenceCollector,
-            ComplianceStatus,
-            ComplianceFramework,
-        )
-
         # Step 1: Initialize mapper and assess controls
         mapper = ISO27001ControlMapper()
 
