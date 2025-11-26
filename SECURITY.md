@@ -6,8 +6,10 @@ We release patches for security vulnerabilities in the following versions:
 
 | Version | Supported          |
 | ------- | ------------------ |
-| 0.1.x   | :white_check_mark: |
-| < 0.1   | :x:                |
+| 2.2.x   | :white_check_mark: |
+| 2.1.x   | :white_check_mark: |
+| 2.0.x   | :warning: Critical fixes only |
+| < 2.0   | :x:                |
 
 ## Reporting a Vulnerability
 
@@ -19,8 +21,8 @@ We take the security of Nethical seriously. If you believe you have found a secu
 
 Instead, please report them via one of the following methods:
 
-1. **Email**: Send an email to [INSERT_SECURITY_EMAIL] with the subject line "SECURITY: [Brief Description]"
-2. **GitHub Security Advisories**: Use GitHub's private vulnerability reporting feature at https://github.com/V1B3hR/nethical/security/advisories/new
+1. **GitHub Security Advisories**: Use GitHub's private vulnerability reporting feature at https://github.com/V1B3hR/nethical/security/advisories/new (preferred)
+2. **Email**: Send an email to security@nethical.ai with the subject line "SECURITY: [Brief Description]"
 
 ### What to Include
 
