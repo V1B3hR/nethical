@@ -209,7 +209,7 @@ class AgentAction:
     action_type: ActionType
     content: str
     metadata: Dict[str, Any] = field(default_factory=dict)
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     context: Dict[str, Any] = field(default_factory=dict)
     intent: Optional[str] = None
     risk_score: float = 0.0
@@ -242,7 +242,7 @@ class SafetyViolation:
     confidence: float
     evidence: List[str] = field(default_factory=list)
     recommendations: List[str] = field(default_factory=list)
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     detector_name: Optional[str] = None
     remediation_applied: bool = False
     false_positive: bool = False
@@ -276,7 +276,7 @@ class JudgmentResult:
     violations: List[SafetyViolation] = field(default_factory=list)
     modifications: Dict[str, Any] = field(default_factory=dict)
     feedback: List[str] = field(default_factory=list)
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     remediation_steps: List[str] = field(default_factory=list)
     follow_up_required: bool = False
 

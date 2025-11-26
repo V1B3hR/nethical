@@ -14,6 +14,7 @@ See: https://spec.modelcontextprotocol.io/
 
 import json
 import asyncio
+import logging
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
@@ -322,7 +323,7 @@ class MCPServer:
         # Add quota status if available
         if "quota_enforcement" in result:
             quota = result["quota_enforcement"]
-            if not quota.get("allowed"):
+            if quota and not quota.get("allowed"):
                 response_text += f"\n**❌ Quota Exceeded:** {quota.get('reason', 'Rate limit exceeded')}\n"
         
         # Add violation details if blocked
@@ -484,19 +485,14 @@ class MCPServer:
             "isError": False,
         }
     
-    import logging
-
-# ... other imports ...
-
-class MCPServer:
-    # ... existing code ...
-
     async def _handle_message(self, message: Dict[str, Any]) -> Dict[str, Any]:
         msg_id = message.get("id")
         try:
             method = message.get("method")
             params = message.get("params", {})
-            if method == "tools/list":
+            if method == "initialize":
+                result = await self._handle_initialize(params)
+            elif method == "tools/list":
                 result = await self._handle_list_tools(params)
             elif method == "tools/call":
                 result = await self._handle_call_tool(params)
@@ -550,11 +546,15 @@ class MCPServer:
                         # Send keepalive
                         yield ": keepalive\n\n"
                     except Exception as e:
+                        # Log error type and safe message for internal diagnostics
+                        # Avoid logging full exception details that might contain sensitive data
+                        error_type = type(e).__name__
+                        logging.error("SSE event processing error (type=%s): %s", error_type, str(e)[:200])
                         error_msg = {
                             "jsonrpc": "2.0",
                             "error": {
                                 "code": -32603,
-                                "message": str(e),
+                                "message": "An internal error occurred.",
                             },
                         }
                         yield f"data: {json.dumps(error_msg)}\n\n"
