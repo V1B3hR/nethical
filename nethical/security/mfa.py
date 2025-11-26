@@ -6,10 +6,16 @@ This module provides MFA capabilities including:
 - Backup codes generation and validation
 - SMS-based verification (stub for external service integration)
 - Admin operation MFA enforcement
+- Brute-force protection with rate limiting
+
+Security Features:
+- Rate limiting to prevent brute-force attacks
+- Account lockout after consecutive failed attempts
+- Constant-time comparison for code validation
 
 Dependencies:
-    - pyotp (for TOTP generation/validation)
-    - qrcode (for QR code generation)
+    - pyotp (required for TOTP generation/validation)
+    - qrcode (optional, for QR code generation)
 """
 
 from __future__ import annotations
@@ -17,7 +23,7 @@ from __future__ import annotations
 import hashlib
 import logging
 import secrets
-from datetime import datetime, timezone
+from datetime import datetime, timedelta, timezone
 from typing import Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 from enum import Enum
@@ -28,6 +34,8 @@ __all__ = [
     "MFAManager",
     "MFARequiredError",
     "InvalidMFACodeError",
+    "MFALockedOutError",
+    "MFADependencyError",
     "get_mfa_manager",
     "set_mfa_manager",
 ]
@@ -49,6 +57,14 @@ class MFARequiredError(Exception):
 
 class InvalidMFACodeError(Exception):
     """Raised when MFA code is invalid"""
+
+
+class MFALockedOutError(Exception):
+    """Raised when user is locked out due to too many failed MFA attempts"""
+
+
+class MFADependencyError(Exception):
+    """Raised when a required MFA dependency (like pyotp) is not installed"""
 
 
 @dataclass
@@ -74,12 +90,43 @@ class MFAManager:
     - Twilio (SMS)
     - Authy
     - Duo Security
+
+    Security Features:
+    - Rate limiting to prevent brute-force attacks on TOTP codes
+    - Account lockout after consecutive failed attempts
     """
 
-    def __init__(self):
-        """Initialize MFA Manager"""
+    # Rate limiting constants
+    MAX_ATTEMPTS = 5  # Maximum failed attempts before lockout
+    LOCKOUT_DURATION = timedelta(minutes=15)  # Lockout duration after max attempts
+    ATTEMPT_WINDOW = timedelta(minutes=5)  # Window for counting failed attempts
+
+    def __init__(
+        self,
+        max_attempts: int = 5,
+        lockout_duration_minutes: int = 15,
+        require_pyotp: bool = False,
+    ):
+        """
+        Initialize MFA Manager
+
+        Args:
+            max_attempts: Maximum failed MFA attempts before lockout (default: 5)
+            lockout_duration_minutes: Account lockout duration in minutes (default: 15)
+            require_pyotp: If True, raise error when pyotp is not installed
+        """
         self.user_mfa: Dict[str, MFASetup] = {}
         self.admin_mfa_required: bool = True  # Enforce MFA for admin operations
+        self.require_pyotp = require_pyotp
+
+        # Rate limiting configuration
+        self.max_attempts = max_attempts
+        self.lockout_duration = timedelta(minutes=lockout_duration_minutes)
+
+        # Track failed attempts for rate limiting
+        self._failed_attempts: Dict[str, List[datetime]] = {}
+        self._lockouts: Dict[str, datetime] = {}
+
         log.info("MFAManager initialized")
 
     def setup_totp(self, user_id: str, issuer: str = "Nethical") -> Tuple[str, str, List[str]]:
@@ -157,9 +204,103 @@ class MFAManager:
             self.user_mfa[user_id].enabled = False
             log.info(f"MFA disabled for user {user_id}")
 
+    def _check_rate_limit(self, user_id: str) -> bool:
+        """
+        Check if user is rate limited due to failed attempts.
+
+        Args:
+            user_id: User identifier
+
+        Returns:
+            True if user can attempt verification, False if rate limited
+
+        Raises:
+            MFALockedOutError: If user is locked out
+        """
+        now = datetime.now(timezone.utc)
+
+        # Check if user is currently locked out
+        if user_id in self._lockouts:
+            lockout_end = self._lockouts[user_id]
+            if now < lockout_end:
+                remaining = (lockout_end - now).total_seconds()
+                log.warning(f"User {user_id} is locked out for {remaining:.0f}s more")
+                raise MFALockedOutError(
+                    f"Account locked due to too many failed MFA attempts. "
+                    f"Try again in {remaining:.0f} seconds."
+                )
+            else:
+                # Lockout expired, remove it
+                del self._lockouts[user_id]
+                if user_id in self._failed_attempts:
+                    del self._failed_attempts[user_id]
+
+        return True
+
+    def _record_failed_attempt(self, user_id: str) -> None:
+        """
+        Record a failed MFA attempt and potentially lock out the user.
+
+        Args:
+            user_id: User identifier
+        """
+        now = datetime.now(timezone.utc)
+        window_start = now - timedelta(minutes=5)
+
+        # Initialize or clean up old attempts
+        if user_id not in self._failed_attempts:
+            self._failed_attempts[user_id] = []
+
+        # Remove attempts outside the window
+        self._failed_attempts[user_id] = [
+            ts for ts in self._failed_attempts[user_id]
+            if ts > window_start
+        ]
+
+        # Record this attempt
+        self._failed_attempts[user_id].append(now)
+
+        # Check if we should lock out the user
+        if len(self._failed_attempts[user_id]) >= self.max_attempts:
+            lockout_end = now + self.lockout_duration
+            self._lockouts[user_id] = lockout_end
+            log.warning(
+                f"User {user_id} locked out until {lockout_end.isoformat()} "
+                f"after {self.max_attempts} failed MFA attempts"
+            )
+
+    def _clear_failed_attempts(self, user_id: str) -> None:
+        """Clear failed attempt counter on successful verification."""
+        if user_id in self._failed_attempts:
+            del self._failed_attempts[user_id]
+        if user_id in self._lockouts:
+            del self._lockouts[user_id]
+
+    def get_remaining_attempts(self, user_id: str) -> int:
+        """
+        Get remaining MFA attempts before lockout.
+
+        Args:
+            user_id: User identifier
+
+        Returns:
+            Number of remaining attempts
+        """
+        if user_id not in self._failed_attempts:
+            return self.max_attempts
+
+        now = datetime.now(timezone.utc)
+        window_start = now - timedelta(minutes=5)
+        recent_attempts = len([
+            ts for ts in self._failed_attempts[user_id]
+            if ts > window_start
+        ])
+
+        return max(0, self.max_attempts - recent_attempts)
+
     def verify_totp(self, user_id: str, code: str) -> bool:
         """
-        Verify a TOTP code
+        Verify a TOTP code with brute-force protection.
 
         Args:
             user_id: User identifier
@@ -167,8 +308,16 @@ class MFAManager:
 
         Returns:
             True if code is valid
+
+        Raises:
+            MFALockedOutError: If user is locked out due to failed attempts
+            MFADependencyError: If pyotp is not installed and require_pyotp is True
         """
+        # Check rate limit first
+        self._check_rate_limit(user_id)
+
         if user_id not in self.user_mfa:
+            self._record_failed_attempt(user_id)
             return False
 
         mfa_setup = self.user_mfa[user_id]
@@ -185,16 +334,28 @@ class MFAManager:
             totp = pyotp.TOTP(mfa_setup.totp_secret)
             is_valid = totp.verify(code, valid_window=1)  # Allow 30s window
         except ImportError:
-            # Fallback: basic validation (not recommended for production)
-            log.warning("pyotp not available, using basic TOTP validation")
-            # For security, we'll reject in fallback mode
-            is_valid = False
+            if self.require_pyotp:
+                log.error("pyotp is required but not installed")
+                raise MFADependencyError(
+                    "pyotp library is required for TOTP verification but is not installed. "
+                    "Install it with: pip install pyotp"
+                )
+            # Fallback: reject all codes when pyotp is not available
+            log.error(
+                "pyotp not available for TOTP verification. "
+                "Install pyotp for production use: pip install pyotp"
+            )
+            self._record_failed_attempt(user_id)
+            return False
 
         if is_valid:
+            self._clear_failed_attempts(user_id)
             mfa_setup.last_used_at = datetime.now(timezone.utc)
             log.info(f"TOTP code verified for user {user_id}")
         else:
-            log.warning(f"Invalid TOTP code for user {user_id}")
+            self._record_failed_attempt(user_id)
+            remaining = self.get_remaining_attempts(user_id)
+            log.warning(f"Invalid TOTP code for user {user_id}. {remaining} attempts remaining.")
 
         return is_valid
 
