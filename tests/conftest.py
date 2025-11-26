@@ -166,11 +166,18 @@ class MockRedis:
         return sum(1 for key in keys if key in self._data)
     
     def incr(self, key):
-        """Increment a value."""
+        """Increment a value.
+        
+        Note: Redis INCR creates the key with value 1 if it doesn't exist,
+        or returns an error if the value is not a number.
+        """
         if key not in self._data:
             self._data[key] = 0
-        self._data[key] = int(self._data[key]) + 1
-        return self._data[key]
+        try:
+            self._data[key] = int(self._data[key]) + 1
+            return self._data[key]
+        except (ValueError, TypeError):
+            raise ValueError(f"value at key '{key}' is not an integer or out of range")
     
     def expire(self, key, seconds):
         """Set expiry on a key."""
