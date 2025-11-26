@@ -15,7 +15,8 @@ spec:
       containers:
         - name: nethical
           # Use FIPS-validated container image
-          image: nethical:latest-fips
+          # Note: Replace with your FIPS-validated image tag
+          # image: nethical:0.1.0-fips
           env:
             # FIPS mode configuration
             - name: NETHICAL_FIPS_MODE

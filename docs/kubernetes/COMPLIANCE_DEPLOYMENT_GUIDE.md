@@ -255,44 +255,56 @@ echo "Compliance validation passed for $FRAMEWORK"
 
 ### Framework-Specific Validations
 
+> **Note**: The commands below use `nethical-0` as the pod name which works for StatefulSet deployments.
+> For other deployment types, use `kubectl get pods -n nethical -l app.kubernetes.io/name=nethical -o name | head -1`
+> to get the first pod name, or use `kubectl exec -n nethical deploy/nethical -- ...` for Deployments.
+
+#### Helper: Get First Pod Name
+
+```bash
+# Set POD variable for reuse
+POD=$(kubectl get pods -n nethical -l app.kubernetes.io/name=nethical -o name | head -1)
+# Example: pod/nethical-0
+```
+
 #### HIPAA Validation
 
 ```bash
 # Verify PHI encryption
-kubectl exec -n nethical nethical-0 -- env | grep -E "PHI|ENCRYPTION"
+kubectl exec -n nethical $POD -- env | grep -E "PHI|ENCRYPTION"
 
 # Check session timeout (max 15 minutes)
-kubectl exec -n nethical nethical-0 -- env | grep SESSION_TIMEOUT
+kubectl exec -n nethical $POD -- env | grep SESSION_TIMEOUT
 
 # Verify audit retention (min 6 years)
-kubectl exec -n nethical nethical-0 -- env | grep AUDIT_RETENTION
+kubectl exec -n nethical $POD -- env | grep AUDIT_RETENTION
 ```
 
 #### FIPS Validation
 
 ```bash
 # Verify FIPS mode
-kubectl exec -n nethical nethical-0 -- env | grep FIPS
+kubectl exec -n nethical $POD -- env | grep FIPS
 
 # Check crypto algorithms
-kubectl exec -n nethical nethical-0 -- python -c \
+kubectl exec -n nethical $POD -- python -c \
   "import ssl; print('FIPS:', ssl.FIPS_mode())"
 
 # Verify TLS configuration
-kubectl exec -n nethical nethical-0 -- env | grep TLS_MIN_VERSION
+kubectl exec -n nethical $POD -- env | grep TLS_MIN_VERSION
 ```
 
 #### NIST 800-53 Validation
 
 ```bash
 # Verify impact level
-kubectl exec -n nethical nethical-0 -- env | grep IMPACT_LEVEL
+kubectl exec -n nethical $POD -- env | grep IMPACT_LEVEL
 
 # Check MFA configuration
-kubectl exec -n nethical nethical-0 -- env | grep MFA
+kubectl exec -n nethical $POD -- env | grep MFA
 
 # Verify lockout settings
-kubectl exec -n nethical nethical-0 -- env | grep LOCKOUT
+kubectl exec -n nethical $POD -- env | grep LOCKOUT
 ```
 
 ## Audit Trail and Evidence
