@@ -521,6 +521,11 @@ class IntegratedGovernance:
         """
         start_time = time.time()
 
+        # ==================== Regional Configuration ====================
+        # Define effective_region and effective_domain early for use in quotas and throughout
+        effective_region = region_id or self.region_id
+        effective_domain = self.logical_domain
+
         # ==================== Quota & Resource Enforcement ====================
         quota_result = None
         pii_matches = []
@@ -561,10 +566,6 @@ class IntegratedGovernance:
                     violation_detected = True
                     violation_type = violation_type or "privacy"
                     violation_severity = "critical" if pii_risk > 0.8 else "high"
-
-        # Use instance region if not provided
-        effective_region = region_id or self.region_id
-        effective_domain = self.logical_domain
 
         # Validate data residency if region specified
         residency_validation = None
@@ -623,33 +624,31 @@ class IntegratedGovernance:
             )
 
         # Run violation detection asynchronously
-        # Use a dedicated helper to handle event loop properly
-        def run_async_evaluation():
-            """Helper to run async evaluation in a safe way"""
-            try:
-                # Check if there's already a running loop
-                asyncio.get_running_loop()
-                # We're in an async context - this shouldn't happen for process_action
-                # Fall back to creating a new loop
-                raise RuntimeError("Cannot use run_until_complete in async context")
-            except RuntimeError:
-                # No running loop, safe to use run_until_complete
-                pass
-            
-            # Get or create event loop
-            try:
-                loop = asyncio.get_event_loop()
-                if loop.is_closed():
-                    loop = asyncio.new_event_loop()
-                    asyncio.set_event_loop(loop)
-            except RuntimeError:
-                loop = asyncio.new_event_loop()
-                asyncio.set_event_loop(loop)
-            
-            return loop.run_until_complete(self.safety_governance.evaluate_action(action_obj))
+        # Use proper async handling based on current context
+        async def async_evaluate():
+            """Run evaluation in async context"""
+            return await self.safety_governance.evaluate_action(action_obj)
         
-        # Evaluate the action for violations
-        judgment = run_async_evaluation()
+        def sync_evaluate():
+            """Run evaluation in sync context by creating a new event loop"""
+            # Create a new loop in a thread-safe manner
+            loop = asyncio.new_event_loop()
+            try:
+                return loop.run_until_complete(self.safety_governance.evaluate_action(action_obj))
+            finally:
+                loop.close()
+        
+        # Determine if we're in an async context
+        try:
+            asyncio.get_running_loop()
+            # We're in an async context - use concurrent.futures to run in thread
+            import concurrent.futures
+            with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                future = executor.submit(sync_evaluate)
+                judgment = future.result(timeout=30.0)
+        except RuntimeError:
+            # No running loop, safe to run synchronously
+            judgment = sync_evaluate()
         
         # Extract violation information
         detected_violations = judgment.violations

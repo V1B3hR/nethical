@@ -15,6 +15,7 @@ from typing import Dict, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime
 from collections import deque
+import threading
 import time
 import logging
 
@@ -324,18 +325,29 @@ class QuotaEnforcer:
 
 # Global singleton instance
 _global_enforcer: Optional[QuotaEnforcer] = None
+_global_enforcer_lock = threading.Lock()
 
 
 def get_quota_enforcer(config: Optional[QuotaConfig] = None) -> QuotaEnforcer:
-    """Get or create the global quota enforcer instance."""
+    """Get or create the global quota enforcer instance.
+    
+    Thread-safe singleton access with double-checked locking pattern.
+    """
     global _global_enforcer
     if _global_enforcer is None:
-        _global_enforcer = QuotaEnforcer(config)
+        with _global_enforcer_lock:
+            # Double-check after acquiring lock
+            if _global_enforcer is None:
+                _global_enforcer = QuotaEnforcer(config)
     return _global_enforcer
 
 
 def configure_quotas(config: QuotaConfig):
-    """Configure the global quota enforcer."""
+    """Configure the global quota enforcer.
+    
+    Thread-safe reconfiguration of the global enforcer.
+    """
     global _global_enforcer
-    _global_enforcer = QuotaEnforcer(config)
+    with _global_enforcer_lock:
+        _global_enforcer = QuotaEnforcer(config)
     return _global_enforcer
