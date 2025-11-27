@@ -158,6 +158,8 @@ drift_reports/
 # Performance profiling results
 profiling_results/
 tests/performance/results/
+tests/validation/results/
+tests/resilience/results/
 
 # MLOps data directories
 data/raw/
