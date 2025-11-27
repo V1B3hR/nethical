@@ -308,11 +308,12 @@ class AnomalyMLClassifier:
             anomaly_threshold=model_data.get("anomaly_threshold", 0.5)
         )
         
-        # Convert string keys back to tuples
+        # Convert string keys back to tuples using ast.literal_eval for safety
+        import ast
         normal_ngrams_str = model_data.get("normal_ngrams", {})
         anomal_ngrams_str = model_data.get("anomalous_ngrams", {})
-        classifier.normal_ngrams = {eval(k): v for k, v in normal_ngrams_str.items()}
-        classifier.anomalous_ngrams = {eval(k): v for k, v in anomal_ngrams_str.items()}
+        classifier.normal_ngrams = {ast.literal_eval(k): v for k, v in normal_ngrams_str.items()}
+        classifier.anomalous_ngrams = {ast.literal_eval(k): v for k, v in anomal_ngrams_str.items()}
         
         classifier.action_frequencies = model_data.get("action_frequencies", {})
         classifier.normal_entropy_stats = model_data.get("normal_entropy_stats", {"mean": 0.0, "std": 1.0})

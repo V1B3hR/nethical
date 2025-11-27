@@ -270,7 +270,7 @@ class CorrelationMLClassifier:
         classifier = cls(
             pattern_threshold=model_data.get("pattern_threshold", 0.5)
         )
-        classifier.feature_weights = model_data.get("feature_weights", {name: 0.2 for name in cls.FEATURE_NAMES})
+        classifier.feature_weights = model_data.get("feature_weights", {name: 0.2 for name in classifier.FEATURE_NAMES})
         classifier.feature_means = model_data.get("feature_means", {})
         classifier.feature_stds = model_data.get("feature_stds", {})
         classifier.feature_ranges = model_data.get("feature_ranges", classifier.feature_ranges)

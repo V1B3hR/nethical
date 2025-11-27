@@ -310,6 +310,7 @@ class BaselineMLClassifier:
 
 # Optional: Import PyTorch-based AdvancedMLClassifier
 # This is kept for backward compatibility and advanced use cases
+_TORCH_AVAILABLE = False
 try:
     import torch
     import torch.nn as nn
@@ -319,12 +320,7 @@ try:
     
     _TORCH_AVAILABLE = True
 except ImportError:
-    _TORCH_AVAILABLE = False
-    torch = None
-    nn = None
-    optim = None
-    np = None
-    StandardScaler = None
+    pass  # PyTorch not available, AdvancedMLClassifier will not be defined
 
 
 if _TORCH_AVAILABLE:
