@@ -1,0 +1,115 @@
+{
+  "timestamp": "2025-11-27T19:10:33.684917",
+  "tests_run": 3,
+  "results": [
+    {
+      "test_name": "high_iteration_1000_workers_20",
+      "duration_seconds": 6.909566640853882,
+      "total_requests": 1000,
+      "successful_requests": 1000,
+      "failed_requests": 0,
+      "success_rate": 1.0,
+      "throughput_rps": 144.72687680401623,
+      "latency_stats": {
+        "mean_ms": 137.54484605789185,
+        "median_ms": 135.15067100524902,
+        "min_ms": 79.91218566894531,
+        "max_ms": 243.37482452392578,
+        "p50_ms": 135.15257835388184,
+        "p90_ms": 147.34172821044922,
+        "p95_ms": 156.1453342437744,
+        "p99_ms": 209.80119705200195,
+        "stddev_ms": 13.359410542527472
+      },
+      "memory_analysis": {
+        "initial_memory_mb": 107.08984375,
+        "final_memory_mb": 106.59375,
+        "max_memory_mb": 107.08984375,
+        "min_memory_mb": 106.59375,
+        "growth_mb": -0.49609375,
+        "growth_percent": -0.4632500455954769,
+        "leak_detected": false
+      },
+      "performance_analysis": {
+        "early_mean_ms": 142.06068595250449,
+        "late_mean_ms": 135.47631661097208,
+        "degradation_percent": -4.63489902036217,
+        "degradation_detected": false
+      },
+      "phase_metrics": {}
+    },
+    {
+      "test_name": "scaling_test_5_to_30",
+      "duration_seconds": 46.95815324783325,
+      "total_requests": 6738,
+      "successful_requests": 6738,
+      "failed_requests": 0,
+      "success_rate": 1.0,
+      "throughput_rps": 143.48945888988737,
+      "latency_stats": {
+        "mean_ms": 201.97450912964737,
+        "median_ms": 214.65885639190674,
+        "min_ms": 0.1735687255859375,
+        "max_ms": 375.868558883667,
+        "p50_ms": 214.66326713562012,
+        "p90_ms": 237.26844787597656,
+        "p95_ms": 256.2079429626465,
+        "p99_ms": 286.4110469818115,
+        "stddev_ms": 55.17745142916782
+      },
+      "memory_analysis": {
+        "initial_memory_mb": 106.21875,
+        "final_memory_mb": 108.13671875,
+        "max_memory_mb": 108.13671875,
+        "min_memory_mb": 106.21875,
+        "growth_mb": 1.91796875,
+        "growth_percent": 1.805678140629597,
+        "leak_detected": false
+      },
+      "performance_analysis": {
+        "early_mean_ms": 196.27874708813331,
+        "late_mean_ms": 190.97062371165637,
+        "degradation_percent": -2.7043800998451872,
+        "degradation_detected": false
+      },
+      "phase_metrics": {}
+    },
+    {
+      "test_name": "stress_test_50_workers",
+      "duration_seconds": 22.23202657699585,
+      "total_requests": 2600,
+      "successful_requests": 2594,
+      "failed_requests": 6,
+      "success_rate": 0.9976923076923077,
+      "throughput_rps": 116.94840283657715,
+      "latency_stats": {
+        "mean_ms": 418.16311968962964,
+        "median_ms": 398.5344171524048,
+        "min_ms": 198.34065437316895,
+        "max_ms": 5105.90124130249,
+        "p50_ms": 398.54907989501953,
+        "p90_ms": 479.9773693084717,
+        "p95_ms": 492.51317977905273,
+        "p99_ms": 542.4134731292725,
+        "stddev_ms": 129.5140693722247
+      },
+      "memory_analysis": {
+        "initial_memory_mb": 107.5078125,
+        "final_memory_mb": 149.18359375,
+        "max_memory_mb": 149.18359375,
+        "min_memory_mb": 107.5078125,
+        "growth_mb": 41.67578125,
+        "growth_percent": 38.765351355279414,
+        "leak_detected": true
+      },
+      "performance_analysis": {
+        "early_mean_ms": 419.18281573326846,
+        "late_mean_ms": 414.70239539412495,
+        "degradation_percent": -1.068846377041004,
+        "degradation_detected": false
+      },
+      "phase_metrics": {}
+    }
+  ],
+  "overall_pass": true
+}

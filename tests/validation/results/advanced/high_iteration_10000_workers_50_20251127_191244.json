@@ -1,0 +1,36 @@
+{
+  "test_name": "high_iteration_10000_workers_50",
+  "duration_seconds": 83.39889597892761,
+  "total_requests": 10000,
+  "successful_requests": 10000,
+  "failed_requests": 0,
+  "success_rate": 1.0,
+  "throughput_rps": 119.9056640093497,
+  "latency_stats": {
+    "mean_ms": 415.83374671936036,
+    "median_ms": 409.5097780227661,
+    "min_ms": 199.35345649719238,
+    "max_ms": 619.8067665100098,
+    "p50_ms": 409.51085090637207,
+    "p90_ms": 451.7343044281006,
+    "p95_ms": 488.7070655822754,
+    "p99_ms": 538.8984680175781,
+    "stddev_ms": 34.30592035599698
+  },
+  "memory_analysis": {
+    "initial_memory_mb": 64.34375,
+    "final_memory_mb": 107.9296875,
+    "max_memory_mb": 107.9296875,
+    "min_memory_mb": 64.34375,
+    "growth_mb": 43.5859375,
+    "growth_percent": 67.73919378339,
+    "leak_detected": true
+  },
+  "performance_analysis": {
+    "early_mean_ms": 411.97287464141846,
+    "late_mean_ms": 423.81207219759625,
+    "degradation_percent": 2.8737808445477486,
+    "degradation_detected": false
+  },
+  "phase_metrics": {}
+}
