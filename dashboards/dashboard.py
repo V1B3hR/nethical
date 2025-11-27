@@ -26,7 +26,18 @@ class DashboardMetrics:
     audit_log: Dict[str, Any] = field(default_factory=dict)
     invariant_violations: Dict[str, Any] = field(default_factory=dict)
     slo_compliance: Dict[str, Any] = field(default_factory=dict)
-    
+
+    # 🔑 New important categories
+    security: Dict[str, Any] = field(default_factory=dict)
+    performance: Dict[str, Any] = field(default_factory=dict)
+    reliability: Dict[str, Any] = field(default_factory=dict)
+    compliance: Dict[str, Any] = field(default_factory=dict)
+    engagement: Dict[str, Any] = field(default_factory=dict)
+    accessibility: Dict[str, Any] = field(default_factory=dict)
+    cost_efficiency: Dict[str, Any] = field(default_factory=dict)
+    risk: Dict[str, Any] = field(default_factory=dict)
+    sustainability: Dict[str, Any] = field(default_factory=dict)
+
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
         return {
@@ -37,7 +48,17 @@ class DashboardMetrics:
             "audit_log": self.audit_log,
             "invariant_violations": self.invariant_violations,
             "slo_compliance": self.slo_compliance,
+            "security": self.security,
+            "performance": self.performance,
+            "reliability": self.reliability,
+            "compliance": self.compliance,
+            "engagement": self.engagement,
+            "accessibility": self.accessibility,
+            "cost_efficiency": self.cost_efficiency,
+            "risk": self.risk,
+            "sustainability": self.sustainability,
         }
+
 
 
 class GovernanceDashboard:
