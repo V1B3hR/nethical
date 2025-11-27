@@ -1,208 +1,179 @@
+import torch
+import torch.nn as nn
+import torch.optim as optim
+import numpy as np
 import json
-import math
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Optional
 from datetime import datetime
+from sklearn.preprocessing import StandardScaler
 
-# --- BaselineMLClassifier definition (from baseline.py) ---
 
+class AdvancedMLClassifier(nn.Module):
+    """Advanced ML classifier with feature scaling and multi-class transformer architecture."""
 
-class BaselineMLClassifier:
-    """Simple baseline classifier for ML training pipeline.
+    def __init__(self, input_dim: int, num_classes: int = 2, num_layers: int = 2, d_model: int = 64, num_heads: int = 4):
+        super().__init__()
+        self.input_dim = input_dim
+        self.num_classes = num_classes
+        self.d_model = d_model
 
-    This classifier uses a weighted feature combination approach similar to
-    the MLShadowClassifier but optimized for supervised learning with labels.
-    """
+        # Input encoder
+        self.input_linear = nn.Linear(input_dim, d_model)
 
-    def __init__(self):
-        """Initialize baseline classifier."""
-        # Default feature weights
-        self.feature_weights = {
-            "violation_count": 0.3,
-            "severity_max": 0.25,
-            "recency_score": 0.2,
-            "frequency_score": 0.15,
-            "context_risk": 0.1,
-        }
+        # Transformer encoder
+        encoder_layer = nn.TransformerEncoderLayer(
+            d_model=d_model, nhead=num_heads, dim_feedforward=128, batch_first=True
+        )
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
 
-        # Model metadata
+        # Output layer (multi-class)
+        self.output_layer = nn.Linear(d_model, num_classes)
+        self.softmax = nn.Softmax(dim=1)
+
+        # Scaler for features
+        self.scaler: Optional[StandardScaler] = None
+
+        # Metadata
         self.trained = False
         self.training_samples = 0
         self.timestamp = None
 
-    def train(self, train_data: List[Dict[str, Any]]) -> None:
-        """Train the classifier on labeled data.
+    def forward(self, x):
+        x = self.input_linear(x).unsqueeze(1)  # (batch, seq_len=1, d_model)
+        x = self.transformer(x)
+        x = x.squeeze(1)
+        logits = self.output_layer(x)
+        probs = self.softmax(logits)
+        return probs
 
-        For this baseline implementation, we use a simple approach:
-        - Learn optimal feature weights from training data
-        - No complex optimization, just basic statistics
+    def fit_scaler(self, X: np.ndarray):
+        """Fit feature scaler."""
+        self.scaler = StandardScaler()
+        self.scaler.fit(X)
 
-        Args:
-            train_data: List of training samples with 'features' and 'label'
-        """
-        if not train_data:
-            raise ValueError("Training data cannot be empty")
+    def scale_features(self, X: np.ndarray) -> np.ndarray:
+        """Scale features with fitted scaler."""
+        if self.scaler is None:
+            raise ValueError("Feature scaler not fitted.")
+        return self.scaler.transform(X)
 
-        # Simple training: adjust weights based on feature importance
-        # Calculate correlation of each feature with labels
-        feature_sums = {k: 0.0 for k in self.feature_weights.keys()}
-        label_sums = {k: {"positive": 0.0, "negative": 0.0} for k in self.feature_weights.keys()}
-
+    def train_model(self, train_data: List[Dict[str, Any]], epochs: int = 50, lr: float = 1e-3):
+        """Train classifier with multi-class support and feature scaling."""
+        # Prepare features in consistent order
+        feature_keys = sorted(train_data[0]['features'].keys())
+        X = []
+        y = []
         for sample in train_data:
-            features = sample.get("features", {})
-            label = sample.get("label", 0)
+            feat_vector = np.array([sample["features"][k] for k in feature_keys], dtype=np.float32)
+            X.append(feat_vector)
+            y.append(int(sample["label"]))
+        X = np.stack(X)
+        self.fit_scaler(X)
+        X_scaled = self.scale_features(X)
+        X_tensor = torch.tensor(X_scaled, dtype=torch.float32)
+        y_tensor = torch.tensor(y, dtype=torch.long)
 
-            for feature_name in self.feature_weights.keys():
-                feature_value = features.get(feature_name, 0.0)
-                if isinstance(feature_value, (int, float)):
-                    feature_sums[feature_name] += feature_value
-                    if label == 1:
-                        label_sums[feature_name]["positive"] += feature_value
-                    else:
-                        label_sums[feature_name]["negative"] += feature_value
+        optimizer = optim.Adam(self.parameters(), lr=lr)
+        criterion = nn.CrossEntropyLoss()
 
-        # Adjust weights based on discriminative power
-        # Features that differ more between positive/negative get higher weight
-        total_weight = 0.0
-        adjusted_weights = {}
-
-        for feature_name in self.feature_weights.keys():
-            pos_avg = label_sums[feature_name]["positive"]
-            neg_avg = label_sums[feature_name]["negative"]
-
-            # Discriminative power = difference between positive and negative averages
-            discriminative_power = abs(pos_avg - neg_avg) + 0.01  # Add small epsilon
-            adjusted_weights[feature_name] = discriminative_power
-            total_weight += discriminative_power
-
-        # Normalize weights to sum to 1
-        if total_weight > 0:
-            for feature_name in self.feature_weights.keys():
-                self.feature_weights[feature_name] = adjusted_weights[feature_name] / total_weight
+        self.train()
+        for epoch in range(epochs):
+            optimizer.zero_grad()
+            preds = self.forward(X_tensor)
+            loss = criterion(preds, y_tensor)
+            loss.backward()
+            optimizer.step()
 
         self.trained = True
         self.training_samples = len(train_data)
         self.timestamp = datetime.now().isoformat()
+        self.feature_keys = feature_keys
 
     def predict(self, features: Dict[str, Any]) -> Dict[str, Any]:
-        """Make a prediction for given features.
-
-        Args:
-            features: Feature dictionary
-
-        Returns:
-            Dictionary with 'label', 'score', and 'confidence'
-        """
-        if not self.trained:
-            # Use default weights if not trained
-            pass
-
-        # Compute weighted score
-        score = 0.0
-        for feature_name, weight in self.feature_weights.items():
-            feature_value = features.get(feature_name, 0.0)
-            if isinstance(feature_value, (int, float)):
-                score += weight * min(feature_value, 1.0)
-
-        # Apply sigmoid-like transformation for non-linearity
-        score = 1.0 - math.exp(-2 * score)
-        score = min(score, 1.0)
-
-        # Determine label (threshold at 0.5)
-        label = 1 if score >= 0.5 else 0
-
-        # Calculate confidence based on distance from threshold
-        confidence = abs(score - 0.5) * 2  # Scale 0-0.5 to 0-1
-        confidence = min(confidence, 1.0)
-
-        return {"label": label, "score": score, "confidence": confidence}
+        feat_vector = np.array([features[k] for k in self.feature_keys], dtype=np.float32)
+        X_scaled = self.scale_features(feat_vector.reshape(1, -1))
+        X_tensor = torch.tensor(X_scaled, dtype=torch.float32)
+        self.eval()
+        with torch.no_grad():
+            probs = self.forward(X_tensor).cpu().numpy()[0]  # shape: (num_classes,)
+        label = int(np.argmax(probs))
+        confidence = float(np.max(probs))
+        return {
+            "label": label,
+            "class_probs": {str(i): float(prob) for i, prob in enumerate(probs)},
+            "confidence": confidence
+        }
 
     def compute_metrics(self, predictions: List[int], labels: List[int]) -> Dict[str, float]:
-        """Compute evaluation metrics.
+        # Multi-class metrics
+        confusion = np.zeros((self.num_classes, self.num_classes), dtype=int)
+        for pred, label in zip(predictions, labels):
+            confusion[label, pred] += 1
 
-        Args:
-            predictions: List of predicted labels
-            labels: List of true labels
+        accuracy = sum([confusion[i, i] for i in range(self.num_classes)]) / max(len(labels), 1)
+        per_class_accuracy = [
+            confusion[c, c] / max(sum(confusion[c]), 1) for c in range(self.num_classes)
+        ]
 
-        Returns:
-            Dictionary of metrics
-        """
-        if len(predictions) != len(labels):
-            raise ValueError("Predictions and labels must have same length")
+        # Macro-averaged precision/recall/f1
+        precision_list = []
+        recall_list = []
+        f1_list = []
+        for c in range(self.num_classes):
+            tp = confusion[c, c]
+            fp = sum(confusion[:, c]) - tp
+            fn = sum(confusion[c, :]) - tp
+            precision = tp / max(tp + fp, 1)
+            recall = tp / max(tp + fn, 1)
+            f1 = 2 * precision * recall / max(precision + recall, 1e-8) if (precision + recall) else 0
+            precision_list.append(precision)
+            recall_list.append(recall)
+            f1_list.append(f1)
 
-        if len(predictions) == 0:
-            return {"accuracy": 0.0, "precision": 0.0, "recall": 0.0, "f1_score": 0.0, "ece": 0.0}
-
-        # Calculate confusion matrix
-        tp = sum(1 for p, l in zip(predictions, labels) if p == 1 and l == 1)
-        tn = sum(1 for p, l in zip(predictions, labels) if p == 0 and l == 0)
-        fp = sum(1 for p, l in zip(predictions, labels) if p == 1 and l == 0)
-        fn = sum(1 for p, l in zip(predictions, labels) if p == 0 and l == 1)
-
-        # Calculate metrics
-        total = len(predictions)
-        accuracy = (tp + tn) / total if total > 0 else 0.0
-
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-
-        f1_score = (
-            2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-        )
-
-        # Simple ECE approximation (would need probability scores for proper calculation)
-        # For now, use a placeholder based on accuracy
-        ece = max(0.0, 0.15 * (1.0 - accuracy))  # Higher error when accuracy is lower
+        macro_prec = sum(precision_list) / self.num_classes
+        macro_rec = sum(recall_list) / self.num_classes
+        macro_f1 = sum(f1_list) / self.num_classes
 
         return {
             "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1_score": f1_score,
-            "ece": ece,
-            "true_positives": tp,
-            "true_negatives": tn,
-            "false_positives": fp,
-            "false_negatives": fn,
+            "macro_precision": macro_prec,
+            "macro_recall": macro_rec,
+            "macro_f1_score": macro_f1,
+            "per_class_accuracy": per_class_accuracy,
+            "confusion_matrix": confusion.tolist()
         }
 
     def save(self, filepath: str) -> None:
-        """Save model to JSON file.
-
-        Args:
-            filepath: Path to save model
-        """
-        model_data = {
-            "model_type": "baseline",
-            "feature_weights": self.feature_weights,
+        torch.save(self.state_dict(), filepath + ".pt")
+        meta = {
+            "input_dim": self.input_dim,
+            "d_model": self.d_model,
+            "num_classes": self.num_classes,
             "trained": self.trained,
             "training_samples": self.training_samples,
-            "timestamp": self.timestamp or datetime.now().isoformat(),
-            "version": "1.0",
+            "timestamp": self.timestamp,
+            "feature_keys": getattr(self, "feature_keys", None),
+            "scaler_mean": self.scaler.mean_.tolist() if self.scaler else None,
+            "scaler_scale": self.scaler.scale_.tolist() if self.scaler else None,
+            "version": "2.1"
         }
-
-        with open(filepath, "w") as f:
-            json.dump(model_data, f, indent=2)
+        with open(filepath + ".meta.json", "w") as f:
+            json.dump(meta, f, indent=2)
 
     @classmethod
-    def load(cls, filepath: str) -> "BaselineMLClassifier":
-        """Load model from JSON file.
-
-        Args:
-            filepath: Path to model file
-
-        Returns:
-            Loaded classifier instance
-        """
-        with open(filepath, "r") as f:
-            model_data = json.load(f)
-
-        classifier = cls()
-        classifier.feature_weights = model_data.get("feature_weights", classifier.feature_weights)
-        classifier.trained = model_data.get("trained", False)
-        classifier.training_samples = model_data.get("training_samples", 0)
-        classifier.timestamp = model_data.get("timestamp")
-
-        return classifier
-
-
-# --- End of BaselineMLClassifier definition ---
+    def load(cls, filepath: str) -> "AdvancedMLClassifier":
+        # Load meta
+        with open(filepath + ".meta.json", "r") as f:
+            meta = json.load(f)
+        model = cls(meta["input_dim"], num_classes=meta["num_classes"], d_model=meta["d_model"])
+        model.load_state_dict(torch.load(filepath + ".pt"))
+        model.trained = meta["trained"]
+        model.training_samples = meta["training_samples"]
+        model.timestamp = meta["timestamp"]
+        model.feature_keys = meta["feature_keys"]
+        # Restore scaler
+        if meta.get("scaler_mean") is not None and meta.get("scaler_scale") is not None:
+            model.scaler = StandardScaler()
+            model.scaler.mean_ = np.array(meta["scaler_mean"])
+            model.scaler.scale_ = np.array(meta["scaler_scale"])
+        return model
