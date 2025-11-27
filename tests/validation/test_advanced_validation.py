@@ -63,7 +63,7 @@ logger = logging.getLogger(__name__)
 # Configuration and Enums
 # =============================================================================
 
-class TestPhase(Enum):
+class ExecutionPhase(Enum):
     """Test execution phases"""
     RAMP_UP = "ramp_up"
     SUSTAINED = "sustained"
@@ -81,7 +81,7 @@ class FailureType(Enum):
 
 
 @dataclass
-class TestConfig:
+class ValidationConfig:
     """Configuration for advanced validation tests"""
     # Iteration settings
     min_iterations: int = 1000
@@ -120,7 +120,7 @@ class TestConfig:
     failure_injection_rate: float = 0.01  # 1% failure rate
     
     @classmethod
-    def from_environment(cls) -> "TestConfig":
+    def from_environment(cls) -> "ValidationConfig":
         """Create config from environment variables"""
         config = cls()
         if os.getenv("NETHICAL_ADVANCED_ITERATIONS"):
@@ -146,7 +146,7 @@ class RequestMetric:
     duration_ms: float
     success: bool
     error: Optional[str] = None
-    phase: TestPhase = TestPhase.SUSTAINED
+    phase: ExecutionPhase = ExecutionPhase.SUSTAINED
 
 
 @dataclass
@@ -161,10 +161,10 @@ class SystemMetric:
 
 
 @dataclass
-class TestResults:
+class ValidationResults:
     """Comprehensive test results"""
     test_name: str
-    config: TestConfig
+    config: ValidationConfig
     start_time: float = field(default_factory=time.time)
     end_time: float = 0.0
     
@@ -533,15 +533,15 @@ class AdvancedLoadTestRunner:
     def __init__(
         self,
         governance: SafetyGovernance,
-        config: Optional[TestConfig] = None,
+        config: Optional[ValidationConfig] = None,
         output_dir: Optional[Path] = None,
     ):
         self.governance = governance
-        self.config = config or TestConfig.from_environment()
+        self.config = config or ValidationConfig.from_environment()
         self.output_dir = output_dir or Path("tests/validation/results")
         self.worker_pool: Optional[WorkerPool] = None
         self.failure_injector: Optional[FailureInjector] = None
-        self.results: Optional[TestResults] = None
+        self.results: Optional[ValidationResults] = None
         self._metrics_thread: Optional[threading.Thread] = None
         self._stop_metrics = threading.Event()
     
@@ -565,7 +565,7 @@ class AdvancedLoadTestRunner:
         self,
         request_id: int,
         worker_id: int,
-        phase: TestPhase,
+        phase: ExecutionPhase,
         inject_failures: bool = False,
     ) -> RequestMetric:
         """Execute a single request and collect metrics"""
@@ -646,7 +646,7 @@ class AdvancedLoadTestRunner:
         iterations: int = 10000,
         workers: int = 50,
         inject_failures: bool = False,
-    ) -> TestResults:
+    ) -> ValidationResults:
         """
         Run a high-iteration test with configurable concurrency.
         
@@ -661,7 +661,7 @@ class AdvancedLoadTestRunner:
         logger.info(f"  Workers: {workers}")
         logger.info(f"  Failure injection: {inject_failures}")
         
-        self.results = TestResults(test_name=test_name, config=self.config)
+        self.results = ValidationResults(test_name=test_name, config=self.config)
         self.worker_pool = WorkerPool(max_workers=workers)
         
         if inject_failures:
@@ -679,7 +679,7 @@ class AdvancedLoadTestRunner:
                     self._execute_single_request,
                     i,
                     worker_id,
-                    TestPhase.SUSTAINED,
+                    ExecutionPhase.SUSTAINED,
                     inject_failures,
                 )
                 if future:
@@ -723,7 +723,7 @@ class AdvancedLoadTestRunner:
         max_workers: int = 100,
         ramp_duration_seconds: float = 30.0,
         sustained_duration_seconds: float = 60.0,
-    ) -> TestResults:
+    ) -> ValidationResults:
         """
         Run a test with variable worker scaling (ramp-up and ramp-down).
         
@@ -736,14 +736,14 @@ class AdvancedLoadTestRunner:
         test_name = f"scaling_test_{min_workers}_to_{max_workers}"
         logger.info(f"Starting {test_name}")
         
-        self.results = TestResults(test_name=test_name, config=self.config)
+        self.results = ValidationResults(test_name=test_name, config=self.config)
         self.worker_pool = WorkerPool(max_workers=max_workers)
         self.worker_pool.start(min_workers)
         self._start_metrics_collection()
         
         request_counter = [0]  # Use list for mutable closure
         
-        def submit_requests(phase: TestPhase, duration: float):
+        def submit_requests(phase: ExecutionPhase, duration: float):
             """Submit requests for a duration"""
             end_time = time.time() + duration
             futures = []
@@ -786,13 +786,13 @@ class AdvancedLoadTestRunner:
                 target_workers = int(min_workers + (step + 1) * worker_increment)
                 self.worker_pool.scale_to(target_workers)
                 
-                step_futures = submit_requests(TestPhase.RAMP_UP, self.config.ramp_step_seconds)
+                step_futures = submit_requests(ExecutionPhase.RAMP_UP, self.config.ramp_step_seconds)
                 all_futures.extend(step_futures)
             
             # Phase 2: Sustained load
             logger.info(f"  Phase 2: Sustained load ({sustained_duration_seconds}s)")
             self.worker_pool.scale_to(max_workers)
-            sustained_futures = submit_requests(TestPhase.SUSTAINED, sustained_duration_seconds)
+            sustained_futures = submit_requests(ExecutionPhase.SUSTAINED, sustained_duration_seconds)
             all_futures.extend(sustained_futures)
             
             # Phase 3: Ramp down
@@ -801,7 +801,7 @@ class AdvancedLoadTestRunner:
                 target_workers = int(max_workers - (step + 1) * worker_increment)
                 self.worker_pool.scale_to(max(min_workers, target_workers))
                 
-                step_futures = submit_requests(TestPhase.RAMP_DOWN, self.config.ramp_step_seconds)
+                step_futures = submit_requests(ExecutionPhase.RAMP_DOWN, self.config.ramp_step_seconds)
                 all_futures.extend(step_futures)
             
             # Collect results
@@ -832,7 +832,7 @@ class AdvancedLoadTestRunner:
         duration_seconds: float = 300.0,
         workers: int = 20,
         target_rps: float = 10.0,
-    ) -> TestResults:
+    ) -> ValidationResults:
         """
         Run a soak test for memory leak and performance drift detection.
         
@@ -847,7 +847,7 @@ class AdvancedLoadTestRunner:
         logger.info(f"  Workers: {workers}")
         logger.info(f"  Target RPS: {target_rps}")
         
-        self.results = TestResults(test_name=test_name, config=self.config)
+        self.results = ValidationResults(test_name=test_name, config=self.config)
         self.worker_pool = WorkerPool(max_workers=workers)
         self.worker_pool.start(workers)
         self._start_metrics_collection()
@@ -872,7 +872,7 @@ class AdvancedLoadTestRunner:
                     self._execute_single_request,
                     request_id,
                     worker_id,
-                    TestPhase.SUSTAINED,
+                    ExecutionPhase.SUSTAINED,
                     False,
                 )
                 if future:
@@ -938,7 +938,7 @@ class AdvancedLoadTestRunner:
         workers: int = 100,
         duration_seconds: float = 60.0,
         inject_failures: bool = True,
-    ) -> TestResults:
+    ) -> ValidationResults:
         """
         Run a stress test with high concurrency and failure injection.
         
@@ -953,7 +953,7 @@ class AdvancedLoadTestRunner:
         logger.info(f"  Duration: {duration_seconds}s")
         logger.info(f"  Failure injection: {inject_failures}")
         
-        self.results = TestResults(test_name=test_name, config=self.config)
+        self.results = ValidationResults(test_name=test_name, config=self.config)
         self.worker_pool = WorkerPool(max_workers=workers)
         
         if inject_failures:
@@ -977,7 +977,7 @@ class AdvancedLoadTestRunner:
                         self._execute_single_request,
                         request_id,
                         worker_id,
-                        TestPhase.SUSTAINED,
+                        ExecutionPhase.SUSTAINED,
                         inject_failures,
                     )
                     if future:
@@ -1028,7 +1028,7 @@ def governance():
 @pytest.fixture
 def test_config():
     """Get test configuration"""
-    return TestConfig.from_environment()
+    return ValidationConfig.from_environment()
 
 
 @pytest.fixture

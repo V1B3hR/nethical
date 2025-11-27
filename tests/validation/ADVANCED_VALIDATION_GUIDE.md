@@ -128,11 +128,11 @@ Tests with injected failures for resilience:
 
 ### Test Configuration
 
-The `TestConfig` dataclass provides all configuration options:
+The `ValidationConfig` dataclass provides all configuration options:
 
 ```python
 @dataclass
-class TestConfig:
+class ValidationConfig:
     # Iteration settings
     min_iterations: int = 1000
     standard_iterations: int = 10000
