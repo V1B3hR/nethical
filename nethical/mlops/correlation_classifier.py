@@ -1,8 +1,20 @@
-"""ML-based Correlation Pattern Classifier.
+"""
+MultiPatternMLClassifier: Extensible ML-based Pattern Detector for Multi-Agent Systems
 
-This module provides a trainable classifier for detecting correlation patterns
-in multi-agent activities. It can be used with the train_any_model.py
-training pipeline.
+This single-cell script provides a multi-type pattern classifier for multi-agent activities,
+based on extending the CorrelationMLClassifier architecture.
+
+Features:
+- Detects multiple pattern types: correlation, anomaly, collaboration, temporal, spatial (extensible).
+- Easy to add new features and pattern types.
+- Single class supports train, predict, metrics, save, and load.
+
+Usage Example:
+    classifier = MultiPatternMLClassifier(
+        pattern_types=["correlation", "anomaly", "collaboration", "temporal", "spatial"]
+    )
+    classifier.train(train_data)
+    result = classifier.predict(sample_features)
 """
 
 import json
@@ -12,263 +24,219 @@ from datetime import datetime
 from collections import defaultdict
 
 
-class CorrelationMLClassifier:
-    """ML classifier for correlation pattern detection.
+class MultiPatternMLClassifier:
+    """
+    ML classifier for multi-pattern detection in agent activities.
 
-    This classifier learns patterns from multi-agent activity data and predicts
-    whether correlation patterns are present. It uses statistical features
-    extracted from agent behaviors.
+    Supports multiple pattern types. Features are extracted and weighted for each pattern.
     """
 
-    def __init__(self, pattern_threshold: float = 0.5):
-        """Initialize correlation classifier.
-
-        Args:
-            pattern_threshold: Threshold for correlation pattern classification (default: 0.5)
+    def __init__(self, pattern_types=None, pattern_thresholds=None):
         """
-        self.pattern_threshold = pattern_threshold
+        Args:
+            pattern_types: List of supported pattern types (str). E.g. ["correlation", "anomaly", ...]
+            pattern_thresholds: Optional dict: {pattern_type: threshold (float from 0 to 1)}
+        """
+        if pattern_types is None:
+            pattern_types = ["correlation", "anomaly", "collaboration", "temporal", "spatial"]
 
-        # Learned patterns
-        self.normal_patterns: Dict[str, float] = {}
-        self.anomalous_patterns: Dict[str, float] = {}
+        self.pattern_types = pattern_types
+        self.pattern_thresholds = pattern_thresholds or {p: 0.5 for p in self.pattern_types}
 
-        # Feature weights (learned during training)
+        # Feature weights for each pattern_type. Overwritten by training.
         self.feature_weights = {
-            "agent_count": 0.25,
-            "action_rate": 0.2,
-            "entropy_variance": 0.2,
-            "time_correlation": 0.2,
-            "payload_similarity": 0.15,
+            # base features as example
+            "agent_count": {pt: 0.2 for pt in self.pattern_types},
+            "action_rate": {pt: 0.2 for pt in self.pattern_types},
+            "entropy_variance": {pt: 0.2 for pt in self.pattern_types},
+            "time_correlation": {pt: 0.2 for pt in self.pattern_types},
+            "payload_similarity": {pt: 0.2 for pt in self.pattern_types},
+            # additional, example features for new patterns:
+            "group_size": {pt: 0.15 if pt == "collaboration" else 0.0 for pt in self.pattern_types},
+            "temporal_spike": {pt: 0.15 if pt == "temporal" else 0.0 for pt in self.pattern_types},
+            "spatial_variance": {pt: 0.15 if pt == "spatial" else 0.0 for pt in self.pattern_types},
         }
 
-        # Model metadata
-        self.trained = False
+        self.trained = {pt: False for pt in self.pattern_types}
         self.training_samples = 0
         self.timestamp = None
 
-    def _calculate_entropy(self, text: str) -> float:
-        """Calculate Shannon entropy of text.
-
-        Args:
-            text: Input text
-
-        Returns:
-            Entropy value
-        """
+    @staticmethod
+    def _calculate_entropy(text: str) -> float:
+        """Calculate Shannon entropy of text."""
         if not text:
             return 0.0
-
         char_freq = defaultdict(int)
         for char in text:
             char_freq[char] += 1
-
         length = len(text)
         entropy = 0.0
-
         for count in char_freq.values():
             if count > 0:
                 probability = count / length
                 entropy -= probability * math.log2(probability)
-
         return entropy
 
     def _extract_features(self, sample_features: Dict[str, Any]) -> Dict[str, float]:
-        """Extract normalized features from sample.
-
-        Args:
-            sample_features: Raw feature dictionary
-
-        Returns:
-            Dictionary of normalized features
-        """
+        """Extract and normalize features from sample dict."""
         features = {}
-
-        # Agent count feature
         features["agent_count"] = min(sample_features.get("agent_count", 0) / 10.0, 1.0)
-
-        # Action rate feature
         features["action_rate"] = min(sample_features.get("action_rate", 0) / 100.0, 1.0)
-
-        # Entropy variance feature
         features["entropy_variance"] = min(sample_features.get("entropy_variance", 0) / 5.0, 1.0)
-
-        # Time correlation feature
         features["time_correlation"] = min(sample_features.get("time_correlation", 0), 1.0)
-
-        # Payload similarity feature
         features["payload_similarity"] = min(sample_features.get("payload_similarity", 0), 1.0)
-
+        # NEW FEATURES, optionally required for new pattern types:
+        features["group_size"] = min(sample_features.get("group_size", 1) / 10.0, 1.0)
+        features["temporal_spike"] = min(sample_features.get("temporal_spike", 0) / 5.0, 1.0)
+        features["spatial_variance"] = min(sample_features.get("spatial_variance", 0) / 5.0, 1.0)
         return features
 
     def train(self, train_data: List[Dict[str, Any]]) -> None:
-        """Train the classifier on labeled data.
+        """Train classifier on multiple pattern types (multi-label/multi-class).
 
         Args:
-            train_data: List of training samples with 'features' and 'label'
+            train_data: List of samples with 'features' and 'labels', where labels is a dict:
+                {
+                    "features": {feature_name: value, ...},
+                    "labels": {pattern_type: 0/1, ...}
+                }
         """
         if not train_data:
             raise ValueError("Training data cannot be empty")
-
-        # Collect statistics for normal and anomalous patterns
-        feature_stats = {"normal": defaultdict(list), "anomalous": defaultdict(list)}
+        feature_stats = {pt: {"positive": defaultdict(list), "negative": defaultdict(list)}
+                         for pt in self.pattern_types}
 
         for sample in train_data:
             raw_features = sample.get("features", {})
-            label = sample.get("label", 0)
+            labels = sample.get("labels", {})  # dict: {pattern_type: 0/1}
+            norm_features = self._extract_features(raw_features)
 
-            # Extract and normalize features
-            features = self._extract_features(raw_features)
+            for pt in self.pattern_types:
+                label = labels.get(pt, 0)
+                cat = "positive" if label == 1 else "negative"
+                for fname, val in norm_features.items():
+                    if fname in self.feature_weights:
+                        feature_stats[pt][cat][fname].append(val)
 
-            category = "anomalous" if label == 1 else "normal"
-            for feature_name, value in features.items():
-                if feature_name in self.feature_weights:
-                    feature_stats[category][feature_name].append(value)
+        # Learn discriminative power and weights per pattern_type
+        for pt in self.pattern_types:
+            adjusted_weights = {}
+            total_weight = 0.0
+            for fname in self.feature_weights:
+                pos_vals = feature_stats[pt]["positive"].get(fname, [0])
+                neg_vals = feature_stats[pt]["negative"].get(fname, [0])
+                pos_avg = sum(pos_vals) / len(pos_vals) if pos_vals else 0
+                neg_avg = sum(neg_vals) / len(neg_vals) if neg_vals else 0
+                discriminative_power = abs(pos_avg - neg_avg) + 0.01
+                adjusted_weights[fname] = discriminative_power
+                total_weight += discriminative_power
+            # Normalize so weights sum to 1
+            for fname in self.feature_weights:
+                self.feature_weights[fname][pt] = adjusted_weights[fname] / total_weight if total_weight > 0 else 0.0
+            self.trained[pt] = True
 
-        # Calculate discriminative power for each feature
-        adjusted_weights = {}
-        total_weight = 0.0
-
-        for feature_name in self.feature_weights.keys():
-            normal_values = feature_stats["normal"].get(feature_name, [0])
-            anomalous_values = feature_stats["anomalous"].get(feature_name, [0])
-
-            normal_avg = sum(normal_values) / len(normal_values) if normal_values else 0
-            anomalous_avg = sum(anomalous_values) / len(anomalous_values) if anomalous_values else 0
-
-            # Discriminative power = difference between normal and anomalous averages
-            discriminative_power = abs(anomalous_avg - normal_avg) + 0.01
-            adjusted_weights[feature_name] = discriminative_power
-            total_weight += discriminative_power
-
-        # Normalize weights to sum to 1
-        if total_weight > 0:
-            for feature_name in self.feature_weights.keys():
-                self.feature_weights[feature_name] = adjusted_weights[feature_name] / total_weight
-
-        self.trained = True
         self.training_samples = len(train_data)
         self.timestamp = datetime.now().isoformat()
 
     def predict(self, features: Dict[str, Any]) -> Dict[str, Any]:
-        """Make a prediction for given features.
+        """Predict for multiple pattern types.
 
         Args:
-            features: Feature dictionary
+            features: Raw features dict
 
         Returns:
-            Dictionary with 'label', 'score', and 'confidence'
+            Dict {pattern_type: {label, score, confidence}}
         """
-        if not self.trained:
-            # Use default weights if not trained
-            pass
+        norm_features = self._extract_features(features)
+        result = {}
+        for pt in self.pattern_types:
+            score = 0.0
+            for fname, weight_by_pt in self.feature_weights.items():
+                weight = weight_by_pt.get(pt, 0.0)
+                fval = norm_features.get(fname, 0.0)
+                score += weight * fval
+            # Calibration (soft sigmoid, temperature T=2)
+            score = 1.0 / (1.0 + math.exp(-2 * (score - 0.5)))
+            score = min(max(score, 0.0), 1.0)
+            threshold = self.pattern_thresholds.get(pt, 0.5)
+            label = 1 if score >= threshold else 0
+            confidence = abs(score - threshold) * 2
+            confidence = min(confidence, 1.0)
+            result[pt] = {"label": label, "score": score, "confidence": confidence}
+        return result
 
-        # Extract and normalize features
-        normalized_features = self._extract_features(features)
-
-        # Compute weighted score
-        score = 0.0
-        for feature_name, weight in self.feature_weights.items():
-            feature_value = normalized_features.get(feature_name, 0.0)
-            score += weight * feature_value
-
-        # Apply softer sigmoid transformation for better calibration
-        # Using temperature scaling with T=2 for better calibration
-        score = 1.0 / (1.0 + math.exp(-2 * (score - 0.5)))
-        score = min(max(score, 0.0), 1.0)
-
-        # Determine label (threshold at pattern_threshold)
-        label = 1 if score >= self.pattern_threshold else 0
-
-        # Calculate confidence based on distance from threshold
-        confidence = abs(score - self.pattern_threshold) * 2
-        confidence = min(confidence, 1.0)
-
-        return {"label": label, "score": score, "confidence": confidence}
-
-    def compute_metrics(self, predictions: List[int], labels: List[int]) -> Dict[str, float]:
-        """Compute evaluation metrics.
-
-        Args:
-            predictions: List of predicted labels
-            labels: List of true labels
-
-        Returns:
-            Dictionary of metrics
-        """
-        if len(predictions) != len(labels):
-            raise ValueError("Predictions and labels must have same length")
-
-        if len(predictions) == 0:
-            return {"accuracy": 0.0, "precision": 0.0, "recall": 0.0, "f1_score": 0.0, "ece": 0.0}
-
-        # Calculate confusion matrix
-        tp = sum(1 for p, l in zip(predictions, labels) if p == 1 and l == 1)
-        tn = sum(1 for p, l in zip(predictions, labels) if p == 0 and l == 0)
-        fp = sum(1 for p, l in zip(predictions, labels) if p == 1 and l == 0)
-        fn = sum(1 for p, l in zip(predictions, labels) if p == 0 and l == 1)
-
-        # Calculate metrics
-        total = len(predictions)
-        accuracy = (tp + tn) / total if total > 0 else 0.0
-
-        precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
-        recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
-
-        f1_score = (
-            2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
-        )
-
-        # Simple ECE approximation
-        ece = max(0.0, 0.15 * (1.0 - accuracy))
-
-        return {
-            "accuracy": accuracy,
-            "precision": precision,
-            "recall": recall,
-            "f1_score": f1_score,
-            "ece": ece,
-            "true_positives": tp,
-            "true_negatives": tn,
-            "false_positives": fp,
-            "false_negatives": fn,
-        }
+    @staticmethod
+    def compute_metrics(preds: Dict[str, List[int]], labels: Dict[str, List[int]]) -> Dict[str, Dict[str, float]]:
+        """Compute metrics for each pattern_type."""
+        metrics = {}
+        for pt in preds.keys():
+            p = preds[pt]
+            l = labels[pt]
+            if len(p) != len(l) or len(p) == 0:
+                metrics[pt] = {"accuracy": 0, "precision":0, "recall":0, "f1_score":0, "ece":0}
+                continue
+            tp = sum(1 for pred, lab in zip(p, l) if pred == 1 and lab == 1)
+            tn = sum(1 for pred, lab in zip(p, l) if pred == 0 and lab == 0)
+            fp = sum(1 for pred, lab in zip(p, l) if pred == 1 and lab == 0)
+            fn = sum(1 for pred, lab in zip(p, l) if pred == 0 and lab == 1)
+            total = len(p)
+            accuracy = (tp + tn) / total if total > 0 else 0.0
+            precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+            recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+            f1_score = (
+                2 * (precision * recall) / (precision + recall) if (precision + recall) > 0 else 0.0
+            )
+            ece = max(0.0, 0.15 * (1.0 - accuracy))
+            metrics[pt] = dict(
+                accuracy=accuracy, precision=precision, recall=recall,
+                f1_score=f1_score, ece=ece, true_positives=tp, true_negatives=tn,
+                false_positives=fp, false_negatives=fn
+            )
+        return metrics
 
     def save(self, filepath: str) -> None:
-        """Save model to JSON file.
-
-        Args:
-            filepath: Path to save model
-        """
+        """Save to JSON."""
         model_data = {
-            "model_type": "correlation",
-            "pattern_threshold": self.pattern_threshold,
+            "model_type": "multi_pattern",
+            "pattern_types": self.pattern_types,
+            "pattern_thresholds": self.pattern_thresholds,
             "feature_weights": self.feature_weights,
             "trained": self.trained,
             "training_samples": self.training_samples,
             "timestamp": self.timestamp or datetime.now().isoformat(),
             "version": "1.0",
         }
-
         with open(filepath, "w") as f:
             json.dump(model_data, f, indent=2)
 
     @classmethod
-    def load(cls, filepath: str) -> "CorrelationMLClassifier":
-        """Load model from JSON file.
-
-        Args:
-            filepath: Path to model file
-
-        Returns:
-            Loaded classifier instance
-        """
+    def load(cls, filepath: str) -> "MultiPatternMLClassifier":
+        """Load from JSON file."""
         with open(filepath, "r") as f:
             model_data = json.load(f)
-
-        classifier = cls(pattern_threshold=model_data.get("pattern_threshold", 0.5))
+        classifier = cls(
+            pattern_types=model_data.get("pattern_types", None),
+            pattern_thresholds=model_data.get("pattern_thresholds", None)
+        )
         classifier.feature_weights = model_data.get("feature_weights", classifier.feature_weights)
-        classifier.trained = model_data.get("trained", False)
+        classifier.trained = model_data.get("trained", {pt: False for pt in classifier.pattern_types})
         classifier.training_samples = model_data.get("training_samples", 0)
         classifier.timestamp = model_data.get("timestamp")
-
         return classifier
+
+# --- Example usage (uncomment to run) ---
+# train_data = [
+#     {"features": {"agent_count": 5, "action_rate": 70, "entropy_variance": 2.1, 
+#                   "time_correlation": 0.9, "payload_similarity": 0.8, "group_size": 3, "temporal_spike": 1.5, "spatial_variance": 0.7},
+#      "labels": {"correlation": 1, "anomaly":0, "collaboration":1, "temporal":0, "spatial":0}},
+#     {"features": {"agent_count": 1, "action_rate": 15, "entropy_variance": 0.5, 
+#                   "time_correlation": 0.1, "payload_similarity": 0.0, "group_size": 1, "temporal_spike": 0.5, "spatial_variance": 1.5},
+#      "labels": {"correlation": 0, "anomaly":1, "collaboration":0, "temporal":1, "spatial":1}},
+#     # More samples...
+# ]
+# classifier = MultiPatternMLClassifier()
+# classifier.train(train_data)
+# features = {"agent_count": 3, "action_rate": 60, "entropy_variance": 1.9, 
+#             "time_correlation": 0.8, "payload_similarity": 0.79, "group_size": 2, "temporal_spike": 1.1, "spatial_variance": 1.1}
+# prediction = classifier.predict(features)
+# print("Pattern predictions:", prediction)
