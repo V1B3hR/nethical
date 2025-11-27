@@ -160,35 +160,40 @@ run_all_tests() {
 mkdir -p "$OUTPUT_DIR"
 
 # Parse command line arguments
-case "${1:-standard}" in
-    --quick)
-        run_quick_tests
-        ;;
-    --standard)
-        run_standard_tests
-        ;;
-    --extended)
-        run_extended_tests
-        ;;
-    --soak)
-        run_soak_tests
-        ;;
-    --stress)
-        run_stress_tests
-        ;;
-    --all)
-        run_all_tests
-        ;;
-    --help|-h)
-        show_help
-        exit 0
-        ;;
-    *)
-        log_error "Unknown option: $1"
-        show_help
-        exit 1
-        ;;
-esac
+if [ -z "${1:-}" ]; then
+    # No argument provided, run standard tests
+    run_standard_tests
+else
+    case "$1" in
+        --quick)
+            run_quick_tests
+            ;;
+        --standard)
+            run_standard_tests
+            ;;
+        --extended)
+            run_extended_tests
+            ;;
+        --soak)
+            run_soak_tests
+            ;;
+        --stress)
+            run_stress_tests
+            ;;
+        --all)
+            run_all_tests
+            ;;
+        --help|-h)
+            show_help
+            exit 0
+            ;;
+        *)
+            log_error "Unknown option: $1"
+            show_help
+            exit 1
+            ;;
+    esac
+fi
 
 # Check result
 if [ $? -eq 0 ]; then

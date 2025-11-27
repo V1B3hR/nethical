@@ -208,15 +208,27 @@ class TestResults:
         sorted_durations = sorted(durations)
         n = len(sorted_durations)
         
+        # Use proper percentile calculation
+        def percentile(data: List[float], p: float) -> float:
+            """Calculate percentile using linear interpolation."""
+            if not data:
+                return 0.0
+            k = (len(data) - 1) * p
+            f = int(k)
+            c = min(f + 1, len(data) - 1)
+            if f == c:
+                return data[f]
+            return data[f] * (c - k) + data[c] * (k - f)
+        
         return {
             "mean_ms": statistics.mean(durations),
             "median_ms": statistics.median(durations),
             "min_ms": min(durations),
             "max_ms": max(durations),
-            "p50_ms": sorted_durations[int(n * 0.50)],
-            "p90_ms": sorted_durations[int(n * 0.90)],
-            "p95_ms": sorted_durations[int(n * 0.95)] if n > 20 else max(durations),
-            "p99_ms": sorted_durations[int(n * 0.99)] if n > 100 else max(durations),
+            "p50_ms": percentile(sorted_durations, 0.50),
+            "p90_ms": percentile(sorted_durations, 0.90),
+            "p95_ms": percentile(sorted_durations, 0.95) if n > 20 else max(durations),
+            "p99_ms": percentile(sorted_durations, 0.99) if n > 100 else max(durations),
             "stddev_ms": statistics.stdev(durations) if len(durations) > 1 else 0,
         }
     
@@ -483,8 +495,8 @@ class FailureInjector:
         elif failure_type == FailureType.RANDOM_EXCEPTION:
             raise RuntimeError("Injected failure for resilience testing")
         elif failure_type == FailureType.MEMORY_PRESSURE:
-            # Allocate and release memory
-            _ = [0] * (1024 * 1024)  # ~8MB
+            # Allocate and release memory (~8MB)
+            _ = bytearray(8 * 1024 * 1024)
         elif failure_type == FailureType.CPU_SPIKE:
             # Brief CPU intensive work
             end_time = time.time() + 0.1
@@ -572,12 +584,8 @@ class AdvancedLoadTestRunner:
             action = self._create_action(request_id)
             
             # Use sync evaluation (run async in thread)
-            loop = asyncio.new_event_loop()
-            asyncio.set_event_loop(loop)
-            try:
-                loop.run_until_complete(self.governance.evaluate_action(action))
-            finally:
-                loop.close()
+            # Using asyncio.run() for proper event loop lifecycle management
+            asyncio.run(self.governance.evaluate_action(action))
                 
         except Exception as e:
             success = False
