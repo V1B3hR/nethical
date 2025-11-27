@@ -27,7 +27,7 @@ class DashboardMetrics:
     invariant_violations: Dict[str, Any] = field(default_factory=dict)
     slo_compliance: Dict[str, Any] = field(default_factory=dict)
 
-    # 🔑 New important categories
+    # New important categories
     security: Dict[str, Any] = field(default_factory=dict)
     performance: Dict[str, Any] = field(default_factory=dict)
     reliability: Dict[str, Any] = field(default_factory=dict)
