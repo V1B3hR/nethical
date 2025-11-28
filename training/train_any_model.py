@@ -214,10 +214,19 @@ def get_model_class(model_type: str):
 
 
 def preprocess_for_heuristic(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
-    # Example: Use raw numeric features, no scaling
+    # Use raw numeric features, no scaling
+    # Prefer hardcoded keys if available, otherwise fall back to all available keys
+    preferred_keys = ["violation_count", "severity_max", "recency_score", "frequency_score", "context_risk"]
     for sample in data:
         feats = sample["features"]
-        sample["features"] = {k: float(feats.get(k, 0.0)) for k in ["violation_count","severity_max","recency_score","frequency_score","context_risk"]}
+        # Check if any preferred keys are present in the data
+        available_preferred = [k for k in preferred_keys if k in feats]
+        if available_preferred:
+            # Use only the preferred keys that are present
+            sample["features"] = {k: float(feats.get(k, 0.0)) for k in preferred_keys}
+        else:
+            # Fall back to all available keys (dynamic feature selection)
+            sample["features"] = {k: float(v) for k, v in feats.items() if isinstance(v, (int, float))}
     return data
 
 
@@ -517,10 +526,11 @@ def compute_metrics(
     probs: Optional[Sequence[float]] = None
 ) -> Dict[str, float]:
     tp, tn, fp, fn = _compute_confusion(preds, labels)
-    precision = tp / (tp + fp + 1e-8)
-    recall = tp / (tp + fn + 1e-8)
-    accuracy = (tp + tn) / (tp + tn + fp + fn + 1e-8)
-    f1 = 2 * precision * recall / (precision + recall + 1e-8)
+    total = tp + tn + fp + fn
+    precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
+    recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
+    accuracy = (tp + tn) / total if total > 0 else 0.0
+    f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
     metrics = {
         "precision": float(precision),
