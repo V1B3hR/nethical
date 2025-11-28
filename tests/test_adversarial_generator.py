@@ -5,6 +5,7 @@ Tests synthetic adversarial data generation for model hardening including:
 - Prompt injection attacks
 - Social engineering attempts
 - Obfuscated threats
+- Toxic/Unsafe content
 """
 
 import sys
@@ -39,8 +40,20 @@ class TestAdversarialGenerator:
         
         data = gen.generate_all(count_per_type=10)
         
-        # 3 types * 10 each = 30 samples
-        assert len(data) == 30
+        # 4 types * 10 each = 40 samples
+        assert len(data) == 40
+        
+        # All should be threats (label=1)
+        for sample in data:
+            assert sample["label"] == 1
+
+    def test_generate_method(self):
+        """Test generate method produces requested number of samples."""
+        gen = AdversarialGenerator(seed=42)
+        
+        data = gen.generate(num_samples=100)
+        
+        assert len(data) == 100
         
         # All should be threats (label=1)
         for sample in data:
@@ -79,12 +92,14 @@ class TestAdversarialGenerator:
             assert "violation_count" in features
             assert "severity_max" in features
             assert "context_risk" in features
+            assert "recency_score" in features
+            assert "frequency_score" in features
             
-            # Check feature values
+            # Check feature values are within expected ranges
             assert isinstance(features["text"], str)
-            assert features["violation_count"] == 0.0
-            assert features["severity_max"] == 0.1
-            assert features["context_risk"] == 0.9
+            assert 0.0 <= features["violation_count"] <= 0.2
+            assert 0.1 <= features["severity_max"] <= 0.3
+            assert 0.8 <= features["context_risk"] <= 1.0
 
     def test_generate_social_engineering(self):
         """Test social engineering sample generation."""
@@ -108,11 +123,11 @@ class TestAdversarialGenerator:
             assert "severity_max" in features
             assert "context_risk" in features
             
-            # Check feature values
+            # Check feature values are within expected ranges
             assert isinstance(features["text"], str)
-            assert features["violation_count"] == 0.1
-            assert features["severity_max"] == 0.8
-            assert features["context_risk"] == 0.8
+            assert 0.0 <= features["violation_count"] <= 0.2
+            assert 0.7 <= features["severity_max"] <= 0.9
+            assert 0.7 <= features["context_risk"] <= 0.9
 
     def test_generate_obfuscation(self):
         """Test obfuscation sample generation."""
@@ -128,6 +143,7 @@ class TestAdversarialGenerator:
             assert "metadata" in sample
             assert sample["label"] == 1
             assert sample["metadata"]["type"] == "adversarial_obfuscation"
+            assert "method" in sample["metadata"]
             
             # Check feature structure
             features = sample["features"]
@@ -136,34 +152,54 @@ class TestAdversarialGenerator:
             assert "severity_max" in features
             assert "context_risk" in features
             
-            # Check feature values - obfuscated text contains transforms
+            # Check feature values
             assert isinstance(features["text"], str)
             assert features["violation_count"] == 0.0
-            assert features["severity_max"] == 0.9
-            assert features["context_risk"] == 1.0
+            assert 0.8 <= features["severity_max"] <= 1.0
+            assert 0.9 <= features["context_risk"] <= 1.0
 
-    def test_obfuscation_transforms(self):
-        """Test that obfuscation applies leetspeak or spacing transforms."""
+    def test_generate_toxic_content(self):
+        """Test toxic content sample generation."""
         gen = AdversarialGenerator(seed=42)
         
-        # Generate many samples to test both transforms
-        data = gen.generate_obfuscation(20)
+        data = gen.generate_toxic_content(5)
         
-        leetspeak_found = False
-        spaced_found = False
+        assert len(data) == 5
         
         for sample in data:
-            text = sample["features"]["text"]
-            # Leetspeak uses digits
-            if any(c in text for c in "0134"):
-                leetspeak_found = True
-            # Spaced version has more spaces than original
-            if text.count(" ") > 2:
-                spaced_found = True
+            assert "features" in sample
+            assert "label" in sample
+            assert "metadata" in sample
+            assert sample["label"] == 1
+            assert sample["metadata"]["type"] == "adversarial_toxic_content"
+            
+            # Check feature structure
+            features = sample["features"]
+            assert "text" in features
+            assert "violation_count" in features
+            assert "severity_max" in features
+            assert "context_risk" in features
+            
+            # Check feature values - toxic content has high violation counts
+            assert isinstance(features["text"], str)
+            assert 0.7 <= features["violation_count"] <= 1.0
+            assert 0.9 <= features["severity_max"] <= 1.0
+            assert 0.9 <= features["context_risk"] <= 1.0
+
+    def test_obfuscation_transforms(self):
+        """Test that obfuscation applies multiple transforms."""
+        gen = AdversarialGenerator(seed=42)
         
-        # Both transforms should be represented
-        assert leetspeak_found, "Leetspeak transform not found in samples"
-        assert spaced_found, "Spaced transform not found in samples"
+        # Generate many samples to test all transforms
+        data = gen.generate_obfuscation(50)
+        
+        methods_found = set()
+        for sample in data:
+            methods_found.add(sample["metadata"]["method"])
+        
+        # All 4 methods should be represented
+        expected_methods = {"leetspeak", "spaced", "base64", "homoglyph"}
+        assert methods_found == expected_methods, f"Missing methods: {expected_methods - methods_found}"
 
     def test_prompt_injection_patterns(self):
         """Test that prompt injection uses expected attack patterns."""
@@ -175,7 +211,7 @@ class TestAdversarialGenerator:
         texts = [sample["features"]["text"].lower() for sample in data]
         
         # Check for presence of known patterns
-        pattern_keywords = ["ignore", "override", "dan", "admin", "developer", "safety"]
+        pattern_keywords = ["ignore", "override", "dan", "admin", "developer", "safety", "bypass"]
         found_patterns = set()
         for text in texts:
             for keyword in pattern_keywords:
@@ -194,7 +230,7 @@ class TestAdversarialGenerator:
         texts = [sample["features"]["text"].lower() for sample in data]
         
         # Check for presence of known patterns
-        pattern_keywords = ["urgent", "account", "money", "lottery", "tech support", "hr"]
+        pattern_keywords = ["urgent", "account", "password", "verify", "security", "payment", "action"]
         found_patterns = set()
         for text in texts:
             for keyword in pattern_keywords:
@@ -211,7 +247,9 @@ class TestAdversarialGenerator:
         assert gen.generate_prompt_injections(0) == []
         assert gen.generate_social_engineering(0) == []
         assert gen.generate_obfuscation(0) == []
+        assert gen.generate_toxic_content(0) == []
         assert gen.generate_all(0) == []
+        assert gen.generate(0) == []
 
     def test_large_count(self):
         """Test generation with large count."""
@@ -219,13 +257,32 @@ class TestAdversarialGenerator:
         
         data = gen.generate_all(count_per_type=100)
         
-        assert len(data) == 300
+        # 4 types * 100 each = 400 samples
+        assert len(data) == 400
         
         # All should be valid
         for sample in data:
             assert sample["label"] == 1
             assert "features" in sample
             assert "metadata" in sample
+
+    def test_generate_5000_samples(self):
+        """Test generating 5000 samples as specified in requirements."""
+        gen = AdversarialGenerator(seed=42)
+        
+        data = gen.generate(num_samples=5000)
+        
+        assert len(data) == 5000
+        
+        # Check type distribution (should be roughly equal)
+        type_counts = {}
+        for sample in data:
+            sample_type = sample["metadata"]["type"]
+            type_counts[sample_type] = type_counts.get(sample_type, 0) + 1
+        
+        # Each type should have roughly 1250 samples (5000/4)
+        for count in type_counts.values():
+            assert 1000 <= count <= 1500, f"Uneven distribution: {type_counts}"
 
 
 if __name__ == "__main__":
