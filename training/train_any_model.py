@@ -132,8 +132,12 @@ def load_datasets_from_file(file_path: Optional[Path] = None) -> List[str]:
                         # Remove any trailing path components (e.g., /discussion/123)
                         slug_parts = parts[1].split("/")
                         if len(slug_parts) >= 2:
-                            slug = f"{slug_parts[0]}/{slug_parts[1]}"
-                            datasets.append(slug)
+                            owner = slug_parts[0].strip()
+                            dataset_name = slug_parts[1].strip()
+                            # Validate both parts are non-empty strings
+                            if owner and dataset_name:
+                                slug = f"{owner}/{dataset_name}"
+                                datasets.append(slug)
         logging.info("Loaded %d dataset slugs from %s", len(datasets), file_path)
     except Exception as e:
         logging.warning("Failed to read datasets file %s: %s", file_path, e)
