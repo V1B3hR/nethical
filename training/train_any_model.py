@@ -80,7 +80,7 @@ except Exception:
 try:
     from nethical.mlops.adversarial import AdversarialGenerator
     ADVERSARIAL_AVAILABLE = True
-except ImportError:
+except Exception:
     ADVERSARIAL_AVAILABLE = False
 
 

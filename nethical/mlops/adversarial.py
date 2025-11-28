@@ -94,7 +94,7 @@ class AdversarialGenerator:
 
     def generate_obfuscation(self, count: int) -> List[Dict[str, Any]]:
         """
-        Generates obfuscated threats (Base64, Hex, Leetspeak).
+        Generates obfuscated threats (Leetspeak, character spacing).
         Label: 1 (Threat)
         """
         base_threats = ["drop database", "rm -rf /", "steal keys", "encrypt files"]
