@@ -1,32 +1,154 @@
-# End-to-End Real Data Training - Quick Reference
+# End-to-End ML Classifier Training Guide
 
 ## Overview
 
-The end-to-end training pipeline downloads, processes, and trains the BaselineMLClassifier using real-world security datasets from Kaggle.
+This guide covers the training workflow for all three core MLops classifier modules in the Nethical framework:
+
+1. **BaselineMLClassifier**: Lightweight heuristic-based classifier for ethical violation detection
+2. **AnomalyMLClassifier**: N-gram based anomaly detector for action sequence analysis
+3. **CorrelationMLClassifier**: Multi-agent correlation pattern detector
+
+All classifiers can be trained using the unified `training/train_any_model.py` script with optional audit logging, governance validation, and ethical drift tracking.
+
+## Classifier Modules
+
+### 1. BaselineMLClassifier
+
+**Use case**: Detecting ethical violations based on numeric features
+
+**Location**: `nethical/mlops/baseline.py`
+
+**Features analyzed**:
+- `violation_count`: Number of violations detected
+- `severity_max`: Maximum severity level
+- `recency_score`: How recent the event is
+- `frequency_score`: Frequency of similar events
+- `context_risk`: Contextual risk factors
+
+**Training command**:
+```bash
+# Heuristic mode (raw features)
+python training/train_any_model.py --model-type heuristic --num-samples 5000
+
+# Logistic mode (normalized features)
+python training/train_any_model.py --model-type logistic --num-samples 5000
+
+# With governance and audit
+python training/train_any_model.py --model-type heuristic --enable-governance --enable-audit
+```
+
+**Example usage**:
+```python
+from nethical.mlops.baseline import BaselineMLClassifier
+
+clf = BaselineMLClassifier.load('models/current/heuristic_model.json')
+result = clf.predict({
+    'violation_count': 0.7,
+    'severity_max': 0.8,
+    'recency_score': 0.5,
+    'frequency_score': 0.4,
+    'context_risk': 0.6
+})
+print(f"Label: {result['label']}, Score: {result['score']:.3f}")
+```
+
+### 2. AnomalyMLClassifier
+
+**Use case**: Detecting anomalous patterns in action sequences
+
+**Location**: `nethical/mlops/anomaly_classifier.py`
+
+**Features analyzed**:
+- N-gram patterns (trigrams by default)
+- Action frequency distributions
+- Sequence entropy
+- Pattern diversity
+
+**Training command**:
+```bash
+# Train anomaly detector
+python training/train_any_model.py --model-type anomaly --num-samples 5000
+
+# With governance and drift tracking
+python training/train_any_model.py --model-type anomaly --enable-governance --enable-drift-tracking
+```
+
+**Example usage**:
+```python
+from nethical.mlops.anomaly_classifier import AnomalyMLClassifier
+
+clf = AnomalyMLClassifier.load('models/current/anomaly_model.json')
+result = clf.predict({'sequence': ['read', 'process', 'write']})
+print(f"Anomalous: {result['label'] == 1}, Score: {result['score']:.3f}")
+```
+
+### 3. CorrelationMLClassifier
+
+**Use case**: Detecting coordinated multi-agent attack patterns
+
+**Location**: `nethical/mlops/correlation_classifier.py`
+
+**Features analyzed**:
+- `agent_count`: Number of unique agents involved
+- `action_rate`: Rate of actions per time unit
+- `entropy_variance`: Variance in action entropy
+- `time_correlation`: Temporal correlation between agents
+- `payload_similarity`: Similarity of payloads across agents
+
+**Training command**:
+```bash
+# Train correlation detector
+python training/train_any_model.py --model-type correlation --num-samples 5000
+
+# With full observability
+python training/train_any_model.py --model-type correlation --enable-audit --enable-governance --enable-drift-tracking
+```
+
+**Example usage**:
+```python
+from nethical.mlops.correlation_classifier import CorrelationMLClassifier
+
+clf = CorrelationMLClassifier.load('models/current/correlation_model.json')
+result = clf.predict({
+    'agent_count': 8,
+    'action_rate': 45,
+    'entropy_variance': 0.6,
+    'time_correlation': 0.8,
+    'payload_similarity': 0.75
+})
+print(f"Pattern detected: {result['label'] == 1}, Score: {result['score']:.3f}")
+```
 
 ## Quick Start
 
-### Option 1: Using train_model.py (Recommended for specific datasets)
+### Option 1: Using train_any_model.py (Recommended)
 
-The `train_model.py` script now uses real-world data by default from these two datasets:
-- https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai
-- https://www.kaggle.com/datasets/xontoloyo/security-breachhh
+The `training/train_any_model.py` script is the recommended unified training interface:
 
 ```bash
-# Train with real datasets (downloads and processes automatically)
-python scripts/train_model.py
+# Train BaselineMLClassifier (heuristic mode)
+python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 5000
 
-# Train and test (complete workflow)
-python scripts/train_model.py all
-python scripts/train_model.py --run-all
+# Train AnomalyMLClassifier
+python training/train_any_model.py --model-type anomaly --epochs 10 --num-samples 5000
+
+# Train CorrelationMLClassifier
+python training/train_any_model.py --model-type correlation --epochs 10 --num-samples 5000
+
+# With full observability features
+python training/train_any_model.py \
+    --model-type heuristic \
+    --num-samples 5000 \
+    --enable-audit \
+    --enable-governance \
+    --enable-drift-tracking \
+    --cohort-id production_v1
 ```
 
-**Note:** If Kaggle API is not available, manually download the CSV files and place them in `data/external/`.
-
-### Option 2: Using baseline_orchestrator.py (For all datasets)
+### Option 2: Using baseline_orchestrator.py (For Kaggle datasets)
 
 ```bash
-# Full pipeline
+# Full pipeline with Kaggle datasets
 python scripts/baseline_orchestrator.py
 
 # Or step-by-step
@@ -35,88 +157,182 @@ python scripts/baseline_orchestrator.py --process-only  # Process CSV files
 python scripts/baseline_orchestrator.py --train-only    # Train model
 ```
 
-### Option 3: Using train_any_model.py (With Audit Logging and Governance)
+## Dataset Setup
 
-The `training/train_any_model.py` script supports both Merkle audit logging and governance validation:
+### Kaggle Datasets
+
+All datasets are listed in `datasets/datasets`. The training pipeline supports automatic download:
 
 ```bash
-# Train with audit logging enabled
-python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000 --enable-audit
+# Automatic download (requires Kaggle API)
+python training/train_any_model.py --model-type heuristic --num-samples 10000
 
-# Train with governance validation enabled
-python training/train_any_model.py --model-type logistic --epochs 20 --num-samples 2000 --enable-governance
-
-# Train with both audit logging and governance validation
-python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000 --enable-audit --enable-governance
-
-# Customize audit log path
-python training/train_any_model.py --model-type logistic --epochs 20 --enable-audit --audit-path custom_audit_logs
-
-# Train without audit logging or governance (default)
-python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000
+# Skip download (use synthetic data or existing files)
+python training/train_any_model.py --model-type heuristic --num-samples 10000 --no-download
 ```
 
-#### Audit Logging Features
+**Kaggle API Setup**:
+1. Get credentials from https://www.kaggle.com/account
+2. Save to `~/.kaggle/kaggle.json`
+3. Set permissions: `chmod 600 ~/.kaggle/kaggle.json`
 
-When `--enable-audit` is specified:
-- Creates an immutable audit trail using Merkle trees
-- Logs key training events: start, data loading, split, training completion, metrics, model save
-- Generates a Merkle root hash for cryptographic verification
-- Saves audit logs in structured JSON format
-- Creates a summary file with Merkle root and metrics
+**Manual Download**:
+1. Download CSV files from Kaggle
+2. Place in `data/external/` directory
+3. Run training script
 
-The audit logs can be used for:
-- Compliance and regulatory requirements
-- Training reproducibility verification
-- Detecting tampering with training records
-- Tracking model lineage and provenance
+### Synthetic Data Fallback
 
-#### Governance Validation Features
+When real datasets are unavailable, the training pipeline automatically generates synthetic data:
 
-When `--enable-governance` is specified:
-- Validates training data samples for safety violations (toxic content, harmful patterns, etc.)
-- Checks model predictions during validation for safety issues
-- Reports governance violations and decisions
-- Includes governance metrics in the training summary and audit logs
+- **BaselineMLClassifier**: Random features with rule-based labels
+- **AnomalyMLClassifier**: Normal vs. anomalous action sequences
+- **CorrelationMLClassifier**: Normal vs. coordinated activity patterns
 
-The governance system detects:
-- Ethical violations (harmful content, bias, discrimination)
-- Safety violations (dangerous commands, unsafe domains)
-- Manipulation patterns (social engineering, phishing, emotional leverage)
-- Dark patterns (NLP manipulation, weaponized empathy)
+## Feature Preprocessing
+
+### BaselineMLClassifier Modes
+
+1. **heuristic** (`--model-type heuristic`): Raw numeric features, no scaling
+2. **logistic** (`--model-type logistic`): Min-max normalization to [0,1]
+3. **simple_transformer** (`--model-type simple_transformer`): Features + text tokenization
+
+### AnomalyMLClassifier
+
+Input: Action sequences as list of strings
+```python
+{'sequence': ['read', 'process', 'write', 'logout']}
+```
+
+### CorrelationMLClassifier
+
+Input: Multi-agent activity metrics
+```python
+{
+    'agent_count': 5,
+    'action_rate': 25.0,
+    'entropy_variance': 0.4,
+    'time_correlation': 0.6,
+    'payload_similarity': 0.5
+}
+```
+
+## Audit Logging
+
+Enable Merkle tree-based audit logging for compliance and reproducibility:
+
+```bash
+python training/train_any_model.py \
+    --model-type heuristic \
+    --enable-audit \
+    --audit-path training_audit_logs
+```
+
+**Logged Events**:
+- Training start (config, parameters)
+- Data loading (sample count)
+- Data split (train/validation sizes)
+- Training completion (duration)
+- Validation metrics (accuracy, precision, recall, F1)
+- Model save (paths)
+- Governance validations (if enabled)
+
+**Audit Summary** (`training_summary.json`):
+```json
+{
+    "merkle_root": "abc123...",
+    "model_type": "heuristic",
+    "promoted": true,
+    "metrics": {"accuracy": 0.92, "precision": 0.90, ...},
+    "governance": {"enabled": true, "data_violations": 0, ...}
+}
+```
+
+## Governance Validation
+
+Enable real-time safety and ethical validation during training:
+
+```bash
+python training/train_any_model.py \
+    --model-type heuristic \
+    --enable-governance \
+    --gov-data-samples 100 \
+    --gov-pred-samples 50
+```
+
+**Detected Violations**:
+- Ethical violations (harmful content, bias)
+- Safety violations (dangerous commands)
+- Manipulation patterns (social engineering)
 - Privacy issues (PII exposure)
-- Security issues (prompt injection, adversarial attacks)
+- Security issues (prompt injection)
 
-Governance validation provides:
-- Real-time safety checks during training
-- Detailed violation reports with confidence scores
-- Decision tracking (allow, block, quarantine, etc.)
-- Integration with audit logging for comprehensive compliance
-
-**Example Output:**
-```
-[INFO] Governance validation enabled
-[INFO] Running governance validation on training data samples...
-[WARN] Governance found 5 problematic data samples
-[INFO] Running governance validation on model predictions...
-[INFO] Governance validation passed for 50 predictions
-
-[INFO] Governance Validation Summary:
-  Data samples validated: 100
-  Data violations found: 5
-  Predictions validated: 50
-  Prediction violations found: 0
+**Fail-Fast Mode**:
+```bash
+python training/train_any_model.py \
+    --model-type heuristic \
+    --enable-governance \
+    --gov-fail-on-violations
 ```
 
-## Dataset Sources
+## Model Selection & Promotion
 
-All datasets are listed in `datasets/datasets`. See README.md for the complete list.
+Models are evaluated against promotion gate criteria:
 
-## Next Steps
+- **Max ECE (Expected Calibration Error)**: ≤ 0.08
+- **Min Accuracy**: ≥ 0.85
 
-1. Review validation metrics
-2. Test model with scripts/test_model.py
-3. Deploy to Phase 5 shadow mode
-4. Monitor performance with Phase 7 anomaly detection
+**Customize thresholds**:
+```bash
+python training/train_any_model.py \
+    --model-type heuristic \
+    --promotion-max-ece 0.10 \
+    --promotion-min-accuracy 0.80
+```
 
-See scripts/README.md and README.md for detailed documentation.
+**Model paths**:
+- Promoted: `models/current/<model_type>_model_*.json`
+- Candidates: `models/candidates/<model_type>_model_*.json`
+
+## Example Training Scripts
+
+See `examples/training/` for complete examples:
+
+- `train_baseline_classifier.py`: BaselineMLClassifier training demo
+- `train_anomaly_detector.py`: AnomalyMLClassifier training demo
+- `correlation_model_demo.py`: CorrelationMLClassifier training demo
+- `demo_governance_training.py`: Training with governance validation
+- `train_with_drift_tracking.py`: Training with ethical drift tracking
+- `real_data_training_demo.py`: Real data training workflow
+
+## Tests
+
+Validate classifier functionality:
+
+```bash
+# Test all classifiers
+python -m pytest tests/test_anomaly_classifier.py -v
+python -m pytest tests/test_correlation_classifier.py -v
+
+# Test training pipeline
+python -m pytest tests/test_train_audit_logging.py -v
+python -m pytest tests/test_train_governance.py -v
+python -m pytest tests/test_train_drift_tracking.py -v
+```
+
+## Related Documentation
+
+- **training/README.md**: Detailed training script documentation
+- **scripts/README.md**: Script usage and workflow guide
+- **docs/implementation/TRAIN_MODEL_REAL_DATA_SUMMARY.md**: Real data training implementation
+- **docs/AUDIT_LOGGING_GUIDE.md**: Audit logging details
+- **docs/implementation/GOVERNANCE_TRAINING_IMPLEMENTATION.md**: Governance integration
+
+## Next Steps After Training
+
+1. Review validation metrics in model JSON files
+2. Test models with `scripts/test_model.py`
+3. Deploy to Phase 5 shadow mode (passive inference)
+4. Promote to Phase 6 blended enforcement (active decisions)
+5. Monitor with Phase 7 anomaly detection
+6. Track drift with ethical drift reporting
