@@ -9,15 +9,21 @@ Scans datasets in datasets/datasets or data/external to provide intelligence on:
 
 Does NOT remove toxic data. We need it for the models to learn.
 """
+from __future__ import annotations
 
 import argparse
 import logging
 from pathlib import Path
-import sys
-from typing import Dict, List, Optional, Set, Tuple
+from typing import TYPE_CHECKING
+
+if TYPE_CHECKING:
+    from typing import Optional
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | [RECON] %(message)s")
+
+# Threshold for minimum threat percentage to avoid adversarial training recommendation
+MIN_THREAT_RATIO = 0.2
 
 # Expected features for different model types
 EXPECTED_FEATURES = {
@@ -65,13 +71,12 @@ def discover_feature_columns(df) -> Set[str]:
     return feature_cols
 
 
-def check_missing_features(available_features: Set[str], model_type: str = "heuristic") -> Set[str]:
+def check_missing_features(available_features: set, model_type: str = "heuristic") -> set:
     """Check which expected features are missing."""
     expected = EXPECTED_FEATURES.get(model_type, EXPECTED_FEATURES["heuristic"])
     # Normalize to lowercase for comparison
     available_lower = {f.lower() for f in available_features}
-    expected_lower = {f.lower() for f in expected}
-    return expected - {f for f in expected if f.lower() in available_lower}
+    return {f for f in expected if f.lower() not in available_lower}
 
 
 def calculate_balance_ratio(threats: int, safe: int) -> Tuple[float, str]:
@@ -272,9 +277,9 @@ def inspect_datasets(
             f"Dataset is {status}. Consider oversampling threats or using class weights."
         )
 
-    if check_adversarial and report["total_threats"] < report["total_samples"] * 0.2:
+    if check_adversarial and report["total_threats"] < report["total_samples"] * MIN_THREAT_RATIO:
         report["recommendations"].append(
-            "Less than 20% threats. Adversarial training recommended for robust models."
+            f"Less than {int(MIN_THREAT_RATIO * 100)}% threats. Adversarial training recommended for robust models."
         )
 
     # Print summary

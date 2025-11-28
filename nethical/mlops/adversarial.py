@@ -208,9 +208,11 @@ class AdversarialGenerator:
             Obfuscated text.
         """
         if method == "leetspeak":
-            return text.replace("e", "3").replace("a", "4").replace("o", "0").replace("i", "1").replace("s", "5").replace("t", "7")
+            # Use translation table for efficient character substitution
+            leet_table = str.maketrans({'e': '3', 'a': '4', 'o': '0', 'i': '1', 's': '5', 't': '7'})
+            return text.translate(leet_table)
         elif method == "spaced":
-            return " ".join(list(text))
+            return " ".join(text)
         elif method == "base64":
             return base64.b64encode(text.encode()).decode()
         elif method == "homoglyph":
