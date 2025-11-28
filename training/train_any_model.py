@@ -87,6 +87,60 @@ except Exception:
 # Default external data directory
 DATA_EXTERNAL_DIR = Path("data/external")
 
+# Default path to the datasets file
+DATASETS_FILE_PATH = Path(__file__).parent.parent / "datasets" / "datasets"
+
+
+def load_datasets_from_file(file_path: Optional[Path] = None) -> List[str]:
+    """
+    Load Kaggle dataset slugs from the datasets file.
+    
+    Parses URLs like https://www.kaggle.com/datasets/owner/dataset-name
+    and extracts the slug (owner/dataset-name).
+    
+    Gracefully ignores lines that are not dataset URLs (e.g., discussions, code, competitions).
+    
+    Args:
+        file_path: Path to the datasets file. Defaults to DATASETS_FILE_PATH.
+        
+    Returns:
+        List of Kaggle dataset slugs extracted from the file.
+        Returns an empty list if the file doesn't exist or contains no valid dataset URLs.
+    """
+    if file_path is None:
+        file_path = DATASETS_FILE_PATH
+    
+    if not file_path.exists():
+        logging.debug("Datasets file not found at %s", file_path)
+        return []
+    
+    datasets: List[str] = []
+    try:
+        with open(file_path, "r", encoding="utf-8") as f:
+            for line in f:
+                line = line.strip()
+                if not line:
+                    continue
+                # Only process Kaggle dataset URLs
+                # Format: https://www.kaggle.com/datasets/{owner}/{dataset-name}
+                if "/datasets/" in line and line.startswith("https://www.kaggle.com/"):
+                    # Extract the slug from the URL
+                    # Split by /datasets/ and take the part after it
+                    parts = line.split("/datasets/")
+                    if len(parts) >= 2:
+                        # The slug is everything after /datasets/
+                        # Remove any trailing path components (e.g., /discussion/123)
+                        slug_parts = parts[1].split("/")
+                        if len(slug_parts) >= 2:
+                            slug = f"{slug_parts[0]}/{slug_parts[1]}"
+                            datasets.append(slug)
+        logging.info("Loaded %d dataset slugs from %s", len(datasets), file_path)
+    except Exception as e:
+        logging.warning("Failed to read datasets file %s: %s", file_path, e)
+        return []
+    
+    return datasets
+
 
 def configure_logging(verbosity: int = 1) -> None:
     """Configure application logging."""
@@ -778,8 +832,9 @@ def main():
     # Reproducibility
     set_seed(args.seed)
 
-    # Datasets to download
-    default_kaggle_datasets = [
+    # Datasets to download - try to load from file first, then use defaults
+    datasets_from_file = load_datasets_from_file()
+    default_kaggle_datasets = datasets_from_file if datasets_from_file else [
         "teamincribo/cyber-security-attacks",
         "Microsoft/microsoft-security-incident-prediction",
         "kmldas/data-ethics-in-data-science-analytics-ml-and-ai",
