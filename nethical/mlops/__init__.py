@@ -9,6 +9,7 @@ This module provides MLOps functionality including:
 - Baseline classifier for ML training
 - Anomaly classifier for anomaly detection
 - Correlation classifier for correlation pattern detection
+- Adversarial generator for hard negative training
 """
 
 __all__ = [
@@ -19,4 +20,5 @@ __all__ = [
     "baseline",
     "anomaly_classifier",
     "correlation_classifier",
+    "adversarial",
 ]

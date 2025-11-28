@@ -76,6 +76,13 @@ try:
 except Exception:
     GOVERNANCE_AVAILABLE = False
 
+# Import Adversarial Generator for hard negative training
+try:
+    from nethical.mlops.adversarial import AdversarialGenerator
+    ADVERSARIAL_AVAILABLE = True
+except Exception:
+    ADVERSARIAL_AVAILABLE = False
+
 
 # Default external data directory
 DATA_EXTERNAL_DIR = Path("data/external")
@@ -235,7 +242,10 @@ def preprocess_for_logistic(data: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
     # Preserve key order by extracting keys from first sample
     if not data:
         return data
-    keys = list(data[0]["features"].keys())
+    # Filter to only numeric features (exclude strings like 'text')
+    keys = [k for k, v in data[0]["features"].items() if isinstance(v, (int, float))]
+    if not keys:
+        return data
     arr = np.array([[float(sample["features"].get(k, 0.0)) for k in keys] for sample in data], dtype=float)
     mins, maxs = arr.min(axis=0), arr.max(axis=0)
     denom = (maxs - mins) + 1e-8
@@ -697,6 +707,10 @@ def main():
     parser.add_argument("--gov-pred-samples", type=int, default=50, help="Number of prediction samples to validate with governance")
     parser.add_argument("--gov-fail-on-violations", action="store_true", help="Abort training if governance finds any violations")
 
+    # Adversarial training
+    parser.add_argument("--include-adversarial", action="store_true", help="Mix in synthetic adversarial threats (Hard Negatives)")
+    parser.add_argument("--adversarial-count", type=int, default=200, help="Number of adversarial samples to generate per type")
+
     # Promotion gate
     parser.add_argument("--promotion-max-ece", type=float, default=0.08, help="Max ECE to pass promotion gate")
     parser.add_argument("--promotion-min-accuracy", type=float, default=0.85, help="Min accuracy to pass promotion gate")
@@ -801,6 +815,29 @@ def main():
             'num_samples': len(raw_data),
             'timestamp': datetime.now(timezone.utc).isoformat()
         })
+
+    # Adversarial Injection
+    if args.include_adversarial:
+        if ADVERSARIAL_AVAILABLE:
+            logging.info("Adversarial Training Enabled: Generating %d threats per type...", args.adversarial_count)
+            adv_gen = AdversarialGenerator(seed=args.seed)
+            adv_data = adv_gen.generate_all(count_per_type=args.adversarial_count)
+
+            # Log audit event for adversarial injection
+            if merkle_anchor:
+                merkle_anchor.add_event({
+                    'event_type': 'adversarial_injection',
+                    'count': len(adv_data),
+                    'timestamp': datetime.now(timezone.utc).isoformat()
+                })
+
+            # Mix into raw_data
+            raw_data.extend(adv_data)
+            # Shuffle to mix threats with normal data
+            random.shuffle(raw_data)
+            logging.info("Added %d adversarial samples. Total dataset size: %d", len(adv_data), len(raw_data))
+        else:
+            logging.warning("Adversarial generator requested but module not found.")
 
     # Governance validation on data
     governance_violations = []
