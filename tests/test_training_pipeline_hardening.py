@@ -78,7 +78,7 @@ class TestComputeMetricsZeroDenominator:
         
         # precision = tp / (tp + fp) = 0 / (0 + 5) = 0.0
         assert metrics["precision"] == 0.0
-        # recall = tp / (tp + fn) = 0 / (0 + 0) = 0.0 (no false negatives because no true positives)
+        # recall = tp / (tp + fn) = 0 / (0 + 0) = 0.0 (fn=0 because no positive labels exist to miss)
         assert metrics["recall"] == 0.0
         # accuracy = 0 / 5 = 0.0
         assert metrics["accuracy"] == 0.0
