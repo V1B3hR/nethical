@@ -1,41 +1,28 @@
-name: Nethical Commando Training
+name: Commando Training Pipeline
 
 on:
   push:
-    branches: [ "main", "master" ]
+    branches: [ "main" ]
   pull_request:
-    branches: [ "main", "master" ]
-  workflow_dispatch:
-
-permissions:
-  contents: read
+    branches: [ "main" ]
 
 jobs:
   train-commandos:
     runs-on: ubuntu-latest
-    
+
     steps:
     - uses: actions/checkout@v3
-    
-    - name: Set up Python
+
+    - name: Set up Python 3.10
       uses: actions/setup-python@v4
       with:
         python-version: '3.10'
-        
+
     - name: Install dependencies
-      run: |
-        python -m pip install --upgrade pip
-        pip install numpy pandas
-        # Attempt to install torch if needed, but keep it light for CI demo
-        # pip install torch scikit-learn
-        if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
-        
-    - name: Make script executable
+      run: pip install -r requirements.txt
+
+    - name: Grant execution permissions to training script
       run: chmod +x scripts/train_commandos.sh
-      
-    - name: 'Run Commando Training (Mission: Heuristic)'
-      # Running a quick smoke test with fewer samples to save CI time
-      run: ./scripts/train_commandos.sh --model-type heuristic --num-samples 500 --epochs 1
-      
-    - name: 'Run Commando Training (Mission: Anomaly)'
-      run: ./scripts/train_commandos.sh --model-type anomaly --num-samples 500 --epochs 1
+
+    - name: Run training script
+      run: ./scripts/train_commandos.sh
