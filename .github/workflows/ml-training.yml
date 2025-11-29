@@ -22,6 +22,11 @@ jobs:
           pip install --upgrade pip
           pip install numpy pandas kaggle
 
+      - name: Create output directories
+        run: |
+          mkdir -p models
+          mkdir -p training_drift_reports
+
       - name: Run training script
         run: |
           python training/train_any_model.py \
@@ -31,7 +36,8 @@ jobs:
             --num-samples 20000 \
             --include-adversarial \
             --enable-governance \
-            --enable-drift-tracking
+            --enable-drift-tracking \
+            --no-download
 
       - name: Upload model artifacts
         uses: actions/upload-artifact@v4
