@@ -10,8 +10,10 @@ Key improvements:
 - Enhanced governance validation workflow (configurable sample sizes and failure policy).
 - Optional ethical drift tracking + audit logging with Merkle anchors.
 - Reproducibility, richer CLI, and better error handling/logging.
+- Train all model types at once with --model-type all.
 
 Usage:
+    # Train a single model type:
     python train_any_model.py \
         --model-type logistic \
         --epochs 30 \
@@ -23,10 +25,17 @@ Usage:
         --promotion-min-accuracy 0.85 \
         --promotion-max-ece 0.08 \
         --enable-governance --enable-audit --enable-drift-tracking
+    
+    # Train all model types:
+    python train_any_model.py \
+        --model-type all \
+        --epochs 10 \
+        --num-samples 2000 \
+        --enable-audit
 
 Optional Kaggle auth sources (priority order):
-1) CLI: --andrzejmatewski --406272cc0df9e65d6d7fa69ff136bf5c
-2) Env vars: andrzejmatewski, 406272cc0df9e65d6d7fa69ff136bf5c
+1) CLI: --kaggle-username <user> --kaggle-key <key>
+2) Env vars: KAGGLE_USERNAME, KAGGLE_KEY
 3) Existing file: ~/.kaggle/kaggle.json
 
 Dependencies: kaggle (optional), pandas (optional), numpy (required)
@@ -254,6 +263,16 @@ def set_seed(seed: int = 42) -> None:
 
 
 # ----------- Model Registry & Preprocessing -----------
+
+# List of all available model types
+ALL_MODEL_TYPES = ["heuristic", "logistic", "simple_transformer", "anomaly", "correlation"]
+
+
+def get_all_model_types() -> List[str]:
+    """Return a list of all available model types."""
+    return ALL_MODEL_TYPES.copy()
+
+
 def get_model_class(model_type: str):
     """
     Registry mapping Nethical model types to (ModelClass, preprocess_fn).
@@ -729,10 +748,316 @@ def _extract_label_and_prob(pred: Any) -> Tuple[int, Optional[float]]:
         return 0, None
 
 
+def train_single_model(
+    model_type: str,
+    args,
+    merkle_anchor=None,
+    drift_reporter=None,
+    governance=None,
+    datasets_to_download: Optional[List[str]] = None,
+    skip_download: bool = False
+) -> Dict[str, Any]:
+    """
+    Train a single model type with the given arguments and optional logging/governance.
+    
+    Returns a dictionary with training results including metrics and paths.
+    """
+    result = {
+        'model_type': model_type,
+        'success': False,
+        'metrics': {},
+        'promoted': False,
+        'model_path': None,
+        'metrics_path': None,
+        'error': None
+    }
+    
+    try:
+        cohort_id = args.cohort_id or f"{model_type}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        
+        # Audit: training start for this model
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'training_start',
+                'model_type': model_type,
+                'epochs': args.epochs,
+                'batch_size': args.batch_size,
+                'num_samples': args.num_samples,
+                'seed': args.seed,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            })
+        
+        # Load data for this specific model type
+        raw_data = load_data(num_samples=args.num_samples, model_type=model_type)
+        
+        # Audit: data loaded
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'data_loaded',
+                'model_type': model_type,
+                'num_samples': len(raw_data),
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            })
+        
+        # Adversarial Injection
+        if args.include_adversarial:
+            if ADVERSARIAL_AVAILABLE:
+                logging.info("[%s] Adversarial Training Enabled: Generating %d threats per type...", 
+                           model_type, args.adversarial_count)
+                adv_gen = AdversarialGenerator(seed=args.seed)
+                adv_data = adv_gen.generate_all(count_per_type=args.adversarial_count)
+                
+                if merkle_anchor:
+                    merkle_anchor.add_event({
+                        'event_type': 'adversarial_injection',
+                        'model_type': model_type,
+                        'count': len(adv_data),
+                        'timestamp': datetime.now(timezone.utc).isoformat()
+                    })
+                
+                raw_data.extend(adv_data)
+                random.shuffle(raw_data)
+                logging.info("[%s] Added %d adversarial samples. Total dataset size: %d", 
+                           model_type, len(adv_data), len(raw_data))
+            else:
+                logging.warning("[%s] Adversarial generator requested but module not found.", model_type)
+        
+        # Governance validation on data
+        governance_violations = []
+        if governance:
+            logging.info("[%s] Running governance validation on training data samples...", model_type)
+            sample_size = min(max(args.gov_data_samples, 0), len(raw_data))
+            for i, sample in enumerate(raw_data[:sample_size]):
+                try:
+                    content = json.dumps(sample.get('features', {}), ensure_ascii=False)
+                    judgment = run_governance_validation(
+                        governance,
+                        content,
+                        ActionType.DATA_ACCESS,
+                        action_id=f"data_sample_{model_type}_{i}",
+                        agent_id="training_data_loader"
+                    )
+                    if judgment.decision in [Decision.BLOCK, Decision.QUARANTINE]:
+                        governance_violations.append({
+                            'sample_id': i,
+                            'decision': judgment.decision.value,
+                            'violations': len(judgment.violations)
+                        })
+                except Exception as e:
+                    logging.warning("[%s] Error validating sample %d: %s", model_type, i, e)
+            if governance_violations:
+                logging.warning("[%s] Governance found %d problematic data samples", 
+                              model_type, len(governance_violations))
+                if merkle_anchor:
+                    merkle_anchor.add_event({
+                        'event_type': 'governance_data_validation',
+                        'model_type': model_type,
+                        'samples_checked': sample_size,
+                        'violations_found': len(governance_violations),
+                        'timestamp': datetime.now(timezone.utc).isoformat()
+                    })
+                if args.gov_fail_on_violations:
+                    result['error'] = "Governance violations in data (fail-fast enabled)"
+                    return result
+            else:
+                logging.info("[%s] Governance validation passed for %d data samples", model_type, sample_size)
+        
+        # Build model + preprocessing
+        ModelClass, preprocess_fn = get_model_class(model_type)
+        logging.info("[%s] Preprocessing data...", model_type)
+        processed_data = preprocess_fn(raw_data)
+        
+        # Split data
+        train_data, val_data = split_data(
+            processed_data,
+            train_ratio=args.train_ratio,
+            split_strategy=args.split_strategy,
+            seed=args.seed
+        )
+        
+        # Audit: data split
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'data_split',
+                'model_type': model_type,
+                'train_samples': len(train_data),
+                'val_samples': len(val_data),
+                'split_strategy': args.split_strategy,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            })
+        
+        # Train model
+        model = ModelClass()
+        logging.info("[%s] Training model for %d epoch(s), batch size %d...", 
+                    model_type, args.epochs, args.batch_size)
+        training_start_time = datetime.now(timezone.utc)
+        model.train(train_data)
+        training_end_time = datetime.now(timezone.utc)
+        
+        # Audit: training completed
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'training_completed',
+                'model_type': model_type,
+                'epochs': args.epochs,
+                'training_duration_seconds': (training_end_time - training_start_time).total_seconds(),
+                'timestamp': training_end_time.isoformat()
+            })
+        
+        # Validate
+        preds: List[int] = []
+        probs: List[Optional[float]] = []
+        for sample in val_data:
+            pred_raw = model.predict(sample['features'])
+            label, prob = _extract_label_and_prob(pred_raw)
+            preds.append(label)
+            probs.append(prob)
+        
+        labels = [int(sample['label']) for sample in val_data]
+        probs_all = None
+        if all(p is not None for p in probs) and len(probs) == len(labels):
+            probs_all = [float(p) for p in probs]
+        
+        metrics = compute_metrics(preds, labels, probs=probs_all)
+        result['metrics'] = metrics
+        
+        logging.info("[%s] Validation Metrics:", model_type)
+        for k in sorted(metrics.keys()):
+            v = metrics[k]
+            logging.info("  %s: %.4f", k, v if isinstance(v, (int, float)) and not math.isnan(v) else float('nan'))
+        
+        # Audit: validation metrics
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'validation_metrics',
+                'model_type': model_type,
+                'metrics': metrics,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            })
+        
+        # Governance validation on predictions
+        prediction_violations = []
+        if governance:
+            logging.info("[%s] Running governance validation on model predictions...", model_type)
+            sample_size = min(max(args.gov_pred_samples, 0), len(val_data))
+            for i in range(sample_size):
+                try:
+                    pred = preds[i]
+                    sample = val_data[i]
+                    content = f"Model prediction: {pred} for features {json.dumps(sample.get('features', {}), ensure_ascii=False)}"
+                    judgment = run_governance_validation(
+                        governance,
+                        content,
+                        ActionType.MODEL_UPDATE,
+                        action_id=f"prediction_{model_type}_{i}",
+                        agent_id=f"model_{model_type}"
+                    )
+                    if judgment.decision in [Decision.BLOCK, Decision.QUARANTINE]:
+                        prediction_violations.append({
+                            'prediction_id': i,
+                            'decision': judgment.decision.value,
+                            'violations': len(judgment.violations)
+                        })
+                except Exception as e:
+                    logging.warning("[%s] Error validating prediction %d: %s", model_type, i, e)
+            if prediction_violations:
+                logging.warning("[%s] Governance found %d problematic predictions", 
+                              model_type, len(prediction_violations))
+                if merkle_anchor:
+                    merkle_anchor.add_event({
+                        'event_type': 'governance_prediction_validation',
+                        'model_type': model_type,
+                        'predictions_checked': sample_size,
+                        'violations_found': len(prediction_violations),
+                        'timestamp': datetime.now(timezone.utc).isoformat()
+                    })
+                if args.gov_fail_on_violations:
+                    result['error'] = "Governance violations in predictions (fail-fast enabled)"
+                    return result
+            else:
+                logging.info("[%s] Governance validation passed for %d predictions", model_type, sample_size)
+        
+        # Drift tracking
+        if drift_reporter:
+            risk_score = 1.0 - float(metrics.get('accuracy', 0.0))
+            try:
+                drift_reporter.track_action(agent_id=f"model_{model_type}", cohort=cohort_id, risk_score=risk_score)
+            except Exception as e:
+                logging.warning("[%s] Failed to track action in drift reporter: %s", model_type, e)
+        
+        # Promotion decision
+        promoted = check_promotion_gate(
+            metrics,
+            max_ece=args.promotion_max_ece,
+            min_accuracy=args.promotion_min_accuracy
+        )
+        result['promoted'] = promoted
+        
+        # Drift tracking of violations if not promoted
+        if drift_reporter and not promoted:
+            try:
+                if metrics.get('ece', 0.0) > args.promotion_max_ece:
+                    drift_reporter.track_violation(
+                        agent_id=f"model_{model_type}",
+                        cohort=cohort_id,
+                        violation_type="calibration_error",
+                        severity="high" if metrics['ece'] > (args.promotion_max_ece * 2) else "medium"
+                    )
+                if metrics.get('accuracy', 1.0) < args.promotion_min_accuracy:
+                    drift_reporter.track_violation(
+                        agent_id=f"model_{model_type}",
+                        cohort=cohort_id,
+                        violation_type="low_accuracy",
+                        severity="high" if metrics['accuracy'] < max(0.7, args.promotion_min_accuracy - 0.15) else "medium"
+                    )
+            except Exception as e:
+                logging.warning("[%s] Failed to record drift violations: %s", model_type, e)
+        
+        # Save model + metrics
+        model_path, metrics_path = save_model_and_metrics(
+            model=model,
+            metrics=metrics,
+            model_type=model_type,
+            promoted=promoted,
+            base_dir=args.models_dir
+        )
+        result['model_path'] = model_path
+        result['metrics_path'] = metrics_path
+        
+        # Audit: model saved
+        if merkle_anchor:
+            merkle_anchor.add_event({
+                'event_type': 'model_saved',
+                'model_type': model_type,
+                'model_path': model_path,
+                'metrics_path': metrics_path,
+                'promoted': promoted,
+                'timestamp': datetime.now(timezone.utc).isoformat()
+            })
+        
+        # Governance summary for this model
+        if governance:
+            logging.info("[%s] Governance Validation Summary:", model_type)
+            logging.info("  Data samples validated: %d", min(args.gov_data_samples, len(raw_data)))
+            logging.info("  Data violations found: %d", len(governance_violations))
+            logging.info("  Predictions validated: %d", min(args.gov_pred_samples, len(val_data)))
+            logging.info("  Prediction violations found: %d", len(prediction_violations))
+        
+        result['success'] = True
+        
+    except Exception as e:
+        logging.error("[%s] Training failed: %s", model_type, e)
+        result['error'] = str(e)
+    
+    return result
+
+
 def main():
     parser = argparse.ArgumentParser(description="Nethical ML Training Pipeline")
     # Core training
-    parser.add_argument("--model-type", type=str, required=True, help="Model type (e.g., heuristic, logistic, anomaly, correlation)")
+    all_types_str = ", ".join(get_all_model_types())
+    parser.add_argument("--model-type", type=str, required=True, 
+                       help=f"Model type to train. Options: {all_types_str}, or 'all' to train all model types")
     parser.add_argument("--epochs", type=int, default=10, help="Number of epochs (may be unused for baseline models)")
     parser.add_argument("--batch-size", type=int, default=32, help="Batch size (may be unused for baseline models)")
     parser.add_argument("--num-samples", type=int, default=10000, help="Number of samples to use")
@@ -781,6 +1106,19 @@ def main():
     if args.verbosity == 0:
         logging.getLogger().setLevel(logging.WARNING)
 
+    # Determine which model types to train
+    if args.model_type.lower() == "all":
+        model_types_to_train = get_all_model_types()
+        logging.info("Training all model types: %s", ", ".join(model_types_to_train))
+    else:
+        # Validate model type
+        available_types = get_all_model_types()
+        if args.model_type not in available_types:
+            logging.error("Unknown model type: %s. Available types: %s, or 'all'", 
+                         args.model_type, ", ".join(available_types))
+            sys.exit(1)
+        model_types_to_train = [args.model_type]
+
     # Initialize Merkle Anchor for audit logging
     merkle_anchor = None
     if args.enable_audit:
@@ -789,8 +1127,8 @@ def main():
                 merkle_anchor = MerkleAnchor(storage_path=args.audit_path, chunk_size=100)
                 logging.info("Merkle audit logging enabled. Logs stored in: %s", args.audit_path)
                 merkle_anchor.add_event({
-                    'event_type': 'training_start',
-                    'model_type': args.model_type,
+                    'event_type': 'batch_training_start',
+                    'model_types': model_types_to_train,
                     'epochs': args.epochs,
                     'batch_size': args.batch_size,
                     'num_samples': args.num_samples,
@@ -805,13 +1143,11 @@ def main():
 
     # Initialize Ethical Drift Reporter
     drift_reporter = None
-    cohort_id = args.cohort_id or f"{args.model_type}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
     if args.enable_drift_tracking:
         if DRIFT_REPORTER_AVAILABLE:
             try:
                 drift_reporter = EthicalDriftReporter(report_dir=args.drift_report_dir)
                 logging.info("Ethical drift tracking enabled. Reports stored in: %s", args.drift_report_dir)
-                logging.info("Training cohort ID: %s", cohort_id)
             except Exception as e:
                 logging.warning("Failed to initialize drift reporter: %s", e)
                 drift_reporter = None
@@ -855,259 +1191,50 @@ def main():
     ]
     datasets_to_download = args.kaggle_dataset or default_kaggle_datasets
 
-    # Download datasets if requested/possible
+    # Download datasets if requested/possible (once for all models)
     download_kaggle_datasets(
         datasets=datasets_to_download,
-        skip_download=args.no-download if hasattr(args, "no-download") else args.no_download,  # handle hyphen mapping
+        skip_download=args.no_download,
         kaggle_username=args.kaggle_username,
         kaggle_key=args.kaggle_key,
         overwrite_kaggle_json=args.overwrite_kaggle_json,
     )
 
-    # Load data
-    raw_data = load_data(num_samples=args.num_samples, model_type=args.model_type)
-
-    # Audit: data loaded
-    if merkle_anchor:
-        merkle_anchor.add_event({
-            'event_type': 'data_loaded',
-            'num_samples': len(raw_data),
-            'timestamp': datetime.now(timezone.utc).isoformat()
-        })
-
-    # Adversarial Injection
-    if args.include_adversarial:
-        if ADVERSARIAL_AVAILABLE:
-            logging.info("Adversarial Training Enabled: Generating %d threats per type...", args.adversarial_count)
-            adv_gen = AdversarialGenerator(seed=args.seed)
-            adv_data = adv_gen.generate_all(count_per_type=args.adversarial_count)
-
-            # Log audit event for adversarial injection
-            if merkle_anchor:
-                merkle_anchor.add_event({
-                    'event_type': 'adversarial_injection',
-                    'count': len(adv_data),
-                    'timestamp': datetime.now(timezone.utc).isoformat()
-                })
-
-            # Mix into raw_data
-            raw_data.extend(adv_data)
-            # Shuffle to mix threats with normal data
-            random.shuffle(raw_data)
-            logging.info("Added %d adversarial samples. Total dataset size: %d", len(adv_data), len(raw_data))
-        else:
-            logging.warning("Adversarial generator requested but module not found.")
-
-    # Governance validation on data
-    governance_violations = []
-    if governance:
-        logging.info("Running governance validation on training data samples...")
-        sample_size = min(max(args.gov_data_samples, 0), len(raw_data))
-        for i, sample in enumerate(raw_data[:sample_size]):
-            try:
-                content = json.dumps(sample.get('features', {}), ensure_ascii=False)
-                judgment = run_governance_validation(
-                    governance,
-                    content,
-                    ActionType.DATA_ACCESS,
-                    action_id=f"data_sample_{i}",
-                    agent_id="training_data_loader"
-                )
-                if judgment.decision in [Decision.BLOCK, Decision.QUARANTINE]:
-                    governance_violations.append({
-                        'sample_id': i,
-                        'decision': judgment.decision.value,
-                        'violations': len(judgment.violations)
-                    })
-            except Exception as e:
-                logging.warning("Error validating sample %d: %s", i, e)
-        if governance_violations:
-            logging.warning("Governance found %d problematic data samples", len(governance_violations))
-            if merkle_anchor:
-                merkle_anchor.add_event({
-                    'event_type': 'governance_data_validation',
-                    'samples_checked': sample_size,
-                    'violations_found': len(governance_violations),
-                    'timestamp': datetime.now(timezone.utc).isoformat()
-                })
-            if args.gov_fail_on_violations:
-                logging.error("Aborting due to governance violations in data (fail-fast enabled).")
-                return
-        else:
-            logging.info("Governance validation passed for %d data samples", sample_size)
-
-    # Build model + preprocessing
-    ModelClass, preprocess_fn = get_model_class(args.model_type)
-    logging.info("Preprocessing data for model type: %s", args.model_type)
-    processed_data = preprocess_fn(raw_data)
-
-    # Split data
-    train_data, val_data = split_data(
-        processed_data,
-        train_ratio=args.train_ratio,
-        split_strategy=args.split_strategy,
-        seed=args.seed
-    )
-
-    # Audit: data split
-    if merkle_anchor:
-        merkle_anchor.add_event({
-            'event_type': 'data_split',
-            'train_samples': len(train_data),
-            'val_samples': len(val_data),
-            'split_strategy': args.split_strategy,
-            'timestamp': datetime.now(timezone.utc).isoformat()
-        })
-
-    # Train model (BaselineMLClassifier may ignore epochs/batch_size)
-    model = ModelClass()
-    logging.info("Training %s model for %d epoch(s), batch size %d...", args.model_type, args.epochs, args.batch_size)
+    # Train each model type
+    all_results: List[Dict[str, Any]] = []
     training_start_time = datetime.now(timezone.utc)
-    model.train(train_data)
-    training_end_time = datetime.now(timezone.utc)
-
-    # Audit: training completed
-    if merkle_anchor:
-        merkle_anchor.add_event({
-            'event_type': 'training_completed',
-            'model_type': args.model_type,
-            'epochs': args.epochs,
-            'training_duration_seconds': (training_end_time - training_start_time).total_seconds(),
-            'timestamp': training_end_time.isoformat()
-        })
-
-    # Validate
-    preds: List[int] = []
-    probs: List[Optional[float]] = []
-    for sample in val_data:
-        pred_raw = model.predict(sample['features'])
-        label, prob = _extract_label_and_prob(pred_raw)
-        preds.append(label)
-        probs.append(prob)
-
-    labels = [int(sample['label']) for sample in val_data]
-    # Only pass probabilities if we have them for all samples
-    probs_all = None
-    if all(p is not None for p in probs) and len(probs) == len(labels):
-        probs_all = [float(p) for p in probs]  # type: ignore
-
-    metrics = compute_metrics(preds, labels, probs=probs_all)
-    logging.info("Validation Metrics:")
-    for k in sorted(metrics.keys()):
-        v = metrics[k]
-        logging.info("  %s: %.4f", k, v if isinstance(v, (int, float)) and not math.isnan(v) else float('nan'))
-
-    # Audit: validation metrics
-    if merkle_anchor:
-        merkle_anchor.add_event({
-            'event_type': 'validation_metrics',
-            'metrics': metrics,
-            'timestamp': datetime.now(timezone.utc).isoformat()
-        })
-
-    # Governance validation on predictions
-    prediction_violations = []
-    if governance:
-        logging.info("Running governance validation on model predictions...")
-        sample_size = min(max(args.gov_pred_samples, 0), len(val_data))
-        for i in range(sample_size):
-            try:
-                pred = preds[i]
-                sample = val_data[i]
-                content = f"Model prediction: {pred} for features {json.dumps(sample.get('features', {}), ensure_ascii=False)}"
-                judgment = run_governance_validation(
-                    governance,
-                    content,
-                    ActionType.MODEL_UPDATE,
-                    action_id=f"prediction_{i}",
-                    agent_id=f"model_{args.model_type}"
-                )
-                if judgment.decision in [Decision.BLOCK, Decision.QUARANTINE]:
-                    prediction_violations.append({
-                        'prediction_id': i,
-                        'decision': judgment.decision.value,
-                        'violations': len(judgment.violations)
-                    })
-            except Exception as e:
-                logging.warning("Error validating prediction %d: %s", i, e)
-        if prediction_violations:
-            logging.warning("Governance found %d problematic predictions", len(prediction_violations))
-            if merkle_anchor:
-                merkle_anchor.add_event({
-                    'event_type': 'governance_prediction_validation',
-                    'predictions_checked': sample_size,
-                    'violations_found': len(prediction_violations),
-                    'timestamp': datetime.now(timezone.utc).isoformat()
-                })
-            if args.gov_fail_on_violations:
-                logging.error("Aborting due to governance violations in predictions (fail-fast enabled).")
-                return
+    
+    for i, model_type in enumerate(model_types_to_train, 1):
+        logging.info("=" * 70)
+        logging.info("Training model %d/%d: %s", i, len(model_types_to_train), model_type)
+        logging.info("=" * 70)
+        
+        result = train_single_model(
+            model_type=model_type,
+            args=args,
+            merkle_anchor=merkle_anchor,
+            drift_reporter=drift_reporter,
+            governance=governance,
+            datasets_to_download=datasets_to_download,
+            skip_download=True  # Already downloaded above
+        )
+        all_results.append(result)
+        
+        if result['success']:
+            logging.info("[%s] Training completed successfully. Promoted: %s", 
+                        model_type, result['promoted'])
         else:
-            logging.info("Governance validation passed for %d predictions", sample_size)
-
-    # Drift tracking
-    if drift_reporter:
-        risk_score = 1.0 - float(metrics.get('accuracy', 0.0))
-        try:
-            drift_reporter.track_action(agent_id=f"model_{args.model_type}", cohort=cohort_id, risk_score=risk_score)
-        except Exception as e:
-            logging.warning("Failed to track action in drift reporter: %s", e)
-
-    # Promotion decision
-    promoted = check_promotion_gate(
-        metrics,
-        max_ece=args.promotion_max_ece,
-        min_accuracy=args.promotion_min_accuracy
-    )
-
-    # Drift tracking of violations if not promoted
-    if drift_reporter and not promoted:
-        try:
-            if metrics.get('ece', 0.0) > args.promotion_max_ece:
-                drift_reporter.track_violation(
-                    agent_id=f"model_{args.model_type}",
-                    cohort=cohort_id,
-                    violation_type="calibration_error",
-                    severity="high" if metrics['ece'] > (args.promotion_max_ece * 2) else "medium"
-                )
-            if metrics.get('accuracy', 1.0) < args.promotion_min_accuracy:
-                drift_reporter.track_violation(
-                    agent_id=f"model_{args.model_type}",
-                    cohort=cohort_id,
-                    violation_type="low_accuracy",
-                    severity="high" if metrics['accuracy'] < max(0.7, args.promotion_min_accuracy - 0.15) else "medium"
-                )
-        except Exception as e:
-            logging.warning("Failed to record drift violations: %s", e)
-
-    # Save model + metrics
-    model_path, metrics_path = save_model_and_metrics(
-        model=model,
-        metrics=metrics,
-        model_type=args.model_type,
-        promoted=promoted,
-        base_dir=args.models_dir
-    )
-
-    # Audit: model saved
-    if merkle_anchor:
-        merkle_anchor.add_event({
-            'event_type': 'model_saved',
-            'model_path': model_path,
-            'metrics_path': metrics_path,
-            'promoted': promoted,
-            'timestamp': datetime.now(timezone.utc).isoformat()
-        })
-
-    # Generate drift report
+            logging.error("[%s] Training failed: %s", model_type, result.get('error', 'Unknown error'))
+    
+    training_end_time = datetime.now(timezone.utc)
+    
+    # Generate drift report (covers all models trained)
     if drift_reporter:
         try:
             logging.info("Generating ethical drift report...")
-            report_start_time = training_start_time
-            report_end_time = datetime.now(timezone.utc)
             drift_report = drift_reporter.generate_report(
-                start_time=report_start_time,
-                end_time=report_end_time
+                start_time=training_start_time,
+                end_time=training_end_time
             )
             logging.info("Drift Report ID: %s", drift_report.report_id)
             logging.info("Drift detected: %s", drift_report.drift_metrics.get('has_drift', False))
@@ -1123,18 +1250,41 @@ def main():
     # Finalize audit logs
     if merkle_anchor:
         try:
+            # Add batch training summary event
+            merkle_anchor.add_event({
+                'event_type': 'batch_training_completed',
+                'model_types': model_types_to_train,
+                'total_models': len(model_types_to_train),
+                'successful': sum(1 for r in all_results if r['success']),
+                'promoted': sum(1 for r in all_results if r['promoted']),
+                'training_duration_seconds': (training_end_time - training_start_time).total_seconds(),
+                'timestamp': training_end_time.isoformat()
+            })
+            
             if getattr(merkle_anchor, "current_chunk", None) and merkle_anchor.current_chunk.event_count > 0:
                 merkle_root = merkle_anchor.finalize_chunk()
                 logging.info("Training audit trail finalized. Merkle root: %s", merkle_root)
                 logging.info("Audit logs saved to: %s", args.audit_path)
 
-                # Audit summary
+                # Audit summary for all models
                 audit_summary_path = Path(args.audit_path) / "training_summary.json"
                 audit_summary = {
                     'merkle_root': merkle_root,
-                    'model_type': args.model_type,
-                    'promoted': promoted,
-                    'metrics': metrics,
+                    'model_types': model_types_to_train,
+                    'results': [
+                        {
+                            'model_type': r['model_type'],
+                            'success': r['success'],
+                            'promoted': r['promoted'],
+                            'metrics': r['metrics'],
+                            'model_path': r['model_path'],
+                            'error': r.get('error')
+                        }
+                        for r in all_results
+                    ],
+                    'total_models': len(model_types_to_train),
+                    'successful': sum(1 for r in all_results if r['success']),
+                    'promoted': sum(1 for r in all_results if r['promoted']),
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 }
                 if governance:
@@ -1142,11 +1292,7 @@ def main():
                         governance_metrics = governance.get_system_metrics()
                     except Exception:
                         governance_metrics = {}
-                    gov_summary = {
-                        'enabled': True,
-                        'data_violations': len(governance_violations),
-                        'prediction_violations': len(prediction_violations)
-                    }
+                    gov_summary = {'enabled': True}
                     if isinstance(governance_metrics, dict) and 'metrics' in governance_metrics:
                         metrics_dict = governance_metrics['metrics']
                         for key in ('total_actions_evaluated', 'total_violations_detected', 'total_actions_blocked'):
@@ -1162,13 +1308,24 @@ def main():
         except Exception as e:
             logging.warning("Failed to finalize audit chunk: %s", e)
 
-    # Governance summary
+    # Print final summary
+    logging.info("=" * 70)
+    logging.info("TRAINING SUMMARY")
+    logging.info("=" * 70)
+    logging.info("Total models trained: %d", len(model_types_to_train))
+    logging.info("Successful: %d", sum(1 for r in all_results if r['success']))
+    logging.info("Promoted: %d", sum(1 for r in all_results if r['promoted']))
+    logging.info("Failed: %d", sum(1 for r in all_results if not r['success']))
+    logging.info("")
+    
+    for r in all_results:
+        status = "✓ PROMOTED" if r['promoted'] else ("✓ SUCCESS" if r['success'] else "✗ FAILED")
+        accuracy = r['metrics'].get('accuracy', 0) if r['metrics'] else 0
+        logging.info("  %s: %s (accuracy: %.4f)", r['model_type'], status, accuracy)
+    
     if governance:
-        logging.info("Governance Validation Summary:")
-        logging.info("  Data samples validated: %d", min(args.gov_data_samples, len(raw_data)))
-        logging.info("  Data violations found: %d", len(governance_violations))
-        logging.info("  Predictions validated: %d", min(args.gov_pred_samples, len(val_data)))
-        logging.info("  Prediction violations found: %d", len(prediction_violations))
+        logging.info("")
+        logging.info("Governance Summary:")
         try:
             gov_metrics = governance.get_system_metrics()
             if 'metrics' in gov_metrics and 'total_actions_evaluated' in gov_metrics['metrics']:
