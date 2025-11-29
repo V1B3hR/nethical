@@ -9,6 +9,7 @@ A plug-and-play training pipeline that supports multiple model types with option
 ### Features
 
 - **Multiple Model Types**: Support for heuristic, logistic, anomaly, correlation, and transformer models
+- **Train All Models**: Use `--model-type all` to train all model types in a single run
 - **Kaggle Dataset Integration**: Automatically downloads and processes datasets from Kaggle
 - **Synthetic Data Fallback**: Generates synthetic data when real datasets are unavailable
 - **Promotion Gate**: Validates models against quality criteria before promotion
@@ -23,6 +24,11 @@ Basic training:
 python training/train_any_model.py --model-type heuristic --epochs 10 --num-samples 1000
 ```
 
+**Training all model types at once:**
+```bash
+python training/train_any_model.py --model-type all --epochs 10 --num-samples 1000
+```
+
 Training with audit logging:
 ```bash
 python training/train_any_model.py \
@@ -31,6 +37,18 @@ python training/train_any_model.py \
     --num-samples 2000 \
     --enable-audit \
     --audit-path training_logs
+```
+
+Training all models with full monitoring:
+```bash
+python training/train_any_model.py \
+    --model-type all \
+    --epochs 20 \
+    --num-samples 2000 \
+    --enable-audit \
+    --enable-governance \
+    --enable-drift-tracking \
+    --drift-report-dir drift_reports
 ```
 
 Training with governance validation:
@@ -70,6 +88,7 @@ python training/train_any_model.py \
 
 - `--model-type`: Type of model to train (required)
   - Options: `heuristic`, `logistic`, `simple_transformer`, `anomaly`, `correlation`
+  - Use `all` to train all model types sequentially
 - `--epochs`: Number of training epochs (default: 10)
 - `--batch-size`: Batch size for training (default: 32)
 - `--num-samples`: Number of samples to use (default: 10000)
