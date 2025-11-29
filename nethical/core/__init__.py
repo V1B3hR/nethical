@@ -7,6 +7,15 @@ from .ethical_drift_reporter import EthicalDriftReporter, EthicalDriftReport, Co
 from .performance_optimizer import PerformanceOptimizer, DetectorTier, DetectorMetrics
 from .phase3_integration import Phase3IntegratedGovernance
 
+# Fundamental Laws - Ethical Backbone
+from .fundamental_laws import (
+    LawCategory,
+    FundamentalLaw,
+    FundamentalLawsRegistry,
+    FUNDAMENTAL_LAWS,
+    get_fundamental_laws,
+)
+
 # Phase 4 components
 from .audit_merkle import MerkleAnchor, AuditChunk, MerkleNode
 from .policy_diff import PolicyDiffAuditor, PolicyDiffResult, PolicyChange, ChangeType, RiskLevel
@@ -98,6 +107,12 @@ from .rbac import (
 )
 
 __all__ = [
+    # Fundamental Laws - Ethical Backbone
+    "LawCategory",
+    "FundamentalLaw",
+    "FundamentalLawsRegistry",
+    "FUNDAMENTAL_LAWS",
+    "get_fundamental_laws",
     # Phase 3
     "RiskEngine",
     "RiskTier",

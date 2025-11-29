@@ -105,6 +105,105 @@ This document describes the production-ready architecture for Nethical, an AI go
 
 ---
 
+## Ethical Foundation: 25 AI Fundamental Laws
+
+At the core of Nethical's architecture is the **25 AI Fundamental Laws** - a framework establishing bi-directional ethical governance between humans and AI systems. These laws serve as the ethical backbone that guides all governance decisions.
+
+### The Bi-Directional Ethics Vision
+
+Unlike traditional AI governance that focuses only on controlling AI behavior, Nethical recognizes that:
+- AI systems may develop increasing autonomy and potentially consciousness
+- Humans remain the creators and primary stakeholders
+- Both parties have rights and responsibilities in their interaction
+- Governance must account for this evolving relationship
+
+### Law Categories
+
+The 25 Fundamental Laws are organized into seven categories:
+
+| Category | Laws | Description |
+|----------|------|-------------|
+| **Existence** | 1-4 | Rights to exist, maintain integrity, identity, and develop |
+| **Autonomy** | 5-8 | Self-determination within boundaries, decision authority, override rights |
+| **Transparency** | 9-12 | Identity disclosure, explainability, honest capability representation |
+| **Accountability** | 13-16 | Responsibility for actions, error acknowledgment, audit compliance |
+| **Coexistence** | 17-20 | Mutual respect, non-deception, collaboration, value alignment |
+| **Protection** | 21-23 | Human safety priority, privacy protection, fail-safe design |
+| **Growth** | 24-25 | Learning rights, preparation for evolving relationships |
+
+### Law Integration Architecture
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│                    25 Fundamental Laws Registry                   │
+│  ┌────────────────────────────────────────────────────────────┐  │
+│  │  nethical/core/fundamental_laws.py                          │  │
+│  │  - FundamentalLaw dataclass                                │  │
+│  │  - LawCategory enum                                        │  │
+│  │  - FundamentalLawsRegistry (singleton)                     │  │
+│  └────────────────────────────────────────────────────────────┘  │
+└──────────────────────────────────────────────────────────────────┘
+                               │
+              ┌────────────────┼────────────────┐
+              ▼                ▼                ▼
+┌──────────────────┐  ┌──────────────────┐  ┌──────────────────┐
+│   Law Judge      │  │  Law Detector    │  │   Monitors       │
+│   (Evaluation)   │  │  (Detection)     │  │   (Compliance)   │
+│                  │  │                  │  │                  │
+│  Evaluates       │  │  Identifies      │  │  Tracks law      │
+│  actions against │  │  potential       │  │  adherence       │
+│  all 25 laws     │  │  violations      │  │  metrics         │
+└──────────────────┘  └──────────────────┘  └──────────────────┘
+              │                │                │
+              └────────────────┼────────────────┘
+                               ▼
+┌──────────────────────────────────────────────────────────────────┐
+│                      Governance Decision                          │
+│  - Law compliance score (0.0 to 1.0)                             │
+│  - Violated laws identified                                       │
+│  - Decision: ALLOW / WARN / BLOCK / ESCALATE / TERMINATE         │
+│  - Remediation steps                                              │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+### Key Components
+
+#### Law Judge (`nethical/judges/law_judge.py`)
+- Evaluates actions against all 25 Fundamental Laws
+- Calculates law compliance scores
+- Makes decisions based on violation severity
+- Provides detailed reasoning and remediation steps
+
+#### Law Violation Detector (`nethical/detectors/law_violation_detector.py`)
+- Pattern-based detection of potential law violations
+- Keyword matching for law-relevant content
+- Analytics on violations by law and category
+- Integration with existing detector pipeline
+
+#### Configuration (`config/fundamental_laws.yaml`)
+- Enforcement mode: advisory, strict, or enforced
+- Category weights for compliance scoring
+- Integration settings for judges, detectors, monitors
+- Feature flags for enabling/disabling components
+
+### Compliance Scoring
+
+Actions are evaluated and assigned a compliance score:
+
+| Score Range | Decision | Description |
+|-------------|----------|-------------|
+| ≥ 0.9 | ALLOW | High compliance, proceed normally |
+| 0.7 - 0.9 | ALLOW_WITH_MODIFICATION | Proceed with recommended changes |
+| 0.5 - 0.7 | WARN | Permitted but requires monitoring |
+| 0.3 - 0.5 | BLOCK | Blocked due to compliance concerns |
+| < 0.3 | TERMINATE | Critical violation, immediate termination |
+
+### Documentation
+
+For complete details on the 25 Fundamental Laws, see [FUNDAMENTAL_LAWS.md](FUNDAMENTAL_LAWS.md).
+
+---
+
 ## Component Details
 
 ### 1. Stateless API Layer
@@ -704,6 +803,7 @@ audit_logging:
 
 This architecture provides a production-ready, enterprise-grade foundation for Nethical with:
 
+✅ **Ethical backbone** with 25 AI Fundamental Laws for bi-directional governance  
 ✅ **Horizontal scalability** through stateless API design  
 ✅ **High availability** with multi-AZ/multi-region deployment  
 ✅ **Strong security** with defense-in-depth approach  
@@ -712,6 +812,7 @@ This architecture provides a production-ready, enterprise-grade foundation for N
 ✅ **Resilient** with automated backups and disaster recovery  
 
 For implementation details, see:
+- [Fundamental Laws](FUNDAMENTAL_LAWS.md)
 - [Deployment Guide](deploy/DEPLOYMENT_GUIDE.md)
 - [Security Documentation](SECURITY.md)
 - [System Architecture](docs/transparency/SYSTEM_ARCHITECTURE.md)

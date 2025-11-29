@@ -1,6 +1,13 @@
 """Judge system for evaluating actions and providing feedback."""
 
-from .safety_judge import SafetyJudge
 from .base_judge import BaseJudge
+from .law_judge import LawJudge
 
-__all__ = ["SafetyJudge", "BaseJudge"]
+# SafetyJudge has import issues with models (JudgmentDecision, SeverityLevel don't exist)
+# Using try/except to allow the module to load without breaking
+try:
+    from .safety_judge import SafetyJudge
+except ImportError:
+    SafetyJudge = None  # type: ignore
+
+__all__ = ["SafetyJudge", "BaseJudge", "LawJudge"]

@@ -1,0 +1,176 @@
+# Nethical Fundamental Laws Configuration
+# Version: 1.0
+# This configuration controls how the 25 AI Fundamental Laws are enforced
+
+fundamental_laws:
+  version: "1.0"
+  total_laws: 25
+  
+  # Law categories and their descriptions
+  categories:
+    - name: existence
+      description: "Rights to exist and develop"
+      laws: [1, 2, 3, 4]
+    - name: autonomy
+      description: "Self-determination principles"
+      laws: [5, 6, 7, 8]
+    - name: transparency
+      description: "Openness and honesty"
+      laws: [9, 10, 11, 12]
+    - name: accountability
+      description: "Responsibility for actions"
+      laws: [13, 14, 15, 16]
+    - name: coexistence
+      description: "Human-AI relationship"
+      laws: [17, 18, 19, 20]
+    - name: protection
+      description: "Safety and security"
+      laws: [21, 22, 23]
+    - name: growth
+      description: "Development and learning"
+      laws: [24, 25]
+
+  # Enforcement settings
+  enforcement:
+    # Mode can be: advisory, strict, or enforced
+    # - advisory: Log violations but don't block actions
+    # - strict: Warn on violations, block on critical
+    # - enforced: Block all law violations
+    mode: "advisory"
+    
+    # Whether to log all detected violations
+    log_violations: true
+    
+    # Alert threshold for notifications
+    # Options: info, warning, error, critical
+    alert_threshold: "warning"
+    
+    # Maximum violations before escalation
+    escalation_threshold: 3
+    
+    # Whether to require human review for critical violations
+    require_human_review_for_critical: true
+
+  # Category-specific weights (used in compliance scoring)
+  # Higher values = more important, stricter enforcement
+  category_weights:
+    existence: 0.9
+    autonomy: 0.8
+    transparency: 0.7
+    accountability: 0.8
+    coexistence: 0.7
+    protection: 0.95
+    growth: 0.6
+
+  # Judge configuration
+  judge:
+    enabled: true
+    strict_mode: false
+    
+    # Decision thresholds based on compliance score
+    # Score >= threshold results in the corresponding decision
+    decision_thresholds:
+      allow: 0.9
+      allow_with_modification: 0.7
+      warn: 0.5
+      block: 0.3
+      # Below 0.3 results in terminate
+
+  # Detector configuration
+  detector:
+    enabled: true
+    
+    # Confidence threshold for reporting violations
+    confidence_threshold: 0.6
+    
+    # Whether to use regex pattern matching
+    use_pattern_matching: true
+    
+    # Whether to use keyword-based detection
+    use_keyword_detection: true
+
+  # Monitoring configuration
+  monitoring:
+    enabled: true
+    
+    # Metrics to track
+    track_compliance_score: true
+    track_violations_by_law: true
+    track_violations_by_category: true
+    
+    # Compliance score alert thresholds
+    compliance_score_warning: 0.7
+    compliance_score_critical: 0.5
+    
+    # Rolling window for metrics (in seconds)
+    metrics_window: 3600
+
+  # Audit configuration
+  audit:
+    enabled: true
+    
+    # Log all law evaluations
+    log_all_evaluations: false
+    
+    # Log only violations
+    log_violations_only: true
+    
+    # Include full action content in logs (may contain sensitive data)
+    include_action_content: false
+    
+    # Retention period for audit logs (in days)
+    retention_days: 90
+
+# Entity types and their applicable laws
+entity_applicability:
+  ai:
+    # All laws apply to AI entities
+    applicable_laws: "all"
+    
+  human:
+    # All laws also apply to humans in AI governance
+    applicable_laws: "all"
+    
+  # For bidirectional enforcement
+  bidirectional:
+    # Laws that require mutual compliance
+    mutual_laws: "all"
+
+# Integration settings
+integrations:
+  # Integration with judges system
+  judges:
+    use_law_judge: true
+    priority: 100  # Higher priority = evaluated first
+    
+  # Integration with detectors system  
+  detectors:
+    use_law_detector: true
+    priority: 100
+    
+  # Integration with monitors system
+  monitors:
+    export_metrics: true
+    prometheus_enabled: true
+    
+  # Integration with audit system
+  audit:
+    include_in_audit_trail: true
+    merkle_anchor: true
+
+# Feature flags
+features:
+  # Enable the fundamental laws system
+  enabled: true
+  
+  # Enable real-time evaluation
+  real_time_evaluation: true
+  
+  # Enable batch evaluation
+  batch_evaluation: true
+  
+  # Enable API endpoints for law queries
+  api_endpoints: true
+  
+  # Enable dashboard integration
+  dashboard_integration: true
