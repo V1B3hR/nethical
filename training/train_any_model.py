@@ -25,8 +25,8 @@ Usage:
         --enable-governance --enable-audit --enable-drift-tracking
 
 Optional Kaggle auth sources (priority order):
-1) CLI: --kaggle-username --kaggle-key
-2) Env vars: KAGGLE_USERNAME, KAGGLE_KEY
+1) CLI: --andrzejmatewski --406272cc0df9e65d6d7fa69ff136bf5c
+2) Env vars: andrzejmatewski, 406272cc0df9e65d6d7fa69ff136bf5c
 3) Existing file: ~/.kaggle/kaggle.json
 
 Dependencies: kaggle (optional), pandas (optional), numpy (required)
