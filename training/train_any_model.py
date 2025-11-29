@@ -34,7 +34,7 @@ Usage:
         --num-samples 20000 \
         --enable-audit \
         --promotion-min-accuracy 0.85 \
-        --promotion-max-ece 0.08
+        --promotion-max-ece 0.08 \
 
 Optional Kaggle auth sources (priority order):
 1) CLI: --kaggle-username <user> --kaggle-key <key>
