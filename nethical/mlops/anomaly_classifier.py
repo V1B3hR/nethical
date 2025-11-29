@@ -347,7 +347,6 @@ except ImportError:
 if _TORCH_AVAILABLE:
     from itertools import groupby
     from collections import Counter
-    import pandas as pd
 
     # --- Data Utilities (PyTorch-based) ---
 
