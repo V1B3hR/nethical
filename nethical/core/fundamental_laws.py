@@ -34,9 +34,15 @@ class LawCategory(Enum):
     GROWTH = "growth"  # Development and learning
 
 
-@dataclass(frozen=False)
+@dataclass(frozen=False, eq=False)
 class FundamentalLaw:
     """Represents a single fundamental law.
+
+    Note: This dataclass is mutable but hashable. The hash is based solely on
+    the law number which serves as a stable identity. This is safe because:
+    1. The law number is validated on creation and should never change
+    2. Two laws are equal if and only if they have the same number
+    3. The mutable fields (keywords list) don't affect identity
 
     Attributes:
         number: The law number (1-25)
