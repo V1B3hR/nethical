@@ -57,10 +57,10 @@ if decision != "ALLOW":
 
 | Platform | Integration Type | Module | Manifest |
 |----------|-----------------|--------|----------|
-| **OpenAI (GPT-4, GPT-3.5)** | REST API, Plugin | `rest_api` | `ai-plugin.json` |
-| **Anthropic Claude** | Function Calling | `claude_tools` | `ai-plugin.json` |
-| **xAI Grok** | Function Calling | `grok_tools` | `grok-manifest.json` |
-| **Google Gemini** | Function Calling | `gemini_tools` | `gemini-manifest.json` |
+| **OpenAI (GPT-4, GPT-3.5)** | REST API, Plugin | `rest_api` | `config/integrations/ai-plugin.json` |
+| **Anthropic Claude** | Function Calling | `claude_tools` | `config/integrations/ai-plugin.json` |
+| **xAI Grok** | Function Calling | `grok_tools` | `config/integrations/grok-manifest.json` |
+| **Google Gemini** | Function Calling | `gemini_tools` | `config/integrations/gemini-manifest.json` |
 | **Meta LLaMA** | REST API | `rest_api` | - |
 | **Custom LLMs** | REST API | `rest_api` | - |
 

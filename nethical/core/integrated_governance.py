@@ -92,7 +92,7 @@ class IntegratedGovernance:
         enable_ethical_taxonomy: bool = True,
         enable_sla_monitoring: bool = True,
         s3_bucket: Optional[str] = None,
-        taxonomy_path: str = "ethics_taxonomy.json",
+        taxonomy_path: str = "taxonomies/ethics_taxonomy.json",
         # Phase 5-7 config
         enable_shadow_mode: bool = True,
         enable_ml_blending: bool = True,

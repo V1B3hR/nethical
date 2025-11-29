@@ -20,7 +20,7 @@ Create and validate industry-specific taxonomies:
 ```python
 from nethical.api.taxonomy_api import TaxonomyAPI
 
-api = TaxonomyAPI("ethics_taxonomy.json")
+api = TaxonomyAPI("taxonomies/ethics_taxonomy.json")
 
 # Create healthcare taxonomy
 result = api.create_industry_taxonomy_endpoint("healthcare", "1.0")

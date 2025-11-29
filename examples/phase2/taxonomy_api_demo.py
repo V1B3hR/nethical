@@ -19,7 +19,7 @@ def main():
     print("=" * 80)
     
     # Initialize API
-    api = TaxonomyAPI("ethics_taxonomy.json")
+    api = TaxonomyAPI("taxonomies/ethics_taxonomy.json")
     
     # Example 1: Validate current taxonomy
     print("\n1. Validating current taxonomy...")

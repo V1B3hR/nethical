@@ -55,7 +55,7 @@ Modified `.github/dependabot.yml` to remove non-existent labels:
 
 Since PR #88 is on a different branch (`copilot/enhance-threat-modeling-tools`), we've provided:
 
-1. **Corrected Test File**: `test_sso_CORRECTED.py`
+1. **Corrected Test File**: `tests/test_sso_CORRECTED.py`
    - Restored from commit `889d794` (before corruption)
    - Applied security fix to line 250
    - Both security alerts resolved
@@ -77,7 +77,7 @@ Since PR #88 is on a different branch (`copilot/enhance-threat-modeling-tools`),
 git checkout copilot/enhance-threat-modeling-tools
 
 # Get the fixed file
-git show origin/copilot/resolve-pull-request-issues:test_sso_CORRECTED.py > test_sso_CORRECTED.py
+git show origin/copilot/resolve-pull-request-issues:tests/test_sso_CORRECTED.py > test_sso_CORRECTED.py
 
 # Get and run the fix script
 git show origin/copilot/resolve-pull-request-issues:apply_pr88_fixes.sh > /tmp/apply_pr88_fixes.sh
@@ -95,7 +95,7 @@ git push origin copilot/enhance-threat-modeling-tools
 | File | Purpose |
 |------|---------|
 | `.github/dependabot.yml` | Fixed configuration (removes non-existent labels) |
-| `test_sso_CORRECTED.py` | Corrected test file with security fixes for PR #88 |
+| `tests/test_sso_CORRECTED.py` | Corrected test file with security fixes for PR #88 |
 | `apply_pr88_fixes.sh` | Automated script to apply PR #88 fixes |
 | `PR_ISSUES_RESOLUTION.md` | Detailed technical documentation |
 | `PR_FIXES_README.md` | Quick start guide |

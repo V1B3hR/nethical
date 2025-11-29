@@ -59,7 +59,7 @@ class Phase4IntegratedGovernance:
         enable_ethical_taxonomy: bool = True,
         enable_sla_monitoring: bool = True,
         s3_bucket: Optional[str] = None,
-        taxonomy_path: str = "ethics_taxonomy.json",
+        taxonomy_path: str = "taxonomies/ethics_taxonomy.json",
     ):
         """Initialize Phase 4 integrated governance.
 

@@ -47,7 +47,7 @@ class APIResponse:
 class TaxonomyAPI:
     """REST API for taxonomy management."""
 
-    def __init__(self, taxonomy_path: str = "ethics_taxonomy.json"):
+    def __init__(self, taxonomy_path: str = "taxonomies/ethics_taxonomy.json"):
         """Initialize taxonomy API.
 
         Args:

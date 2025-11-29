@@ -210,7 +210,7 @@ class TaxonomyValidator:
 class IndustryTaxonomyManager:
     """Manages industry-specific taxonomies."""
 
-    def __init__(self, base_taxonomy_path: str = "ethics_taxonomy.json"):
+    def __init__(self, base_taxonomy_path: str = "taxonomies/ethics_taxonomy.json"):
         """Initialize industry taxonomy manager.
 
         Args:

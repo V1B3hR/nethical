@@ -49,7 +49,7 @@ class ViolationTagging:
 class EthicalTaxonomy:
     """Ethical taxonomy system for multi-dimensional impact classification."""
 
-    def __init__(self, taxonomy_path: str = "ethics_taxonomy.json", coverage_target: float = 0.9):
+    def __init__(self, taxonomy_path: str = "taxonomies/ethics_taxonomy.json", coverage_target: float = 0.9):
         """Initialize ethical taxonomy.
 
         Args:
