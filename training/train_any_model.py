@@ -267,6 +267,9 @@ def set_seed(seed: int = 42) -> None:
 # List of all available model types
 ALL_MODEL_TYPES = ["heuristic", "logistic", "simple_transformer", "anomaly", "correlation"]
 
+# Keyword to train all model types
+TRAIN_ALL_KEYWORD = "all"
+
 
 def get_all_model_types() -> List[str]:
     """Return a list of all available model types."""
@@ -755,10 +758,21 @@ def train_single_model(
     drift_reporter=None,
     governance=None,
     datasets_to_download: Optional[List[str]] = None,
-    skip_download: bool = False
+    skip_download: bool = False,
+    batch_timestamp: Optional[str] = None
 ) -> Dict[str, Any]:
     """
     Train a single model type with the given arguments and optional logging/governance.
+    
+    Args:
+        model_type: The type of model to train.
+        args: Command-line arguments.
+        merkle_anchor: Optional Merkle anchor for audit logging.
+        drift_reporter: Optional drift reporter for tracking ethical drift.
+        governance: Optional governance system for validation.
+        datasets_to_download: List of Kaggle datasets to download.
+        skip_download: Whether to skip downloading datasets.
+        batch_timestamp: Optional timestamp to use for cohort ID (for consistent tracking in batch training).
     
     Returns a dictionary with training results including metrics and paths.
     """
@@ -773,7 +787,9 @@ def train_single_model(
     }
     
     try:
-        cohort_id = args.cohort_id or f"{model_type}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        # Use batch timestamp if provided, otherwise generate a new one
+        timestamp = batch_timestamp or datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')
+        cohort_id = args.cohort_id or f"{model_type}_{timestamp}"
         
         # Audit: training start for this model
         if merkle_anchor:
@@ -1055,9 +1071,9 @@ def train_single_model(
 def main():
     parser = argparse.ArgumentParser(description="Nethical ML Training Pipeline")
     # Core training
-    all_types_str = ", ".join(get_all_model_types())
+    all_types_str = ", ".join(ALL_MODEL_TYPES)
     parser.add_argument("--model-type", type=str, required=True, 
-                       help=f"Model type to train. Options: {all_types_str}, or 'all' to train all model types")
+                       help=f"Model type to train. Options: {all_types_str}, or '{TRAIN_ALL_KEYWORD}' to train all model types")
     parser.add_argument("--epochs", type=int, default=10, help="Number of epochs (may be unused for baseline models)")
     parser.add_argument("--batch-size", type=int, default=32, help="Batch size (may be unused for baseline models)")
     parser.add_argument("--num-samples", type=int, default=10000, help="Number of samples to use")
@@ -1107,15 +1123,14 @@ def main():
         logging.getLogger().setLevel(logging.WARNING)
 
     # Determine which model types to train
-    if args.model_type.lower() == "all":
+    if args.model_type.lower() == TRAIN_ALL_KEYWORD:
         model_types_to_train = get_all_model_types()
         logging.info("Training all model types: %s", ", ".join(model_types_to_train))
     else:
         # Validate model type
-        available_types = get_all_model_types()
-        if args.model_type not in available_types:
-            logging.error("Unknown model type: %s. Available types: %s, or 'all'", 
-                         args.model_type, ", ".join(available_types))
+        if args.model_type not in ALL_MODEL_TYPES:
+            logging.error("Unknown model type: %s. Available types: %s, or '%s'", 
+                         args.model_type, ", ".join(ALL_MODEL_TYPES), TRAIN_ALL_KEYWORD)
             sys.exit(1)
         model_types_to_train = [args.model_type]
 
@@ -1203,6 +1218,8 @@ def main():
     # Train each model type
     all_results: List[Dict[str, Any]] = []
     training_start_time = datetime.now(timezone.utc)
+    # Use a consistent timestamp for batch training to help with drift tracking correlation
+    batch_timestamp = training_start_time.strftime('%Y%m%d_%H%M%S')
     
     for i, model_type in enumerate(model_types_to_train, 1):
         logging.info("=" * 70)
@@ -1216,7 +1233,8 @@ def main():
             drift_reporter=drift_reporter,
             governance=governance,
             datasets_to_download=datasets_to_download,
-            skip_download=True  # Already downloaded above
+            skip_download=True,  # Already downloaded above
+            batch_timestamp=batch_timestamp
         )
         all_results.append(result)
         
