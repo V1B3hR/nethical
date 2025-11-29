@@ -35,6 +35,7 @@ Usage:
         --enable-audit \
         --promotion-min-accuracy 0.85 \
         --promotion-max-ece 0.08 \
+        --enable-governance --enable-audit --enable-drift-tracking
 
 Optional Kaggle auth sources (priority order):
 1) CLI: --kaggle-username <user> --kaggle-key <key>
