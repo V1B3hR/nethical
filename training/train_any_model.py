@@ -1334,7 +1334,7 @@ def main():
                         for key in ('total_actions_evaluated', 'total_violations_detected', 'total_actions_blocked'):
                             if key in metrics_dict:
                                 gov_summary[key] = metrics_dict[key]
-                    # Add data_violations and prediction_violations totals
+                    # Add data_violations and prediction_violations totals from all results
                     gov_summary['data_violations'] = sum(r.get('data_violations', 0) for r in all_results)
                     gov_summary['prediction_violations'] = sum(r.get('prediction_violations', 0) for r in all_results)
                     audit_summary['governance'] = gov_summary
