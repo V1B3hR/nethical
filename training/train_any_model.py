@@ -783,7 +783,9 @@ def train_single_model(
         'promoted': False,
         'model_path': None,
         'metrics_path': None,
-        'error': None
+        'error': None,
+        'data_violations': 0,
+        'prediction_violations': 0
     }
     
     try:
@@ -861,6 +863,8 @@ def train_single_model(
                         })
                 except Exception as e:
                     logging.warning("[%s] Error validating sample %d: %s", model_type, i, e)
+            # Track data violations in result
+            result['data_violations'] = len(governance_violations)
             if governance_violations:
                 logging.warning("[%s] Governance found %d problematic data samples", 
                               model_type, len(governance_violations))
@@ -976,6 +980,8 @@ def train_single_model(
                         })
                 except Exception as e:
                     logging.warning("[%s] Error validating prediction %d: %s", model_type, i, e)
+            # Track prediction violations in result
+            result['prediction_violations'] = len(prediction_violations)
             if prediction_violations:
                 logging.warning("[%s] Governance found %d problematic predictions", 
                               model_type, len(prediction_violations))
@@ -1163,6 +1169,8 @@ def main():
             try:
                 drift_reporter = EthicalDriftReporter(report_dir=args.drift_report_dir)
                 logging.info("Ethical drift tracking enabled. Reports stored in: %s", args.drift_report_dir)
+                if args.cohort_id:
+                    logging.info("Training cohort ID: %s", args.cohort_id)
             except Exception as e:
                 logging.warning("Failed to initialize drift reporter: %s", e)
                 drift_reporter = None
@@ -1296,7 +1304,9 @@ def main():
                             'promoted': r['promoted'],
                             'metrics': r['metrics'],
                             'model_path': r['model_path'],
-                            'error': r.get('error')
+                            'error': r.get('error'),
+                            'data_violations': r.get('data_violations', 0),
+                            'prediction_violations': r.get('prediction_violations', 0)
                         }
                         for r in all_results
                     ],
@@ -1305,6 +1315,14 @@ def main():
                     'promoted': sum(1 for r in all_results if r['promoted']),
                     'timestamp': datetime.now(timezone.utc).isoformat()
                 }
+                
+                # For backwards compatibility: when training a single model,
+                # add model_type and metrics at the top level
+                if len(all_results) == 1:
+                    single_result = all_results[0]
+                    audit_summary['model_type'] = single_result['model_type']
+                    audit_summary['metrics'] = single_result['metrics']
+                
                 if governance:
                     try:
                         governance_metrics = governance.get_system_metrics()
@@ -1316,6 +1334,9 @@ def main():
                         for key in ('total_actions_evaluated', 'total_violations_detected', 'total_actions_blocked'):
                             if key in metrics_dict:
                                 gov_summary[key] = metrics_dict[key]
+                    # Add data_violations and prediction_violations totals
+                    gov_summary['data_violations'] = sum(r.get('data_violations', 0) for r in all_results)
+                    gov_summary['prediction_violations'] = sum(r.get('prediction_violations', 0) for r in all_results)
                     audit_summary['governance'] = gov_summary
                 else:
                     audit_summary['governance'] = {'enabled': False}

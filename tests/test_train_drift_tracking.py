@@ -48,13 +48,14 @@ def test_train_with_drift_tracking():
         # Check that training succeeded
         assert result.returncode == 0, f"Training failed with return code {result.returncode}"
         
-        # Check that drift tracking was enabled
-        assert "Ethical drift tracking enabled" in result.stdout, "Drift tracking not enabled"
-        assert "Training cohort ID: test_cohort_a" in result.stdout, "Cohort ID not set"
+        # Check that drift tracking was enabled (may be in stdout or stderr depending on logging)
+        combined_output = result.stdout + result.stderr
+        assert "Ethical drift tracking enabled" in combined_output, "Drift tracking not enabled"
+        assert "Training cohort ID: test_cohort_a" in combined_output, "Cohort ID not set"
         
         # Check that drift report was generated
-        assert "Generating ethical drift report" in result.stdout, "Drift report not generated"
-        assert "Drift Report ID:" in result.stdout, "Drift report ID not printed"
+        assert "Generating ethical drift report" in combined_output, "Drift report not generated"
+        assert "Drift Report ID:" in combined_output, "Drift report ID not printed"
         
         # Check that drift reports directory was created
         assert drift_path.exists(), "Drift reports directory not created"
