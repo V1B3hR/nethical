@@ -29,9 +29,12 @@ Usage:
     # Train all model types:
     python train_any_model.py \
         --model-type all \
-        --epochs 10 \
-        --num-samples 2000 \
-        --enable-audit
+        --epochs 70 \
+        --batch-size 64 \
+        --num-samples 20000 \
+        --enable-audit \
+        --promotion-min-accuracy 0.85 \
+        --promotion-max-ece 0.08
 
 Optional Kaggle auth sources (priority order):
 1) CLI: --kaggle-username <user> --kaggle-key <key>
