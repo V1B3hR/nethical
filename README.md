@@ -481,10 +481,10 @@ Nethical is designed for **plug-and-play** integration with **ALL major LLMs and
 
 | Platform | Integration Method | Status | Manifest |
 |----------|-------------------|--------|----------|
-| **OpenAI (GPT-4, GPT-3.5, ChatGPT)** | REST API, Plugin | ✅ Ready | `ai-plugin.json`, `openapi.yaml` |
-| **Anthropic Claude** | Function Calling | ✅ Ready | `ai-plugin.json` |
-| **xAI Grok** | Function Calling | ✅ Ready | `grok-manifest.json` |
-| **Google Gemini** | Function Calling | ✅ Ready | `gemini-manifest.json` |
+| **OpenAI (GPT-4, GPT-3.5, ChatGPT)** | REST API, Plugin | ✅ Ready | `config/integrations/ai-plugin.json`, `openapi.yaml` |
+| **Anthropic Claude** | Function Calling | ✅ Ready | `config/integrations/ai-plugin.json` |
+| **xAI Grok** | Function Calling | ✅ Ready | `config/integrations/grok-manifest.json` |
+| **Google Gemini** | Function Calling | ✅ Ready | `config/integrations/gemini-manifest.json` |
 | **Meta LLaMA** | REST API | ✅ Ready | `openapi.yaml` |
 | **Custom LLMs** | REST API | ✅ Ready | `openapi.yaml` |
 
@@ -492,16 +492,16 @@ Nethical is designed for **plug-and-play** integration with **ALL major LLMs and
 
 | Platform | Type | Status | Manifest |
 |----------|------|--------|----------|
-| **LangChain** | Agent Framework | ✅ Ready | `langchain-tool.json` |
-| **HuggingFace** | ML Platform | ✅ Ready | `huggingface-tool.yaml` |
-| **AutoGen** | Multi-Agent | ✅ Ready | `autogen-manifest.json` |
+| **LangChain** | Agent Framework | ✅ Ready | `config/integrations/langchain-tool.json` |
+| **HuggingFace** | ML Platform | ✅ Ready | `config/integrations/huggingface-tool.yaml` |
+| **AutoGen** | Multi-Agent | ✅ Ready | `config/integrations/autogen-manifest.json` |
 | **Ray Serve** | Model Serving | ✅ Ready | Python SDK |
-| **MLflow** | MLOps | ✅ Ready | `mlflow-integration.yaml` |
-| **AWS SageMaker** | Cloud ML | 📋 Stub | `enterprise-mcp-integrations.yaml` |
-| **Azure ML** | Cloud ML | 📋 Stub | `enterprise-mcp-integrations.yaml` |
-| **Google Vertex AI** | Cloud ML | 📋 Stub | `enterprise-mcp-integrations.yaml` |
-| **Weights & Biases** | Experiment Tracking | 📋 Stub | `enterprise-mcp-integrations.yaml` |
-| **Databricks** | Data Platform | 📋 Stub | `enterprise-mcp-integrations.yaml` |
+| **MLflow** | MLOps | ✅ Ready | `config/integrations/mlflow-integration.yaml` |
+| **AWS SageMaker** | Cloud ML | 📋 Stub | `config/integrations/enterprise-mcp-integrations.yaml` |
+| **Azure ML** | Cloud ML | 📋 Stub | `config/integrations/enterprise-mcp-integrations.yaml` |
+| **Google Vertex AI** | Cloud ML | 📋 Stub | `config/integrations/enterprise-mcp-integrations.yaml` |
+| **Weights & Biases** | Experiment Tracking | 📋 Stub | `config/integrations/enterprise-mcp-integrations.yaml` |
+| **Databricks** | Data Platform | 📋 Stub | `config/integrations/enterprise-mcp-integrations.yaml` |
 
 ### Quick Integration Examples
 
@@ -568,12 +568,12 @@ safe_agent = wrap_autogen_agent(agent, check_messages=True)
 
 Nethical is ready for registration with major LLM marketplaces:
 
-- **OpenAI ChatGPT Plugin Store**: Use `ai-plugin.json` + `openapi.yaml`
+- **OpenAI ChatGPT Plugin Store**: Use `config/integrations/ai-plugin.json` + `openapi.yaml`
 - **Anthropic Claude**: Function calling with `claude_tools` module
-- **xAI Grok Marketplace**: Use `grok-manifest.json` (when available)
+- **xAI Grok Marketplace**: Use `config/integrations/grok-manifest.json` (when available)
 - **Google Gemini**: Function declarations with `gemini_tools` module
-- **LangChain Hub**: Publish with `langchain-tool.json`
-- **HuggingFace Spaces**: Deploy with `huggingface-tool.yaml`
+- **LangChain Hub**: Publish with `config/integrations/langchain-tool.json`
+- **HuggingFace Spaces**: Deploy with `config/integrations/huggingface-tool.yaml`
 
 ### Documentation & Guides
 

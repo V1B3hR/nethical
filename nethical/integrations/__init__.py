@@ -119,19 +119,19 @@ def get_integration_info() -> Dict[str, Any]:
             "available": CLAUDE_AVAILABLE,
             "setup": "pip install anthropic",
             "docs": "See nethical.integrations.claude_tools",
-            "manifest": "ai-plugin.json"
+            "manifest": "config/integrations/ai-plugin.json"
         },
         "grok": {
             "available": GROK_AVAILABLE,
             "setup": "pip install xai-sdk (when available) or use REST API",
             "docs": "See nethical.integrations.grok_tools",
-            "manifest": "grok-manifest.json"
+            "manifest": "config/integrations/grok-manifest.json"
         },
         "gemini": {
             "available": GEMINI_AVAILABLE,
             "setup": "pip install google-generativeai",
             "docs": "See nethical.integrations.gemini_tools",
-            "manifest": "gemini-manifest.json"
+            "manifest": "config/integrations/gemini-manifest.json"
         },
         "rest_api": {
             "available": REST_API_AVAILABLE,
@@ -143,7 +143,7 @@ def get_integration_info() -> Dict[str, Any]:
             "available": True,
             "setup": "Use REST API endpoint",
             "docs": "See nethical.integrations.rest_api",
-            "manifest": "ai-plugin.json"
+            "manifest": "config/integrations/ai-plugin.json"
         },
         "llama": {
             "available": True,

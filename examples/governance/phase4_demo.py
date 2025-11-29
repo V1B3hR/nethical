@@ -238,7 +238,7 @@ def main():
         enable_quarantine=True,
         enable_ethical_taxonomy=True,
         enable_sla_monitoring=True,
-        taxonomy_path="ethics_taxonomy.json"
+        taxonomy_path="taxonomies/ethics_taxonomy.json"
     )
     print("✓ Governance system initialized")
     

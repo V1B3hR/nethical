@@ -28,7 +28,7 @@ Nethical maintains compliance with:
 
 **Requirements Met:**
 - ✅ OpenAPI 3.1 specification
-- ✅ ai-plugin.json manifest
+- ✅ ai-plugin.json manifest (in `config/integrations/`)
 - ✅ HTTPS endpoints required
 - ✅ Schema validation
 - ✅ CORS configuration
@@ -92,7 +92,7 @@ tool = get_nethical_tool()
 - ✅ Response structure
 - ✅ Error codes
 
-**Manifest:** `grok-manifest.json`
+**Manifest:** `config/integrations/grok-manifest.json`
 
 ### Google Gemini Standards
 
@@ -103,7 +103,7 @@ tool = get_nethical_tool()
 - ✅ Safety settings integration
 - ✅ Context handling
 
-**Manifest:** `gemini-manifest.json`
+**Manifest:** `config/integrations/gemini-manifest.json`
 
 ## MCP Platform Compliance
 
@@ -116,7 +116,7 @@ tool = get_nethical_tool()
 - ✅ Memory compatibility
 - ✅ Chain composition
 
-**Manifest:** `langchain-tool.json`
+**Manifest:** `config/integrations/langchain-tool.json`
 
 **Validation:**
 
@@ -138,7 +138,7 @@ assert hasattr(tool, '_arun')  # Async support
 - ✅ Model Hub integration
 - ✅ Dataset compatibility
 
-**Manifest:** `huggingface-tool.yaml`
+**Manifest:** `config/integrations/huggingface-tool.yaml`
 
 ### AutoGen Standards
 
@@ -149,7 +149,7 @@ assert hasattr(tool, '_arun')  # Async support
 - ✅ Group chat monitoring
 - ✅ Conversation tracking
 
-**Manifest:** `autogen-manifest.json`
+**Manifest:** `config/integrations/autogen-manifest.json`
 
 ### MLflow Standards
 
@@ -160,7 +160,7 @@ assert hasattr(tool, '_arun')  # Async support
 - ✅ Registry integration
 - ✅ Deployment hooks
 
-**Manifest:** `mlflow-integration.yaml`
+**Manifest:** `config/integrations/mlflow-integration.yaml`
 
 ### Ray Serve Standards
 

@@ -10,7 +10,7 @@ This directory contains fixes for issues found in Pull Requests #88, #89, and #9
 ## What's Included
 
 1. **PR_ISSUES_RESOLUTION.md** - Detailed documentation of all issues and fixes
-2. **test_sso_CORRECTED.py** - Corrected test file with security fixes for PR #88
+2. **tests/test_sso_CORRECTED.py** - Corrected test file with security fixes for PR #88
 3. **apply_pr88_fixes.sh** - Automated script to apply fixes to PR #88
 4. **.github/dependabot.yml** - Fixed configuration (already applied)
 
@@ -32,7 +32,7 @@ git checkout copilot/enhance-threat-modeling-tools
 
 # Copy the fix script from main
 git show origin/copilot/resolve-pull-request-issues:apply_pr88_fixes.sh > /tmp/apply_pr88_fixes.sh
-git show origin/copilot/resolve-pull-request-issues:test_sso_CORRECTED.py > test_sso_CORRECTED.py
+git show origin/copilot/resolve-pull-request-issues:tests/test_sso_CORRECTED.py > test_sso_CORRECTED.py
 
 # Run the fix script
 chmod +x /tmp/apply_pr88_fixes.sh
