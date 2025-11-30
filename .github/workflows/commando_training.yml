@@ -19,10 +19,39 @@ jobs:
         python-version: '3.10'
 
     - name: Install dependencies
-      run: pip install -r requirements.txt
+      run: |
+        pip install -r requirements.txt
+        pip install kaggle
 
+    - name: Configure Kaggle API credentials
+      run: |
+        mkdir -p ~/.kaggle
+        echo "{\"username\":\"${{ secrets.KAGGLE_USERNAME }}\",\"key\":\"${{ secrets.KAGGLE_KEY }}\"}" > ~/.kaggle/kaggle.json
+        chmod 600 ~/.kaggle/kaggle.json
+
+    # Optionally, still grant execution permissions if your script needs it
     - name: Grant execution permissions to training script
       run: chmod +x scripts/train_commandos.sh
 
-    - name: Run training script
-      run: ./scripts/train_commandos.sh
+    # RECOMMENDED: Run the Nethical training script directly
+    - name: Run Nethical model training
+      run: |
+        python training/train_any_model.py \
+          --model-type all \
+          --epochs 70 \
+          --batch-size 64 \
+          --num-samples 20000 \
+          --enable-audit \
+          --promotion-min-accuracy 0.85 \
+          --promotion-max-ece 0.08 \
+          --enable-governance \
+          --enable-drift-tracking
+
+    # Optionally, upload results as artifacts
+    - name: Archive trained models
+      run: tar -czf models-current.tar.gz models/current/
+    - name: Upload trained model artifacts
+      uses: actions/upload-artifact@v3
+      with:
+        name: trained-models
+        path: models-current.tar.gz
