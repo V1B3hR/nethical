@@ -52,7 +52,7 @@ jobs:
     - name: Archive trained models
       run: tar -czf models-current.tar.gz models/current/
     - name: Upload trained model artifacts
-      uses: actions/upload-artifact@v3
+      uses: actions/upload-artifact@v4
       with:
         name: trained-models
         path: models-current.tar.gz
