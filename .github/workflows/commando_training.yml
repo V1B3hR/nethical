@@ -12,10 +12,11 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - uses: actions/upload-artifact@v4
+    - name: Checkout code
+      uses: actions/checkout@v3
 
     - name: Set up Python 3.10
-      uses: actions/upload-artifact@v4
+      uses: actions/setup-python@v4
       with:
         python-version: '3.10'
 
@@ -30,11 +31,10 @@ jobs:
         echo "{\"username\":\"${{ secrets.KAGGLE_USERNAME }}\",\"key\":\"${{ secrets.KAGGLE_KEY }}\"}" > ~/.kaggle/kaggle.json
         chmod 600 ~/.kaggle/kaggle.json
 
-    # Optionally, still grant execution permissions if your script needs it
-    - name: Grant execution permissions to training script
+    - name: (Optional) Grant execution permissions to training script
+      if: runner.os == 'Linux'
       run: chmod +x scripts/train_commandos.sh
 
-    # RECOMMENDED: Run the Nethical training script directly
     - name: Run Nethical model training
       run: |
         python training/train_any_model.py \
@@ -48,9 +48,10 @@ jobs:
           --enable-governance \
           --enable-drift-tracking
 
-    # Optionally, upload results as artifacts
     - name: Archive trained models
-      run: tar -czf models-current.tar.gz models/current/
+      run: |
+        tar -czf models-current.tar.gz models/current/
+
     - name: Upload trained model artifacts
       uses: actions/upload-artifact@v4
       with:
