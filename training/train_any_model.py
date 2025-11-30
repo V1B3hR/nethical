@@ -31,7 +31,7 @@ Usage:
         --model-type all \
         --epochs 70 \
         --batch-size 64 \
-        --num-samples 20000 \
+        --num-samples 10000 \
         --enable-audit \
         --promotion-min-accuracy 0.85 \
         --promotion-max-ece 0.08 \
