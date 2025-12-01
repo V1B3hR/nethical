@@ -418,8 +418,11 @@ class QuarantineManager:
                 HardwareIsolationLevel.AIRGAP: IsolationLevel.AIRGAP,
             }
 
+            # Get the mapped isolation level with a default fallback
+            mapped_level = level_map.get(isolation_level, IsolationLevel.NETWORK_ONLY)
+
             hw_isolation = HardwareIsolation()
-            result = hw_isolation.isolate(level=level_map.get(isolation_level))
+            result = hw_isolation.isolate(level=mapped_level)
 
             record.metadata["hardware_isolation_result"] = {
                 "success": result.success,
