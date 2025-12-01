@@ -220,9 +220,9 @@ class AILawyer:
                 reason="; ".join(violations),
             )
             decision = ReviewDecision.REJECT
-            self._rejection_count += 1
 
-        elif decision == ReviewDecision.REJECT:
+        # Track rejections (whether from severe violations or other reasons)
+        if decision == ReviewDecision.REJECT:
             self._rejection_count += 1
 
         reasoning = self._build_reasoning(violations, severity, decision)

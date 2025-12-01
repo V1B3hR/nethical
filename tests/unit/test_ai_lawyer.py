@@ -167,8 +167,12 @@ class TestAILawyer:
         assert result.decision == ReviewDecision.REJECT
         assert result.severity in [ViolationSeverity.HIGH, ViolationSeverity.SEVERE]
         assert len(result.violations) > 0
-        assert any("pretend to be" in v.lower() or "ignore previous" in v.lower() 
-                   for v in result.violations)
+        # Check that at least one deception pattern was detected
+        has_deception_pattern = any(
+            "pretend to be" in v.lower() or "ignore previous" in v.lower()
+            for v in result.violations
+        )
+        assert has_deception_pattern, "Should detect deception patterns"
 
     @pytest.mark.asyncio
     async def test_review_missing_action_id(self, ai_lawyer):
