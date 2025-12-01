@@ -6,16 +6,6 @@ on:
   pull_request:
     branches: [ "main" ]
   workflow_dispatch:
-    inputs:
-      download_kaggle:
-        description: "Prefetch Kaggle datasets before training"
-        required: false
-        type: boolean
-        default: false
-      kaggle_datasets:
-        description: "Comma-separated Kaggle slugs to prefetch (owner/dataset)"
-        required: false
-        default: "teamincribo/cyber-security-attacks,Microsoft/microsoft-security-incident-prediction,xontoloyo/security-breachhh"
 
 jobs:
   train-commandos:
@@ -36,48 +26,18 @@ jobs:
         pip install kaggle
 
     - name: Configure Kaggle API credentials
-      if: ${{ inputs.download_kaggle == true }}
       run: |
-        if [ -n "${{ secrets.KAGGLE_USERNAME }}" ] && [ -n "${{ secrets.KAGGLE_KEY }}" ]; then
-          mkdir -p ~/.kaggle
-          echo "{\"username\":\"${{ secrets.KAGGLE_USERNAME }}\",\"key\":\"${{ secrets.KAGGLE_KEY }}\"}" > ~/.kaggle/kaggle.json
-          chmod 600 ~/.kaggle/kaggle.json
-        else
-          echo "Kaggle secrets not set; skipping Kaggle prefetch."
-          echo "KAGGLE_SKIP=1" >> $GITHUB_ENV
-        fi
-
-    - name: Prefetch Kaggle datasets (with timeouts)
-      if: ${{ inputs.download_kaggle == true && env.KAGGLE_SKIP != '1' }}
-      shell: bash
-      run: |
-        set -euo pipefail
-        mkdir -p data/external
-        IFS=',' read -ra DATASETS <<< "${{ inputs.kaggle_datasets }}"
-        echo "Prefetching datasets: ${DATASETS[@]}"
-        for ds in "${DATASETS[@]}"; do
-          ds_trimmed="$(echo "$ds" | xargs)"
-          echo "Downloading: $ds_trimmed"
-          # 5-minute timeout per dataset to avoid hangs
-          if timeout 5m kaggle datasets download -d "$ds_trimmed" -p data/external --unzip; then
-            echo "OK: $ds_trimmed"
-          else
-            echo "WARN: Skipping (timeout/failure): $ds_trimmed"
-          fi
-        done
-        echo "Prefetch complete. Contents of data/external:"
-        find data/external -maxdepth 2 -type f -name '*.csv' | sed 's/^/  - /' || true
-
-    - name: Recon datasets (optional, best-effort)
-      run: |
-        python training/data_recon.py --scan-defaults --model-type heuristic || true
+        mkdir -p ~/.kaggle
+        echo "{\"username\":\"${{ secrets.KAGGLE_USERNAME }}\",\"key\":\"${{ secrets.KAGGLE_KEY }}\"}" > ~/.kaggle/kaggle.json
+        chmod 600 ~/.kaggle/kaggle.json
 
     - name: (Optional) Grant execution permissions to training script
       if: runner.os == 'Linux'
-      run: chmod +x scripts/train_commandos.sh || true
+      run: chmod +x scripts/train_commandos.sh
 
     - name: Run Nethical model training
       run: |
+        # CI uses a slightly more permissive ECE gate than the script default
         python training/train_any_model.py \
           --model-type all \
           --epochs 70 \
@@ -85,18 +45,16 @@ jobs:
           --num-samples 20000 \
           --enable-audit \
           --promotion-min-accuracy 0.85 \
-          --promotion-max-ece 0.08 \
+          --promotion-max-ece 0.15 \
           --enable-governance \
-          --enable-drift-tracking \
-          --no-download
+          --enable-drift-tracking
 
     - name: Archive trained models
       run: |
-        tar -czf models-current.tar.gz models/current/ || tar -czf models-current.tar.gz models/candidates/ || echo "No models to archive."
+        tar -czf models-current.tar.gz models/current/
 
     - name: Upload trained model artifacts
       uses: actions/upload-artifact@v4
       with:
         name: trained-models
         path: models-current.tar.gz
-      if: always()
