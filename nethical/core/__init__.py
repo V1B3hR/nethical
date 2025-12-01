@@ -19,10 +19,32 @@ from .fundamental_laws import (
 # Phase 4 components
 from .audit_merkle import MerkleAnchor, AuditChunk, MerkleNode
 from .policy_diff import PolicyDiffAuditor, PolicyDiffResult, PolicyChange, ChangeType, RiskLevel
-from .quarantine import QuarantineManager, QuarantineReason, QuarantineStatus, QuarantinePolicy
+from .quarantine import QuarantineManager, QuarantineReason, QuarantineStatus, QuarantinePolicy, HardwareIsolationLevel
 from .ethical_taxonomy import EthicalTaxonomy, EthicalTag, ViolationTagging, EthicalDimension
 from .sla_monitor import SLAMonitor, SLAStatus, SLATarget, SLABreach
 from .phase4_integration import Phase4IntegratedGovernance
+
+# Kill Switch Protocol - Emergency Override System
+from .kill_switch import (
+    ShutdownMode,
+    CommandType,
+    KeyType,
+    ConnectionType,
+    IsolationLevel,
+    ActuatorState,
+    KillSwitchConfig,
+    AgentRecord,
+    ActuatorRecord,
+    SignedCommand,
+    AuditLogEntry,
+    KillSwitchResult,
+    KillSwitchCallback,
+    GlobalKillSwitch,
+    ActuatorSevering,
+    CryptoSignedCommands,
+    HardwareIsolation,
+    KillSwitchProtocol,
+)
 
 # Phase 5 components
 from .ml_shadow import MLShadowClassifier, ShadowPrediction, ShadowMetrics, MLModelType
@@ -143,6 +165,7 @@ __all__ = [
     "QuarantineReason",
     "QuarantineStatus",
     "QuarantinePolicy",
+    "HardwareIsolationLevel",
     "EthicalTaxonomy",
     "EthicalTag",
     "ViolationTagging",
@@ -152,6 +175,25 @@ __all__ = [
     "SLATarget",
     "SLABreach",
     "Phase4IntegratedGovernance",
+    # Kill Switch Protocol
+    "ShutdownMode",
+    "CommandType",
+    "KeyType",
+    "ConnectionType",
+    "IsolationLevel",
+    "ActuatorState",
+    "KillSwitchConfig",
+    "AgentRecord",
+    "ActuatorRecord",
+    "SignedCommand",
+    "AuditLogEntry",
+    "KillSwitchResult",
+    "KillSwitchCallback",
+    "GlobalKillSwitch",
+    "ActuatorSevering",
+    "CryptoSignedCommands",
+    "HardwareIsolation",
+    "KillSwitchProtocol",
     # Phase 5
     "MLShadowClassifier",
     "ShadowPrediction",

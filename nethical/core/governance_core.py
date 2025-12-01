@@ -812,6 +812,9 @@ class EnhancedSafetyGovernance:
             self.metrics["total_actions_blocked"] += 1
         elif judgment.decision == Decision.ALLOW_WITH_MODIFICATION:
             self.metrics["total_actions_modified"] += 1
+        elif judgment.decision == Decision.TERMINATE:
+            # Trigger kill switch for TERMINATE decisions
+            await self._handle_terminate_decision(action, judgment)
 
         # Alerts
         await self._handle_alerts(action, validated, judgment)
@@ -877,6 +880,68 @@ class EnhancedSafetyGovernance:
             )
             return False
         return True
+
+    # -------- Kill Switch Integration --------
+
+    async def _handle_terminate_decision(
+        self, action: AgentAction, judgment: JudgmentResult
+    ) -> None:
+        """Handle TERMINATE decision by triggering kill switch.
+
+        This method is called when a TERMINATE decision is made,
+        integrating with the Kill Switch Protocol to ensure safe shutdown
+        as required by Law 7 (Human Override Authority) and Law 23 (Safe Failure Modes).
+
+        Args:
+            action: The action that triggered termination
+            judgment: The judgment result
+        """
+        try:
+            from .kill_switch import KillSwitchProtocol, ShutdownMode
+
+            # Get or create kill switch protocol instance
+            if not hasattr(self, "_kill_switch_protocol"):
+                self._kill_switch_protocol = KillSwitchProtocol()
+
+            # Determine the agent and cohort to terminate
+            agent_id = action.agent_id
+            cohort = action.metadata.get("cohort")
+
+            # Log the termination trigger
+            logger.warning(
+                "TERMINATE decision triggered kill switch for agent %s (judgment: %s)",
+                agent_id,
+                judgment.judgment_id,
+            )
+
+            # Execute kill switch for the specific agent
+            result = self._kill_switch_protocol.emergency_shutdown(
+                mode=ShutdownMode.GRACEFUL,
+                agent_id=agent_id,
+                sever_actuators=True,
+                isolate_hardware=False,  # Only isolate hardware for critical emergencies
+            )
+
+            if not result.success:
+                logger.error(
+                    "Kill switch activation failed for agent %s: %s",
+                    agent_id,
+                    result.errors,
+                )
+
+            # Update judgment metadata with kill switch result
+            judgment.modifications["kill_switch_triggered"] = True
+            judgment.modifications["kill_switch_result"] = {
+                "success": result.success,
+                "activation_time_ms": result.activation_time_ms,
+                "agents_affected": result.agents_affected,
+                "actuators_severed": result.actuators_severed,
+            }
+
+        except ImportError:
+            logger.warning("Kill switch module not available for TERMINATE decision")
+        except Exception as e:
+            logger.error("Failed to trigger kill switch: %s", e)
 
     # -------- Alerts --------
 
