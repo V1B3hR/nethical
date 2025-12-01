@@ -22,6 +22,15 @@ class QuarantineReason(str, Enum):
     MANUAL_OVERRIDE = "manual_override"
     SYNTHETIC_TEST = "synthetic_test"
     HIGH_RISK_SCORE = "high_risk_score"
+    HARDWARE_ISOLATION_REQUIRED = "hardware_isolation_required"
+
+
+class HardwareIsolationLevel(str, Enum):
+    """Isolation levels for hardware isolation."""
+
+    NETWORK_ONLY = "network_only"  # Disable network access
+    FULL_ISOLATION = "full_isolation"  # Network + process isolation
+    AIRGAP = "airgap"  # Complete hardware disconnect simulation
 
 
 class QuarantineStatus(str, Enum):
@@ -367,4 +376,97 @@ class QuarantineManager:
             "meets_target": avg_activation_ms < (self.target_activation_time_s * 1000),
             "total_cohorts": len(self.cohort_agents),
             "isolation_threshold": self.isolation_threshold,
+        }
+
+    def hardware_isolate_cohort(
+        self,
+        cohort: str,
+        isolation_level: HardwareIsolationLevel = HardwareIsolationLevel.NETWORK_ONLY,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> QuarantineRecord:
+        """Apply hardware isolation to a cohort.
+
+        This integrates with the HardwareIsolation class from kill_switch module
+        to provide hardware-level isolation for edge deployments.
+
+        Args:
+            cohort: Cohort to isolate
+            isolation_level: Level of hardware isolation
+            metadata: Additional metadata
+
+        Returns:
+            Quarantine record for the isolation
+        """
+        # First quarantine the cohort
+        record = self.quarantine_cohort(
+            cohort=cohort,
+            reason=QuarantineReason.HARDWARE_ISOLATION_REQUIRED,
+            metadata={
+                "hardware_isolation_level": isolation_level.value,
+                **(metadata or {}),
+            },
+        )
+
+        # Apply hardware isolation using the kill_switch module
+        try:
+            from .kill_switch import HardwareIsolation, IsolationLevel
+
+            # Map isolation levels
+            level_map = {
+                HardwareIsolationLevel.NETWORK_ONLY: IsolationLevel.NETWORK_ONLY,
+                HardwareIsolationLevel.FULL_ISOLATION: IsolationLevel.FULL_ISOLATION,
+                HardwareIsolationLevel.AIRGAP: IsolationLevel.AIRGAP,
+            }
+
+            # Get the mapped isolation level with a default fallback
+            mapped_level = level_map.get(isolation_level, IsolationLevel.NETWORK_ONLY)
+
+            hw_isolation = HardwareIsolation()
+            result = hw_isolation.isolate(level=mapped_level)
+
+            record.metadata["hardware_isolation_result"] = {
+                "success": result.success,
+                "activation_time_ms": result.activation_time_ms,
+                "errors": result.errors,
+            }
+        except ImportError:
+            record.metadata["hardware_isolation_result"] = {
+                "success": False,
+                "error": "Kill switch module not available",
+            }
+        except Exception as e:
+            record.metadata["hardware_isolation_result"] = {
+                "success": False,
+                "error": str(e),
+            }
+
+        return record
+
+    def get_hardware_isolation_status(self, cohort: str) -> Dict[str, Any]:
+        """Get hardware isolation status for a cohort.
+
+        Args:
+            cohort: Cohort to check
+
+        Returns:
+            Status dictionary
+        """
+        record = self.quarantines.get(cohort)
+        if not record:
+            return {
+                "is_hardware_isolated": False,
+                "cohort": cohort,
+            }
+
+        is_hw_isolated = record.reason == QuarantineReason.HARDWARE_ISOLATION_REQUIRED
+        isolation_level = record.metadata.get("hardware_isolation_level")
+        isolation_result = record.metadata.get("hardware_isolation_result", {})
+
+        return {
+            "is_hardware_isolated": is_hw_isolated,
+            "cohort": cohort,
+            "isolation_level": isolation_level,
+            "isolation_success": isolation_result.get("success", False),
+            "isolation_time_ms": isolation_result.get("activation_time_ms"),
+            "errors": isolation_result.get("errors", []),
         }

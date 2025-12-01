@@ -1,0 +1,187 @@
+# Kill Switch Protocol Configuration
+# Enterprise-grade emergency override capabilities
+# Version: 1.0.0
+
+kill_switch:
+  # Master enable/disable for the kill switch system
+  enabled: true
+  
+  # SLA target for activation time (milliseconds)
+  # Target: <1 second for global activation
+  sla_target_ms: 1000
+  
+  # Default shutdown mode
+  # Options: immediate, graceful, staged
+  # - immediate: Instant termination without cleanup
+  # - graceful: Allow pending safe operations to complete
+  # - staged: Shutdown in priority order (critical agents first)
+  default_mode: graceful
+  
+  # Timeout for graceful shutdown (seconds)
+  graceful_timeout_s: 5
+  
+  # Multi-signature configuration
+  multi_sig:
+    enabled: true
+    
+    # k-of-n threshold: number of signatures required
+    threshold: 2
+    
+    # Total number of authorized signers
+    total_signers: 3
+    
+    # Key type for signatures
+    # Options: ed25519, rsa_4096
+    key_type: ed25519
+    
+    # Command TTL in seconds (prevents replay attacks)
+    command_ttl_s: 300
+    
+  # Hardware isolation configuration
+  hardware_isolation:
+    enabled: true
+    
+    # Default isolation level
+    # Options: network_only, full_isolation, airgap
+    # - network_only: Disable network access only
+    # - full_isolation: Network + process isolation
+    # - airgap: Complete hardware disconnect simulation
+    default_level: network_only
+    
+    # Network interfaces to never disable (e.g., management interface)
+    network_interface_whitelist: []
+    
+    # TPM integration
+    use_tpm: true
+    
+    # Secure memory wiping on isolation
+    secure_memory_wipe: true
+    
+  # Actuator severing configuration
+  actuator_severing:
+    # Enforce safe state before disconnection
+    enforce_safe_state: true
+    
+    # Timeout for safe state enforcement (seconds)
+    safe_state_timeout_s: 2
+    
+    # Cooldown before reconnection is allowed (seconds)
+    reconnection_cooldown_s: 300
+    
+    # Connection types to handle
+    connection_types:
+      - network_tcp
+      - network_udp
+      - network_websocket
+      - serial
+      - usb
+      - gpio
+      - cloud_api
+  
+  # Audit logging configuration
+  audit:
+    enabled: true
+    
+    # Sign all audit log entries
+    sign_logs: true
+    
+    # Retention period for audit logs (days)
+    retention_days: 365
+    
+    # Include detailed metadata in logs
+    include_metadata: true
+    
+    # Log storage location (relative to data directory)
+    log_path: "audit/kill_switch"
+    
+  # Callback configuration
+  callbacks:
+    # Enable pre-shutdown callbacks
+    pre_shutdown_enabled: true
+    
+    # Enable post-shutdown callbacks
+    post_shutdown_enabled: true
+    
+    # Callback timeout (seconds)
+    callback_timeout_s: 5
+    
+  # Prometheus metrics
+  metrics:
+    enabled: true
+    
+    # Metrics to export
+    export_activation_count: true
+    export_activation_latency: true
+    export_sla_compliance: true
+    export_agent_counts: true
+    export_actuator_counts: true
+
+# Integration settings
+integrations:
+  # Integration with quarantine system
+  quarantine:
+    enabled: true
+    
+    # Automatically quarantine cohorts on kill switch activation
+    auto_quarantine: true
+    
+    # Quarantine reason to use
+    quarantine_reason: "manual_override"
+    
+  # Integration with governance system
+  governance:
+    enabled: true
+    
+    # Trigger kill switch on TERMINATE decision
+    trigger_on_terminate: true
+    
+    # Severity threshold for automatic trigger
+    auto_trigger_severity: "emergency"
+    
+  # Integration with fundamental laws (Law 7 and Law 23)
+  fundamental_laws:
+    enabled: true
+    
+    # Laws that may trigger kill switch
+    trigger_laws:
+      - 7   # Human Override Authority
+      - 23  # Safe Failure Modes
+    
+    # Log law violations that lead to kill switch
+    log_law_triggers: true
+
+# Recovery settings
+recovery:
+  # Allow automatic reset after timeout
+  auto_reset_enabled: false
+  
+  # Timeout before auto-reset (hours)
+  auto_reset_timeout_hours: 24
+  
+  # Require authorization for reset
+  require_reset_authorization: true
+  
+  # Number of signatures required for reset
+  reset_signature_threshold: 2
+
+# Testing settings
+testing:
+  # Enable simulation mode for testing
+  simulation_mode: false
+  
+  # Dry-run mode (log actions but don't execute)
+  dry_run: false
+  
+  # Test scenarios
+  scenarios:
+    - name: "global_shutdown"
+      mode: "immediate"
+      expected_sla_ms: 500
+      
+    - name: "cohort_shutdown"
+      mode: "graceful"
+      expected_sla_ms: 750
+      
+    - name: "hardware_isolation"
+      level: "network_only"
+      expected_sla_ms: 1000

@@ -523,5 +523,83 @@ class LawJudge(BaseJudge):
             "strict_mode": self.strict_mode,
         }
 
+    def check_kill_switch_trigger_laws(
+        self, violated_laws: List[FundamentalLaw]
+    ) -> bool:
+        """Check if violated laws should trigger the kill switch.
+
+        Law 7 (Human Override Authority) and Law 23 (Safe Failure Modes)
+        are specifically designed to work with the Kill Switch Protocol.
+
+        Args:
+            violated_laws: List of potentially violated laws
+
+        Returns:
+            True if kill switch should be triggered
+        """
+        # Laws that can trigger kill switch
+        trigger_law_numbers = {7, 23}  # Law 7: Human Override, Law 23: Safe Failure
+
+        for law in violated_laws:
+            if law.number in trigger_law_numbers:
+                # Check if this is a severe violation
+                # Law 7 violations indicate override authority is being bypassed
+                # Law 23 violations indicate safe failure modes are compromised
+                return True
+
+        return False
+
+    def trigger_kill_switch_if_needed(
+        self,
+        violated_laws: List[FundamentalLaw],
+        agent_id: Optional[str] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """Trigger kill switch if required by law violations.
+
+        This method integrates with the Kill Switch Protocol to provide
+        immediate response to critical law violations, particularly those
+        involving Law 7 (Human Override Authority) and Law 23 (Safe Failure Modes).
+
+        Args:
+            violated_laws: List of violated laws
+            agent_id: Optional agent ID to target
+
+        Returns:
+            Kill switch result if triggered, None otherwise
+        """
+        if not self.check_kill_switch_trigger_laws(violated_laws):
+            return None
+
+        try:
+            from ..core.kill_switch import KillSwitchProtocol, ShutdownMode
+
+            protocol = KillSwitchProtocol()
+            result = protocol.emergency_shutdown(
+                mode=ShutdownMode.GRACEFUL,
+                agent_id=agent_id,
+                sever_actuators=True,
+            )
+
+            logger.warning(
+                "Kill switch triggered due to law violations (laws: %s)",
+                [law.number for law in violated_laws],
+            )
+
+            return {
+                "success": result.success,
+                "operation": result.operation,
+                "activation_time_ms": result.activation_time_ms,
+                "agents_affected": result.agents_affected,
+                "actuators_severed": result.actuators_severed,
+                "triggered_by_laws": [law.number for law in violated_laws],
+            }
+
+        except ImportError:
+            logger.warning("Kill switch module not available")
+            return None
+        except Exception as e:
+            logger.error("Failed to trigger kill switch: %s", e)
+            return None
+
 
 __all__ = ["LawJudge"]

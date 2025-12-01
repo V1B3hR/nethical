@@ -3,6 +3,7 @@
 from .taxonomy_api import TaxonomyAPI
 from .explainability_api import ExplainabilityAPI
 from .hitl_api import HITLReviewAPI
+from .kill_switch_api import router as kill_switch_router
 
 # Re-export app from the main API module (nethical/api.py is shadowed by this package)
 # Import the main FastAPI app for convenience
@@ -24,4 +25,4 @@ except Exception:
     app = None
     API_VERSION = "2.3.0"
 
-__all__ = ["TaxonomyAPI", "ExplainabilityAPI", "HITLReviewAPI", "app", "API_VERSION"]
+__all__ = ["TaxonomyAPI", "ExplainabilityAPI", "HITLReviewAPI", "kill_switch_router", "app", "API_VERSION"]
