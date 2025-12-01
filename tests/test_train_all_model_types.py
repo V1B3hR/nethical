@@ -63,8 +63,11 @@ def test_train_all_model_types():
         expected_models = ["heuristic", "logistic", "simple_transformer", "anomaly", "correlation"]
         
         for model_type in expected_models:
-            assert f"Training model" in combined_output and model_type in combined_output, \
-                f"Model type {model_type} was not trained"
+            # Check for the specific training message for each model type
+            # The output format is: "[model_type] Training model for X epoch(s)"
+            training_pattern = f"[{model_type}] Training model for"
+            assert training_pattern in combined_output, \
+                f"Model type {model_type} was not trained (pattern '{training_pattern}' not found)"
             print(f"  ✓ {model_type} was trained")
         
         print("\n[3/5] Checking training summary output...")
@@ -248,9 +251,10 @@ def test_train_all_model_types_command_from_problem_statement():
         
         print("\n[2/3] Verifying promotion gate thresholds were applied...")
         
-        # Check for promotion gate messages
-        assert "Promotion Gate: ECE <= 0.080, Accuracy >= 0.850" in combined_output, \
-            "Promotion gate thresholds not applied correctly"
+        # Check for promotion gate messages with key components
+        assert "Promotion Gate:" in combined_output, "Promotion gate message not found"
+        assert "ECE <= 0.08" in combined_output, "ECE threshold not applied correctly"
+        assert "Accuracy >= 0.85" in combined_output, "Accuracy threshold not applied correctly"
         print("  ✓ Promotion gate thresholds correctly applied")
         
         print("\n[3/3] Verifying all 5 model types were trained...")
@@ -258,10 +262,17 @@ def test_train_all_model_types_command_from_problem_statement():
         assert "Total models trained: 5" in combined_output, "Not all models were trained"
         print("  ✓ All 5 model types trained")
         
-        # Count successful models
-        successful_count = combined_output.count("SUCCESS")
-        assert successful_count >= 5, f"Expected at least 5 successful trainings, got {successful_count}"
-        print(f"  ✓ {successful_count} successful model trainings")
+        # Verify all model types appear in success messages (format: "model_type: ✓ SUCCESS")
+        expected_models = ["heuristic", "logistic", "simple_transformer", "anomaly", "correlation"]
+        successful_models = []
+        for model_type in expected_models:
+            # Match the pattern from training summary: "  model_type: ✓ SUCCESS"
+            if f"{model_type}: ✓ SUCCESS" in combined_output or f"{model_type}: ✓ PROMOTED" in combined_output:
+                successful_models.append(model_type)
+        
+        assert len(successful_models) == 5, \
+            f"Expected 5 successful models, got {len(successful_models)}: {successful_models}"
+        print(f"  ✓ All 5 models trained successfully: {', '.join(successful_models)}")
         
         print("\n" + "=" * 70)
         print("  ✅ PROBLEM STATEMENT COMMAND TEST PASSED")
