@@ -42,11 +42,14 @@ def test_train_all_model_types():
         
         # Print summary lines
         print("\nOutput Summary:")
+        summary_keywords = [
+            'Training all model types', 'Training model', 
+            'TRAINING SUMMARY', 'Total models', 'Successful',
+            'Promoted', 'Failed', 'heuristic:', 'logistic:',
+            'simple_transformer:', 'anomaly:', 'correlation:'
+        ]
         for line in combined_output.split('\n'):
-            if any(x in line for x in ['Training all model types', 'Training model', 
-                                        'TRAINING SUMMARY', 'Total models', 'Successful',
-                                        'Promoted', 'Failed', 'heuristic:', 'logistic:',
-                                        'simple_transformer:', 'anomaly:', 'correlation:']):
+            if any(x in line for x in summary_keywords):
                 print(line)
         
         # Check that training succeeded
@@ -94,7 +97,9 @@ def test_train_all_model_types():
             assert model_type in expected_types, f"Unexpected model type: {model_type}"
             assert result_item['success'] is True, f"Model {model_type} failed"
             assert 'metrics' in result_item, f"No metrics for {model_type}"
-            print(f"✓ {model_type}: success={result_item['success']}, accuracy={result_item['metrics'].get('accuracy', 0):.4f}")
+            accuracy = result_item['metrics'].get('accuracy')
+            accuracy_str = f"{accuracy:.4f}" if accuracy is not None else "N/A"
+            print(f"✓ {model_type}: success={result_item['success']}, accuracy={accuracy_str}")
         
         print("\n" + "=" * 70)
         print("  ✅ ALL TESTS PASSED")
@@ -120,9 +125,9 @@ def test_train_all_model_types_with_full_options():
             sys.executable,
             str(script_path),
             "--model-type", "all",
-            "--epochs", "5",  # Reduced for faster testing
+            "--epochs", "5",
             "--batch-size", "64",
-            "--num-samples", "100",  # Reduced for faster testing
+            "--num-samples", "100",
             "--enable-audit",
             "--audit-path", str(audit_path),
             "--promotion-min-accuracy", "0.85",
