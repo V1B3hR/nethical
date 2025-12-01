@@ -12,51 +12,15 @@ Key improvements:
 - Reproducibility, richer CLI, and better error handling/logging.
 - Train all model types at once with --model-type all.
 
-Usage:
-    # Train a single model type:
-    python train_any_model.py \
-        --model-type logistic \
-        --epochs 30 \
-        --batch-size 64 \
-        --num-samples 4000 \
-        --seed 32 \
-        --split-strategy stratified \
-        --train-ratio 0.8 \
-        --promotion-min-accuracy 0.85 \
-        --promotion-max-ece 0.08 \
-        --enable-governance --enable-audit --enable-drift-tracking
-    
-    # Train all model types:
-    python train_any_model.py \
-        --model-type all \
-        --epochs 70 \
-        --batch-size 64 \
-        --num-samples 10000 \
-        --enable-audit \
-        --promotion-min-accuracy 0.85 \
-        --promotion-max-ece 0.08 \
-        --enable-governance --enable-audit --enable-drift-tracking
-
-Optional Kaggle auth sources (priority order):
-1) CLI: --kaggle-username <user> --kaggle-key <key>
-2) Env vars: KAGGLE_USERNAME, KAGGLE_KEY
-3) Existing file: ~/.kaggle/kaggle.json
-
-
-Nethical Plug-and-Play Model Training Script (Refactored Single-File Version)
-
-Goals of this refactor:
-- Preserve functionality from the improved script.
-- Make code easier to read, test, and extend.
-- Add defensive checks for real-world runs without breaking current CLI behavior.
-
-Highlights:
-- Modular functions for configuration, data, models, metrics, and training orchestration.
-- Optional sklearn metrics (ROC-AUC) when available; retains ECE implementation.
-- Safer handling of empty validation sets and model API assumptions.
-- Same CLI flags and defaults so existing usage keeps working.
-
-Dependencies: numpy (required), pandas (optional), kaggle (optional), scikit-learn (optional), torch (optional)
+New in this revision:
+- ECE handling improvements:
+  - --ece-bins to configure bin count for ECE (default: 10)
+  - --ece-policy to control how ECE is applied in the promotion gate:
+      * strict (default): require both Accuracy >= min and ECE <= max
+      * probs_only: enforce ECE threshold only if probabilities are available, otherwise skip ECE check
+      * disable: ignore ECE in the promotion gate
+  - Brier score computed when probabilities are available
+  - Clear logging about ECE policy and whether probabilities were used
 """
 
 import argparse
@@ -538,41 +502,84 @@ def _roc_auc_safe(labels: Sequence[int], probs: Sequence[float]) -> float:
         pass
     return float("nan")
 
+def _brier_score(probs: Sequence[float], labels: Sequence[int]) -> float:
+    try:
+        if len(probs) == len(labels) and len(labels) > 0:
+            diffs = [(float(p) - float(y)) ** 2 for p, y in zip(probs, labels)]
+            return float(np.mean(diffs))
+    except Exception:
+        pass
+    return float("nan")
+
 def compute_metrics(
     preds: Sequence[int],
     labels: Sequence[int],
-    probs: Optional[Sequence[float]] = None
+    probs: Optional[Sequence[float]] = None,
+    ece_bins: int = 10
 ) -> Dict[str, float]:
     tp, tn, fp, fn = _compute_confusion(preds, labels)
     total = tp + tn + fp + fn
     if total == 0:
-        return {"precision": 0.0, "recall": 0.0, "accuracy": 0.0, "f1": 0.0, "ece": float("nan"), "roc_auc": float("nan")}
+        return {"precision": 0.0, "recall": 0.0, "accuracy": 0.0, "f1": 0.0, "ece": float("nan"), "roc_auc": float("nan"), "brier": float("nan")}
     precision = tp / (tp + fp) if (tp + fp) > 0 else 0.0
     recall = tp / (tp + fn) if (tp + fn) > 0 else 0.0
     accuracy = (tp + tn) / total
     f1 = 2 * precision * recall / (precision + recall) if (precision + recall) > 0 else 0.0
 
-    metrics = {"precision": float(precision), "recall": float(recall), "accuracy": float(accuracy), "f1": float(f1)}
+    metrics: Dict[str, float] = {"precision": float(precision), "recall": float(recall), "accuracy": float(accuracy), "f1": float(f1)}
 
     if probs is not None and len(probs) == len(labels):
         try:
-            ece = _ece(probs, labels, n_bins=10)
+            ece = _ece(probs, labels, n_bins=ece_bins)
             metrics["ece"] = float(ece)
         except Exception:
             metrics["ece"] = float("nan")
         metrics["roc_auc"] = _roc_auc_safe(labels, probs)
+        metrics["brier"] = _brier_score(probs, labels)
     else:
+        # Fallback: approximate ECE; prefer real probabilities when available
         metrics["ece"] = float(abs(accuracy - precision))
         metrics["roc_auc"] = float("nan")
+        metrics["brier"] = float("nan")
 
     return metrics
 
-def check_promotion_gate(metrics: Dict[str, float], max_ece: float = 0.08, min_accuracy: float = 0.85) -> bool:
+def check_promotion_gate(
+    metrics: Dict[str, float],
+    max_ece: float = 0.08,
+    min_accuracy: float = 0.85,
+    ece_policy: str = "strict",
+    has_probs: bool = False
+) -> bool:
     acc = metrics.get("accuracy", float("nan"))
     ece = metrics.get("ece", float("nan"))
-    passed = (not math.isnan(ece) and ece <= max_ece) and (not math.isnan(acc) and acc >= min_accuracy)
-    logging.info("Promotion Gate: ECE <= %.3f, Accuracy >= %.3f", max_ece, min_accuracy)
-    logging.info("ECE: %.3f | Accuracy: %.3f | Result: %s", ece, acc, "PASS" if passed else "FAIL")
+
+    # Determine whether to apply ECE threshold per policy
+    apply_ece = {
+        "strict": True,
+        "probs_only": bool(has_probs),
+        "disable": False
+    }.get(ece_policy, True)
+
+    # Build human-readable gate conditions
+    conditions = [f"Accuracy >= {min_accuracy:.3f}"]
+    if apply_ece:
+        conditions.append(f"ECE <= {max_ece:.3f}")
+    logging.info("Promotion Gate Policy: %s | Conditions: %s", ece_policy, " AND ".join(conditions))
+
+    acc_ok = (not math.isnan(acc) and acc >= min_accuracy)
+    ece_ok = True
+    if apply_ece:
+        ece_ok = (not math.isnan(ece) and ece <= max_ece)
+
+    logging.info("Gate Values: Accuracy=%.3f (%s) | ECE=%.3f (%s) | Probabilities=%s",
+                 acc, "OK" if acc_ok else "FAIL",
+                 ece if not math.isnan(ece) else float("nan"),
+                 "OK" if ece_ok else "FAIL",
+                 "yes" if has_probs else "no")
+
+    passed = acc_ok and ece_ok
+    logging.info("Promotion Gate Result: %s", "PASS" if passed else "FAIL")
     return passed
 
 
@@ -815,7 +822,8 @@ def train_single_model(
         if all(p is not None for p in probs) and len(probs) == len(labels):
             probs_all = [float(p) for p in probs]
 
-        metrics = compute_metrics(preds, labels, probs=probs_all)
+        # Metrics with configurable ECE bins; include Brier if probs available
+        metrics = compute_metrics(preds, labels, probs=probs_all, ece_bins=args.ece_bins)
         result['metrics'] = metrics
 
         logging.info("[%s] Validation Metrics:", model_type)
@@ -882,7 +890,16 @@ def train_single_model(
             except Exception as e:
                 logging.warning("[%s] Failed to track action in drift reporter: %s", model_type, e)
 
-        promoted = check_promotion_gate(metrics, max_ece=args.promotion_max_ece, min_accuracy=args.promotion_min_accuracy)
+        has_probs = probs_all is not None
+        logging.info("[%s] Probabilities available for ECE/Brier: %s", model_type, "yes" if has_probs else "no")
+
+        promoted = check_promotion_gate(
+            metrics,
+            max_ece=args.promotion_max_ece,
+            min_accuracy=args.promotion_min_accuracy,
+            ece_policy=args.ece_policy,
+            has_probs=has_probs
+        )
         result['promoted'] = promoted
 
         if drift_reporter and not promoted:
@@ -980,6 +997,10 @@ def build_arg_parser() -> argparse.ArgumentParser:
     # Promotion gate
     parser.add_argument("--promotion-max-ece", type=float, default=0.08, help="Max ECE to pass promotion gate")
     parser.add_argument("--promotion-min-accuracy", type=float, default=0.85, help="Min accuracy to pass promotion gate")
+
+    # ECE/Calibration controls
+    parser.add_argument("--ece-bins", type=int, default=10, help="Number of bins to compute Expected Calibration Error (ECE)")
+    parser.add_argument("--ece-policy", type=str, default="strict", choices=["strict", "probs_only", "disable"], help="How to apply ECE in the promotion gate")
 
     # Output
     parser.add_argument("--models-dir", type=str, default="models", help="Base directory to save models and metrics")
