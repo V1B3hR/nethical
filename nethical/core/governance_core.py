@@ -614,6 +614,13 @@ class EnhancedSafetyGovernance:
 
         self.judge = SafetyJudge()
 
+        # Initialize Kill Switch Protocol and AI Lawyer (Stage 0)
+        from .kill_switch import KillSwitchProtocol
+        from .compliance import AILawyer
+
+        self.kill_switch_protocol = KillSwitchProtocol()
+        self.ai_lawyer = AILawyer(kill_switch_protocol=self.kill_switch_protocol)
+
         # In-memory histories
         self.violation_history: deque = deque(maxlen=self.config.max_violation_history)
         self.judgment_history: deque = deque(maxlen=self.config.max_judgment_history)
@@ -730,9 +737,41 @@ class EnhancedSafetyGovernance:
 
     async def evaluate_action(self, action: AgentAction, use_cache: bool = True) -> JudgmentResult:
         from .governance_evaluation import generate_id, sha256_content_key
+        from .compliance import ReviewDecision
 
         await self._maybe_reload_patterns()
         start = time.time()
+
+        # Stage 0: AI Lawyer Review (Fast Fail for severe violations)
+        lawyer_result = await self.ai_lawyer.review_action_context(
+            action_id=action.action_id,
+            agent_id=action.agent_id,
+            content=action.content,
+            metadata=action.metadata,
+            context=action.context,
+        )
+
+        if lawyer_result.decision == ReviewDecision.REJECT:
+            # Fast Fail: Immediately return TERMINATE judgment
+            jr = JudgmentResult(
+                judgment_id=generate_id("judg"),
+                action_id=action.action_id,
+                decision=Decision.TERMINATE,
+                confidence=1.0,
+                reasoning=lawyer_result.reasoning,
+                violations=[],
+                feedback=lawyer_result.violations,
+                remediation_steps=["Action rejected by AI Lawyer"],
+                follow_up_required=True,
+            )
+            jr.modifications["ai_lawyer_review"] = {
+                "decision": lawyer_result.decision.value,
+                "severity": lawyer_result.severity.value if lawyer_result.severity else None,
+                "kill_switch_triggered": lawyer_result.kill_switch_triggered,
+                "review_time_ms": lawyer_result.review_time_ms,
+            }
+            self.metrics["total_actions_blocked"] += 1
+            return jr
 
         if len(action.content) > 500_000:
             jr = JudgmentResult(
