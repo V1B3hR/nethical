@@ -10,14 +10,14 @@
 #   pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
 
 # Web server framework (optional - for API server)
-fastapi==0.122.0
+fastapi==0.123.0
 uvicorn==0.38.0
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
-pydantic==2.12.4
+pydantic==2.12.5
 pydantic-core==2.41.5
 typing-extensions==4.15.0
 dataclasses-json==0.6.7
@@ -30,7 +30,7 @@ pandas==2.3.3
 PyYAML==6.0.3
 
 # Security
-cryptography==44.0.1
+cryptography==44.0.3
 defusedxml==0.7.1
 
 # Transitive/supporting (explicitly pinned to keep lock stable)
