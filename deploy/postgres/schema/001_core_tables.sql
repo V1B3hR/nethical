@@ -370,8 +370,11 @@ SELECT add_retention_policy('nethical.latency_metrics', INTERVAL '7 days', if_no
 -- ============================================================================
 
 -- Enable compression on older chunks for space efficiency
-SELECT alter_table_set_access_method('nethical.audit_events', 'columnar');
+-- Note: The columnar access method is optional and may not be available in all TimescaleDB installations
+-- Uncomment the following line if your TimescaleDB installation supports columnar storage:
+-- SELECT alter_table_set_access_method('nethical.audit_events', 'columnar');
 
+-- TimescaleDB native compression (works in all installations)
 ALTER TABLE nethical.audit_events SET (
     timescaledb.compress,
     timescaledb.compress_segmentby = 'agent_id, decision, region_id',

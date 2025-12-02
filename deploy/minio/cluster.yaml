@@ -16,14 +16,23 @@ kind: Secret
 metadata:
   name: minio-credentials
   namespace: nethical-storage
+  annotations:
+    # SECURITY WARNING: These are placeholder credentials for development only.
+    # For production deployments, use external secret management:
+    # - HashiCorp Vault with External Secrets Operator
+    # - AWS Secrets Manager
+    # - Azure Key Vault
+    # See: https://external-secrets.io/
+    kubernetes.io/description: "PLACEHOLDER CREDENTIALS - MUST BE REPLACED IN PRODUCTION"
 type: Opaque
 stringData:
-  # Override these in production via external secrets
+  # ⚠️ SECURITY: Replace these values before production deployment
+  # MinIO requires root password to be at least 8 characters
   MINIO_ROOT_USER: "nethical-admin"
-  MINIO_ROOT_PASSWORD: "CHANGE_ME_IN_PRODUCTION_MIN_8_CHARS"
-  # Application access key
+  MINIO_ROOT_PASSWORD: "CHANGE_ME_IN_PRODUCTION_USE_STRONG_PASSWORD"
+  # Application access key - use separate credentials with limited permissions
   ACCESS_KEY: "nethical-app"
-  SECRET_KEY: "CHANGE_ME_IN_PRODUCTION"
+  SECRET_KEY: "CHANGE_ME_IN_PRODUCTION_USE_STRONG_PASSWORD"
 
 ---
 # MinIO Configuration

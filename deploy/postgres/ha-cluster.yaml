@@ -17,14 +17,25 @@ kind: Secret
 metadata:
   name: postgres-credentials
   namespace: nethical-db
+  annotations:
+    # SECURITY WARNING: These are placeholder credentials for development only.
+    # For production deployments, use external secret management:
+    # - HashiCorp Vault with External Secrets Operator
+    # - AWS Secrets Manager
+    # - Azure Key Vault
+    # - Google Cloud Secret Manager
+    # See: https://external-secrets.io/
+    kubernetes.io/description: "PLACEHOLDER CREDENTIALS - MUST BE REPLACED IN PRODUCTION"
 type: Opaque
 stringData:
-  # These should be overridden in production via external secrets
+  # ⚠️ SECURITY: Replace these values before production deployment
+  # Use `kubectl create secret generic postgres-credentials --from-literal=...` 
+  # or integrate with an external secrets operator
   POSTGRES_USER: "nethical"
-  POSTGRES_PASSWORD: "CHANGE_ME_IN_PRODUCTION"
+  POSTGRES_PASSWORD: "CHANGE_ME_IN_PRODUCTION_USE_STRONG_PASSWORD"
   POSTGRES_DB: "nethical"
   REPLICATION_USER: "replicator"
-  REPLICATION_PASSWORD: "CHANGE_ME_IN_PRODUCTION"
+  REPLICATION_PASSWORD: "CHANGE_ME_IN_PRODUCTION_USE_STRONG_PASSWORD"
 
 ---
 # ConfigMap for PostgreSQL configuration

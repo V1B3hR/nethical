@@ -377,10 +377,12 @@ class StorageMigrator:
                         
                     with open(artifact_file, 'rb') as f:
                         data = f.read()
-                        
+                    
+                    # Use SHA-256 for artifact ID to reduce collision risk
+                    artifact_hash = hashlib.sha256(artifact_id.encode()).hexdigest()[:32]
                     result = self.s3.upload_artifact(
                         artifact_type=artifact_type,
-                        artifact_id=hashlib.md5(artifact_id.encode()).hexdigest()[:16],
+                        artifact_id=artifact_hash,
                         data=data,
                         filename=artifact_file.name
                     )

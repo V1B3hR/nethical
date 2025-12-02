@@ -725,18 +725,28 @@ class PostgresBackend:
         """Aggregate metrics over time buckets using TimescaleDB."""
         if not self.enabled:
             return []
-            
-        valid_aggs = ["avg", "sum", "min", "max", "count"]
-        if aggregation not in valid_aggs:
-            raise ValueError(f"Invalid aggregation: {aggregation}. Must be one of {valid_aggs}")
+        
+        # Use a mapping to ensure SQL-safe aggregation functions
+        agg_mapping = {
+            "avg": "AVG",
+            "sum": "SUM",
+            "min": "MIN",
+            "max": "MAX",
+            "count": "COUNT"
+        }
+        
+        if aggregation not in agg_mapping:
+            raise ValueError(f"Invalid aggregation: {aggregation}. Must be one of {list(agg_mapping.keys())}")
+        
+        safe_agg = agg_mapping[aggregation]
             
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
-                # Validated aggregation used in query (not user input)
+                # Use safe aggregation from whitelist mapping
                 query = f"""
                     SELECT
                         time_bucket(%s, time) AS bucket,
-                        {aggregation}(metric_value) AS value,
+                        {safe_agg}(metric_value) AS value,
                         COUNT(*) AS count
                     FROM {self.config.schema}.governance_metrics
                     WHERE metric_name = %s
