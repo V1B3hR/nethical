@@ -1,0 +1,64 @@
+# L2 Redis Cache Configuration
+# Regional Redis cluster for edge and cloud deployments
+
+redis:
+  cluster:
+    enabled: true
+    shards: 3
+    replicas_per_shard: 2
+
+  connection:
+    host: redis-cluster.nethical.svc.cluster.local
+    port: 6379
+    password: ${REDIS_PASSWORD}
+    db: 0
+    ssl: true
+    socket_timeout: 2.0
+    max_connections: 100
+
+  settings:
+    maxmemory: 16GB
+    maxmemory_policy: allkeys-lru
+    tcp_keepalive: 300
+    timeout: 0
+
+  ttl:
+    default_seconds: 300
+    policy_seconds: 600
+    decision_seconds: 60
+    agent_seconds: 120
+
+  performance:
+    same_az_latency_ms: 1
+    cross_az_latency_ms: 5
+
+  high_availability:
+    sentinel:
+      enabled: true
+      master_name: nethical-master
+      quorum: 2
+    failover:
+      automatic: true
+      max_time_seconds: 30
+
+  monitoring:
+    slowlog_log_slower_than: 10000  # microseconds
+    slowlog_max_len: 128
+    latency_monitor_threshold: 100  # milliseconds
+
+  pubsub:
+    channels:
+      - nethical:cache:invalidation
+      - nethical:policy:update
+      - nethical:security:event
+
+  backup:
+    rdb:
+      enabled: true
+      save_intervals:
+        - "900 1"   # 15 min if at least 1 key changed
+        - "300 10"  # 5 min if at least 10 keys changed
+        - "60 10000"  # 1 min if at least 10000 keys changed
+    aof:
+      enabled: true
+      fsync: everysec

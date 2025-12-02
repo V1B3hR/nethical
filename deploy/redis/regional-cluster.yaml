@@ -1,0 +1,174 @@
+# Redis Regional Cluster Deployment
+# Kubernetes manifests for L2 Redis cache
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nethical-cache
+  labels:
+    app: nethical
+    component: cache
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-config
+  namespace: nethical-cache
+data:
+  redis.conf: |
+    maxmemory 16gb
+    maxmemory-policy allkeys-lru
+    tcp-keepalive 300
+    timeout 0
+    
+    # Cluster mode
+    cluster-enabled yes
+    cluster-config-file nodes.conf
+    cluster-node-timeout 5000
+    
+    # Persistence
+    appendonly yes
+    appendfsync everysec
+    
+    # Security
+    requirepass ${REDIS_PASSWORD}
+    tls-port 6379
+    port 0
+    tls-cert-file /etc/redis/tls/tls.crt
+    tls-key-file /etc/redis/tls/tls.key
+    tls-ca-cert-file /etc/redis/tls/ca.crt
+    
+    # Performance
+    tcp-backlog 511
+    databases 16
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-cluster
+  namespace: nethical-cache
+spec:
+  serviceName: redis-cluster
+  replicas: 6  # 3 masters + 3 replicas
+  selector:
+    matchLabels:
+      app: redis-cluster
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+    spec:
+      containers:
+      - name: redis
+        image: redis:7.2-alpine
+        ports:
+        - containerPort: 6379
+          name: redis
+        - containerPort: 16379
+          name: cluster-bus
+        command:
+        - redis-server
+        - /etc/redis/redis.conf
+        volumeMounts:
+        - name: config
+          mountPath: /etc/redis
+        - name: data
+          mountPath: /data
+        - name: tls
+          mountPath: /etc/redis/tls
+          readOnly: true
+        resources:
+          requests:
+            memory: "4Gi"
+            cpu: "1"
+          limits:
+            memory: "8Gi"
+            cpu: "2"
+        livenessProbe:
+          tcpSocket:
+            port: 6379
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          exec:
+            command:
+            - redis-cli
+            - --tls
+            - --cert
+            - /etc/redis/tls/tls.crt
+            - --key
+            - /etc/redis/tls/tls.key
+            - --cacert
+            - /etc/redis/tls/ca.crt
+            - ping
+          initialDelaySeconds: 5
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: redis-config
+      - name: tls
+        secret:
+          secretName: redis-tls
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster
+  namespace: nethical-cache
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 6379
+    name: redis
+  - port: 16379
+    name: cluster-bus
+  selector:
+    app: redis-cluster
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-cluster-lb
+  namespace: nethical-cache
+spec:
+  type: ClusterIP
+  ports:
+  - port: 6379
+    name: redis
+  selector:
+    app: redis-cluster
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-cluster-pdb
+  namespace: nethical-cache
+spec:
+  minAvailable: 4
+  selector:
+    matchLabels:
+      app: redis-cluster
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-cluster
+  namespace: nethical-cache
+spec:
+  selector:
+    matchLabels:
+      app: redis-cluster
+  endpoints:
+  - port: redis
+    interval: 15s

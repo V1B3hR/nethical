@@ -1,0 +1,82 @@
+# Safety-Critical Cloud SLA Configuration
+# For medical, industrial, and financial AI systems
+
+deployment_type: safety_critical
+
+latency:
+  decision:
+    p50_ms: 10
+    p95_ms: 25
+    p99_ms: 50
+  policy_sync:
+    max_lag_ms: 1000
+  failover:
+    max_time_ms: 50
+
+availability:
+  target_percent: 99.999
+  measurement: multi_region_monitoring
+
+throughput:
+  sustained_rps: 5000
+  peak_rps: 20000
+  max_concurrent_requests: 5000
+
+cache:
+  l1:
+    enabled: true
+    max_size_mb: 512
+    ttl_seconds: 15  # Shorter TTL for fresher data
+    hit_rate_target: 0.60
+  l2:
+    enabled: true
+    ttl_seconds: 120
+    hit_rate_target: 0.80
+  l3:
+    enabled: true
+    ttl_seconds: 300
+    hit_rate_target: 0.95
+
+circuit_breaker:
+  enabled: true
+  max_latency_ms: 25
+  failure_threshold: 3  # More sensitive
+  recovery_timeout_seconds: 30
+  half_open_requests: 2
+
+rate_limiting:
+  enabled: true
+  requests_per_second: 500
+  burst_size: 1000
+
+redundancy:
+  multi_region: true
+  active_active: true
+  regions:
+    - us-east-1
+    - eu-west-1
+    - ap-southeast-1
+
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+  alerting:
+    latency_critical_multiplier: 1.5
+    latency_warning_multiplier: 1.2
+  health_check:
+    interval_seconds: 5
+    timeout_seconds: 2
+
+compliance:
+  audit_all_decisions: true
+  retention_days: 365
+  encryption: true
+  hipaa: true
+  gdpr: true
+
+safety:
+  safe_defaults: true
+  terminate_always_available: true
+  block_on_uncertainty: true
+  human_escalation: true
