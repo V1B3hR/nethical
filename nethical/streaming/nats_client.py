@@ -65,6 +65,9 @@ class NATSClient:
         # Fallback in-memory queue
         self._memory_queue: Dict[str, List[Dict]] = {}
         self._subscribers: Dict[str, List[Callable]] = {}
+        
+        # Compiled pattern cache for efficient matching
+        self._pattern_cache: Dict[str, str] = {}  # pattern -> prefix for * patterns
 
         # Metrics
         self._messages_published = 0
@@ -238,14 +241,20 @@ class NATSClient:
             except Exception as e:
                 logger.error(f"Subscriber error: {e}")
 
-        # Also check pattern subscribers
+        # Check pattern subscribers using cached prefixes for efficiency
         for pattern, callbacks in self._subscribers.items():
-            if pattern.endswith("*") and subject.startswith(pattern[:-1]):
-                for callback in callbacks:
-                    try:
-                        callback(message)
-                    except Exception as e:
-                        logger.error(f"Subscriber error: {e}")
+            if pattern.endswith("*"):
+                # Use cached prefix or compute and cache it
+                if pattern not in self._pattern_cache:
+                    self._pattern_cache[pattern] = pattern[:-1]
+                prefix = self._pattern_cache[pattern]
+                
+                if subject.startswith(prefix):
+                    for callback in callbacks:
+                        try:
+                            callback(message)
+                        except Exception as e:
+                            logger.error(f"Subscriber error: {e}")
 
     def get_queued_messages(self, subject: str) -> List[Dict[str, Any]]:
         """

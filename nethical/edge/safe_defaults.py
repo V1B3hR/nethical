@@ -8,9 +8,13 @@ Philosophy: "Safe by default when uncertain"
 import logging
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, Optional, Set
+from typing import Any, Dict, Optional, Set, TYPE_CHECKING
 
 logger = logging.getLogger(__name__)
+
+# Use TYPE_CHECKING to avoid circular imports at runtime
+if TYPE_CHECKING:
+    from .local_governor import DecisionType
 
 
 class DefaultDecisionType(str, Enum):
@@ -33,7 +37,7 @@ class DefaultDecision:
         reason: Reason for this default
     """
 
-    decision: "DecisionType"
+    decision: str  # Use string to avoid circular import
     risk_score: float
     confidence: float
     reason: str

@@ -203,7 +203,7 @@ class EdgeGovernor:
             
             # Calculate confidence from detection result
             confidence = 1.0
-            if detection_result and detection_result.confidences:
+            if detection_result and detection_result.confidences and len(detection_result.confidences) > 0:
                 confidence = sum(detection_result.confidences) / len(detection_result.confidences)
             
             decision = EdgeDecision(

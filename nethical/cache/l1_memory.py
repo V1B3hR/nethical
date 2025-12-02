@@ -249,5 +249,8 @@ class L1MemoryCache:
             if key not in self._cache:
                 return False
             if time.time() > self._cache[key].expires_at:
+                # Clean up expired entry when detected
+                del self._cache[key]
+                self._expired += 1
                 return False
             return True
