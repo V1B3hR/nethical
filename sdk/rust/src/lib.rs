@@ -170,7 +170,8 @@ impl NethicalClient {
         // In production, this would use reqwest or similar HTTP client.
         
         let agent_id = request.agent_id.unwrap_or_else(|| "unknown".to_string());
-        let _action_type = request.action_type.unwrap_or_else(|| "query".to_string());
+        // action_type would be used in production for request body
+        let _ = request.action_type.unwrap_or_else(|| "query".to_string());
         
         // Placeholder response - in production, this would make HTTP request
         Ok(EvaluateResponse {
