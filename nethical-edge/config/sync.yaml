@@ -1,0 +1,183 @@
+# Edge to Cloud Sync Configuration
+#
+# This configuration defines the synchronization protocol
+# between edge devices and the Nethical cloud service.
+
+sync:
+  # Enable/disable sync
+  enabled: true
+  
+  # Cloud API endpoint
+  cloud_endpoint: "https://api.nethical.io"
+  
+  # Backup endpoints for failover
+  backup_endpoints:
+    - "https://api-eu.nethical.io"
+    - "https://api-apac.nethical.io"
+  
+  # Sync intervals
+  intervals:
+    # Normal operation
+    normal_sec: 30
+    # When connectivity is unstable
+    degraded_sec: 60
+    # Initial sync after coming online
+    initial_sec: 5
+    # Emergency sync (critical events)
+    emergency_sec: 0  # Immediate
+  
+  # Retry configuration
+  retry:
+    max_attempts: 3
+    initial_delay_ms: 100
+    max_delay_ms: 5000
+    backoff_multiplier: 2.0
+    jitter: true
+  
+  # Priority levels for sync
+  priorities:
+    critical:
+      # Security events, emergency updates
+      immediate: true
+      retry_aggressively: true
+    high:
+      # Policy changes
+      max_delay_sec: 10
+    normal:
+      # Regular background sync
+      batch_enabled: true
+    low:
+      # Analytics, non-critical data
+      opportunistic: true
+
+# CRDT synchronization settings
+crdt:
+  # Policy CRDT settings
+  policy:
+    # How to handle conflicts
+    conflict_resolution: "lww"  # last-writer-wins
+    # Maximum delta batch size
+    max_delta_batch: 100
+    # Merkle tree branching factor
+    merkle_branching: 16
+  
+  # Vector clock settings
+  vector_clock:
+    # Hybrid logical clock settings
+    max_drift_sec: 60
+    # Node ID format
+    node_id_format: "region-device"
+
+# Anti-entropy settings
+anti_entropy:
+  # Background sync interval
+  interval_sec: 30
+  # Maximum concurrent syncs
+  max_concurrent: 3
+  # Prioritize syncs with these peers
+  priority_peers: []
+  # Maximum sync session duration
+  max_session_sec: 60
+
+# Offline mode settings
+offline:
+  # Operating mode when offline
+  # conservative: Only allow pre-approved actions
+  # permissive: Allow most actions, log for later review  
+  # emergency: Minimal restrictions, safety-critical only
+  mode: "conservative"
+  
+  # Maximum time to operate offline before degrading
+  max_duration_hours: 24
+  
+  # Actions to always allow offline
+  always_allow:
+    - "emergency_stop"
+    - "safe_shutdown"
+    - "status_report"
+  
+  # Actions to never allow offline
+  never_allow:
+    - "firmware_update"
+    - "security_config_change"
+    - "remote_access_enable"
+  
+  # Queue decisions for later sync
+  decision_queue:
+    enabled: true
+    max_size: 10000
+    persist_to_disk: true
+    path: "/var/cache/nethical/decisions"
+
+# Network monitoring
+network:
+  # Health check endpoint
+  health_check_endpoint: "https://api.nethical.io/health"
+  
+  # Check interval
+  check_interval_sec: 5
+  
+  # Timeouts
+  connect_timeout_ms: 5000
+  read_timeout_ms: 10000
+  
+  # Connection quality thresholds
+  quality:
+    # RTT thresholds
+    excellent_rtt_ms: 50
+    good_rtt_ms: 200
+    acceptable_rtt_ms: 500
+    
+    # Packet loss thresholds
+    acceptable_loss_percent: 1.0
+    
+  # Degraded mode triggers
+  degraded_triggers:
+    consecutive_failures: 3
+    rtt_threshold_ms: 1000
+    loss_threshold_percent: 5.0
+
+# Authentication
+auth:
+  # Device authentication method
+  method: "mtls"  # or "api_key", "jwt"
+  
+  # mTLS settings
+  mtls:
+    cert_path: "/etc/nethical/certs/device.crt"
+    key_path: "/etc/nethical/certs/device.key"
+    ca_path: "/etc/nethical/certs/ca.crt"
+  
+  # Token refresh
+  token:
+    refresh_before_expiry_sec: 300
+    max_retry: 3
+
+# Compression
+compression:
+  enabled: true
+  algorithm: "zstd"
+  level: 3
+  min_size_bytes: 1024
+
+# Encryption
+encryption:
+  # Additional encryption beyond TLS
+  payload_encryption: false
+  algorithm: "aes-256-gcm"
+  
+# Audit
+audit:
+  # Log all sync operations
+  log_syncs: true
+  
+  # Include in audit trail
+  include_decisions: true
+  include_policies: true
+  include_violations: true
+  
+  # Local audit log
+  local_log:
+    path: "/var/log/nethical/sync.log"
+    max_size_mb: 100
+    rotation: 7

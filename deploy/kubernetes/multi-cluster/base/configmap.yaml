@@ -1,0 +1,40 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nethical-config
+  namespace: nethical
+data:
+  # Multi-region settings
+  REGION: ""  # Set by overlay
+  REGION_ROLE: ""  # "primary" or "secondary"
+  
+  # CRDT sync settings
+  SYNC_ENABLED: "true"
+  SYNC_INTERVAL_SEC: "30"
+  SYNC_MAX_CONCURRENT: "3"
+  SYNC_DELTA_BATCH_SIZE: "100"
+  
+  # Edge settings
+  EDGE_MODE: "false"
+  EDGE_LATENCY_TARGET_MS: "10"
+  
+  # Cache settings
+  L1_CACHE_SIZE_MB: "256"
+  L1_CACHE_TTL_SEC: "30"
+  L2_CACHE_TTL_SEC: "300"
+  L3_CACHE_TTL_SEC: "900"
+  
+  # API settings
+  API_VERSION: "v2"
+  API_RATE_LIMIT: "10000"
+  API_TIMEOUT_SEC: "30"
+  
+  # Observability
+  LOG_LEVEL: "INFO"
+  METRICS_ENABLED: "true"
+  TRACING_ENABLED: "true"
+  TRACING_SAMPLE_RATE: "0.1"
+  
+  # Governance
+  FUNDAMENTAL_LAWS_ENABLED: "true"
+  STRICT_MODE: "true"

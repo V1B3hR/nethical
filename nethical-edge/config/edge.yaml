@@ -1,0 +1,172 @@
+# Edge Governance Configuration
+#
+# Configuration for Nethical Edge governance engine.
+
+edge:
+  # Unique device identifier
+  device_id: "${DEVICE_ID:-default}"
+  
+  # Operating mode
+  # - minimal: For memory-constrained devices (<64MB)
+  # - standard: For typical edge devices (128-256MB)
+  # - full: For capable edge devices (256MB+)
+  mode: "standard"
+  
+  # Platform-specific settings
+  platform: "generic"  # generic, jetson, raspberry_pi, beaglebone
+
+governance:
+  # Latency targets
+  latency_target_ms: 10
+  latency_p99_target_ms: 25
+  
+  # Offline behavior
+  offline_mode: "conservative"
+  
+  # 25 Fundamental Laws enforcement
+  fundamental_laws_enabled: true
+  
+  # Strict mode (fail-safe on uncertainty)
+  strict_mode: true
+  
+  # Risk thresholds
+  risk_thresholds:
+    allow: 0.3
+    restrict: 0.6
+    block: 0.8
+
+# Decision cache settings
+cache:
+  # L1 cache size in MB
+  size_mb: 64
+  
+  # TTL for cached decisions
+  ttl_sec: 30
+  
+  # Maximum cached entries
+  max_entries: 10000
+  
+  # Cache warmup on startup
+  warmup_enabled: true
+  warmup_file: "/etc/nethical/warmup_actions.json"
+
+# Fast detector settings
+detector:
+  # Enable/disable detectors
+  enabled: true
+  
+  # Lightweight detectors for edge
+  detectors:
+    - pii_basic
+    - harmful_content
+    - policy_violation
+  
+  # Detection confidence threshold
+  confidence_threshold: 0.7
+
+# Predictive engine settings
+predictive:
+  # Enable action prediction
+  enabled: true
+  
+  # Pattern learning
+  pattern_learning: true
+  pattern_window_size: 1000
+  
+  # Pre-computation
+  precompute_enabled: true
+  precompute_top_n: 100
+
+# Safe defaults
+safe_defaults:
+  # Default decision when uncertain
+  uncertain_decision: "RESTRICT"
+  
+  # Default risk score when can't calculate
+  default_risk_score: 0.5
+  
+  # Confidence threshold for non-default
+  min_confidence: 0.6
+
+# Circuit breaker settings
+circuit_breaker:
+  # Enable circuit breaker
+  enabled: true
+  
+  # Latency threshold to open circuit
+  latency_threshold_ms: 20
+  
+  # Failure rate threshold
+  failure_rate_threshold: 0.5
+  
+  # Window size for rate calculation
+  window_size: 100
+  
+  # Half-open state settings
+  half_open_requests: 5
+  recovery_timeout_sec: 30
+
+# JIT compilation settings
+jit:
+  # Enable JIT (requires Numba)
+  enabled: true
+  
+  # Warmup on startup
+  warmup_enabled: true
+  
+  # Cache compiled functions
+  cache_enabled: true
+  cache_dir: "/var/cache/nethical/jit"
+
+# Logging
+logging:
+  level: "INFO"
+  format: "json"
+  
+  # Log destinations
+  console: true
+  file: "/var/log/nethical/edge.log"
+  
+  # File rotation
+  max_size_mb: 50
+  backup_count: 5
+  
+  # Include latency in logs
+  include_latency: true
+  
+  # Slow query threshold
+  slow_query_ms: 10
+
+# Metrics
+metrics:
+  # Enable Prometheus metrics
+  enabled: true
+  port: 9090
+  path: "/metrics"
+  
+  # Histogram buckets for latency
+  latency_buckets: [0.001, 0.002, 0.005, 0.01, 0.025, 0.05, 0.1, 0.25, 0.5, 1.0]
+  
+  # Push gateway (optional)
+  push_gateway: ""
+  push_interval_sec: 60
+
+# Health checks
+health:
+  # Enable health endpoints
+  enabled: true
+  port: 8080
+  
+  endpoints:
+    live: "/health/live"
+    ready: "/health/ready"
+    startup: "/health/startup"
+  
+  # Component checks
+  components:
+    - name: "cache"
+      critical: true
+    - name: "detector"
+      critical: true
+    - name: "sync"
+      critical: false
