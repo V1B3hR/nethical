@@ -199,13 +199,15 @@ class HybridLogicalClock:
         physical: Physical time (wall clock) component
         logical: Logical counter component
         node_id: ID of the local node for tie-breaking
+        max_drift_usec: Maximum allowed clock drift in microseconds
     """
 
     physical: int = 0  # Physical time in microseconds
     logical: int = 0
     node_id: str = ""
+    max_drift_usec: int = 60 * 1_000_000  # Default: 1 minute
 
-    # Maximum allowed clock skew in microseconds (1 minute)
+    # Class constant for backwards compatibility
     MAX_DRIFT_USEC: int = 60 * 1_000_000
 
     def now(self) -> Tuple[int, int]:
@@ -252,8 +254,9 @@ class HybridLogicalClock:
         """
         wall = int(time.time() * 1_000_000)
 
-        # Check for excessive clock drift
-        if remote_physical > wall + self.MAX_DRIFT_USEC:
+        # Check for excessive clock drift (use instance variable if set, else class constant)
+        max_drift = self.max_drift_usec if self.max_drift_usec else self.MAX_DRIFT_USEC
+        if remote_physical > wall + max_drift:
             logger.warning(
                 f"Excessive clock drift detected: "
                 f"remote={remote_physical}, local={wall}, "

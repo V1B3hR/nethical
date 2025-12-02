@@ -29,12 +29,16 @@ terraform {
     }
   }
 
+  # Backend configuration should be provided via backend config file or CLI
+  # Example: terraform init -backend-config=backend.hcl
+  # Or set via environment variables: TF_BACKEND_*
   backend "s3" {
-    bucket         = "nethical-terraform-state"
-    key            = "multi-region/terraform.tfstate"
-    region         = "us-east-1"
-    encrypt        = true
-    dynamodb_table = "nethical-terraform-locks"
+    # These values should be overridden via backend config
+    # bucket         = "nethical-terraform-state-${var.environment}"
+    # key            = "multi-region/terraform.tfstate"
+    # region         = "us-east-1"
+    # encrypt        = true
+    # dynamodb_table = "nethical-terraform-locks-${var.environment}"
   }
 }
 
@@ -43,6 +47,18 @@ variable "environment" {
   description = "Deployment environment (dev, staging, prod)"
   type        = string
   default     = "prod"
+}
+
+variable "state_bucket" {
+  description = "S3 bucket for Terraform state (used in backend config)"
+  type        = string
+  default     = "nethical-terraform-state"
+}
+
+variable "state_lock_table" {
+  description = "DynamoDB table for Terraform state locking"
+  type        = string
+  default     = "nethical-terraform-locks"
 }
 
 variable "primary_region" {

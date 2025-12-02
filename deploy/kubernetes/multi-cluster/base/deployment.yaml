@@ -54,8 +54,8 @@ spec:
       
       containers:
         - name: nethical
-          image: ghcr.io/v1b3hr/nethical:latest
-          imagePullPolicy: Always
+          image: ghcr.io/v1b3hr/nethical:v3.4.0
+          imagePullPolicy: IfNotPresent
           
           ports:
             - name: http

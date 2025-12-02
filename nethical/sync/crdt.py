@@ -291,7 +291,8 @@ class ORSet(Generic[T]):
             Self for method chaining
         """
         # Generate a unique tag for this add operation
-        tag = f"{self.node_id}:{uuid.uuid4().hex[:12]}"
+        # Use full UUID hex (32 chars) to minimize collision probability
+        tag = f"{self.node_id}:{uuid.uuid4().hex}"
 
         if element not in self.elements:
             self.elements[element] = set()
