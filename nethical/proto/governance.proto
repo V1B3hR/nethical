@@ -1,0 +1,292 @@
+// Nethical Governance Protocol Buffer Definitions
+// 
+// This file defines the gRPC service for inter-service communication
+// with lower latency than REST for internal services.
+//
+// Adheres to the 25 Fundamental Laws of AI Ethics.
+//
+// Usage:
+//   protoc --python_out=. --grpc_python_out=. governance.proto
+
+syntax = "proto3";
+
+package nethical.governance.v1;
+
+option go_package = "github.com/v1b3hr/nethical/proto";
+option java_package = "com.nethical.governance.v1";
+
+// GovernanceService provides ethical governance for AI actions.
+service GovernanceService {
+  // EvaluateAction evaluates a single action for ethical compliance.
+  rpc EvaluateAction(EvaluateRequest) returns (EvaluateResponse);
+  
+  // BatchEvaluate evaluates multiple actions in a streaming fashion.
+  rpc BatchEvaluate(BatchEvaluateRequest) returns (stream EvaluateResponse);
+  
+  // StreamDecisions provides a real-time stream of governance decisions.
+  rpc StreamDecisions(DecisionStreamRequest) returns (stream Decision);
+  
+  // GetDecision retrieves a specific decision by ID.
+  rpc GetDecision(GetDecisionRequest) returns (Decision);
+  
+  // ListPolicies returns all active governance policies.
+  rpc ListPolicies(ListPoliciesRequest) returns (ListPoliciesResponse);
+  
+  // HealthCheck returns the service health status.
+  rpc HealthCheck(HealthCheckRequest) returns (HealthCheckResponse);
+}
+
+// EvaluateRequest contains the details of an action to evaluate.
+message EvaluateRequest {
+  // Unique identifier for the AI agent
+  string agent_id = 1;
+  
+  // The action content to evaluate
+  string action = 2;
+  
+  // Type of action (e.g., code_generation, query, command)
+  string action_type = 3;
+  
+  // Additional context key-value pairs
+  map<string, string> context = 4;
+  
+  // Stated intent for semantic monitoring
+  optional string stated_intent = 5;
+  
+  // Request priority (low, normal, high, critical)
+  string priority = 6;
+  
+  // Whether to include detailed explanation
+  bool require_explanation = 7;
+  
+  // Request ID for tracing
+  optional string request_id = 8;
+}
+
+// EvaluateResponse contains the governance decision.
+message EvaluateResponse {
+  // Decision: ALLOW, RESTRICT, BLOCK, or TERMINATE
+  string decision = 1;
+  
+  // Unique identifier for this decision
+  string decision_id = 2;
+  
+  // Risk score from 0.0 to 1.0
+  float risk_score = 3;
+  
+  // Decision confidence from 0.0 to 1.0
+  float confidence = 4;
+  
+  // Latency of the evaluation in milliseconds
+  int64 latency_ms = 5;
+  
+  // List of detected violations
+  repeated Violation violations = 6;
+  
+  // Human-readable explanation
+  string reason = 7;
+  
+  // Detailed explanation if requested
+  optional Explanation explanation = 8;
+  
+  // Audit trail identifier
+  optional string audit_id = 9;
+  
+  // Whether result was served from cache
+  bool cache_hit = 10;
+  
+  // Fundamental Laws that were checked
+  repeated int32 fundamental_laws_checked = 11;
+  
+  // Timestamp of the decision
+  string timestamp = 12;
+}
+
+// Violation represents a detected policy or law violation.
+message Violation {
+  // Unique violation identifier
+  string id = 1;
+  
+  // Type of violation
+  string type = 2;
+  
+  // Severity: low, medium, high, critical
+  string severity = 3;
+  
+  // Human-readable description
+  string description = 4;
+  
+  // Reference to the Fundamental Law violated
+  optional string law_reference = 5;
+  
+  // Evidence key-value pairs
+  map<string, string> evidence = 6;
+}
+
+// Explanation provides detailed reasoning for a decision.
+message Explanation {
+  // Summary of the evaluation
+  string summary = 1;
+  
+  // List of risk factors identified
+  repeated string risk_factors = 2;
+  
+  // Rationale for the decision
+  string decision_rationale = 3;
+  
+  // Laws that were applied
+  repeated string laws_applied = 4;
+  
+  // Recommendations for the action
+  repeated string recommendations = 5;
+}
+
+// BatchEvaluateRequest contains multiple actions to evaluate.
+message BatchEvaluateRequest {
+  // List of evaluation requests
+  repeated EvaluateRequest requests = 1;
+  
+  // Whether to process in parallel
+  bool parallel = 2;
+  
+  // Stop on first error if true
+  bool fail_fast = 3;
+}
+
+// Decision represents a governance decision record.
+message Decision {
+  // Unique decision identifier
+  string decision_id = 1;
+  
+  // Decision type: ALLOW, RESTRICT, BLOCK, TERMINATE
+  string decision = 2;
+  
+  // Agent that requested the action
+  string agent_id = 3;
+  
+  // Summary of the evaluated action
+  string action_summary = 4;
+  
+  // Type of action
+  string action_type = 5;
+  
+  // Risk score
+  float risk_score = 6;
+  
+  // Decision confidence
+  float confidence = 7;
+  
+  // Explanation for the decision
+  string reasoning = 8;
+  
+  // Violations detected
+  repeated Violation violations = 9;
+  
+  // Fundamental Laws applied
+  repeated int32 fundamental_laws = 10;
+  
+  // When the decision was made
+  string timestamp = 11;
+  
+  // Evaluation latency
+  int64 latency_ms = 12;
+  
+  // Audit trail ID
+  optional string audit_id = 13;
+}
+
+// DecisionStreamRequest configures a decision stream.
+message DecisionStreamRequest {
+  // Filter by agent ID (optional)
+  optional string agent_id = 1;
+  
+  // Filter by decision type (optional)
+  repeated string decision_types = 2;
+  
+  // Filter by minimum risk score (optional)
+  optional float min_risk_score = 3;
+  
+  // Include historical decisions from the last N seconds
+  optional int64 history_seconds = 4;
+}
+
+// GetDecisionRequest retrieves a specific decision.
+message GetDecisionRequest {
+  // Decision identifier
+  string decision_id = 1;
+}
+
+// ListPoliciesRequest configures policy listing.
+message ListPoliciesRequest {
+  // Filter by status (optional)
+  optional string status = 1;
+  
+  // Filter by scope (optional)
+  optional string scope = 2;
+  
+  // Page number
+  int32 page = 3;
+  
+  // Items per page
+  int32 page_size = 4;
+}
+
+// ListPoliciesResponse contains a list of policies.
+message ListPoliciesResponse {
+  // List of policies
+  repeated Policy policies = 1;
+  
+  // Total count of policies
+  int32 total_count = 2;
+  
+  // Whether more pages exist
+  bool has_next = 3;
+}
+
+// Policy represents a governance policy.
+message Policy {
+  // Unique policy identifier
+  string policy_id = 1;
+  
+  // Policy name
+  string name = 2;
+  
+  // Policy description
+  string description = 3;
+  
+  // Policy version
+  string version = 4;
+  
+  // Status: active, deprecated, quarantine
+  string status = 5;
+  
+  // Policy scope
+  string scope = 6;
+  
+  // Fundamental Laws implemented
+  repeated int32 fundamental_laws = 7;
+  
+  // Creation timestamp
+  string created_at = 8;
+  
+  // Last update timestamp
+  string updated_at = 9;
+}
+
+// HealthCheckRequest is empty.
+message HealthCheckRequest {}
+
+// HealthCheckResponse contains service health information.
+message HealthCheckResponse {
+  // Service status
+  string status = 1;
+  
+  // API version
+  string version = 2;
+  
+  // Uptime in seconds
+  int64 uptime_seconds = 3;
+  
+  // Current timestamp
+  string timestamp = 4;
+}

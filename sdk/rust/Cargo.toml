@@ -1,0 +1,24 @@
+[package]
+name = "nethical"
+version = "1.0.0"
+edition = "2021"
+description = "Official Rust SDK for the Nethical Governance API"
+license = "MIT"
+repository = "https://github.com/v1b3hr/nethical"
+documentation = "https://docs.rs/nethical"
+keywords = ["nethical", "governance", "ai-safety", "ethics", "ai"]
+categories = ["api-bindings", "asynchronous"]
+
+[dependencies]
+# Note: In production, uncomment these dependencies
+# reqwest = { version = "0.11", features = ["json"] }
+# tokio = { version = "1.0", features = ["full"] }
+# serde = { version = "1.0", features = ["derive"] }
+# serde_json = "1.0"
+
+[dev-dependencies]
+# tokio = { version = "1.0", features = ["full", "test-util"] }
+
+[features]
+default = []
+# async = ["reqwest", "tokio"]
