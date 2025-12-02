@@ -1,0 +1,50 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Development environment overlay
+namespace: nethical-dev
+
+resources:
+  - ../base
+
+# Development-specific patches
+patches:
+  # Reduce replicas for dev
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 1
+    target:
+      kind: StatefulSet
+      name: nethical
+  
+  # Disable autoscaling in dev
+  - patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 1
+      - op: replace
+        path: /spec/maxReplicas
+        value: 2
+    target:
+      kind: HorizontalPodAutoscaler
+      name: nethical
+
+# Development-specific config
+configMapGenerator:
+  - name: nethical-dev-config
+    behavior: merge
+    literals:
+      - NETHICAL_LOG_LEVEL=debug
+      - NETHICAL_ENABLE_DEV_MODE=true
+      - NETHICAL_REGION_ID=dev-local
+      - NETHICAL_ENVIRONMENT=development
+
+# Resource limits for development
+patchesStrategicMerge:
+  - dev-resources.yaml
+
+# Labels for development
+commonLabels:
+  environment: development
+  app.kubernetes.io/instance: nethical-dev

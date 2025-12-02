@@ -1,0 +1,428 @@
+# Nethical MinIO Object Storage Deployment
+# S3-compatible object storage for models, artifacts, and audit logs
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nethical-storage
+  labels:
+    app.kubernetes.io/name: nethical-storage
+    app.kubernetes.io/component: object-storage
+
+---
+# MinIO Credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: minio-credentials
+  namespace: nethical-storage
+type: Opaque
+stringData:
+  # Override these in production via external secrets
+  MINIO_ROOT_USER: "nethical-admin"
+  MINIO_ROOT_PASSWORD: "CHANGE_ME_IN_PRODUCTION_MIN_8_CHARS"
+  # Application access key
+  ACCESS_KEY: "nethical-app"
+  SECRET_KEY: "CHANGE_ME_IN_PRODUCTION"
+
+---
+# MinIO Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: minio-config
+  namespace: nethical-storage
+data:
+  # Bucket initialization script
+  init-buckets.sh: |
+    #!/bin/sh
+    set -e
+    
+    # Wait for MinIO to be ready
+    until mc alias set local http://localhost:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD; do
+      echo "Waiting for MinIO..."
+      sleep 5
+    done
+    
+    # Create buckets
+    mc mb --ignore-existing local/nethical-models
+    mc mb --ignore-existing local/nethical-artifacts
+    mc mb --ignore-existing local/nethical-audit-logs
+    mc mb --ignore-existing local/nethical-backups
+    
+    # Set bucket policies
+    # Models bucket - read/write for authenticated users
+    mc anonymous set none local/nethical-models
+    
+    # Audit logs bucket - append only (versioning enabled)
+    mc version enable local/nethical-audit-logs
+    
+    # Set lifecycle rules for audit logs
+    cat > /tmp/lifecycle.json <<EOF
+    {
+      "Rules": [
+        {
+          "ID": "MoveToIA",
+          "Status": "Enabled",
+          "Filter": {},
+          "Transition": {
+            "Days": 30,
+            "StorageClass": "GLACIER"
+          }
+        },
+        {
+          "ID": "ExpireOld",
+          "Status": "Enabled",
+          "Filter": {},
+          "Expiration": {
+            "Days": 2555
+          }
+        }
+      ]
+    }
+    EOF
+    mc ilm import local/nethical-audit-logs < /tmp/lifecycle.json
+    
+    # Create application service account
+    mc admin user add local $ACCESS_KEY $SECRET_KEY
+    
+    # Create policy for application
+    cat > /tmp/app-policy.json <<EOF
+    {
+      "Version": "2012-10-17",
+      "Statement": [
+        {
+          "Effect": "Allow",
+          "Action": [
+            "s3:GetObject",
+            "s3:PutObject",
+            "s3:DeleteObject",
+            "s3:ListBucket"
+          ],
+          "Resource": [
+            "arn:aws:s3:::nethical-models/*",
+            "arn:aws:s3:::nethical-models",
+            "arn:aws:s3:::nethical-artifacts/*",
+            "arn:aws:s3:::nethical-artifacts",
+            "arn:aws:s3:::nethical-audit-logs/*",
+            "arn:aws:s3:::nethical-audit-logs"
+          ]
+        }
+      ]
+    }
+    EOF
+    mc admin policy create local nethical-app-policy /tmp/app-policy.json
+    mc admin policy attach local nethical-app-policy --user $ACCESS_KEY
+    
+    echo "MinIO initialization complete"
+
+---
+# Headless Service for StatefulSet
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio-headless
+  namespace: nethical-storage
+  labels:
+    app: minio
+spec:
+  ports:
+    - port: 9000
+      name: api
+    - port: 9001
+      name: console
+  clusterIP: None
+  selector:
+    app: minio
+
+---
+# MinIO API Service
+apiVersion: v1
+kind: Service
+metadata:
+  name: minio
+  namespace: nethical-storage
+  labels:
+    app: minio
+spec:
+  ports:
+    - port: 9000
+      targetPort: 9000
+      name: api
+    - port: 9001
+      targetPort: 9001
+      name: console
+  selector:
+    app: minio
+  type: ClusterIP
+
+---
+# MinIO StatefulSet (Distributed Mode)
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: minio
+  namespace: nethical-storage
+  labels:
+    app: minio
+spec:
+  serviceName: minio-headless
+  replicas: 4  # Distributed mode requires 4-16 nodes
+  podManagementPolicy: Parallel
+  selector:
+    matchLabels:
+      app: minio
+  template:
+    metadata:
+      labels:
+        app: minio
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9000"
+        prometheus.io/path: "/minio/v2/metrics/cluster"
+    spec:
+      securityContext:
+        fsGroup: 1000
+        runAsUser: 1000
+        runAsNonRoot: true
+        
+      containers:
+        - name: minio
+          image: minio/minio:RELEASE.2024-03-15T01-07-19Z
+          imagePullPolicy: IfNotPresent
+          
+          args:
+            - server
+            - http://minio-{0...3}.minio-headless.nethical-storage.svc.cluster.local/data
+            - --console-address
+            - ":9001"
+            
+          ports:
+            - containerPort: 9000
+              name: api
+            - containerPort: 9001
+              name: console
+              
+          envFrom:
+            - secretRef:
+                name: minio-credentials
+                
+          env:
+            - name: MINIO_PROMETHEUS_AUTH_TYPE
+              value: "public"
+            - name: MINIO_BROWSER_REDIRECT_URL
+              value: "https://minio-console.nethical.example.com"
+              
+          resources:
+            requests:
+              cpu: 250m
+              memory: 512Mi
+            limits:
+              cpu: 1000m
+              memory: 2Gi
+              
+          volumeMounts:
+            - name: data
+              mountPath: /data
+              
+          livenessProbe:
+            httpGet:
+              path: /minio/health/live
+              port: 9000
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 3
+            
+          readinessProbe:
+            httpGet:
+              path: /minio/health/ready
+              port: 9000
+            initialDelaySeconds: 10
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+            
+          securityContext:
+            allowPrivilegeEscalation: false
+            readOnlyRootFilesystem: false
+            capabilities:
+              drop:
+                - ALL
+                
+      # Init container to initialize buckets on first node only
+      initContainers:
+        - name: init-buckets
+          image: minio/mc:RELEASE.2024-03-13T23-51-57Z
+          command:
+            - sh
+            - -c
+            - |
+              # Only run on first pod
+              if [ "$(hostname)" = "minio-0" ]; then
+                # Start MinIO in background for initialization
+                /opt/bin/minio server /data &
+                MINIO_PID=$!
+                sleep 10
+                
+                # Run initialization script
+                /scripts/init-buckets.sh
+                
+                # Stop background MinIO
+                kill $MINIO_PID
+              fi
+          envFrom:
+            - secretRef:
+                name: minio-credentials
+          volumeMounts:
+            - name: data
+              mountPath: /data
+            - name: scripts
+              mountPath: /scripts
+              
+      volumes:
+        - name: scripts
+          configMap:
+            name: minio-config
+            defaultMode: 0755
+            
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+        labels:
+          app: minio
+      spec:
+        accessModes:
+          - ReadWriteOnce
+        resources:
+          requests:
+            storage: 100Gi
+        # Set appropriate storage class for production
+        # storageClassName: fast-ssd
+
+---
+# Pod Disruption Budget
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: minio-pdb
+  namespace: nethical-storage
+spec:
+  # MinIO distributed mode can tolerate up to half of nodes down
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: minio
+
+---
+# Network Policy
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: minio-network-policy
+  namespace: nethical-storage
+spec:
+  podSelector:
+    matchLabels:
+      app: minio
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Allow from nethical namespace
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: nethical
+      ports:
+        - port: 9000
+          protocol: TCP
+    # Allow from monitoring
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: monitoring
+      ports:
+        - port: 9000
+          protocol: TCP
+    # Allow console access from ingress
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              name: ingress-nginx
+      ports:
+        - port: 9001
+          protocol: TCP
+    # Allow inter-node communication
+    - from:
+        - podSelector:
+            matchLabels:
+              app: minio
+      ports:
+        - port: 9000
+          protocol: TCP
+  egress:
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+          podSelector:
+            matchLabels:
+              k8s-app: kube-dns
+      ports:
+        - port: 53
+          protocol: UDP
+    # Allow inter-node communication
+    - to:
+        - podSelector:
+            matchLabels:
+              app: minio
+      ports:
+        - port: 9000
+          protocol: TCP
+
+---
+# Ingress for MinIO Console
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: minio-console
+  namespace: nethical-storage
+  annotations:
+    nginx.ingress.kubernetes.io/proxy-body-size: "0"
+    nginx.ingress.kubernetes.io/proxy-buffering: "off"
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - minio-console.nethical.example.com
+      secretName: minio-console-tls
+  rules:
+    - host: minio-console.nethical.example.com
+      http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: minio
+                port:
+                  name: console
+
+---
+# ServiceMonitor for Prometheus
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: minio-monitor
+  namespace: nethical-storage
+  labels:
+    app: minio
+spec:
+  selector:
+    matchLabels:
+      app: minio
+  endpoints:
+    - port: api
+      interval: 30s
+      path: /minio/v2/metrics/cluster

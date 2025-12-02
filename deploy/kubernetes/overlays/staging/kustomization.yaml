@@ -1,0 +1,49 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Staging environment overlay
+namespace: nethical-staging
+
+resources:
+  - ../base
+
+# Staging-specific patches
+patches:
+  # 2 replicas for staging
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 2
+    target:
+      kind: StatefulSet
+      name: nethical
+  
+  # Moderate autoscaling
+  - patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 2
+      - op: replace
+        path: /spec/maxReplicas
+        value: 5
+    target:
+      kind: HorizontalPodAutoscaler
+      name: nethical
+
+# Staging-specific config
+configMapGenerator:
+  - name: nethical-staging-config
+    behavior: merge
+    literals:
+      - NETHICAL_LOG_LEVEL=info
+      - NETHICAL_ENVIRONMENT=staging
+      - NETHICAL_REGION_ID=staging-central
+
+# Resource limits for staging
+patchesStrategicMerge:
+  - staging-resources.yaml
+
+# Labels for staging
+commonLabels:
+  environment: staging
+  app.kubernetes.io/instance: nethical-staging

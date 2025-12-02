@@ -1,0 +1,68 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "nethical-edge.fullname" . }}-config
+  labels:
+    {{- include "nethical-edge.labels" . | nindent 4 }}
+data:
+  # Core configuration
+  NETHICAL_STORAGE_DIR: {{ .Values.nethical.storageDir | default "/data/nethical" | quote }}
+  NETHICAL_REGION_ID: {{ .Values.nethical.regionId | default "edge-local" | quote }}
+  NETHICAL_LOGICAL_DOMAIN: {{ .Values.nethical.logicalDomain | default "edge" | quote }}
+  
+  # Edge mode
+  NETHICAL_EDGE_MODE: {{ .Values.nethical.edgeMode | default true | quote }}
+  
+  # Feature flags
+  NETHICAL_ENABLE_MERKLE: {{ .Values.nethical.enableMerkle | default false | quote }}
+  NETHICAL_ENABLE_QUARANTINE: {{ .Values.nethical.enableQuarantine | default true | quote }}
+  NETHICAL_ENABLE_QUOTA: {{ .Values.nethical.enableQuota | default true | quote }}
+  NETHICAL_ENABLE_OTEL: {{ .Values.nethical.enableOtel | default false | quote }}
+  
+  # Quota configuration
+  NETHICAL_REQUESTS_PER_SECOND: {{ .Values.nethical.requestsPerSecond | default 100 | quote }}
+  NETHICAL_MAX_PAYLOAD_BYTES: {{ .Values.nethical.maxPayloadBytes | default 100000 | quote }}
+  
+  # Privacy
+  NETHICAL_PRIVACY_MODE: {{ .Values.nethical.privacyMode | default "minimal" | quote }}
+  
+  # Edge cache configuration
+  {{- if .Values.nethical.edge.cache }}
+  NETHICAL_CACHE_L1_SIZE_MB: {{ .Values.nethical.edge.cache.l1SizeMb | default 64 | quote }}
+  NETHICAL_CACHE_L1_TTL_SECONDS: {{ .Values.nethical.edge.cache.l1TtlSeconds | default 60 | quote }}
+  {{- end }}
+  
+  # Latency targets
+  {{- if .Values.nethical.edge.latency }}
+  NETHICAL_LATENCY_P50_TARGET_MS: {{ .Values.nethical.edge.latency.p50TargetMs | default 5 | quote }}
+  NETHICAL_LATENCY_P95_TARGET_MS: {{ .Values.nethical.edge.latency.p95TargetMs | default 10 | quote }}
+  NETHICAL_LATENCY_P99_TARGET_MS: {{ .Values.nethical.edge.latency.p99TargetMs | default 25 | quote }}
+  {{- end }}
+  
+  # Offline fallback
+  {{- if .Values.nethical.edge.offline }}
+  NETHICAL_OFFLINE_ENABLED: {{ .Values.nethical.edge.offline.enabled | default true | quote }}
+  NETHICAL_OFFLINE_SYNC_INTERVAL: {{ .Values.nethical.edge.offline.syncIntervalSeconds | default 30 | quote }}
+  NETHICAL_OFFLINE_MAX_DECISIONS: {{ .Values.nethical.edge.offline.maxOfflineDecisions | default 10000 | quote }}
+  {{- end }}
+  
+  # Predictive engine
+  {{- if .Values.nethical.edge.prediction }}
+  NETHICAL_PREDICTION_ENABLED: {{ .Values.nethical.edge.prediction.enabled | default true | quote }}
+  NETHICAL_PREDICTION_WARMUP: {{ .Values.nethical.edge.prediction.cacheWarmupOnStartup | default true | quote }}
+  NETHICAL_PREDICTION_LEARNING: {{ .Values.nethical.edge.prediction.patternLearningEnabled | default true | quote }}
+  {{- end }}
+  
+  # Cloud sync
+  {{- if .Values.nethical.edge.cloudSync }}
+  NETHICAL_CLOUD_SYNC_ENABLED: {{ .Values.nethical.edge.cloudSync.enabled | default true | quote }}
+  NETHICAL_CLOUD_SYNC_ENDPOINT: {{ .Values.nethical.edge.cloudSync.endpoint | default "" | quote }}
+  NETHICAL_CLOUD_SYNC_INTERVAL: {{ .Values.nethical.edge.cloudSync.syncIntervalSeconds | default 60 | quote }}
+  NETHICAL_CLOUD_SYNC_BATCH_SIZE: {{ .Values.nethical.edge.cloudSync.batchSize | default 100 | quote }}
+  {{- end }}
+  
+  # Redis configuration (if enabled)
+  {{- if .Values.redis.enabled }}
+  REDIS_HOST: {{ .Values.redis.host | quote }}
+  REDIS_PORT: {{ .Values.redis.port | quote }}
+  {{- end }}
