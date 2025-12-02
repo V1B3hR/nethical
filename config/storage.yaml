@@ -1,0 +1,239 @@
+# Nethical Storage Configuration
+# Version: 1.0.0
+# This file configures all storage backends for the Nethical governance system
+
+# Storage backend selection
+# Options: 'postgres', 'timescaledb', 'file', 'memory'
+storage:
+  # Primary storage backend
+  backend: "postgres"
+  
+  # Enable high-availability mode
+  ha_enabled: false
+  
+  # Storage path for file-based fallback
+  fallback_path: "/data/nethical/storage"
+
+# PostgreSQL/TimescaleDB Configuration
+postgresql:
+  # Connection settings
+  host: "${POSTGRES_HOST:-localhost}"
+  port: ${POSTGRES_PORT:-5432}
+  database: "${POSTGRES_DB:-nethical}"
+  user: "${POSTGRES_USER:-nethical}"
+  password: "${POSTGRES_PASSWORD:-}"
+  
+  # Schema configuration
+  schema: "nethical"
+  
+  # Connection pool settings
+  pool:
+    min_connections: 1
+    max_connections: 20
+    max_overflow: 10
+    pool_timeout: 30
+    pool_recycle: 3600
+    
+  # Connection options
+  options:
+    connect_timeout: 10
+    application_name: "nethical"
+    ssl_mode: "prefer"  # Options: disable, allow, prefer, require, verify-ca, verify-full
+    
+  # PgBouncer compatibility
+  pgbouncer:
+    enabled: false
+    mode: "transaction"  # Options: session, transaction, statement
+    
+  # TimescaleDB specific settings
+  timescaledb:
+    enabled: true
+    # Chunk time intervals for hypertables
+    chunk_intervals:
+      audit_events: "1 day"
+      security_events: "1 day"
+      governance_metrics: "1 hour"
+      latency_metrics: "5 minutes"
+      quota_usage: "1 hour"
+    # Compression settings
+    compression:
+      enabled: true
+      after_interval: "7 days"
+      segment_by:
+        audit_events: ["agent_id", "decision", "region_id"]
+        governance_metrics: ["agent_id", "metric_name"]
+    # Data retention policies
+    retention:
+      audit_events: "365 days"
+      security_events: "730 days"
+      governance_metrics: "30 days"
+      latency_metrics: "7 days"
+      quota_usage: "90 days"
+
+# Object Storage Configuration (S3/MinIO)
+object_storage:
+  # Enable object storage
+  enabled: false
+  
+  # Provider: 's3', 'minio', 'gcs', 'azure'
+  provider: "minio"
+  
+  # S3/MinIO settings
+  s3:
+    endpoint: "${S3_ENDPOINT:-http://localhost:9000}"
+    access_key: "${S3_ACCESS_KEY:-}"
+    secret_key: "${S3_SECRET_KEY:-}"
+    region: "${S3_REGION:-us-east-1}"
+    use_ssl: true
+    verify_ssl: true
+    
+  # Bucket configuration
+  buckets:
+    models: "nethical-models"
+    artifacts: "nethical-artifacts"
+    audit_logs: "nethical-audit-logs"
+    backups: "nethical-backups"
+    
+  # Storage tiers and lifecycle
+  lifecycle:
+    hot:
+      storage_class: "STANDARD"
+      retention_days: 7
+    warm:
+      storage_class: "STANDARD_IA"
+      retention_days: 90
+    cold:
+      storage_class: "GLACIER_IR"
+      retention_days: 365
+    archive:
+      storage_class: "DEEP_ARCHIVE"
+      retention_days: 2555  # 7 years
+
+# Redis Cache Configuration
+redis:
+  # Enable Redis caching
+  enabled: false
+  
+  # Connection settings
+  host: "${REDIS_HOST:-localhost}"
+  port: ${REDIS_PORT:-6379}
+  password: "${REDIS_PASSWORD:-}"
+  database: 0
+  
+  # SSL/TLS
+  ssl: false
+  ssl_cert_reqs: "required"
+  
+  # Connection pool
+  pool:
+    max_connections: 50
+    min_idle: 5
+    
+  # Cluster mode
+  cluster:
+    enabled: false
+    nodes: []
+    
+  # Cache TTLs
+  ttl:
+    decisions: 30
+    policies: 300
+    agents: 60
+    metrics: 10
+
+# Elasticsearch Configuration (for audit search)
+elasticsearch:
+  # Enable Elasticsearch
+  enabled: false
+  
+  # Connection settings
+  hosts:
+    - "${ES_HOST:-localhost}:${ES_PORT:-9200}"
+  
+  # Authentication
+  auth:
+    username: "${ES_USER:-}"
+    password: "${ES_PASSWORD:-}"
+    api_key: "${ES_API_KEY:-}"
+    
+  # SSL/TLS
+  ssl:
+    enabled: false
+    verify_certs: true
+    ca_certs: ""
+    
+  # Index settings
+  indices:
+    audit: "nethical-audit"
+    security: "nethical-security"
+    metrics: "nethical-metrics"
+    
+  # Index lifecycle management
+  ilm:
+    enabled: true
+    hot_phase: "7d"
+    warm_phase: "30d"
+    cold_phase: "90d"
+    delete_phase: "365d"
+
+# Backup Configuration
+backup:
+  # Enable automated backups
+  enabled: true
+  
+  # Backup schedule (cron format)
+  schedule: "0 2 * * *"  # 2 AM daily
+  
+  # Backup retention
+  retention:
+    daily: 7
+    weekly: 4
+    monthly: 12
+    
+  # Backup destinations
+  destinations:
+    - type: "s3"
+      bucket: "nethical-backups"
+      prefix: "postgres/"
+    - type: "local"
+      path: "/backup/nethical"
+      
+  # Point-in-time recovery
+  pitr:
+    enabled: true
+    wal_archive: "s3://nethical-backups/wal/"
+
+# Encryption Configuration
+encryption:
+  # Enable encryption at rest
+  at_rest:
+    enabled: true
+    algorithm: "AES-256-GCM"
+    key_source: "env"  # Options: env, vault, kms
+    key_env_var: "NETHICAL_ENCRYPTION_KEY"
+    
+  # Enable encryption in transit
+  in_transit:
+    enabled: true
+    min_tls_version: "1.2"
+    
+# High Availability Configuration
+high_availability:
+  # Enable HA mode
+  enabled: false
+  
+  # Primary-replica configuration
+  replication:
+    mode: "async"  # Options: sync, async, quorum
+    replicas: 2
+    
+  # Automatic failover
+  failover:
+    enabled: true
+    timeout: 30
+    health_check_interval: 5
+    
+  # Connection routing
+  routing:
+    read_replicas: true
+    write_to_primary: true

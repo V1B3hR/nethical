@@ -1,0 +1,62 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Production environment overlay
+namespace: nethical-prod
+
+resources:
+  - ../base
+
+# Production-specific patches
+patches:
+  # High availability for production
+  - patch: |-
+      - op: replace
+        path: /spec/replicas
+        value: 3
+    target:
+      kind: StatefulSet
+      name: nethical
+  
+  # Production autoscaling
+  - patch: |-
+      - op: replace
+        path: /spec/minReplicas
+        value: 3
+      - op: replace
+        path: /spec/maxReplicas
+        value: 30
+      - op: replace
+        path: /spec/targetCPUUtilizationPercentage
+        value: 70
+    target:
+      kind: HorizontalPodAutoscaler
+      name: nethical
+  
+  # Increase PDB for production
+  - patch: |-
+      - op: replace
+        path: /spec/minAvailable
+        value: 2
+    target:
+      kind: PodDisruptionBudget
+      name: nethical
+
+# Production-specific config
+configMapGenerator:
+  - name: nethical-prod-config
+    behavior: merge
+    literals:
+      - NETHICAL_LOG_LEVEL=warning
+      - NETHICAL_ENVIRONMENT=production
+      - NETHICAL_ENABLE_MERKLE=true
+      - NETHICAL_ENABLE_OTEL=true
+
+# Resource limits for production
+patchesStrategicMerge:
+  - prod-resources.yaml
+
+# Labels for production
+commonLabels:
+  environment: production
+  app.kubernetes.io/instance: nethical-prod

@@ -1,0 +1,229 @@
+# Nethical Edge - Ultra-Low Latency Deployment Configuration
+# Optimized for autonomous vehicles, industrial robots, and safety-critical systems
+
+# Replica count - typically 1 per edge node
+replicaCount: 1
+
+image:
+  repository: ghcr.io/v1b3hr/nethical-edge
+  pullPolicy: IfNotPresent
+  tag: "latest"
+
+imagePullSecrets: []
+nameOverride: ""
+fullnameOverride: ""
+
+# Service account configuration
+serviceAccount:
+  create: true
+  annotations: {}
+  name: ""
+
+# Pod annotations for observability
+podAnnotations:
+  prometheus.io/scrape: "true"
+  prometheus.io/port: "8888"
+  prometheus.io/path: "/metrics"
+
+# Security context - minimal privileges
+podSecurityContext:
+  runAsNonRoot: true
+  runAsUser: 1000
+  fsGroup: 1000
+
+securityContext:
+  capabilities:
+    drop:
+      - ALL
+  readOnlyRootFilesystem: true
+  allowPrivilegeEscalation: false
+
+# Service configuration
+service:
+  type: ClusterIP
+  port: 8000
+  metricsPort: 8888
+  annotations: {}
+
+# Ingress - typically disabled for edge deployments
+ingress:
+  enabled: false
+
+# Edge-optimized resource allocation
+# These are minimal footprint while maintaining performance
+resources:
+  requests:
+    cpu: 100m
+    memory: 128Mi
+  limits:
+    cpu: 500m
+    memory: 256Mi
+
+# Autoscaling - disabled for edge (fixed resources)
+autoscaling:
+  enabled: false
+
+# Pod Disruption Budget
+podDisruptionBudget:
+  enabled: false  # Edge deployments are typically standalone
+
+# Node selector for edge nodes
+nodeSelector:
+  node-type: edge
+  # kubernetes.io/arch: arm64  # Uncomment for ARM-based edge devices
+
+# Tolerations for edge nodes
+tolerations:
+  - key: "node-role.kubernetes.io/edge"
+    operator: "Exists"
+    effect: "NoSchedule"
+  - key: "node.kubernetes.io/not-ready"
+    operator: "Exists"
+    effect: "NoExecute"
+    tolerationSeconds: 10
+
+# Affinity - prefer edge nodes
+affinity:
+  nodeAffinity:
+    requiredDuringSchedulingIgnoredDuringExecution:
+      nodeSelectorTerms:
+        - matchExpressions:
+            - key: node-type
+              operator: In
+              values:
+                - edge
+                - edge-compute
+
+# Persistent storage - local for edge
+persistence:
+  enabled: true
+  accessMode: ReadWriteOnce
+  size: 1Gi
+  storageClass: local-path  # Use local storage for edge
+  annotations: {}
+
+# Edge-specific Nethical configuration
+nethical:
+  # Edge mode optimizations
+  edgeMode: true
+  
+  # Storage - local paths for edge
+  storageDir: "/data/nethical"
+  
+  # Region and domain
+  regionId: "${EDGE_REGION_ID:-edge-local}"
+  logicalDomain: "${EDGE_DOMAIN:-edge}"
+  
+  # Feature flags - edge optimized
+  enableMerkle: false  # Disable for latency
+  enableQuarantine: true
+  enableQuota: true
+  enableOtel: false  # Disable for latency unless needed
+  
+  # Quota configuration - edge limits
+  requestsPerSecond: 100.0  # Higher for local
+  maxPayloadBytes: 100000  # Smaller for edge
+  
+  # Privacy settings
+  privacyMode: "minimal"  # Minimal for edge performance
+  
+  # Edge-specific settings
+  edge:
+    # Cache settings
+    cache:
+      l1SizeMb: 64
+      l1TtlSeconds: 60
+      
+    # Latency targets
+    latency:
+      p50TargetMs: 5
+      p95TargetMs: 10
+      p99TargetMs: 25
+      
+    # Offline fallback
+    offline:
+      enabled: true
+      syncIntervalSeconds: 30
+      maxOfflineDecisions: 10000
+      
+    # Predictive pre-computation
+    prediction:
+      enabled: true
+      cacheWarmupOnStartup: true
+      patternLearningEnabled: true
+      
+    # Cloud sync settings
+    cloudSync:
+      enabled: true
+      endpoint: "${CLOUD_SYNC_ENDPOINT:-}"
+      syncIntervalSeconds: 60
+      batchSize: 100
+
+# Probes - faster for edge responsiveness
+probes:
+  liveness:
+    enabled: true
+    initialDelaySeconds: 5
+    periodSeconds: 10
+    timeoutSeconds: 2
+    failureThreshold: 3
+  readiness:
+    enabled: true
+    initialDelaySeconds: 3
+    periodSeconds: 5
+    timeoutSeconds: 2
+    failureThreshold: 3
+  startup:
+    enabled: true
+    initialDelaySeconds: 2
+    periodSeconds: 2
+    timeoutSeconds: 2
+    failureThreshold: 30
+
+# Redis - typically co-located on edge or disabled
+redis:
+  enabled: false
+  host: "localhost"
+  port: 6379
+
+# Extra environment variables for edge
+extraEnv:
+  - name: NETHICAL_MODE
+    value: "edge"
+  - name: NETHICAL_LOG_LEVEL
+    value: "warning"  # Reduce logging overhead
+  - name: PYTHONOPTIMIZE
+    value: "2"  # Enable Python optimizations
+  - name: NUMBA_CACHE_DIR
+    value: "/data/nethical/cache/numba"
+  - name: JIT_WARMUP_ON_STARTUP
+    value: "true"
+
+# Extra volumes for edge-specific data
+extraVolumes:
+  - name: numba-cache
+    emptyDir: {}
+
+extraVolumeMounts:
+  - name: numba-cache
+    mountPath: /data/nethical/cache/numba
+
+# Network Policy - restrictive for edge
+networkPolicy:
+  enabled: true
+  # Only allow local and cloud sync traffic
+  egressCIDRs:
+    - 10.0.0.0/8  # Internal cluster
+  ingressFromSameNamespace: true
+
+# Priority class for edge workloads
+priorityClassName: "system-node-critical"
+
+# Termination grace period - minimal for fast restarts
+terminationGracePeriodSeconds: 5
+
+# DNS policy for edge
+dnsPolicy: ClusterFirst
+
+# Host network - useful for some edge deployments
+hostNetwork: false
