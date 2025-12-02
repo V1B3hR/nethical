@@ -109,32 +109,32 @@ class CacheHierarchy:
             Cached value or None
         """
         # Try L1
-        if self.l1:
+        if self.l1 is not None:
             value = self.l1.get(key)
             if value is not None:
                 self._l1_hits += 1
                 return value
 
         # Try L2
-        if self.l2 and self.l2.is_connected:
+        if self.l2 is not None and self.l2.is_connected:
             value = self.l2.get(key)
             if value is not None:
                 self._l2_hits += 1
                 # Promote to L1
-                if self.config.read_through and self.l1:
+                if self.config.read_through and self.l1 is not None:
                     self.l1.set(key, value, self.config.l1_ttl_seconds)
                 return value
 
         # Try L3
-        if self.l3:
+        if self.l3 is not None:
             value = self.l3.get(key)
             if value is not None:
                 self._l3_hits += 1
                 # Promote to lower levels
                 if self.config.read_through:
-                    if self.l1:
+                    if self.l1 is not None:
                         self.l1.set(key, value, self.config.l1_ttl_seconds)
-                    if self.l2 and self.l2.is_connected:
+                    if self.l2 is not None and self.l2.is_connected:
                         self.l2.set(key, value, self.config.l2_ttl_seconds)
                 return value
 
@@ -158,16 +158,16 @@ class CacheHierarchy:
             level: Specific level to write to (l1, l2, l3, all)
         """
         if level == "l1" or level is None or level == "all":
-            if self.l1:
+            if self.l1 is not None:
                 l1_ttl = ttl if ttl else self.config.l1_ttl_seconds
                 self.l1.set(key, value, l1_ttl)
 
         if self.config.write_through or level in ("l2", "all"):
-            if self.l2 and self.l2.is_connected:
+            if self.l2 is not None and self.l2.is_connected:
                 l2_ttl = ttl if ttl else self.config.l2_ttl_seconds
                 self.l2.set(key, value, l2_ttl)
 
-            if self.l3:
+            if self.l3 is not None:
                 l3_ttl = ttl if ttl else self.config.l3_ttl_seconds
                 self.l3.set(key, value, l3_ttl)
 
@@ -178,11 +178,11 @@ class CacheHierarchy:
         Args:
             key: Cache key
         """
-        if self.l1:
+        if self.l1 is not None:
             self.l1.delete(key)
-        if self.l2 and self.l2.is_connected:
+        if self.l2 is not None and self.l2.is_connected:
             self.l2.delete(key)
-        if self.l3:
+        if self.l3 is not None:
             self.l3.delete(key)
 
     def invalidate_pattern(self, pattern: str):
@@ -192,18 +192,18 @@ class CacheHierarchy:
         Args:
             pattern: Pattern to match
         """
-        if self.l1:
+        if self.l1 is not None:
             self.l1.invalidate_pattern(pattern)
-        if self.l2 and self.l2.is_connected:
+        if self.l2 is not None and self.l2.is_connected:
             self.l2.invalidate_pattern(pattern)
-        if self.l3:
+        if self.l3 is not None:
             self.l3.invalidate_pattern(pattern)
 
     def clear(self):
         """Clear all cache levels."""
-        if self.l1:
+        if self.l1 is not None:
             self.l1.clear()
-        if self.l3:
+        if self.l3 is not None:
             self.l3.clear()
 
     def get_or_set(
