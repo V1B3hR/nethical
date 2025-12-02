@@ -1,0 +1,55 @@
+# Edge Deployment SLA Configuration
+# For autonomous vehicles, robots, and real-time systems
+
+deployment_type: edge
+
+latency:
+  decision:
+    p50_ms: 5
+    p95_ms: 10
+    p99_ms: 25
+  policy_sync:
+    max_lag_ms: 1000
+  failover:
+    max_time_ms: 5
+
+availability:
+  target_percent: 99.9999
+  measurement: local_uptime
+
+cache:
+  l1:
+    enabled: true
+    max_size_mb: 256
+    ttl_seconds: 30
+    hit_rate_target: 0.60
+  l2:
+    enabled: false  # Not used at edge
+  l3:
+    enabled: false  # Not used at edge
+
+circuit_breaker:
+  enabled: true
+  max_latency_ms: 10
+  failure_threshold: 5
+  recovery_timeout_seconds: 30
+  half_open_requests: 3
+
+offline_mode:
+  enabled: true
+  max_offline_hours: 24
+  conservative_risk_threshold: 1.5
+  sync_on_reconnect: true
+
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+  alerting:
+    latency_critical_multiplier: 2.0
+    latency_warning_multiplier: 1.5
+
+safety:
+  safe_defaults: true
+  terminate_always_available: true
+  block_on_uncertainty: true

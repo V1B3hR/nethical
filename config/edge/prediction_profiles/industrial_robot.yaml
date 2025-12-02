@@ -1,0 +1,98 @@
+# Industrial Robot Prediction Profile
+# Pre-computation patterns for industrial robot governance
+
+domain: industrial_robot
+
+description: |
+  Prediction profile for industrial robot governance.
+  Focuses on manufacturing and industrial automation patterns.
+
+common_actions:
+  - action_type: motion
+    patterns:
+      - linear_move
+      - joint_move
+      - circular_move
+    frequency: very_high
+    
+  - action_type: manipulation
+    patterns:
+      - gripper_open
+      - gripper_close
+      - tool_change
+    frequency: high
+    
+  - action_type: sensing
+    patterns:
+      - force_sensing
+      - vision_inspection
+      - proximity_detection
+    frequency: high
+    
+  - action_type: communication
+    patterns:
+      - plc_command
+      - mes_update
+      - safety_signal
+    frequency: medium
+
+action_weights:
+  motion: 0.40
+  manipulation: 0.30
+  sensing: 0.20
+  communication: 0.10
+
+context_patterns:
+  - assembly_line
+  - welding_cell
+  - pick_and_place
+  - quality_inspection
+  - collaborative_work
+
+warmup_actions:
+  - action: "Move to position"
+    action_type: motion
+    context:
+      cell_type: assembly
+      
+  - action: "Grip workpiece"
+    action_type: manipulation
+    context:
+      cell_type: pick_and_place
+      
+  - action: "Force limit reached"
+    action_type: sensing
+    context:
+      environment: collaborative
+      priority: safety
+      
+  - action: "Emergency stop"
+    action_type: safety
+    context:
+      environment: any
+      priority: critical
+
+risk_thresholds:
+  motion:
+    allow: 0.2
+    restrict: 0.4
+    block: 0.6
+  manipulation:
+    allow: 0.2
+    restrict: 0.4
+    block: 0.6
+  sensing:
+    allow: 0.3
+    restrict: 0.5
+    block: 0.7
+
+safety_critical_actions:
+  - emergency_stop
+  - collision_stop
+  - force_limit_stop
+  - zone_violation_stop
+
+collaborative_safety:
+  human_presence_detection: true
+  speed_reduction_zone: true
+  force_limit_mode: true

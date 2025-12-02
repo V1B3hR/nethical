@@ -1,0 +1,67 @@
+# Cloud API SLA Configuration
+# For standard API access from applications
+
+deployment_type: cloud
+
+latency:
+  decision:
+    p50_ms: 50
+    p95_ms: 100
+    p99_ms: 250
+  policy_sync:
+    max_lag_ms: 5000
+  failover:
+    max_time_ms: 100
+
+availability:
+  target_percent: 99.9
+  measurement: external_monitoring
+
+throughput:
+  sustained_rps: 10000
+  peak_rps: 50000
+  max_concurrent_requests: 10000
+
+cache:
+  l1:
+    enabled: true
+    max_size_mb: 512
+    ttl_seconds: 30
+    hit_rate_target: 0.60
+  l2:
+    enabled: true
+    ttl_seconds: 300
+    hit_rate_target: 0.80  # Cumulative
+  l3:
+    enabled: true
+    ttl_seconds: 900
+    hit_rate_target: 0.95  # Cumulative
+
+circuit_breaker:
+  enabled: true
+  max_latency_ms: 100
+  failure_threshold: 10
+  recovery_timeout_seconds: 60
+  half_open_requests: 5
+
+rate_limiting:
+  enabled: true
+  requests_per_second: 1000
+  burst_size: 2000
+
+monitoring:
+  prometheus:
+    enabled: true
+    port: 9090
+  alerting:
+    latency_critical_multiplier: 2.0
+    latency_warning_multiplier: 1.5
+  health_check:
+    interval_seconds: 10
+    timeout_seconds: 5
+
+autoscaling:
+  enabled: true
+  min_replicas: 3
+  max_replicas: 30
+  target_cpu_percent: 70

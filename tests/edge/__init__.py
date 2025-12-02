@@ -1,0 +1,1 @@
+"""Edge module test init."""

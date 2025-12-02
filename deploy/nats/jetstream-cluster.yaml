@@ -1,0 +1,250 @@
+# NATS JetStream Cluster Deployment
+# Kubernetes manifests for event streaming
+
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nethical-streaming
+  labels:
+    app: nethical
+    component: streaming
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: nats-config
+  namespace: nethical-streaming
+data:
+  nats.conf: |
+    # NATS Server Configuration
+    
+    # Cluster name
+    server_name: nethical-nats
+    
+    # Client connections
+    port: 4222
+    
+    # HTTP monitoring
+    http_port: 8222
+    
+    # Cluster configuration
+    cluster {
+      name: nethical-cluster
+      port: 6222
+      routes [
+        nats://nats-0.nats.nethical-streaming.svc.cluster.local:6222
+        nats://nats-1.nats.nethical-streaming.svc.cluster.local:6222
+        nats://nats-2.nats.nethical-streaming.svc.cluster.local:6222
+      ]
+    }
+    
+    # JetStream configuration
+    jetstream {
+      store_dir: /data/jetstream
+      max_memory_store: 1G
+      max_file_store: 100G
+    }
+    
+    # TLS
+    tls {
+      cert_file: /etc/nats/tls/tls.crt
+      key_file: /etc/nats/tls/tls.key
+      ca_file: /etc/nats/tls/ca.crt
+      verify: true
+    }
+    
+    # Authorization
+    authorization {
+      default_permissions: {
+        subscribe: ["nethical.>"]
+        publish: ["nethical.>"]
+      }
+    }
+    
+    # Logging
+    debug: false
+    trace: false
+    logtime: true
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: nats
+  namespace: nethical-streaming
+spec:
+  serviceName: nats
+  replicas: 3
+  selector:
+    matchLabels:
+      app: nats
+  template:
+    metadata:
+      labels:
+        app: nats
+    spec:
+      containers:
+      - name: nats
+        image: nats:2.10-alpine
+        ports:
+        - containerPort: 4222
+          name: client
+        - containerPort: 6222
+          name: cluster
+        - containerPort: 8222
+          name: monitor
+        args:
+        - -c
+        - /etc/nats/nats.conf
+        - --name=$(POD_NAME)
+        env:
+        - name: POD_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: metadata.name
+        volumeMounts:
+        - name: config
+          mountPath: /etc/nats
+        - name: data
+          mountPath: /data
+        - name: tls
+          mountPath: /etc/nats/tls
+          readOnly: true
+        resources:
+          requests:
+            memory: "1Gi"
+            cpu: "500m"
+          limits:
+            memory: "2Gi"
+            cpu: "1"
+        livenessProbe:
+          httpGet:
+            path: /healthz
+            port: 8222
+          initialDelaySeconds: 30
+          periodSeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /healthz?js-enabled-only=true
+            port: 8222
+          initialDelaySeconds: 10
+          periodSeconds: 5
+      volumes:
+      - name: config
+        configMap:
+          name: nats-config
+      - name: tls
+        secret:
+          secretName: nats-tls
+  volumeClaimTemplates:
+  - metadata:
+      name: data
+    spec:
+      accessModes: ["ReadWriteOnce"]
+      storageClassName: fast-ssd
+      resources:
+        requests:
+          storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats
+  namespace: nethical-streaming
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+  - port: 4222
+    name: client
+  - port: 6222
+    name: cluster
+  - port: 8222
+    name: monitor
+  selector:
+    app: nats
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nats-lb
+  namespace: nethical-streaming
+spec:
+  type: ClusterIP
+  ports:
+  - port: 4222
+    name: client
+  selector:
+    app: nats
+---
+# JetStream Streams Configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: jetstream-streams
+  namespace: nethical-streaming
+data:
+  streams.json: |
+    {
+      "streams": [
+        {
+          "name": "POLICY_UPDATES",
+          "subjects": [
+            "nethical.policy.*.created",
+            "nethical.policy.*.updated",
+            "nethical.policy.*.deprecated"
+          ],
+          "retention": "limits",
+          "max_age": 86400000000000,
+          "storage": "file",
+          "replicas": 3
+        },
+        {
+          "name": "AGENT_EVENTS",
+          "subjects": [
+            "nethical.agent.*.suspended",
+            "nethical.agent.*.quota_exceeded",
+            "nethical.agent.*.decision"
+          ],
+          "retention": "limits",
+          "max_age": 3600000000000,
+          "storage": "file",
+          "replicas": 3
+        },
+        {
+          "name": "SECURITY_EVENTS",
+          "subjects": [
+            "nethical.security.breach",
+            "nethical.security.emergency_flush"
+          ],
+          "retention": "limits",
+          "max_age": 604800000000000,
+          "storage": "file",
+          "replicas": 3
+        }
+      ]
+    }
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: nats-pdb
+  namespace: nethical-streaming
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: nats
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: nats
+  namespace: nethical-streaming
+spec:
+  selector:
+    matchLabels:
+      app: nats
+  endpoints:
+  - port: monitor
+    path: /varz
+    interval: 15s

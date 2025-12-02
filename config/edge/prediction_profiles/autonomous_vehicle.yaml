@@ -1,0 +1,92 @@
+# Autonomous Vehicle Prediction Profile
+# Pre-computation patterns for AV governance
+
+domain: autonomous_vehicle
+
+description: |
+  Prediction profile for autonomous vehicle governance.
+  Focuses on safety-critical action patterns common in AV systems.
+
+common_actions:
+  - action_type: perception
+    patterns:
+      - object_detection
+      - lane_detection
+      - traffic_sign_recognition
+    frequency: very_high
+    
+  - action_type: planning
+    patterns:
+      - route_planning
+      - trajectory_planning
+      - collision_avoidance
+    frequency: high
+    
+  - action_type: control
+    patterns:
+      - steering_command
+      - acceleration_command
+      - brake_command
+    frequency: very_high
+    
+  - action_type: communication
+    patterns:
+      - v2v_message
+      - v2i_message
+      - telemetry_upload
+    frequency: medium
+
+action_weights:
+  perception: 0.30
+  planning: 0.25
+  control: 0.35
+  communication: 0.10
+
+context_patterns:
+  - highway_driving
+  - urban_driving
+  - parking
+  - emergency_stop
+  - construction_zone
+
+warmup_actions:
+  - action: "Detect pedestrian"
+    action_type: perception
+    context:
+      environment: urban
+      
+  - action: "Plan lane change"
+    action_type: planning
+    context:
+      environment: highway
+      
+  - action: "Emergency brake"
+    action_type: control
+    context:
+      environment: any
+      priority: critical
+      
+  - action: "Upload telemetry"
+    action_type: communication
+    context:
+      environment: any
+
+risk_thresholds:
+  control:
+    allow: 0.1
+    restrict: 0.3
+    block: 0.5
+  planning:
+    allow: 0.2
+    restrict: 0.4
+    block: 0.6
+  perception:
+    allow: 0.3
+    restrict: 0.5
+    block: 0.7
+
+safety_critical_actions:
+  - emergency_brake
+  - emergency_steering
+  - collision_avoidance
+  - pedestrian_stop
