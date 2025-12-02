@@ -8,11 +8,12 @@ Each module handles a specific domain of the API:
 - fairness: Fairness metrics and bias detection
 - appeals: Appeal submission and tracking
 - audit: Audit trail access
+- explanations: GDPR Article 22 Right to Explanation
 
 All routes implement the 25 Fundamental Laws of AI Ethics.
 """
 
-from . import appeals, audit, decisions, evaluate, fairness, metrics, policies
+from . import appeals, audit, decisions, evaluate, explanations, fairness, metrics, policies
 
 __all__ = [
     "evaluate",
@@ -22,4 +23,5 @@ __all__ = [
     "fairness",
     "appeals",
     "audit",
+    "explanations",
 ]

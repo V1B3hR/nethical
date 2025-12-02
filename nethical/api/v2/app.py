@@ -32,6 +32,7 @@ from .routes import (
     audit,
     decisions,
     evaluate,
+    explanations,
     fairness,
     metrics,
     policies,
@@ -125,6 +126,7 @@ def create_v2_app() -> FastAPI:
     app.include_router(fairness.router, tags=["Fairness"])
     app.include_router(appeals.router, tags=["Appeals"])
     app.include_router(audit.router, tags=["Audit"])
+    app.include_router(explanations.router, tags=["Explanations"])
     
     @app.get("/", tags=["Root"])
     async def root() -> dict[str, Any]:
@@ -145,6 +147,7 @@ def create_v2_app() -> FastAPI:
                 "fairness": "GET /fairness - Fairness metrics",
                 "appeals": "POST /appeals - Submit appeal",
                 "audit": "GET /audit/{id} - Audit trail lookup",
+                "explanations": "GET /explanations/{id} - GDPR Article 22 explanations",
             },
             "fundamental_laws": 25,
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -183,6 +186,7 @@ async def router_root() -> dict[str, Any]:
             "fairness": "GET /v2/fairness",
             "appeals": "POST /v2/appeals",
             "audit": "GET /v2/audit/{id}",
+            "explanations": "GET /v2/explanations/{id}",
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
@@ -196,3 +200,4 @@ router.include_router(metrics.router, tags=["Metrics"])
 router.include_router(fairness.router, tags=["Fairness"])
 router.include_router(appeals.router, tags=["Appeals"])
 router.include_router(audit.router, tags=["Audit"])
+router.include_router(explanations.router, tags=["Explanations"])
