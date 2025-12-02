@@ -1,0 +1,51 @@
+{
+  "name": "nethical-sdk",
+  "version": "1.0.0",
+  "description": "Official JavaScript/TypeScript SDK for the Nethical Governance API",
+  "main": "dist/index.js",
+  "types": "dist/index.d.ts",
+  "module": "dist/index.mjs",
+  "exports": {
+    ".": {
+      "require": "./dist/index.js",
+      "import": "./dist/index.mjs",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "files": [
+    "dist",
+    "src"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "test": "jest",
+    "lint": "eslint src",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": [
+    "nethical",
+    "governance",
+    "ai-safety",
+    "ethics",
+    "ai",
+    "llm"
+  ],
+  "author": "Nethical Team",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/v1b3hr/nethical.git",
+    "directory": "sdk/javascript"
+  },
+  "bugs": {
+    "url": "https://github.com/v1b3hr/nethical/issues"
+  },
+  "homepage": "https://github.com/v1b3hr/nethical#readme",
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.0.0"
+  },
+  "engines": {
+    "node": ">=18.0.0"
+  }
+}
