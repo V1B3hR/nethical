@@ -26,6 +26,10 @@ from typing import Any, Optional
 from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel, Field
 
+# API version - should match the main API version
+# In production, this could be read from pyproject.toml or a central config
+API_VERSION = "2.0.0"
+
 router = APIRouter(prefix="/transparency", tags=["Transparency"])
 
 
@@ -326,7 +330,7 @@ async def get_system_info() -> SystemInfo:
     """
     return SystemInfo(
         system_name="Nethical AI Governance Platform",
-        version="3.6.0",
+        version=API_VERSION,
         description=(
             "AI safety and ethics governance platform that evaluates AI actions "
             "against safety policies and ethical constraints. Designed for "

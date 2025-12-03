@@ -645,21 +645,29 @@ async def submit_review(
         
     Returns:
         ReviewDecisionResponse confirming the review
+        
+    Note:
+        In production, reviewer_id would come from authenticated session,
+        decision_id from the review record, and duration from actual timestamps.
     """
-    reviewed_at = datetime.now(timezone.utc).isoformat()
+    reviewed_at = datetime.now(timezone.utc)
     
     final_decision = request.modified_decision or request.decision
+    
+    # In production, these would come from the actual review record
+    # For now, we use UUID-based generation and placeholder values
+    decision_id = str(uuid.uuid4())
     
     response.headers["X-Review-Complete"] = "true"
     response.headers["X-Law-14-Applied"] = "true"
     
     return ReviewDecisionResponse(
         review_id=request.review_id,
-        decision_id=f"dec-from-{request.review_id}",
-        reviewer_id="current-user-id",
+        decision_id=decision_id,
+        reviewer_id="authenticated-user-placeholder",  # TODO: Get from auth context
         decision=final_decision,
-        reviewed_at=reviewed_at,
-        review_duration_seconds=42.5,
+        reviewed_at=reviewed_at.isoformat(),
+        review_duration_seconds=0.0,  # TODO: Calculate from review start time
     )
 
 
@@ -679,10 +687,11 @@ async def set_oversight_mode(
     Returns:
         Confirmation of mode change
     """
+    previous_mode = _oversight_state.get("mode", OversightMode.MONITORING)
     _oversight_state["mode"] = mode
     
     return {
-        "previous_mode": _oversight_state.get("mode", OversightMode.MONITORING).value,
+        "previous_mode": previous_mode.value,
         "new_mode": mode.value,
         "changed_at": datetime.now(timezone.utc).isoformat(),
         "eu_ai_act_compliant": mode != OversightMode.DISABLED,
