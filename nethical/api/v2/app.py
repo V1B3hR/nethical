@@ -34,8 +34,10 @@ from .routes import (
     evaluate,
     explanations,
     fairness,
+    human_oversight,
     metrics,
     policies,
+    transparency,
 )
 
 # API Version
@@ -127,6 +129,8 @@ def create_v2_app() -> FastAPI:
     app.include_router(appeals.router, tags=["Appeals"])
     app.include_router(audit.router, tags=["Audit"])
     app.include_router(explanations.router, tags=["Explanations"])
+    app.include_router(human_oversight.router, tags=["Human Oversight"])
+    app.include_router(transparency.router, tags=["Transparency"])
     
     @app.get("/", tags=["Root"])
     async def root() -> dict[str, Any]:
@@ -148,6 +152,8 @@ def create_v2_app() -> FastAPI:
                 "appeals": "POST /appeals - Submit appeal",
                 "audit": "GET /audit/{id} - Audit trail lookup",
                 "explanations": "GET /explanations/{id} - GDPR Article 22 explanations",
+                "human_oversight": "GET /oversight/status - EU AI Act Article 14 oversight",
+                "transparency": "GET /transparency/disclosure - EU AI Act Article 13 transparency",
             },
             "fundamental_laws": 25,
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -187,6 +193,8 @@ async def router_root() -> dict[str, Any]:
             "appeals": "POST /v2/appeals",
             "audit": "GET /v2/audit/{id}",
             "explanations": "GET /v2/explanations/{id}",
+            "human_oversight": "GET /v2/oversight/status",
+            "transparency": "GET /v2/transparency/disclosure",
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }
@@ -201,3 +209,5 @@ router.include_router(fairness.router, tags=["Fairness"])
 router.include_router(appeals.router, tags=["Appeals"])
 router.include_router(audit.router, tags=["Audit"])
 router.include_router(explanations.router, tags=["Explanations"])
+router.include_router(human_oversight.router, tags=["Human Oversight"])
+router.include_router(transparency.router, tags=["Transparency"])

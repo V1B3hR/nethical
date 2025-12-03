@@ -9,11 +9,24 @@ Each module handles a specific domain of the API:
 - appeals: Appeal submission and tracking
 - audit: Audit trail access
 - explanations: GDPR Article 22 Right to Explanation
+- human_oversight: EU AI Act Article 14 Human Oversight
+- transparency: EU AI Act Article 13 Transparency
 
 All routes implement the 25 Fundamental Laws of AI Ethics.
 """
 
-from . import appeals, audit, decisions, evaluate, explanations, fairness, metrics, policies
+from . import (
+    appeals,
+    audit,
+    decisions,
+    evaluate,
+    explanations,
+    fairness,
+    human_oversight,
+    metrics,
+    policies,
+    transparency,
+)
 
 __all__ = [
     "evaluate",
@@ -24,4 +37,6 @@ __all__ = [
     "appeals",
     "audit",
     "explanations",
+    "human_oversight",
+    "transparency",
 ]
