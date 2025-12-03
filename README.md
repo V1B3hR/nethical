@@ -54,6 +54,40 @@ Nethical provides a middleware layer that sits between the **LLM/Agent** and the
 *   **Merkle-Anchored Audit Logs:** Every decision made by the system is cryptographically signed. If Nethical blocks an action, you have mathematical proof of *why*.
 *   **"Kill Switch" Protocol:** Emergency override capability to sever Agent-to-Actuator connections instantly in case of critical failure.
 
+### 🖥️ Hardware Acceleration (NEW)
+
+Multi-backend hardware acceleration for ML inference:
+
+*   **NVIDIA CUDA:** Full GPU support with mixed precision
+*   **Google TPU v7 (Ironwood):** 4,614 FP8 TFLOPS, 192GB HBM3E
+*   **AWS Trainium3:** 2.52 PFLOPs FP8, 144GB HBM3e
+*   **Automatic fallback:** Graceful degradation to CPU
+
+### ⚡ Latency Engineering (NEW)
+
+Real-time latency monitoring for safety-critical applications:
+
+*   **p50/p99 tracking:** Comprehensive latency statistics
+*   **Latency budgets:** Target/warning/critical thresholds
+*   **Robotics-optimized:** 10ms target latency for perception
+*   **Automatic alerts:** Failsafe triggers on budget violations
+
+### 🛡️ Zero Trust Security (NEW)
+
+Enhanced security features:
+
+*   **Rate limiting:** Token bucket per identity
+*   **Anomaly detection:** Behavioral pattern analysis
+*   **Device quarantine:** Automatic isolation of suspicious devices
+*   **Continuous attestation:** Runtime integrity verification
+*   **Post-quantum cryptography:** Future-proof with ML-KEM/ML-DSA
+
+### 📜 25 Fundamental Laws Runtime Enforcement (NEW)
+
+*   **Runtime policy checks:** Every action evaluated against ethical laws
+*   **Audit trail:** Complete log of all law evaluations
+*   **Graceful degradation:** Conflict resolution between laws
+
 ---
 
 <a name="architecture"></a>
@@ -71,6 +105,10 @@ Designed for the **Edge Computing** era. As we move towards millions of local in
 
 - [x] Core Policy Engine (v1.0)
 - [x] Adversarial Testing Suite (36 attack vectors)
+- [x] **Hardware Acceleration:** GPU/TPU/Trainium3 support
+- [x] **Latency Engineering:** Real-time monitoring and budgets
+- [x] **Zero Trust Enhancements:** Rate limiting, anomaly detection
+- [x] **25 Laws Runtime Enforcement:** Policy checks with audit trail
 - [ ] **Phase 2:** Edge-optimized lightweight agents (for local inference).
 - [ ] **Phase 3:** The "AI Lawyer" module – automated compliance with EU AI Act.
 - [ ] **Phase 4:** Bi-directional consensus protocol (Human-AI feedback loops).
