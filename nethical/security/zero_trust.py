@@ -30,6 +30,9 @@ __all__ = [
     "PolicyEnforcer",
     "ContinuousAuthEngine",
     "ZeroTrustController",
+    "RateLimiter",
+    "AnomalyDetector",
+    "QuarantineManager",
 ]
 
 log = logging.getLogger(__name__)
@@ -579,3 +582,365 @@ class ZeroTrustController:
             "cached_device_health": len(self.device_health_cache),
             "total_access_logs": len(self.policy_enforcer.access_logs),
         }
+
+
+class RateLimiter:
+    """
+    Rate limiting per identity for Zero Trust.
+
+    Implements token bucket algorithm with sliding window for
+    precise rate control per user, device, or API endpoint.
+
+    Fundamental Laws Alignment:
+        - Law 22 (Digital Security): Prevents abuse and DoS attacks
+        - Law 5 (Boundaries): Enforces operational limits
+    """
+
+    def __init__(
+        self,
+        requests_per_minute: int = 60,
+        burst_size: int = 10,
+    ):
+        """
+        Initialize rate limiter.
+
+        Args:
+            requests_per_minute: Sustained request rate
+            burst_size: Maximum burst allowance
+        """
+        self.requests_per_minute = requests_per_minute
+        self.burst_size = burst_size
+        self._buckets: Dict[str, Dict[str, Any]] = {}
+        self._lock = __import__("threading").RLock()
+        log.info(f"RateLimiter initialized: {requests_per_minute}/min, burst={burst_size}")
+
+    def check_rate(self, identity: str) -> tuple[bool, int]:
+        """
+        Check if request is within rate limit.
+
+        Args:
+            identity: User/device/endpoint identifier
+
+        Returns:
+            Tuple of (allowed, remaining_requests)
+        """
+        import time
+
+        now = time.time()
+        refill_rate = self.requests_per_minute / 60.0  # tokens per second
+
+        with self._lock:
+            if identity not in self._buckets:
+                self._buckets[identity] = {
+                    "tokens": float(self.burst_size),
+                    "last_update": now,
+                }
+
+            bucket = self._buckets[identity]
+
+            # Refill tokens based on time elapsed
+            elapsed = now - bucket["last_update"]
+            bucket["tokens"] = min(
+                float(self.burst_size),
+                bucket["tokens"] + elapsed * refill_rate,
+            )
+            bucket["last_update"] = now
+
+            # Check if request allowed
+            if bucket["tokens"] >= 1.0:
+                bucket["tokens"] -= 1.0
+                return True, int(bucket["tokens"])
+            else:
+                log.warning(f"Rate limit exceeded for {identity}")
+                return False, 0
+
+    def get_status(self, identity: str) -> Dict[str, Any]:
+        """Get rate limit status for identity."""
+        with self._lock:
+            bucket = self._buckets.get(identity, {})
+            return {
+                "identity": identity,
+                "tokens_remaining": bucket.get("tokens", self.burst_size),
+                "requests_per_minute": self.requests_per_minute,
+                "burst_size": self.burst_size,
+            }
+
+    def reset(self, identity: str) -> None:
+        """Reset rate limit for identity."""
+        with self._lock:
+            if identity in self._buckets:
+                del self._buckets[identity]
+                log.info(f"Rate limit reset for {identity}")
+
+
+class AnomalyDetector:
+    """
+    Anomaly detection for API calls.
+
+    Detects suspicious patterns in access requests using
+    statistical analysis and behavioral profiling.
+
+    Fundamental Laws Alignment:
+        - Law 22 (Digital Security): Identifies potential attacks
+        - Law 16 (Report Harm): Reports suspicious activity
+    """
+
+    def __init__(
+        self,
+        window_size: int = 100,
+        threshold_std: float = 3.0,
+    ):
+        """
+        Initialize anomaly detector.
+
+        Args:
+            window_size: Number of requests to analyze
+            threshold_std: Standard deviations for anomaly
+        """
+        self.window_size = window_size
+        self.threshold_std = threshold_std
+        self._patterns: Dict[str, List[Dict[str, Any]]] = {}
+        self._anomalies: List[Dict[str, Any]] = []
+        log.info("AnomalyDetector initialized")
+
+    def record_request(
+        self,
+        identity: str,
+        request_type: str,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> Optional[Dict[str, Any]]:
+        """
+        Record a request and check for anomalies.
+
+        Args:
+            identity: User/device identifier
+            request_type: Type of request
+            metadata: Additional request data
+
+        Returns:
+            Anomaly details if detected, None otherwise
+        """
+        import time
+        from collections import deque
+
+        now = time.time()
+        request = {
+            "timestamp": now,
+            "type": request_type,
+            "metadata": metadata or {},
+        }
+
+        # Initialize pattern storage
+        if identity not in self._patterns:
+            self._patterns[identity] = []
+
+        pattern = self._patterns[identity]
+        pattern.append(request)
+
+        # Keep only window_size entries
+        if len(pattern) > self.window_size:
+            pattern.pop(0)
+
+        # Check for anomalies
+        anomaly = self._detect_anomaly(identity, request)
+        if anomaly:
+            self._anomalies.append(anomaly)
+            log.warning(f"Anomaly detected for {identity}: {anomaly['reason']}")
+
+        return anomaly
+
+    def _detect_anomaly(
+        self,
+        identity: str,
+        request: Dict[str, Any],
+    ) -> Optional[Dict[str, Any]]:
+        """Detect anomalies in request patterns."""
+        pattern = self._patterns.get(identity, [])
+
+        if len(pattern) < 10:
+            return None  # Not enough data
+
+        # Check request frequency
+        timestamps = [r["timestamp"] for r in pattern[-10:]]
+        if len(timestamps) >= 2:
+            intervals = [
+                timestamps[i] - timestamps[i - 1]
+                for i in range(1, len(timestamps))
+            ]
+            avg_interval = sum(intervals) / len(intervals)
+
+            if avg_interval < 0.1:  # More than 10 requests per second
+                return {
+                    "identity": identity,
+                    "reason": "Excessive request frequency",
+                    "avg_interval_ms": avg_interval * 1000,
+                    "timestamp": request["timestamp"],
+                    "severity": "high",
+                }
+
+        # Check for unusual request types
+        type_counts: Dict[str, int] = {}
+        for r in pattern:
+            t = r["type"]
+            type_counts[t] = type_counts.get(t, 0) + 1
+
+        current_type = request["type"]
+        if current_type not in type_counts or type_counts[current_type] == 1:
+            # New or rare request type
+            total = len(pattern)
+            if total > 20:  # Enough baseline data
+                return {
+                    "identity": identity,
+                    "reason": f"Unusual request type: {current_type}",
+                    "timestamp": request["timestamp"],
+                    "severity": "medium",
+                }
+
+        return None
+
+    def get_anomalies(self, limit: int = 50) -> List[Dict[str, Any]]:
+        """Get recent anomalies."""
+        return self._anomalies[-limit:]
+
+    def get_identity_profile(self, identity: str) -> Dict[str, Any]:
+        """Get behavioral profile for identity."""
+        pattern = self._patterns.get(identity, [])
+
+        if not pattern:
+            return {"identity": identity, "requests": 0}
+
+        type_counts: Dict[str, int] = {}
+        for r in pattern:
+            t = r["type"]
+            type_counts[t] = type_counts.get(t, 0) + 1
+
+        return {
+            "identity": identity,
+            "requests": len(pattern),
+            "request_types": type_counts,
+            "first_seen": pattern[0]["timestamp"] if pattern else None,
+            "last_seen": pattern[-1]["timestamp"] if pattern else None,
+        }
+
+
+class QuarantineManager:
+    """
+    Automatic quarantine for suspicious devices.
+
+    Isolates potentially compromised devices from the network
+    while maintaining audit trail and recovery procedures.
+
+    Fundamental Laws Alignment:
+        - Law 22 (Digital Security): Isolates threats
+        - Law 23 (Fail-Safe Design): Safe isolation mode
+        - Law 15 (Audit Compliance): Full quarantine logging
+    """
+
+    def __init__(
+        self,
+        auto_quarantine: bool = True,
+        quarantine_duration_hours: int = 24,
+    ):
+        """
+        Initialize quarantine manager.
+
+        Args:
+            auto_quarantine: Enable automatic quarantine
+            quarantine_duration_hours: Default quarantine duration
+        """
+        self.auto_quarantine = auto_quarantine
+        self.quarantine_duration_hours = quarantine_duration_hours
+        self._quarantined: Dict[str, Dict[str, Any]] = {}
+        self._history: List[Dict[str, Any]] = []
+        log.info("QuarantineManager initialized")
+
+    def quarantine(
+        self,
+        device_id: str,
+        reason: str,
+        duration_hours: Optional[int] = None,
+    ) -> Dict[str, Any]:
+        """
+        Quarantine a device.
+
+        Args:
+            device_id: Device identifier
+            reason: Reason for quarantine
+            duration_hours: Quarantine duration
+
+        Returns:
+            Quarantine record
+        """
+        duration = duration_hours or self.quarantine_duration_hours
+        now = datetime.now(timezone.utc)
+
+        record = {
+            "device_id": device_id,
+            "reason": reason,
+            "quarantined_at": now,
+            "expires_at": now + __import__("datetime").timedelta(hours=duration),
+            "status": "active",
+        }
+
+        self._quarantined[device_id] = record
+        self._history.append(record.copy())
+
+        log.warning(f"Device quarantined: {device_id} - {reason}")
+        return record
+
+    def is_quarantined(self, device_id: str) -> bool:
+        """Check if device is quarantined."""
+        if device_id not in self._quarantined:
+            return False
+
+        record = self._quarantined[device_id]
+        now = datetime.now(timezone.utc)
+
+        # Check expiration
+        if now > record["expires_at"]:
+            self.release(device_id, "Quarantine expired")
+            return False
+
+        return record["status"] == "active"
+
+    def release(self, device_id: str, reason: str = "Manual release") -> bool:
+        """
+        Release device from quarantine.
+
+        Args:
+            device_id: Device identifier
+            reason: Reason for release
+
+        Returns:
+            True if device was quarantined
+        """
+        if device_id not in self._quarantined:
+            return False
+
+        record = self._quarantined[device_id]
+        record["status"] = "released"
+        record["released_at"] = datetime.now(timezone.utc)
+        record["release_reason"] = reason
+
+        self._history.append(record.copy())
+        del self._quarantined[device_id]
+
+        log.info(f"Device released from quarantine: {device_id}")
+        return True
+
+    def get_quarantined_devices(self) -> List[Dict[str, Any]]:
+        """Get all quarantined devices."""
+        now = datetime.now(timezone.utc)
+        active = []
+
+        for device_id, record in list(self._quarantined.items()):
+            if now > record["expires_at"]:
+                self.release(device_id, "Quarantine expired")
+            else:
+                active.append(record)
+
+        return active
+
+    def get_history(self, limit: int = 100) -> List[Dict[str, Any]]:
+        """Get quarantine history."""
+        return self._history[-limit:]

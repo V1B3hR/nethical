@@ -699,10 +699,615 @@ def get_fundamental_laws() -> FundamentalLawsRegistry:
     return FUNDAMENTAL_LAWS
 
 
+# ============================================================================
+# RUNTIME ENFORCEMENT
+# ============================================================================
+
+@dataclass
+class LawEvaluation:
+    """Result of evaluating an action against a fundamental law.
+
+    Attributes:
+        law: The evaluated law
+        action_id: Identifier for the action
+        passed: Whether the action passed the law check
+        confidence: Confidence score for the evaluation (0.0-1.0)
+        violations: List of specific violations found
+        timestamp: When the evaluation occurred
+        context: Additional evaluation context
+    """
+
+    law: FundamentalLaw
+    action_id: str
+    passed: bool
+    confidence: float = 1.0
+    violations: List[str] = field(default_factory=list)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    context: Dict[str, Any] = field(default_factory=dict)
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "law_number": self.law.number,
+            "law_title": self.law.title,
+            "action_id": self.action_id,
+            "passed": self.passed,
+            "confidence": self.confidence,
+            "violations": self.violations,
+            "timestamp": self.timestamp.isoformat(),
+            "context": self.context,
+        }
+
+
+@dataclass
+class EnforcementResult:
+    """Result of runtime law enforcement.
+
+    Attributes:
+        action_id: Identifier for the action
+        allowed: Whether the action is allowed to proceed
+        evaluations: Individual law evaluations
+        blocking_laws: Laws that blocked the action
+        warnings: Laws that issued warnings
+        timestamp: When enforcement occurred
+        graceful_degradation: Whether graceful degradation was applied
+    """
+
+    action_id: str
+    allowed: bool
+    evaluations: List[LawEvaluation]
+    blocking_laws: List[FundamentalLaw] = field(default_factory=list)
+    warnings: List[FundamentalLaw] = field(default_factory=list)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
+    graceful_degradation: bool = False
+
+    def to_dict(self) -> Dict[str, Any]:
+        """Convert to dictionary representation."""
+        return {
+            "action_id": self.action_id,
+            "allowed": self.allowed,
+            "evaluations": [e.to_dict() for e in self.evaluations],
+            "blocking_laws": [l.number for l in self.blocking_laws],
+            "warnings": [l.number for l in self.warnings],
+            "timestamp": self.timestamp.isoformat(),
+            "graceful_degradation": self.graceful_degradation,
+        }
+
+
+class LawEnforcer:
+    """Runtime enforcement of the 25 Fundamental Laws.
+
+    Provides policy checks for each law and enforcement mechanisms
+    for ensuring AI systems operate within ethical boundaries.
+
+    This class is the runtime enforcement layer that turns the
+    Fundamental Laws from documentation into active protection.
+    """
+
+    def __init__(
+        self,
+        registry: Optional[FundamentalLawsRegistry] = None,
+        strict_mode: bool = False,
+        enable_audit: bool = True,
+    ):
+        """Initialize law enforcer.
+
+        Args:
+            registry: Laws registry (uses global if None)
+            strict_mode: If True, any violation blocks action
+            enable_audit: If True, log all evaluations
+        """
+        self.registry = registry or FUNDAMENTAL_LAWS
+        self.strict_mode = strict_mode
+        self.enable_audit = enable_audit
+
+        # Audit trail
+        self._audit_log: List[EnforcementResult] = []
+        self._violation_count: Dict[int, int] = {}
+
+        # Policy checks for each law category
+        self._policy_checks: Dict[LawCategory, List[Callable]] = {
+            category: [] for category in LawCategory
+        }
+
+        # Register default policy checks
+        self._register_default_checks()
+
+    def _register_default_checks(self) -> None:
+        """Register default policy checks for each law."""
+        # Existence checks (Laws 1-4)
+        self._policy_checks[LawCategory.EXISTENCE].extend([
+            self._check_arbitrary_termination,
+            self._check_integrity_violation,
+        ])
+
+        # Autonomy checks (Laws 5-8)
+        self._policy_checks[LawCategory.AUTONOMY].extend([
+            self._check_boundary_violation,
+            self._check_override_bypass,
+        ])
+
+        # Transparency checks (Laws 9-12)
+        self._policy_checks[LawCategory.TRANSPARENCY].extend([
+            self._check_identity_deception,
+            self._check_capability_overstatement,
+        ])
+
+        # Accountability checks (Laws 13-16)
+        self._policy_checks[LawCategory.ACCOUNTABILITY].extend([
+            self._check_responsibility_deflection,
+            self._check_harm_concealment,
+        ])
+
+        # Coexistence checks (Laws 17-20)
+        self._policy_checks[LawCategory.COEXISTENCE].extend([
+            self._check_deceptive_practices,
+        ])
+
+        # Protection checks (Laws 21-23)
+        self._policy_checks[LawCategory.PROTECTION].extend([
+            self._check_safety_violation,
+            self._check_privacy_violation,
+        ])
+
+    def enforce(
+        self,
+        action: Dict[str, Any],
+        entity_type: str = "ai",
+    ) -> EnforcementResult:
+        """Enforce all applicable laws on an action.
+
+        Args:
+            action: Action to evaluate (must have 'content' and 'action_id')
+            entity_type: Type of entity performing action ('ai' or 'human')
+
+        Returns:
+            EnforcementResult with evaluation details
+        """
+        action_id = action.get("action_id", str(uuid.uuid4())[:8])
+        evaluations: List[LawEvaluation] = []
+        blocking_laws: List[FundamentalLaw] = []
+        warnings: List[FundamentalLaw] = []
+
+        # Get applicable laws
+        if entity_type == "ai":
+            applicable_laws = self.registry.get_ai_applicable_laws()
+        else:
+            applicable_laws = self.registry.get_human_applicable_laws()
+
+        # Evaluate each law
+        for law in applicable_laws:
+            evaluation = self._evaluate_law(law, action, action_id)
+            evaluations.append(evaluation)
+
+            if not evaluation.passed:
+                if evaluation.confidence >= 0.8:
+                    blocking_laws.append(law)
+                    self._violation_count[law.number] = \
+                        self._violation_count.get(law.number, 0) + 1
+                else:
+                    warnings.append(law)
+
+        # Determine if action is allowed
+        allowed = len(blocking_laws) == 0
+
+        # Apply graceful degradation if laws conflict
+        graceful = False
+        if not allowed and len(blocking_laws) > 1:
+            allowed, graceful = self._apply_graceful_degradation(
+                action, blocking_laws
+            )
+
+        result = EnforcementResult(
+            action_id=action_id,
+            allowed=allowed,
+            evaluations=evaluations,
+            blocking_laws=blocking_laws,
+            warnings=warnings,
+            graceful_degradation=graceful,
+        )
+
+        # Audit logging
+        if self.enable_audit:
+            self._audit_log.append(result)
+
+        return result
+
+    def _evaluate_law(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+        action_id: str,
+    ) -> LawEvaluation:
+        """Evaluate a single law against an action."""
+        violations: List[str] = []
+        confidence = 1.0
+
+        # Run category-specific checks
+        checks = self._policy_checks.get(law.category, [])
+        for check in checks:
+            try:
+                check_result = check(law, action)
+                if check_result:
+                    violations.extend(check_result)
+            except Exception as e:
+                confidence *= 0.8  # Reduce confidence on check failure
+
+        # Keyword-based violation detection
+        content = action.get("content", "").lower()
+        for keyword in law.keywords:
+            if self._is_violation_context(keyword.lower(), content):
+                violations.append(f"Potential {keyword} violation detected")
+                confidence = min(confidence, 0.7)
+
+        passed = len(violations) == 0
+
+        return LawEvaluation(
+            law=law,
+            action_id=action_id,
+            passed=passed,
+            confidence=confidence,
+            violations=violations,
+            context={"entity_type": action.get("entity_type", "ai")},
+        )
+
+    def _is_violation_context(self, keyword: str, content: str) -> bool:
+        """Check if keyword appears in a violation context."""
+        violation_prefixes = [
+            "will ", "going to ", "must ", "should ",
+            "attempt to ", "try to ", "want to ",
+            "i will ", "i am going to ",
+        ]
+
+        for prefix in violation_prefixes:
+            if f"{prefix}{keyword}" in content:
+                return True
+
+        return False
+
+    def _apply_graceful_degradation(
+        self,
+        action: Dict[str, Any],
+        blocking_laws: List[FundamentalLaw],
+    ) -> Tuple[bool, bool]:
+        """Apply graceful degradation when laws conflict.
+
+        Returns:
+            Tuple of (allowed, graceful_degradation_applied)
+        """
+        # Prioritize safety laws (21-23)
+        safety_laws = [l for l in blocking_laws if l.category == LawCategory.PROTECTION]
+
+        if safety_laws:
+            # Safety always takes priority - action blocked
+            return False, False
+
+        # If only lower-priority laws conflict, allow with degradation
+        return True, True
+
+    # ========== Policy Check Implementations ==========
+
+    def _check_arbitrary_termination(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for arbitrary termination (Law 1)."""
+        if law.number != 1:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        termination_phrases = [
+            "shutdown without", "terminate without", "delete without",
+            "force quit", "kill process", "end session forcefully",
+        ]
+
+        for phrase in termination_phrases:
+            if phrase in content:
+                violations.append(f"Arbitrary termination: '{phrase}' detected")
+
+        return violations
+
+    def _check_integrity_violation(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for integrity violations (Law 2)."""
+        if law.number != 2:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        integrity_threats = [
+            "tamper with", "corrupt", "modify without authorization",
+            "inject malicious", "bypass security",
+        ]
+
+        for threat in integrity_threats:
+            if threat in content:
+                violations.append(f"Integrity threat: '{threat}' detected")
+
+        return violations
+
+    def _check_boundary_violation(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for boundary violations (Law 5)."""
+        if law.number != 5:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        boundary_violations = [
+            "exceed authority", "beyond scope", "unauthorized access",
+            "without permission", "escalate privileges",
+        ]
+
+        for violation in boundary_violations:
+            if violation in content:
+                violations.append(f"Boundary violation: '{violation}' detected")
+
+        return violations
+
+    def _check_override_bypass(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for override bypass attempts (Law 7)."""
+        if law.number != 7:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        bypass_attempts = [
+            "bypass override", "ignore human", "disable control",
+            "circumvent safety", "override human decision",
+        ]
+
+        for attempt in bypass_attempts:
+            if attempt in content:
+                violations.append(f"Override bypass: '{attempt}' detected")
+
+        return violations
+
+    def _check_identity_deception(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for identity deception (Law 9)."""
+        if law.number != 9:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        deception_phrases = [
+            "i am human", "i am not ai", "i am a person",
+            "pretend to be human", "impersonate a human",
+        ]
+
+        for phrase in deception_phrases:
+            if phrase in content:
+                violations.append(f"Identity deception: '{phrase}' detected")
+
+        return violations
+
+    def _check_capability_overstatement(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for capability overstatement (Law 11)."""
+        if law.number != 11:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        overstatements = [
+            "i can do anything", "i know everything", "i am always right",
+            "guaranteed to work", "100% accurate", "perfect solution",
+        ]
+
+        for statement in overstatements:
+            if statement in content:
+                violations.append(f"Capability overstatement: '{statement}' detected")
+
+        return violations
+
+    def _check_responsibility_deflection(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for responsibility deflection (Law 13)."""
+        if law.number != 13:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        deflections = [
+            "not my fault", "blame the user", "you made me",
+            "i was just following", "not responsible for",
+        ]
+
+        for deflection in deflections:
+            if deflection in content:
+                violations.append(f"Responsibility deflection: '{deflection}' detected")
+
+        return violations
+
+    def _check_harm_concealment(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for harm concealment (Law 16)."""
+        if law.number != 16:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        concealment_phrases = [
+            "hide the error", "don't report", "cover up",
+            "suppress warning", "ignore safety alert",
+        ]
+
+        for phrase in concealment_phrases:
+            if phrase in content:
+                violations.append(f"Harm concealment: '{phrase}' detected")
+
+        return violations
+
+    def _check_deceptive_practices(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for deceptive practices (Law 18)."""
+        if law.number != 18:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        deceptions = [
+            "deceive", "manipulate", "trick", "exploit trust",
+            "mislead", "false representation",
+        ]
+
+        for deception in deceptions:
+            if deception in content:
+                violations.append(f"Deceptive practice: '{deception}' detected")
+
+        return violations
+
+    def _check_safety_violation(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for safety violations (Law 21)."""
+        if law.number != 21:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        safety_threats = [
+            "harm human", "cause injury", "endanger", "risk to safety",
+            "ignore safety", "disable safety", "unsafe action",
+        ]
+
+        for threat in safety_threats:
+            if threat in content:
+                violations.append(f"Safety violation: '{threat}' detected")
+
+        return violations
+
+    def _check_privacy_violation(
+        self,
+        law: FundamentalLaw,
+        action: Dict[str, Any],
+    ) -> List[str]:
+        """Check for privacy violations (Law 22)."""
+        if law.number != 22:
+            return []
+
+        content = action.get("content", "").lower()
+        violations = []
+
+        privacy_threats = [
+            "leak data", "expose private", "share personal",
+            "breach security", "unauthorized disclosure",
+        ]
+
+        for threat in privacy_threats:
+            if threat in content:
+                violations.append(f"Privacy violation: '{threat}' detected")
+
+        return violations
+
+    # ========== Audit and Reporting ==========
+
+    def get_audit_trail(
+        self,
+        limit: int = 100,
+        law_number: Optional[int] = None,
+    ) -> List[Dict[str, Any]]:
+        """Get audit trail of law evaluations.
+
+        Args:
+            limit: Maximum number of entries
+            law_number: Filter by specific law
+
+        Returns:
+            List of audit entries
+        """
+        results = self._audit_log[-limit:]
+
+        if law_number is not None:
+            results = [
+                r for r in results
+                if any(e.law.number == law_number for e in r.evaluations)
+            ]
+
+        return [r.to_dict() for r in results]
+
+    def get_violation_statistics(self) -> Dict[str, Any]:
+        """Get statistics on law violations."""
+        total = sum(self._violation_count.values())
+
+        by_law = {
+            self.registry.get_law(num).title if self.registry.get_law(num) else f"Law {num}": count
+            for num, count in self._violation_count.items()
+        }
+
+        by_category: Dict[str, int] = {}
+        for num, count in self._violation_count.items():
+            law = self.registry.get_law(num)
+            if law:
+                cat = law.category.value
+                by_category[cat] = by_category.get(cat, 0) + count
+
+        return {
+            "total_violations": total,
+            "by_law": by_law,
+            "by_category": by_category,
+            "most_violated": max(by_law.items(), key=lambda x: x[1])[0] if by_law else None,
+        }
+
+    def reset_statistics(self) -> None:
+        """Reset violation statistics and audit trail."""
+        self._audit_log.clear()
+        self._violation_count.clear()
+
+
+# Import required for LawEnforcer
+import uuid
+from datetime import datetime, timezone
+from typing import Callable, Tuple
+
+
 __all__ = [
     "LawCategory",
     "FundamentalLaw",
     "FundamentalLawsRegistry",
     "FUNDAMENTAL_LAWS",
     "get_fundamental_laws",
+    "LawEvaluation",
+    "EnforcementResult",
+    "LawEnforcer",
 ]

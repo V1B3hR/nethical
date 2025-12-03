@@ -26,6 +26,31 @@ test = [
     "httpx>=0.27.0",
 ]
 
+# Hardware accelerator support
+cuda = [
+    "torch>=2.0.0",
+]
+
+tpu = [
+    "torch>=2.0.0",
+    "torch_xla>=2.0.0",
+]
+
+trainium = [
+    "torch>=2.0.0",
+    "torch-neuronx>=2.0.0",
+]
+
+# All accelerators
+accelerators = [
+    "torch>=2.0.0",
+]
+
+# Post-quantum cryptography (when libraries mature)
+pqc = [
+    "cryptography>=44.0.0",
+]
+
 [project.scripts]
 nethical = "nethical.cli:cli"
 
