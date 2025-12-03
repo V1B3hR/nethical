@@ -9,7 +9,7 @@ Components:
 - FormalVerifier: Integration with Z3/TLA+ for static verification
 """
 
-from nethical.verification.runtime_monitor import (
+from .runtime_monitor import (
     RuntimeVerifier,
     InvariantDefinition,
     InvariantViolation,

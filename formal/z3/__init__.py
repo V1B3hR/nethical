@@ -5,7 +5,7 @@ This module provides Z3 SMT solver integration for formal verification
 of Nethical governance policies.
 """
 
-from formal.z3.policy_verifier import (
+from .policy_verifier import (
     PolicyVerifier,
     FundamentalLawsVerifier,
     VerificationResult,

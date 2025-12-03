@@ -765,7 +765,3 @@ class TestChaosFramework:
         assert result.recovery_time_seconds >= 0
         assert isinstance(result.violations, list)
         assert isinstance(result.metrics, dict)
-
-
-if __name__ == "__main__":
-    pytest.main([__file__, "-v"])
