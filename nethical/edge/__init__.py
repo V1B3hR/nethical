@@ -14,6 +14,7 @@ Components:
 - SafeDefaults: Fail-safe default decisions
 - PredictiveEngine: Pre-computation for predicted actions
 - OfflineFallback: Graceful degradation when disconnected
+- TPM: Trusted Platform Module integration for edge security
 """
 
 from .local_governor import EdgeGovernor, EdgeDecision, DecisionType
@@ -28,6 +29,28 @@ from .network_monitor import NetworkMonitor, ConnectionStatus
 from .decision_queue import DecisionQueue, QueuedDecision
 from .sync_manager import SyncManager, SyncStatus
 from .circuit_breaker import CircuitBreaker, CircuitState
+
+# Phase 5: TPM Integration for Edge Security
+from .tpm import (
+    TPMVersion,
+    TPMStatus,
+    AttestationStatus,
+    BootState,
+    PCRBank,
+    PCRValue,
+    PlatformMeasurement,
+    AttestationQuote,
+    AttestationResult,
+    TPMConfig,
+    SecureBootConfig,
+    TPMInterface,
+    SoftwareTPM,
+    HardwareTPM,
+    RemoteAttestation,
+    SecureBootVerifier,
+    EdgeSecurityManager,
+    create_tpm_interface,
+)
 
 __all__ = [
     # Core
@@ -62,4 +85,23 @@ __all__ = [
     # Circuit Breaker
     "CircuitBreaker",
     "CircuitState",
+    # Phase 5: TPM Integration
+    "TPMVersion",
+    "TPMStatus",
+    "AttestationStatus",
+    "BootState",
+    "PCRBank",
+    "PCRValue",
+    "PlatformMeasurement",
+    "AttestationQuote",
+    "AttestationResult",
+    "TPMConfig",
+    "SecureBootConfig",
+    "TPMInterface",
+    "SoftwareTPM",
+    "HardwareTPM",
+    "RemoteAttestation",
+    "SecureBootVerifier",
+    "EdgeSecurityManager",
+    "create_tpm_interface",
 ]

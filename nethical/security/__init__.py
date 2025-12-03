@@ -169,6 +169,29 @@ from .regulatory_compliance import (
     generate_regulatory_mapping_table,
 )
 
+# Phase 5: Hardware Security Module (HSM) Integration
+from .hsm import (
+    HSMProvider,
+    KeyAlgorithm,
+    KeyUsage,
+    HSMOperationStatus,
+    HSMKeyInfo,
+    HSMConfig as HSMAbstractionConfig,
+    HSMOperationResult,
+    KeyCeremonyConfig,
+    KeyCeremonyRecord,
+    BaseHSMProvider,
+    AWSCloudHSMProvider,
+    AzureDedicatedHSMProvider,
+    GoogleCloudHSMProvider,
+    YubiHSMProvider,
+    ThalesLunaProvider,
+    SoftwareHSMProvider,
+    HSMAbstractionLayer,
+    KeyCeremonyManager,
+    create_hsm_provider,
+)
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -303,4 +326,24 @@ __all__ = [
     "USStandardsCompliance",
     "RegulatoryMappingGenerator",
     "generate_regulatory_mapping_table",
+    # Phase 5: HSM Integration
+    "HSMProvider",
+    "KeyAlgorithm",
+    "KeyUsage",
+    "HSMOperationStatus",
+    "HSMKeyInfo",
+    "HSMAbstractionConfig",
+    "HSMOperationResult",
+    "KeyCeremonyConfig",
+    "KeyCeremonyRecord",
+    "BaseHSMProvider",
+    "AWSCloudHSMProvider",
+    "AzureDedicatedHSMProvider",
+    "GoogleCloudHSMProvider",
+    "YubiHSMProvider",
+    "ThalesLunaProvider",
+    "SoftwareHSMProvider",
+    "HSMAbstractionLayer",
+    "KeyCeremonyManager",
+    "create_hsm_provider",
 ]
