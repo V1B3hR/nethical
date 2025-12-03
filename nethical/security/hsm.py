@@ -37,6 +37,8 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Protocol, Tuple, TypeVar, Union
 import base64
 
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
 __all__ = [
     # Enums
     "HSMProvider",
@@ -533,12 +535,18 @@ class SoftwareHSMProvider(BaseHSMProvider):
             )
 
         try:
-            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
             key = self._key_material[key_id]
-            # Ensure key is correct size for AES
+            # Derive proper AES key using HKDF if key size doesn't match
             if len(key) not in (16, 24, 32):
-                key = key[:32] if len(key) >= 32 else key.ljust(32, b'\0')
+                from cryptography.hazmat.primitives import hashes
+                from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+                hkdf = HKDF(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=None,
+                    info=b"nethical-hsm-encrypt",
+                )
+                key = hkdf.derive(key)
 
             nonce = secrets.token_bytes(12)
             aesgcm = AESGCM(key)
@@ -577,12 +585,18 @@ class SoftwareHSMProvider(BaseHSMProvider):
             )
 
         try:
-            from cryptography.hazmat.primitives.ciphers.aead import AESGCM
-
             key = self._key_material[key_id]
-            # Ensure key is correct size for AES
+            # Derive proper AES key using HKDF if key size doesn't match
             if len(key) not in (16, 24, 32):
-                key = key[:32] if len(key) >= 32 else key.ljust(32, b'\0')
+                from cryptography.hazmat.primitives import hashes
+                from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+                hkdf = HKDF(
+                    algorithm=hashes.SHA256(),
+                    length=32,
+                    salt=None,
+                    info=b"nethical-hsm-encrypt",
+                )
+                key = hkdf.derive(key)
 
             # Extract nonce and ciphertext
             nonce = ciphertext[:12]
@@ -604,6 +618,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
                 status=HSMOperationStatus.FAILURE,
                 error_message=str(e),
             )
+
 
     async def get_key_info(self, key_id: str) -> Optional[HSMKeyInfo]:
         """Get key information"""

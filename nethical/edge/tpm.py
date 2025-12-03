@@ -36,6 +36,8 @@ from enum import Enum
 from typing import Any, Dict, List, Optional, Tuple, Union
 import base64
 
+from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+
 __all__ = [
     # Enums
     "TPMVersion",
@@ -428,7 +430,6 @@ class SoftwareTPM(TPMInterface):
         key = seal_key.digest()
         nonce = secrets.token_bytes(12)
 
-        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
         aesgcm = AESGCM(key)
         ciphertext = aesgcm.encrypt(nonce, data, None)
 
@@ -466,7 +467,6 @@ class SoftwareTPM(TPMInterface):
         nonce = sealed_data[:12]
         ciphertext = sealed_data[12:]
 
-        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
         aesgcm = AESGCM(original_key)
 
         try:
