@@ -1,0 +1,46 @@
+# Nethical Asia Pacific Northeast 2 Region Overlay (Seoul - AWS ap-northeast-2)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-ap-northeast-2
+
+namespace: nethical
+
+resources:
+  - ../../base
+  - destination-rule.yaml
+  - network-policy.yaml
+
+commonLabels:
+  region: ap-northeast-2
+  region-role: secondary
+  topology.kubernetes.io/region: ap-northeast-2
+
+commonAnnotations:
+  nethical.io/data-residency: "apac"
+  nethical.io/compliance-framework: "pipa"
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+    target:
+      kind: Deployment
+      name: nethical-api
+
+configMapGenerator:
+  - name: nethical-config
+    behavior: merge
+    literals:
+      - NETHICAL_REGION_ID=ap-northeast-2
+      - REGION=ap-northeast-2
+      - REGION_ROLE=secondary
+      - DATABASE_READ_WRITE=false
+      - NETHICAL_DATA_RESIDENCY=apac
+      - NETHICAL_COMPLIANCE_MODE=pipa
+      - SYNC_PEERS=nethical-api.ap-south-1.nethical.io,nethical-api.ap-northeast-1.nethical.io,nethical-api.ap-southeast-2.nethical.io

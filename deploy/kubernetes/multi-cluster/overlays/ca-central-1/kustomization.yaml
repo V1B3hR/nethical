@@ -1,0 +1,46 @@
+# Nethical Canada Central Region Overlay (Montreal - AWS ca-central-1)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-ca-central-1
+
+namespace: nethical
+
+resources:
+  - ../../base
+  - destination-rule.yaml
+  - network-policy.yaml
+
+commonLabels:
+  region: ca-central-1
+  region-role: secondary
+  topology.kubernetes.io/region: ca-central-1
+
+commonAnnotations:
+  nethical.io/data-residency: "americas"
+  nethical.io/compliance-framework: "pipeda"
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+    target:
+      kind: Deployment
+      name: nethical-api
+
+configMapGenerator:
+  - name: nethical-config
+    behavior: merge
+    literals:
+      - NETHICAL_REGION_ID=ca-central-1
+      - REGION=ca-central-1
+      - REGION_ROLE=secondary
+      - DATABASE_READ_WRITE=false
+      - NETHICAL_DATA_RESIDENCY=americas
+      - NETHICAL_COMPLIANCE_MODE=pipeda
+      - SYNC_PEERS=nethical-api.us-east-1.nethical.io,nethical-api.us-west-2.nethical.io,nethical-api.us-central1.nethical.io

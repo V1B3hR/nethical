@@ -1,0 +1,44 @@
+# Nethical US West 2 Region Overlay (Oregon - AWS us-west-2)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-us-west-2
+
+namespace: nethical
+
+resources:
+  - ../../base
+  - destination-rule.yaml
+  - network-policy.yaml
+
+commonLabels:
+  region: us-west-2
+  region-role: secondary
+  topology.kubernetes.io/region: us-west-2
+
+commonAnnotations:
+  nethical.io/data-residency: "americas"
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+    target:
+      kind: Deployment
+      name: nethical-api
+
+configMapGenerator:
+  - name: nethical-config
+    behavior: merge
+    literals:
+      - NETHICAL_REGION_ID=us-west-2
+      - REGION=us-west-2
+      - REGION_ROLE=secondary
+      - DATABASE_READ_WRITE=false
+      - NETHICAL_DATA_RESIDENCY=americas
+      - SYNC_PEERS=nethical-api.us-east-1.nethical.io,nethical-api.us-central1.nethical.io,nethical-api.ca-central-1.nethical.io

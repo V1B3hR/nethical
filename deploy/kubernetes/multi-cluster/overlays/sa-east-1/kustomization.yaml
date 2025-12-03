@@ -1,0 +1,46 @@
+# Nethical South America East Region Overlay (São Paulo - AWS sa-east-1)
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-sa-east-1
+
+namespace: nethical
+
+resources:
+  - ../../base
+  - destination-rule.yaml
+  - network-policy.yaml
+
+commonLabels:
+  region: sa-east-1
+  region-role: secondary
+  topology.kubernetes.io/region: sa-east-1
+
+commonAnnotations:
+  nethical.io/data-residency: "americas"
+  nethical.io/compliance-framework: "lgpd"
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+    target:
+      kind: Deployment
+      name: nethical-api
+
+configMapGenerator:
+  - name: nethical-config
+    behavior: merge
+    literals:
+      - NETHICAL_REGION_ID=sa-east-1
+      - REGION=sa-east-1
+      - REGION_ROLE=secondary
+      - DATABASE_READ_WRITE=false
+      - NETHICAL_DATA_RESIDENCY=americas
+      - NETHICAL_COMPLIANCE_MODE=lgpd
+      - SYNC_PEERS=nethical-api.us-east-1.nethical.io,nethical-api.us-west-2.nethical.io,nethical-api.ca-central-1.nethical.io

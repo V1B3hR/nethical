@@ -1,0 +1,42 @@
+# Istio DestinationRule for China East 2 Region (Shanghai/Hangzhou)
+# China-specific routing with data residency enforcement
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nethical-api-cn-east-2
+  namespace: nethical
+  labels:
+    region: cn-east-2
+    compliance/china-data-residency: "true"
+spec:
+  host: nethical-api
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5s
+      http:
+        h2UpgradePolicy: UPGRADE
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 100
+        maxRetries: 3
+    loadBalancer:
+      simple: LEAST_REQUEST
+      localityLbSetting:
+        enabled: true
+        failoverPriority:
+          - "topology.kubernetes.io/region"
+          - "topology.kubernetes.io/zone"
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+  subsets:
+    - name: cn-east-2
+      labels:
+        region: cn-east-2
+    - name: china-fallback
+      labels:
+        compliance/china-data-residency: "true"

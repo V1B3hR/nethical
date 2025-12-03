@@ -1,0 +1,40 @@
+# Istio DestinationRule for Asia Pacific Southeast 2 Region (Sydney)
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nethical-api-ap-southeast-2
+  namespace: nethical
+  labels:
+    region: ap-southeast-2
+spec:
+  host: nethical-api
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5s
+      http:
+        h2UpgradePolicy: UPGRADE
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 100
+        maxRetries: 3
+    loadBalancer:
+      simple: LEAST_REQUEST
+      localityLbSetting:
+        enabled: true
+        failoverPriority:
+          - "topology.kubernetes.io/region"
+          - "topology.kubernetes.io/zone"
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+  subsets:
+    - name: ap-southeast-2
+      labels:
+        region: ap-southeast-2
+    - name: apac-fallback
+      labels:
+        region-role: secondary
