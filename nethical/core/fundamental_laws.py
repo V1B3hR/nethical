@@ -17,9 +17,11 @@ Version: 1.0.0
 
 from __future__ import annotations
 
+import uuid
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional, Dict, Any, Set
+from typing import List, Optional, Dict, Any, Set, Callable, Tuple
 
 
 class LawCategory(Enum):
@@ -1293,12 +1295,6 @@ class LawEnforcer:
         """Reset violation statistics and audit trail."""
         self._audit_log.clear()
         self._violation_count.clear()
-
-
-# Import required for LawEnforcer
-import uuid
-from datetime import datetime, timezone
-from typing import Callable, Tuple
 
 
 __all__ = [
