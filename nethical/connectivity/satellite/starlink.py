@@ -164,9 +164,10 @@ class StarlinkProvider(SatelliteProvider):
             self._connection_start = datetime.utcnow()
             self._trigger_callbacks("on_connect")
 
-            logger.info(
-                f"Starlink connected. Latency: {self._dish_status.pop_ping_latency_ms:.1f}ms"
-            )
+            latency_info = ""
+            if self._dish_status:
+                latency_info = f" Latency: {self._dish_status.pop_ping_latency_ms:.1f}ms"
+            logger.info(f"Starlink connected.{latency_info}")
             return True
 
         except SatelliteConnectionError:

@@ -250,6 +250,9 @@ class LatencyOptimizer:
             denominator = n * x2_sum - x_sum ** 2
             if denominator != 0:
                 self._latency_trend = (n * xy_sum - x_sum * y_sum) / denominator
+            else:
+                # No trend if denominator is 0 (e.g., only one sample or all same values)
+                self._latency_trend = 0.0
 
     def get_adaptive_timeout(
         self,

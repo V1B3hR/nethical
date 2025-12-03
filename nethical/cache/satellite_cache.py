@@ -354,7 +354,11 @@ class SatelliteCache:
             entry = self._cache.get(key)
             if entry:
                 try:
-                    # In a real implementation, this would sync to remote
+                    # Stub implementation for sync:
+                    # In production, this would sync to remote storage (e.g., Redis, cloud).
+                    # For now, we mark entries as synced since there's no remote to sync to.
+                    # Remote sync callback can be registered via register_callback("on_sync", cb)
+                    await self._trigger_sync_callback(key, entry)
                     entry.sync_state = SyncState.SYNCED
                     self._pending_sync.discard(key)
                     synced += 1
@@ -633,3 +637,20 @@ class SatelliteCache:
             "is_online": self._is_online,
             "last_sync": self._last_sync.isoformat() if self._last_sync else None,
         }
+
+    async def _trigger_sync_callback(self, key: str, entry: CacheEntry) -> None:
+        """
+        Trigger sync callback for remote synchronization.
+
+        This method can be overridden or extended via callbacks to implement
+        actual remote sync logic (e.g., to Redis, cloud storage).
+        """
+        if "on_sync" in self._callbacks:
+            for callback in self._callbacks["on_sync"]:
+                try:
+                    if asyncio.iscoroutinefunction(callback):
+                        await callback(key, entry)
+                    else:
+                        callback(key, entry)
+                except Exception as e:
+                    logger.error(f"Sync callback failed for {key}: {e}")

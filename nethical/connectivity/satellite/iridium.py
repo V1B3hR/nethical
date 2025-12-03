@@ -213,9 +213,11 @@ class IridiumProvider(SatelliteProvider):
             timeout = timeout or self.config.timeout_seconds
             # Check for queued MT messages
             if self._modem_status and self._modem_status.mt_queue_length > 0:
-                # Simulated receive
+                # Stub implementation:
+                # In production, this would retrieve actual MT messages from the modem.
+                # The simulated response is for testing and development purposes only.
                 await asyncio.sleep(min(timeout, 0.1))
-                return b"MT message data"
+                return b"MT message data"  # Simulated MT message
             return None
         except Exception as e:
             self._metrics.errors_count += 1

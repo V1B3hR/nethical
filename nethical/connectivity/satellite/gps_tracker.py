@@ -325,11 +325,17 @@ class GPSTracker:
         if not self._is_tracking:
             return None
 
-        # In a real implementation, this would read from GNSS hardware
-        # For now, return simulated position
+        # If we have a cached position from hardware, return it
+        if self._current_position:
+            return self._current_position
+
+        # Simulation/stub implementation:
+        # In production, this reads from GNSS hardware.
+        # The simulated position (San Francisco) is used for testing
+        # and development purposes only.
         position = Position(
-            latitude=37.7749,
-            longitude=-122.4194,
+            latitude=37.7749,  # San Francisco (simulation)
+            longitude=-122.4194,  # San Francisco (simulation)
             altitude_m=10.0,
             horizontal_accuracy_m=3.0,
             vertical_accuracy_m=5.0,
