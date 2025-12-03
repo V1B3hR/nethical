@@ -1,0 +1,214 @@
+# Redis APAC Cluster Deployment (Expanded)
+# Regional Redis clusters for Asia-Pacific region
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nethical-cache-apac
+  labels:
+    app: nethical
+    component: cache
+    region: apac
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-apac-config
+  namespace: nethical-cache-apac
+data:
+  redis.conf: |
+    # APAC Regional Redis Cluster Configuration
+    maxmemory 16gb
+    maxmemory-policy allkeys-lru
+    tcp-keepalive 300
+    timeout 0
+    
+    # Cluster mode
+    cluster-enabled yes
+    cluster-config-file nodes.conf
+    cluster-node-timeout 5000
+    
+    # Persistence
+    appendonly yes
+    appendfsync everysec
+    
+    # Security
+    requirepass ${REDIS_PASSWORD}
+    tls-port 6379
+    port 0
+    tls-cert-file /etc/redis/tls/tls.crt
+    tls-key-file /etc/redis/tls/tls.key
+    tls-ca-cert-file /etc/redis/tls/ca.crt
+    
+    # Performance
+    tcp-backlog 511
+    databases 16
+    
+    # APAC-specific tuning
+    # Slightly higher latency tolerance for geographically distributed nodes
+    latency-monitor-threshold 75
+    slowlog-log-slower-than 15000
+    slowlog-max-len 128
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-apac-cluster
+  namespace: nethical-cache-apac
+  labels:
+    app: redis-cluster
+    region: apac
+spec:
+  serviceName: redis-apac-cluster
+  replicas: 8  # Masters+replicas across ap-south-1, ap-southeast-2, ap-northeast-1, ap-northeast-2
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: apac
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+        region: apac
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: redis-cluster
+                topologyKey: topology.kubernetes.io/zone
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+            - containerPort: 16379
+              name: cluster-bus
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+          volumeMounts:
+            - name: config
+              mountPath: /etc/redis
+            - name: data
+              mountPath: /data
+            - name: tls
+              mountPath: /etc/redis/tls
+              readOnly: true
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "1"
+            limits:
+              memory: "8Gi"
+              cpu: "2"
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - --tls
+                - --cert
+                - /etc/redis/tls/tls.crt
+                - --key
+                - /etc/redis/tls/tls.key
+                - --cacert
+                - /etc/redis/tls/ca.crt
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        - name: redis-exporter
+          image: oliver006/redis_exporter:latest
+          ports:
+            - containerPort: 9121
+              name: metrics
+          env:
+            - name: REDIS_ADDR
+              value: "redis://localhost:6379"
+      volumes:
+        - name: config
+          configMap:
+            name: redis-apac-config
+        - name: tls
+          secret:
+            secretName: redis-tls
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-apac-cluster
+  namespace: nethical-cache-apac
+  labels:
+    app: redis-cluster
+    region: apac
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 6379
+      name: redis
+    - port: 16379
+      name: cluster-bus
+  selector:
+    app: redis-cluster
+    region: apac
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-apac-lb
+  namespace: nethical-cache-apac
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      name: redis
+  selector:
+    app: redis-cluster
+    region: apac
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-apac-pdb
+  namespace: nethical-cache-apac
+spec:
+  minAvailable: 5
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: apac
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-apac
+  namespace: nethical-cache-apac
+spec:
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: apac
+  endpoints:
+    - port: metrics
+      interval: 15s
