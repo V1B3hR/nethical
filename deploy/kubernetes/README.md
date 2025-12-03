@@ -265,6 +265,108 @@ kubectl delete -f deploy/kubernetes/
 kubectl delete namespace nethical
 ```
 
+## Multi-Cluster Global Deployment
+
+Nethical supports deployment across multiple regions worldwide using Kustomize overlays.
+
+### Available Regions
+
+| Region | Location | Cloud Provider | Compliance |
+|--------|----------|----------------|------------|
+| **Americas** |
+| `us-east-1` | US East (Virginia) | AWS | - |
+| `us-west-2` | US West (Oregon) | AWS | - |
+| `us-central1` | US Central | GCP | - |
+| `ca-central-1` | Canada (Montreal) | AWS | PIPEDA |
+| `sa-east-1` | South America (São Paulo) | AWS | LGPD |
+| **Europe** |
+| `eu-west-1` | EU West (Ireland) | AWS | GDPR |
+| `eu-west-2` | UK (London) | AWS | UK-GDPR |
+| `eu-central-1` | Central Europe (Frankfurt) | AWS | GDPR |
+| `eu-north-1` | Northern Europe (Stockholm) | AWS | GDPR |
+| `eu-south-1` | Southern Europe (Milan) | AWS | GDPR |
+| `europe-east1` | Eastern Europe (Warsaw) | GCP | GDPR |
+| **Asia-Pacific** |
+| `ap-south-1` | Asia Pacific (Mumbai) | AWS | - |
+| `ap-southeast-2` | Australia (Sydney) | AWS | Australian Privacy Act |
+| `ap-northeast-1` | Japan (Tokyo) | AWS | APPI |
+| `ap-northeast-2` | South Korea (Seoul) | AWS | PIPA |
+| **China** |
+| `cn-north-1` | China (Beijing) | AWS China | CSL, PIPL |
+| `cn-east-2` | China (Shanghai) | Alibaba | CSL, PIPL |
+| **Satellite** |
+| `satellite` | Edge/Remote | Satellite | - |
+
+### Deploying to a Region
+
+Use Kustomize overlays for region-specific deployment:
+
+```bash
+# Deploy to EU Central (Frankfurt)
+kubectl apply -k deploy/kubernetes/multi-cluster/overlays/eu-central-1/
+
+# Deploy to US West (Oregon)
+kubectl apply -k deploy/kubernetes/multi-cluster/overlays/us-west-2/
+
+# Deploy to satellite edge
+kubectl apply -k deploy/kubernetes/multi-cluster/overlays/satellite/
+```
+
+### Multi-Cluster Architecture
+
+```
+┌─────────────────────────────────────────────────────────────────────────┐
+│                          Global Load Balancer                            │
+│                    (Cloudflare / AWS Global Accelerator)                 │
+└─────────────────────────────────────────────────────────────────────────┘
+                                    │
+            ┌───────────────────────┼───────────────────────┐
+            ▼                       ▼                       ▼
+    ┌───────────────┐       ┌───────────────┐       ┌───────────────┐
+    │   Americas    │       │    Europe     │       │   Asia-Pac    │
+    │   Region      │       │   Region      │       │   Region      │
+    │               │       │               │       │               │
+    │  us-east-1    │       │  eu-west-1    │       │  ap-south-1   │
+    │  us-west-2    │       │  eu-central-1 │       │  ap-northeast │
+    │  ca-central   │       │  eu-north-1   │       │  ap-southeast │
+    └───────────────┘       └───────────────┘       └───────────────┘
+                                    │
+                                    ▼
+                    ┌───────────────────────────────┐
+                    │       Satellite Edge          │
+                    │  (Remote/Maritime/Aviation)   │
+                    └───────────────────────────────┘
+```
+
+### Region-Specific Configuration
+
+Each overlay includes:
+
+- **kustomization.yaml**: Base reference and region config
+- **destination-rule.yaml**: Istio locality-aware routing
+- **network-policy.yaml**: Cross-region traffic rules
+
+### Compliance Features
+
+- **GDPR**: All EU regions include GDPR compliance labels and data residency enforcement
+- **China CSL/PIPL**: China regions have strict data localization with no cross-border transfers
+- **Regional data residency**: NetworkPolicies enforce data stays within compliance zones
+
+### Satellite Edge Deployment
+
+For satellite-connected edge nodes:
+
+```bash
+# Deploy satellite-optimized configuration
+kubectl apply -k deploy/kubernetes/multi-cluster/overlays/satellite/
+
+# Features:
+# - Extended timeouts (60s default, 15s per retry)
+# - Aggressive retry policies (5 attempts)
+# - Optimized connection pools for high latency
+# - Offline-capable local caching
+```
+
 ## Best Practices
 
 1. **Security**:

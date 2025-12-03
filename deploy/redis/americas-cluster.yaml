@@ -1,0 +1,214 @@
+# Redis Americas Cluster Deployment
+# Regional Redis clusters for US, Canada, and South America
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nethical-cache-americas
+  labels:
+    app: nethical
+    component: cache
+    region: americas
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-americas-config
+  namespace: nethical-cache-americas
+data:
+  redis.conf: |
+    # Americas Regional Redis Cluster Configuration
+    maxmemory 16gb
+    maxmemory-policy allkeys-lru
+    tcp-keepalive 300
+    timeout 0
+    
+    # Cluster mode
+    cluster-enabled yes
+    cluster-config-file nodes.conf
+    cluster-node-timeout 5000
+    
+    # Persistence
+    appendonly yes
+    appendfsync everysec
+    
+    # Security
+    requirepass ${REDIS_PASSWORD}
+    tls-port 6379
+    port 0
+    tls-cert-file /etc/redis/tls/tls.crt
+    tls-key-file /etc/redis/tls/tls.key
+    tls-ca-cert-file /etc/redis/tls/ca.crt
+    
+    # Performance
+    tcp-backlog 511
+    databases 16
+    
+    # Americas-specific tuning
+    # Lower latency expected for intra-continent
+    latency-monitor-threshold 50
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-americas-cluster
+  namespace: nethical-cache-americas
+  labels:
+    app: redis-cluster
+    region: americas
+spec:
+  serviceName: redis-americas-cluster
+  replicas: 6  # 3 masters + 3 replicas across us-east-1, us-west-2, ca-central-1
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: americas
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+        region: americas
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: redis-cluster
+                topologyKey: topology.kubernetes.io/zone
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+            - containerPort: 16379
+              name: cluster-bus
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+          volumeMounts:
+            - name: config
+              mountPath: /etc/redis
+            - name: data
+              mountPath: /data
+            - name: tls
+              mountPath: /etc/redis/tls
+              readOnly: true
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "1"
+            limits:
+              memory: "8Gi"
+              cpu: "2"
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - --tls
+                - --cert
+                - /etc/redis/tls/tls.crt
+                - --key
+                - /etc/redis/tls/tls.key
+                - --cacert
+                - /etc/redis/tls/ca.crt
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        - name: redis-exporter
+          image: oliver006/redis_exporter:latest
+          ports:
+            - containerPort: 9121
+              name: metrics
+          env:
+            - name: REDIS_ADDR
+              value: "redis://localhost:6379"
+      volumes:
+        - name: config
+          configMap:
+            name: redis-americas-config
+        - name: tls
+          secret:
+            secretName: redis-tls
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: fast-ssd
+        resources:
+          requests:
+            storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-americas-cluster
+  namespace: nethical-cache-americas
+  labels:
+    app: redis-cluster
+    region: americas
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 6379
+      name: redis
+    - port: 16379
+      name: cluster-bus
+  selector:
+    app: redis-cluster
+    region: americas
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-americas-lb
+  namespace: nethical-cache-americas
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      name: redis
+  selector:
+    app: redis-cluster
+    region: americas
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-americas-pdb
+  namespace: nethical-cache-americas
+spec:
+  minAvailable: 4
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: americas
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-americas
+  namespace: nethical-cache-americas
+spec:
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: americas
+  endpoints:
+    - port: metrics
+      interval: 15s

@@ -1,0 +1,239 @@
+# Redis Satellite Edge Deployment
+# Lightweight Redis for satellite edge nodes with offline support
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nethical-cache-satellite
+  labels:
+    app: nethical
+    component: cache
+    region: satellite
+    connectivity-type: satellite
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-satellite-config
+  namespace: nethical-cache-satellite
+data:
+  redis.conf: |
+    # Satellite Edge Redis Configuration
+    # Optimized for high-latency, bandwidth-constrained links
+    
+    # Memory - smaller footprint for edge devices
+    maxmemory 2gb
+    maxmemory-policy allkeys-lru
+    
+    # Extended timeouts for satellite latency
+    tcp-keepalive 600
+    timeout 300
+    
+    # Standalone mode (no cluster for edge)
+    cluster-enabled no
+    
+    # Persistence - critical for offline operation
+    appendonly yes
+    appendfsync always  # Ensure durability
+    save 60 1000
+    save 300 10
+    save 900 1
+    
+    # Security
+    requirepass ${REDIS_PASSWORD}
+    
+    # Compression for bandwidth
+    # Enable RDB compression
+    rdbcompression yes
+    rdbchecksum yes
+    
+    # Performance - tuned for satellite
+    tcp-backlog 128
+    databases 4  # Fewer databases for edge
+    
+    # Higher latency tolerance
+    latency-monitor-threshold 500
+    slowlog-log-slower-than 100000
+    slowlog-max-len 64
+    
+    # Active defragmentation for memory efficiency
+    activedefrag yes
+    active-defrag-ignore-bytes 100mb
+    active-defrag-threshold-lower 10
+    active-defrag-threshold-upper 50
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-satellite-edge
+  namespace: nethical-cache-satellite
+  labels:
+    app: redis-edge
+    region: satellite
+spec:
+  replicas: 1  # Single instance per edge node
+  selector:
+    matchLabels:
+      app: redis-edge
+      region: satellite
+  strategy:
+    type: Recreate  # Simple strategy for edge
+  template:
+    metadata:
+      labels:
+        app: redis-edge
+        region: satellite
+        connectivity-type: satellite
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+    spec:
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+          volumeMounts:
+            - name: config
+              mountPath: /etc/redis
+            - name: data
+              mountPath: /data
+          resources:
+            requests:
+              memory: "512Mi"
+              cpu: "100m"
+            limits:
+              memory: "2Gi"
+              cpu: "500m"
+          livenessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 30
+            periodSeconds: 30
+            timeoutSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 10
+            timeoutSeconds: 5
+          env:
+            - name: REDIS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: redis-satellite-secret
+                  key: password
+        - name: redis-exporter
+          image: oliver006/redis_exporter:latest
+          ports:
+            - containerPort: 9121
+              name: metrics
+          env:
+            - name: REDIS_ADDR
+              value: "redis://localhost:6379"
+          resources:
+            requests:
+              memory: "32Mi"
+              cpu: "10m"
+            limits:
+              memory: "64Mi"
+              cpu: "50m"
+      volumes:
+        - name: config
+          configMap:
+            name: redis-satellite-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: redis-satellite-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: redis-satellite-data
+  namespace: nethical-cache-satellite
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: local-path  # Use local storage for edge
+  resources:
+    requests:
+      storage: 10Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-satellite
+  namespace: nethical-cache-satellite
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      name: redis
+    - port: 9121
+      name: metrics
+  selector:
+    app: redis-edge
+    region: satellite
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: redis-satellite-secret
+  namespace: nethical-cache-satellite
+type: Opaque
+stringData:
+  password: "${REDIS_SATELLITE_PASSWORD}"
+---
+# ConfigMap for satellite cache sync configuration
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: satellite-cache-sync-config
+  namespace: nethical-cache-satellite
+data:
+  sync-config.yaml: |
+    # Satellite cache synchronization configuration
+    sync:
+      enabled: true
+      interval_seconds: 300  # 5 minutes between syncs
+      batch_size: 100
+      compression: true
+      
+    offline:
+      max_queue_size: 10000
+      persist_queue: true
+      retry_attempts: 5
+      retry_delay_seconds: 60
+      
+    latency:
+      adaptive_timeout: true
+      base_timeout_ms: 5000
+      max_timeout_ms: 60000
+      
+    priority:
+      urgent_sync_delay_ms: 100
+      high_sync_delay_ms: 1000
+      normal_sync_delay_ms: 5000
+      low_sync_delay_ms: 30000
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-satellite
+  namespace: nethical-cache-satellite
+spec:
+  selector:
+    matchLabels:
+      app: redis-edge
+      region: satellite
+  endpoints:
+    - port: metrics
+      interval: 60s  # Longer interval for satellite to reduce bandwidth

@@ -1,0 +1,43 @@
+# Istio DestinationRule for EU North Region (Stockholm)
+# Locality-aware routing for optimal latency
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nethical-api-eu-north-1
+  namespace: nethical
+  labels:
+    region: eu-north-1
+    compliance/gdpr: "true"
+spec:
+  host: nethical-api
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 1000
+        connectTimeout: 5s
+      http:
+        h2UpgradePolicy: UPGRADE
+        http1MaxPendingRequests: 1000
+        http2MaxRequests: 1000
+        maxRequestsPerConnection: 100
+        maxRetries: 3
+    loadBalancer:
+      simple: LEAST_REQUEST
+      localityLbSetting:
+        enabled: true
+        failoverPriority:
+          - "topology.kubernetes.io/region"
+          - "topology.kubernetes.io/zone"
+    outlierDetection:
+      consecutive5xxErrors: 5
+      interval: 10s
+      baseEjectionTime: 30s
+      maxEjectionPercent: 50
+  subsets:
+    - name: eu-north-1
+      labels:
+        region: eu-north-1
+    - name: eu-fallback
+      labels:
+        region-role: secondary
+        compliance/gdpr: "true"

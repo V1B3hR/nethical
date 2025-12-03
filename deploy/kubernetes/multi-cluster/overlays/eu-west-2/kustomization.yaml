@@ -1,0 +1,52 @@
+# Nethical EU West 2 Region Overlay (London - AWS eu-west-2)
+# GDPR compliant deployment for UK
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-eu-west-2
+  annotations:
+    compliance/gdpr: "true"
+    compliance/data-residency: "eu"
+    compliance/uk-gdpr: "true"
+
+namespace: nethical
+
+resources:
+  - ../../base
+  - destination-rule.yaml
+  - network-policy.yaml
+
+commonLabels:
+  region: eu-west-2
+  region-role: secondary
+  compliance/gdpr: "true"
+  topology.kubernetes.io/region: eu-west-2
+
+commonAnnotations:
+  nethical.io/data-residency: "eu"
+  nethical.io/compliance-framework: "gdpr,uk-gdpr"
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+    target:
+      kind: Deployment
+      name: nethical-api
+
+configMapGenerator:
+  - name: nethical-config
+    behavior: merge
+    literals:
+      - NETHICAL_REGION_ID=eu-west-2
+      - REGION=eu-west-2
+      - REGION_ROLE=secondary
+      - DATABASE_READ_WRITE=false
+      - NETHICAL_DATA_RESIDENCY=eu
+      - NETHICAL_COMPLIANCE_MODE=gdpr,uk-gdpr
+      - SYNC_PEERS=nethical-api.us-east-1.nethical.io,nethical-api.eu-west-1.nethical.io,nethical-api.eu-central-1.nethical.io

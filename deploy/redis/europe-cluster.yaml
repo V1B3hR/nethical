@@ -1,0 +1,272 @@
+# Redis Europe Cluster Deployment (Expanded)
+# Regional Redis clusters for EU with GDPR-compliant data residency
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nethical-cache-europe
+  labels:
+    app: nethical
+    component: cache
+    region: europe
+    compliance/gdpr: "true"
+  annotations:
+    nethical.io/data-residency: "eu"
+---
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: redis-europe-config
+  namespace: nethical-cache-europe
+data:
+  redis.conf: |
+    # Europe Regional Redis Cluster Configuration
+    # GDPR-compliant with data residency in EU
+    maxmemory 16gb
+    maxmemory-policy allkeys-lru
+    tcp-keepalive 300
+    timeout 0
+    
+    # Cluster mode
+    cluster-enabled yes
+    cluster-config-file nodes.conf
+    cluster-node-timeout 5000
+    
+    # Persistence with GDPR-compliant retention
+    appendonly yes
+    appendfsync everysec
+    
+    # Security
+    requirepass ${REDIS_PASSWORD}
+    tls-port 6379
+    port 0
+    tls-cert-file /etc/redis/tls/tls.crt
+    tls-key-file /etc/redis/tls/tls.key
+    tls-ca-cert-file /etc/redis/tls/ca.crt
+    
+    # Encryption at rest
+    # (Handled by storage layer)
+    
+    # Performance
+    tcp-backlog 511
+    databases 16
+    
+    # Europe-specific tuning
+    latency-monitor-threshold 50
+    slowlog-log-slower-than 10000
+    slowlog-max-len 128
+    
+    # Audit logging for GDPR
+    logfile /var/log/redis/redis-server.log
+    loglevel notice
+---
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: redis-europe-cluster
+  namespace: nethical-cache-europe
+  labels:
+    app: redis-cluster
+    region: europe
+    compliance/gdpr: "true"
+spec:
+  serviceName: redis-europe-cluster
+  replicas: 8  # Masters+replicas across eu-west-1, eu-central-1, eu-north-1, eu-south-1
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: europe
+  template:
+    metadata:
+      labels:
+        app: redis-cluster
+        region: europe
+        compliance/gdpr: "true"
+      annotations:
+        prometheus.io/scrape: "true"
+        prometheus.io/port: "9121"
+        nethical.io/data-residency: "eu"
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: redis-cluster
+                topologyKey: topology.kubernetes.io/zone
+      containers:
+        - name: redis
+          image: redis:7.2-alpine
+          ports:
+            - containerPort: 6379
+              name: redis
+            - containerPort: 16379
+              name: cluster-bus
+          command:
+            - redis-server
+            - /etc/redis/redis.conf
+          volumeMounts:
+            - name: config
+              mountPath: /etc/redis
+            - name: data
+              mountPath: /data
+            - name: tls
+              mountPath: /etc/redis/tls
+              readOnly: true
+            - name: logs
+              mountPath: /var/log/redis
+          resources:
+            requests:
+              memory: "4Gi"
+              cpu: "1"
+            limits:
+              memory: "8Gi"
+              cpu: "2"
+          livenessProbe:
+            tcpSocket:
+              port: 6379
+            initialDelaySeconds: 30
+            periodSeconds: 10
+          readinessProbe:
+            exec:
+              command:
+                - redis-cli
+                - --tls
+                - --cert
+                - /etc/redis/tls/tls.crt
+                - --key
+                - /etc/redis/tls/tls.key
+                - --cacert
+                - /etc/redis/tls/ca.crt
+                - ping
+            initialDelaySeconds: 5
+            periodSeconds: 5
+        - name: redis-exporter
+          image: oliver006/redis_exporter:latest
+          ports:
+            - containerPort: 9121
+              name: metrics
+          env:
+            - name: REDIS_ADDR
+              value: "redis://localhost:6379"
+      volumes:
+        - name: config
+          configMap:
+            name: redis-europe-config
+        - name: tls
+          secret:
+            secretName: redis-tls
+        - name: logs
+          emptyDir: {}
+  volumeClaimTemplates:
+    - metadata:
+        name: data
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: encrypted-ssd  # GDPR: encryption at rest
+        resources:
+          requests:
+            storage: 100Gi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-europe-cluster
+  namespace: nethical-cache-europe
+  labels:
+    app: redis-cluster
+    region: europe
+spec:
+  type: ClusterIP
+  clusterIP: None
+  ports:
+    - port: 6379
+      name: redis
+    - port: 16379
+      name: cluster-bus
+  selector:
+    app: redis-cluster
+    region: europe
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: redis-europe-lb
+  namespace: nethical-cache-europe
+spec:
+  type: ClusterIP
+  ports:
+    - port: 6379
+      name: redis
+  selector:
+    app: redis-cluster
+    region: europe
+---
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: redis-europe-pdb
+  namespace: nethical-cache-europe
+spec:
+  minAvailable: 5
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: europe
+---
+apiVersion: monitoring.coreos.com/v1
+kind: ServiceMonitor
+metadata:
+  name: redis-europe
+  namespace: nethical-cache-europe
+spec:
+  selector:
+    matchLabels:
+      app: redis-cluster
+      region: europe
+  endpoints:
+    - port: metrics
+      interval: 15s
+---
+# NetworkPolicy for GDPR data residency
+apiVersion: networking.k8s.io/v1
+kind: NetworkPolicy
+metadata:
+  name: redis-europe-gdpr
+  namespace: nethical-cache-europe
+spec:
+  podSelector:
+    matchLabels:
+      app: redis-cluster
+      region: europe
+  policyTypes:
+    - Ingress
+    - Egress
+  ingress:
+    # Only allow from EU region pods
+    - from:
+        - namespaceSelector:
+            matchLabels:
+              compliance/gdpr: "true"
+      ports:
+        - protocol: TCP
+          port: 6379
+  egress:
+    # Only allow to EU region pods for replication
+    - to:
+        - namespaceSelector:
+            matchLabels:
+              compliance/gdpr: "true"
+      ports:
+        - protocol: TCP
+          port: 6379
+        - protocol: TCP
+          port: 16379
+    # Allow DNS
+    - to:
+        - namespaceSelector: {}
+      ports:
+        - protocol: UDP
+          port: 53

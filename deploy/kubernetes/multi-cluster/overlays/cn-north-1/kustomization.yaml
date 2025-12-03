@@ -1,0 +1,55 @@
+# Nethical China North Region Overlay (Beijing - cn-north-1)
+# China data residency requirements with strict data localization
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-cn-north-1
+  annotations:
+    compliance/data-residency: "china"
+    compliance/csl: "true"
+    compliance/pipl: "true"
+
+namespace: nethical
+
+resources:
+  - ../../base
+  - destination-rule.yaml
+  - network-policy.yaml
+
+commonLabels:
+  region: cn-north-1
+  region-role: secondary
+  compliance/china-data-residency: "true"
+  topology.kubernetes.io/region: cn-north-1
+
+commonAnnotations:
+  nethical.io/data-residency: "china"
+  nethical.io/compliance-framework: "csl,pipl"
+  nethical.io/data-localization: "strict"
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+    target:
+      kind: Deployment
+      name: nethical-api
+
+configMapGenerator:
+  - name: nethical-config
+    behavior: merge
+    literals:
+      - NETHICAL_REGION_ID=cn-north-1
+      - REGION=cn-north-1
+      - REGION_ROLE=secondary
+      - DATABASE_READ_WRITE=false
+      - NETHICAL_DATA_RESIDENCY=china
+      - NETHICAL_COMPLIANCE_MODE=csl,pipl
+      - NETHICAL_DATA_LOCALIZATION=strict
+      - NETHICAL_CROSS_BORDER_TRANSFER=disabled
+      - SYNC_PEERS=nethical-api.cn-east-2.nethical.io

@@ -1,0 +1,47 @@
+# Istio DestinationRule for Satellite Connectivity
+# Connection pool settings optimized for variable satellite latency
+apiVersion: networking.istio.io/v1beta1
+kind: DestinationRule
+metadata:
+  name: nethical-api-satellite
+  namespace: nethical
+  labels:
+    region: satellite
+    connectivity-type: satellite
+spec:
+  host: nethical-api
+  trafficPolicy:
+    connectionPool:
+      tcp:
+        maxConnections: 500
+        connectTimeout: 30s
+        tcpKeepalive:
+          time: 60s
+          interval: 30s
+          probes: 3
+      http:
+        h2UpgradePolicy: UPGRADE
+        http1MaxPendingRequests: 500
+        http2MaxRequests: 500
+        maxRequestsPerConnection: 50
+        maxRetries: 5
+        idleTimeout: 300s
+    loadBalancer:
+      simple: LEAST_REQUEST
+      localityLbSetting:
+        enabled: true
+        failoverPriority:
+          - "topology.kubernetes.io/region"
+    outlierDetection:
+      consecutive5xxErrors: 10
+      interval: 30s
+      baseEjectionTime: 60s
+      maxEjectionPercent: 30
+      minHealthPercent: 30
+  subsets:
+    - name: satellite
+      labels:
+        region: satellite
+    - name: terrestrial-fallback
+      labels:
+        region-role: secondary

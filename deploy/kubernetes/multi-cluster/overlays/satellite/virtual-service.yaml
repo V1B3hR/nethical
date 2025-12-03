@@ -1,0 +1,71 @@
+# Istio VirtualService for Satellite Connectivity
+# Optimized for high-latency satellite links (20-100ms+ typical latency)
+apiVersion: networking.istio.io/v1beta1
+kind: VirtualService
+metadata:
+  name: nethical-api-satellite
+  namespace: nethical
+  labels:
+    region: satellite
+    connectivity-type: satellite
+spec:
+  hosts:
+    - nethical-api
+    - nethical-api.nethical.svc.cluster.local
+  http:
+    - match:
+        - headers:
+            x-connectivity-type:
+              exact: satellite
+      route:
+        - destination:
+            host: nethical-api
+            port:
+              number: 80
+          weight: 100
+      retries:
+        attempts: 5
+        perTryTimeout: 15s
+        retryOn: connect-failure,refused-stream,unavailable,cancelled,resource-exhausted,retriable-status-codes
+        retriableStatusCodes:
+          - 502
+          - 503
+          - 504
+      timeout: 60s
+    - route:
+        - destination:
+            host: nethical-api
+            port:
+              number: 80
+          weight: 100
+      retries:
+        attempts: 5
+        perTryTimeout: 15s
+        retryOn: connect-failure,refused-stream,unavailable,cancelled,resource-exhausted
+      timeout: 60s
+---
+# Request timeout configuration for satellite
+apiVersion: networking.istio.io/v1beta1
+kind: EnvoyFilter
+metadata:
+  name: satellite-timeout-config
+  namespace: nethical
+spec:
+  workloadSelector:
+    labels:
+      connectivity-type: satellite
+  configPatches:
+    - applyTo: NETWORK_FILTER
+      match:
+        context: SIDECAR_INBOUND
+        listener:
+          filterChain:
+            filter:
+              name: "envoy.filters.network.http_connection_manager"
+      patch:
+        operation: MERGE
+        value:
+          typed_config:
+            "@type": "type.googleapis.com/envoy.extensions.filters.network.http_connection_manager.v3.HttpConnectionManager"
+            stream_idle_timeout: 300s
+            request_timeout: 120s

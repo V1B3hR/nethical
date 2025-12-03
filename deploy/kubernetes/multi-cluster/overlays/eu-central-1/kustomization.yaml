@@ -1,0 +1,51 @@
+# Nethical EU Central Region Overlay (Frankfurt - AWS eu-central-1)
+# GDPR compliant deployment for Central Europe
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+metadata:
+  name: nethical-eu-central-1
+  annotations:
+    compliance/gdpr: "true"
+    compliance/data-residency: "eu"
+
+namespace: nethical
+
+resources:
+  - ../../base
+  - destination-rule.yaml
+  - network-policy.yaml
+
+commonLabels:
+  region: eu-central-1
+  region-role: secondary
+  compliance/gdpr: "true"
+  topology.kubernetes.io/region: eu-central-1
+
+commonAnnotations:
+  nethical.io/data-residency: "eu"
+  nethical.io/compliance-framework: "gdpr"
+
+patches:
+  - patch: |-
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/cpu
+        value: "500m"
+      - op: replace
+        path: /spec/template/spec/containers/0/resources/requests/memory
+        value: "1Gi"
+    target:
+      kind: Deployment
+      name: nethical-api
+
+configMapGenerator:
+  - name: nethical-config
+    behavior: merge
+    literals:
+      - NETHICAL_REGION_ID=eu-central-1
+      - REGION=eu-central-1
+      - REGION_ROLE=secondary
+      - DATABASE_READ_WRITE=false
+      - NETHICAL_DATA_RESIDENCY=eu
+      - NETHICAL_COMPLIANCE_MODE=gdpr
+      - SYNC_PEERS=nethical-api.us-east-1.nethical.io,nethical-api.eu-west-1.nethical.io,nethical-api.ap-south-1.nethical.io
