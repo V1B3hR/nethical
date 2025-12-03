@@ -1,6 +1,6 @@
 # 🚀 Nethical Global Safety-Critical Roadmap
 
-**Version**: 3.7  
+**Version**: 3.8  
 **Last Updated**: 2025-12-03  
 **Target**: Global AI Safety Infrastructure for Autonomous Vehicles, Robots, and Critical Systems  
 **Codename**: "Bullet Train on Magnetic Rails"
@@ -1520,6 +1520,282 @@ chaos_experiments:
 - [ ] Game day runbooks
 - [ ] Resilience validation reports
 
+### 7.4 Comprehensive Test Suite for New Components
+
+**Purpose**: Ensure thorough testing of all components added in PR #195 (Certifications) and PR #196 (Accelerators, Latency, Security, Laws)
+
+#### 7.4.1 Hardware Accelerator Tests
+
+**Objective**: Validate all hardware accelerator functionality across versions
+
+```yaml
+accelerator_tests:
+  cuda_tests:
+    - CC 3.5+ (Kepler) baseline compatibility
+    - CC 5.x (Maxwell) feature detection
+    - CC 6.x (Pascal) tensor core detection
+    - CC 7.x (Volta/Turing) mixed precision
+    - CC 8.x (Ampere) BF16/TF32 support
+    - CC 9.0 (Hopper) FP8 transformer engine
+    - CC 10.0 (Blackwell) next-gen features
+    - Multi-GPU device selection
+    - Memory management and cleanup
+    
+  tpu_tests:
+    - TPU v2 detection and configuration
+    - TPU v3 detection and configuration
+    - TPU v4 detection and configuration
+    - TPU v5e/v5p feature detection
+    - TPU v7 (Ironwood) full functionality
+    - XLA compilation verification
+    - Batch size optimization per version
+    - FP8 enable/disable based on version
+    
+  trainium_tests:
+    - Inferentia 1 detection (inference-only mode)
+    - Inferentia 2 detection and configuration
+    - Trainium 1 training support verification
+    - Trainium 2/3 FP8 support
+    - Neuron SDK compilation
+    - Version-specific compiler flags
+    
+  cross_platform_tests:
+    - Unified API consistency across backends
+    - Graceful fallback to CPU
+    - Memory info reporting
+    - Device synchronization
+```
+
+**Deliverables**:
+- [ ] `tests/accelerators/test_cuda_versions.py` - CUDA CC 3.5-10.0 tests
+- [ ] `tests/accelerators/test_tpu_versions.py` - TPU v2-v7 tests
+- [ ] `tests/accelerators/test_trainium_versions.py` - Inferentia/Trainium tests
+- [ ] `tests/accelerators/test_unified_api.py` - Cross-platform API tests
+- [ ] `tests/accelerators/test_fallback.py` - Graceful degradation tests
+
+#### 7.4.2 Latency Engineering Tests
+
+**Objective**: Validate latency monitoring, budgets, and caching functionality
+
+```yaml
+latency_tests:
+  budget_tests:
+    - LatencyBudget threshold enforcement
+    - Budget allocation per component
+    - Over-budget alerting
+    - Budget inheritance in nested operations
+    
+  monitoring_tests:
+    - p50/p95/p99 percentile accuracy
+    - Sliding window calculations
+    - Real-time metric emission
+    - Historical trend analysis
+    
+  cache_tests:
+    - InferenceCache hit rate validation
+    - Cache eviction policies (LRU, LFU)
+    - TTL enforcement
+    - Cache size limits
+    - Multi-level cache hierarchy
+    
+  regression_tests:
+    - Latency regression detection
+    - Performance baseline comparison
+    - Alert threshold validation
+    - Automated performance gates
+```
+
+**Deliverables**:
+- [ ] `tests/latency/test_budget_enforcement.py` - Budget threshold tests
+- [ ] `tests/latency/test_percentile_accuracy.py` - p50/p95/p99 tests
+- [ ] `tests/latency/test_inference_cache.py` - Cache hit rate tests
+- [ ] `tests/latency/test_regression_detection.py` - Performance regression tests
+
+#### 7.4.3 Security Hardening Tests
+
+**Objective**: Validate security components for production hardening
+
+```yaml
+security_tests:
+  rate_limiting_tests:
+    - RateLimiter token bucket algorithm
+    - Sliding window rate limits
+    - Per-agent rate limiting
+    - Rate limit bypass prevention
+    
+  anomaly_detection_tests:
+    - AnomalyDetector baseline learning
+    - Anomaly scoring accuracy
+    - False positive rate validation
+    - Attack pattern detection
+    
+  quarantine_tests:
+    - QuarantineManager isolation
+    - Quarantine escalation paths
+    - Quarantine release criteria
+    - Audit trail for quarantine events
+    
+  attestation_tests:
+    - ContinuousAttestation scheduling
+    - TPM integration verification
+    - TEE (Trusted Execution Environment) checks
+    - Attestation failure handling
+    
+  post_quantum_crypto_tests:
+    - ML-KEM key generation
+    - ML-DSA signature verification
+    - HybridKeyExchange handshake
+    - Algorithm agility testing
+    
+  penetration_tests:
+    - OWASP Top 10 vulnerability scan
+    - API security testing
+    - Authentication bypass attempts
+    - Privilege escalation testing
+```
+
+**Deliverables**:
+- [ ] `tests/security/test_rate_limiter.py` - Rate limiting tests
+- [ ] `tests/security/test_anomaly_detector.py` - Anomaly detection tests
+- [ ] `tests/security/test_quarantine_manager.py` - Quarantine tests
+- [ ] `tests/security/test_continuous_attestation.py` - Attestation tests
+- [ ] `tests/security/test_post_quantum_crypto.py` - PQC algorithm tests
+- [ ] `tests/security/test_penetration.py` - Security penetration tests
+
+#### 7.4.4 25 Fundamental Laws Tests
+
+**Objective**: Verify enforcement of all 25 Fundamental Laws
+
+```yaml
+fundamental_laws_tests:
+  individual_law_tests:
+    - Law 1: Human Dignity enforcement
+    - Law 2: Right to Integrity checks
+    - Law 3: Fairness validation
+    - Law 4: Transparency requirements
+    - Law 5-25: Individual law verification
+    
+  conflict_resolution_tests:
+    - Law priority ordering
+    - Conflicting law scenarios
+    - Resolution documentation
+    - Override justification audit
+    
+  audit_trail_tests:
+    - Law invocation logging
+    - Decision justification capture
+    - Immutable audit records
+    - Merkle-tree verification
+    
+  integration_tests:
+    - Multi-law decision scenarios
+    - Edge case handling
+    - Safety-critical law enforcement
+    - Real-world scenario simulation
+```
+
+**Deliverables**:
+- [ ] `tests/laws/test_individual_laws.py` - Per-law enforcement tests (25 tests)
+- [ ] `tests/laws/test_conflict_resolution.py` - Law conflict tests
+- [ ] `tests/laws/test_audit_trail.py` - Law audit verification
+- [ ] `tests/laws/test_integration_scenarios.py` - Multi-law integration tests
+
+#### 7.4.5 Certification Validation Tests
+
+**Objective**: Validate compliance with safety and regulatory certifications
+
+```yaml
+certification_tests:
+  iso_26262_tests:
+    - FMEA analysis validation
+    - FTA (Fault Tree Analysis) tests
+    - Safety Case integrity checks
+    - MC/DC (Modified Condition/Decision Coverage) validation
+    - ASIL-D compliance verification
+    
+  iec_62443_tests:
+    - Security zone boundary tests
+    - Conduit protection validation
+    - SL-3 security level verification
+    - Defense-in-depth validation
+    
+  fda_part_11_tests:
+    - Electronic signature validation
+    - Audit trail completeness
+    - 21 CFR Part 11 compliance checks
+    - Record integrity verification
+    
+  eu_ai_act_tests:
+    - Transparency API completeness
+    - Human Oversight interface tests
+    - Risk management documentation
+    - Conformity assessment validation
+    - Article 9-15 requirement checks
+```
+
+**Deliverables**:
+- [ ] `tests/certification/test_iso_26262.py` - Automotive safety tests
+- [ ] `tests/certification/test_iec_62443.py` - Industrial security tests
+- [ ] `tests/certification/test_fda_part_11.py` - Medical compliance tests
+- [ ] `tests/certification/test_eu_ai_act.py` - EU AI Act compliance tests
+- [ ] `tests/certification/test_mcdc_coverage.py` - MC/DC coverage validation
+
+### 7.5 CI/CD Test Pipeline
+
+**Purpose**: Establish comprehensive automated testing infrastructure
+
+```yaml
+ci_cd_pipeline:
+  stages:
+    unit_tests:
+      - All unit tests execution
+      - Coverage measurement (target: >90%)
+      - Fast feedback (<5 minutes)
+      
+    integration_tests:
+      - Cross-component integration
+      - API endpoint testing
+      - Database integration
+      - Cache integration
+      
+    hardware_tests:
+      - GPU tests on cloud runners (NVIDIA A100)
+      - TPU tests on Google Cloud
+      - Trainium tests on AWS
+      - Multi-device scenarios
+      
+    security_tests:
+      - SAST (Bandit, CodeQL, Semgrep)
+      - DAST (OWASP ZAP)
+      - Dependency scanning (Trivy, Safety)
+      - Container scanning
+      
+    compliance_tests:
+      - GDPR validation
+      - EU AI Act checks
+      - ISO certification verification
+      - Fundamental Laws enforcement
+      
+  coverage_targets:
+    overall: ">90%"
+    safety_critical: "100%"
+    security_components: ">95%"
+    
+  performance_gates:
+    latency_regression: "<5% increase"
+    throughput_regression: "<10% decrease"
+    memory_regression: "<15% increase"
+```
+
+**Deliverables**:
+- [ ] `.github/workflows/test-unit.yml` - Unit test workflow
+- [ ] `.github/workflows/test-integration.yml` - Integration test workflow
+- [ ] `.github/workflows/test-hardware.yml` - Hardware-specific tests
+- [ ] `.github/workflows/test-security.yml` - Security test workflow
+- [ ] `.github/workflows/test-compliance.yml` - Compliance test workflow
+- [ ] `tests/conftest.py` - Enhanced test fixtures
+- [ ] `docs/testing/TEST_STRATEGY.md` - Testing strategy documentation
+
 ---
 
 ## 📊 Success Metrics & SLAs
@@ -1662,6 +1938,7 @@ Phase 0 ────────────────────────
 | 3.5 | 2025-12-03 | Copilot | Global Infrastructure Expansion: 15 new Kubernetes region overlays (EU, Americas, APAC, China), Satellite connectivity module (Starlink, Kuiper, OneWeb, Iridium), GPS/GNSS tracking, Failover management, Latency optimization, Satellite-aware caching, Redis cluster configs |
 | 3.6 | 2025-12-03 | Copilot | Phase 5 implementation: Security Hardening (HSM abstraction layer with multi-provider support, TPM integration for edge devices, Comprehensive security CI/CD workflow, Grafana security dashboard, Incident response runbooks, Penetration testing schedule) |
 | 3.7 | 2025-12-03 | Copilot | Phase 6 implementation: Certification & Standards (ISO 26262 ASIL-D documentation with FMEA/FTA/Safety Case, IEC 62443 SL-3 industrial cybersecurity, FDA 21 CFR Part 11 electronic records, EU AI Act conformity assessment, Human Oversight API, Transparency API) |
+| 3.8 | 2025-12-03 | Copilot | Phase 7 update: Added sections 7.4 (Comprehensive Test Suite for PR #195/#196 components) and 7.5 (CI/CD Test Pipeline). Legacy TPU v2-v5 and Trainium/Inferentia 1-2 support added. Privacy documentation added. |
 
 ---
 
