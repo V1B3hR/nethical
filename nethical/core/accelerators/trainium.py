@@ -6,9 +6,9 @@ Supports AWS Neuron chips from Inferentia 1 to Trainium 3:
 
     Inferentia 1 (2019): 128 TOPS INT8, inference only
     Inferentia 2 (2022): 380 TOPS INT8, 32GB HBM, inference only
-    Trainium 1 (2022): 840 TFLOPS FP8, 32GB HBM2, training + inference
-    Trainium 2 (2024): 1,575 TFLOPS FP8, 96GB HBM3, training + inference
-    Trainium 3 (2025): 2,520 TFLOPS FP8, 144GB HBM3e, training + inference
+    Trainium 1 (2022): 420 TFLOPS BF16 / 0.84 PFLOPs FP8, 32GB HBM2
+    Trainium 2 (2024): 787 TFLOPS BF16 / 1.575 PFLOPs FP8, 96GB HBM3
+    Trainium 3 (2025): 1,260 TFLOPS BF16 / 2.52 PFLOPs FP8, 144GB HBM3e
 
 Features:
     - Neuron SDK integration for optimized inference
@@ -219,11 +219,16 @@ def detect_trainium_version() -> Optional[TrainiumVersion]:
             import torch_neuronx
             sdk_version = getattr(torch_neuronx, "__version__", "")
             # Newer SDK versions typically indicate newer hardware support
-            # This is a heuristic fallback
+            # This is a heuristic fallback when instance type detection fails
+            # SDK 3.x = Trainium 3, SDK 2.5+ = Trainium 2, SDK 2.x = Trainium 1
             if sdk_version:
-                major_version = int(sdk_version.split(".")[0])
+                parts = sdk_version.split(".")
+                major_version = int(parts[0])
+                minor_version = int(parts[1]) if len(parts) > 1 else 0
                 if major_version >= 3:
                     return TrainiumVersion.TRAINIUM_3
+                elif major_version == 2 and minor_version >= 5:
+                    return TrainiumVersion.TRAINIUM_2
                 elif major_version >= 2:
                     return TrainiumVersion.TRAINIUM_1
         except Exception:
