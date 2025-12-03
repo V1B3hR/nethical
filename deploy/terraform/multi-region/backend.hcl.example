@@ -1,0 +1,25 @@
+# Terraform Backend Configuration Template
+#
+# Copy this file and configure for your environment:
+#   cp backend.hcl.example backend-prod.hcl
+#
+# Then initialize with:
+#   terraform init -backend-config=backend-prod.hcl
+
+# S3 bucket for state storage
+bucket = "nethical-terraform-state-ENVIRONMENT"
+
+# State file key
+key = "multi-region/terraform.tfstate"
+
+# AWS region for state bucket
+region = "us-east-1"
+
+# Enable encryption at rest
+encrypt = true
+
+# DynamoDB table for state locking
+dynamodb_table = "nethical-terraform-locks-ENVIRONMENT"
+
+# Optional: Assume role for cross-account access
+# role_arn = "arn:aws:iam::ACCOUNT_ID:role/TerraformStateAccess"

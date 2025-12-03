@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nethical
+  labels:
+    app.kubernetes.io/name: nethical
+    app.kubernetes.io/part-of: nethical-platform
+    istio-injection: enabled
