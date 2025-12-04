@@ -45,6 +45,8 @@ __all__ = [
     "RegexTimeoutError",
     "AgentType",
     "DEFAULT_MEMORY_WINDOWS",
+    "SPIKE_DETECTION_THRESHOLD",
+    "JERK_DETECTION_THRESHOLD",
 ]
 
 log = logging.getLogger(__name__)
@@ -473,6 +475,16 @@ DEFAULT_MEMORY_WINDOWS: Dict[str, tuple] = {
     AgentType.DEFAULT: (100, 300),  # 100 actions OR 5 minutes (300s)
 }
 
+# Default values for BehavioralAnalyzer initialization
+_DEFAULT_LOOKBACK_WINDOW = 100
+_DEFAULT_TIME_WINDOW_SECONDS = 600
+
+# Thresholds for danger pattern detection
+SPIKE_DETECTION_THRESHOLD = 5.0  # Spike if value > average * threshold
+JERK_DETECTION_THRESHOLD = 10.0  # High jerk if delta > average * threshold
+DEVIATION_RATIO_THRESHOLD = 5.0  # Pattern deviation if ratio > threshold
+FREQUENCY_ANOMALY_THRESHOLD = 10.0  # Actions per second threshold
+
 
 class BehavioralAnalyzer:
     """
@@ -493,10 +505,12 @@ class BehavioralAnalyzer:
 
     def __init__(
         self,
-        lookback_window: int = 100,
-        time_window_seconds: int = 600,
+        lookback_window: int = _DEFAULT_LOOKBACK_WINDOW,
+        time_window_seconds: int = _DEFAULT_TIME_WINDOW_SECONDS,
         agent_type: str = AgentType.DEFAULT,
         custom_windows: Optional[Dict[str, tuple]] = None,
+        spike_threshold: float = SPIKE_DETECTION_THRESHOLD,
+        jerk_threshold: float = JERK_DETECTION_THRESHOLD,
     ):
         """
         Initialize behavioral analyzer with configurable memory windows.
@@ -506,14 +520,19 @@ class BehavioralAnalyzer:
             time_window_seconds: Default time window in seconds (default: 600 = 10 minutes)
             agent_type: Type of agent for automatic window configuration
             custom_windows: Custom memory windows per agent type {type: (max_actions, max_time_seconds)}
+            spike_threshold: Multiplier for sudden spike detection (default: 5.0)
+            jerk_threshold: Multiplier for high jerk detection (default: 10.0)
         """
         # Use agent-type-specific defaults if not explicitly provided
         memory_windows = custom_windows or DEFAULT_MEMORY_WINDOWS
         if agent_type in memory_windows:
             default_actions, default_time = memory_windows[agent_type]
-            self.lookback_window = lookback_window if lookback_window != 100 else default_actions
+            # Use agent-type defaults only if user provided the function defaults
+            self.lookback_window = (
+                lookback_window if lookback_window != _DEFAULT_LOOKBACK_WINDOW else default_actions
+            )
             self.time_window_seconds = (
-                time_window_seconds if time_window_seconds != 600 else default_time
+                time_window_seconds if time_window_seconds != _DEFAULT_TIME_WINDOW_SECONDS else default_time
             )
         else:
             self.lookback_window = lookback_window
@@ -525,6 +544,10 @@ class BehavioralAnalyzer:
         self._baseline_profiles: Dict[str, Dict[str, Any]] = {}
         self._agent_types: Dict[str, str] = {}  # Map agent_id -> agent_type
         self._rolling_stats: Dict[str, Dict[str, Any]] = {}  # Statistical summaries
+
+        # Configurable thresholds for danger pattern detection
+        self.spike_threshold = spike_threshold
+        self.jerk_threshold = jerk_threshold
 
         log.info(
             f"Behavioral Analyzer initialized: agent_type={agent_type}, "
@@ -858,8 +881,8 @@ class BehavioralAnalyzer:
             if avg == 0:
                 continue
 
-            # Check for sudden spike (more than 5x average)
-            if abs(current_val) > abs(avg) * 5:
+            # Check for sudden spike (configurable threshold, default 5x average)
+            if abs(current_val) > abs(avg) * self.spike_threshold:
                 return {
                     "type": "sudden_spike",
                     "severity": "high",
@@ -868,6 +891,7 @@ class BehavioralAnalyzer:
                         "current_value": current_val,
                         "average_value": avg,
                         "spike_ratio": abs(current_val / avg) if avg != 0 else float("inf"),
+                        "threshold": self.spike_threshold,
                     },
                 }
         return None
@@ -898,8 +922,8 @@ class BehavioralAnalyzer:
 
             if deltas:
                 avg_delta = sum(deltas) / len(deltas)
-                # High jerk if delta is more than 10x average
-                if avg_delta > 0 and delta > avg_delta * 10:
+                # High jerk if delta exceeds configurable threshold (default 10x average)
+                if avg_delta > 0 and delta > avg_delta * self.jerk_threshold:
                     return {
                         "type": "high_jerk",
                         "severity": "high",
@@ -908,6 +932,7 @@ class BehavioralAnalyzer:
                             "current_delta": delta,
                             "average_delta": avg_delta,
                             "jerk_ratio": delta / avg_delta if avg_delta > 0 else float("inf"),
+                            "threshold": self.jerk_threshold,
                         },
                     }
         return None

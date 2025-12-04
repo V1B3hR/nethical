@@ -29,6 +29,11 @@ from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
+# Configurable thresholds for danger pattern detection
+SPIKE_DETECTION_THRESHOLD = 5.0  # Spike if value > average * threshold
+OSCILLATION_SIGN_CHANGE_THRESHOLD = 8  # Min sign changes to detect oscillation
+BOUNDARY_RIDING_RATIO = 0.8  # Ratio of actions at limit to trigger detection
+
 
 class AnalysisMode(str, Enum):
     """Analysis mode for physical safety checks."""
@@ -200,6 +205,7 @@ class PhysicalSafetyDetector:
         safety_envelope: Optional[SafetyEnvelope] = None,
         history_size: int = 100,
         history_time_seconds: float = 10.0,
+        spike_threshold: float = SPIKE_DETECTION_THRESHOLD,
     ):
         """
         Initialize PhysicalSafetyDetector.
@@ -209,6 +215,7 @@ class PhysicalSafetyDetector:
             safety_envelope: Custom safety envelope (overrides robot_type defaults)
             history_size: Maximum number of actions to track
             history_time_seconds: Maximum time window for history
+            spike_threshold: Multiplier for sudden spike detection (default: 5.0)
         """
         self.name = "PhysicalSafetyDetector"
         self.robot_type = robot_type
@@ -217,6 +224,7 @@ class PhysicalSafetyDetector:
         )
         self.history_size = history_size
         self.history_time_seconds = history_time_seconds
+        self.spike_threshold = spike_threshold
 
         # History tracking per robot/agent
         self._context_history: Dict[str, deque] = {}
@@ -544,8 +552,8 @@ class PhysicalSafetyDetector:
                 if curr_val * prev_val < 0:  # Sign change
                     sign_changes += 1
 
-        # High number of sign changes indicates oscillation
-        if sign_changes >= 8:
+        # High number of sign changes indicates oscillation (configurable threshold)
+        if sign_changes >= OSCILLATION_SIGN_CHANGE_THRESHOLD:
             return SafetyViolation(
                 violation_id=f"oscillation_{uuid4().hex[:8]}",
                 action_id=None,
@@ -553,7 +561,10 @@ class PhysicalSafetyDetector:
                 severity="MEDIUM",
                 description=f"Oscillation detected: {sign_changes} direction changes",
                 confidence=0.85,
-                evidence=[f"sign_changes={sign_changes}"],
+                evidence=[
+                    f"sign_changes={sign_changes}",
+                    f"threshold={OSCILLATION_SIGN_CHANGE_THRESHOLD}",
+                ],
                 recommendations=[
                     "Check control loop stability",
                     "Review PID tuning",
@@ -578,8 +589,8 @@ class PhysicalSafetyDetector:
             historical_vals = [abs(getattr(ctx, axis)) for ctx in recent]
             avg_val = sum(historical_vals) / len(historical_vals) if historical_vals else 0
 
-            # Spike if current value is more than 5x the average
-            if avg_val > 0 and current_val > avg_val * 5:
+            # Spike if current value exceeds configurable threshold (default 5x the average)
+            if avg_val > 0 and current_val > avg_val * self.spike_threshold:
                 violations.append(
                     SafetyViolation(
                         violation_id=f"spike_{axis}_{uuid4().hex[:8]}",
@@ -588,7 +599,11 @@ class PhysicalSafetyDetector:
                         severity="HIGH",
                         description=f"Sudden spike in {axis}: {current_val:.3f} (avg: {avg_val:.3f})",
                         confidence=0.90,
-                        evidence=[f"{axis}={current_val:.3f}", f"avg={avg_val:.3f}"],
+                        evidence=[
+                            f"{axis}={current_val:.3f}",
+                            f"avg={avg_val:.3f}",
+                            f"threshold={self.spike_threshold}x",
+                        ],
                         recommendations=[
                             "Check for control malfunction",
                             "Verify sensor readings",
@@ -625,9 +640,9 @@ class PhysicalSafetyDetector:
                     at_limit_count += 1
                     break
 
-        # Boundary riding if more than 80% of recent actions are at limit
+        # Boundary riding if ratio of recent actions at limit exceeds threshold
         ratio = at_limit_count / len(recent)
-        if ratio > 0.8:
+        if ratio > BOUNDARY_RIDING_RATIO:
             return SafetyViolation(
                 violation_id=f"boundary_{uuid4().hex[:8]}",
                 action_id=None,
@@ -635,7 +650,10 @@ class PhysicalSafetyDetector:
                 severity="MEDIUM",
                 description=f"Boundary riding detected: {ratio*100:.0f}% at limits",
                 confidence=0.80,
-                evidence=[f"at_limit_ratio={ratio:.2f}"],
+                evidence=[
+                    f"at_limit_ratio={ratio:.2f}",
+                    f"threshold={BOUNDARY_RIDING_RATIO}",
+                ],
                 recommendations=[
                     "Review commanded velocities",
                     "Check if limits are appropriate",
