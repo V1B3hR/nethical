@@ -55,6 +55,19 @@ variable "tags" {
   default     = {}
 }
 
+variable "elasticache_kms_key_arn" {
+  description = "ARN of the KMS key to use for at-rest encryption. If not provided, encryption uses AWS managed key."
+  type        = string
+  default     = ""
+}
+
+variable "redis_auth_token" {
+  description = "Auth token (password) for Redis. Must be at least 16 characters. Provision via CI secrets or Terraform variables."
+  type        = string
+  sensitive   = true
+  default     = ""
+}
+
 # Primary region resources
 resource "aws_elasticache_subnet_group" "primary" {
   provider   = aws.primary
@@ -107,6 +120,8 @@ resource "aws_elasticache_replication_group" "primary" {
   
   at_rest_encryption_enabled = true
   transit_encryption_enabled = true
+  kms_key_id                 = var.elasticache_kms_key_arn != "" ? var.elasticache_kms_key_arn : null
+  auth_token                 = var.redis_auth_token != "" ? var.redis_auth_token : null
   
   snapshot_retention_limit = 7
   snapshot_window         = "03:00-05:00"

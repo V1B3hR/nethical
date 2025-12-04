@@ -67,6 +67,17 @@ variable "tags" {
   default     = {}
 }
 
+variable "kms_admin_iam_arn" {
+  description = "IAM ARN of the principal allowed to administer the KMS key (e.g., arn:aws:iam::123456789012:role/KMSAdminRole)"
+  type        = string
+}
+
+variable "eks_cluster_arn" {
+  description = "EKS cluster ARN used to constrain KMS key usage. If empty, defaults to constructed ARN from cluster_name."
+  type        = string
+  default     = ""
+}
+
 # IAM Role for EKS Cluster
 resource "aws_iam_role" "cluster" {
   name = "${var.cluster_name}-cluster-role"
@@ -188,8 +199,67 @@ resource "aws_kms_key" "eks" {
   deletion_window_in_days = 7
   enable_key_rotation     = true
   
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "eks-key-policy"
+    Statement = [
+      {
+        Sid    = "AllowAdminAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = var.kms_admin_iam_arn
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowEKSServiceUse"
+        Effect = "Allow"
+        Principal = {
+          Service = "eks.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService"    = "eks.${var.region}.amazonaws.com"
+            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
+          }
+          ArnLike = {
+            "kms:EncryptionContext:aws:eks:arn" = var.eks_cluster_arn != "" ? var.eks_cluster_arn : "arn:aws:eks:${var.region}:${data.aws_caller_identity.current.account_id}:cluster/${var.cluster_name}"
+          }
+        }
+      },
+      {
+        Sid    = "AllowClusterRole"
+        Effect = "Allow"
+        Principal = {
+          AWS = aws_iam_role.cluster.arn
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey",
+          "kms:CreateGrant"
+        ]
+        Resource = "*"
+      }
+    ]
+  })
+  
   tags = var.tags
 }
+
+# Data source for current AWS account
+data "aws_caller_identity" "current" {}
 
 # EKS Node Group
 resource "aws_eks_node_group" "main" {
