@@ -41,12 +41,13 @@ jobs:
 
       - name: Install pre-commit tools
         run: |
-          pip install bandit pre-commit gitleaks
+          pip install bandit pre-commit
 
-      - name: Run Gitleaks (Secrets Scanning)
-        uses: gitleaks/gitleaks-action@v2
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      - name: Run Gitleaks (Secrets Scanning) 
+        uses: gitleaks/gitleaks-action@v2 with: 
+        args: --redact --verbose # optional: pass CLI args to gitleaks (redact sensitive output) 
+        env: 
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
         continue-on-error: true
 
       - name: Run Bandit (SAST)
