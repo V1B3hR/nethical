@@ -43,11 +43,12 @@ jobs:
         run: |
           pip install bandit pre-commit
 
-      - name: Run Gitleaks (Secrets Scanning) 
-        uses: gitleaks/gitleaks-action@v2 with: 
-        args: --redact --verbose # optional: pass CLI args to gitleaks (redact sensitive output) 
-        env: 
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }} 
+      - name: Run Gitleaks (Secrets Scanning)
+        uses: gitleaks/gitleaks-action@v2
+        with:
+          args: --redact --verbose # optional: pass CLI args to gitleaks (redact sensitive output)
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
 
       - name: Run Bandit (SAST)
@@ -57,11 +58,11 @@ jobs:
         continue-on-error: true
 
       - name: Upload Bandit results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: bandit-results
           path: bandit-results.json
-        if: always()
 
   # =================================================================
   # Static Application Security Testing (SAST)
@@ -110,13 +111,16 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies
+      - name: Install tools
         run: |
           pip install safety pip-audit
 
-      - name: Run Safety Check
+      - name: Install project dependencies
         run: |
           pip install -r requirements.txt
+
+      - name: Run Safety Check
+        run: |
           safety check --json > safety-results.json || true
         continue-on-error: true
 
@@ -136,12 +140,13 @@ jobs:
         continue-on-error: true
 
       - name: Upload Trivy results to Security tab
+        if: always()
         uses: github/codeql-action/upload-sarif@v3
         with:
           sarif_file: trivy-dependency-results.sarif
-        if: always()
 
       - name: Upload dependency scan results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: dependency-scan-results
@@ -149,7 +154,6 @@ jobs:
             safety-results.json
             pip-audit-results.json
             trivy-dependency-results.sarif
-        if: always()
 
   # =================================================================
   # Container Security Scanning
@@ -163,10 +167,12 @@ jobs:
       - name: Build Docker image
         id: docker_build
         run: |
-          docker build -t nethical:security-scan . || echo "build_failed=true" >> $GITHUB_OUTPUT
+          set -e
+          docker build -t nethical:security-scan .
+        continue-on-error: true
 
       - name: Run Trivy (Container Scan)
-        if: steps.docker_build.outputs.build_failed != 'true'
+        if: success() && steps.docker_build.outcome == 'success'
         uses: aquasecurity/trivy-action@master
         with:
           image-ref: 'nethical:security-scan'
@@ -176,7 +182,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Grype (Container Scan)
-        if: steps.docker_build.outputs.build_failed != 'true'
+        if: success() && steps.docker_build.outcome == 'success'
         uses: anchore/scan-action@v4
         with:
           image: 'nethical:security-scan'
@@ -186,12 +192,12 @@ jobs:
         continue-on-error: true
 
       - name: Upload container scan results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: container-scan-results
           path: |
             trivy-container-results.sarif
-        if: always()
 
   # =================================================================
   # SBOM Generation
@@ -202,7 +208,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Generate SBOM with Syft
+      - name: Generate SBOM with Syft (SPDX)
         uses: anchore/sbom-action@v0
         with:
           path: '.'
@@ -230,7 +236,7 @@ jobs:
   dast:
     name: DAST Analysis
     runs-on: ubuntu-latest
-    if: github.event_name == 'schedule' || github.event.inputs.full_scan == 'true'
+    if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' && github.event.inputs.full_scan == 'true'
     steps:
       - uses: actions/checkout@v4
 
@@ -257,13 +263,13 @@ jobs:
         continue-on-error: true
 
       - name: Upload ZAP results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: zap-results
           path: |
             report_html.html
             report_json.json
-        if: always()
 
   # =================================================================
   # Infrastructure as Code Security
@@ -291,13 +297,13 @@ jobs:
         continue-on-error: true
 
       - name: Upload IaC scan results
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: iac-security-results
           path: |
             checkov-results.sarif
             kics-results/
-        if: always()
 
   # =================================================================
   # License Compliance
@@ -313,25 +319,28 @@ jobs:
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
-      - name: Install dependencies
+      - name: Install tools
         run: |
           pip install pip-licenses
 
-      - name: Generate license report
+      - name: Install project dependencies
         run: |
           pip install -r requirements.txt
+
+      - name: Generate license report
+        run: |
           pip-licenses --format=json --output-file=licenses.json
           pip-licenses --format=markdown --output-file=licenses.md
         continue-on-error: true
 
       - name: Upload license report
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: license-report
           path: |
             licenses.json
             licenses.md
-        if: always()
 
   # =================================================================
   # Security Report Aggregation
@@ -339,7 +348,14 @@ jobs:
   security-report:
     name: Security Report
     runs-on: ubuntu-latest
-    needs: [pre-commit-security, sast, dependency-scan, container-scan, sbom, iac-security, license-scan]
+    needs:
+      - pre-commit-security
+      - sast
+      - dependency-scan
+      - container-scan
+      - sbom
+      - iac-security
+      - license-scan
     if: always()
     steps:
       - uses: actions/checkout@v4
@@ -362,13 +378,12 @@ jobs:
           from datetime import datetime
 
           report = {
-              "generated_at": datetime.utcnow().isoformat(),
+              "generated_at": datetime.utcnow().isoformat() + "Z",
               "repository": os.environ.get("GITHUB_REPOSITORY", "unknown"),
               "run_id": os.environ.get("GITHUB_RUN_ID", "unknown"),
               "sections": {}
           }
 
-          # Check for various scan results
           sections = [
               ("bandit", "security-reports/bandit-results/bandit-results.json"),
               ("safety", "security-reports/dependency-scan-results/safety-results.json"),
@@ -381,8 +396,8 @@ jobs:
                   try:
                       with open(path) as f:
                           report["sections"][name] = json.load(f)
-                  except:
-                      report["sections"][name] = {"error": "Failed to parse"}
+                  except Exception as e:
+                      report["sections"][name] = {"error": f"Failed to parse: {e}"}
               else:
                   report["sections"][name] = {"status": "not_found"}
 
@@ -402,17 +417,19 @@ jobs:
 
       - name: Create summary
         run: |
-          echo "## Security Scan Summary" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "| Check | Status |" >> $GITHUB_STEP_SUMMARY
-          echo "|-------|--------|" >> $GITHUB_STEP_SUMMARY
-          echo "| Pre-commit Security | ${{ needs.pre-commit-security.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| SAST Analysis | ${{ needs.sast.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Dependency Scan | ${{ needs.dependency-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| Container Scan | ${{ needs.container-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| SBOM Generation | ${{ needs.sbom.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| IaC Security | ${{ needs.iac-security.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "| License Compliance | ${{ needs.license-scan.result }} |" >> $GITHUB_STEP_SUMMARY
-          echo "" >> $GITHUB_STEP_SUMMARY
-          echo "**Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
-          echo "**Triggered by:** ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          {
+            echo "## Security Scan Summary"
+            echo ""
+            echo "| Check | Status |"
+            echo "|-------|--------|"
+            echo "| Pre-commit Security | ${{ needs.pre-commit-security.result }} |"
+            echo "| SAST Analysis | ${{ needs.sast.result }} |"
+            echo "| Dependency Scan | ${{ needs.dependency-scan.result }} |"
+            echo "| Container Scan | ${{ needs.container-scan.result }} |"
+            echo "| SBOM Generation | ${{ needs.sbom.result }} |"
+            echo "| IaC Security | ${{ needs.iac-security.result }} |"
+            echo "| License Compliance | ${{ needs.license-scan.result }} |"
+            echo ""
+            echo "**Run ID:** ${{ github.run_id }}"
+            echo "**Triggered by:** ${{ github.event_name }}"
+          } >> "$GITHUB_STEP_SUMMARY"
