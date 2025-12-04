@@ -1,13 +1,16 @@
 from setuptools import setup, find_packages
 
 setup(
-    # ... other metadata ...
+    name="sqlinjectiondetector",
+    version="0.1.0",
+    description="A plugin for detecting SQL injection vulnerabilities.",
+    author="Your Name",
+    author_email="your.email@example.com",
     packages=find_packages(include=[
         'cli', 'data', 'audit', 'probes', 'models', 'portal', 'assets', 'deploy',
         'config', 'formal', 'policies', 'training', 'nethical', 'datasets',
         'security', 'dashboards', 'taxonomies', 'governance'
     ]),
-),
     extras_require={
         "dev": [
             "pytest>=7.0.0",
