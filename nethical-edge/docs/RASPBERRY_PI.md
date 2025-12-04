@@ -195,6 +195,23 @@ For Raspberry Pi with ROS Noetic or ROS2:
 
 ```python
 #!/usr/bin/env python3
+"""
+Nethical ROS Integration with Full 6-DOF Support
+
+This example demonstrates governance of robotic systems with complete
+6 Degrees of Freedom context for both mobile robots and robotic arms.
+
+6-DOF Context Schema:
+- Translation (linear movement):
+  - linear_x: Forward/backward
+  - linear_y: Left/right  
+  - linear_z: Up/down (NEW - for robotic arms, drones)
+
+- Rotation (angular movement):
+  - angular_x: Roll (NEW - for robotic arms, manipulators)
+  - angular_y: Pitch (NEW - for robotic arms, manipulators)
+  - angular_z: Yaw
+"""
 import rospy
 from std_msgs.msg import String
 from geometry_msgs.msg import Twist
@@ -226,27 +243,42 @@ class NethicalROS:
         rospy.loginfo("Nethical governance node started")
     
     def velocity_callback(self, msg: Twist):
-        # Evaluate movement action
+        # Evaluate movement action with FULL 6-DOF context
+        # This supports robotic arms, drones, and complex manipulators
         result = self.governor.evaluate(
             action="move_robot",
             action_type="physical_action",
             context={
-                "linear_x": msg.linear.x,
-                "linear_y": msg.linear.y,
-                "angular_z": msg.angular.z,
+                # Translation (linear movement)
+                "linear_x": msg.linear.x,     # Forward/backward
+                "linear_y": msg.linear.y,     # Left/right
+                "linear_z": msg.linear.z,     # Up/down (for arms/drones)
+                
+                # Rotation (angular movement)
+                "angular_x": msg.angular.x,   # Roll (for arms/manipulators)
+                "angular_y": msg.angular.y,   # Pitch (for arms/manipulators)
+                "angular_z": msg.angular.z,   # Yaw
+                
+                # Optional safety context
+                "near_humans": False,  # Set True if humans detected nearby
+                "max_limit": 1.0,      # Maximum velocity limit
             }
         )
         
         if result.decision.value == "ALLOW":
             self.vel_pub.publish(msg)
         elif result.decision.value == "RESTRICT":
-            # Limit velocity
+            # Limit velocity on all axes
             limited = Twist()
-            limited.linear.x = min(msg.linear.x, 0.5)
-            limited.angular.z = min(msg.angular.z, 0.5)
+            limited.linear.x = max(-0.5, min(msg.linear.x, 0.5))
+            limited.linear.y = max(-0.5, min(msg.linear.y, 0.5))
+            limited.linear.z = max(-0.5, min(msg.linear.z, 0.5))
+            limited.angular.x = max(-0.5, min(msg.angular.x, 0.5))
+            limited.angular.y = max(-0.5, min(msg.angular.y, 0.5))
+            limited.angular.z = max(-0.5, min(msg.angular.z, 0.5))
             self.vel_pub.publish(limited)
         else:
-            # Stop robot
+            # Emergency stop - zero all velocities
             self.vel_pub.publish(Twist())
     
     def run(self):
@@ -255,6 +287,40 @@ class NethicalROS:
 if __name__ == '__main__':
     node = NethicalROS()
     node.run()
+```
+
+### Fast Safety Checks for Real-Time Control
+
+For safety-critical applications requiring <1ms latency:
+
+```python
+from nethical_edge import EdgeGovernor, AnalysisMode
+
+governor = EdgeGovernor(device_id="robot-arm-001")
+
+def control_loop_callback(msg: Twist):
+    # Fast "shallow" check for real-time safety (<1ms target)
+    context = {
+        "linear_x": msg.linear.x,
+        "linear_y": msg.linear.y,
+        "linear_z": msg.linear.z,
+        "angular_x": msg.angular.x,
+        "angular_y": msg.angular.y,
+        "angular_z": msg.angular.z,
+    }
+    
+    # Shallow analysis: threshold checks only
+    is_safe, violations = governor.fast_check(context)
+    
+    if not is_safe:
+        # Emergency stop
+        return Twist()
+    
+    # Optionally run deep analysis in background
+    # for behavioral profiling (10-50ms)
+    # governor.evaluate_async(context, mode=AnalysisMode.DEEP)
+    
+    return msg
 ```
 
 ## Systemd Service

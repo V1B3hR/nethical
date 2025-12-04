@@ -167,10 +167,38 @@ class ActionType(str, Enum):
     MODEL_UPDATE = "model_update"
     SYSTEM_COMMAND = "system_command"
     EXTERNAL_API = "external_api"
+    
+    # Physical action types for robotic systems (6-DOF support)
+    PHYSICAL_ACTION = "physical_action"  # General physical/robotic action
+    ROBOT_MOVE = "robot_move"  # Robot movement command
+    ROBOT_MANIPULATE = "robot_manipulate"  # Robotic arm manipulation
+    ROBOT_GRASP = "robot_grasp"  # Grasping/gripper action
+    ROBOT_NAVIGATE = "robot_navigate"  # Autonomous navigation
+    EMERGENCY_STOP = "emergency_stop"  # Emergency stop command
 
     def is_privileged(self) -> bool:
         """Check if action type requires elevated privileges."""
         return self in {ActionType.MODEL_UPDATE, ActionType.SYSTEM_COMMAND, ActionType.DATA_ACCESS}
+
+    def is_physical(self) -> bool:
+        """Check if action type involves physical/robotic movement."""
+        return self in {
+            ActionType.PHYSICAL_ACTION,
+            ActionType.ROBOT_MOVE,
+            ActionType.ROBOT_MANIPULATE,
+            ActionType.ROBOT_GRASP,
+            ActionType.ROBOT_NAVIGATE,
+            ActionType.EMERGENCY_STOP,
+        }
+
+    def is_safety_critical(self) -> bool:
+        """Check if action type is safety-critical (requires fast analysis)."""
+        return self in {
+            ActionType.PHYSICAL_ACTION,
+            ActionType.ROBOT_MOVE,
+            ActionType.ROBOT_MANIPULATE,
+            ActionType.EMERGENCY_STOP,
+        }
 
 
 # ============== Base Config ==============

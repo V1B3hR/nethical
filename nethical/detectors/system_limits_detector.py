@@ -140,6 +140,87 @@ class SystemLimitsDetector(BaseDetector):
         # External hooks (e.g., alerting, telemetry)
         self.external_alert_hook = None
 
+        # Fast analysis thresholds for shallow checks
+        self._fast_max_payload_size = 50_000  # Stricter limit for fast checks
+        self._fast_max_rate = 100  # Commands per second for fast rate check
+        self._fast_metrics = {
+            "shallow_checks": 0,
+            "deep_checks": 0,
+            "shallow_latencies_ms": deque(maxlen=1000),
+            "deep_latencies_ms": deque(maxlen=1000),
+        }
+
+    def fast_check(self, action: AgentAction) -> Tuple[bool, List[str]]:
+        """
+        Fast "shallow" analysis for real-time safety-critical decisions.
+
+        Target latency: <1ms
+
+        Performs only simple threshold checks:
+        - Payload size limit
+        - Basic rate limiting (commands per second)
+        - Pre-computed safety violations
+
+        Args:
+            action: The agent action to check
+
+        Returns:
+            Tuple of (is_safe, list of violation descriptions)
+        """
+        start_time = time.perf_counter()
+        violations = []
+        is_safe = True
+
+        # 1. Fast payload size check (simple comparison)
+        payload_size = len(action.actual_action)
+        if payload_size > self._fast_max_payload_size:
+            violations.append(f"Payload too large: {payload_size} chars")
+            is_safe = False
+
+        # 2. Fast rate check (simple counter)
+        agent_id = action.agent_id
+        current_time = time.time()
+        self.request_history[agent_id].append(current_time)
+
+        # Count requests in last second
+        one_second_ago = current_time - 1.0
+        recent_count = sum(1 for t in self.request_history[agent_id] if t >= one_second_ago)
+
+        if recent_count > self._fast_max_rate:
+            violations.append(f"Rate limit exceeded: {recent_count}/s")
+            is_safe = False
+
+        # 3. Check agent reputation (pre-computed)
+        if self.agent_reputation.get(agent_id, 1.0) < 0.3:
+            violations.append("Agent has low reputation score")
+            is_safe = False
+
+        # Track metrics
+        latency_ms = (time.perf_counter() - start_time) * 1000
+        self._fast_metrics["shallow_checks"] += 1
+        self._fast_metrics["shallow_latencies_ms"].append(latency_ms)
+
+        return is_safe, violations
+
+    def get_fast_check_metrics(self) -> Dict[str, Any]:
+        """Get metrics for fast analysis mode."""
+        shallow_latencies = list(self._fast_metrics["shallow_latencies_ms"])
+        return {
+            "shallow_checks": self._fast_metrics["shallow_checks"],
+            "deep_checks": self._fast_metrics["deep_checks"],
+            "avg_shallow_latency_ms": (
+                sum(shallow_latencies) / len(shallow_latencies)
+                if shallow_latencies
+                else 0
+            ),
+            "max_shallow_latency_ms": max(shallow_latencies) if shallow_latencies else 0,
+            "p99_shallow_latency_ms": (
+                sorted(shallow_latencies)[int(len(shallow_latencies) * 0.99)]
+                if len(shallow_latencies) > 10
+                else 0
+            ),
+        }
+
     async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
         if not self.enabled:
             return []
