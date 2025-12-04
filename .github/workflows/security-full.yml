@@ -46,7 +46,7 @@ jobs:
       - name: Run Gitleaks (Secrets Scanning)
         uses: gitleaks/gitleaks-action@v2
         with:
-          args: --redact --verbose # optional: pass CLI args to gitleaks (redact sensitive output)
+          args: --redact --verbose
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         continue-on-error: true
