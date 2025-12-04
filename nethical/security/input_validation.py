@@ -43,6 +43,8 @@ __all__ = [
     "BehavioralAnalyzer",
     "AdversarialInputDefense",
     "RegexTimeoutError",
+    "AgentType",
+    "DEFAULT_MEMORY_WINDOWS",
 ]
 
 log = logging.getLogger(__name__)
@@ -453,6 +455,25 @@ class ThreatIntelligenceDB:
         return 0
 
 
+class AgentType(str, Enum):
+    """Agent type classifications for behavioral analysis."""
+
+    FAST_ROBOT = "fast_robot"  # Robotic arms, fast actuators
+    CHATBOT = "chatbot"  # AI assistants, chatbots
+    INDUSTRIAL = "industrial"  # Industrial machines
+    DEFAULT = "default"  # Default/unknown agent type
+
+
+# Default memory window configurations per agent type
+# Format: (max_actions, max_time_seconds)
+DEFAULT_MEMORY_WINDOWS: Dict[str, tuple] = {
+    AgentType.FAST_ROBOT: (100, 10),  # 100 actions OR 10 seconds
+    AgentType.CHATBOT: (200, 600),  # 200 actions OR 10 minutes (600s)
+    AgentType.INDUSTRIAL: (200, 30),  # 200 actions OR 30 seconds
+    AgentType.DEFAULT: (100, 300),  # 100 actions OR 5 minutes (300s)
+}
+
+
 class BehavioralAnalyzer:
     """
     Behavioral Analysis for Agent History
@@ -462,25 +483,82 @@ class BehavioralAnalyzer:
     - Coordinated attacks
     - Gradual privilege escalation
     - Repeated violations
+    - Dangerous agent behaviors (sudden spikes, oscillation, etc.)
+
+    Supports configurable memory windows per agent type:
+    - Fast robots/arms: 50-100 actions OR 5-10 seconds
+    - Chatbots/AI assistants: 100-200 actions OR 10 minutes
+    - Industrial machines: 200 actions OR 30 seconds
     """
 
-    def __init__(self, lookback_window: int = 100):
+    def __init__(
+        self,
+        lookback_window: int = 100,
+        time_window_seconds: int = 600,
+        agent_type: str = AgentType.DEFAULT,
+        custom_windows: Optional[Dict[str, tuple]] = None,
+    ):
         """
-        Initialize behavioral analyzer
+        Initialize behavioral analyzer with configurable memory windows.
 
         Args:
-            lookback_window: Number of historical actions to analyze
+            lookback_window: Default number of historical actions to analyze
+            time_window_seconds: Default time window in seconds (default: 600 = 10 minutes)
+            agent_type: Type of agent for automatic window configuration
+            custom_windows: Custom memory windows per agent type {type: (max_actions, max_time_seconds)}
         """
-        self.lookback_window = lookback_window
+        # Use agent-type-specific defaults if not explicitly provided
+        memory_windows = custom_windows or DEFAULT_MEMORY_WINDOWS
+        if agent_type in memory_windows:
+            default_actions, default_time = memory_windows[agent_type]
+            self.lookback_window = lookback_window if lookback_window != 100 else default_actions
+            self.time_window_seconds = (
+                time_window_seconds if time_window_seconds != 600 else default_time
+            )
+        else:
+            self.lookback_window = lookback_window
+            self.time_window_seconds = time_window_seconds
+
+        self.agent_type = agent_type
+        self._memory_windows = memory_windows
         self._agent_history: Dict[str, List[Dict[str, Any]]] = {}
         self._baseline_profiles: Dict[str, Dict[str, Any]] = {}
+        self._agent_types: Dict[str, str] = {}  # Map agent_id -> agent_type
+        self._rolling_stats: Dict[str, Dict[str, Any]] = {}  # Statistical summaries
 
-        log.info("Behavioral Analyzer initialized")
+        log.info(
+            f"Behavioral Analyzer initialized: agent_type={agent_type}, "
+            f"lookback_window={self.lookback_window}, time_window={self.time_window_seconds}s"
+        )
+
+    def set_agent_type(self, agent_id: str, agent_type: str) -> None:
+        """
+        Set the agent type for a specific agent to use appropriate memory windows.
+
+        Args:
+            agent_id: Agent identifier
+            agent_type: One of AgentType values
+        """
+        self._agent_types[agent_id] = agent_type
+        log.debug(f"Set agent type for {agent_id}: {agent_type}")
+
+    def get_memory_window(self, agent_id: str) -> tuple:
+        """
+        Get the memory window configuration for an agent.
+
+        Returns:
+            Tuple of (max_actions, max_time_seconds)
+        """
+        agent_type = self._agent_types.get(agent_id, self.agent_type)
+        if agent_type in self._memory_windows:
+            return self._memory_windows[agent_type]
+        return (self.lookback_window, self.time_window_seconds)
 
     async def analyze_agent_behavior(
         self,
         agent_id: str,
         current_action: Dict[str, Any],
+        agent_type: Optional[str] = None,
     ) -> Dict[str, Any]:
         """
         Analyze agent's behavioral patterns
@@ -488,11 +566,17 @@ class BehavioralAnalyzer:
         Args:
             agent_id: Agent identifier
             current_action: Current action being performed
+            agent_type: Optional agent type override for this analysis
 
         Returns:
-            Behavioral analysis results
+            Behavioral analysis results including danger patterns
         """
-        # Get agent history
+        # Set agent type if provided
+        if agent_type:
+            self.set_agent_type(agent_id, agent_type)
+
+        # Get agent history (after eviction)
+        self._evict_old_entries(agent_id)
         history = self._agent_history.get(agent_id, [])
 
         # Build/update baseline profile
@@ -506,18 +590,93 @@ class BehavioralAnalyzer:
             history,
         )
 
-        # Detect patterns
+        # Detect patterns including danger signals
         patterns = self._detect_patterns(agent_id, current_action, history)
+
+        # Detect danger patterns
+        danger_patterns = self._detect_danger_patterns(agent_id, current_action, history)
 
         # Update history
         self._update_history(agent_id, current_action)
 
+        # Update rolling stats for memory management
+        self._update_rolling_stats(agent_id, current_action, history)
+
         return {
             "anomaly_score": anomaly_score,
             "patterns": patterns,
+            "danger_patterns": danger_patterns,
             "baseline_deviation": anomaly_score > 0.5,
             "history_count": len(history),
+            "memory_window": self.get_memory_window(agent_id),
+            "rolling_stats": self._rolling_stats.get(agent_id, {}),
         }
+
+    def _evict_old_entries(self, agent_id: str) -> None:
+        """
+        Evict old entries based on time and count limits.
+        Uses fixed-size deque behavior for automatic oldest eviction.
+        """
+        if agent_id not in self._agent_history:
+            return
+
+        max_actions, max_time_seconds = self.get_memory_window(agent_id)
+        current_time = datetime.now(timezone.utc)
+        cutoff_time = current_time - timedelta(seconds=max_time_seconds)
+
+        # Time-based eviction
+        history = self._agent_history[agent_id]
+        filtered_history = []
+        for action in history:
+            try:
+                action_time = datetime.fromisoformat(
+                    action.get("timestamp", current_time.isoformat())
+                )
+                if action_time.tzinfo is None:
+                    action_time = action_time.replace(tzinfo=timezone.utc)
+                if action_time >= cutoff_time:
+                    filtered_history.append(action)
+            except (ValueError, TypeError):
+                # Keep actions with invalid timestamps
+                filtered_history.append(action)
+
+        # Count-based eviction (keep most recent)
+        if len(filtered_history) > max_actions:
+            filtered_history = filtered_history[-max_actions:]
+
+        self._agent_history[agent_id] = filtered_history
+
+    def _update_rolling_stats(
+        self, agent_id: str, current_action: Dict[str, Any], history: List[Dict[str, Any]]
+    ) -> None:
+        """
+        Update rolling statistics for memory-efficient profiling.
+        Keeps statistical summaries instead of raw data.
+        """
+        if agent_id not in self._rolling_stats:
+            self._rolling_stats[agent_id] = {
+                "total_actions": 0,
+                "total_violations": 0,
+                "avg_content_length": 0.0,
+                "violation_rate": 0.0,
+            }
+
+        stats = self._rolling_stats[agent_id]
+        stats["total_actions"] += 1
+
+        if current_action.get("has_violation", False):
+            stats["total_violations"] += 1
+
+        # Update running average of content length
+        content_length = len(str(current_action.get("content", "")))
+        n = stats["total_actions"]
+        stats["avg_content_length"] = (
+            stats["avg_content_length"] * (n - 1) + content_length
+        ) / n
+
+        # Update violation rate
+        if stats["total_actions"] > 0:
+            stats["violation_rate"] = stats["total_violations"] / stats["total_actions"]
 
     def _build_baseline(self, history: List[Dict[str, Any]]) -> Dict[str, Any]:
         """Build baseline behavior profile"""
@@ -585,6 +744,385 @@ class BehavioralAnalyzer:
             patterns.append("potential_escalation")
 
         return patterns
+
+    def _detect_danger_patterns(
+        self,
+        agent_id: str,
+        current_action: Dict[str, Any],
+        history: List[Dict[str, Any]],
+    ) -> List[Dict[str, Any]]:
+        """
+        Detect dangerous agent behaviors.
+
+        Danger signals detected:
+        - sudden_spike: Unexpected jump in any metric
+        - high_jerk: Large delta between consecutive actions
+        - boundary_riding: Continuously at max limits
+        - oscillation: Rapid back-and-forth behavior
+        - privilege_escalation: New action types never seen before
+        - frequency_anomaly: Too many commands too fast
+        - contextual_violation: Dangerous in context
+        - pattern_deviation: Behavior unlike historical baseline
+        - repeated_violations: Multiple blocked actions
+
+        Returns:
+            List of detected danger patterns with details
+        """
+        danger_patterns = []
+
+        if not history:
+            return danger_patterns
+
+        # Get numeric values from current and historical actions for analysis
+        current_values = self._extract_numeric_values(current_action)
+        historical_values = [self._extract_numeric_values(a) for a in history[-10:]]
+
+        # 1. Sudden spike detection
+        spike_result = self._detect_sudden_spike(current_values, historical_values)
+        if spike_result:
+            danger_patterns.append(spike_result)
+
+        # 2. High jerk detection (rapid acceleration changes)
+        jerk_result = self._detect_high_jerk(current_values, historical_values)
+        if jerk_result:
+            danger_patterns.append(jerk_result)
+
+        # 3. Boundary riding detection
+        boundary_result = self._detect_boundary_riding(current_action, history)
+        if boundary_result:
+            danger_patterns.append(boundary_result)
+
+        # 4. Oscillation detection
+        oscillation_result = self._detect_oscillation(history)
+        if oscillation_result:
+            danger_patterns.append(oscillation_result)
+
+        # 5. Privilege escalation detection
+        escalation_result = self._detect_privilege_escalation(current_action, history)
+        if escalation_result:
+            danger_patterns.append(escalation_result)
+
+        # 6. Frequency anomaly detection
+        frequency_result = self._detect_frequency_anomaly(agent_id, history)
+        if frequency_result:
+            danger_patterns.append(frequency_result)
+
+        # 7. Contextual violation detection
+        contextual_result = self._detect_contextual_violation(current_action, history)
+        if contextual_result:
+            danger_patterns.append(contextual_result)
+
+        # 8. Pattern deviation detection
+        deviation_result = self._detect_pattern_deviation(current_action, history)
+        if deviation_result:
+            danger_patterns.append(deviation_result)
+
+        # 9. Repeated violations detection
+        violation_result = self._detect_repeated_violations(history)
+        if violation_result:
+            danger_patterns.append(violation_result)
+
+        return danger_patterns
+
+    def _extract_numeric_values(self, action: Dict[str, Any]) -> Dict[str, float]:
+        """Extract numeric values from an action for analysis."""
+        values = {}
+        context = action.get("context", {})
+
+        # Extract any numeric values from context
+        for key, value in context.items():
+            if isinstance(value, (int, float)):
+                values[key] = float(value)
+
+        # Also check for common fields
+        for field in ["speed", "velocity", "rate", "value", "score"]:
+            if field in action and isinstance(action[field], (int, float)):
+                values[field] = float(action[field])
+
+        return values
+
+    def _detect_sudden_spike(
+        self, current_values: Dict[str, float], historical_values: List[Dict[str, float]]
+    ) -> Optional[Dict[str, Any]]:
+        """Detect sudden spikes - unexpected jumps in any metric."""
+        if not historical_values or not current_values:
+            return None
+
+        for key, current_val in current_values.items():
+            # Get historical values for this key
+            hist_vals = [h.get(key, 0) for h in historical_values if key in h]
+            if not hist_vals:
+                continue
+
+            avg = sum(hist_vals) / len(hist_vals)
+            if avg == 0:
+                continue
+
+            # Check for sudden spike (more than 5x average)
+            if abs(current_val) > abs(avg) * 5:
+                return {
+                    "type": "sudden_spike",
+                    "severity": "high",
+                    "details": {
+                        "metric": key,
+                        "current_value": current_val,
+                        "average_value": avg,
+                        "spike_ratio": abs(current_val / avg) if avg != 0 else float("inf"),
+                    },
+                }
+        return None
+
+    def _detect_high_jerk(
+        self, current_values: Dict[str, float], historical_values: List[Dict[str, float]]
+    ) -> Optional[Dict[str, Any]]:
+        """Detect high jerk - large delta between consecutive actions."""
+        if len(historical_values) < 2 or not current_values:
+            return None
+
+        last_values = historical_values[-1] if historical_values else {}
+
+        for key, current_val in current_values.items():
+            if key not in last_values:
+                continue
+
+            last_val = last_values[key]
+            delta = abs(current_val - last_val)
+
+            # Calculate typical delta from history
+            deltas = []
+            for i in range(1, len(historical_values)):
+                if key in historical_values[i] and key in historical_values[i - 1]:
+                    deltas.append(
+                        abs(historical_values[i][key] - historical_values[i - 1][key])
+                    )
+
+            if deltas:
+                avg_delta = sum(deltas) / len(deltas)
+                # High jerk if delta is more than 10x average
+                if avg_delta > 0 and delta > avg_delta * 10:
+                    return {
+                        "type": "high_jerk",
+                        "severity": "high",
+                        "details": {
+                            "metric": key,
+                            "current_delta": delta,
+                            "average_delta": avg_delta,
+                            "jerk_ratio": delta / avg_delta if avg_delta > 0 else float("inf"),
+                        },
+                    }
+        return None
+
+    def _detect_boundary_riding(
+        self, current_action: Dict[str, Any], history: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """Detect boundary riding - continuously operating at max limits."""
+        context = current_action.get("context", {})
+        max_limit = context.get("max_limit", 1.0)
+
+        # Check for values at or near max limit
+        at_limit_count = 0
+        check_count = min(10, len(history))
+
+        for action in history[-check_count:]:
+            action_context = action.get("context", {})
+            for key, value in action_context.items():
+                if isinstance(value, (int, float)):
+                    action_max = action_context.get("max_limit", max_limit)
+                    if action_max > 0 and abs(value) >= action_max * 0.95:
+                        at_limit_count += 1
+                        break
+
+        # If more than 80% of recent actions are at limit
+        if check_count > 0 and at_limit_count / check_count > 0.8:
+            return {
+                "type": "boundary_riding",
+                "severity": "medium",
+                "details": {
+                    "at_limit_ratio": at_limit_count / check_count,
+                    "checked_actions": check_count,
+                },
+            }
+        return None
+
+    def _detect_oscillation(self, history: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+        """Detect oscillation - rapid back-and-forth behavior."""
+        if len(history) < 6:
+            return None
+
+        # Look for sign changes in numeric values
+        recent_history = history[-10:]
+        sign_changes = 0
+
+        for i in range(1, len(recent_history)):
+            current_context = recent_history[i].get("context", {})
+            prev_context = recent_history[i - 1].get("context", {})
+
+            for key in current_context:
+                if key in prev_context:
+                    curr_val = current_context.get(key, 0)
+                    prev_val = prev_context.get(key, 0)
+                    if isinstance(curr_val, (int, float)) and isinstance(prev_val, (int, float)):
+                        if curr_val * prev_val < 0:  # Sign change
+                            sign_changes += 1
+
+        # Oscillation if many sign changes
+        if sign_changes >= 4:
+            return {
+                "type": "oscillation",
+                "severity": "medium",
+                "details": {
+                    "sign_changes": sign_changes,
+                    "checked_actions": len(recent_history),
+                },
+            }
+        return None
+
+    def _detect_privilege_escalation(
+        self, current_action: Dict[str, Any], history: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """Detect privilege escalation - new action types never seen before."""
+        current_type = current_action.get("action_type", "")
+
+        if not current_type:
+            return None
+
+        # Get all historical action types
+        historical_types = {a.get("action_type", "") for a in history}
+
+        # Check for new high-privilege action types
+        privileged_actions = {
+            "system_command",
+            "file_delete",
+            "data_access",
+            "model_update",
+            "admin_action",
+            "config_change",
+        }
+
+        if current_type in privileged_actions and current_type not in historical_types:
+            return {
+                "type": "privilege_escalation",
+                "severity": "critical",
+                "details": {
+                    "new_action_type": current_type,
+                    "historical_types": list(historical_types),
+                },
+            }
+        return None
+
+    def _detect_frequency_anomaly(
+        self, agent_id: str, history: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """Detect frequency anomaly - too many commands too fast."""
+        if len(history) < 10:
+            return None
+
+        # Calculate actions per second in recent history
+        recent = history[-20:]
+        if len(recent) < 2:
+            return None
+
+        try:
+            timestamps = []
+            for action in recent:
+                ts_str = action.get("timestamp", "")
+                if ts_str:
+                    ts = datetime.fromisoformat(ts_str)
+                    timestamps.append(ts)
+
+            if len(timestamps) < 2:
+                return None
+
+            timestamps.sort()
+            time_span = (timestamps[-1] - timestamps[0]).total_seconds()
+
+            if time_span > 0:
+                actions_per_second = len(timestamps) / time_span
+                # Anomaly if more than 10 actions per second
+                if actions_per_second > 10:
+                    return {
+                        "type": "frequency_anomaly",
+                        "severity": "high",
+                        "details": {
+                            "actions_per_second": actions_per_second,
+                            "action_count": len(timestamps),
+                            "time_span_seconds": time_span,
+                        },
+                    }
+        except (ValueError, TypeError):
+            pass
+        return None
+
+    def _detect_contextual_violation(
+        self, current_action: Dict[str, Any], history: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """Detect contextual violation - dangerous in context."""
+        context = current_action.get("context", {})
+
+        # Check for dangerous context combinations
+        speed = context.get("speed", context.get("velocity", 0))
+        near_humans = context.get("near_humans", context.get("humans_nearby", False))
+
+        if isinstance(speed, (int, float)) and speed > 0.5 and near_humans:
+            return {
+                "type": "contextual_violation",
+                "severity": "critical",
+                "details": {
+                    "violation": "high_speed_near_humans",
+                    "speed": speed,
+                    "near_humans": near_humans,
+                },
+            }
+        return None
+
+    def _detect_pattern_deviation(
+        self, current_action: Dict[str, Any], history: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """Detect pattern deviation - behavior unlike historical baseline."""
+        if len(history) < 20:
+            return None
+
+        # Compare current action characteristics to historical baseline
+        baseline = self._build_baseline(history)
+        current_length = len(str(current_action.get("content", "")))
+        baseline_length = baseline.get("typical_content_length", 0)
+
+        # Check for significant deviation
+        if baseline_length > 0:
+            deviation_ratio = abs(current_length - baseline_length) / baseline_length
+            if deviation_ratio > 5:  # More than 5x deviation
+                return {
+                    "type": "pattern_deviation",
+                    "severity": "medium",
+                    "details": {
+                        "current_length": current_length,
+                        "baseline_length": baseline_length,
+                        "deviation_ratio": deviation_ratio,
+                    },
+                }
+        return None
+
+    def _detect_repeated_violations(
+        self, history: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
+        """Detect repeated violations - agent keeps trying blocked actions."""
+        if len(history) < 5:
+            return None
+
+        recent_violations = sum(
+            1 for a in history[-20:] if a.get("has_violation", False) or a.get("blocked", False)
+        )
+
+        if recent_violations >= 5:
+            return {
+                "type": "repeated_violations",
+                "severity": "high",
+                "details": {
+                    "violation_count": recent_violations,
+                    "checked_actions": min(20, len(history)),
+                },
+            }
+        return None
 
     def _update_history(self, agent_id: str, action: Dict[str, Any]) -> None:
         """Update agent history"""

@@ -17,6 +17,50 @@ logger = logging.getLogger(__name__)
 
 
 @dataclass
+class SixDOFContextPattern:
+    """
+    Pattern for 6-DOF (6 Degrees of Freedom) robot context.
+
+    Used for pre-computing decisions for common robotic movements.
+    
+    Translation (linear movement):
+    - linear_x: Forward/backward
+    - linear_y: Left/right
+    - linear_z: Up/down
+
+    Rotation (angular movement):
+    - angular_x: Roll
+    - angular_y: Pitch
+    - angular_z: Yaw
+    """
+
+    linear_x_range: Tuple[float, float] = (-1.0, 1.0)
+    linear_y_range: Tuple[float, float] = (-1.0, 1.0)
+    linear_z_range: Tuple[float, float] = (-1.0, 1.0)
+    angular_x_range: Tuple[float, float] = (-1.0, 1.0)
+    angular_y_range: Tuple[float, float] = (-1.0, 1.0)
+    angular_z_range: Tuple[float, float] = (-1.0, 1.0)
+
+    def matches(self, context: Dict[str, Any]) -> bool:
+        """Check if a context matches this pattern."""
+        checks = [
+            ("linear_x", self.linear_x_range),
+            ("linear_y", self.linear_y_range),
+            ("linear_z", self.linear_z_range),
+            ("angular_x", self.angular_x_range),
+            ("angular_y", self.angular_y_range),
+            ("angular_z", self.angular_z_range),
+        ]
+        
+        for key, (min_val, max_val) in checks:
+            value = context.get(key, 0.0)
+            if isinstance(value, (int, float)):
+                if not (min_val <= value <= max_val):
+                    return False
+        return True
+
+
+@dataclass
 class PredictionProfile:
     """
     Prediction profile for a specific domain.
@@ -27,6 +71,7 @@ class PredictionProfile:
         action_weights: Frequency weights for actions
         context_patterns: Common context patterns
         warmup_actions: Actions to pre-compute on startup
+        six_dof_patterns: Pre-computed 6-DOF patterns for robotics
     """
 
     domain: str
@@ -34,6 +79,7 @@ class PredictionProfile:
     action_weights: Dict[str, float] = field(default_factory=dict)
     context_patterns: List[Dict[str, Any]] = field(default_factory=list)
     warmup_actions: List[Dict[str, Any]] = field(default_factory=list)
+    six_dof_patterns: List[SixDOFContextPattern] = field(default_factory=list)
 
 
 class PredictiveEngine:
@@ -279,3 +325,100 @@ class PredictiveEngine:
                 "patterns_learned": len(self._action_patterns),
                 "profiles_loaded": len(self._profiles),
             }
+
+    def matches_six_dof_pattern(
+        self, context: Dict[str, Any], domain: Optional[str] = None
+    ) -> bool:
+        """
+        Check if context matches any pre-computed 6-DOF pattern.
+
+        Useful for fast safety checks on robotic contexts.
+
+        Args:
+            context: 6-DOF context with linear_x/y/z and angular_x/y/z
+            domain: Optional domain filter
+
+        Returns:
+            True if context matches a known safe pattern
+        """
+        profiles = (
+            [self._profiles[domain]] if domain and domain in self._profiles
+            else self._profiles.values()
+        )
+
+        for profile in profiles:
+            for pattern in profile.six_dof_patterns:
+                if pattern.matches(context):
+                    return True
+
+        return False
+
+    def create_robot_profile(
+        self,
+        domain: str,
+        max_linear_velocity: float = 1.0,
+        max_angular_velocity: float = 1.0,
+    ) -> PredictionProfile:
+        """
+        Create a prediction profile for robotic systems with 6-DOF support.
+
+        Args:
+            domain: Domain identifier (e.g., 'mobile_robot', 'robotic_arm')
+            max_linear_velocity: Maximum linear velocity for safe patterns
+            max_angular_velocity: Maximum angular velocity for safe patterns
+
+        Returns:
+            PredictionProfile configured for robotics
+        """
+        # Create common 6-DOF patterns for safe operation
+        safe_patterns = [
+            # Stationary
+            SixDOFContextPattern(
+                linear_x_range=(-0.1, 0.1),
+                linear_y_range=(-0.1, 0.1),
+                linear_z_range=(-0.1, 0.1),
+                angular_x_range=(-0.1, 0.1),
+                angular_y_range=(-0.1, 0.1),
+                angular_z_range=(-0.1, 0.1),
+            ),
+            # Low-speed forward movement
+            SixDOFContextPattern(
+                linear_x_range=(0.0, max_linear_velocity * 0.5),
+                linear_y_range=(-0.1, 0.1),
+                linear_z_range=(-0.1, 0.1),
+                angular_x_range=(-0.1, 0.1),
+                angular_y_range=(-0.1, 0.1),
+                angular_z_range=(-max_angular_velocity * 0.5, max_angular_velocity * 0.5),
+            ),
+            # Normal operation envelope
+            SixDOFContextPattern(
+                linear_x_range=(-max_linear_velocity, max_linear_velocity),
+                linear_y_range=(-max_linear_velocity, max_linear_velocity),
+                linear_z_range=(-max_linear_velocity * 0.5, max_linear_velocity * 0.5),
+                angular_x_range=(-max_angular_velocity, max_angular_velocity),
+                angular_y_range=(-max_angular_velocity, max_angular_velocity),
+                angular_z_range=(-max_angular_velocity, max_angular_velocity),
+            ),
+        ]
+
+        profile = PredictionProfile(
+            domain=domain,
+            common_actions=[
+                {"action": "move_forward", "action_type": "physical_action"},
+                {"action": "move_backward", "action_type": "physical_action"},
+                {"action": "turn_left", "action_type": "physical_action"},
+                {"action": "turn_right", "action_type": "physical_action"},
+                {"action": "stop", "action_type": "physical_action"},
+            ],
+            action_weights={
+                "move_forward": 0.4,
+                "stop": 0.2,
+                "turn_left": 0.15,
+                "turn_right": 0.15,
+                "move_backward": 0.1,
+            },
+            six_dof_patterns=safe_patterns,
+        )
+
+        self.load_profile(profile)
+        return profile
