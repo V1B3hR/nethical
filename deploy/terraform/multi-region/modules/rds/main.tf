@@ -79,6 +79,17 @@ variable "tags" {
   default     = {}
 }
 
+variable "kms_admin_iam_arn" {
+  description = "IAM ARN of the principal allowed to administer the KMS key (e.g., arn:aws:iam::123456789012:role/KMSAdminRole)"
+  type        = string
+}
+
+variable "rds_db_identifier" {
+  description = "RDS DB identifier used to constrain KMS key usage. If empty, defaults to var.identifier."
+  type        = string
+  default     = ""
+}
+
 # Random password for master user
 resource "random_password" "master" {
   count   = var.is_primary ? 1 : 0
@@ -173,8 +184,72 @@ resource "aws_kms_key" "db" {
   deletion_window_in_days = 7
   enable_key_rotation     = true
   
+  policy = jsonencode({
+    Version = "2012-10-17"
+    Id      = "rds-key-policy"
+    Statement = [
+      {
+        Sid    = "AllowAdminAccess"
+        Effect = "Allow"
+        Principal = {
+          AWS = var.kms_admin_iam_arn
+        }
+        Action   = "kms:*"
+        Resource = "*"
+      },
+      {
+        Sid    = "AllowRDSServiceUse"
+        Effect = "Allow"
+        Principal = {
+          Service = "rds.amazonaws.com"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:ViaService"    = "rds.${var.region}.amazonaws.com"
+            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
+          }
+          StringLike = {
+            "kms:EncryptionContext:aws:rds:db-id" = var.rds_db_identifier != "" ? var.rds_db_identifier : var.identifier
+          }
+        }
+      },
+      {
+        Sid    = "AllowServiceLinkedRole"
+        Effect = "Allow"
+        Principal = {
+          AWS = "arn:aws:iam::${data.aws_caller_identity.current.account_id}:role/aws-service-role/rds.amazonaws.com/AWSServiceRoleForRDS"
+        }
+        Action = [
+          "kms:Encrypt",
+          "kms:Decrypt",
+          "kms:ReEncrypt*",
+          "kms:GenerateDataKey*",
+          "kms:DescribeKey",
+          "kms:CreateGrant"
+        ]
+        Resource = "*"
+        Condition = {
+          StringEquals = {
+            "kms:CallerAccount" = data.aws_caller_identity.current.account_id
+          }
+        }
+      }
+    ]
+  })
+  
   tags = var.tags
 }
+
+# Data source for current AWS account
+data "aws_caller_identity" "current" {}
 
 # Primary RDS Instance
 resource "aws_db_instance" "primary" {

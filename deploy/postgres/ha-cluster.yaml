@@ -12,30 +12,39 @@ metadata:
 
 ---
 # Secret for PostgreSQL credentials
+# PROVISIONING INSTRUCTIONS:
+# This secret template defines required keys but does NOT contain actual values.
+# Provision secrets before deploying using one of the following methods:
+#
+# Option 1 - kubectl create secret:
+#   kubectl create secret generic postgres-credentials \
+#     --namespace nethical-db \
+#     --from-literal=POSTGRES_USER='<your-db-user>' \
+#     --from-literal=POSTGRES_PASSWORD='<your-strong-password>' \
+#     --from-literal=POSTGRES_DB='<your-db-name>' \
+#     --from-literal=REPLICATION_USER='<your-replication-user>' \
+#     --from-literal=REPLICATION_PASSWORD='<your-replication-password>' \
+#     --from-literal=DATA_SOURCE_NAME='postgresql://<user>:<password>@localhost:5432/<db>?sslmode=disable'
+#
+# Option 2 - External Secrets Operator (recommended for production):
+#   Configure ExternalSecret CRD to sync from:
+#   - HashiCorp Vault
+#   - AWS Secrets Manager
+#   - Azure Key Vault
+#   - Google Cloud Secret Manager
+#   See: https://external-secrets.io/
 apiVersion: v1
 kind: Secret
 metadata:
   name: postgres-credentials
   namespace: nethical-db
   annotations:
-    # SECURITY WARNING: These are placeholder credentials for development only.
-    # For production deployments, use external secret management:
-    # - HashiCorp Vault with External Secrets Operator
-    # - AWS Secrets Manager
-    # - Azure Key Vault
-    # - Google Cloud Secret Manager
-    # See: https://external-secrets.io/
-    kubernetes.io/description: "PLACEHOLDER CREDENTIALS - MUST BE REPLACED IN PRODUCTION"
+    kubernetes.io/description: "Template for PostgreSQL credentials - provision via kubectl or external secret manager"
 type: Opaque
-stringData:
-  # ⚠️ SECURITY: Replace these values before production deployment
-  # Use `kubectl create secret generic postgres-credentials --from-literal=...` 
-  # or integrate with an external secrets operator
-  POSTGRES_USER: "nethical"
-  POSTGRES_PASSWORD: "CHANGE_ME_IN_PRODUCTION_USE_STRONG_PASSWORD"
-  POSTGRES_DB: "nethical"
-  REPLICATION_USER: "replicator"
-  REPLICATION_PASSWORD: "CHANGE_ME_IN_PRODUCTION_USE_STRONG_PASSWORD"
+# Keys are defined but values must be provisioned externally
+# Do not commit actual secret values to this file
+# Required keys: POSTGRES_USER, POSTGRES_PASSWORD, POSTGRES_DB, REPLICATION_USER, REPLICATION_PASSWORD, DATA_SOURCE_NAME
+data: {}
 
 ---
 # ConfigMap for PostgreSQL configuration

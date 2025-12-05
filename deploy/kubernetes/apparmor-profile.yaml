@@ -1,11 +1,12 @@
 ---
 # AppArmor Profile for Nethical
 # This profile restricts file system access and capabilities for enhanced security
+# NOTE: ConfigMap is in kube-system namespace to be accessible by the apparmor-loader DaemonSet
 apiVersion: v1
 kind: ConfigMap
 metadata:
   name: nethical-apparmor-profile
-  namespace: nethical
+  namespace: kube-system
   labels:
     app.kubernetes.io/name: nethical
     app.kubernetes.io/component: security
@@ -154,11 +155,13 @@ data:
 
 ---
 # DaemonSet to load AppArmor profile on nodes
+# NOTE: This DaemonSet is scoped to kube-system namespace for security.
+# It requires host access to load AppArmor profiles into the kernel.
 apiVersion: apps/v1
 kind: DaemonSet
 metadata:
   name: apparmor-loader
-  namespace: nethical
+  namespace: kube-system
   labels:
     app.kubernetes.io/name: nethical
     app.kubernetes.io/component: security
@@ -170,9 +173,11 @@ spec:
     metadata:
       labels:
         app: apparmor-loader
+      annotations:
+        container.apparmor.security.beta.kubernetes.io/apparmor-loader: unconfined
     spec:
-      hostPID: true
-      hostNetwork: true
+      hostPID: false
+      hostNetwork: false
       initContainers:
       - name: apparmor-loader
         image: ubuntu:22.04
@@ -201,18 +206,38 @@ spec:
             exit 1
           fi
         securityContext:
-          privileged: true
+          privileged: false
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: false
+          runAsNonRoot: false
+          capabilities:
+            drop:
+              - ALL
+            add:
+              - MAC_ADMIN
+              - SYS_ADMIN
         volumeMounts:
         - name: apparmor-profiles
           mountPath: /profiles
           readOnly: true
         - name: sys-kernel-security
           mountPath: /sys/kernel/security
+          readOnly: false
         - name: etc-apparmor
           mountPath: /etc/apparmor.d
+          readOnly: false
       containers:
       - name: pause
         image: gcr.io/google_containers/pause:latest
+        securityContext:
+          privileged: false
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
+          runAsNonRoot: true
+          runAsUser: 65534
+          capabilities:
+            drop:
+              - ALL
         resources:
           requests:
             cpu: 10m
