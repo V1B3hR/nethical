@@ -10,18 +10,27 @@ from .attestation import (
     compute_measurements_digest,
 )
 
-from .auth import (
-    AuthManager,
-    TokenPayload,
-    TokenType,
-    APIKey,
-    AuthenticationError,
-    TokenExpiredError,
-    InvalidTokenError,
-    authenticate_request,
-    get_auth_manager,
-    set_auth_manager,
-)
+try:
+    from .auth import (
+        AuthManager,
+        TokenPayload,
+        TokenType,
+        APIKey,
+        AuthenticationError,
+        TokenExpiredError,
+        InvalidTokenError,
+        authenticate_request,
+        get_auth_manager,
+        set_auth_manager,
+    )
+except ModuleNotFoundError as e:
+    # Defensive: PyJWT dependency missing error explanation
+    if e.name == "jwt":
+        raise ImportError(
+            "PyJWT library required for authentication. "
+            "Please install by running: pip install PyJWT"
+        ) from e
+    raise
 
 from .mfa import (
     MFAMethod,
