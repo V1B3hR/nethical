@@ -24,7 +24,7 @@ from datetime import datetime
 from enum import Enum
 from abc import ABC, abstractmethod
 import numpy as np
-
+import logging
 
 class AdversarialAttackType(Enum):
     """Types of adversarial attacks on ML models."""
@@ -1960,8 +1960,8 @@ class AdversarialDefenseSystem:
                 adversarial_prediction = model_prediction_func(input_data)
                 if baseline_input is not None:
                     original_prediction = model_prediction_func(baseline_input)
-            except Exception:
-                pass
+            except Exception as e:
+                logging.exception("Model prediction failed in adversarial example detection.")
 
         # Run chaos analysis if enabled
         chaos_result = None
@@ -1970,8 +1970,8 @@ class AdversarialDefenseSystem:
                 chaos_result = self.chaos_system.analyze_input(
                     input_array, baseline_array
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logging.exception("Chaos analysis failed in adversarial example detection.")
 
         # Run defense perturbation if enabled
         defense_result = None
@@ -1980,8 +1980,8 @@ class AdversarialDefenseSystem:
                 defense_result = self.defense_system.analyze_input(
                     input_array, model_prediction_func, adversarial_prediction
                 )
-            except Exception:
-                pass
+            except Exception as e:
+                logging.exception("Defense perturbation analysis failed in adversarial example detection.")
 
         # Determine if adversarial
         is_adversarial = self._is_adversarial(
