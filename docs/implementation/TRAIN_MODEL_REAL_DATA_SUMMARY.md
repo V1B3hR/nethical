@@ -2,7 +2,6 @@
 
 ## Overview
 Modified `scripts/train_model.py` to use real-world datasets by default instead of synthetic data, specifically targeting the two datasets requested:
-- https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai
 - https://www.kaggle.com/datasets/xontoloyo/security-breachhh
 
 ## Changes Made
