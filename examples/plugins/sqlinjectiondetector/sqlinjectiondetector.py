@@ -112,11 +112,7 @@ class Sqlinjectiondetector(DetectorPlugin):
                         detector=self.name,
                         severity=pattern_info['severity'],
                         description=pattern_info['description'],
-                        category="security",
-                        details={
-                            "pattern_type": pattern_name,
-                            "action_snippet": action_str[:200]  # First 200 chars
-                        }
+                        category="security"
                     ))
                     
                     logger.warning(
