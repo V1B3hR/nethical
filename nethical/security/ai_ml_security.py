@@ -1684,7 +1684,6 @@ class CompressionTransformations(InputTransformation):
                 if block.size == block_size * block_size:
                     # Simple DCT-like quantization simulation
                     block_mean = np.mean(block)
-                    block_std = np.std(block)
                     # Reduce high frequency detail based on quality
                     smoothed = block_mean + (block - block_mean) * quality_factor
                     result[i:i + block_size, j:j + block_size] = smoothed
