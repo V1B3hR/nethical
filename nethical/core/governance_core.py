@@ -892,17 +892,15 @@ class EnhancedSafetyGovernance:
     # -------- Detector Execution Offloading --------
 
     async def _run_detector_cpu_bound(
-        self, detector: BaseDetector, action: AgentAction
-    ) -> List[SafetyViolation]:
-        start = time.time()
-        if detector.cpu_bound:
-            res = await asyncio.to_thread(lambda: asyncio.run(detector.detect_violations(action)))
-        else:
-            res = await detector.detect_violations(action)
-        elapsed = time.time() - start
-        timing = self.metrics["detector_timing"].setdefault(detector.name, [])
-        timing.append(elapsed)
-        return res
+    self, detector: BaseDetector, action: AgentAction
+) -> List[SafetyViolation]:
+    start = time.time()
+    # Just await directly - threading with asyncio.run() is the bottleneck
+    res = await detector.detect_violations(action)
+    elapsed = time.time() - start
+    timing = self.metrics["detector_timing"]. setdefault(detector. name, [])
+    timing. append(elapsed)
+    return res
 
     # -------- Validation --------
 
