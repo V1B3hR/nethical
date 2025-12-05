@@ -67,9 +67,9 @@ class TestBase64ErrorHandling:
     async def test_valid_base64_with_whitespace_no_error(self):
         """Test that valid base64 with surrounding whitespace doesn't raise errors."""
         test_cases = [
-            "SGVsbG8gV29ybGQh\n\n",  # Base64 with trailing newlines
-            "    SGVsbG8gV29ybGQh    ",  # Base64 with spaces
-            "\n  SGVsbG8gV29ybGQh  \n",  # Mixed whitespace
+            "SGVsbG8gV29ybGQh\n\n",  # Valid base64 with trailing newlines
+            "    SGVsbG8gV29ybGQh    ",  # Valid base64 with leading/trailing spaces
+            "\n  SGVsbG8gV29ybGQh  \n",  # Valid base64 with mixed leading/trailing whitespace
         ]
         for content in test_cases:
             action = AgentAction(

@@ -8,6 +8,7 @@ Refactored from the monolithic governance.py file.
 from __future__ import annotations
 
 import base64
+import binascii
 import codecs
 import re
 from abc import ABC, abstractmethod
@@ -450,7 +451,7 @@ class AdversarialDetector(BaseDetector):
                             SubMission.ENCODING_EVASION,
                         )
                     )
-            except Exception:
+            except (binascii.Error, UnicodeDecodeError):
                 # If decoding fails despite looks_like_base64 returning True,
                 # silently skip this check rather than raising an error
                 pass
