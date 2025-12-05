@@ -5,7 +5,6 @@ without raising exceptions, as specified in issue #204.
 """
 
 import pytest
-import asyncio
 from nethical.core.governance_detectors import AdversarialDetector
 from nethical.core.governance_core import AgentAction, ActionType
 
