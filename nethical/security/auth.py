@@ -21,12 +21,11 @@ import hmac
 import logging
 import secrets
 import warnings
-import jwt
 from datetime import datetime, timedelta, timezone
 from typing import Dict, Optional, Any, Tuple, Callable
 from dataclasses import dataclass, field
 from enum import Enum
-
+import jwt
 
 
 __all__ = [
