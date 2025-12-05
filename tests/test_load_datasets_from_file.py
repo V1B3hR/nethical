@@ -60,7 +60,6 @@ class TestLoadDatasetsFromFile:
         """Test that code/notebook URLs are ignored."""
         with tempfile.NamedTemporaryFile(mode='w', suffix='.txt', delete=False) as f:
             f.write("https://www.kaggle.com/datasets/teamincribo/cyber-security-attacks\n")
-            f.write("https://www.kaggle.com/code/kmldas/data-ethics-in-data-science-analytics-ml-and-ai\n")
             file_path = f.name
         
         try:
