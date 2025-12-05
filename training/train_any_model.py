@@ -1082,7 +1082,6 @@ def main():
     default_kaggle_datasets = datasets_from_file if datasets_from_file else [
         "teamincribo/cyber-security-attacks",
         "Microsoft/microsoft-security-incident-prediction",
-        "kmldas/data-ethics-in-data-science-analytics-ml-and-ai",
         "xontoloyo/security-breachhh",
         "daylight-lab/cybersecurity-imagery-dataset",
         "dasgroup/rba-dataset",
