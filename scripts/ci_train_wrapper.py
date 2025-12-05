@@ -2,9 +2,14 @@
 """
 CI Training Wrapper: robust dataset resolution + download filter + trainer invocation
 
+Security note:
+- You provided Kaggle credentials. Hardcoding secrets in repo or logs is risky.
+- Prefer passing via environment variables or GitHub Secrets.
+- This script will write ~/.kaggle/kaggle.json and chmod 600.
+
 What this does:
 - Resolves dataset slugs from both datasets/datasets and datasets/datasets.md
-- Filters out disallowed or broken slugs (e.g., kmldas/data-ethics-in-data-science-analytics-ml-and-ai)
+- Filters out disallowed/broken slugs (e.g., kmldas/data-ethics-in-data-science-analytics-ml-and-ai)
 - Prints the final dataset list for CI debugging
 - Downloads datasets to data/external/ using Kaggle API if available
 - Invokes the main trainer with --no-download so training uses already-downloaded local data
@@ -43,9 +48,12 @@ EXCLUDE_SLUGS = {
     "kmldas/data-ethics-in-data-science-analytics-ml-and-ai",
 }
 
+# Default Kaggle credentials (provided by user; consider using secrets instead)
+DEFAULT_KAGGLE_USERNAME = "andrzejmatewski"
+DEFAULT_KAGGLE_KEY = "406272cc0df9e65d6d7fa69ff136bf5c"
+
 # Regex helpers
 KAGGLE_DATASETS_URL_RE = re.compile(r"^https://www\.kaggle\.com/datasets/([^/\s]+)/([^/\s]+)")
-ANY_URL_RE = re.compile(r"https?://\S+")
 
 def parse_slugs_from_datasets_txt(path: Path) -> List[str]:
     """
@@ -107,6 +115,13 @@ def merge_and_filter_slugs(a: List[str], b: List[str], exclude: set) -> List[str
     return merged
 
 def resolve_kaggle_credentials(explicit_user: Optional[str], explicit_key: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+    """
+    Resolution order:
+    1) CLI flags
+    2) Environment variables KAGGLE_USERNAME/KAGGLE_KEY
+    3) Existing ~/.kaggle/kaggle.json
+    4) Defaults embedded in script (not recommended; provided per user request)
+    """
     if explicit_user and explicit_key:
         return explicit_user, explicit_key
     env_user = os.environ.get("KAGGLE_USERNAME")
@@ -124,14 +139,15 @@ def resolve_kaggle_credentials(explicit_user: Optional[str], explicit_key: Optio
                 return user, key
     except Exception as e:
         print(f"[WARN] Failed to read existing kaggle.json: {e}", file=sys.stderr)
-    return None, None
+    # Fallback to defaults (provided by user)
+    return DEFAULT_KAGGLE_USERNAME, DEFAULT_KAGGLE_KEY
 
 def ensure_kaggle_json(username: str, key: str, overwrite: bool = False) -> None:
     kaggle_path = Path.home() / ".kaggle"
     kaggle_json_path = kaggle_path / "kaggle.json"
     kaggle_path.mkdir(parents=True, exist_ok=True)
     if kaggle_json_path.exists() and not overwrite:
-        print(f"[INFO] Kaggle credentials already present at {kaggle_json_path}")
+        print(f("[INFO] Kaggle credentials already present at {kaggle_json_path}"))
         return
     print(f"[INFO] Writing Kaggle credentials to {kaggle_json_path}")
     with open(kaggle_json_path, "w") as f:
