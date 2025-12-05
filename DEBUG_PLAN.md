@@ -616,7 +616,10 @@ print(f"Memory usage: {stats.memory_bytes / 1024 / 1024:.2f} MB")
 cache.debug_key("policy:agent-001")
 
 # Clear cache (development only)
-cache.clear()  # WARNING: Do not use in production
+# CRITICAL: Never use in production - add environment check
+# if os.getenv('NETHICAL_ENV') != 'production':
+#     cache.clear()
+cache.clear()  # WARNING: Verify non-production environment first
 ```
 
 ### 3.10 API Layer (nethical/api/)
@@ -821,7 +824,7 @@ debugger.debug_credentials(
     credential_id="cred-001",
     show_type=True,
     show_expiry=True,
-    show_value=False  # NEVER set to True in production
+    show_value=False  # CRITICAL: NEVER set to True in production
 )
 ```
 
@@ -1054,9 +1057,9 @@ Set via NETHICAL_LOG_LEVEL: DEBUG, INFO, WARNING, ERROR
 
 | Level | Contact | Response |
 |-------|---------|----------|
-| P1 Critical | security@nethical.ai | 15 min |
-| P2 High | oncall@nethical.ai | 1 hour |
-| P3 Medium | support@nethical.ai | 4 hours |
+| P1 Critical | See internal wiki for security contacts | 15 min |
+| P2 High | See internal wiki for on-call contacts | 1 hour |
+| P3 Medium | See internal wiki for support contacts | 4 hours |
 | P4 Low | GitHub Issues | 24 hours |
 
 ### 15.3 Related Docs
