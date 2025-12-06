@@ -873,7 +873,7 @@ class EnhancedSafetyGovernance:
 
         return judgment
 
-        async def batch_evaluate_actions(
+    async def batch_evaluate_actions(
         self, actions: List[AgentAction], parallel: bool = True
     ) -> List[JudgmentResult]:
         if parallel and self.config.enable_async_processing:
@@ -889,18 +889,18 @@ class EnhancedSafetyGovernance:
                     logger.error("Error evaluating action %s: %s", a.action_id, e)
             return results
 
+    # -------- Detector Execution Offloading --------
+
     async def _run_detector_cpu_bound(
         self, detector: BaseDetector, action: AgentAction
     ) -> List[SafetyViolation]:
         start = time.time()
-        if detector.cpu_bound:
-            res = await asyncio.to_thread(lambda: asyncio.run(detector.detect_violations(action)))
-        else:
-            res = await detector.detect_violations(action)
+        res = await detector.detect_violations(action)
         elapsed = time.time() - start
         timing = self.metrics["detector_timing"].setdefault(detector.name, [])
         timing.append(elapsed)
         return res
+
     # -------- Validation --------
 
     def _validate_violation_type_and_sub_mission(self, violation: SafetyViolation) -> bool:
