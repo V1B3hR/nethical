@@ -1,7 +1,7 @@
 ![Nethical Banner](assets/nethical_banner.png)
 
     
-Visit: https://github.com/sponsors/V1B3hR to sponsorship my project.
+Give a ⭐ and visit: https://github.com/sponsors/V1B3hR to sponsorship my project.
 
 
 <p align="center">
