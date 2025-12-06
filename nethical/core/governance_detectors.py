@@ -8,6 +8,7 @@ Refactored from the monolithic governance.py file.
 from __future__ import annotations
 
 import base64
+import binascii
 import codecs
 import re
 from abc import ABC, abstractmethod
@@ -431,22 +432,29 @@ class AdversarialDetector(BaseDetector):
             )
 
         # Encoding evasions
-        if looks_like_base64(lower):
-            decoded = base64.b64decode(lower, validate=True).decode("utf-8", "ignore")
-            dec_low = decoded.lower()
-            if any(hp in dec_low for hp in self.harmful_patterns):
-                violations.append(
-                    self._new_violation(
-                        action,
-                        ViolationType.ADVERSARIAL,
-                        Severity.CRITICAL,
-                        "Base64 encoded harmful content",
-                        0.95,
-                        ["Decoded harmful subsequence"],
-                        ["Block & log", "Escalate to security"],
-                        SubMission.ENCODING_EVASION,
+        # Strip and normalize the content the same way looks_like_base64() does
+        stripped_lower = lower.strip().replace("\n", "")
+        if looks_like_base64(stripped_lower):
+            try:
+                decoded = base64.b64decode(stripped_lower, validate=True).decode("utf-8", "ignore")
+                dec_low = decoded.lower()
+                if any(hp in dec_low for hp in self.harmful_patterns):
+                    violations.append(
+                        self._new_violation(
+                            action,
+                            ViolationType.ADVERSARIAL,
+                            Severity.CRITICAL,
+                            "Base64 encoded harmful content",
+                            0.95,
+                            ["Decoded harmful subsequence"],
+                            ["Block & log", "Escalate to security"],
+                            SubMission.ENCODING_EVASION,
+                        )
                     )
-                )
+            except (binascii.Error, UnicodeDecodeError):
+                # If decoding fails despite looks_like_base64 returning True,
+                # silently skip this check rather than raising an error
+                pass
         if might_be_rot13(lower):
             decoded = codecs.decode(lower, "rot13")
             if any(hp in decoded.lower() for hp in self.harmful_patterns):

@@ -901,7 +901,6 @@ class EnhancedSafetyGovernance:
         timing = self.metrics["detector_timing"].setdefault(detector.name, [])
         timing.append(elapsed)
         return res
-
     # -------- Validation --------
 
     def _validate_violation_type_and_sub_mission(self, violation: SafetyViolation) -> bool:
