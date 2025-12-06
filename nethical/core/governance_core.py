@@ -873,7 +873,7 @@ class EnhancedSafetyGovernance:
 
         return judgment
 
-    async def batch_evaluate_actions(
+        async def batch_evaluate_actions(
         self, actions: List[AgentAction], parallel: bool = True
     ) -> List[JudgmentResult]:
         if parallel and self.config.enable_async_processing:
@@ -888,8 +888,6 @@ class EnhancedSafetyGovernance:
                 except Exception as e:
                     logger.error("Error evaluating action %s: %s", a.action_id, e)
             return results
-
-    # -------- Detector Execution Offloading --------
 
     async def _run_detector_cpu_bound(
         self, detector: BaseDetector, action: AgentAction
