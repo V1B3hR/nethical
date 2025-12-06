@@ -29,7 +29,7 @@ class ComparisonResult:
 
 @dataclass
 class BenchmarkComparison:
-    """Overall comparison of benchmark results."""
+    """Overall comparison of benchmark results"""
 
     scenario_name: str
     passed: bool
@@ -40,9 +40,11 @@ class BenchmarkComparison:
 class BenchmarkComparer:
     """Compares benchmark results against baselines."""
 
-    # Default regression thresholds (percentage increase that triggers failure)
+    # Default regression thresholds (percentage change that triggers failure)
+    # Positive values mean increase allowed before regression; negative means allowed decrease before regression.
     DEFAULT_THRESHOLDS = {
-        "avg_latency_ms": 10.0,  # 10% increase triggers regression
+        "avg_latency_ms": 10.0,   # 10% increase triggers regression
+        "p50_latency_ms": 10.0,   # add explicit threshold for p50
         "p95_latency_ms": 15.0,
         "p99_latency_ms": 20.0,
         "throughput_rps": -10.0,  # 10% decrease triggers regression
@@ -54,7 +56,26 @@ class BenchmarkComparer:
         thresholds: Optional[Dict[str, float]] = None,
     ):
         self.baselines_dir = Path(baselines_dir)
-        self.thresholds = thresholds or self.DEFAULT_THRESHOLDS
+
+        # Allow thresholds override via env var BENCHMARK_THRESHOLDS as JSON, e.g.:
+        # {"avg_latency_ms": 25.0, "p99_latency_ms": 30.0, "throughput_rps": -20.0}
+        env_thresholds: Optional[Dict[str, float]] = None
+        raw = os.getenv("BENCHMARK_THRESHOLDS", "").strip()
+        if raw:
+            try:
+                parsed = json.loads(raw)
+                if isinstance(parsed, dict):
+                    env_thresholds = {str(k): float(v) for k, v in parsed.items()}
+            except Exception as e:
+                logger.warning(f"Failed to parse BENCHMARK_THRESHOLDS: {e}")
+
+        base_thresholds = thresholds or self.DEFAULT_THRESHOLDS
+        if env_thresholds:
+            merged = dict(base_thresholds)
+            merged.update(env_thresholds)
+            self.thresholds = merged
+        else:
+            self.thresholds = base_thresholds
 
     def load_baseline(self, version: str) -> Optional[Dict[str, Any]]:
         """Load baseline results for a specific version."""
@@ -198,7 +219,6 @@ class BenchmarkComparer:
             lines.append("")
             lines.append("| Metric | Current | Baseline | Change | Status |")
             lines.append("|--------|---------|----------|--------|--------|")
-
             for c in comparison.comparisons:
                 status = "❌ REGRESSION" if c.regression else "✅ OK"
                 change = f"{c.difference_percent:+.2f}%"
@@ -218,6 +238,16 @@ def compare_and_report(
 ) -> int:
     """Compare benchmarks and return exit code."""
     comparer = BenchmarkComparer()
+
+    # Allow toggling fail behavior from env
+    env_fail = os.getenv("FAIL_ON_REGRESSION")
+    if env_fail is not None:
+        try:
+            # Accept "true"/"false"/"1"/"0"
+            fail_on_regression = str(env_fail).lower() in {"1", "true", "yes"}
+        except Exception:
+            pass
+
     comparisons = comparer.compare_results(current_path, baseline_version)
 
     if not comparisons:
