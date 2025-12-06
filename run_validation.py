@@ -17,24 +17,57 @@ from typing import Dict, List
 class ValidationRunner:
     """Run validation test suites"""
     
-    def __init__(self, config_path: str = "validation_config.yaml"):
-        self.config_path = Path(config_path)
+    def __init__(self, config_path: str = None):
+        # Try multiple config file locations
+        if config_path is None:
+            possible_paths = [
+                Path("validation.yaml"),
+                Path("validation_config.yaml"),
+                Path("config/validation_config.yaml"),
+            ]
+            for path in possible_paths:
+                if path.exists():
+                    config_path = str(path)
+                    break
+        
+        self.config_path = Path(config_path) if config_path else None
         self.config = self.load_config()
         self.results = {
             "timestamp": datetime.now().isoformat(),
-            "version": "1.0.0",
+            "version": "2.0.0",
+            "random_seed": self.config.get("global", {}).get("random_seed", 42),
             "suites": {},
             "summary": {}
         }
     
     def load_config(self) -> Dict:
         """Load validation configuration"""
-        if not self.config_path.exists():
-            print(f"Warning: Config file {self.config_path} not found, using defaults")
-            return {}
-        
-        with open(self.config_path, 'r') as f:
-            return yaml.safe_load(f)
+        if self.config_path and self.config_path.exists():
+            print(f"Loading config from {self.config_path}")
+            with open(self.config_path, 'r') as f:
+                return yaml.safe_load(f)
+        else:
+            print(f"Warning: Config file not found, using defaults")
+            return self._default_config()
+    
+    def _default_config(self) -> Dict:
+        """Return default configuration"""
+        return {
+            "global": {
+                "random_seed": 42,
+                "artifacts_dir": "artifacts/validation"
+            },
+            "metrics": {
+                "ethics": {
+                    "precision_threshold": 0.92,
+                    "recall_threshold": 0.88,
+                    "f1_threshold": 0.90
+                },
+                "performance": {
+                    "accuracy_threshold": 0.85
+                }
+            }
+        }
     
     def run_test_suite(self, suite_name: str, test_path: str) -> Dict:
         """
@@ -225,8 +258,8 @@ def main():
     )
     parser.add_argument(
         "--config",
-        default="validation_config.yaml",
-        help="Path to validation configuration file"
+        default=None,
+        help="Path to validation configuration file (default: auto-detect validation.yaml or validation_config.yaml)"
     )
     
     args = parser.parse_args()

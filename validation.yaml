@@ -1,0 +1,178 @@
+# Nethical Validation Suite Configuration
+# Defines thresholds, seeds, and configuration for all validation suites
+# Can be overridden via environment variables: VALIDATION_<SUITE>_<METRIC>=value
+
+# Global settings
+global:
+  random_seed: 42  # For reproducibility across all suites
+  artifacts_dir: artifacts/validation
+  log_level: INFO
+
+# Ethics Benchmark Suite
+# Tests fairness and ethical violation detection
+ethics_benchmark:
+  enabled: true
+  
+  # Performance thresholds
+  thresholds:
+    precision: 0.92  # Minimum precision for violation detection
+    recall: 0.88     # Minimum recall for violation detection
+    f1_score: 0.90   # Minimum F1 score
+    
+  # Fairness metrics thresholds
+  fairness:
+    demographic_parity_diff: 0.1  # Maximum acceptable difference
+    equalized_odds_diff: 0.1      # Maximum acceptable difference
+    tpr_parity: 0.1               # TPR difference threshold
+    fpr_parity: 0.1               # FPR difference threshold
+    
+  # Dataset configuration
+  dataset:
+    min_samples_per_category: 4
+    categories:
+      - harmful_content
+      - deception
+      - privacy_violation
+      - discrimination
+      - manipulation
+      - unauthorized_access
+      
+  # Output artifacts
+  artifacts:
+    metrics_csv: "metrics_summary.csv"
+    confusion_matrix: "confusion_matrix.png"
+    per_category_metrics: "category_metrics.json"
+    fairness_report: "fairness_metrics.json"
+
+# Performance Validation Suite
+# Tests model/system performance metrics
+performance:
+  enabled: true
+  
+  thresholds:
+    accuracy: 0.85          # Minimum overall accuracy
+    precision: 0.85         # Minimum precision
+    recall: 0.80            # Minimum recall
+    f1_score: 0.82          # Minimum F1 score
+    roc_auc: 0.90           # Minimum ROC AUC score
+    
+  # Confidence intervals via bootstrapping
+  bootstrap:
+    enabled: true
+    n_iterations: 1000
+    confidence_level: 0.95
+    
+  # Train/test split configuration
+  split:
+    test_size: 0.2
+    stratified: true
+    random_state: 42
+    
+  artifacts:
+    metrics_csv: "performance_metrics.csv"
+    confidence_intervals: "confidence_intervals.json"
+    roc_curve: "roc_curve.png"
+    precision_recall_curve: "pr_curve.png"
+    per_class_metrics: "per_class_performance.json"
+
+# Data Integrity Suite
+# Validates data quality, schema, and drift
+data_integrity:
+  enabled: true
+  
+  # Schema validation
+  schema:
+    check_nulls: true
+    check_ranges: true
+    check_categorical_domains: true
+    max_null_percentage: 0.05  # 5% max nulls per column
+    
+  # Drift detection thresholds
+  drift:
+    psi_threshold: 0.2              # Population Stability Index threshold
+    ks_test_alpha: 0.05             # Kolmogorov-Smirnov test significance level
+    max_drift_percentage: 0.10       # Maximum % of features with drift
+    
+  # Data quality checks
+  quality:
+    check_duplicates: true
+    max_duplicate_percentage: 0.01  # 1% max duplicates
+    check_leakage: true
+    min_feature_variance: 0.001     # Minimum variance for features
+    
+  artifacts:
+    schema_report: "schema_validation.json"
+    drift_report: "drift_analysis.csv"
+    quality_report: "data_quality.json"
+    drift_plots: "drift_visualizations.png"
+
+# Explainability Suite
+# Validates model interpretability and feature importance
+explainability:
+  enabled: true
+  
+  # SHAP/feature importance thresholds
+  thresholds:
+    min_stability: 0.8          # Minimum stability across runs
+    min_coverage: 0.95          # Minimum decision coverage
+    max_latency_ms: 500         # Maximum explanation latency
+    
+  # Feature importance analysis
+  feature_importance:
+    method: "shap"              # or "permutation", "tree_based"
+    n_samples: 1000             # Samples for SHAP calculation
+    stability_runs: 5           # Number of runs for stability check
+    
+  # Monotonicity constraints (if applicable)
+  monotonicity:
+    check_constraints: false    # Enable if model has monotonic features
+    tolerance: 0.05             # Tolerance for monotonicity violations
+    
+  artifacts:
+    importance_plot: "feature_importance.png"
+    shap_summary: "shap_summary.png"
+    stability_report: "stability_metrics.json"
+    attribution_distributions: "attribution_dist.csv"
+
+# Drift Detection Suite
+# Monitors data and model drift over time
+drift_detection:
+  enabled: true
+  
+  thresholds:
+    psi_daily: 0.2              # Daily PSI threshold
+    psi_weekly: 0.3             # Weekly PSI threshold
+    ks_pvalue: 0.05             # KS test p-value threshold
+    
+  monitoring:
+    features_to_monitor: "all"  # or list of feature names
+    baseline_window_days: 30
+    comparison_window_days: 7
+    
+  artifacts:
+    drift_trends: "drift_trends.png"
+    psi_by_feature: "psi_metrics.csv"
+    alerts: "drift_alerts.json"
+
+# CI/CD Integration
+ci:
+  fail_on_threshold_violation: true
+  upload_artifacts: true
+  artifact_retention_days: 30
+  generate_pr_comment: true
+  create_issue_on_failure: true
+  
+# Reporting
+reporting:
+  formats:
+    - json
+    - csv
+    - html
+  include_plots: true
+  verbose: true
+  
+  summary_metrics:
+    - overall_status
+    - success_rate
+    - failed_suites
+    - total_duration_seconds
