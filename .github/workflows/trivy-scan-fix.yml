@@ -1,0 +1,62 @@
+name: Trivy Container Scan (fixed)
+
+on:
+  workflow_dispatch:
+    inputs:
+      image:
+        description: 'Image to scan (optional). If empty, workflow builds the repo image.'
+        required: false
+        default: ''
+  push:
+    branches:
+      - main
+
+jobs:
+  trivy-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Show disk usage (debug)
+        run: df -h
+
+      - name: Cleanup runner disk (prune Docker & clear tmp)
+        run: |
+          # Aggressively free Docker space and tmp files to avoid "no space left" errors
+          sudo docker system prune -af --volumes || true
+          sudo rm -rf /tmp/* || true
+          sudo rm -rf /var/lib/docker/tmp/* || true
+
+      - name: Cache Trivy DB
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.cache/trivy
+            /home/runner/.cache/trivy
+          key: trivy-db-${{ runner.os }}-${{ github.ref }}-${{ hashFiles('**/Dockerfile') }}
+          restore-keys: trivy-db-${{ runner.os }}-
+
+      - name: Build docker image (when no image was provided)
+        if: ${{ github.event.inputs.image == '' }}
+        run: |
+          docker build -t ${{ github.repository }}:latest .
+
+      - name: Determine image to scan
+        id: image
+        run: |
+          if [ -n "${{ github.event.inputs.image }}" ]; then
+            echo "image=${{ github.event.inputs.image }}" > $GITHUB_OUTPUT
+          else
+            echo "image=${{ github.repository }}:latest" > $GITHUB_OUTPUT
+          fi
+
+      - name: Install Trivy (pinned)
+        run: |
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin 0.68.1
+
+      - name: Run Trivy (Container Scan)
+        env:
+          TRIVY_CACHE_DIR: ~/.cache/trivy
+        run: |
+          trivy image --cache-dir ~/.cache/trivy --skip-version-check --format table --exit-code 1 ${{ steps.image.outputs.image }}
