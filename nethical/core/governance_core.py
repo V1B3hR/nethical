@@ -895,12 +895,14 @@ class EnhancedSafetyGovernance:
         self, detector: BaseDetector, action: AgentAction
     ) -> List[SafetyViolation]:
         start = time.time()
-        res = await detector.detect_violations(action)
+        if detector.cpu_bound:
+            res = await asyncio.to_thread(lambda: asyncio.run(detector.detect_violations(action)))
+        else:
+            res = await detector.detect_violations(action)
         elapsed = time.time() - start
         timing = self.metrics["detector_timing"].setdefault(detector.name, [])
         timing.append(elapsed)
         return res
-
     # -------- Validation --------
 
     def _validate_violation_type_and_sub_mission(self, violation: SafetyViolation) -> bool:
