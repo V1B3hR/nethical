@@ -114,6 +114,9 @@ class DataIntegrityValidator:
         logger.info(f"Schema validation: {'PASSED' if results['schema_valid'] else 'FAILED'}")
         return results
     
+    # Small constant to avoid log(0) in PSI calculation
+    PSI_EPSILON = 1e-10
+    
     def calculate_psi(
         self,
         expected: np.ndarray,
@@ -155,9 +158,9 @@ class DataIntegrityValidator:
         expected_percents, _ = np.histogram(expected, bins=bin_edges)
         actual_percents, _ = np.histogram(actual, bins=bin_edges)
         
-        # Normalize to percentages
-        expected_percents = expected_percents / len(expected) + 1e-10  # Avoid log(0)
-        actual_percents = actual_percents / len(actual) + 1e-10
+        # Normalize to percentages and add epsilon to avoid log(0)
+        expected_percents = expected_percents / len(expected) + self.PSI_EPSILON
+        actual_percents = actual_percents / len(actual) + self.PSI_EPSILON
         
         # Calculate PSI
         psi = np.sum((actual_percents - expected_percents) * np.log(actual_percents / expected_percents))

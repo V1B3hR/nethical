@@ -10,7 +10,7 @@ Implements:
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from sklearn.inspection import permutation_importance
 import logging
 import json
@@ -133,14 +133,16 @@ class ExplainabilityValidator:
             try:
                 explainer = shap.TreeExplainer(model)
                 shap_values = explainer.shap_values(X_sample)
-            except:
+            except (AttributeError, TypeError, ValueError) as e:
                 # Fall back to KernelExplainer (slower but works with any model)
+                logger.info(f"TreeExplainer failed ({e}), falling back to KernelExplainer")
                 explainer = shap.KernelExplainer(model.predict, X_sample[:100])
                 shap_values = explainer.shap_values(X_sample)
             
             # Handle different SHAP value formats
             if isinstance(shap_values, list):
-                # Binary classification returns list of SHAP values for each class
+                # Binary classification: SHAP returns list [shap_for_class_0, shap_for_class_1]
+                # We use index 1 for positive class (convention: positive class is at index 1)
                 shap_values = shap_values[1]  # Use positive class
             
             n_features = X.shape[1]

@@ -49,8 +49,11 @@ jobs:
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
-          pip install pytest pytest-asyncio pytest-cov pytest-json-report scipy pyyaml
+          pip install pytest pytest-asyncio pytest-cov pytest-json-report scipy pyyaml pandas matplotlib seaborn
           pip install -e .
+          
+      - name: Create artifacts directory
+        run: mkdir -p artifacts/validation
       
       - name: Create validation reports directory
         run: mkdir -p validation_reports

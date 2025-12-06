@@ -213,7 +213,7 @@ class FairnessMetrics:
         y_true: np.ndarray,
         y_pred: np.ndarray,
         sensitive_feature: Optional[np.ndarray] = None
-    ) -> Dict[str, any]:
+    ) -> Dict[str, Any]:
         """
         Calculate all fairness and performance metrics
         

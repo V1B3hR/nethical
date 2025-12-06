@@ -85,6 +85,13 @@ class ValidationConfig:
             }
         }
     
+    # Environment variable prefix for overrides
+    ENV_VAR_PREFIX = "VALIDATION_"
+    
+    def _get_env_key(self, key_path: str) -> str:
+        """Convert config key path to environment variable name"""
+        return f"{self.ENV_VAR_PREFIX}{key_path.upper().replace('.', '_')}"
+    
     def get(self, key_path: str, default: Any = None) -> Any:
         """
         Get configuration value with dot notation and environment variable override
@@ -97,7 +104,7 @@ class ValidationConfig:
             Configuration value
         """
         # Check for environment variable override
-        env_key = f"VALIDATION_{key_path.upper().replace('.', '_')}"
+        env_key = self._get_env_key(key_path)
         env_value = os.getenv(env_key)
         if env_value is not None:
             # Try to parse as appropriate type

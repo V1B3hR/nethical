@@ -97,7 +97,8 @@ class PerformanceValidator:
         # Basic metrics
         metrics["accuracy"] = accuracy_score(y_true, y_pred)
         
-        # Precision, recall, F1
+        # Precision, recall, F1 for binary classification
+        # Note: Using 'binary' average assumes binary classification task (classes 0 and 1)
         precision, recall, f1, support = precision_recall_fscore_support(
             y_true, y_pred, average='binary', zero_division=0
         )
@@ -118,10 +119,12 @@ class PerformanceValidator:
         # ROC AUC if probabilities provided
         if y_prob is not None:
             try:
+                # For binary classification: if 2D array with 2 columns, use positive class probs
                 if len(y_prob.shape) > 1 and y_prob.shape[1] == 2:
                     # Binary classification with probs for both classes
                     y_prob_positive = y_prob[:, 1]
                 else:
+                    # Single column of probabilities (already for positive class)
                     y_prob_positive = y_prob.flatten()
                 metrics["roc_auc"] = roc_auc_score(y_true, y_prob_positive)
             except Exception as e:
