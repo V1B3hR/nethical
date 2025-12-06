@@ -36,16 +36,15 @@ jobs:
           pip install -r requirements.txt
           pip install -e .
       
-      - name: Run benchmarks
+      - name: Run Benchmarks
         env:
           BENCHMARK_ITERATIONS: ${{ github.event.inputs.iterations || '1000' }}
           BENCHMARK_WARMUP: '100'
           BENCHMARK_WORKERS: '10'
+          FAIL_ON_REGRESSION: ${{ github.event_name != 'push' && github.ref != 'refs/heads/main' && 'false' || 'true' }}
+          BENCHMARK_THRESHOLDS: '{"avg_latency_ms":25,"p50_latency_ms":20,"p95_latency_ms":30,"p99_latency_ms":40,"throughput_rps":-20}'
         run: |
           python -m benchmarks.runner
-      
-      - name: Compare against baseline
-        run: |
           # Find the latest benchmark result using find for robustness
           LATEST_RESULT=$(find benchmark_results -name '*.json' -type f -printf '%T@ %p\n' 2>/dev/null | sort -nr | head -1 | cut -d' ' -f2-)
           if [ -n "$LATEST_RESULT" ] && [ -f "$LATEST_RESULT" ]; then
