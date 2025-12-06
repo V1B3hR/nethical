@@ -17,6 +17,7 @@ Security Notes:
 from __future__ import annotations
 
 import hashlib
+from argon2 import PasswordHasher
 import hmac
 import logging
 import secrets
@@ -262,7 +263,8 @@ class AuthManager:
         key_id = secrets.token_urlsafe(8)
         key_secret = secrets.token_urlsafe(32)
         api_key_string = f"{key_id}.{key_secret}"
-        key_hash = hashlib.sha256(api_key_string.encode()).hexdigest()
+        ph = PasswordHasher()
+        key_hash = ph.hash(api_key_string)
         api_key = APIKey(
             key_id=key_id,
             user_id=user_id,
@@ -284,8 +286,10 @@ class AuthManager:
             api_key = self.api_keys.get(key_id)
             if not api_key:
                 raise InvalidTokenError("API key not found")
-            key_hash = hashlib.sha256(api_key_string.encode()).hexdigest()
-            if not hmac.compare_digest(api_key.key_hash, key_hash):
+            ph = PasswordHasher()
+            try:
+                ph.verify(api_key.key_hash, api_key_string)
+            except Exception:
                 raise InvalidTokenError("Invalid API key")
             if not api_key.is_valid():
                 raise InvalidTokenError("API key is disabled or expired")
