@@ -1,6 +1,8 @@
 ![Nethical Banner](assets/nethical_banner.png)
+
     
-                                                                          Visit: https://github.com/sponsors/V1B3hR to sponsorship my project.
+Visit: https://github.com/sponsors/V1B3hR to sponsorship my project.
+
 
 <p align="center">
   <img src="assets/nethical_logo.png" alt="Nethical Logo" width="128" height="128">
