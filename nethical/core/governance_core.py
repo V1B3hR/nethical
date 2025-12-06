@@ -889,9 +889,7 @@ class EnhancedSafetyGovernance:
                     logger.error("Error evaluating action %s: %s", a.action_id, e)
             return results
 
-    # -------- Detector Execution Offloading --------
-
-        async def _run_detector_cpu_bound(
+    async def _run_detector_cpu_bound(
         self, detector: BaseDetector, action: AgentAction
     ) -> List[SafetyViolation]:
         start = time.time()
