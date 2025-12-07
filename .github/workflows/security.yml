@@ -138,6 +138,8 @@ jobs:
   dependency-audit:
     name: Dependency Vulnerability Audit
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       

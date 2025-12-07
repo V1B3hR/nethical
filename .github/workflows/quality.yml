@@ -10,6 +10,8 @@ jobs:
   linting:
     name: Linting with flake8
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -32,6 +34,8 @@ jobs:
   formatting:
     name: Code Formatting with Black
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -51,6 +55,8 @@ jobs:
   type-checking:
     name: Type Checking with mypy
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -72,6 +78,8 @@ jobs:
   complexity:
     name: Code Complexity with Radon
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
@@ -98,6 +106,8 @@ jobs:
   docstring-coverage:
     name: Docstring Coverage
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
     steps:
       - uses: actions/checkout@v4
       
