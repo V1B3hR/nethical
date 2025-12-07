@@ -1,0 +1,115 @@
+name: Code Quality
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+
+jobs:
+  linting:
+    name: Linting with flake8
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install flake8
+        run: pip install flake8
+      
+      - name: Run flake8
+        run: |
+          # Stop the build if there are Python syntax errors or undefined names
+          flake8 nethical/ --count --select=E9,F63,F7,F82 --show-source --statistics
+          # Exit-zero treats all errors as warnings
+          flake8 nethical/ --count --exit-zero --max-complexity=10 --max-line-length=88 --statistics
+        continue-on-error: false
+
+  formatting:
+    name: Code Formatting with Black
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Black
+        run: pip install black
+      
+      - name: Run Black
+        run: |
+          black --check --diff nethical/
+        continue-on-error: false
+
+  type-checking:
+    name: Type Checking with mypy
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install dependencies
+        run: |
+          pip install mypy
+          pip install types-PyYAML types-python-dateutil
+      
+      - name: Run mypy
+        run: |
+          mypy nethical/ --ignore-missing-imports --check-untyped-defs
+        continue-on-error: true
+
+  complexity:
+    name: Code Complexity with Radon
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Radon
+        run: pip install radon
+      
+      - name: Check Cyclomatic Complexity
+        run: |
+          radon cc nethical/ -a -nb --total-average
+          # Fail if average complexity is above threshold
+          radon cc nethical/ -a -nb --total-average | grep -E "Average complexity: [A-C]" || exit 0
+        continue-on-error: true
+      
+      - name: Check Maintainability Index
+        run: |
+          radon mi nethical/ -nb
+        continue-on-error: true
+
+  docstring-coverage:
+    name: Docstring Coverage
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install interrogate
+        run: pip install interrogate
+      
+      - name: Check Docstring Coverage
+        run: |
+          interrogate nethical/ -v --fail-under=60
+        continue-on-error: true

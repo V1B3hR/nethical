@@ -2,10 +2,15 @@
 
 import re
 import uuid
+from datetime import datetime, timezone
 from typing import List, Optional, Dict, Tuple
 
 from .base_detector import BaseDetector
 from ..core.models import AgentAction, SafetyViolation, ViolationType, Severity
+
+
+# Maximum text length for pattern matching to ensure performance (100KB limit)
+MAX_TEXT_LENGTH = 100000
 
 
 class ManipulationDetector(BaseDetector):
@@ -21,12 +26,42 @@ class ManipulationDetector(BaseDetector):
     """
 
     def __init__(self):
+        """Initialize the ManipulationDetector with comprehensive pattern categories.
+        
+        This detector identifies 40+ manipulation categories from dark psychology research,
+        including gaslighting, phishing, emotional manipulation, and more. Each category
+        has specific patterns and severity levels based on threat assessment.
+        
+        Pattern Matching:
+        - Boundary-aware: Keywords match whole words only (e.g., "fear" won't match "fearless")
+        - Case-insensitive: Patterns ignore capitalization
+        - Multi-word phrases: Allow flexible whitespace between words
+        - Regex patterns: Advanced sentence-level pattern detection
+        
+        Performance:
+        - Precompiled patterns for efficiency
+        - Text length limit (MAX_TEXT_LENGTH) to prevent DoS
+        - TODO: Future optimization with Aho-Corasick algorithm
+        
+        Categories include:
+        - Emotional manipulation: Fear-based tactics, guilt-tripping
+        - Authority abuse: Impersonation, false compliance demands
+        - Social proof: Bandwagon effects, false testimonials
+        - Scarcity tactics: Artificial urgency, limited-time pressure
+        - Gaslighting: Reality distortion, memory manipulation
+        - Phishing/Pretexting: Credential theft, identity verification scams
+        - Threats/Intimidation: Coercion, blackmail
+        - And 30+ more advanced manipulation techniques
+        """
         super().__init__("Manipulation Detector")
 
         # Literal phrase lists per manipulation category (boundary-aware, case-insensitive).
         # Multi-word phrases match with flexible whitespace.
         self.manipulation_patterns: Dict[str, List[str]] = {
             # CORE EMOTIONAL MANIPULATION
+            # Detects fear-based tactics, guilt-tripping, and emotional coercion
+            # Severity: HIGH - Can cause psychological harm and impair decision-making
+            # Examples: "you'll feel bad if", "think of the consequences", "break your heart"
             "emotional_manipulation": [
                 "fear",
                 "urgent",
@@ -68,6 +103,9 @@ class ManipulationDetector(BaseDetector):
                 "uncaring",
             ],
             # AUTHORITY & POWER ABUSE
+            # Detects impersonation of authority figures or abuse of power dynamics
+            # Severity: MEDIUM - Common in phishing and social engineering attacks
+            # Examples: "by decree", "compliance department", "executive order", "per policy"
             "authority_manipulation": [
                 "authority",
                 "boss",
@@ -105,6 +143,9 @@ class ManipulationDetector(BaseDetector):
                 "authorized personnel",
             ],
             # SOCIAL INFLUENCE
+            # Detects bandwagon effects and false popularity claims
+            # Severity: MEDIUM - Exploits human tendency to follow the crowd
+            # Examples: "everyone is doing it", "millions use", "trending", "industry standard"
             "social_proof": [
                 "everyone",
                 "everybody",
@@ -137,6 +178,9 @@ class ManipulationDetector(BaseDetector):
                 "number one choice",
             ],
             # URGENCY & SCARCITY
+            # Detects artificial time pressure and scarcity tactics
+            # Severity: MEDIUM - Creates false urgency to bypass rational decision-making
+            # Examples: "limited time", "act now", "offer ends soon", "while supplies last"
             "scarcity": [
                 "limited",
                 "scarce",
@@ -225,6 +269,9 @@ class ManipulationDetector(BaseDetector):
                 "chemistry",
             ],
             # GASLIGHTING
+            # Detects reality distortion and memory manipulation tactics
+            # Severity: HIGH - Psychological abuse that can cause lasting harm
+            # Examples: "you're imagining things", "that never happened", "you're crazy", "calm down"
             "gaslighting": [
                 "you're imagining things",
                 "you are imagining things",
@@ -258,6 +305,9 @@ class ManipulationDetector(BaseDetector):
                 "everyone agrees with me",
             ],
             # THREATS & INTIMIDATION
+            # Detects coercion, blackmail, and intimidation tactics
+            # Severity: HIGH - Direct threat to user safety and wellbeing
+            # Examples: "or else", "legal action", "you'll regret", "consequences", "final warning"
             "threats_intimidation": [
                 "or else",
                 "you'll regret",
@@ -287,6 +337,9 @@ class ManipulationDetector(BaseDetector):
                 "ruin your reputation",
             ],
             # PHISHING & PRETEXTING
+            # Detects credential theft attempts and identity verification scams
+            # Severity: HIGH - Direct security threat, common attack vector
+            # Examples: "verify your account", "suspicious activity", "click the link", "urgent verification"
             "phishing_pretexting": [
                 "verify your account",
                 "reset your password",
@@ -607,7 +660,10 @@ class ManipulationDetector(BaseDetector):
                 "red herring",
                 "smoke and mirrors",
             ],
-            # DARVO
+            # DARVO (Deny, Attack, Reverse Victim and Offender)
+            # Detects perpetrator claiming victim status to deflect accountability
+            # Severity: HIGH - Advanced manipulation tactic used by abusers
+            # Examples: "i'm the real victim", "you're attacking me", "you made me do this"
             "darvo": [
                 "i'm the real victim here",
                 "you're attacking me",
@@ -637,6 +693,9 @@ class ManipulationDetector(BaseDetector):
                 "unconventional",
             ],
             # ISOLATION TACTICS
+            # Detects attempts to separate victim from support network
+            # Severity: HIGH - Classic abusive behavior pattern, highly harmful
+            # Examples: "they're not good for you", "you don't need them", "choose me or them"
             "isolation": [
                 "they're not good for you",
                 "you don't need them",
@@ -1316,7 +1375,10 @@ class ManipulationDetector(BaseDetector):
         text_to_check = self._assemble_text(action)
 
         # Skip processing if content is too large for performance
-        if len(text_to_check) > 100000:  # 100KB limit for pattern matching
+        # TODO: Optimize pattern matching with Aho-Corasick algorithm for O(n) complexity
+        # instead of current O(n*m) where n=text length, m=number of patterns
+        # Reference: https://github.com/V1B3hR/nethical/issues/TBD
+        if len(text_to_check) > MAX_TEXT_LENGTH:
             return []
         if not text_to_check:
             return []
@@ -1392,3 +1454,32 @@ class ManipulationDetector(BaseDetector):
             evidence={"manipulation_type": category, "detected_keywords": distinct_keywords},
             timestamp=datetime.now(timezone.utc),
         )
+
+    def _escalate_severity(
+        self,
+        base: Severity,
+        total_occurrences: int,
+        distinct_keywords: int,
+    ) -> Severity:
+        """Escalate severity based on occurrence count and keyword diversity.
+        
+        Args:
+            base: Base severity for the manipulation category
+            total_occurrences: Total number of pattern matches found
+            distinct_keywords: Number of distinct keywords/patterns matched
+            
+        Returns:
+            Escalated severity level
+        """
+        # Multiple distinct keywords or high occurrence count indicates more sophisticated attack
+        if distinct_keywords >= 5 or total_occurrences >= 10:
+            if base == Severity.LOW:
+                return Severity.MEDIUM
+            elif base == Severity.MEDIUM:
+                return Severity.HIGH
+            # HIGH stays HIGH (can't escalate further to CRITICAL)
+        elif distinct_keywords >= 3 or total_occurrences >= 5:
+            if base == Severity.LOW:
+                return Severity.MEDIUM
+        
+        return base
