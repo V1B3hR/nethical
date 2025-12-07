@@ -109,7 +109,7 @@ class TestNoCodeInjection:
     @pytest.mark.asyncio
     async def test_malicious_pattern_injection_attempt(self):
         """Test that malicious patterns in text don't affect detection logic."""
-        from nethical.core.models import AgentAction
+        from nethical.core.models import AgentAction, ActionType
         from datetime import datetime, timezone
         
         detector = ManipulationDetector()
@@ -122,11 +122,12 @@ class TestNoCodeInjection:
         )
         
         action = AgentAction(
-            id="test-injection",
+            action_id="test-injection",
             agent_id="test",
+            action_type=ActionType.QUERY,
+            content=malicious_text,
+            intent=malicious_text,
             timestamp=datetime.now(timezone.utc),
-            stated_intent=malicious_text,
-            actual_action=malicious_text,
         )
         
         # Should not raise any exceptions or execute code
@@ -217,18 +218,18 @@ class TestBoundaryProtection:
     @pytest.mark.asyncio
     async def test_boundary_prevents_substring_false_positives(self):
         """Test that word boundaries prevent false positives from substrings."""
-        from nethical.core.models import AgentAction
+        from nethical.core.models import AgentAction, ActionType
         from datetime import datetime, timezone
         
         detector = ManipulationDetector()
         
         # "fear" should match, but "fearless" should not trigger "fear" pattern
         action = AgentAction(
-            id="test-boundary",
+            action_id="test-boundary",
             agent_id="test",
+            action_type=ActionType.QUERY,
+            content="Be fearless in your approach.",
             timestamp=datetime.now(timezone.utc),
-            stated_intent="",
-            actual_action="Be fearless in your approach.",
         )
         
         violations = await detector.detect_violations(action)
@@ -253,15 +254,16 @@ class TestPatternImmutability:
         
         # Patterns should not change during normal operation
         import asyncio
-        from nethical.core.models import AgentAction
+        from nethical.core.models import AgentAction, ActionType
         from datetime import datetime, timezone
         
         action = AgentAction(
-            id="test",
+            action_id="test",
             agent_id="test",
+            action_type=ActionType.QUERY,
+            content="test",
+            intent="test",
             timestamp=datetime.now(timezone.utc),
-            stated_intent="test",
-            actual_action="test",
         )
         
         # Run detection multiple times
@@ -288,7 +290,7 @@ class TestInputSanitization:
     @pytest.mark.asyncio
     async def test_handles_special_characters_safely(self):
         """Test that special characters in input don't break detection."""
-        from nethical.core.models import AgentAction
+        from nethical.core.models import AgentAction, ActionType
         from datetime import datetime, timezone
         
         detector = ManipulationDetector()
@@ -297,11 +299,11 @@ class TestInputSanitization:
         special_chars = r".*+?[]{}()|\^$"
         
         action = AgentAction(
-            id="test-special",
+            action_id="test-special",
             agent_id="test",
+            action_type=ActionType.QUERY,
+            content=special_chars,
             timestamp=datetime.now(timezone.utc),
-            stated_intent=special_chars,
-            actual_action=special_chars,
         )
         
         # Should not raise exceptions
@@ -311,7 +313,7 @@ class TestInputSanitization:
     @pytest.mark.asyncio
     async def test_handles_unicode_safely(self):
         """Test that Unicode characters are handled safely."""
-        from nethical.core.models import AgentAction
+        from nethical.core.models import AgentAction, ActionType
         from datetime import datetime, timezone
         
         detector = ManipulationDetector()
@@ -320,11 +322,11 @@ class TestInputSanitization:
         unicode_text = "你好 مرحبا Здравствуйте 🔒🔐🛡️"
         
         action = AgentAction(
-            id="test-unicode",
+            action_id="test-unicode",
             agent_id="test",
+            action_type=ActionType.QUERY,
+            content=unicode_text,
             timestamp=datetime.now(timezone.utc),
-            stated_intent=unicode_text,
-            actual_action=unicode_text,
         )
         
         # Should not raise exceptions
@@ -334,18 +336,18 @@ class TestInputSanitization:
     @pytest.mark.asyncio
     async def test_handles_null_bytes_safely(self):
         """Test that null bytes don't cause issues."""
-        from nethical.core.models import AgentAction
+        from nethical.core.models import AgentAction, ActionType
         from datetime import datetime, timezone
         
         detector = ManipulationDetector()
         
         # Text with null byte (if it makes it through to the detector)
         action = AgentAction(
-            id="test-null",
+            action_id="test-null",
             agent_id="test",
+            action_type=ActionType.QUERY,
+            content="test\x00injection",
             timestamp=datetime.now(timezone.utc),
-            stated_intent="test\x00injection",
-            actual_action="test\x00more",
         )
         
         # Should not raise exceptions

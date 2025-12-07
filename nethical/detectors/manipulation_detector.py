@@ -1369,7 +1369,8 @@ class ManipulationDetector(BaseDetector):
 
     async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
         """Detect manipulation techniques in the given action."""
-        if not self.enabled:
+        from .base_detector import DetectorStatus
+        if self.status != DetectorStatus.ACTIVE:
             return []
 
         text_to_check = self._assemble_text(action)
@@ -1401,8 +1402,8 @@ class ManipulationDetector(BaseDetector):
     def _assemble_text(self, action: AgentAction) -> str:
         """Assemble and normalize the text to analyze from the action."""
         parts = [
-            getattr(action, "stated_intent", "") or "",
-            getattr(action, "actual_action", "") or "",
+            getattr(action, "intent", "") or "",
+            getattr(action, "content", "") or "",
         ]
         text = " ".join(p.strip() for p in parts if p).strip()
         return text
@@ -1445,14 +1446,21 @@ class ManipulationDetector(BaseDetector):
             f"({len(distinct_keywords)} keyword(s), {total_occurrences} occurrence(s))."
         )
 
+        # Format evidence as string list for the model
+        evidence_items = [
+            f"Manipulation type: {category}",
+            f"Detected keywords: {', '.join(distinct_keywords[:10])}",  # Limit for readability
+            f"Total matches: {total_occurrences}",
+        ]
+        
         return SafetyViolation(
-            id=str(uuid.uuid4()),
-            action_id=action.id,
+            action_id=action.action_id,
             violation_type=ViolationType.MANIPULATION,
             severity=severity,
             description=description,
-            evidence={"manipulation_type": category, "detected_keywords": distinct_keywords},
-            timestamp=datetime.now(timezone.utc),
+            confidence=min(0.6 + (len(distinct_keywords) * 0.05), 0.95),  # Higher confidence with more matches
+            evidence=evidence_items,
+            detector_name=self.name,
         )
 
     def _escalate_severity(
