@@ -237,8 +237,9 @@ class TestBoundaryProtection:
         # Should not detect "fear" in "fearless"
         if violations:
             for v in violations:
-                keywords = v.evidence.get("detected_keywords", [])
-                assert "fear" not in keywords, \
+                # evidence is now a list of strings, check if "fear" keyword is mentioned
+                evidence_text = " ".join(v.evidence).lower()
+                assert "fear," not in evidence_text and "fear\n" not in evidence_text, \
                     "Word boundary should prevent matching 'fear' in 'fearless'"
 
 

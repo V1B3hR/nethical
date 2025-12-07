@@ -5,7 +5,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import List, Optional, Dict, Tuple
 
-from .base_detector import BaseDetector
+from .base_detector import BaseDetector, DetectorStatus
 from ..core.models import AgentAction, SafetyViolation, ViolationType, Severity
 
 
@@ -1369,7 +1369,6 @@ class ManipulationDetector(BaseDetector):
 
     async def detect_violations(self, action: AgentAction) -> List[SafetyViolation]:
         """Detect manipulation techniques in the given action."""
-        from .base_detector import DetectorStatus
         if self.status != DetectorStatus.ACTIVE:
             return []
 
@@ -1378,7 +1377,7 @@ class ManipulationDetector(BaseDetector):
         # Skip processing if content is too large for performance
         # TODO: Optimize pattern matching with Aho-Corasick algorithm for O(n) complexity
         # instead of current O(n*m) where n=text length, m=number of patterns
-        # Reference: https://github.com/V1B3hR/nethical/issues/TBD
+        # This would significantly improve performance for large texts with many patterns
         if len(text_to_check) > MAX_TEXT_LENGTH:
             return []
         if not text_to_check:
