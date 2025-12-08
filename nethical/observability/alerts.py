@@ -139,7 +139,7 @@ class AlertRuleManager:
                 name="drift_detected",
                 description="Data or behavior drift detected",
                 severity=AlertSeverity.WARNING,
-                condition=lambda metrics: self._check_drift(metrics),
+                condition=self._check_drift,
                 threshold=0.2,  # 20% drift
                 duration=300,  # Fire if true for 5 minutes
                 labels={"component": "ml_monitor"},
