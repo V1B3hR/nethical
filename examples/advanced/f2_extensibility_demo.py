@@ -61,7 +61,7 @@ except ImportError:
         try:
             mod = __import__(module, fromlist=[cls] if cls else [])
             return getattr(mod, cls) if cls else mod
-        except:
+        except Exception:
             return None
 
     def run_demo_safely(func, name, skip=True):
