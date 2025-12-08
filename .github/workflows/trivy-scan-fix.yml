@@ -16,6 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+    env:
+      TRIVY_CACHE_DIR: ~/.cache/trivy
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
@@ -25,7 +28,6 @@ jobs:
 
       - name: Cleanup runner disk (prune Docker & clear tmp)
         run: |
-          # Aggressively free Docker space and tmp files to avoid "no space left" errors
           sudo docker system prune -af --volumes || true
           sudo rm -rf /tmp/* || true
           sudo rm -rf /var/lib/docker/tmp/* || true
@@ -42,23 +44,25 @@ jobs:
       - name: Build docker image (when no image was provided)
         if: ${{ github.event.inputs.image == '' }}
         run: |
-          docker build -t ${{ github.repository }}:latest .
+          image_repo="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+          docker build -t "${image_repo}:latest" .
 
-      - name: Determine image to scan
+      - name: Determine image to scan (force lowercase)
         id: image
         run: |
           if [ -n "${{ github.event.inputs.image }}" ]; then
-            echo "image=${{ github.event.inputs.image }}" > $GITHUB_OUTPUT
+            image_input="${{ github.event.inputs.image }}"
+            image=$(echo "${image_input}" | tr '[:upper:]' '[:lower:]')
           else
-            echo "image=${{ github.repository }}:latest" > $GITHUB_OUTPUT
+            image_repo="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
+            image="${image_repo}:latest"
           fi
+          echo "image=${image}" >> "$GITHUB_OUTPUT"
 
       - name: Install Trivy (pinned)
         run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
-          
+
       - name: Run Trivy (Container Scan)
-        env:
-          TRIVY_CACHE_DIR: ~/.cache/trivy
         run: |
-          trivy image --cache-dir ~/.cache/trivy --skip-version-check --format table --exit-code 1 ${{ steps.image.outputs.image }}
+          trivy image --cache-dir "${TRIVY_CACHE_DIR}" --skip-version-check --format table --exit-code 1 "${{ steps.image.outputs.image }}"
