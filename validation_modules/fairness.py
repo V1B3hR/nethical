@@ -10,7 +10,7 @@ Computes fairness metrics including:
 
 import numpy as np
 import pandas as pd
-from typing import Dict, List, Tuple, Optional
+from typing import Dict, List, Tuple, Optional, Any
 from sklearn.metrics import confusion_matrix, precision_recall_fscore_support
 import logging
 import json
