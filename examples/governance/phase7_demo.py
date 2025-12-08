@@ -9,7 +9,7 @@ Demonstrates:
 """
 
 import random
-from nethical.core import AnomalyDriftMonitor, AnomalyType, DriftSeverity
+from nethical.core import AnomalyDriftMonitor
 
 
 def print_section(title):
