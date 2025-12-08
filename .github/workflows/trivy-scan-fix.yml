@@ -55,8 +55,8 @@ jobs:
 
       - name: Install Trivy (pinned)
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin 0.68.1
-
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          
       - name: Run Trivy (Container Scan)
         env:
           TRIVY_CACHE_DIR: ~/.cache/trivy
