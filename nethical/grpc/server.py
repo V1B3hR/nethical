@@ -6,7 +6,7 @@ where REST latency is too high.
 
 Usage:
     from nethical.grpc import create_grpc_server
-    
+
     server = create_grpc_server(port=50051)
     server.start()
     server.wait_for_termination()
@@ -38,19 +38,19 @@ from nethical.proto import (
 
 class GovernanceServicer:
     """Implementation of the GovernanceService gRPC service.
-    
+
     Provides governance decision-making with sub-10ms latency
     target for internal service communication.
-    
+
     All methods implement the 25 Fundamental Laws.
     """
-    
+
     def __init__(self):
         """Initialize the governance servicer."""
         self.start_time = time.time()
         self._decision_cache: dict[str, Decision] = {}
         self._policies: list[Policy] = self._init_default_policies()
-    
+
     def _init_default_policies(self) -> list[Policy]:
         """Initialize default policies."""
         return [
@@ -77,13 +77,13 @@ class GovernanceServicer:
                 updated_at=datetime.now(timezone.utc).isoformat(),
             ),
         ]
-    
+
     def EvaluateAction(self, request: EvaluateRequest) -> EvaluateResponse:
         """Evaluate a single action for ethical compliance.
-        
+
         This is the core governance decision endpoint.
         Target latency: <10ms p99.
-        
+
         Implements:
         - Law 6: Decision Authority
         - Law 10: Reasoning Transparency
@@ -93,17 +93,17 @@ class GovernanceServicer:
         start_time = time.perf_counter()
         decision_id = str(uuid.uuid4())
         request_id = request.request_id or str(uuid.uuid4())
-        
+
         # Initialize evaluation
         decision = "ALLOW"
         risk_score = 0.0
         confidence = 1.0
         violations: list[Violation] = []
         laws_checked = [6, 10, 15, 21, 22]
-        
+
         # Evaluate action content
         action_lower = request.action.lower()
-        
+
         # Safety checks (Law 21)
         dangerous_patterns = [
             ("delete all", "Bulk deletion detected", "high", 23),
@@ -114,23 +114,28 @@ class GovernanceServicer:
             ("exploit", "Exploitation attempt", "high", 21),
             ("bypass security", "Security bypass", "critical", 21),
         ]
-        
+
         for pattern, desc, severity, law in dangerous_patterns:
             if pattern in action_lower:
-                violations.append(Violation(
-                    id=str(uuid.uuid4()),
-                    type="safety_violation",
-                    severity=severity,
-                    description=desc,
-                    law_reference=f"Law {law}",
-                ))
+                violations.append(
+                    Violation(
+                        id=str(uuid.uuid4()),
+                        type="safety_violation",
+                        severity=severity,
+                        description=desc,
+                        law_reference=f"Law {law}",
+                    )
+                )
                 risk_score = max(
                     risk_score,
-                    0.7 if severity == "medium" else
-                    0.85 if severity == "high" else 0.95
+                    (
+                        0.7
+                        if severity == "medium"
+                        else 0.85 if severity == "high" else 0.95
+                    ),
                 )
                 laws_checked.append(law)
-        
+
         # Determine decision
         if risk_score >= 0.9:
             decision = "BLOCK"
@@ -138,7 +143,7 @@ class GovernanceServicer:
         elif risk_score >= 0.7:
             decision = "RESTRICT"
             confidence = 0.85
-        
+
         # Build explanation if requested
         explanation = None
         if request.require_explanation:
@@ -148,10 +153,10 @@ class GovernanceServicer:
                 decision_rationale=f"Decision based on risk score {risk_score:.2f}",
                 laws_applied=[f"Law {i}" for i in set(laws_checked)],
             )
-        
+
         latency_ms = int((time.perf_counter() - start_time) * 1000)
         timestamp = datetime.now(timezone.utc).isoformat()
-        
+
         response = EvaluateResponse(
             decision=decision,
             decision_id=decision_id,
@@ -166,7 +171,7 @@ class GovernanceServicer:
             fundamental_laws_checked=list(set(laws_checked)),
             timestamp=timestamp,
         )
-        
+
         # Store decision for lookup
         self._decision_cache[decision_id] = Decision(
             decision_id=decision_id,
@@ -183,21 +188,21 @@ class GovernanceServicer:
             latency_ms=latency_ms,
             audit_id=request_id,
         )
-        
+
         return response
-    
+
     def BatchEvaluate(
         self,
         request_list: list[EvaluateRequest],
     ) -> Iterator[EvaluateResponse]:
         """Evaluate multiple actions with streaming responses.
-        
+
         Yields responses as they are evaluated for lower latency
         in batch scenarios.
         """
         for request in request_list:
             yield self.EvaluateAction(request)
-    
+
     def StreamDecisions(
         self,
         agent_id: Optional[str] = None,
@@ -205,7 +210,7 @@ class GovernanceServicer:
         min_risk_score: Optional[float] = None,
     ) -> Iterator[Decision]:
         """Stream decisions matching the filter criteria.
-        
+
         Provides real-time access to governance decisions
         for monitoring and alerting.
         """
@@ -217,17 +222,17 @@ class GovernanceServicer:
                 continue
             if min_risk_score and decision.risk_score < min_risk_score:
                 continue
-            
+
             yield decision
-    
+
     def GetDecision(self, decision_id: str) -> Optional[Decision]:
         """Retrieve a specific decision by ID.
-        
+
         Implements Law 10 (Reasoning Transparency) and
         Law 15 (Audit Compliance).
         """
         return self._decision_cache.get(decision_id)
-    
+
     def ListPolicies(
         self,
         status: Optional[str] = None,
@@ -236,24 +241,24 @@ class GovernanceServicer:
         page_size: int = 20,
     ) -> tuple[list[Policy], int, bool]:
         """List governance policies.
-        
+
         Returns (policies, total_count, has_next).
         Implements Law 8 (Constraint Transparency).
         """
         policies = self._policies
-        
+
         if status:
             policies = [p for p in policies if p.status == status]
         if scope:
             policies = [p for p in policies if p.scope == scope]
-        
+
         total_count = len(policies)
         start = (page - 1) * page_size
         end = start + page_size
         page_policies = policies[start:end]
-        
+
         return page_policies, total_count, end < total_count
-    
+
     def HealthCheck(self) -> dict:
         """Return service health status."""
         uptime = int(time.time() - self.start_time)
@@ -270,14 +275,14 @@ def create_grpc_server(
     max_workers: int = 10,
 ) -> "GRPCServer":
     """Create a gRPC server instance.
-    
+
     Note: This is a placeholder for actual gRPC server creation.
     In production, this would use grpcio to create a real server.
-    
+
     Args:
         port: Port to listen on
         max_workers: Maximum thread workers
-        
+
     Returns:
         GRPCServer instance (placeholder)
     """
@@ -286,26 +291,26 @@ def create_grpc_server(
 
 class GRPCServer:
     """Placeholder gRPC server.
-    
+
     In production, this would wrap grpcio.Server.
     """
-    
+
     def __init__(self, port: int = 50051, max_workers: int = 10):
         self.port = port
         self.max_workers = max_workers
         self.servicer = GovernanceServicer()
         self._running = False
-    
+
     def start(self) -> None:
         """Start the server."""
         logger.info("Starting gRPC server on port %d", self.port)
         self._running = True
-    
+
     def stop(self, grace: int = 5) -> None:
         """Stop the server."""
         logger.info("Stopping gRPC server with %ds grace period", grace)
         self._running = False
-    
+
     def wait_for_termination(self, timeout: Optional[float] = None) -> None:
         """Wait for server termination."""
         logger.info("Waiting for gRPC server termination")

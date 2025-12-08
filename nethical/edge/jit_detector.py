@@ -23,13 +23,14 @@ except ImportError:
     def njit(*args, **kwargs):
         """Fallback decorator when Numba is not available."""
         import functools
-        
+
         def decorator(func):
             @functools.wraps(func)
             def wrapper(*fargs, **fkwargs):
                 return func(*fargs, **fkwargs)
+
             return wrapper
-        
+
         # Handle both @njit and @njit() syntax
         if len(args) == 1 and callable(args[0]) and not kwargs:
             return decorator(args[0])
@@ -210,7 +211,7 @@ def fast_risk_aggregation(
 def warmup_jit_detectors():
     """
     Warmup JIT compilation for all detector functions.
-    
+
     Call this at startup to ensure JIT compilation is complete
     before processing real requests.
     """

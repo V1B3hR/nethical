@@ -39,7 +39,10 @@ from .human_feedback import EscalationQueue
 from .optimization import MultiObjectiveOptimizer, Configuration
 
 # F3: Privacy & Data Handling imports
-from .redaction_pipeline import EnhancedRedactionPipeline, RedactionPolicy as RedactionPolicyEnum
+from .redaction_pipeline import (
+    EnhancedRedactionPipeline,
+    RedactionPolicy as RedactionPolicyEnum,
+)
 from .differential_privacy import DifferentialPrivacy, PrivacyMechanism, PrivacyAudit
 from .federated_analytics import FederatedAnalytics
 from .data_minimization import DataMinimization
@@ -176,16 +179,19 @@ class IntegratedGovernance:
         # ==================== Core Governance & Violation Detection ====================
         # Initialize the enhanced safety governance for violation detection
         from .governance_core import MonitoringConfig
+
         safety_storage = storage_path / "safety_governance"
         safety_storage.mkdir(parents=True, exist_ok=True)
         safety_config = MonitoringConfig(
             enable_persistence=True,
-            db_path=str(safety_storage / "governance_data.sqlite")
+            db_path=str(safety_storage / "governance_data.sqlite"),
         )
         self.safety_governance = EnhancedSafetyGovernance(config=safety_config)
 
         # ==================== Phase 3 Components ====================
-        self.risk_engine = RiskEngine(redis_client=redis_client, key_prefix="nethical:risk")
+        self.risk_engine = RiskEngine(
+            redis_client=redis_client, key_prefix="nethical:risk"
+        )
 
         self.correlation_engine = CorrelationEngine(
             config_path=correlation_config_path,
@@ -267,7 +273,9 @@ class IntegratedGovernance:
             resolution_sla_seconds=resolution_sla_seconds,
         )
 
-        self.optimizer = MultiObjectiveOptimizer(storage_path=str(storage_path / "optimization.db"))
+        self.optimizer = MultiObjectiveOptimizer(
+            storage_path=str(storage_path / "optimization.db")
+        )
 
         # Configuration
         self.auto_escalate_on_block = auto_escalate_on_block
@@ -326,7 +334,8 @@ class IntegratedGovernance:
         self.enable_quota_enforcement = enable_quota_enforcement
         if enable_quota_enforcement and QUOTA_AVAILABLE:
             quota_config = QuotaConfig(
-                requests_per_second=requests_per_second, max_payload_bytes=max_payload_bytes
+                requests_per_second=requests_per_second,
+                max_payload_bytes=max_payload_bytes,
             )
             self.quota_enforcer = QuotaEnforcer(quota_config)
 
@@ -375,7 +384,11 @@ class IntegratedGovernance:
         # Define regional policy profiles
         policy_profiles = {
             "EU_GDPR": {
-                "compliance_requirements": ["GDPR", "data_protection", "right_to_erasure"],
+                "compliance_requirements": [
+                    "GDPR",
+                    "data_protection",
+                    "right_to_erasure",
+                ],
                 "data_retention_days": 30,
                 "cross_border_transfer_allowed": False,
                 "encryption_required": True,
@@ -408,9 +421,13 @@ class IntegratedGovernance:
             },
         }
 
-        self.regional_policies = policy_profiles.get(policy_name, policy_profiles["GLOBAL_DEFAULT"])
+        self.regional_policies = policy_profiles.get(
+            policy_name, policy_profiles["GLOBAL_DEFAULT"]
+        )
 
-    def validate_data_residency(self, region_id: Optional[str] = None) -> Dict[str, Any]:
+    def validate_data_residency(
+        self, region_id: Optional[str] = None
+    ) -> Dict[str, Any]:
         """Validate data residency compliance.
 
         Args:
@@ -539,7 +556,9 @@ class IntegratedGovernance:
             quota_result = self.quota_enforcer.check_quota(
                 agent_id=agent_id,
                 cohort=cohort,
-                tenant=effective_region if effective_region else None,  # Use region as tenant
+                tenant=(
+                    effective_region if effective_region else None
+                ),  # Use region as tenant
                 payload_size=payload_size,
                 action_type=action_type or "query",
             )
@@ -575,14 +594,14 @@ class IntegratedGovernance:
         # ==================== Core Violation Detection ====================
         # Import ActionType enum
         from .governance_core import ActionType
-        
+
         # Convert action type string to enum
         action_type_enum = ActionType.QUERY
         if action_type:
             action_type_str = action_type.upper()
             if hasattr(ActionType, action_type_str):
                 action_type_enum = getattr(ActionType, action_type_str)
-        
+
         # Convert action to AgentAction format if it's a string
         if isinstance(action, str):
             # Create an AgentAction object from string
@@ -591,12 +610,12 @@ class IntegratedGovernance:
                 agent_id=agent_id,
                 content=action,
                 action_type=action_type_enum,
-                timestamp=datetime.now(timezone.utc)
+                timestamp=datetime.now(timezone.utc),
             )
-        elif hasattr(action, 'content'):
+        elif hasattr(action, "content"):
             # Already an AgentAction-like object
             # Handle action_type conversion
-            existing_action_type = getattr(action, 'action_type', None)
+            existing_action_type = getattr(action, "action_type", None)
             if isinstance(existing_action_type, str):
                 existing_action_type_str = existing_action_type.upper()
                 if hasattr(ActionType, existing_action_type_str):
@@ -605,13 +624,17 @@ class IntegratedGovernance:
                     existing_action_type = action_type_enum
             elif existing_action_type is None:
                 existing_action_type = action_type_enum
-                
+
             action_obj = AgentAction(
-                action_id=getattr(action, 'action_id', action_id or f"action_{agent_id}_{int(time.time() * 1000)}"),
+                action_id=getattr(
+                    action,
+                    "action_id",
+                    action_id or f"action_{agent_id}_{int(time.time() * 1000)}",
+                ),
                 agent_id=agent_id,
                 content=action.content,
                 action_type=existing_action_type,
-                timestamp=getattr(action, 'timestamp', datetime.now(timezone.utc))
+                timestamp=getattr(action, "timestamp", datetime.now(timezone.utc)),
             )
         else:
             # Convert any other format to AgentAction
@@ -620,7 +643,7 @@ class IntegratedGovernance:
                 agent_id=agent_id,
                 content=str(action),
                 action_type=action_type_enum,
-                timestamp=datetime.now(timezone.utc)
+                timestamp=datetime.now(timezone.utc),
             )
 
         # Run violation detection asynchronously
@@ -630,32 +653,43 @@ class IntegratedGovernance:
             # Create a new loop in a thread-safe manner
             loop = asyncio.new_event_loop()
             try:
-                return loop.run_until_complete(self.safety_governance.evaluate_action(action_obj))
+                return loop.run_until_complete(
+                    self.safety_governance.evaluate_action(action_obj)
+                )
             finally:
                 loop.close()
-        
+
         # Determine if we're in an async context
         try:
             asyncio.get_running_loop()
             # We're in an async context - use concurrent.futures to run in thread
             import concurrent.futures
+
             with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
                 future = executor.submit(sync_evaluate)
                 judgment = future.result(timeout=30.0)
         except RuntimeError:
             # No running loop, safe to run synchronously
             judgment = sync_evaluate()
-        
+
         # Extract violation information
         detected_violations = judgment.violations
         decision = judgment.decision
         violation_detected = len(detected_violations) > 0
-        
+
         # Determine violation type and severity from detected violations
         if detected_violations:
             # Use the most severe violation
-            violation_type = detected_violations[0].violation_type.value if not violation_type else violation_type
-            violation_severity = detected_violations[0].severity.value if not violation_severity else violation_severity
+            violation_type = (
+                detected_violations[0].violation_type.value
+                if not violation_type
+                else violation_type
+            )
+            violation_severity = (
+                detected_violations[0].severity.value
+                if not violation_severity
+                else violation_severity
+            )
 
         results = {
             "agent_id": agent_id,
@@ -669,7 +703,9 @@ class IntegratedGovernance:
                 {
                     "matches_count": len(pii_matches),
                     "pii_risk_score": pii_risk,
-                    "pii_types": [m.pii_type.value for m in pii_matches] if pii_matches else [],
+                    "pii_types": (
+                        [m.pii_type.value for m in pii_matches] if pii_matches else []
+                    ),
                 }
                 if self.pii_detector
                 else None
@@ -680,8 +716,16 @@ class IntegratedGovernance:
             "violations": [
                 {
                     "violation_id": v.violation_id,
-                    "violation_type": v.violation_type.value if hasattr(v.violation_type, 'value') else str(v.violation_type),
-                    "severity": v.severity.value if hasattr(v.severity, 'value') else str(v.severity),
+                    "violation_type": (
+                        v.violation_type.value
+                        if hasattr(v.violation_type, "value")
+                        else str(v.violation_type)
+                    ),
+                    "severity": (
+                        v.severity.value
+                        if hasattr(v.severity, "value")
+                        else str(v.severity)
+                    ),
                     "description": v.description,
                     "confidence": v.confidence,
                     "detector_name": v.detector_name,
@@ -701,18 +745,24 @@ class IntegratedGovernance:
         if violation_detected and violation_severity:
             severity_map = {"low": 0.25, "medium": 0.5, "high": 0.75, "critical": 1.0}
             # Convert to string if needed and normalize
-            severity_str = str(violation_severity).lower() if violation_severity else "medium"
+            severity_str = (
+                str(violation_severity).lower() if violation_severity else "medium"
+            )
             violation_score = severity_map.get(severity_str, 0.5)
 
         action_context = {"cohort": cohort, "has_violation": violation_detected}
 
         risk_score = self.risk_engine.calculate_risk_score(
-            agent_id=agent_id, violation_severity=violation_score, action_context=action_context
+            agent_id=agent_id,
+            violation_severity=violation_score,
+            action_context=action_context,
         )
 
         # Boost risk score based on PII detection and quota pressure
         if pii_risk > 0:
-            risk_score = min(1.0, risk_score + (pii_risk * 0.3))  # Add up to 30% for PII
+            risk_score = min(
+                1.0, risk_score + (pii_risk * 0.3)
+            )  # Add up to 30% for PII
 
         if quota_result and quota_result.get("backpressure_level", 0) > 0.8:
             risk_score = min(1.0, risk_score + 0.2)  # Add 20% for quota pressure
@@ -915,13 +965,17 @@ class IntegratedGovernance:
                 "merkle_anchor": {
                     "enabled": self.merkle_anchor is not None,
                     "current_chunk_events": (
-                        self.merkle_anchor.current_chunk.event_count if self.merkle_anchor else 0
+                        self.merkle_anchor.current_chunk.event_count
+                        if self.merkle_anchor
+                        else 0
                     ),
                 },
                 "quarantine_manager": {
                     "enabled": self.quarantine_manager is not None,
                     "quarantined_cohorts": (
-                        len(self.quarantine_manager.quarantines) if self.quarantine_manager else 0
+                        len(self.quarantine_manager.quarantines)
+                        if self.quarantine_manager
+                        else 0
                     ),
                 },
                 "sla_monitor": {"enabled": self.sla_monitor is not None},
@@ -936,7 +990,9 @@ class IntegratedGovernance:
                     "pending_cases": len(self.escalation_queue.list_pending_cases())
                 },
                 "optimizer": {"tracked_configs": len(self.optimizer.configurations)},
-                "active_config": self.active_config.config_id if self.active_config else None,
+                "active_config": (
+                    self.active_config.config_id if self.active_config else None
+                ),
             },
         }
 

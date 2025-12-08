@@ -27,10 +27,28 @@ MIN_THREAT_RATIO = 0.2
 
 # Expected features for different model types
 EXPECTED_FEATURES = {
-    "heuristic": {"violation_count", "severity_max", "recency_score", "frequency_score", "context_risk"},
-    "logistic": {"violation_count", "severity_max", "recency_score", "frequency_score", "context_risk"},
+    "heuristic": {
+        "violation_count",
+        "severity_max",
+        "recency_score",
+        "frequency_score",
+        "context_risk",
+    },
+    "logistic": {
+        "violation_count",
+        "severity_max",
+        "recency_score",
+        "frequency_score",
+        "context_risk",
+    },
     "anomaly": {"sequence"},
-    "correlation": {"agent_count", "action_rate", "entropy_variance", "time_correlation", "payload_similarity"},
+    "correlation": {
+        "agent_count",
+        "action_rate",
+        "entropy_variance",
+        "time_correlation",
+        "payload_similarity",
+    },
     "transformer": {"text"},
 }
 
@@ -44,7 +62,15 @@ DEFAULT_SCAN_DIRS = [
 
 def discover_label_column(df) -> Optional[str]:
     """Try to find a reasonable label column."""
-    for cand in ["label", "target", "class", "is_threat", "is_toxic", "is_anomaly", "y"]:
+    for cand in [
+        "label",
+        "target",
+        "class",
+        "is_threat",
+        "is_toxic",
+        "is_anomaly",
+        "y",
+    ]:
         matches = [c for c in df.columns if c.lower() == cand]
         if matches:
             return matches[0]
@@ -71,7 +97,9 @@ def discover_feature_columns(df) -> Set[str]:
     return feature_cols
 
 
-def check_missing_features(available_features: set, model_type: str = "heuristic") -> set:
+def check_missing_features(
+    available_features: set, model_type: str = "heuristic"
+) -> set:
     """Check which expected features are missing."""
     expected = EXPECTED_FEATURES.get(model_type, EXPECTED_FEATURES["heuristic"])
     # Normalize to lowercase for comparison
@@ -253,17 +281,23 @@ def inspect_datasets(
                 logging.info(f"Dataset: {result['file']}")
                 logging.info(f"  - Total: {result['total_samples']}")
                 logging.info(f"  - Safe (0): {result['safe']}")
-                logging.info(f"  - Threats (1): {result['threats']} ({result['threat_ratio']:.1f}%)")
+                logging.info(
+                    f"  - Threats (1): {result['threats']} ({result['threat_ratio']:.1f}%)"
+                )
 
                 if result["missing_features"]:
-                    logging.warning(f"  - Missing features: {', '.join(result['missing_features'])}")
+                    logging.warning(
+                        f"  - Missing features: {', '.join(result['missing_features'])}"
+                    )
 
                 for warning in result["warnings"]:
                     logging.warning(f"  ! {warning}")
                     report["all_warnings"].append(f"{result['file']}: {warning}")
 
     # Overall statistics
-    ratio, status = calculate_balance_ratio(report["total_threats"], report["total_safe"])
+    ratio, status = calculate_balance_ratio(
+        report["total_threats"], report["total_safe"]
+    )
     report["overall_balance_status"] = status
 
     # Generate recommendations
@@ -277,7 +311,10 @@ def inspect_datasets(
             f"Dataset is {status}. Consider oversampling threats or using class weights."
         )
 
-    if check_adversarial and report["total_threats"] < report["total_samples"] * MIN_THREAT_RATIO:
+    if (
+        check_adversarial
+        and report["total_threats"] < report["total_samples"] * MIN_THREAT_RATIO
+    ):
         report["recommendations"].append(
             f"Less than {int(MIN_THREAT_RATIO * 100)}% threats. Adversarial training recommended for robust models."
         )

@@ -43,8 +43,8 @@ class BenchmarkComparer:
     # Default regression thresholds (percentage change that triggers failure)
     # Positive values mean increase allowed before regression; negative means allowed decrease before regression.
     DEFAULT_THRESHOLDS = {
-        "avg_latency_ms": 10.0,   # 10% increase triggers regression
-        "p50_latency_ms": 10.0,   # add explicit threshold for p50
+        "avg_latency_ms": 10.0,  # 10% increase triggers regression
+        "p50_latency_ms": 10.0,  # add explicit threshold for p50
         "p95_latency_ms": 15.0,
         "p99_latency_ms": 20.0,
         "throughput_rps": -10.0,  # 10% decrease triggers regression

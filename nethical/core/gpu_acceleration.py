@@ -300,7 +300,9 @@ class GPUBatchProcessor:
     Optimized for processing multiple actions in parallel on GPU.
     """
 
-    def __init__(self, use_gpu: bool = True, batch_size: int = 64, mixed_precision: bool = False):
+    def __init__(
+        self, use_gpu: bool = True, batch_size: int = 64, mixed_precision: bool = False
+    ):
         """
         Initialize GPU batch processor.
 

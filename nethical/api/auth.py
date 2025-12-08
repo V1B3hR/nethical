@@ -55,6 +55,7 @@ class AuthManager:
     # ------------------------------------------------------------------ #
     def _now(self) -> float:
         import time
+
         return time.time()
 
     def _load_iterations(self) -> int:
@@ -66,7 +67,7 @@ class AuthManager:
             if val < 50_000:
                 logger.warning(
                     "Iteration count %d below recommended minimum (50k); using 50k instead.",
-                    val
+                    val,
                 )
                 return 50_000
             return val
@@ -96,6 +97,7 @@ class AuthManager:
 
     def _b64decode(self, s: str) -> bytes:
         import base64
+
         return base64.b64decode(s)
 
     def _load_from_env(self, initial: bool = False) -> None:
@@ -108,7 +110,7 @@ class AuthManager:
                 "Authentication %s with %d API keys (iterations=%d).",
                 "initialized" if initial else "reloaded",
                 len(self._api_keys),
-                self._iterations
+                self._iterations,
             )
         else:
             self._api_keys = None
@@ -144,7 +146,7 @@ class AuthManager:
             api_key.encode("utf-8"),
             self._salt,
             self._iterations,
-            dklen=32
+            dklen=32,
         )
         # Represent as hex; truncate to first 32 chars for log readability
         return dk.hex()[:32]
@@ -170,7 +172,9 @@ class AuthManager:
                 self._api_keys = new_set
                 self._permissive_mode = False
                 self._last_reload_ts = self._now()
-                logger.info("Authentication reloaded with %d provided API keys.", len(new_set))
+                logger.info(
+                    "Authentication reloaded with %d provided API keys.", len(new_set)
+                )
             else:
                 self._api_keys = None
                 self._permissive_mode = True

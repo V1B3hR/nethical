@@ -106,7 +106,7 @@ class TestEUAIActCompliance:
             {"employment_recruitment": True},
             {"law_enforcement": True},
         ]
-        
+
         for case in high_risk_cases:
             result = eu_compliance.classify_risk_level(case)
             assert result == AIRiskLevel.HIGH, f"Failed for {case}"
@@ -118,7 +118,7 @@ class TestEUAIActCompliance:
             {"emotion_recognition": True},
             {"deep_fake": True},
         ]
-        
+
         for case in limited_cases:
             result = eu_compliance.classify_risk_level(case)
             assert result == AIRiskLevel.LIMITED, f"Failed for {case}"
@@ -135,7 +135,7 @@ class TestEUAIActCompliance:
         """Test getting requirements for high-risk systems."""
         requirements = eu_compliance.get_applicable_requirements(AIRiskLevel.HIGH)
         assert len(requirements) > 0
-        
+
         # High-risk should include all requirements
         req_ids = [r.id for r in requirements]
         assert "EU-AI-9.1" in req_ids
@@ -143,18 +143,18 @@ class TestEUAIActCompliance:
 
     def test_get_applicable_requirements_unacceptable(self, eu_compliance):
         """Test that unacceptable risk returns no requirements."""
-        requirements = eu_compliance.get_applicable_requirements(AIRiskLevel.UNACCEPTABLE)
+        requirements = eu_compliance.get_applicable_requirements(
+            AIRiskLevel.UNACCEPTABLE
+        )
         assert len(requirements) == 0
 
     def test_assess_requirement(self, eu_compliance):
         """Test updating requirement status."""
         result = eu_compliance.assess_requirement(
-            "EU-AI-9.1",
-            ComplianceStatus.COMPLIANT,
-            "Verified through testing"
+            "EU-AI-9.1", ComplianceStatus.COMPLIANT, "Verified through testing"
         )
         assert result is True
-        
+
         req = eu_compliance.requirements["EU-AI-9.1"]
         assert req.implementation_status == ComplianceStatus.COMPLIANT
         assert req.remediation_notes == "Verified through testing"
@@ -162,8 +162,7 @@ class TestEUAIActCompliance:
     def test_assess_nonexistent_requirement(self, eu_compliance):
         """Test assessing non-existent requirement."""
         result = eu_compliance.assess_requirement(
-            "NONEXISTENT",
-            ComplianceStatus.COMPLIANT
+            "NONEXISTENT", ComplianceStatus.COMPLIANT
         )
         assert result is False
 
@@ -197,7 +196,7 @@ class TestUKLawCompliance:
         """Test NHS DSPT requirements exist."""
         assert "NHS-DSPT-1" in uk_compliance.requirements
         assert "NHS-DSPT-7" in uk_compliance.requirements
-        
+
         req = uk_compliance.requirements["NHS-DSPT-7"]
         assert req.framework == RegulatoryFramework.UK_NHS_DSPT
         assert req.category == ControlCategory.ACCESS_CONTROL
@@ -242,7 +241,7 @@ class TestUSStandardsCompliance:
         """Test SOC2 requirements exist."""
         assert "SOC2-CC6.1" in us_compliance.requirements
         assert "SOC2-CC7.4" in us_compliance.requirements
-        
+
         req = us_compliance.requirements["SOC2-CC6.1"]
         assert req.framework == RegulatoryFramework.US_SOC2
         assert req.category == ControlCategory.ACCESS_CONTROL
@@ -265,27 +264,27 @@ class TestRegulatoryMappingGenerator:
     def test_generate_mapping_table(self, generator):
         """Test mapping table generation."""
         mapping = generator.generate_mapping_table()
-        
+
         assert "metadata" in mapping
         assert "summary" in mapping
         assert "requirements" in mapping
-        
+
         # Check metadata
         assert mapping["metadata"]["total_requirements"] > 0
         assert "frameworks" in mapping["metadata"]
-        
+
         # Check summary
         assert "by_framework" in mapping["summary"]
         assert "by_category" in mapping["summary"]
         assert "by_status" in mapping["summary"]
-        
+
         # Check requirements
         assert len(mapping["requirements"]) > 0
 
     def test_requirements_structure(self, generator):
         """Test requirement entries have correct structure."""
         mapping = generator.generate_mapping_table()
-        
+
         for req in mapping["requirements"]:
             assert "id" in req
             assert "framework" in req
@@ -301,7 +300,7 @@ class TestRegulatoryMappingGenerator:
     def test_generate_markdown_report(self, generator):
         """Test markdown report generation."""
         md = generator.generate_markdown_report()
-        
+
         assert "# Regulatory Compliance Mapping Table" in md
         assert "## Summary by Framework" in md
         assert "## EU AI ACT" in md
@@ -314,26 +313,26 @@ class TestRegulatoryMappingGenerator:
         with tempfile.TemporaryDirectory() as tmpdir:
             output_path = Path(tmpdir) / "test_mapping.json"
             json_str = generator.generate_json_report(str(output_path))
-            
+
             # Verify JSON is valid
             data = json.loads(json_str)
             assert "metadata" in data
             assert "requirements" in data
-            
+
             # Verify file was created
             assert output_path.exists()
 
     def test_generate_audit_report(self, generator):
         """Test audit report generation."""
         report = generator.generate_audit_report(auditor_name="TestAuditor")
-        
+
         assert "report_id" in report
         assert "generated_at" in report
         assert report["auditor"] == "TestAuditor"
         assert "summary" in report
         assert "findings" in report
         assert "recommendations" in report
-        
+
         # Check summary fields
         summary = report["summary"]
         assert "total_requirements" in summary
@@ -348,11 +347,11 @@ class TestGenerateRegulatoryMappingTable:
         """Test generating mapping table to temp directory."""
         with tempfile.TemporaryDirectory() as tmpdir:
             result = generate_regulatory_mapping_table(tmpdir)
-            
+
             assert "markdown" in result
             assert "json" in result
             assert "audit" in result
-            
+
             # Verify files exist
             assert Path(result["markdown"]).exists()
             assert Path(result["json"]).exists()
@@ -362,16 +361,16 @@ class TestGenerateRegulatoryMappingTable:
         """Test content of generated files."""
         with tempfile.TemporaryDirectory() as tmpdir:
             result = generate_regulatory_mapping_table(tmpdir)
-            
+
             # Check markdown
             md_content = Path(result["markdown"]).read_text()
             assert "Regulatory Compliance" in md_content
-            
+
             # Check JSON
             json_content = Path(result["json"]).read_text()
             data = json.loads(json_content)
             assert data["metadata"]["total_requirements"] > 0
-            
+
             # Check audit
             audit_content = Path(result["audit"]).read_text()
             audit_data = json.loads(audit_content)
@@ -384,7 +383,7 @@ class TestControlCategory:
     def test_all_categories_defined(self):
         """Test all control categories are defined."""
         categories = [c.value for c in ControlCategory]
-        
+
         expected = [
             "transparency",
             "explainability",
@@ -400,7 +399,7 @@ class TestControlCategory:
             "privacy",
             "fairness",
         ]
-        
+
         for cat in expected:
             assert cat in categories, f"Missing category: {cat}"
 
@@ -411,7 +410,7 @@ class TestComplianceStatus:
     def test_all_statuses_defined(self):
         """Test all compliance statuses are defined."""
         statuses = [s.value for s in ComplianceStatus]
-        
+
         assert "compliant" in statuses
         assert "partial" in statuses
         assert "non_compliant" in statuses
@@ -426,12 +425,18 @@ class TestCrossFrameworkCoverage:
         """Test risk management controls exist across frameworks."""
         eu = EUAIActCompliance()
         us = USStandardsCompliance()
-        
-        eu_risk = [r for r in eu.requirements.values() 
-                   if r.category == ControlCategory.RISK_MANAGEMENT]
-        us_risk = [r for r in us.requirements.values() 
-                   if r.category == ControlCategory.RISK_MANAGEMENT]
-        
+
+        eu_risk = [
+            r
+            for r in eu.requirements.values()
+            if r.category == ControlCategory.RISK_MANAGEMENT
+        ]
+        us_risk = [
+            r
+            for r in us.requirements.values()
+            if r.category == ControlCategory.RISK_MANAGEMENT
+        ]
+
         assert len(eu_risk) > 0
         assert len(us_risk) > 0
 
@@ -439,12 +444,18 @@ class TestCrossFrameworkCoverage:
         """Test transparency controls exist across frameworks."""
         eu = EUAIActCompliance()
         uk = UKLawCompliance()
-        
-        eu_transparency = [r for r in eu.requirements.values() 
-                          if r.category == ControlCategory.TRANSPARENCY]
-        uk_transparency = [r for r in uk.requirements.values() 
-                          if r.category == ControlCategory.TRANSPARENCY]
-        
+
+        eu_transparency = [
+            r
+            for r in eu.requirements.values()
+            if r.category == ControlCategory.TRANSPARENCY
+        ]
+        uk_transparency = [
+            r
+            for r in uk.requirements.values()
+            if r.category == ControlCategory.TRANSPARENCY
+        ]
+
         assert len(eu_transparency) > 0
         assert len(uk_transparency) > 0
 
@@ -453,14 +464,23 @@ class TestCrossFrameworkCoverage:
         eu = EUAIActCompliance()
         uk = UKLawCompliance()
         us = USStandardsCompliance()
-        
-        eu_security = [r for r in eu.requirements.values() 
-                      if r.category == ControlCategory.SECURITY]
-        uk_security = [r for r in uk.requirements.values() 
-                      if r.category == ControlCategory.SECURITY]
-        us_security = [r for r in us.requirements.values() 
-                      if r.category == ControlCategory.SECURITY]
-        
+
+        eu_security = [
+            r
+            for r in eu.requirements.values()
+            if r.category == ControlCategory.SECURITY
+        ]
+        uk_security = [
+            r
+            for r in uk.requirements.values()
+            if r.category == ControlCategory.SECURITY
+        ]
+        us_security = [
+            r
+            for r in us.requirements.values()
+            if r.category == ControlCategory.SECURITY
+        ]
+
         assert len(eu_security) > 0
         assert len(uk_security) > 0
         assert len(us_security) > 0

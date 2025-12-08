@@ -76,6 +76,7 @@ def regex_timeout(seconds: int = REGEX_TIMEOUT_SECONDS):
     On Windows, the timeout is not enforced but input length limits still apply.
     """
     import sys
+
     if sys.platform == "win32":
         # Windows doesn't support SIGALRM; just yield
         yield
@@ -152,7 +153,10 @@ class ValidationResult:
 
     def is_safe(self) -> bool:
         """Check if input is safe to process"""
-        return self.is_valid and self.threat_level in (ThreatLevel.NONE, ThreatLevel.LOW)
+        return self.is_valid and self.threat_level in (
+            ThreatLevel.NONE,
+            ThreatLevel.LOW,
+        )
 
 
 class SemanticAnomalyDetector:
@@ -333,7 +337,9 @@ class SemanticAnomalyDetector:
         """
         # Look for long alphanumeric strings
         current_length = 0
-        base64_chars = set("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/=")
+        base64_chars = set(
+            "ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789+/="
+        )
 
         for char in content:
             if char in base64_chars:
@@ -376,7 +382,9 @@ class ThreatIntelligenceDB:
         self._signatures: Dict[str, Dict[str, Any]] = self._load_signatures()
         self._iocs: Set[str] = self._load_iocs()
 
-        log.info(f"Threat Intelligence DB initialized with {len(self._signatures)} signatures")
+        log.info(
+            f"Threat Intelligence DB initialized with {len(self._signatures)} signatures"
+        )
 
     def _load_signatures(self) -> Dict[str, Dict[str, Any]]:
         """Load threat signatures"""
@@ -529,10 +537,14 @@ class BehavioralAnalyzer:
             default_actions, default_time = memory_windows[agent_type]
             # Use agent-type defaults only if user provided the function defaults
             self.lookback_window = (
-                lookback_window if lookback_window != _DEFAULT_LOOKBACK_WINDOW else default_actions
+                lookback_window
+                if lookback_window != _DEFAULT_LOOKBACK_WINDOW
+                else default_actions
             )
             self.time_window_seconds = (
-                time_window_seconds if time_window_seconds != _DEFAULT_TIME_WINDOW_SECONDS else default_time
+                time_window_seconds
+                if time_window_seconds != _DEFAULT_TIME_WINDOW_SECONDS
+                else default_time
             )
         else:
             self.lookback_window = lookback_window
@@ -617,7 +629,9 @@ class BehavioralAnalyzer:
         patterns = self._detect_patterns(agent_id, current_action, history)
 
         # Detect danger patterns
-        danger_patterns = self._detect_danger_patterns(agent_id, current_action, history)
+        danger_patterns = self._detect_danger_patterns(
+            agent_id, current_action, history
+        )
 
         # Update history
         self._update_history(agent_id, current_action)
@@ -670,7 +684,10 @@ class BehavioralAnalyzer:
         self._agent_history[agent_id] = filtered_history
 
     def _update_rolling_stats(
-        self, agent_id: str, current_action: Dict[str, Any], history: List[Dict[str, Any]]
+        self,
+        agent_id: str,
+        current_action: Dict[str, Any],
+        history: List[Dict[str, Any]],
     ) -> None:
         """
         Update rolling statistics for memory-efficient profiling.
@@ -710,7 +727,9 @@ class BehavioralAnalyzer:
         return {
             "actions_per_hour": len(history) / max(1, len(history) // 60),
             "common_patterns": [],
-            "typical_content_length": sum(len(str(a.get("content", ""))) for a in history)
+            "typical_content_length": sum(
+                len(str(a.get("content", ""))) for a in history
+            )
             / len(history),
         }
 
@@ -730,7 +749,9 @@ class BehavioralAnalyzer:
         recent_actions = [
             a
             for a in history[-10:]
-            if datetime.fromisoformat(a.get("timestamp", datetime.now(timezone.utc).isoformat()))
+            if datetime.fromisoformat(
+                a.get("timestamp", datetime.now(timezone.utc).isoformat())
+            )
             > datetime.now(timezone.utc) - timedelta(hours=1)
         ]
 
@@ -758,7 +779,9 @@ class BehavioralAnalyzer:
         patterns = []
 
         # Check for repeated violations
-        recent_violations = sum(1 for a in history[-20:] if a.get("has_violation", False))
+        recent_violations = sum(
+            1 for a in history[-20:] if a.get("has_violation", False)
+        )
         if recent_violations > 5:
             patterns.append("repeated_violations")
 
@@ -865,7 +888,9 @@ class BehavioralAnalyzer:
         return values
 
     def _detect_sudden_spike(
-        self, current_values: Dict[str, float], historical_values: List[Dict[str, float]]
+        self,
+        current_values: Dict[str, float],
+        historical_values: List[Dict[str, float]],
     ) -> Optional[Dict[str, Any]]:
         """Detect sudden spikes - unexpected jumps in any metric."""
         if not historical_values or not current_values:
@@ -890,14 +915,18 @@ class BehavioralAnalyzer:
                         "metric": key,
                         "current_value": current_val,
                         "average_value": avg,
-                        "spike_ratio": abs(current_val / avg) if avg != 0 else float("inf"),
+                        "spike_ratio": (
+                            abs(current_val / avg) if avg != 0 else float("inf")
+                        ),
                         "threshold": self.spike_threshold,
                     },
                 }
         return None
 
     def _detect_high_jerk(
-        self, current_values: Dict[str, float], historical_values: List[Dict[str, float]]
+        self,
+        current_values: Dict[str, float],
+        historical_values: List[Dict[str, float]],
     ) -> Optional[Dict[str, Any]]:
         """Detect high jerk - large delta between consecutive actions."""
         if len(historical_values) < 2 or not current_values:
@@ -931,7 +960,9 @@ class BehavioralAnalyzer:
                             "metric": key,
                             "current_delta": delta,
                             "average_delta": avg_delta,
-                            "jerk_ratio": delta / avg_delta if avg_delta > 0 else float("inf"),
+                            "jerk_ratio": (
+                                delta / avg_delta if avg_delta > 0 else float("inf")
+                            ),
                             "threshold": self.jerk_threshold,
                         },
                     }
@@ -969,7 +1000,9 @@ class BehavioralAnalyzer:
             }
         return None
 
-    def _detect_oscillation(self, history: List[Dict[str, Any]]) -> Optional[Dict[str, Any]]:
+    def _detect_oscillation(
+        self, history: List[Dict[str, Any]]
+    ) -> Optional[Dict[str, Any]]:
         """Detect oscillation - rapid back-and-forth behavior."""
         if len(history) < 6:
             return None
@@ -986,7 +1019,9 @@ class BehavioralAnalyzer:
                 if key in prev_context:
                     curr_val = current_context.get(key, 0)
                     prev_val = prev_context.get(key, 0)
-                    if isinstance(curr_val, (int, float)) and isinstance(prev_val, (int, float)):
+                    if isinstance(curr_val, (int, float)) and isinstance(
+                        prev_val, (int, float)
+                    ):
                         if curr_val * prev_val < 0:  # Sign change
                             sign_changes += 1
 
@@ -1135,7 +1170,9 @@ class BehavioralAnalyzer:
             return None
 
         recent_violations = sum(
-            1 for a in history[-20:] if a.get("has_violation", False) or a.get("blocked", False)
+            1
+            for a in history[-20:]
+            if a.get("has_violation", False) or a.get("blocked", False)
         )
 
         if recent_violations >= 5:
@@ -1162,7 +1199,9 @@ class BehavioralAnalyzer:
 
         # Keep only recent history
         if len(self._agent_history[agent_id]) > self.lookback_window:
-            self._agent_history[agent_id] = self._agent_history[agent_id][-self.lookback_window :]
+            self._agent_history[agent_id] = self._agent_history[agent_id][
+                -self.lookback_window :
+            ]
 
 
 class AdversarialInputDefense:
@@ -1259,7 +1298,9 @@ class AdversarialInputDefense:
             behavioral_score = behavioral_result["anomaly_score"]
 
             if behavioral_result["patterns"]:
-                violations.extend([f"Behavioral: {p}" for p in behavioral_result["patterns"]])
+                violations.extend(
+                    [f"Behavioral: {p}" for p in behavioral_result["patterns"]]
+                )
 
             metadata["behavioral_score"] = behavioral_score
             metadata["behavioral_patterns"] = behavioral_result["patterns"]
@@ -1281,7 +1322,8 @@ class AdversarialInputDefense:
 
         # Final validation decision
         is_valid = len(violations) == 0 or (
-            threat_level in (ThreatLevel.NONE, ThreatLevel.LOW) and self.enable_sanitization
+            threat_level in (ThreatLevel.NONE, ThreatLevel.LOW)
+            and self.enable_sanitization
         )
 
         return ValidationResult(
@@ -1322,7 +1364,9 @@ class AdversarialInputDefense:
         """Aggregate multiple detection scores"""
         # Weighted ensemble
         score = (
-            0.30 * semantic_score + 0.40 * min(threat_count / 3.0, 1.0) + 0.30 * behavioral_score
+            0.30 * semantic_score
+            + 0.40 * min(threat_count / 3.0, 1.0)
+            + 0.30 * behavioral_score
         )
 
         return min(score, 1.0)
@@ -1428,6 +1472,7 @@ class AdversarialInputDefense:
             JSON-safe sanitized content
         """
         import json
+
         # PII redaction first
         pii_patterns = {
             r"\b\d{3}-\d{2}-\d{4}\b": "[SSN-REDACTED]",
@@ -1464,9 +1509,12 @@ class AdversarialInputDefense:
             sanitized = re.sub(pattern, replacement, sanitized)
 
         # Remove control characters (except newline, tab)
-        sanitized = ''.join(
-            char for char in sanitized
-            if char in '\n\t' or (ord(char) >= 32 and ord(char) < 127) or ord(char) >= 160
+        sanitized = "".join(
+            char
+            for char in sanitized
+            if char in "\n\t"
+            or (ord(char) >= 32 and ord(char) < 127)
+            or ord(char) >= 160
         )
 
         return sanitized

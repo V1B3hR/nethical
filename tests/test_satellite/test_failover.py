@@ -23,7 +23,9 @@ class MockProvider:
 
     def __init__(self, healthy=True):
         self._healthy = healthy
-        self._state = ConnectionState.CONNECTED if healthy else ConnectionState.DISCONNECTED
+        self._state = (
+            ConnectionState.CONNECTED if healthy else ConnectionState.DISCONNECTED
+        )
         self._metrics = ConnectionMetrics()
 
     @property

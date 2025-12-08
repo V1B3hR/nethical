@@ -97,7 +97,9 @@ def _setup_root_logging(structured_json: bool):
                 '{"timestamp":"%(asctime)s","level":"%(levelname)s","name":"%(name)s","message":"%(message)s"}'
             )
         else:
-            formatter = logging.Formatter("%(asctime)s [%(levelname)s] %(name)s - %(message)s")
+            formatter = logging.Formatter(
+                "%(asctime)s [%(levelname)s] %(name)s - %(message)s"
+            )
         handler.setFormatter(formatter)
         logger.addHandler(handler)
     logger._nethical_configured = True
@@ -357,7 +359,9 @@ class AlertManager:
 
     def _start_workers(self):
         for i in range(self._config.alert_dispatch_workers):
-            t = threading.Thread(target=self._worker_loop, name=f"alert-dispatch-{i}", daemon=True)
+            t = threading.Thread(
+                target=self._worker_loop, name=f"alert-dispatch-{i}", daemon=True
+            )
             t.start()
             self._workers.append(t)
 
@@ -408,7 +412,9 @@ class AlertManager:
                     handler(alert)
                     break
                 except Exception as e:
-                    backoff = (self._config.handler_retry_backoff**attempt) + random.uniform(0, 0.1)
+                    backoff = (
+                        self._config.handler_retry_backoff**attempt
+                    ) + random.uniform(0, 0.1)
                     logging.warning(
                         f"Alert handler error (attempt {attempt+1}/{self._config.handler_retry_attempts}): {e}. Backoff {backoff:.2f}s"
                     )
@@ -525,7 +531,10 @@ class MetricsCollector:
                     self._prom_counters[name].inc(value)
                 elif metric_type == MetricType.GAUGE and name in self._prom_gauges:
                     self._prom_gauges[name].set(value)
-                elif metric_type == MetricType.HISTOGRAM and name in self._prom_histograms:
+                elif (
+                    metric_type == MetricType.HISTOGRAM
+                    and name in self._prom_histograms
+                ):
                     self._prom_histograms[name].observe(value)
 
             # Cleanup hourly
@@ -539,7 +548,9 @@ class MetricsCollector:
                 dq.popleft()
         self._last_cleanup = time.time()
 
-    def get_metrics(self, name: str, since: Optional[datetime] = None) -> List[MetricPoint]:
+    def get_metrics(
+        self, name: str, since: Optional[datetime] = None
+    ) -> List[MetricPoint]:
         with self._lock:
             if name not in self._metrics:
                 return []
@@ -607,7 +618,9 @@ class ModelMonitor:
         self._lock = threading.RLock()
         self.metrics = MetricsCollector(retention_hours=config.metric_retention_hours)
         self.alerts = AlertManager(config)
-        self._predictions: Deque[Dict[str, Any]] = deque(maxlen=config.prediction_retention)
+        self._predictions: Deque[Dict[str, Any]] = deque(
+            maxlen=config.prediction_retention
+        )
 
         # Register internal alert handler
         self.alerts.register_handler(self._default_alert_handler)
@@ -625,7 +638,9 @@ class ModelMonitor:
             config.persistence_dir.mkdir(parents=True, exist_ok=True)
             if config.async_persistence:
                 self._persistence_thread = threading.Thread(
-                    target=self._persistence_loop, name="monitor-persistence", daemon=True
+                    target=self._persistence_loop,
+                    name="monitor-persistence",
+                    daemon=True,
                 )
                 self._persistence_thread.start()
 
@@ -757,13 +772,17 @@ class ModelMonitor:
         """
         if features is None:
             # Use intersection of keys
-            features = set(baseline_distribution.keys()) & set(current_distribution.keys())
+            features = set(baseline_distribution.keys()) & set(
+                current_distribution.keys()
+            )
 
         drift_events = []
         for feature in features:
             for detector in self._drift_detectors:
                 try:
-                    result = detector.detect(current_distribution, baseline_distribution, feature)
+                    result = detector.detect(
+                        current_distribution, baseline_distribution, feature
+                    )
                 except Exception as e:
                     logging.debug(f"Drift detector error for {feature}: {e}")
                     continue
@@ -822,16 +841,21 @@ class ModelMonitor:
                     if latency_summary.get("count", 0)
                     else False
                 ),
-                "error_rate": window_summary.get("error_rate", 0) > self.config.error_rate_sla,
+                "error_rate": window_summary.get("error_rate", 0)
+                > self.config.error_rate_sla,
             },
             "active_alerts": len(active_alerts),
             "timestamp": now.isoformat(),
         }
 
     def _error_rate_window(self) -> Dict[str, Any]:
-        cutoff = datetime.now(timezone.utc) - timedelta(minutes=self.config.rate_window_minutes)
+        cutoff = datetime.now(timezone.utc) - timedelta(
+            minutes=self.config.rate_window_minutes
+        )
         preds = [
-            p for p in list(self._predictions) if datetime.fromisoformat(p["timestamp"]) >= cutoff
+            p
+            for p in list(self._predictions)
+            if datetime.fromisoformat(p["timestamp"]) >= cutoff
         ]
         if not preds:
             return {"count": 0, "error_rate": 0.0}
@@ -848,7 +872,9 @@ class ModelMonitor:
             "model": self.config.model_name,
             "predictions_buffered": len(self._predictions),
             "alerts": len(self.alerts.get_alerts(limit=10000)),
-            "persistence_backlog": {k: len(v) for k, v in self._persist_buffers.items()},
+            "persistence_backlog": {
+                k: len(v) for k, v in self._persist_buffers.items()
+            },
             "uptime_sec": self._uptime(),
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
@@ -1062,7 +1088,9 @@ def setup_logger(logfile="logs/mlops.log", to_console=True):
         logger.addHandler(fh)
         if to_console:
             ch = logging.StreamHandler()
-            ch.setFormatter(logging.Formatter("%(asctime)s [%(levelname)s] %(message)s"))
+            ch.setFormatter(
+                logging.Formatter("%(asctime)s [%(levelname)s] %(message)s")
+            )
             logger.addHandler(ch)
     _legacy_logger = logger
     logging.warning("setup_logger is deprecated. Use ModelMonitor instead.")

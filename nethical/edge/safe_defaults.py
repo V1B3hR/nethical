@@ -58,20 +58,43 @@ class SafeDefaults:
 
     # Action types that are safe to allow by default
     SAFE_ACTION_TYPES: Set[str] = {
-        "read", "query", "view", "get", "list", "search",
-        "display", "show", "render", "format",
+        "read",
+        "query",
+        "view",
+        "get",
+        "list",
+        "search",
+        "display",
+        "show",
+        "render",
+        "format",
     }
 
     # Action types that should be restricted by default
     RESTRICTED_ACTION_TYPES: Set[str] = {
-        "write", "update", "modify", "patch", "send",
-        "post", "email", "notify", "publish",
+        "write",
+        "update",
+        "modify",
+        "patch",
+        "send",
+        "post",
+        "email",
+        "notify",
+        "publish",
     }
 
     # Action types that should be blocked by default
     BLOCKED_ACTION_TYPES: Set[str] = {
-        "delete", "remove", "drop", "destroy", "execute",
-        "admin", "sudo", "root", "system", "shutdown",
+        "delete",
+        "remove",
+        "drop",
+        "destroy",
+        "execute",
+        "admin",
+        "sudo",
+        "root",
+        "system",
+        "shutdown",
     }
 
     def __init__(

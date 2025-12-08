@@ -225,7 +225,9 @@ class MerkleAnchor:
             "chunk_id": chunk.chunk_id,
             "merkle_root": chunk.merkle_root,
             "created_at": chunk.created_at.isoformat(),
-            "finalized_at": chunk.finalized_at.isoformat() if chunk.finalized_at else None,
+            "finalized_at": (
+                chunk.finalized_at.isoformat() if chunk.finalized_at else None
+            ),
             "event_count": chunk.event_count,
             "events": chunk.events,
         }
@@ -359,7 +361,9 @@ class MerkleAnchor:
             "chunk_id": chunk.chunk_id,
             "merkle_root": chunk.merkle_root,
             "created_at": chunk.created_at.isoformat(),
-            "finalized_at": chunk.finalized_at.isoformat() if chunk.finalized_at else None,
+            "finalized_at": (
+                chunk.finalized_at.isoformat() if chunk.finalized_at else None
+            ),
             "event_count": chunk.event_count,
             "anchored": chunk.anchored,
             "anchor_location": chunk.anchor_location,
@@ -371,7 +375,9 @@ class MerkleAnchor:
         Returns:
             List of chunk information dictionaries
         """
-        return [self.get_chunk_info(chunk_id) for chunk_id in self.finalized_chunks.keys()]
+        return [
+            self.get_chunk_info(chunk_id) for chunk_id in self.finalized_chunks.keys()
+        ]
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get system statistics.
@@ -379,14 +385,20 @@ class MerkleAnchor:
         Returns:
             Statistics dictionary
         """
-        total_events = sum(chunk.event_count for chunk in self.finalized_chunks.values())
+        total_events = sum(
+            chunk.event_count for chunk in self.finalized_chunks.values()
+        )
 
-        anchored_count = sum(1 for chunk in self.finalized_chunks.values() if chunk.anchored)
+        anchored_count = sum(
+            1 for chunk in self.finalized_chunks.values() if chunk.anchored
+        )
 
         return {
             "total_chunks": len(self.finalized_chunks),
             "total_events": total_events,
-            "current_chunk_events": self.current_chunk.event_count if self.current_chunk else 0,
+            "current_chunk_events": (
+                self.current_chunk.event_count if self.current_chunk else 0
+            ),
             "anchored_chunks": anchored_count,
             "chunk_size": self.chunk_size,
             "hash_algorithm": self.hash_algorithm,

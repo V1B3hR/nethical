@@ -543,7 +543,9 @@ def get_available_accelerators() -> List[AcceleratorInfo]:
     return infos
 
 
-def get_best_accelerator(config: Optional[AcceleratorConfig] = None) -> AcceleratorInterface:
+def get_best_accelerator(
+    config: Optional[AcceleratorConfig] = None,
+) -> AcceleratorInterface:
     """Get the best available accelerator.
 
     Auto-detects the highest priority accelerator and returns

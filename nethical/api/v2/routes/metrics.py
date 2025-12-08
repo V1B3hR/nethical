@@ -42,7 +42,7 @@ _metrics: dict[str, Any] = {
 
 class MetricsSummary(BaseModel):
     """Human-readable metrics summary."""
-    
+
     requests_total: int = Field(..., description="Total requests processed")
     decisions: dict[str, int] = Field(
         ...,
@@ -59,7 +59,7 @@ class MetricsSummary(BaseModel):
 
 class PrometheusMetrics(BaseModel):
     """Prometheus-compatible metrics format."""
-    
+
     content_type: str = Field(
         default="text/plain; version=0.0.4",
         description="Content type for Prometheus",
@@ -113,23 +113,23 @@ def record_fairness_audit() -> None:
 @router.get("/metrics")
 async def prometheus_metrics() -> str:
     """Get Prometheus-compatible metrics.
-    
+
     Returns metrics in Prometheus text exposition format.
     Supports Law 10 (Reasoning Transparency) through system observability.
-    
+
     Returns:
         Prometheus metrics text
     """
     uptime = int(time.time() - _start_time)
-    
+
     # Calculate derived metrics
     avg_latency = 0.0
     if _metrics["latency_count"] > 0:
         avg_latency = _metrics["latency_sum_ms"] / _metrics["latency_count"]
-    
+
     cache_total = _metrics["cache_hits"] + _metrics["cache_misses"]
     cache_hit_rate = _metrics["cache_hits"] / cache_total if cache_total > 0 else 0.0
-    
+
     # Build Prometheus format
     lines = [
         "# HELP nethical_requests_total Total number of requests processed",
@@ -180,29 +180,29 @@ async def prometheus_metrics() -> str:
         f"nethical_uptime_seconds {uptime}",
         "",
     ]
-    
+
     return "\n".join(lines)
 
 
 @router.get("/metrics/summary", response_model=MetricsSummary)
 async def metrics_summary() -> MetricsSummary:
     """Get a human-readable metrics summary.
-    
+
     Provides a JSON summary of key metrics for monitoring
     and dashboard integration.
-    
+
     Returns:
         MetricsSummary with current metrics
     """
     uptime = int(time.time() - _start_time)
-    
+
     avg_latency = 0.0
     if _metrics["latency_count"] > 0:
         avg_latency = _metrics["latency_sum_ms"] / _metrics["latency_count"]
-    
+
     cache_total = _metrics["cache_hits"] + _metrics["cache_misses"]
     cache_hit_rate = _metrics["cache_hits"] / cache_total if cache_total > 0 else 0.0
-    
+
     return MetricsSummary(
         requests_total=_metrics["requests_total"],
         decisions={

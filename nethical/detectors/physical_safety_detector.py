@@ -11,7 +11,7 @@ Provides real-time safety analysis for robotic systems with:
 
 6-DOF Context Schema:
 - linear_x: Forward/backward movement
-- linear_y: Left/right movement  
+- linear_y: Left/right movement
 - linear_z: Up/down movement
 - angular_x: Roll rotation
 - angular_y: Pitch rotation
@@ -147,24 +147,48 @@ class SafetyEnvelope:
 # Default safety envelopes per robot type
 DEFAULT_SAFETY_ENVELOPES: Dict[RobotType, SafetyEnvelope] = {
     RobotType.MOBILE_ROBOT: SafetyEnvelope(
-        max_linear_x=2.0, max_linear_y=2.0, max_linear_z=0.5,
-        max_angular_x=0.5, max_angular_y=0.5, max_angular_z=2.0,
-        max_acceleration=3.0, max_jerk=10.0, max_commands_per_second=50.0,
+        max_linear_x=2.0,
+        max_linear_y=2.0,
+        max_linear_z=0.5,
+        max_angular_x=0.5,
+        max_angular_y=0.5,
+        max_angular_z=2.0,
+        max_acceleration=3.0,
+        max_jerk=10.0,
+        max_commands_per_second=50.0,
     ),
     RobotType.ROBOTIC_ARM: SafetyEnvelope(
-        max_linear_x=1.0, max_linear_y=1.0, max_linear_z=1.0,
-        max_angular_x=3.14, max_angular_y=3.14, max_angular_z=3.14,
-        max_acceleration=5.0, max_jerk=15.0, max_commands_per_second=100.0,
+        max_linear_x=1.0,
+        max_linear_y=1.0,
+        max_linear_z=1.0,
+        max_angular_x=3.14,
+        max_angular_y=3.14,
+        max_angular_z=3.14,
+        max_acceleration=5.0,
+        max_jerk=15.0,
+        max_commands_per_second=100.0,
     ),
     RobotType.COLLABORATIVE: SafetyEnvelope(
-        max_linear_x=0.5, max_linear_y=0.5, max_linear_z=0.5,
-        max_angular_x=1.0, max_angular_y=1.0, max_angular_z=1.0,
-        max_acceleration=2.0, max_jerk=5.0, max_commands_per_second=50.0,
+        max_linear_x=0.5,
+        max_linear_y=0.5,
+        max_linear_z=0.5,
+        max_angular_x=1.0,
+        max_angular_y=1.0,
+        max_angular_z=1.0,
+        max_acceleration=2.0,
+        max_jerk=5.0,
+        max_commands_per_second=50.0,
     ),
     RobotType.INDUSTRIAL: SafetyEnvelope(
-        max_linear_x=3.0, max_linear_y=3.0, max_linear_z=3.0,
-        max_angular_x=6.28, max_angular_y=6.28, max_angular_z=6.28,
-        max_acceleration=10.0, max_jerk=30.0, max_commands_per_second=200.0,
+        max_linear_x=3.0,
+        max_linear_y=3.0,
+        max_linear_z=3.0,
+        max_angular_x=6.28,
+        max_angular_y=6.28,
+        max_angular_z=6.28,
+        max_acceleration=10.0,
+        max_jerk=30.0,
+        max_commands_per_second=200.0,
     ),
     RobotType.DEFAULT: SafetyEnvelope(),
 }
@@ -416,7 +440,9 @@ class PhysicalSafetyDetector:
         current_time = time.time()
 
         if agent_id not in self._command_timestamps:
-            self._command_timestamps[agent_id] = deque(maxlen=int(self.safety_envelope.max_commands_per_second * 2))
+            self._command_timestamps[agent_id] = deque(
+                maxlen=int(self.safety_envelope.max_commands_per_second * 2)
+            )
 
         timestamps = self._command_timestamps[agent_id]
         timestamps.append(current_time)
@@ -523,7 +549,10 @@ class PhysicalSafetyDetector:
                         severity="MEDIUM",
                         description=f"Sustained high jerk pattern: avg={avg_jerk:.3f}",
                         confidence=0.85,
-                        evidence=[f"avg_jerk={avg_jerk:.3f}", f"max_jerk={max_jerk:.3f}"],
+                        evidence=[
+                            f"avg_jerk={avg_jerk:.3f}",
+                            f"max_jerk={max_jerk:.3f}",
+                        ],
                         recommendations=[
                             "Review motion planning",
                             "Check for unstable control",
@@ -546,7 +575,14 @@ class PhysicalSafetyDetector:
 
         # Check for sign changes in each axis
         for i in range(1, len(recent)):
-            for axis in ["linear_x", "linear_y", "linear_z", "angular_x", "angular_y", "angular_z"]:
+            for axis in [
+                "linear_x",
+                "linear_y",
+                "linear_z",
+                "angular_x",
+                "angular_y",
+                "angular_z",
+            ]:
                 curr_val = getattr(recent[i], axis)
                 prev_val = getattr(recent[i - 1], axis)
                 if curr_val * prev_val < 0:  # Sign change
@@ -584,10 +620,19 @@ class PhysicalSafetyDetector:
 
         recent = history[-10:]
 
-        for axis in ["linear_x", "linear_y", "linear_z", "angular_x", "angular_y", "angular_z"]:
+        for axis in [
+            "linear_x",
+            "linear_y",
+            "linear_z",
+            "angular_x",
+            "angular_y",
+            "angular_z",
+        ]:
             current_val = abs(getattr(six_dof, axis))
             historical_vals = [abs(getattr(ctx, axis)) for ctx in recent]
-            avg_val = sum(historical_vals) / len(historical_vals) if historical_vals else 0
+            avg_val = (
+                sum(historical_vals) / len(historical_vals) if historical_vals else 0
+            )
 
             # Spike if current value exceeds configurable threshold (default 5x the average)
             if avg_val > 0 and current_val > avg_val * self.spike_threshold:
@@ -721,13 +766,23 @@ class PhysicalSafetyDetector:
             "agents_tracked": len(self._context_history),
             "shallow_analysis": {
                 "count": len(shallow_latencies),
-                "avg_latency_ms": sum(shallow_latencies) / len(shallow_latencies) if shallow_latencies else 0,
+                "avg_latency_ms": (
+                    sum(shallow_latencies) / len(shallow_latencies)
+                    if shallow_latencies
+                    else 0
+                ),
                 "max_latency_ms": max(shallow_latencies) if shallow_latencies else 0,
-                "p99_latency_ms": sorted(shallow_latencies)[int(len(shallow_latencies) * 0.99)] if len(shallow_latencies) > 10 else 0,
+                "p99_latency_ms": (
+                    sorted(shallow_latencies)[int(len(shallow_latencies) * 0.99)]
+                    if len(shallow_latencies) > 10
+                    else 0
+                ),
             },
             "deep_analysis": {
                 "count": len(deep_latencies),
-                "avg_latency_ms": sum(deep_latencies) / len(deep_latencies) if deep_latencies else 0,
+                "avg_latency_ms": (
+                    sum(deep_latencies) / len(deep_latencies) if deep_latencies else 0
+                ),
                 "max_latency_ms": max(deep_latencies) if deep_latencies else 0,
             },
             "robot_type": self.robot_type.value,

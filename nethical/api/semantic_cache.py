@@ -27,7 +27,7 @@ class SemanticCache:
         self,
         maxsize: Optional[int] = None,
         ttl: Optional[int] = None,
-        model_version: str = "default"
+        model_version: str = "default",
     ) -> None:
         self.maxsize = maxsize or int(os.getenv("NETHICAL_CACHE_MAXSIZE", "20000"))
         self.ttl = ttl or int(os.getenv("NETHICAL_CACHE_TTL", "600"))
@@ -43,17 +43,16 @@ class SemanticCache:
 
         logger.info(
             "Semantic cache initialized: maxsize=%d ttl=%ds model=%s",
-            self.maxsize, self.ttl, self.model_version
+            self.maxsize,
+            self.ttl,
+            self.model_version,
         )
 
     # ------------------------------------------------------------------ #
     # Key computation
     # ------------------------------------------------------------------ #
     def _compute_key(
-        self,
-        intent: str,
-        action: str,
-        config_params: Optional[Dict[str, Any]] = None
+        self, intent: str, action: str, config_params: Optional[Dict[str, Any]] = None
     ) -> str:
         norm_intent = intent.strip().lower()
         norm_action = action.strip().lower()
@@ -69,10 +68,7 @@ class SemanticCache:
     # Basic operations
     # ------------------------------------------------------------------ #
     async def get(
-        self,
-        intent: str,
-        action: str,
-        config_params: Optional[Dict[str, Any]] = None
+        self, intent: str, action: str, config_params: Optional[Dict[str, Any]] = None
     ) -> Optional[float]:
         try:
             key = self._compute_key(intent, action, config_params)
@@ -94,7 +90,7 @@ class SemanticCache:
         intent: str,
         action: str,
         similarity: float,
-        config_params: Optional[Dict[str, Any]] = None
+        config_params: Optional[Dict[str, Any]] = None,
     ) -> bool:
         try:
             key = self._compute_key(intent, action, config_params)
@@ -121,7 +117,7 @@ class SemanticCache:
         intent: str,
         action: str,
         compute_fn: Callable[[], Awaitable[float]],
-        config_params: Optional[Dict[str, Any]] = None
+        config_params: Optional[Dict[str, Any]] = None,
     ) -> float:
         cached = await self.get(intent, action, config_params)
         if cached is not None:

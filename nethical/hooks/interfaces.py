@@ -201,7 +201,9 @@ class CryptoSignalProvider(Protocol):
     Disabled by default unless explicitly configured.
     """
 
-    def issue_medical_role_token(self, role: RoleName, ttl_seconds: int = 60) -> SignalResult:
+    def issue_medical_role_token(
+        self, role: RoleName, ttl_seconds: int = 60
+    ) -> SignalResult:
         """
         Issue a short-lived, signed token asserting a 'medical' role for
         purpose-of-use enforcement. Implementations should constrain TTL,

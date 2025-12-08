@@ -218,7 +218,7 @@ class TestCPUAccelerator:
         accelerator.initialize()
 
         def model(x):
-            return x ** 2
+            return x**2
 
         inputs = np.array([[1.0], [2.0], [3.0], [4.0]])
         outputs = accelerator.batch_execute(model, inputs, batch_size=2)

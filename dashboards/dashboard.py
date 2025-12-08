@@ -14,9 +14,11 @@ from .appeals_metrics import AppealsMetricsCollector
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("GovernanceDashboard")
 
+
 @dataclass
 class DashboardMetrics:
     """Container for dashboard metrics"""
+
     timestamp: datetime
     fairness: Dict[str, Any] = field(default_factory=dict)
     policy_lineage: Dict[str, Any] = field(default_factory=dict)
@@ -36,8 +38,10 @@ class DashboardMetrics:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary"""
-        return {k: (v.isoformat() if isinstance(v, datetime) else v)
-                for k, v in self.__dict__.items()}
+        return {
+            k: (v.isoformat() if isinstance(v, datetime) else v)
+            for k, v in self.__dict__.items()
+        }
 
 
 class GovernanceDashboard:
@@ -51,27 +55,35 @@ class GovernanceDashboard:
 
         # Load configuration
         if config_path and os.path.exists(config_path):
-            with open(config_path, 'r') as f:
+            with open(config_path, "r") as f:
                 self.config = json.load(f)
         else:
-            default_config_path = os.path.join(os.path.dirname(__file__), "governance.json")
-            with open(default_config_path, 'r') as f:
+            default_config_path = os.path.join(
+                os.path.dirname(__file__), "governance.json"
+            )
+            with open(default_config_path, "r") as f:
                 self.config = json.load(f)
 
         # Initialize collectors
         self.fairness_collector = FairnessMetricsCollector(
-            protected_attributes=self.config["metrics"]["fairness"]["protected_attributes"]
+            protected_attributes=self.config["metrics"]["fairness"][
+                "protected_attributes"
+            ]
         )
         self.lineage_tracker = PolicyLineageTracker()
         self.appeals_collector = AppealsMetricsCollector()
 
-    async def get_metrics(self, sections: Optional[List[str]] = None, use_cache: bool = True) -> DashboardMetrics:
+    async def get_metrics(
+        self, sections: Optional[List[str]] = None, use_cache: bool = True
+    ) -> DashboardMetrics:
         """Get dashboard metrics asynchronously"""
         start_time = datetime.utcnow()
         metrics = DashboardMetrics(timestamp=start_time)
 
         async def collect(section: str, func: callable):
-            metrics.__dict__[section] = await self._get_cached_or_compute(section, func, use_cache)
+            metrics.__dict__[section] = await self._get_cached_or_compute(
+                section, func, use_cache
+            )
 
         tasks = []
         if not sections or "fairness" in sections:
@@ -83,7 +95,9 @@ class GovernanceDashboard:
         if not sections or "audit_log" in sections:
             tasks.append(collect("audit_log", self._compute_audit_metrics))
         if not sections or "invariant_violations" in sections:
-            tasks.append(collect("invariant_violations", self._compute_invariant_metrics))
+            tasks.append(
+                collect("invariant_violations", self._compute_invariant_metrics)
+            )
 
         await asyncio.gather(*tasks)
 
@@ -95,7 +109,9 @@ class GovernanceDashboard:
 
         return metrics
 
-    async def _get_cached_or_compute(self, key: str, compute_func: callable, use_cache: bool) -> Any:
+    async def _get_cached_or_compute(
+        self, key: str, compute_func: callable, use_cache: bool
+    ) -> Any:
         """Get cached value or compute new one"""
         if use_cache and key in self._cache:
             cache_time = self._cache_timestamps.get(key)
@@ -137,18 +153,25 @@ class GovernanceDashboard:
     def _compute_audit_metrics(self) -> Dict[str, Any]:
         return {
             "completeness": {"rate": 1.0, "total_decisions": 0, "audited_decisions": 0},
-            "integrity": {"merkle_root_valid": True, "signature_valid": True,
-                          "last_verification": datetime.utcnow().isoformat()},
-            "retention": {"total_entries": 0, "oldest_entry_days": 0, "storage_size_gb": 0.0},
+            "integrity": {
+                "merkle_root_valid": True,
+                "signature_valid": True,
+                "last_verification": datetime.utcnow().isoformat(),
+            },
+            "retention": {
+                "total_entries": 0,
+                "oldest_entry_days": 0,
+                "storage_size_gb": 0.0,
+            },
         }
 
     def _compute_invariant_metrics(self) -> Dict[str, Any]:
         violations = {}
         for probe_name, result in self._probe_results.items():
-            if hasattr(result, 'violations'):
+            if hasattr(result, "violations"):
                 violations[probe_name] = {
                     "count": len(result.violations),
-                    "status": getattr(result, 'status', "unknown"),
+                    "status": getattr(result, "status", "unknown"),
                     "recent_violations": result.violations[:5],
                 }
         return violations
@@ -165,7 +188,9 @@ class GovernanceDashboard:
             }
         return compliance
 
-    def export_metrics(self, format: str = "json", sections: Optional[List[str]] = None) -> str:
+    def export_metrics(
+        self, format: str = "json", sections: Optional[List[str]] = None
+    ) -> str:
         """Export metrics in specified format"""
         metrics = asyncio.run(self.get_metrics(sections=sections))
         if format == "json":
@@ -184,7 +209,9 @@ class GovernanceDashboard:
                 continue
             if isinstance(data, dict):
                 for key, value in data.items():
-                    lines.append(f"{section},{key},{value},{metrics.timestamp.isoformat()}")
+                    lines.append(
+                        f"{section},{key},{value},{metrics.timestamp.isoformat()}"
+                    )
         return "\n".join(lines)
 
     def _export_pdf(self, metrics: DashboardMetrics) -> str:

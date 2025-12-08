@@ -239,7 +239,9 @@ class FairnessSampler:
                 continue
 
             # Calculate proportional sample size
-            cohort_target = int((cohort_population / total_population) * job.target_sample_size)
+            cohort_target = int(
+                (cohort_population / total_population) * job.target_sample_size
+            )
             cohort_target = min(cohort_target, cohort_population)
 
             # Random sampling from cohort
@@ -339,7 +341,9 @@ class FairnessSampler:
                             if job_dict.get("end_time")
                             else None
                         ),
-                        samples=[Sample.from_dict(s) for s in job_dict.get("samples", [])],
+                        samples=[
+                            Sample.from_dict(s) for s in job_dict.get("samples", [])
+                        ],
                         coverage=job_dict.get("coverage", {}),
                         metadata=job_dict.get("metadata", {}),
                     )
@@ -365,7 +369,9 @@ class FairnessSampler:
                             if job_dict.get("end_time")
                             else None
                         ),
-                        samples=[Sample.from_dict(s) for s in job_dict.get("samples", [])],
+                        samples=[
+                            Sample.from_dict(s) for s in job_dict.get("samples", [])
+                        ],
                         coverage=job_dict.get("coverage", {}),
                         metadata=job_dict.get("metadata", {}),
                     )
@@ -396,7 +402,9 @@ class FairnessSampler:
             "total_samples": total_samples,
             "target_samples": job.target_sample_size,
             "completion_rate": (
-                total_samples / job.target_sample_size if job.target_sample_size > 0 else 0
+                total_samples / job.target_sample_size
+                if job.target_sample_size > 0
+                else 0
             ),
             "cohort_coverage": {},
             "violation_distribution": defaultdict(int),
@@ -452,7 +460,9 @@ class FairnessSampler:
                 key = f"{self.key_prefix}:cohort:{agent_id}"
                 cohort = self.redis.get(key)
                 if cohort:
-                    cohort_str = cohort.decode() if isinstance(cohort, bytes) else cohort
+                    cohort_str = (
+                        cohort.decode() if isinstance(cohort, bytes) else cohort
+                    )
                     self.agent_cohorts[agent_id] = cohort_str
                     return cohort_str
             except Exception:

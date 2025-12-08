@@ -223,9 +223,7 @@ class EventPropagation:
             "events_published": self._events_published,
             "events_received": self._events_received,
             "buffer_size": len(self._event_buffer),
-            "subscribers": {
-                et.value: len(self._subscribers[et]) for et in EventType
-            },
+            "subscribers": {et.value: len(self._subscribers[et]) for et in EventType},
             "region": self.region,
         }
 

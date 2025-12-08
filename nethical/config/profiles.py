@@ -53,7 +53,9 @@ def _normalize_locale(locale: str) -> str:
         raise ValueError(f"Locale '{locale}' must be in the form ll_CC (e.g., 'en_US')")
     normalized = f"{parts[0].lower()}_{parts[1].upper()}"
     if not _LOCALE_RE.match(normalized):
-        raise ValueError(f"Locale '{locale}' is invalid after normalization: '{normalized}'")
+        raise ValueError(
+            f"Locale '{locale}' is invalid after normalization: '{normalized}'"
+        )
     return normalized
 
 
@@ -185,7 +187,9 @@ _BUILTIN_REGION_PROFILES: dict[Region, RegionProfile] = {
 }
 
 # Expose as immutable mapping
-REGION_PROFILES: Mapping[Region, RegionProfile] = MappingProxyType(_BUILTIN_REGION_PROFILES)
+REGION_PROFILES: Mapping[Region, RegionProfile] = MappingProxyType(
+    _BUILTIN_REGION_PROFILES
+)
 
 
 def get_profile(region: Region) -> RegionProfile:
@@ -196,7 +200,9 @@ def get_profile(region: Region) -> RegionProfile:
 def find_regions_by_locale(locale: str) -> Tuple[Region, ...]:
     """Return regions that list the given locale."""
     normalized = _normalize_locale(locale)
-    matches = tuple(r for r, profile in REGION_PROFILES.items() if normalized in profile.locales)
+    matches = tuple(
+        r for r, profile in REGION_PROFILES.items() if normalized in profile.locales
+    )
     return matches
 
 
@@ -230,7 +236,9 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
     try:
         import yaml  # type: ignore
     except Exception as exc:
-        raise RuntimeError("PyYAML is required to use load_overrides_from_yaml") from exc
+        raise RuntimeError(
+            "PyYAML is required to use load_overrides_from_yaml"
+        ) from exc
 
     with open(path, "r", encoding="utf-8") as fh:
         raw = yaml.safe_load(fh) or {}
@@ -270,14 +278,24 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
         compliance = _cf_list(spec.get("compliance", base.compliance if base else ()))
         locales = tuple(spec.get("locales", base.locales if base else ()))
         data_residency_required = bool(
-            spec.get("data_residency_required", base.data_residency_required if base else False)
+            spec.get(
+                "data_residency_required",
+                base.data_residency_required if base else False,
+            )
         )
         export_controls_required = bool(
-            spec.get("export_controls_required", base.export_controls_required if base else False)
+            spec.get(
+                "export_controls_required",
+                base.export_controls_required if base else False,
+            )
         )
         geofence_str = spec.get(
             "default_geofencing_policy",
-            base.default_geofencing_policy.value if base else GeofencingPolicy.OPEN.value,
+            (
+                base.default_geofencing_policy.value
+                if base
+                else GeofencingPolicy.OPEN.value
+            ),
         )
         try:
             default_geofencing_policy = GeofencingPolicy(geofence_str)
@@ -288,10 +306,16 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
 
         lra = spec.get(
             "last_reviewed_at",
-            base.last_reviewed_at.isoformat() if (base and base.last_reviewed_at) else None,
+            (
+                base.last_reviewed_at.isoformat()
+                if (base and base.last_reviewed_at)
+                else None
+            ),
         )
         last_reviewed_at = date.fromisoformat(lra) if isinstance(lra, str) else None
-        schema_version = spec.get("schema_version", base.schema_version if base else "1.0")
+        schema_version = spec.get(
+            "schema_version", base.schema_version if base else "1.0"
+        )
 
         merged[region] = RegionProfile(
             region=region,

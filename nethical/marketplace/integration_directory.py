@@ -98,12 +98,16 @@ class IntegrationAdapter(ABC):
         self.config = config
         self._connected = False
         logger.debug(
-            "Initialized adapter %s with config keys: %s", integration_id, list(config.keys())
+            "Initialized adapter %s with config keys: %s",
+            integration_id,
+            list(config.keys()),
         )
 
     def __enter__(self):
         if not self.connect():
-            raise IntegrationConnectionError(f"Failed to connect: {self.integration_id}")
+            raise IntegrationConnectionError(
+                f"Failed to connect: {self.integration_id}"
+            )
         return self
 
     def __exit__(self, exc_type, exc, tb):
@@ -389,7 +393,9 @@ class ImportUtility:
             logger.error("Import JSON error: %s", e, exc_info=True)
             return None
 
-    def import_from_csv(self, filepath: str, encoding: str = "utf-8") -> List[Dict[str, Any]]:
+    def import_from_csv(
+        self, filepath: str, encoding: str = "utf-8"
+    ) -> List[Dict[str, Any]]:
         """Import data from CSV."""
         try:
             import csv
@@ -536,7 +542,9 @@ def validate_config(schema: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
             for key, rules in schema.items():
                 prop: Dict[str, Any] = {}
                 if "type" in rules and rules["type"] in _PY_TYPE_MAP:
-                    prop["type"] = rules["type"] if rules["type"] != "integer" else "number"
+                    prop["type"] = (
+                        rules["type"] if rules["type"] != "integer" else "number"
+                    )
                     # Prefer integer format if int
                     if rules["type"] == "integer":
                         prop["multipleOf"] = 1
@@ -548,7 +556,9 @@ def validate_config(schema: Dict[str, Any], config: Dict[str, Any]) -> Dict[str,
             js_validate(instance=cfg, schema=js_schema)
             return cfg
         except Exception as e:  # noqa: BLE001
-            logger.debug("jsonschema validation failed, falling back to basic validator: %s", e)
+            logger.debug(
+                "jsonschema validation failed, falling back to basic validator: %s", e
+            )
             # Fall back to basic
             return _basic_validate_and_apply_defaults(schema, config)
     # Basic
@@ -632,7 +642,9 @@ class IntegrationDirectory:
         if isinstance(factory, type) and issubclass(factory, IntegrationAdapter):
             klass: AdapterClass = factory
 
-            def _ctor(integration_id: str, config: Dict[str, Any]) -> IntegrationAdapter:
+            def _ctor(
+                integration_id: str, config: Dict[str, Any]
+            ) -> IntegrationAdapter:
                 return klass(integration_id, config)
 
             return _ctor
@@ -650,12 +662,18 @@ class IntegrationDirectory:
         """
         with self._lock:
             if metadata.integration_id in self._integrations:
-                logger.warning("Overwriting existing integration: %s", metadata.integration_id)
+                logger.warning(
+                    "Overwriting existing integration: %s", metadata.integration_id
+                )
             self._integrations[metadata.integration_id] = metadata
             self._adapter_factories[metadata.integration_id] = self._normalize_factory(
                 adapter_class
             )
-            logger.info("Registered integration '%s' (%s)", metadata.integration_id, metadata.name)
+            logger.info(
+                "Registered integration '%s' (%s)",
+                metadata.integration_id,
+                metadata.name,
+            )
 
     def unregister_integration(self, integration_id: str) -> bool:
         """Unregister an integration by id."""
@@ -693,7 +711,9 @@ class IntegrationDirectory:
         try:
             validated_config = validate_config(meta.configuration_schema, config)
         except IntegrationConfigError as e:
-            logger.error("Configuration validation failed for '%s': %s", integration_id, e)
+            logger.error(
+                "Configuration validation failed for '%s': %s", integration_id, e
+            )
             raise
 
         adapter = factory(integration_id, validated_config)

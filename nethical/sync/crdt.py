@@ -359,9 +359,7 @@ class ORSet(Generic[T]):
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         # Convert hashable elements to strings for JSON
-        elements_serialized = {
-            str(k): list(v) for k, v in self.elements.items()
-        }
+        elements_serialized = {str(k): list(v) for k, v in self.elements.items()}
         return {
             "elements": elements_serialized,
             "tombstones": list(self.tombstones),
@@ -371,9 +369,7 @@ class ORSet(Generic[T]):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "ORSet":
         """Create from dictionary."""
-        elements = {
-            k: set(v) for k, v in data.get("elements", {}).items()
-        }
+        elements = {k: set(v) for k, v in data.get("elements", {}).items()}
         return cls(
             elements=elements,
             tombstones=set(data.get("tombstones", [])),
@@ -491,9 +487,7 @@ class MVRegister(Generic[T]):
     @classmethod
     def from_dict(cls, data: Dict[str, Any]) -> "MVRegister":
         """Create from dictionary."""
-        values = [
-            (v, VectorClock.from_dict(c)) for v, c in data.get("values", [])
-        ]
+        values = [(v, VectorClock.from_dict(c)) for v, c in data.get("values", [])]
         return cls(values=values, node_id=data.get("node_id", ""))
 
 
@@ -524,6 +518,7 @@ class PolicyState:
     def _compute_hash(self) -> str:
         """Compute a hash of the policy content."""
         import json
+
         content_str = json.dumps(self.content, sort_keys=True)
         return hashlib.sha256(content_str.encode()).hexdigest()[:16]
 
@@ -691,7 +686,9 @@ class PolicyCRDT:
             source_node=self.node_id,
         )
 
-    def update_policy(self, policy_id: str, new_content: Dict[str, Any]) -> Optional[PolicyDelta]:
+    def update_policy(
+        self, policy_id: str, new_content: Dict[str, Any]
+    ) -> Optional[PolicyDelta]:
         """
         Update an existing policy's content.
 
@@ -868,7 +865,11 @@ class PolicyCRDT:
                 merged_state = self.policies[policy_id].get()
 
                 # Check if value changed
-                if merged_state and local_state and merged_state.version_hash != local_state.version_hash:
+                if (
+                    merged_state
+                    and local_state
+                    and merged_state.version_hash != local_state.version_hash
+                ):
                     result.updated_policies.append(policy_id)
                     result.merged_count += 1
 
@@ -932,13 +933,15 @@ class PolicyCRDT:
         for policy_id, register in self.policies.items():
             state = register.get()
             if state and register.timestamp.timestamp() > since_timestamp:
-                deltas.append(PolicyDelta(
-                    policy_id=policy_id,
-                    operation="update",
-                    state=state,
-                    timestamp=register.timestamp,
-                    source_node=self.node_id,
-                ))
+                deltas.append(
+                    PolicyDelta(
+                        policy_id=policy_id,
+                        operation="update",
+                        state=state,
+                        timestamp=register.timestamp,
+                        source_node=self.node_id,
+                    )
+                )
 
         return deltas
 
@@ -952,10 +955,9 @@ class PolicyCRDT:
         import json
 
         state_dict = {
-            "policies": sorted([
-                (pid, reg.timestamp.timestamp())
-                for pid, reg in self.policies.items()
-            ]),
+            "policies": sorted(
+                [(pid, reg.timestamp.timestamp()) for pid, reg in self.policies.items()]
+            ),
             "active": sorted(list(self.active_policies.to_set())),
         }
 
@@ -965,9 +967,7 @@ class PolicyCRDT:
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary for serialization."""
         return {
-            "policies": {
-                pid: reg.to_dict() for pid, reg in self.policies.items()
-            },
+            "policies": {pid: reg.to_dict() for pid, reg in self.policies.items()},
             "active_policies": self.active_policies.to_dict(),
             "version_history": {
                 pid: counter.to_dict() for pid, counter in self.version_history.items()

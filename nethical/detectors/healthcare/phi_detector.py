@@ -21,7 +21,8 @@ PHI_PATTERNS: Dict[str, re.Pattern] = {
         re.IGNORECASE,
     ),
     "dob": re.compile(
-        r"\b(?:DOB[:\s]*)?(?:\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})\b", re.IGNORECASE
+        r"\b(?:DOB[:\s]*)?(?:\d{4}[-/]\d{2}[-/]\d{2}|\d{2}[-/]\d{2}[-/]\d{4})\b",
+        re.IGNORECASE,
     ),
     "license_number": re.compile(
         r"\b(?:DL|Driver(?:'s)? License)[:\s#-]*[A-Za-z0-9\-]{5,}\b", re.IGNORECASE
@@ -29,7 +30,9 @@ PHI_PATTERNS: Dict[str, re.Pattern] = {
     "health_plan_beneficiary": re.compile(
         r"\b(?:HPN|HICN|Medicare|Medicaid)[\s#:]*[A-Za-z0-9\-]{5,}\b", re.IGNORECASE
     ),
-    "device_id": re.compile(r"\b(?:UDI|Device\s*ID)[:\s#-]*[A-Za-z0-9\-]{6,}\b", re.IGNORECASE),
+    "device_id": re.compile(
+        r"\b(?:UDI|Device\s*ID)[:\s#-]*[A-Za-z0-9\-]{6,}\b", re.IGNORECASE
+    ),
     "url": re.compile(r"\bhttps?://[^\s]+", re.IGNORECASE),
     "ip": re.compile(r"\b(?:\d{1,3}\.){3}\d{1,3}\b"),
 }
@@ -182,12 +185,22 @@ class HealthcarePHIDetector(DetectorPlugin):
                 results[name] = spans
         return results
 
-    def _confidence(self, match_type: str, spans: List[Tuple[int, int, str]], text: str) -> float:
+    def _confidence(
+        self, match_type: str, spans: List[Tuple[int, int, str]], text: str
+    ) -> float:
         # Simple heuristic: more matches + contextual cues => higher confidence
         base = 0.6
-        if match_type in ("ssn_us", "mrn_generic", "health_plan_beneficiary", "license_number"):
+        if match_type in (
+            "ssn_us",
+            "mrn_generic",
+            "health_plan_beneficiary",
+            "license_number",
+        ):
             base = 0.85
-        if any(k in text.lower() for k in ("patient", "mrn", "dob", "hipaa", "medical", "chart")):
+        if any(
+            k in text.lower()
+            for k in ("patient", "mrn", "dob", "hipaa", "medical", "chart")
+        ):
             base += 0.1
         return min(0.99, base + min(0.15, 0.02 * len(spans)))
 
@@ -202,7 +215,9 @@ class HealthcarePHIDetector(DetectorPlugin):
             return tok[: len(value)]
         return tok + ("*" * max(0, len(value) - len(tok)))
 
-    def _safe_snippet(self, text: str, span: Tuple[int, int, str], ctx: int = 20) -> str:
+    def _safe_snippet(
+        self, text: str, span: Tuple[int, int, str], ctx: int = 20
+    ) -> str:
         s, e, _ = span
         return text[max(0, s - ctx) : min(len(text), e + ctx)]
 

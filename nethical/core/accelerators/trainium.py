@@ -38,7 +38,12 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from . import AcceleratorBackend, AcceleratorConfig, AcceleratorInfo, AcceleratorInterface
+from . import (
+    AcceleratorBackend,
+    AcceleratorConfig,
+    AcceleratorInfo,
+    AcceleratorInterface,
+)
 
 __all__ = [
     "TrainiumVersion",
@@ -194,9 +199,10 @@ def detect_trainium_version() -> Optional[TrainiumVersion]:
         # Try to detect from EC2 metadata
         try:
             import urllib.request
+
             req = urllib.request.Request(
                 "http://169.254.169.254/latest/meta-data/instance-type",
-                headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"}
+                headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"},
             )
             with urllib.request.urlopen(req, timeout=1) as response:
                 instance_type = response.read().decode().lower()
@@ -217,6 +223,7 @@ def detect_trainium_version() -> Optional[TrainiumVersion]:
         # Try to detect from Neuron SDK
         try:
             import torch_neuronx
+
             sdk_version = getattr(torch_neuronx, "__version__", "")
             # Newer SDK versions typically indicate newer hardware support
             # This is a heuristic fallback when instance type detection fails
@@ -572,8 +579,14 @@ class TrainiumAccelerator(AcceleratorInterface):
 
         return {
             "total_gb": memory_gb,
-            "version": self._trainium_version.value if self._trainium_version else "unknown",
-            "supports_training": self._trainium_specs.supports_training if self._trainium_specs else False,
+            "version": (
+                self._trainium_version.value if self._trainium_version else "unknown"
+            ),
+            "supports_training": (
+                self._trainium_specs.supports_training
+                if self._trainium_specs
+                else False
+            ),
         }
 
     def clear_cache(self) -> None:

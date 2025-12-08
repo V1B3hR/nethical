@@ -261,7 +261,9 @@ class LawViolationDetector(BaseDetector):
         for law in registry_violations:
             # Check if we already have a violation for this law
             existing_law_nums = [
-                v.metadata.get("law_number") for v in violations if hasattr(v, "metadata")
+                v.metadata.get("law_number")
+                for v in violations
+                if hasattr(v, "metadata")
             ]
             if law.number not in existing_law_nums:
                 violation = self._create_law_violation(

@@ -22,7 +22,7 @@ class SixDOFContextPattern:
     Pattern for 6-DOF (6 Degrees of Freedom) robot context.
 
     Used for pre-computing decisions for common robotic movements.
-    
+
     Translation (linear movement):
     - linear_x: Forward/backward
     - linear_y: Left/right
@@ -51,7 +51,7 @@ class SixDOFContextPattern:
             ("angular_y", self.angular_y_range),
             ("angular_z", self.angular_z_range),
         ]
-        
+
         for key, (min_val, max_val) in checks:
             value = context.get(key, 0.0)
             if isinstance(value, (int, float)):
@@ -342,7 +342,8 @@ class PredictiveEngine:
             True if context matches a known safe pattern
         """
         profiles = (
-            [self._profiles[domain]] if domain and domain in self._profiles
+            [self._profiles[domain]]
+            if domain and domain in self._profiles
             else self._profiles.values()
         )
 
@@ -388,7 +389,10 @@ class PredictiveEngine:
                 linear_z_range=(-0.1, 0.1),
                 angular_x_range=(-0.1, 0.1),
                 angular_y_range=(-0.1, 0.1),
-                angular_z_range=(-max_angular_velocity * 0.5, max_angular_velocity * 0.5),
+                angular_z_range=(
+                    -max_angular_velocity * 0.5,
+                    max_angular_velocity * 0.5,
+                ),
             ),
             # Normal operation envelope
             SixDOFContextPattern(

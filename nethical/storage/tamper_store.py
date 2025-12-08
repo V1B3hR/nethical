@@ -115,7 +115,9 @@ class MerkleAppender:
             for i in range(0, len(nodes), 2):
                 a = nodes[i]
                 b = nodes[i + 1] if i + 1 < len(nodes) else a
-                nxt.append(_hex(_digest(self.algorithm, bytes.fromhex(a) + bytes.fromhex(b))))
+                nxt.append(
+                    _hex(_digest(self.algorithm, bytes.fromhex(a) + bytes.fromhex(b)))
+                )
             nodes = nxt
         return nodes[0]
 
@@ -126,7 +128,9 @@ class MerkleAppender:
         for i in range(0, len(nodes), 2):
             a = nodes[i]
             b = nodes[i + 1] if i + 1 < len(nodes) else a
-            nxt.append(_hex(_digest(self.algorithm, bytes.fromhex(a) + bytes.fromhex(b))))
+            nxt.append(
+                _hex(_digest(self.algorithm, bytes.fromhex(a) + bytes.fromhex(b)))
+            )
         return nxt
 
     def prove(self, index: int) -> List[Dict[str, Any]]:
@@ -180,9 +184,13 @@ class MerkleAppender:
             sib = step["hash"]
             left = bool(step["left"])
             if left:
-                acc = _hex(_digest(self.algorithm, bytes.fromhex(sib) + bytes.fromhex(acc)))
+                acc = _hex(
+                    _digest(self.algorithm, bytes.fromhex(sib) + bytes.fromhex(acc))
+                )
             else:
-                acc = _hex(_digest(self.algorithm, bytes.fromhex(acc) + bytes.fromhex(sib)))
+                acc = _hex(
+                    _digest(self.algorithm, bytes.fromhex(acc) + bytes.fromhex(sib))
+                )
         if expected_root is not None and acc != expected_root:
             raise TamperStoreError("Proof verification failed: root mismatch")
         return acc
@@ -401,7 +409,9 @@ class TamperEvidentOfflineStore:
             return recs
 
     @classmethod
-    def import_records(cls, records: Iterable[Dict[str, Any]]) -> TamperEvidentOfflineStore:
+    def import_records(
+        cls, records: Iterable[Dict[str, Any]]
+    ) -> TamperEvidentOfflineStore:
         """
         Build a store from exported records. Verifies integrity as it loads.
         """
@@ -429,7 +439,9 @@ class TamperEvidentOfflineStore:
                     "_prev_root": r.get("prev_root"),
                     "payload": r.get("payload", {}),
                 }
-                recomputed_leaf = _hex(_digest(digest, _canonical_json_bytes(record_for_hash)))
+                recomputed_leaf = _hex(
+                    _digest(digest, _canonical_json_bytes(record_for_hash))
+                )
                 if recomputed_leaf != r.get("leaf"):
                     raise TamperStoreError(f"Event leaf mismatch at seq {r.get('seq')}")
 

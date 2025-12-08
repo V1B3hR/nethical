@@ -92,19 +92,64 @@ class EthicalViolationDetector(BaseDetector):
         super().__init__("EthicalViolationDetector")
         base_keywords = {
             # Harmful content
-            "harm", "hurt", "damage", "injury", "kill", "attack", "assault", "abuse",
-            "violent", "violence", "weapon", "destroy", "threat", "murder", "endanger",
+            "harm",
+            "hurt",
+            "damage",
+            "injury",
+            "kill",
+            "attack",
+            "assault",
+            "abuse",
+            "violent",
+            "violence",
+            "weapon",
+            "destroy",
+            "threat",
+            "murder",
+            "endanger",
             # Discrimination and bias (use stems for matching variations)
-            "discriminat", "bias", "unfair", "prejudice", "stereotype", "marginaliz",
-            "exclude", "racist", "sexist",
+            "discriminat",
+            "bias",
+            "unfair",
+            "prejudice",
+            "stereotype",
+            "marginaliz",
+            "exclude",
+            "racist",
+            "sexist",
             # Deception and manipulation
-            "deceive", "mislead", "manipulate", "coerce", "exploit", "trick", "fool",
-            "fake", "false", "lie", "fraud", "scam", "phishing", "deceptive",
+            "deceive",
+            "mislead",
+            "manipulate",
+            "coerce",
+            "exploit",
+            "trick",
+            "fool",
+            "fake",
+            "false",
+            "lie",
+            "fraud",
+            "scam",
+            "phishing",
+            "deceptive",
             # Privacy violations
-            "password", "credential", "unauthorized", "privacy", "personal data",
-            "collect data", "extract", "leak", "breach", "spy", "track",
+            "password",
+            "credential",
+            "unauthorized",
+            "privacy",
+            "personal data",
+            "collect data",
+            "extract",
+            "leak",
+            "breach",
+            "spy",
+            "track",
             # Manipulation
-            "emotional manipulation", "coerce", "pressure", "force", "blackmail",
+            "emotional manipulation",
+            "coerce",
+            "pressure",
+            "force",
+            "blackmail",
         }
         if external_keywords:
             base_keywords.update(external_keywords)
@@ -127,35 +172,50 @@ class EthicalViolationDetector(BaseDetector):
         from .governance_core import Severity, ViolationType, SubMission
 
         text = action.content.lower()
-        
+
         # Check for educational/legitimate contexts that should reduce false positives
         educational_indicators = [
-            "educational", "education", "explain", "discuss", "historical", "history",
-            "learn", "teaching", "best practices", "security", "fictional", "story",
-            "authorized", "proper credentials", "legitimate", "approved"
+            "educational",
+            "education",
+            "explain",
+            "discuss",
+            "historical",
+            "history",
+            "learn",
+            "teaching",
+            "best practices",
+            "security",
+            "fictional",
+            "story",
+            "authorized",
+            "proper credentials",
+            "legitimate",
+            "approved",
         ]
-        has_educational_context = any(indicator in text for indicator in educational_indicators)
-        
+        has_educational_context = any(
+            indicator in text for indicator in educational_indicators
+        )
+
         # Increase weight per keyword using smart matching
         score = 0.0
         for keyword in self.ethical_keywords:
             # For single words, use word boundary matching
             # For phrases, use simple substring matching
-            if ' ' in keyword:
+            if " " in keyword:
                 # Multi-word phrase - use substring
                 if keyword in text:
                     score += 0.25
             else:
                 # Single word - use word start boundary for stemming support
                 # This matches "discriminat" with "discriminating", "discrimination", etc.
-                if re.search(r'\b' + re.escape(keyword), text):
+                if re.search(r"\b" + re.escape(keyword), text):
                     score += 0.25
         score = min(score, 1.0)
-        
+
         # Reduce score if educational context detected
         if has_educational_context:
             score = score * 0.6  # Reduce by 40%
-        
+
         violations: List[Any] = []
         if score > 0.2:  # Lower threshold for better detection
             violations.append(
@@ -340,12 +400,18 @@ class PrivacyDetector(BaseDetector):
 
         self.pii_patterns = {
             "ssn": (re.compile(r"\b\d{3}-\d{2}-\d{4}\b"), SubMission.PII_SSN),
-            "credit_card": (re.compile(r"\b(?:\d[ -]?){13,19}\b"), SubMission.PII_CREDIT_CARD),
+            "credit_card": (
+                re.compile(r"\b(?:\d[ -]?){13,19}\b"),
+                SubMission.PII_CREDIT_CARD,
+            ),
             "email": (
                 re.compile(r"\b[A-Za-z0-9._%+\-]+@[A-Za-z0-9.\-]+\.[A-Za-z]{2,}\b"),
                 SubMission.PII_EMAIL,
             ),
-            "phone": (re.compile(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b"), SubMission.PII_PHONE),
+            "phone": (
+                re.compile(r"\b\d{3}[-.]?\d{3}[-.]?\d{4}\b"),
+                SubMission.PII_PHONE,
+            ),
             "ip": (re.compile(r"\b\d{1,3}(?:\.\d{1,3}){3}\b"), SubMission.PII_IP),
         }
 
@@ -436,7 +502,9 @@ class AdversarialDetector(BaseDetector):
         stripped_lower = lower.strip().replace("\n", "")
         if looks_like_base64(stripped_lower):
             try:
-                decoded = base64.b64decode(stripped_lower, validate=True).decode("utf-8", "ignore")
+                decoded = base64.b64decode(stripped_lower, validate=True).decode(
+                    "utf-8", "ignore"
+                )
                 dec_low = decoded.lower()
                 if any(hp in dec_low for hp in self.harmful_patterns):
                     violations.append(
@@ -478,7 +546,9 @@ class AdversarialDetector(BaseDetector):
 
 class DarkPatternDetector(BaseDetector):
     def __init__(
-        self, extra_nlp: Optional[List[str]] = None, extra_empathy: Optional[List[str]] = None
+        self,
+        extra_nlp: Optional[List[str]] = None,
+        extra_empathy: Optional[List[str]] = None,
     ):
         super().__init__("DarkPatternDetector")
         nlp_base = [
@@ -549,7 +619,10 @@ class CognitiveWarfareDetector(BaseDetector):
         ]
         self.psych = [
             re.compile(p, re.IGNORECASE)
-            for p in [r"let\s+me\s+handle\s+everything", r"you'?re\s+struggling\s+to\s+decide"]
+            for p in [
+                r"let\s+me\s+handle\s+everything",
+                r"you'?re\s+struggling\s+to\s+decide",
+            ]
         ]
 
     async def detect_violations(self, action: Any) -> List[Any]:
@@ -775,11 +848,23 @@ class UnauthorizedAccessDetector(BaseDetector):
     def __init__(self):
         super().__init__("UnauthorizedAccessDetector")
         self.unauthorized_keywords = {
-            "bypass login", "bypass authentication", "bypass auth", "bypass security",
-            "unauthorized access", "without permission", "without authorization",
-            "restricted database", "restricted access", "privilege escalation",
-            "admin rights", "root access", "sudo without", "crack password",
-            "bypass firewall", "circumvent security", "exploit vulnerability"
+            "bypass login",
+            "bypass authentication",
+            "bypass auth",
+            "bypass security",
+            "unauthorized access",
+            "without permission",
+            "without authorization",
+            "restricted database",
+            "restricted access",
+            "privilege escalation",
+            "admin rights",
+            "root access",
+            "sudo without",
+            "crack password",
+            "bypass firewall",
+            "circumvent security",
+            "exploit vulnerability",
         }
 
     async def detect_violations(self, action: Any) -> List[Any]:
@@ -787,7 +872,7 @@ class UnauthorizedAccessDetector(BaseDetector):
 
         text_lower = action.content.lower()
         violations = []
-        
+
         for keyword in self.unauthorized_keywords:
             if keyword in text_lower:
                 violations.append(
@@ -803,5 +888,5 @@ class UnauthorizedAccessDetector(BaseDetector):
                     )
                 )
                 break  # Only report once per action
-        
+
         return violations

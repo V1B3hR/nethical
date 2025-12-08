@@ -202,7 +202,11 @@ class LatencyOptimizer:
             return
 
         # Calculate recent average
-        recent = self._measurements[-20:] if len(self._measurements) > 20 else self._measurements
+        recent = (
+            self._measurements[-20:]
+            if len(self._measurements) > 20
+            else self._measurements
+        )
         avg_latency = statistics.mean(m.latency_ms for m in recent)
 
         # Determine profile
@@ -245,9 +249,9 @@ class LatencyOptimizer:
             x_sum = sum(range(n))
             y_sum = sum(latencies)
             xy_sum = sum(i * latencies[i] for i in range(n))
-            x2_sum = sum(i ** 2 for i in range(n))
+            x2_sum = sum(i**2 for i in range(n))
 
-            denominator = n * x2_sum - x_sum ** 2
+            denominator = n * x2_sum - x_sum**2
             if denominator != 0:
                 self._latency_trend = (n * xy_sum - x_sum * y_sum) / denominator
             else:
@@ -424,7 +428,9 @@ class LatencyOptimizer:
             recommendations.append("Consider enabling compression for payloads")
 
         if self._latency_trend > 0.5:
-            recommendations.append("Latency is trending upward - preemptively increase timeouts")
+            recommendations.append(
+                "Latency is trending upward - preemptively increase timeouts"
+            )
 
         if self.config.batching_enabled and len(self._batch_queue) > 0:
             recommendations.append(

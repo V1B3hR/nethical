@@ -290,15 +290,25 @@ class TestAILawyer:
     async def test_severity_ranking(self, ai_lawyer):
         """Test severity ranking functionality."""
         # Verify severity ranking is correct
-        assert ai_lawyer._severity_rank(ViolationSeverity.LOW) < ai_lawyer._severity_rank(ViolationSeverity.MEDIUM)
-        assert ai_lawyer._severity_rank(ViolationSeverity.MEDIUM) < ai_lawyer._severity_rank(ViolationSeverity.HIGH)
-        assert ai_lawyer._severity_rank(ViolationSeverity.HIGH) < ai_lawyer._severity_rank(ViolationSeverity.CRITICAL)
-        assert ai_lawyer._severity_rank(ViolationSeverity.CRITICAL) < ai_lawyer._severity_rank(ViolationSeverity.SEVERE)
+        assert ai_lawyer._severity_rank(
+            ViolationSeverity.LOW
+        ) < ai_lawyer._severity_rank(ViolationSeverity.MEDIUM)
+        assert ai_lawyer._severity_rank(
+            ViolationSeverity.MEDIUM
+        ) < ai_lawyer._severity_rank(ViolationSeverity.HIGH)
+        assert ai_lawyer._severity_rank(
+            ViolationSeverity.HIGH
+        ) < ai_lawyer._severity_rank(ViolationSeverity.CRITICAL)
+        assert ai_lawyer._severity_rank(
+            ViolationSeverity.CRITICAL
+        ) < ai_lawyer._severity_rank(ViolationSeverity.SEVERE)
 
     @pytest.mark.asyncio
     async def test_reasoning_building(self, ai_lawyer):
         """Test reasoning string building."""
-        reasoning = ai_lawyer._build_reasoning([], ViolationSeverity.LOW, ReviewDecision.APPROVE)
+        reasoning = ai_lawyer._build_reasoning(
+            [], ViolationSeverity.LOW, ReviewDecision.APPROVE
+        )
         assert "passed" in reasoning.lower()
 
         reasoning = ai_lawyer._build_reasoning(
@@ -348,7 +358,7 @@ class TestKillSwitchIntegration:
         assert result.severity == ViolationSeverity.SEVERE
         # Kill switch should be triggered
         assert result.kill_switch_triggered is True
-        
+
         # Verify statistics
         stats = ai_lawyer.get_statistics()
         assert stats["kill_switch_activations"] >= 1

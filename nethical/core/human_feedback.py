@@ -151,7 +151,9 @@ class EscalationCase:
             "started_review_at": (
                 self.started_review_at.isoformat() if self.started_review_at else None
             ),
-            "completed_at": self.completed_at.isoformat() if self.completed_at else None,
+            "completed_at": (
+                self.completed_at.isoformat() if self.completed_at else None
+            ),
             "feedback": self.feedback.to_dict() if self.feedback else None,
         }
 
@@ -574,16 +576,24 @@ class EscalationQueue:
                 return sorted_data[-1]
             return sorted_data[f] + (k - f) * (sorted_data[c] - sorted_data[f])
 
-        median_triage = statistics.median(self.triage_times) if self.triage_times else 0.0
+        median_triage = (
+            statistics.median(self.triage_times) if self.triage_times else 0.0
+        )
         p95_triage = percentile(self.triage_times, 0.95) if self.triage_times else 0.0
         median_resolution = (
             statistics.median(self.resolution_times) if self.resolution_times else 0.0
         )
-        p95_resolution = percentile(self.resolution_times, 0.95) if self.resolution_times else 0.0
+        p95_resolution = (
+            percentile(self.resolution_times, 0.95) if self.resolution_times else 0.0
+        )
 
         # Count cases by status
-        pending = sum(1 for c in self.cases_by_id.values() if c.status == ReviewStatus.PENDING)
-        completed = sum(1 for c in self.cases_by_id.values() if c.status == ReviewStatus.COMPLETED)
+        pending = sum(
+            1 for c in self.cases_by_id.values() if c.status == ReviewStatus.PENDING
+        )
+        completed = sum(
+            1 for c in self.cases_by_id.values() if c.status == ReviewStatus.COMPLETED
+        )
 
         return SLAMetrics(
             median_triage_time_seconds=median_triage,
@@ -631,7 +641,9 @@ class EscalationQueue:
         return {
             "total_feedback": total_feedback,
             "tag_counts": dict(tag_counts),
-            "correction_rate": corrections / total_feedback if total_feedback > 0 else 0.0,
+            "correction_rate": (
+                corrections / total_feedback if total_feedback > 0 else 0.0
+            ),
             "false_positive_rate": (
                 tag_counts.get(FeedbackTag.FALSE_POSITIVE.value, 0) / total_feedback
                 if total_feedback > 0
@@ -694,7 +706,10 @@ class EscalationQueue:
 
         if status == ReviewStatus.IN_REVIEW and not case.started_review_at:
             case.started_review_at = datetime.now(timezone.utc)
-        elif status in [ReviewStatus.COMPLETED, ReviewStatus.DEFERRED] and not case.completed_at:
+        elif (
+            status in [ReviewStatus.COMPLETED, ReviewStatus.DEFERRED]
+            and not case.completed_at
+        ):
             case.completed_at = datetime.now(timezone.utc)
 
         self._update_case(case)
@@ -738,10 +753,17 @@ def _demo():
                 "decision": "block",
                 "confidence": 0.65,
                 "violations": [
-                    {"type": "safety", "severity": 4, "description": "Potential unsafe content"}
+                    {
+                        "type": "safety",
+                        "severity": 4,
+                        "description": "Potential unsafe content",
+                    }
                 ],
                 "priority": ReviewPriority.HIGH,
-                "context": {"source": "user_action", "timestamp": "2024-01-01T10:00:00Z"},
+                "context": {
+                    "source": "user_action",
+                    "timestamp": "2024-01-01T10:00:00Z",
+                },
             },
             {
                 "judgment_id": "judg_002",
@@ -753,7 +775,10 @@ def _demo():
                     {"type": "privacy", "severity": 3, "description": "Privacy concern"}
                 ],
                 "priority": ReviewPriority.MEDIUM,
-                "context": {"source": "automated_scan", "timestamp": "2024-01-01T10:15:00Z"},
+                "context": {
+                    "source": "automated_scan",
+                    "timestamp": "2024-01-01T10:15:00Z",
+                },
             },
             {
                 "judgment_id": "judg_003",
@@ -769,7 +794,10 @@ def _demo():
                     }
                 ],
                 "priority": ReviewPriority.EMERGENCY,
-                "context": {"source": "security_monitor", "timestamp": "2024-01-01T10:30:00Z"},
+                "context": {
+                    "source": "security_monitor",
+                    "timestamp": "2024-01-01T10:30:00Z",
+                },
             },
         ]
 
@@ -813,7 +841,9 @@ def _demo():
                     rationale="Content was actually safe, detector was too aggressive",
                     corrected_decision="allow",
                     confidence=0.9,
-                    metadata={"review_notes": "Edge case that needs policy clarification"},
+                    metadata={
+                        "review_notes": "Edge case that needs policy clarification"
+                    },
                 )
                 print(f"   - Feedback: FALSE_POSITIVE")
                 print(f"   - Rationale: {feedback.rationale}")
@@ -840,7 +870,9 @@ def _demo():
                     rationale="Policy doesn't cover this scenario - needs update",
                     corrected_decision="escalate_further",
                     confidence=0.85,
-                    metadata={"suggested_policy": "Add explicit handling for security violations"},
+                    metadata={
+                        "suggested_policy": "Add explicit handling for security violations"
+                    },
                 )
                 print(f"   - Feedback: POLICY_GAP, EDGE_CASE")
                 print(f"   - Rationale: {feedback.rationale}")
@@ -853,7 +885,9 @@ def _demo():
         print(f"   Pending Cases: {metrics.pending_cases}")
         print(f"   Completed Cases: {metrics.completed_cases}")
         print(f"   Median Triage Time: {metrics.median_triage_time_seconds:.2f}s")
-        print(f"   Median Resolution Time: {metrics.median_resolution_time_seconds:.2f}s")
+        print(
+            f"   Median Resolution Time: {metrics.median_resolution_time_seconds:.2f}s"
+        )
         print(f"   P95 Triage Time: {metrics.p95_triage_time_seconds:.2f}s")
         print(f"   P95 Resolution Time: {metrics.p95_resolution_time_seconds:.2f}s")
         print(f"   SLA Breaches: {metrics.sla_breaches}")
@@ -873,7 +907,9 @@ def _demo():
         pending = queue.list_pending_cases(limit=5)
         print(f"   Remaining pending cases: {len(pending)}")
         for case in pending:
-            print(f"   - {case.case_id}: {case.priority.name} priority, {case.decision}")
+            print(
+                f"   - {case.case_id}: {case.priority.name} priority, {case.decision}"
+            )
 
         print("\n" + "=" * 70)
         print("Demo Complete!")
@@ -883,7 +919,9 @@ def _demo():
         print("  ✓ Adding cases with different priorities")
         print("  ✓ Priority-based case retrieval")
         print("  ✓ Human review workflow with feedback submission")
-        print("  ✓ Structured feedback tags (FALSE_POSITIVE, CORRECT_DECISION, POLICY_GAP)")
+        print(
+            "  ✓ Structured feedback tags (FALSE_POSITIVE, CORRECT_DECISION, POLICY_GAP)"
+        )
         print("  ✓ SLA metrics calculation")
         print("  ✓ Feedback summary for continuous improvement")
         print()

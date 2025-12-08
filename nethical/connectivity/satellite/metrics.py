@@ -378,7 +378,7 @@ class SatelliteMetrics:
         signal_score = signal_scores.get(signal, 0.0)
 
         # Weighted average
-        return (latency_score * 0.4 + loss_score * 0.4 + signal_score * 0.2)
+        return latency_score * 0.4 + loss_score * 0.4 + signal_score * 0.2
 
     def get_health_assessment(self) -> Dict[str, Any]:
         """

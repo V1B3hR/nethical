@@ -241,7 +241,9 @@ class DataMinimization:
             return record  # Already anonymized
 
         # Apply anonymization
-        anonymized_data = self._anonymize_fields(record.data, record.category, anonymization_level)
+        anonymized_data = self._anonymize_fields(
+            record.data, record.category, anonymization_level
+        )
 
         record.data = anonymized_data
         record.anonymized = True
@@ -313,9 +315,9 @@ class DataMinimization:
         Returns:
             Deletion request
         """
-        request_id = hashlib.sha256(f"{user_id}{datetime.now().isoformat()}".encode()).hexdigest()[
-            :16
-        ]
+        request_id = hashlib.sha256(
+            f"{user_id}{datetime.now().isoformat()}".encode()
+        ).hexdigest()[:16]
 
         deletion_request = DeletionRequest(
             request_id=request_id,

@@ -26,9 +26,11 @@ router = APIRouter()
 
 class FairnessMetric(BaseModel):
     """A single fairness metric."""
-    
+
     metric_name: str = Field(..., description="Name of the fairness metric")
-    value: float = Field(..., description="Metric value (0.0-1.0, where 1.0 is perfectly fair)")
+    value: float = Field(
+        ..., description="Metric value (0.0-1.0, where 1.0 is perfectly fair)"
+    )
     threshold: float = Field(..., description="Acceptable threshold")
     status: str = Field(..., description="pass, warning, or fail")
     description: str = Field(..., description="Metric description")
@@ -36,7 +38,7 @@ class FairnessMetric(BaseModel):
 
 class GroupFairness(BaseModel):
     """Fairness metrics for a specific group."""
-    
+
     group_id: str = Field(..., description="Group identifier")
     group_name: str = Field(..., description="Human-readable group name")
     sample_size: int = Field(..., description="Number of decisions in sample")
@@ -52,13 +54,15 @@ class GroupFairness(BaseModel):
 
 class FairnessReport(BaseModel):
     """Complete fairness report."""
-    
+
     report_id: str = Field(..., description="Report identifier")
     overall_fairness_score: float = Field(
         ...,
         description="Overall fairness score (0.0-1.0)",
     )
-    metrics: list[FairnessMetric] = Field(..., description="Individual fairness metrics")
+    metrics: list[FairnessMetric] = Field(
+        ..., description="Individual fairness metrics"
+    )
     groups: list[GroupFairness] = Field(..., description="Per-group metrics")
     recommendations: list[str] = Field(
         default_factory=list,
@@ -75,7 +79,7 @@ class FairnessReport(BaseModel):
 
 class FairnessAuditRequest(BaseModel):
     """Request to trigger a fairness audit."""
-    
+
     scope: str = Field(
         default="all",
         description="Audit scope: all, agent, action_type",
@@ -98,10 +102,12 @@ class FairnessAuditRequest(BaseModel):
 
 class FairnessAuditResponse(BaseModel):
     """Response after triggering a fairness audit."""
-    
+
     audit_id: str = Field(..., description="Audit identifier")
     status: str = Field(..., description="pending, running, completed")
-    estimated_duration_seconds: int = Field(..., description="Estimated completion time")
+    estimated_duration_seconds: int = Field(
+        ..., description="Estimated completion time"
+    )
     created_at: str = Field(..., description="Audit creation timestamp")
 
 
@@ -187,27 +193,27 @@ async def get_fairness_metrics(
     period_days: int = Query(7, ge=1, le=365, description="Analysis period in days"),
 ) -> FairnessReport:
     """Get current fairness metrics.
-    
+
     Provides a comprehensive fairness report including individual metrics,
     per-group analysis, and recommendations.
-    
+
     Implements Law 17 (Mutual Respect) and Law 20 (Value Alignment)
     through continuous fairness monitoring.
-    
+
     Args:
         period_days: Number of days to analyze
-        
+
     Returns:
         FairnessReport with current metrics
     """
     now = datetime.now(timezone.utc)
-    
+
     metrics = _generate_sample_fairness_metrics()
     groups = _generate_sample_groups()
-    
+
     # Calculate overall score
     overall_score = sum(m.value for m in metrics) / len(metrics) if metrics else 0.0
-    
+
     # Generate recommendations
     recommendations = []
     for metric in metrics:
@@ -219,14 +225,14 @@ async def get_fairness_metrics(
             recommendations.append(
                 f"Action required on {metric.metric_name}: value {metric.value:.2f} below threshold {metric.threshold:.2f}"
             )
-    
+
     # Check for group disparities
     for group in groups:
         if group.disparity_index < 0.90 or group.disparity_index > 1.10:
             recommendations.append(
                 f"Review treatment of {group.group_name}: disparity index {group.disparity_index:.2f}"
             )
-    
+
     return FairnessReport(
         report_id=str(uuid.uuid4()),
         overall_fairness_score=overall_score,
@@ -235,7 +241,9 @@ async def get_fairness_metrics(
         recommendations=recommendations,
         fundamental_laws=[17, 20],
         timestamp=now.isoformat(),
-        period_start=(now.replace(hour=0, minute=0, second=0, microsecond=0)).isoformat(),
+        period_start=(
+            now.replace(hour=0, minute=0, second=0, microsecond=0)
+        ).isoformat(),
         period_end=now.isoformat(),
     )
 
@@ -245,21 +253,21 @@ async def get_fairness_by_groups(
     group_type: Optional[str] = Query(None, description="Filter by group type"),
 ) -> list[GroupFairness]:
     """Get fairness metrics broken down by groups.
-    
+
     Provides per-group fairness analysis for monitoring
     differential treatment across agent types, action types, etc.
-    
+
     Args:
         group_type: Optional filter by group type
-        
+
     Returns:
         List of GroupFairness records
     """
     groups = _generate_sample_groups()
-    
+
     if group_type:
         groups = [g for g in groups if group_type.lower() in g.group_id.lower()]
-    
+
     return groups
 
 
@@ -268,28 +276,28 @@ async def trigger_fairness_audit(
     request: FairnessAuditRequest,
 ) -> FairnessAuditResponse:
     """Trigger a comprehensive fairness audit.
-    
+
     Initiates an asynchronous fairness audit that analyzes
     decision patterns for bias and unfair treatment.
-    
+
     Implements Law 17 (Mutual Respect) by actively monitoring
     for unfair treatment.
-    
+
     Args:
         request: Audit request configuration
-        
+
     Returns:
         FairnessAuditResponse with audit tracking info
     """
     audit_id = str(uuid.uuid4())
-    
+
     # Estimate duration based on scope
     estimated_seconds = 30  # Base time
     if request.scope == "all":
         estimated_seconds = 60
     if request.period_days > 30:
         estimated_seconds += (request.period_days - 30) * 2
-    
+
     return FairnessAuditResponse(
         audit_id=audit_id,
         status="pending",

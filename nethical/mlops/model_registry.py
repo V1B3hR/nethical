@@ -168,13 +168,17 @@ class ModelVersion:
     framework: Optional[str] = None
     framework_version: Optional[str] = None
     parent_version: Optional[str] = None
-    children: List[str] = field(default_factory=list)  # list of version_ids referencing descendants
+    children: List[str] = field(
+        default_factory=list
+    )  # list of version_ids referencing descendants
     metadata: Dict[str, Any] = field(default_factory=dict)
     artifact: Optional[ArtifactInfo] = None
     environment: Dict[str, Any] = field(default_factory=dict)
     model_signature: Optional[Dict[str, Any]] = None  # e.g., input/output schema
     deprecated_at: Optional[datetime] = None
-    rollback_source: Optional[str] = None  # version_id we rolled back from if applicable
+    rollback_source: Optional[str] = (
+        None  # version_id we rolled back from if applicable
+    )
 
     @property
     def version_id(self) -> str:
@@ -203,7 +207,9 @@ class ModelVersion:
             "artifact": asdict(self.artifact) if self.artifact else None,
             "environment": self.environment,
             "model_signature": self.model_signature,
-            "deprecated_at": self.deprecated_at.isoformat() if self.deprecated_at else None,
+            "deprecated_at": (
+                self.deprecated_at.isoformat() if self.deprecated_at else None
+            ),
             "rollback_source": self.rollback_source,
         }
 
@@ -235,7 +241,9 @@ class ModelVersion:
             environment=data.get("environment", {}),
             model_signature=data.get("model_signature"),
             deprecated_at=(
-                datetime.fromisoformat(data["deprecated_at"]) if data.get("deprecated_at") else None
+                datetime.fromisoformat(data["deprecated_at"])
+                if data.get("deprecated_at")
+                else None
             ),
             rollback_source=data.get("rollback_source"),
         )
@@ -337,7 +345,9 @@ class ModelRegistry:
 
         self._load_registry()
         logger.info(
-            "ModelRegistry initialized at %s (loaded=%d)", self.registry_dir, len(self.models)
+            "ModelRegistry initialized at %s (loaded=%d)",
+            self.registry_dir,
+            len(self.models),
         )
 
     # ------------------------------------------------------------------
@@ -415,11 +425,15 @@ class ModelRegistry:
             if version is None and self.auto_semver:
                 version = self._next_semver(name)
             elif version is None:
-                raise ValidationError("Version must be supplied when auto_semver=False.")
+                raise ValidationError(
+                    "Version must be supplied when auto_semver=False."
+                )
 
             version_id = f"{name}:{version}"
             if version_id in self.models and not allow_overwrite:
-                raise VersionConflictError(f"Model version already exists: {version_id}")
+                raise VersionConflictError(
+                    f"Model version already exists: {version_id}"
+                )
 
             # Copy artifact(s)
             stage_dir = self._get_stage_dir(stage)
@@ -433,10 +447,12 @@ class ModelRegistry:
                     if allow_overwrite:
                         shutil.rmtree(dest_path)
                     else:
-                        raise VersionConflictError(f"Artifact directory exists: {dest_path}")
+                        raise VersionConflictError(
+                            f"Artifact directory exists: {dest_path}"
+                        )
                 shutil.copytree(model_path, dest_path)
-                directory_hash, file_hashes, file_count, size_bytes = compute_directory_hash(
-                    dest_path
+                directory_hash, file_hashes, file_count, size_bytes = (
+                    compute_directory_hash(dest_path)
                 )
                 artifact_info = ArtifactInfo(
                     path=str(dest_path),
@@ -480,7 +496,9 @@ class ModelRegistry:
                 framework=framework,
                 framework_version=framework_version,
                 training_dataset=training_dataset,
-                metadata={**(metadata or {}), "extra": extra} if extra else (metadata or {}),
+                metadata=(
+                    {**(metadata or {}), "extra": extra} if extra else (metadata or {})
+                ),
                 artifact=artifact_info,
                 environment=env_meta,
             )
@@ -495,7 +513,11 @@ class ModelRegistry:
 
             self.models[model_version.version_id] = model_version
             self._save_metadata(model_version)
-            logger.info("Registered model %s in stage '%s'", model_version.version_id, stage.value)
+            logger.info(
+                "Registered model %s in stage '%s'",
+                model_version.version_id,
+                stage.value,
+            )
             self._emit("registered", model_version)
             return model_version
 
@@ -523,7 +545,9 @@ class ModelRegistry:
             from_stage = model.stage
 
             if from_stage == to_stage:
-                logger.warning("Model %s already in stage %s", version_id, to_stage.value)
+                logger.warning(
+                    "Model %s already in stage %s", version_id, to_stage.value
+                )
                 return True
 
             if self.enforce_transitions and not force:
@@ -553,7 +577,9 @@ class ModelRegistry:
             model.model_path = str(new_path)
             model.stage = to_stage
             self._save_metadata(model)
-            logger.info("Promoted %s: %s -> %s", version_id, from_stage.value, to_stage.value)
+            logger.info(
+                "Promoted %s: %s -> %s", version_id, from_stage.value, to_stage.value
+            )
             self._emit("promoted", model)
             return True
 
@@ -577,7 +603,9 @@ class ModelRegistry:
             self._emit("tags_added", model)
             return model
 
-    def deprecate_model(self, version_id: str, reason: Optional[str] = None) -> ModelVersion:
+    def deprecate_model(
+        self, version_id: str, reason: Optional[str] = None
+    ) -> ModelVersion:
         with self._lock:
             model = self._require_model(version_id)
             model.status = ModelStatus.DEPRECATED
@@ -623,7 +651,9 @@ class ModelRegistry:
             registered.rollback_source = source.version_id
             self._save_metadata(registered)
             logger.info(
-                "Created rollback version %s from %s", registered.version_id, target_version_id
+                "Created rollback version %s from %s",
+                registered.version_id,
+                target_version_id,
             )
             self._emit("rollback", registered)
             return registered
@@ -646,7 +676,8 @@ class ModelRegistry:
             if not candidates:
                 return None
             candidates.sort(
-                key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True
+                key=lambda m: (m.created_at, self._version_sort_key(m.version)),
+                reverse=True,
             )
             return candidates[0] if latest else candidates
 
@@ -672,7 +703,8 @@ class ModelRegistry:
             if not include_archived:
                 models = [m for m in models if m.stage != ModelStage.ARCHIVED]
             models.sort(
-                key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True
+                key=lambda m: (m.created_at, self._version_sort_key(m.version)),
+                reverse=True,
             )
             return models
 
@@ -716,7 +748,8 @@ class ModelRegistry:
                 regex = re.compile(name_pattern)
                 results = [m for m in results if regex.search(m.name)]
             results.sort(
-                key=lambda m: (m.created_at, self._version_sort_key(m.version)), reverse=True
+                key=lambda m: (m.created_at, self._version_sort_key(m.version)),
+                reverse=True,
             )
             return results
 
@@ -766,7 +799,9 @@ class ModelRegistry:
         with self._lock:
             model = self._require_model(version_id)
             if model.stage == ModelStage.PRODUCTION and not force:
-                raise ValidationError("Cannot delete production model without force=True")
+                raise ValidationError(
+                    "Cannot delete production model without force=True"
+                )
 
             # Remove artifact
             artifact_path = Path(model.model_path)
@@ -830,19 +865,27 @@ class ModelRegistry:
         # Example validation rules (extend as necessary).
         if to_stage == ModelStage.STAGING:
             if not model.metrics:
-                logger.warning("Promoting to staging without metrics: %s", model.version_id)
+                logger.warning(
+                    "Promoting to staging without metrics: %s", model.version_id
+                )
         if to_stage == ModelStage.PRODUCTION:
             if not model.metrics:
-                logger.warning("Promoting to production without metrics: %s", model.version_id)
+                logger.warning(
+                    "Promoting to production without metrics: %s", model.version_id
+                )
             # Example threshold enforcement (customize)
             if model.metrics and model.metrics.accuracy is not None:
                 if model.metrics.accuracy < 0.5:
-                    raise ValidationError("Accuracy below minimal threshold for production (0.5)")
+                    raise ValidationError(
+                        "Accuracy below minimal threshold for production (0.5)"
+                    )
 
     def _save_metadata(self, model: ModelVersion):
         filename = f"{model.version_id.replace(':', '_')}.json"
         filepath = self.metadata_dir / filename
-        temp_fd, temp_path = tempfile.mkstemp(dir=str(self.metadata_dir), prefix=".tmp_meta_")
+        temp_fd, temp_path = tempfile.mkstemp(
+            dir=str(self.metadata_dir), prefix=".tmp_meta_"
+        )
         try:
             with os.fdopen(temp_fd, "w") as f:
                 json.dump(model.to_dict(), f, indent=2, sort_keys=True)
@@ -899,7 +942,9 @@ class ModelRegistry:
 
     def _next_semver(self, name: str) -> str:
         existing = [
-            m.version for m in self.models.values() if m.name == name and is_semver(m.version)
+            m.version
+            for m in self.models.values()
+            if m.name == name and is_semver(m.version)
         ]
         if not existing:
             return "0.1.0"
@@ -918,7 +963,9 @@ class ModelRegistry:
     # ------------------------------------------------------------------
     def legacy_promote(self, model_filename: str):
         """Legacy simplistic promote; replaced by register/promote workflow."""
-        logger.warning("legacy_promote is deprecated; use promote_model with version IDs.")
+        logger.warning(
+            "legacy_promote is deprecated; use promote_model with version IDs."
+        )
         src = CANDIDATES / model_filename
         dst = CURRENT / model_filename
         CURRENT.mkdir(parents=True, exist_ok=True)

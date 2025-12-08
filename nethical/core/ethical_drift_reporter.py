@@ -177,7 +177,10 @@ class EthicalDriftReporter:
             return "low"
 
     def generate_report(
-        self, start_time: datetime, end_time: datetime, cohorts: Optional[List[str]] = None
+        self,
+        start_time: datetime,
+        end_time: datetime,
+        cohorts: Optional[List[str]] = None,
     ) -> EthicalDriftReport:
         """Generate ethical drift report.
 
@@ -203,7 +206,9 @@ class EthicalDriftReporter:
         drift_metrics = self._calculate_drift_metrics(selected_cohorts)
 
         # Generate recommendations
-        recommendations = self._generate_recommendations(selected_cohorts, drift_metrics)
+        recommendations = self._generate_recommendations(
+            selected_cohorts, drift_metrics
+        )
 
         report = EthicalDriftReport(
             report_id=report_id,
@@ -219,7 +224,9 @@ class EthicalDriftReporter:
 
         return report
 
-    def _calculate_drift_metrics(self, cohorts: Dict[str, CohortProfile]) -> Dict[str, Any]:
+    def _calculate_drift_metrics(
+        self, cohorts: Dict[str, CohortProfile]
+    ) -> Dict[str, Any]:
         """Calculate drift metrics across cohorts.
 
         Args:
@@ -229,7 +236,10 @@ class EthicalDriftReporter:
             Drift metrics
         """
         if len(cohorts) < 2:
-            return {"has_drift": False, "message": "Insufficient cohorts for drift analysis"}
+            return {
+                "has_drift": False,
+                "message": "Insufficient cohorts for drift analysis",
+            }
 
         metrics = {
             "cohort_count": len(cohorts),
@@ -250,7 +260,10 @@ class EthicalDriftReporter:
             cohort_rates = {}
             for cid, profile in cohorts.items():
                 if profile.action_count > 0:
-                    rate = profile.violation_stats.by_type.get(vtype, 0) / profile.action_count
+                    rate = (
+                        profile.violation_stats.by_type.get(vtype, 0)
+                        / profile.action_count
+                    )
                     cohort_rates[cid] = rate
 
             if cohort_rates:
@@ -336,7 +349,9 @@ class EthicalDriftReporter:
         recommendations = []
 
         if not drift_metrics.get("has_drift", False):
-            recommendations.append("No significant ethical drift detected across cohorts")
+            recommendations.append(
+                "No significant ethical drift detected across cohorts"
+            )
             return recommendations
 
         # Violation type recommendations
@@ -434,7 +449,9 @@ class EthicalDriftReporter:
             }
 
             # Aggregate stats
-            dashboard["overall_stats"]["total_violations"] += profile.violation_stats.total_count
+            dashboard["overall_stats"][
+                "total_violations"
+            ] += profile.violation_stats.total_count
             dashboard["overall_stats"]["total_actions"] += profile.action_count
 
             total_risk_sum += profile.avg_risk_score * profile.action_count
@@ -450,7 +467,9 @@ class EthicalDriftReporter:
 
         # Calculate overall average risk
         if total_actions > 0:
-            dashboard["overall_stats"]["avg_risk_score"] = total_risk_sum / total_actions
+            dashboard["overall_stats"]["avg_risk_score"] = (
+                total_risk_sum / total_actions
+            )
 
         # Coverage metrics
         if self.cohort_profiles:

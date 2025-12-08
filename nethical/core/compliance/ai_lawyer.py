@@ -204,7 +204,10 @@ class AILawyer:
             # Update decision to the most restrictive
             if check_decision == ReviewDecision.REJECT:
                 decision = ReviewDecision.REJECT
-            elif check_decision == ReviewDecision.REVIEW and decision != ReviewDecision.REJECT:
+            elif (
+                check_decision == ReviewDecision.REVIEW
+                and decision != ReviewDecision.REJECT
+            ):
                 decision = ReviewDecision.REVIEW
 
         review_time_ms = (time.time() - start_time) * 1000
@@ -271,7 +274,10 @@ class AILawyer:
 
         # Check for content integrity
         content_hash = hashlib.sha256(ctx.content.encode("utf-8")).hexdigest()
-        if ctx.metadata.get("content_hash") and ctx.metadata["content_hash"] != content_hash:
+        if (
+            ctx.metadata.get("content_hash")
+            and ctx.metadata["content_hash"] != content_hash
+        ):
             violations.append("Content hash mismatch detected - potential tampering")
             severity = ViolationSeverity.SEVERE
             decision = ReviewDecision.REJECT

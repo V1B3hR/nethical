@@ -49,7 +49,11 @@ class ViolationTagging:
 class EthicalTaxonomy:
     """Ethical taxonomy system for multi-dimensional impact classification."""
 
-    def __init__(self, taxonomy_path: str = "taxonomies/ethics_taxonomy.json", coverage_target: float = 0.9):
+    def __init__(
+        self,
+        taxonomy_path: str = "taxonomies/ethics_taxonomy.json",
+        coverage_target: float = 0.9,
+    ):
         """Initialize ethical taxonomy.
 
         Args:
@@ -84,7 +88,12 @@ class EthicalTaxonomy:
         """
         if not self.taxonomy_path.exists():
             # Return default taxonomy
-            return {"version": "1.0", "dimensions": {}, "mapping": {}, "coverage_target": 0.9}
+            return {
+                "version": "1.0",
+                "dimensions": {},
+                "mapping": {},
+                "coverage_target": 0.9,
+            }
 
         with open(self.taxonomy_path, "r") as f:
             return json.load(f)
@@ -293,7 +302,9 @@ class EthicalTaxonomy:
                 dimension_usage[dimension] += 1
 
         # Most common dimensions
-        sorted_dimensions = sorted(dimension_usage.items(), key=lambda x: x[1], reverse=True)
+        sorted_dimensions = sorted(
+            dimension_usage.items(), key=lambda x: x[1], reverse=True
+        )
 
         return {
             **stats,
@@ -306,7 +317,10 @@ class EthicalTaxonomy:
         }
 
     def add_mapping(
-        self, violation_type: str, dimension_scores: Dict[str, float], description: str = ""
+        self,
+        violation_type: str,
+        dimension_scores: Dict[str, float],
+        description: str = "",
     ):
         """Add new violation type mapping.
 
@@ -318,7 +332,10 @@ class EthicalTaxonomy:
         self.mapping[violation_type] = dimension_scores
 
         # Update taxonomy file
-        self.taxonomy["mapping"][violation_type] = {**dimension_scores, "description": description}
+        self.taxonomy["mapping"][violation_type] = {
+            **dimension_scores,
+            "description": description,
+        }
 
         # Save updated taxonomy
         self._save_taxonomy()
@@ -348,7 +365,9 @@ class EthicalTaxonomy:
         ]
 
         # Average score for this dimension
-        scores = [scores[dimension] for scores in self.mapping.values() if dimension in scores]
+        scores = [
+            scores[dimension] for scores in self.mapping.values() if dimension in scores
+        ]
         avg_score = sum(scores) / len(scores) if scores else 0
 
         return {
@@ -374,7 +393,9 @@ class EthicalTaxonomy:
         for vtype, scores in self.mapping.items():
             for dimension in scores.keys():
                 if dimension not in self.dimensions:
-                    issues.append(f"Unknown dimension '{dimension}' in mapping for '{vtype}'")
+                    issues.append(
+                        f"Unknown dimension '{dimension}' in mapping for '{vtype}'"
+                    )
 
         # Check coverage
         stats = self.get_coverage_stats()
@@ -386,7 +407,9 @@ class EthicalTaxonomy:
 
         # Check for unmapped violations
         if stats["unmapped_count"] > 0:
-            warnings.append(f"{stats['unmapped_count']} violation type(s) have no ethical mapping")
+            warnings.append(
+                f"{stats['unmapped_count']} violation type(s) have no ethical mapping"
+            )
 
         return {
             "valid": len(issues) == 0,

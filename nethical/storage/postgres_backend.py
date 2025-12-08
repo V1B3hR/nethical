@@ -22,6 +22,7 @@ try:
     import psycopg2
     from psycopg2 import pool, sql
     from psycopg2.extras import RealDictCursor, Json
+
     PSYCOPG2_AVAILABLE = True
 except ImportError:
     PSYCOPG2_AVAILABLE = False
@@ -37,6 +38,7 @@ logger = logging.getLogger(__name__)
 @dataclass
 class PostgresConfig:
     """PostgreSQL connection configuration."""
+
     host: str = "localhost"
     port: int = 5432
     database: str = "nethical"
@@ -55,7 +57,7 @@ class PostgresConfig:
 class PostgresBackend:
     """
     Production-grade PostgreSQL storage backend for Nethical.
-    
+
     Features:
     - Connection pooling with configurable pool size
     - Schema-aware queries (defaults to 'nethical' schema)
@@ -63,24 +65,24 @@ class PostgresBackend:
     - Parameterized queries for SQL injection prevention
     - Batch operations for high throughput
     - TimescaleDB integration for time-series data
-    
+
     Example:
         >>> config = PostgresConfig(host="localhost", database="nethical")
         >>> backend = PostgresBackend(config)
-        >>> 
+        >>>
         >>> # Insert an agent
         >>> backend.insert_agent("agent-001", name="Test Agent")
-        >>> 
+        >>>
         >>> # Query with transaction
         >>> with backend.transaction() as tx:
         ...     tx.insert_audit_event(...)
         ...     tx.insert_metric(...)
     """
-    
+
     def __init__(self, config: Optional[PostgresConfig] = None, enabled: bool = True):
         """
         Initialize PostgreSQL backend.
-        
+
         Args:
             config: PostgreSQL configuration. Uses defaults if not provided.
             enabled: Whether the backend is enabled. Set to False to disable.
@@ -88,18 +90,20 @@ class PostgresBackend:
         self.config = config or PostgresConfig()
         self.enabled = enabled and PSYCOPG2_AVAILABLE
         self._pool: Optional[pool.ThreadedConnectionPool] = None
-        
+
         if not PSYCOPG2_AVAILABLE:
-            logger.warning("psycopg2 not available. Install with: pip install psycopg2-binary")
+            logger.warning(
+                "psycopg2 not available. Install with: pip install psycopg2-binary"
+            )
             self.enabled = False
             return
-            
+
         if not self.enabled:
             logger.info("PostgreSQL backend disabled by configuration")
             return
-            
+
         self._initialize_pool()
-    
+
     def _initialize_pool(self) -> None:
         """Initialize connection pool."""
         try:
@@ -113,36 +117,34 @@ class PostgresBackend:
                 "application_name": self.config.application_name,
                 "sslmode": self.config.ssl_mode,
             }
-            
+
             # Create threaded connection pool
             self._pool = pool.ThreadedConnectionPool(
-                self.config.min_connections,
-                self.config.max_connections,
-                **dsn_params
+                self.config.min_connections, self.config.max_connections, **dsn_params
             )
-            
+
             # Test connection and set search path
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
                     cur.execute(f"SET search_path TO {self.config.schema}, public")
                     conn.commit()
-            
+
             logger.info(
                 f"PostgreSQL connected to {self.config.host}:{self.config.port}"
                 f"/{self.config.database}"
             )
-            
+
         except Exception as e:
             logger.error(f"Failed to initialize PostgreSQL pool: {e}")
             self.enabled = False
             raise
-    
+
     @contextmanager
     def _get_connection(self):
         """Get a connection from the pool with automatic return."""
         if not self.enabled or not self._pool:
             raise RuntimeError("PostgreSQL backend not available")
-            
+
         conn = None
         try:
             conn = self._pool.getconn()
@@ -150,12 +152,12 @@ class PostgresBackend:
         finally:
             if conn:
                 self._pool.putconn(conn)
-    
+
     @contextmanager
     def transaction(self):
         """
         Context manager for database transactions.
-        
+
         Usage:
             with backend.transaction() as tx:
                 tx.insert_agent(...)
@@ -169,11 +171,11 @@ class PostgresBackend:
             except Exception:
                 conn.rollback()
                 raise
-    
+
     # =========================================================================
     # AGENT OPERATIONS
     # =========================================================================
-    
+
     def insert_agent(
         self,
         agent_id: str,
@@ -183,11 +185,11 @@ class PostgresBackend:
         status: str = "active",
         metadata: Optional[Dict[str, Any]] = None,
         region_id: Optional[str] = None,
-        logical_domain: str = "default"
+        logical_domain: str = "default",
     ) -> Optional[str]:
         """
         Insert or update an agent.
-        
+
         Args:
             agent_id: Unique agent identifier
             name: Human-readable agent name
@@ -197,13 +199,13 @@ class PostgresBackend:
             metadata: Additional metadata as JSON
             region_id: Region identifier
             logical_domain: Logical domain for multi-tenancy
-            
+
         Returns:
             UUID of the inserted/updated agent, or None on failure
         """
         if not self.enabled:
             return None
-            
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -224,9 +226,15 @@ class PostgresBackend:
                         RETURNING id
                         """,
                         (
-                            agent_id, name, agent_type, trust_level, status,
-                            Json(metadata or {}), region_id, logical_domain
-                        )
+                            agent_id,
+                            name,
+                            agent_type,
+                            trust_level,
+                            status,
+                            Json(metadata or {}),
+                            region_id,
+                            logical_domain,
+                        ),
                     )
                     result = cur.fetchone()
                     conn.commit()
@@ -235,26 +243,26 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error inserting agent: {e}")
                     return None
-    
+
     def get_agent(self, agent_id: str) -> Optional[Dict[str, Any]]:
         """Get agent by agent_id."""
         if not self.enabled:
             return None
-            
+
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
                     f"SELECT * FROM {self.config.schema}.agents WHERE agent_id = %s",
-                    (agent_id,)
+                    (agent_id,),
                 )
                 result = cur.fetchone()
                 return dict(result) if result else None
-    
+
     def update_agent_status(self, agent_id: str, status: str) -> bool:
         """Update agent status."""
         if not self.enabled:
             return False
-            
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -264,7 +272,7 @@ class PostgresBackend:
                         SET status = %s, updated_at = NOW()
                         WHERE agent_id = %s
                         """,
-                        (status, agent_id)
+                        (status, agent_id),
                     )
                     conn.commit()
                     return cur.rowcount > 0
@@ -272,41 +280,41 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error updating agent status: {e}")
                     return False
-    
+
     def list_agents(
         self,
         status: Optional[str] = None,
         region_id: Optional[str] = None,
         limit: int = 100,
-        offset: int = 0
+        offset: int = 0,
     ) -> List[Dict[str, Any]]:
         """List agents with optional filtering."""
         if not self.enabled:
             return []
-            
+
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 query = f"SELECT * FROM {self.config.schema}.agents WHERE 1=1"
                 params: List[Any] = []
-                
+
                 if status:
                     query += " AND status = %s"
                     params.append(status)
-                    
+
                 if region_id:
                     query += " AND region_id = %s"
                     params.append(region_id)
-                    
+
                 query += " ORDER BY created_at DESC LIMIT %s OFFSET %s"
                 params.extend([limit, offset])
-                
+
                 cur.execute(query, params)
                 return [dict(row) for row in cur.fetchall()]
-    
+
     # =========================================================================
     # MODEL REGISTRY OPERATIONS
     # =========================================================================
-    
+
     def register_model(
         self,
         model_name: str,
@@ -317,12 +325,12 @@ class PostgresBackend:
         framework: Optional[str] = None,
         metrics: Optional[Dict[str, Any]] = None,
         metadata: Optional[Dict[str, Any]] = None,
-        created_by: Optional[str] = None
+        created_by: Optional[str] = None,
     ) -> Optional[str]:
         """Register a new model version."""
         if not self.enabled:
             return None
-            
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -335,10 +343,16 @@ class PostgresBackend:
                         RETURNING id
                         """,
                         (
-                            model_name, version, artifact_path, artifact_hash,
-                            model_type, framework, Json(metrics or {}),
-                            Json(metadata or {}), created_by
-                        )
+                            model_name,
+                            version,
+                            artifact_path,
+                            artifact_hash,
+                            model_type,
+                            framework,
+                            Json(metrics or {}),
+                            Json(metadata or {}),
+                            created_by,
+                        ),
                     )
                     result = cur.fetchone()
                     conn.commit()
@@ -347,12 +361,14 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error registering model: {e}")
                     return None
-    
-    def get_model_version(self, model_name: str, version: str) -> Optional[Dict[str, Any]]:
+
+    def get_model_version(
+        self, model_name: str, version: str
+    ) -> Optional[Dict[str, Any]]:
         """Get a specific model version."""
         if not self.enabled:
             return None
-            
+
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
@@ -360,16 +376,18 @@ class PostgresBackend:
                     SELECT * FROM {self.config.schema}.model_versions 
                     WHERE model_name = %s AND version = %s
                     """,
-                    (model_name, version)
+                    (model_name, version),
                 )
                 result = cur.fetchone()
                 return dict(result) if result else None
-    
-    def promote_model(self, model_name: str, version: str, status: str = "production") -> bool:
+
+    def promote_model(
+        self, model_name: str, version: str, status: str = "production"
+    ) -> bool:
         """Promote a model to a new status."""
         if not self.enabled:
             return False
-            
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -379,7 +397,7 @@ class PostgresBackend:
                         SET status = %s, promoted_at = NOW()
                         WHERE model_name = %s AND version = %s
                         """,
-                        (status, model_name, version)
+                        (status, model_name, version),
                     )
                     conn.commit()
                     return cur.rowcount > 0
@@ -387,17 +405,14 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error promoting model: {e}")
                     return False
-    
+
     def list_model_versions(
-        self,
-        model_name: str,
-        status: Optional[str] = None,
-        limit: int = 50
+        self, model_name: str, status: Optional[str] = None, limit: int = 50
     ) -> List[Dict[str, Any]]:
         """List all versions of a model."""
         if not self.enabled:
             return []
-            
+
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 query = f"""
@@ -405,21 +420,21 @@ class PostgresBackend:
                     WHERE model_name = %s
                 """
                 params: List[Any] = [model_name]
-                
+
                 if status:
                     query += " AND status = %s"
                     params.append(status)
-                    
+
                 query += " ORDER BY created_at DESC LIMIT %s"
                 params.append(limit)
-                
+
                 cur.execute(query, params)
                 return [dict(row) for row in cur.fetchall()]
-    
+
     # =========================================================================
     # POLICY OPERATIONS
     # =========================================================================
-    
+
     def create_policy_version(
         self,
         policy_id: str,
@@ -428,16 +443,16 @@ class PostgresBackend:
         policy_type: str = "governance",
         priority: int = 100,
         created_by: Optional[str] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """Create a new policy version."""
         if not self.enabled:
             return None
-            
+
         # Generate content hash
         content_str = json.dumps(content, sort_keys=True)
         version_hash = hashlib.sha256(content_str.encode()).hexdigest()[:64]
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -450,9 +465,15 @@ class PostgresBackend:
                         RETURNING id
                         """,
                         (
-                            policy_id, version, version_hash, Json(content),
-                            policy_type, priority, created_by, Json(metadata or {})
-                        )
+                            policy_id,
+                            version,
+                            version_hash,
+                            Json(content),
+                            policy_type,
+                            priority,
+                            created_by,
+                            Json(metadata or {}),
+                        ),
                     )
                     result = cur.fetchone()
                     conn.commit()
@@ -461,12 +482,12 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error creating policy version: {e}")
                     return None
-    
+
     def activate_policy(self, policy_id: str, version: str) -> bool:
         """Activate a policy version."""
         if not self.enabled:
             return False
-            
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -477,9 +498,9 @@ class PostgresBackend:
                         SET status = 'deprecated', deprecated_at = NOW()
                         WHERE policy_id = %s AND status = 'active'
                         """,
-                        (policy_id,)
+                        (policy_id,),
                     )
-                    
+
                     # Activate new version
                     cur.execute(
                         f"""
@@ -487,7 +508,7 @@ class PostgresBackend:
                         SET status = 'active', activated_at = NOW()
                         WHERE policy_id = %s AND version = %s
                         """,
-                        (policy_id, version)
+                        (policy_id, version),
                     )
                     conn.commit()
                     return cur.rowcount > 0
@@ -495,12 +516,12 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error activating policy: {e}")
                     return False
-    
+
     def get_active_policy(self, policy_id: str) -> Optional[Dict[str, Any]]:
         """Get the active version of a policy."""
         if not self.enabled:
             return None
-            
+
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
@@ -508,15 +529,15 @@ class PostgresBackend:
                     SELECT * FROM {self.config.schema}.policy_versions
                     WHERE policy_id = %s AND status = 'active'
                     """,
-                    (policy_id,)
+                    (policy_id,),
                 )
                 result = cur.fetchone()
                 return dict(result) if result else None
-    
+
     # =========================================================================
     # AUDIT EVENT OPERATIONS
     # =========================================================================
-    
+
     def insert_audit_event(
         self,
         agent_id: str,
@@ -532,14 +553,14 @@ class PostgresBackend:
         region_id: Optional[str] = None,
         logical_domain: Optional[str] = None,
         request_id: Optional[str] = None,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> bool:
         """Insert an audit event."""
         if not self.enabled:
             return False
-            
+
         timestamp = timestamp or datetime.now(timezone.utc)
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -552,11 +573,21 @@ class PostgresBackend:
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s, %s)
                         """,
                         (
-                            timestamp, agent_id, action_type, action_content, decision,
-                            risk_score, latency_ms, Json(violations or []),
-                            Json(policies_applied or []), Json(context or {}),
-                            Json(metadata or {}), region_id, logical_domain, request_id
-                        )
+                            timestamp,
+                            agent_id,
+                            action_type,
+                            action_content,
+                            decision,
+                            risk_score,
+                            latency_ms,
+                            Json(violations or []),
+                            Json(policies_applied or []),
+                            Json(context or {}),
+                            Json(metadata or {}),
+                            region_id,
+                            logical_domain,
+                            request_id,
+                        ),
                     )
                     conn.commit()
                     return True
@@ -564,31 +595,30 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error inserting audit event: {e}")
                     return False
-    
+
     def batch_insert_audit_events(
-        self,
-        events: List[Dict[str, Any]]
+        self, events: List[Dict[str, Any]]
     ) -> Tuple[int, int]:
         """
         Batch insert multiple audit events for high throughput.
-        
+
         Args:
             events: List of event dictionaries
-            
+
         Returns:
             Tuple of (success_count, failure_count)
         """
         if not self.enabled:
             return (0, len(events))
-            
+
         success = 0
         failed = 0
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 for event in events:
                     try:
-                        timestamp = event.get('time', datetime.now(timezone.utc))
+                        timestamp = event.get("time", datetime.now(timezone.utc))
                         cur.execute(
                             f"""
                             INSERT INTO {self.config.schema}.audit_events
@@ -599,30 +629,30 @@ class PostgresBackend:
                             """,
                             (
                                 timestamp,
-                                event.get('agent_id'),
-                                event.get('action_type'),
-                                event.get('action_content'),
-                                event.get('decision'),
-                                event.get('risk_score'),
-                                event.get('latency_ms'),
-                                Json(event.get('violations', [])),
-                                Json(event.get('policies_applied', [])),
-                                Json(event.get('context', {})),
-                                Json(event.get('metadata', {})),
-                                event.get('region_id'),
-                                event.get('logical_domain'),
-                                event.get('request_id')
-                            )
+                                event.get("agent_id"),
+                                event.get("action_type"),
+                                event.get("action_content"),
+                                event.get("decision"),
+                                event.get("risk_score"),
+                                event.get("latency_ms"),
+                                Json(event.get("violations", [])),
+                                Json(event.get("policies_applied", [])),
+                                Json(event.get("context", {})),
+                                Json(event.get("metadata", {})),
+                                event.get("region_id"),
+                                event.get("logical_domain"),
+                                event.get("request_id"),
+                            ),
                         )
                         success += 1
                     except Exception as e:
                         logger.error(f"Error inserting audit event in batch: {e}")
                         failed += 1
-                        
+
                 conn.commit()
-                
+
         return (success, failed)
-    
+
     def query_audit_events(
         self,
         agent_id: Optional[str] = None,
@@ -630,47 +660,47 @@ class PostgresBackend:
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
         region_id: Optional[str] = None,
-        limit: int = 1000
+        limit: int = 1000,
     ) -> List[Dict[str, Any]]:
         """Query audit events with filtering."""
         if not self.enabled:
             return []
-            
+
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 query = f"SELECT * FROM {self.config.schema}.audit_events WHERE 1=1"
                 params: List[Any] = []
-                
+
                 if agent_id:
                     query += " AND agent_id = %s"
                     params.append(agent_id)
-                    
+
                 if decision:
                     query += " AND decision = %s"
                     params.append(decision)
-                    
+
                 if start_time:
                     query += " AND time >= %s"
                     params.append(start_time)
-                    
+
                 if end_time:
                     query += " AND time <= %s"
                     params.append(end_time)
-                    
+
                 if region_id:
                     query += " AND region_id = %s"
                     params.append(region_id)
-                    
+
                 query += " ORDER BY time DESC LIMIT %s"
                 params.append(limit)
-                
+
                 cur.execute(query, params)
                 return [dict(row) for row in cur.fetchall()]
-    
+
     # =========================================================================
     # METRICS OPERATIONS
     # =========================================================================
-    
+
     def insert_metric(
         self,
         agent_id: str,
@@ -680,14 +710,14 @@ class PostgresBackend:
         tags: Optional[Dict[str, Any]] = None,
         region_id: Optional[str] = None,
         logical_domain: Optional[str] = None,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> bool:
         """Insert a governance metric."""
         if not self.enabled:
             return False
-            
+
         timestamp = timestamp or datetime.now(timezone.utc)
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -701,9 +731,15 @@ class PostgresBackend:
                         DO UPDATE SET metric_value = EXCLUDED.metric_value
                         """,
                         (
-                            timestamp, agent_id, metric_name, metric_value,
-                            metric_type, Json(tags or {}), region_id, logical_domain
-                        )
+                            timestamp,
+                            agent_id,
+                            metric_name,
+                            metric_value,
+                            metric_type,
+                            Json(tags or {}),
+                            region_id,
+                            logical_domain,
+                        ),
                     )
                     conn.commit()
                     return True
@@ -711,7 +747,7 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error inserting metric: {e}")
                     return False
-    
+
     def aggregate_metrics(
         self,
         metric_name: str,
@@ -720,26 +756,28 @@ class PostgresBackend:
         start_time: Optional[datetime] = None,
         end_time: Optional[datetime] = None,
         agent_id: Optional[str] = None,
-        region_id: Optional[str] = None
+        region_id: Optional[str] = None,
     ) -> List[Dict[str, Any]]:
         """Aggregate metrics over time buckets using TimescaleDB."""
         if not self.enabled:
             return []
-        
+
         # Use a mapping to ensure SQL-safe aggregation functions
         agg_mapping = {
             "avg": "AVG",
             "sum": "SUM",
             "min": "MIN",
             "max": "MAX",
-            "count": "COUNT"
+            "count": "COUNT",
         }
-        
+
         if aggregation not in agg_mapping:
-            raise ValueError(f"Invalid aggregation: {aggregation}. Must be one of {list(agg_mapping.keys())}")
-        
+            raise ValueError(
+                f"Invalid aggregation: {aggregation}. Must be one of {list(agg_mapping.keys())}"
+            )
+
         safe_agg = agg_mapping[aggregation]
-            
+
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 # Use safe aggregation from whitelist mapping
@@ -752,32 +790,32 @@ class PostgresBackend:
                     WHERE metric_name = %s
                 """
                 params: List[Any] = [time_bucket, metric_name]
-                
+
                 if start_time:
                     query += " AND time >= %s"
                     params.append(start_time)
-                    
+
                 if end_time:
                     query += " AND time <= %s"
                     params.append(end_time)
-                    
+
                 if agent_id:
                     query += " AND agent_id = %s"
                     params.append(agent_id)
-                    
+
                 if region_id:
                     query += " AND region_id = %s"
                     params.append(region_id)
-                    
+
                 query += " GROUP BY bucket ORDER BY bucket DESC"
-                
+
                 cur.execute(query, params)
                 return [dict(row) for row in cur.fetchall()]
-    
+
     # =========================================================================
     # SECURITY EVENT OPERATIONS
     # =========================================================================
-    
+
     def insert_security_event(
         self,
         event_type: str,
@@ -787,14 +825,14 @@ class PostgresBackend:
         user_id: Optional[str] = None,
         description: Optional[str] = None,
         details: Optional[Dict[str, Any]] = None,
-        timestamp: Optional[datetime] = None
+        timestamp: Optional[datetime] = None,
     ) -> bool:
         """Insert a security event."""
         if not self.enabled:
             return False
-            
+
         timestamp = timestamp or datetime.now(timezone.utc)
-        
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -806,9 +844,15 @@ class PostgresBackend:
                         VALUES (%s, %s, %s, %s, %s, %s, %s, %s)
                         """,
                         (
-                            timestamp, event_type, severity, source_ip,
-                            agent_id, user_id, description, Json(details or {})
-                        )
+                            timestamp,
+                            event_type,
+                            severity,
+                            source_ip,
+                            agent_id,
+                            user_id,
+                            description,
+                            Json(details or {}),
+                        ),
                     )
                     conn.commit()
                     return True
@@ -816,11 +860,11 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error inserting security event: {e}")
                     return False
-    
+
     # =========================================================================
     # API KEY OPERATIONS
     # =========================================================================
-    
+
     def create_api_key(
         self,
         key_hash: str,
@@ -830,12 +874,12 @@ class PostgresBackend:
         scopes: Optional[List[str]] = None,
         rate_limit: int = 1000,
         expires_at: Optional[datetime] = None,
-        metadata: Optional[Dict[str, Any]] = None
+        metadata: Optional[Dict[str, Any]] = None,
     ) -> Optional[str]:
         """Create a new API key record."""
         if not self.enabled:
             return None
-            
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -848,10 +892,15 @@ class PostgresBackend:
                         RETURNING id
                         """,
                         (
-                            key_hash, key_prefix, name, agent_id,
-                            Json(scopes or []), rate_limit, expires_at,
-                            Json(metadata or {})
-                        )
+                            key_hash,
+                            key_prefix,
+                            name,
+                            agent_id,
+                            Json(scopes or []),
+                            rate_limit,
+                            expires_at,
+                            Json(metadata or {}),
+                        ),
                     )
                     result = cur.fetchone()
                     conn.commit()
@@ -860,12 +909,12 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error creating API key: {e}")
                     return None
-    
+
     def validate_api_key(self, key_hash: str) -> Optional[Dict[str, Any]]:
         """Validate an API key and return its details if valid."""
         if not self.enabled:
             return None
-            
+
         with self._get_connection() as conn:
             with conn.cursor(cursor_factory=RealDictCursor) as cur:
                 cur.execute(
@@ -875,10 +924,10 @@ class PostgresBackend:
                       AND revoked_at IS NULL
                       AND (expires_at IS NULL OR expires_at > NOW())
                     """,
-                    (key_hash,)
+                    (key_hash,),
                 )
                 result = cur.fetchone()
-                
+
                 if result:
                     # Update last used timestamp
                     cur.execute(
@@ -887,17 +936,17 @@ class PostgresBackend:
                         SET last_used_at = NOW()
                         WHERE key_hash = %s
                         """,
-                        (key_hash,)
+                        (key_hash,),
                     )
                     conn.commit()
-                    
+
                 return dict(result) if result else None
-    
+
     def revoke_api_key(self, key_hash: str, reason: Optional[str] = None) -> bool:
         """Revoke an API key."""
         if not self.enabled:
             return False
-            
+
         with self._get_connection() as conn:
             with conn.cursor() as cur:
                 try:
@@ -907,7 +956,7 @@ class PostgresBackend:
                         SET revoked_at = NOW(), revoked_reason = %s
                         WHERE key_hash = %s
                         """,
-                        (reason, key_hash)
+                        (reason, key_hash),
                     )
                     conn.commit()
                     return cur.rowcount > 0
@@ -915,16 +964,16 @@ class PostgresBackend:
                     conn.rollback()
                     logger.error(f"Error revoking API key: {e}")
                     return False
-    
+
     # =========================================================================
     # UTILITY METHODS
     # =========================================================================
-    
+
     def health_check(self) -> Dict[str, Any]:
         """Check database health and return status."""
         if not self.enabled:
             return {"status": "disabled", "available": False}
-            
+
         try:
             with self._get_connection() as conn:
                 with conn.cursor() as cur:
@@ -936,15 +985,11 @@ class PostgresBackend:
                         "available": True,
                         "version": version,
                         "host": self.config.host,
-                        "database": self.config.database
+                        "database": self.config.database,
                     }
         except Exception as e:
-            return {
-                "status": "unhealthy",
-                "available": False,
-                "error": str(e)
-            }
-    
+            return {"status": "unhealthy", "available": False, "error": str(e)}
+
     def close(self) -> None:
         """Close all connections in the pool."""
         if self._pool:
@@ -957,28 +1002,28 @@ class PostgresBackend:
 
 class TransactionContext:
     """Context for database transactions with helper methods."""
-    
+
     def __init__(self, conn, schema: str):
         self.conn = conn
         self.schema = schema
         self.cursor = conn.cursor(cursor_factory=RealDictCursor)
-    
+
     def execute(self, query: str, params: Optional[tuple] = None) -> None:
         """Execute a query within the transaction."""
         self.cursor.execute(query, params)
-    
+
     def fetchone(self) -> Optional[Dict[str, Any]]:
         """Fetch one result."""
         result = self.cursor.fetchone()
         return dict(result) if result else None
-    
+
     def fetchall(self) -> List[Dict[str, Any]]:
         """Fetch all results."""
         return [dict(row) for row in self.cursor.fetchall()]
-    
+
     def insert_audit_event(self, **kwargs) -> bool:
         """Insert audit event within transaction."""
-        timestamp = kwargs.get('time', datetime.now(timezone.utc))
+        timestamp = kwargs.get("time", datetime.now(timezone.utc))
         try:
             self.cursor.execute(
                 f"""
@@ -990,29 +1035,29 @@ class TransactionContext:
                 """,
                 (
                     timestamp,
-                    kwargs.get('agent_id'),
-                    kwargs.get('action_type'),
-                    kwargs.get('action_content'),
-                    kwargs.get('decision'),
-                    kwargs.get('risk_score'),
-                    kwargs.get('latency_ms'),
-                    Json(kwargs.get('violations', [])),
-                    Json(kwargs.get('policies_applied', [])),
-                    Json(kwargs.get('context', {})),
-                    Json(kwargs.get('metadata', {})),
-                    kwargs.get('region_id'),
-                    kwargs.get('logical_domain'),
-                    kwargs.get('request_id')
-                )
+                    kwargs.get("agent_id"),
+                    kwargs.get("action_type"),
+                    kwargs.get("action_content"),
+                    kwargs.get("decision"),
+                    kwargs.get("risk_score"),
+                    kwargs.get("latency_ms"),
+                    Json(kwargs.get("violations", [])),
+                    Json(kwargs.get("policies_applied", [])),
+                    Json(kwargs.get("context", {})),
+                    Json(kwargs.get("metadata", {})),
+                    kwargs.get("region_id"),
+                    kwargs.get("logical_domain"),
+                    kwargs.get("request_id"),
+                ),
             )
             return True
         except Exception as e:
             logger.error(f"Error inserting audit event in transaction: {e}")
             return False
-    
+
     def insert_metric(self, **kwargs) -> bool:
         """Insert metric within transaction."""
-        timestamp = kwargs.get('time', datetime.now(timezone.utc))
+        timestamp = kwargs.get("time", datetime.now(timezone.utc))
         try:
             self.cursor.execute(
                 f"""
@@ -1025,14 +1070,14 @@ class TransactionContext:
                 """,
                 (
                     timestamp,
-                    kwargs.get('agent_id'),
-                    kwargs.get('metric_name'),
-                    kwargs.get('metric_value'),
-                    kwargs.get('metric_type', 'gauge'),
-                    Json(kwargs.get('tags', {})),
-                    kwargs.get('region_id'),
-                    kwargs.get('logical_domain')
-                )
+                    kwargs.get("agent_id"),
+                    kwargs.get("metric_name"),
+                    kwargs.get("metric_value"),
+                    kwargs.get("metric_type", "gauge"),
+                    Json(kwargs.get("tags", {})),
+                    kwargs.get("region_id"),
+                    kwargs.get("logical_domain"),
+                ),
             )
             return True
         except Exception as e:

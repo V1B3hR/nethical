@@ -174,7 +174,9 @@ class PluginManager:
             TypeError: If plugin is not a DetectorPlugin instance
         """
         if not isinstance(plugin, DetectorPlugin):
-            raise TypeError(f"Plugin must be an instance of DetectorPlugin, got {type(plugin)}")
+            raise TypeError(
+                f"Plugin must be an instance of DetectorPlugin, got {type(plugin)}"
+            )
 
         plugin_name = plugin.name
 
@@ -272,7 +274,9 @@ class PluginManager:
                 continue
             discovered.append(str(py_file))
 
-        logger.info(f"Discovered {len(discovered)} potential plugin files in {plugin_dir}")
+        logger.info(
+            f"Discovered {len(discovered)} potential plugin files in {plugin_dir}"
+        )
         return discovered
 
     def load_plugin_from_file(self, plugin_path: str) -> List[str]:
@@ -323,7 +327,9 @@ class PluginManager:
                         self._load_errors[name] = str(e)
 
             if loaded_plugins:
-                logger.info(f"Loaded {len(loaded_plugins)} plugin(s) from {plugin_path}")
+                logger.info(
+                    f"Loaded {len(loaded_plugins)} plugin(s) from {plugin_path}"
+                )
             else:
                 logger.warning(f"No valid plugins found in {plugin_path}")
 

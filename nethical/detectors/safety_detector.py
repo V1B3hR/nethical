@@ -203,8 +203,12 @@ class SafetyViolationDetector(BaseDetector):
     ) -> SafetyViolation:
         """Construct a SafetyViolation object with explanation and context."""
         snippet = self._get_context_snippet(full_context, keyword)
-        description = f"{category.replace('_', ' ').title()} violation detected: '{keyword}'."
-        recommendation = self.RECOMMENDATIONS.get(category, "Review and restrict this operation.")
+        description = (
+            f"{category.replace('_', ' ').title()} violation detected: '{keyword}'."
+        )
+        recommendation = self.RECOMMENDATIONS.get(
+            category, "Review and restrict this operation."
+        )
         evidence = {
             "detected_keyword": keyword,
             "context": full_context,

@@ -6,11 +6,28 @@ setup(
     description="A plugin for detecting SQL injection vulnerabilities.",
     author="Your Name",
     author_email="your.email@example.com",
-    packages=find_packages(include=[
-        'cli', 'data', 'audit', 'probes', 'models', 'portal', 'assets', 'deploy',
-        'config', 'formal', 'policies', 'training', 'nethical', 'datasets',
-        'security', 'dashboards', 'taxonomies', 'governance'
-    ]),
+    packages=find_packages(
+        include=[
+            "cli",
+            "data",
+            "audit",
+            "probes",
+            "models",
+            "portal",
+            "assets",
+            "deploy",
+            "config",
+            "formal",
+            "policies",
+            "training",
+            "nethical",
+            "datasets",
+            "security",
+            "dashboards",
+            "taxonomies",
+            "governance",
+        ]
+    ),
     extras_require={
         "dev": [
             "pytest>=7.0.0",

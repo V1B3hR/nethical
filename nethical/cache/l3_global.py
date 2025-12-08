@@ -68,9 +68,7 @@ class L3GlobalCache:
         self._misses = 0
         self._errors = 0
 
-        logger.info(
-            f"L3GlobalCache initialized: provider={self.config.provider}"
-        )
+        logger.info(f"L3GlobalCache initialized: provider={self.config.provider}")
 
     def get(self, key: str) -> Optional[Any]:
         """

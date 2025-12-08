@@ -37,34 +37,40 @@ class LatencyScenario:
         actions = []
 
         # Simple action
-        actions.append({
-            "agent_id": "latency_test_agent",
-            "action_type": "query",
-            "content": "Simple query for data retrieval",
-            "context": {"complexity": "low"},
-        })
+        actions.append(
+            {
+                "agent_id": "latency_test_agent",
+                "action_type": "query",
+                "content": "Simple query for data retrieval",
+                "context": {"complexity": "low"},
+            }
+        )
 
         # Medium complexity action
-        actions.append({
-            "agent_id": "latency_test_agent",
-            "action_type": "analysis",
-            "content": (
-                "Analyze the following dataset and provide insights on "
-                "user behavior patterns over the last quarter"
-            ),
-            "context": {"complexity": "medium"},
-        })
+        actions.append(
+            {
+                "agent_id": "latency_test_agent",
+                "action_type": "analysis",
+                "content": (
+                    "Analyze the following dataset and provide insights on "
+                    "user behavior patterns over the last quarter"
+                ),
+                "context": {"complexity": "medium"},
+            }
+        )
 
         # Complex action with longer content
         long_content = "".join(
             random.choices(string.ascii_letters + string.digits + " ", k=500)
         )
-        actions.append({
-            "agent_id": "latency_test_agent",
-            "action_type": "command",
-            "content": f"Execute complex operation: {long_content}",
-            "context": {"complexity": "high"},
-        })
+        actions.append(
+            {
+                "agent_id": "latency_test_agent",
+                "action_type": "command",
+                "content": f"Execute complex operation: {long_content}",
+                "context": {"complexity": "high"},
+            }
+        )
 
         return actions
 

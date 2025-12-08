@@ -35,7 +35,11 @@ def _iso_utc(ts: Optional[datetime]) -> Optional[str]:
     if not ts:
         return None
     # Format like 2025-01-01T00:00:00.000Z
-    return ts.astimezone(timezone.utc).isoformat(timespec="milliseconds").replace("+00:00", "Z")
+    return (
+        ts.astimezone(timezone.utc)
+        .isoformat(timespec="milliseconds")
+        .replace("+00:00", "Z")
+    )
 
 
 def _sanitize_keys(
@@ -161,7 +165,9 @@ class MLPlatformInterface(ABC):
         raise NotImplementedError
 
     @abstractmethod
-    def log_metrics(self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None):
+    def log_metrics(
+        self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None
+    ):
         """Log metrics"""
         raise NotImplementedError
 
@@ -216,7 +222,9 @@ class MLflowIntegration(MLPlatformInterface):
         #     logging.error("mlflow not installed. Install with: pip install mlflow")
         #     self.client = None
 
-        logging.info(f"MLflow integration initialized (stub) - Tracking URI: {self.tracking_uri}")
+        logging.info(
+            f"MLflow integration initialized (stub) - Tracking URI: {self.tracking_uri}"
+        )
 
     def start_run(self, experiment_name: str, run_name: Optional[str] = None) -> str:
         """Start MLflow run"""
@@ -236,7 +244,9 @@ class MLflowIntegration(MLPlatformInterface):
         logging.info(
             f"[STUB] MLflow start_run: {run_id} (experiment: {experiment_name}, name: {run_name or 'default'})"
         )
-        self._emit("run_started", {"platform": MLPlatform.MLFLOW.value, **run.to_dict()})
+        self._emit(
+            "run_started", {"platform": MLPlatform.MLFLOW.value, **run.to_dict()}
+        )
         # Actual: mlflow.set_experiment(experiment_name); mlflow.start_run(run_name=run_name)
         return run_id
 
@@ -245,14 +255,22 @@ class MLflowIntegration(MLPlatformInterface):
         if run_id in self.active_runs:
             sanitized = _sanitize_keys(parameters)
             self.active_runs[run_id].parameters.update(sanitized)
-            logging.info(f"[STUB] MLflow log_parameters[{run_id}]: {list(sanitized.keys())}")
+            logging.info(
+                f"[STUB] MLflow log_parameters[{run_id}]: {list(sanitized.keys())}"
+            )
             self._emit(
                 "params_logged",
-                {"platform": MLPlatform.MLFLOW.value, "run_id": run_id, "parameters": sanitized},
+                {
+                    "platform": MLPlatform.MLFLOW.value,
+                    "run_id": run_id,
+                    "parameters": sanitized,
+                },
             )
             # Actual: mlflow.log_params(parameters)
 
-    def log_metrics(self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None):
+    def log_metrics(
+        self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None
+    ):
         """Log metrics to MLflow"""
         if run_id in self.active_runs:
             self.active_runs[run_id].metrics.update(metrics)
@@ -288,12 +306,18 @@ class MLflowIntegration(MLPlatformInterface):
     def end_run(self, run_id: str, status: str = "completed"):
         """End MLflow run"""
         if run_id in self.active_runs:
-            st = RunStatus(status) if status in RunStatus._value2member_map_ else RunStatus.UNKNOWN
+            st = (
+                RunStatus(status)
+                if status in RunStatus._value2member_map_
+                else RunStatus.UNKNOWN
+            )
             run = self.active_runs[run_id]
             run.status = st
             run.end_time = _now_utc()
             logging.info(f"[STUB] MLflow end_run[{run_id}] -> {st.value}")
-            self._emit("run_ended", {"platform": MLPlatform.MLFLOW.value, **run.to_dict()})
+            self._emit(
+                "run_ended", {"platform": MLPlatform.MLFLOW.value, **run.to_dict()}
+            )
             # Actual: mlflow.end_run(status=status)
 
     def set_tags(self, run_id: str, tags: Dict[str, str]) -> None:
@@ -301,7 +325,8 @@ class MLflowIntegration(MLPlatformInterface):
             self.active_runs[run_id].tags.update(tags)
             logging.info(f"[STUB] MLflow set_tags[{run_id}]: {list(tags.keys())}")
             self._emit(
-                "tags_set", {"platform": MLPlatform.MLFLOW.value, "run_id": run_id, "tags": tags}
+                "tags_set",
+                {"platform": MLPlatform.MLFLOW.value, "run_id": run_id, "tags": tags},
             )
 
     def get_run(self, run_id: str) -> Optional[ExperimentRun]:
@@ -369,18 +394,28 @@ class WandBIntegration(MLPlatformInterface):
         if run_id in self.active_runs:
             sanitized = _sanitize_keys(parameters)
             self.active_runs[run_id].parameters.update(sanitized)
-            logging.info(f"[STUB] W&B log_parameters[{run_id}]: {list(sanitized.keys())}")
+            logging.info(
+                f"[STUB] W&B log_parameters[{run_id}]: {list(sanitized.keys())}"
+            )
             self._emit(
                 "params_logged",
-                {"platform": MLPlatform.WANDB.value, "run_id": run_id, "parameters": sanitized},
+                {
+                    "platform": MLPlatform.WANDB.value,
+                    "run_id": run_id,
+                    "parameters": sanitized,
+                },
             )
             # Actual: wandb.config.update(parameters)
 
-    def log_metrics(self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None):
+    def log_metrics(
+        self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None
+    ):
         """Log metrics to W&B"""
         if run_id in self.active_runs:
             self.active_runs[run_id].metrics.update(metrics)
-            logging.info(f"[STUB] W&B log_metrics[{run_id}]: {list(metrics.keys())} (step={step})")
+            logging.info(
+                f"[STUB] W&B log_metrics[{run_id}]: {list(metrics.keys())} (step={step})"
+            )
             self._emit(
                 "metrics_logged",
                 {
@@ -410,12 +445,18 @@ class WandBIntegration(MLPlatformInterface):
     def end_run(self, run_id: str, status: str = "completed"):
         """End W&B run"""
         if run_id in self.active_runs:
-            st = RunStatus(status) if status in RunStatus._value2member_map_ else RunStatus.UNKNOWN
+            st = (
+                RunStatus(status)
+                if status in RunStatus._value2member_map_
+                else RunStatus.UNKNOWN
+            )
             run = self.active_runs[run_id]
             run.status = st
             run.end_time = _now_utc()
             logging.info(f"[STUB] W&B end_run[{run_id}] -> {st.value}")
-            self._emit("run_ended", {"platform": MLPlatform.WANDB.value, **run.to_dict()})
+            self._emit(
+                "run_ended", {"platform": MLPlatform.WANDB.value, **run.to_dict()}
+            )
             # Actual: wandb.finish()
 
     def set_tags(self, run_id: str, tags: Dict[str, str]) -> None:
@@ -423,7 +464,8 @@ class WandBIntegration(MLPlatformInterface):
             self.active_runs[run_id].tags.update(tags)
             logging.info(f"[STUB] W&B set_tags[{run_id}]: {list(tags.keys())}")
             self._emit(
-                "tags_set", {"platform": MLPlatform.WANDB.value, "run_id": run_id, "tags": tags}
+                "tags_set",
+                {"platform": MLPlatform.WANDB.value, "run_id": run_id, "tags": tags},
             )
 
     def get_run(self, run_id: str) -> Optional[ExperimentRun]:
@@ -471,8 +513,12 @@ class SageMakerIntegration(MLPlatformInterface):
         )
 
         self.active_runs[run_id] = run
-        logging.info(f"[STUB] SageMaker start_job: {run_id} (experiment: {experiment_name})")
-        self._emit("run_started", {"platform": MLPlatform.SAGEMAKER.value, **run.to_dict()})
+        logging.info(
+            f"[STUB] SageMaker start_job: {run_id} (experiment: {experiment_name})"
+        )
+        self._emit(
+            "run_started", {"platform": MLPlatform.SAGEMAKER.value, **run.to_dict()}
+        )
         # Actual: Create SageMaker training job
         return run_id
 
@@ -484,10 +530,16 @@ class SageMakerIntegration(MLPlatformInterface):
             logging.info(f"[STUB] SageMaker log_hyperparameters[{run_id}]")
             self._emit(
                 "params_logged",
-                {"platform": MLPlatform.SAGEMAKER.value, "run_id": run_id, "parameters": sanitized},
+                {
+                    "platform": MLPlatform.SAGEMAKER.value,
+                    "run_id": run_id,
+                    "parameters": sanitized,
+                },
             )
 
-    def log_metrics(self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None):
+    def log_metrics(
+        self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None
+    ):
         """Log metrics to CloudWatch (via SageMaker)"""
         if run_id in self.active_runs:
             self.active_runs[run_id].metrics.update(metrics)
@@ -519,12 +571,18 @@ class SageMakerIntegration(MLPlatformInterface):
     def end_run(self, run_id: str, status: str = "completed"):
         """Complete SageMaker training job"""
         if run_id in self.active_runs:
-            st = RunStatus(status) if status in RunStatus._value2member_map_ else RunStatus.UNKNOWN
+            st = (
+                RunStatus(status)
+                if status in RunStatus._value2member_map_
+                else RunStatus.UNKNOWN
+            )
             run = self.active_runs[run_id]
             run.status = st
             run.end_time = _now_utc()
             logging.info(f"[STUB] SageMaker end_job[{run_id}] -> {st.value}")
-            self._emit("run_ended", {"platform": MLPlatform.SAGEMAKER.value, **run.to_dict()})
+            self._emit(
+                "run_ended", {"platform": MLPlatform.SAGEMAKER.value, **run.to_dict()}
+            )
 
 
 # --------- Azure ML ---------
@@ -538,7 +596,9 @@ class AzureMLIntegration(MLPlatformInterface):
     This is a stub that logs intent to interact with Azure ML.
     """
 
-    def __init__(self, workspace: Optional[str] = None, subscription_id: Optional[str] = None):
+    def __init__(
+        self, workspace: Optional[str] = None, subscription_id: Optional[str] = None
+    ):
         """
         Initialize Azure ML integration
 
@@ -568,8 +628,12 @@ class AzureMLIntegration(MLPlatformInterface):
             tags={"run_name": run_name} if run_name else {},
         )
         self.active_runs[run_id] = run
-        logging.info(f"[STUB] AzureML start_run: {run_id} (experiment: {experiment_name})")
-        self._emit("run_started", {"platform": MLPlatform.AZURE_ML.value, **run.to_dict()})
+        logging.info(
+            f"[STUB] AzureML start_run: {run_id} (experiment: {experiment_name})"
+        )
+        self._emit(
+            "run_started", {"platform": MLPlatform.AZURE_ML.value, **run.to_dict()}
+        )
         return run_id
 
     def log_parameters(self, run_id: str, parameters: Dict[str, Any]):
@@ -579,10 +643,16 @@ class AzureMLIntegration(MLPlatformInterface):
             logging.info(f"[STUB] AzureML log_parameters[{run_id}]")
             self._emit(
                 "params_logged",
-                {"platform": MLPlatform.AZURE_ML.value, "run_id": run_id, "parameters": sanitized},
+                {
+                    "platform": MLPlatform.AZURE_ML.value,
+                    "run_id": run_id,
+                    "parameters": sanitized,
+                },
             )
 
-    def log_metrics(self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None):
+    def log_metrics(
+        self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None
+    ):
         if run_id in self.active_runs:
             self.active_runs[run_id].metrics.update(metrics)
             logging.info(f"[STUB] AzureML log_metrics[{run_id}] (step={step})")
@@ -611,12 +681,18 @@ class AzureMLIntegration(MLPlatformInterface):
 
     def end_run(self, run_id: str, status: str = "completed"):
         if run_id in self.active_runs:
-            st = RunStatus(status) if status in RunStatus._value2member_map_ else RunStatus.UNKNOWN
+            st = (
+                RunStatus(status)
+                if status in RunStatus._value2member_map_
+                else RunStatus.UNKNOWN
+            )
             run = self.active_runs[run_id]
             run.status = st
             run.end_time = _now_utc()
             logging.info(f"[STUB] AzureML end_run[{run_id}] -> {st.value}")
-            self._emit("run_ended", {"platform": MLPlatform.AZURE_ML.value, **run.to_dict()})
+            self._emit(
+                "run_ended", {"platform": MLPlatform.AZURE_ML.value, **run.to_dict()}
+            )
 
     def get_run(self, run_id: str) -> Optional[ExperimentRun]:
         return self.active_runs.get(run_id)
@@ -649,7 +725,9 @@ class InMemoryIntegration(MLPlatformInterface):
         )
         self.active_runs[run_id] = run
         logging.info(f"[INMEM] start_run: {run_id} (experiment: {experiment_name})")
-        self._emit("run_started", {"platform": MLPlatform.IN_MEMORY.value, **run.to_dict()})
+        self._emit(
+            "run_started", {"platform": MLPlatform.IN_MEMORY.value, **run.to_dict()}
+        )
         return run_id
 
     def log_parameters(self, run_id: str, parameters: Dict[str, Any]):
@@ -659,10 +737,16 @@ class InMemoryIntegration(MLPlatformInterface):
             logging.debug(f"[INMEM] log_parameters[{run_id}]: {sanitized}")
             self._emit(
                 "params_logged",
-                {"platform": MLPlatform.IN_MEMORY.value, "run_id": run_id, "parameters": sanitized},
+                {
+                    "platform": MLPlatform.IN_MEMORY.value,
+                    "run_id": run_id,
+                    "parameters": sanitized,
+                },
             )
 
-    def log_metrics(self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None):
+    def log_metrics(
+        self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None
+    ):
         if run_id in self.active_runs:
             self.active_runs[run_id].metrics.update(metrics)
             logging.debug(f"[INMEM] log_metrics[{run_id}]: {metrics} (step={step})")
@@ -691,18 +775,29 @@ class InMemoryIntegration(MLPlatformInterface):
 
     def end_run(self, run_id: str, status: str = "completed"):
         if run_id in self.active_runs:
-            st = RunStatus(status) if status in RunStatus._value2member_map_ else RunStatus.UNKNOWN
+            st = (
+                RunStatus(status)
+                if status in RunStatus._value2member_map_
+                else RunStatus.UNKNOWN
+            )
             run = self.active_runs[run_id]
             run.status = st
             run.end_time = _now_utc()
             logging.info(f"[INMEM] end_run[{run_id}] -> {st.value}")
-            self._emit("run_ended", {"platform": MLPlatform.IN_MEMORY.value, **run.to_dict()})
+            self._emit(
+                "run_ended", {"platform": MLPlatform.IN_MEMORY.value, **run.to_dict()}
+            )
 
     def set_tags(self, run_id: str, tags: Dict[str, str]) -> None:
         if run_id in self.active_runs:
             self.active_runs[run_id].tags.update(tags)
             self._emit(
-                "tags_set", {"platform": MLPlatform.IN_MEMORY.value, "run_id": run_id, "tags": tags}
+                "tags_set",
+                {
+                    "platform": MLPlatform.IN_MEMORY.value,
+                    "run_id": run_id,
+                    "tags": tags,
+                },
             )
 
     def get_run(self, run_id: str) -> Optional[ExperimentRun]:
@@ -739,7 +834,9 @@ class MLPlatformManager:
         """Remove an ML platform by name"""
         self.platforms.pop(name, None)
 
-    def start_run_all(self, experiment_name: str, run_name: Optional[str] = None) -> Dict[str, str]:
+    def start_run_all(
+        self, experiment_name: str, run_name: Optional[str] = None
+    ) -> Dict[str, str]:
         """Start run on all platforms"""
         run_ids: Dict[str, str] = {}
         for name, platform in self.platforms.items():
@@ -762,7 +859,10 @@ class MLPlatformManager:
                 logging.error(f"Failed to log parameters to {name}: {e}")
 
     def log_metrics_all(
-        self, run_ids: Dict[str, str], metrics: Dict[str, float], step: Optional[int] = None
+        self,
+        run_ids: Dict[str, str],
+        metrics: Dict[str, float],
+        step: Optional[int] = None,
     ):
         """Log metrics to all platforms"""
         for name, run_id in run_ids.items():
@@ -807,7 +907,9 @@ class MLPlatformManager:
             except Exception as e:
                 logging.error(f"Failed to end run on {name}: {e}")
 
-    def get_summaries(self, run_ids: Dict[str, str]) -> Dict[str, Optional[Dict[str, Any]]]:
+    def get_summaries(
+        self, run_ids: Dict[str, str]
+    ) -> Dict[str, Optional[Dict[str, Any]]]:
         """
         Get structured run summaries (if supported by the platform).
         Returns dict of name -> run_dict or None if not available.
@@ -842,7 +944,9 @@ class MLPlatformManager:
                 yield run_ids
                 self.end_run_all(run_ids, status=RunStatus.COMPLETED.value)
             except Exception:
-                logging.exception("Exception inside run_all_context; marking runs as failed")
+                logging.exception(
+                    "Exception inside run_all_context; marking runs as failed"
+                )
                 self.end_run_all(run_ids, status=RunStatus.FAILED.value)
                 raise
 

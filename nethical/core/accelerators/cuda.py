@@ -30,7 +30,12 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from . import AcceleratorBackend, AcceleratorConfig, AcceleratorInfo, AcceleratorInterface
+from . import (
+    AcceleratorBackend,
+    AcceleratorConfig,
+    AcceleratorInfo,
+    AcceleratorInterface,
+)
 
 __all__ = [
     "CUDAAccelerator",
@@ -89,7 +94,11 @@ def get_cuda_info() -> Dict[str, Any]:
         "available": True,
         "device_count": device_count,
         "cuda_version": torch.version.cuda,
-        "cudnn_version": torch.backends.cudnn.version() if torch.backends.cudnn.is_available() else None,
+        "cudnn_version": (
+            torch.backends.cudnn.version()
+            if torch.backends.cudnn.is_available()
+            else None
+        ),
         "devices": devices,
     }
 
@@ -154,7 +163,9 @@ class CUDAAccelerator(AcceleratorInterface):
 
             self._initialized = True
             device_name = torch.cuda.get_device_name(device_id)
-            log.info(f"CUDA accelerator initialized on device {device_id}: {device_name}")
+            log.info(
+                f"CUDA accelerator initialized on device {device_id}: {device_name}"
+            )
 
             return True
 

@@ -115,7 +115,11 @@ class DriftMetrics:
             "kl_threshold": self.kl_threshold,
             "js_threshold": self.js_threshold,
             "drift_detected": any(
-                [self.psi_drift_detected, self.kl_drift_detected, self.js_drift_detected]
+                [
+                    self.psi_drift_detected,
+                    self.kl_drift_detected,
+                    self.js_drift_detected,
+                ]
             ),
         }
 
@@ -154,7 +158,9 @@ class SequenceAnomalyDetector:
         self.total_ngrams: int = 0
 
         # Sequence history per agent
-        self.agent_sequences: Dict[str, Deque[str]] = defaultdict(lambda: deque(maxlen=200))
+        self.agent_sequences: Dict[str, Deque[str]] = defaultdict(
+            lambda: deque(maxlen=200)
+        )
 
     def record_action(self, agent_id: str, action_type: str) -> None:
         """Record an action in agent's sequence, update n-grams and sliding window."""
@@ -290,7 +296,10 @@ class DistributionDriftDetector:
 
     def detect_drift(self) -> DriftMetrics:
         """Detect distribution drift between baseline and current."""
-        if not self.baseline_distribution or len(self.current_scores) < self.min_current_samples:
+        if (
+            not self.baseline_distribution
+            or len(self.current_scores) < self.min_current_samples
+        ):
             # Need baseline and sufficient current data
             return DriftMetrics(
                 psi_threshold=self.psi_threshold,
@@ -303,8 +312,12 @@ class DistributionDriftDetector:
 
         # Calculate metrics
         psi = self._calculate_psi(self.baseline_distribution, current_distribution)
-        kl = self._calculate_kl_divergence(self.baseline_distribution, current_distribution)
-        js = self._calculate_js_distance(self.baseline_distribution, current_distribution)
+        kl = self._calculate_kl_divergence(
+            self.baseline_distribution, current_distribution
+        )
+        js = self._calculate_js_distance(
+            self.baseline_distribution, current_distribution
+        )
 
         # Create metrics
         metrics = DriftMetrics(
@@ -348,14 +361,18 @@ class DistributionDriftDetector:
             psi += (c - b) * math.log(c / b)
         return psi
 
-    def _calculate_kl_divergence(self, baseline: List[float], current: List[float]) -> float:
+    def _calculate_kl_divergence(
+        self, baseline: List[float], current: List[float]
+    ) -> float:
         """Calculate KL(current || baseline): Σ current * log(current/baseline)."""
         kl = 0.0
         for b, c in zip(baseline, current):
             kl += c * math.log(c / b)
         return kl
 
-    def _calculate_js_distance(self, baseline: List[float], current: List[float]) -> float:
+    def _calculate_js_distance(
+        self, baseline: List[float], current: List[float]
+    ) -> float:
         """Calculate Jensen–Shannon distance: sqrt(0.5*KL(P||M)+0.5*KL(Q||M))."""
         m = [(b + c) / 2.0 for b, c in zip(baseline, current)]
         # KL(P||M) + KL(Q||M)
@@ -423,7 +440,9 @@ class AnomalyDriftMonitor:
         self.sequence_detector = SequenceAnomalyDetector(n=sequence_n)
         # Default drift detector (for None cohort)
         self.drift_detector = DistributionDriftDetector(
-            psi_threshold=psi_threshold, kl_threshold=kl_threshold, js_threshold=js_threshold
+            psi_threshold=psi_threshold,
+            kl_threshold=kl_threshold,
+            js_threshold=js_threshold,
         )
         # Per-cohort drift detectors
         self._drift_detectors: Dict[Optional[str], DistributionDriftDetector] = {
@@ -432,7 +451,9 @@ class AnomalyDriftMonitor:
 
         # Alert tracking
         self.alerts: List[AnomalyAlert] = []
-        self._last_alert_at: Dict[Tuple[AnomalyType, Optional[str], Optional[str]], datetime] = {}
+        self._last_alert_at: Dict[
+            Tuple[AnomalyType, Optional[str], Optional[str]], datetime
+        ] = {}
         self._alert_cooldown = timedelta(seconds=alert_cooldown_seconds)
 
         # Alert thresholds by type (score thresholds 0..1)
@@ -444,7 +465,9 @@ class AnomalyDriftMonitor:
         }
 
         # Behavioral tracking
-        self.agent_action_counts: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self.agent_action_counts: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         self.agent_last_seen: Dict[str, datetime] = {}
 
         # Frequency burst tracking (timestamps of recent actions)
@@ -467,7 +490,11 @@ class AnomalyDriftMonitor:
         return self._drift_detectors[cohort]
 
     def record_action(
-        self, agent_id: str, action_type: str, risk_score: float, cohort: Optional[str] = None
+        self,
+        agent_id: str,
+        action_type: str,
+        risk_score: float,
+        cohort: Optional[str] = None,
     ) -> Optional[AnomalyAlert]:
         """Record an action and check for anomalies.
 
@@ -518,7 +545,9 @@ class AnomalyDriftMonitor:
                 return alert
 
         # 2) Sequence anomaly
-        is_anomalous, anomaly_score, evidence = self.sequence_detector.detect_anomaly(agent_id)
+        is_anomalous, anomaly_score, evidence = self.sequence_detector.detect_anomaly(
+            agent_id
+        )
         if is_anomalous:
             alert = self._create_alert(
                 anomaly_type=AnomalyType.SEQUENCE,
@@ -549,7 +578,9 @@ class AnomalyDriftMonitor:
         ):
             # Determine severity from combined signals
             score_for_severity = max(
-                drift_metrics.psi_score, drift_metrics.kl_divergence, drift_metrics.js_distance
+                drift_metrics.psi_score,
+                drift_metrics.kl_divergence,
+                drift_metrics.js_distance,
             )
             if (
                 drift_metrics.psi_score > 0.5
@@ -715,7 +746,9 @@ class AnomalyDriftMonitor:
             # Silent fail for logging
             pass
 
-    def set_baseline_distribution(self, scores: List[float], cohort: Optional[str] = None) -> None:
+    def set_baseline_distribution(
+        self, scores: List[float], cohort: Optional[str] = None
+    ) -> None:
         """Set baseline distribution for drift detection (optionally per cohort)."""
         self._get_drift_detector(cohort).set_baseline(scores)
 
@@ -766,7 +799,9 @@ class AnomalyDriftMonitor:
                     1 for a in self.alerts if a.anomaly_type == AnomalyType.BEHAVIORAL
                 ),
                 AnomalyType.DISTRIBUTIONAL.value: sum(
-                    1 for a in self.alerts if a.anomaly_type == AnomalyType.DISTRIBUTIONAL
+                    1
+                    for a in self.alerts
+                    if a.anomaly_type == AnomalyType.DISTRIBUTIONAL
                 ),
             },
         }

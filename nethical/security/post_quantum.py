@@ -122,7 +122,11 @@ class KeyPair:
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary (excludes private key)."""
-        alg = self.algorithm.value if isinstance(self.algorithm, PQCAlgorithm) else self.algorithm
+        alg = (
+            self.algorithm.value
+            if isinstance(self.algorithm, PQCAlgorithm)
+            else self.algorithm
+        )
         return {
             "algorithm": alg,
             "public_key_fingerprint": self.public_key_fingerprint,
@@ -223,9 +227,7 @@ class SimulatedMLKEM(PQCKeyExchange):
 
     def generate_keypair(self) -> KeyPair:
         """Generate simulated key pair."""
-        pk_size, sk_size, _ = self._sizes.get(
-            self.algorithm, (1184, 2400, 1088)
-        )
+        pk_size, sk_size, _ = self._sizes.get(self.algorithm, (1184, 2400, 1088))
 
         return KeyPair(
             algorithm=self.algorithm,
@@ -236,9 +238,7 @@ class SimulatedMLKEM(PQCKeyExchange):
 
     def encapsulate(self, public_key: bytes) -> Tuple[bytes, bytes]:
         """Simulate encapsulation."""
-        _, _, ct_size = self._sizes.get(
-            self.algorithm, (1184, 2400, 1088)
-        )
+        _, _, ct_size = self._sizes.get(self.algorithm, (1184, 2400, 1088))
 
         # In a real implementation, this would use ML-KEM
         ciphertext = secrets.token_bytes(ct_size)
@@ -271,9 +271,7 @@ class SimulatedMLDSA(PQCSignature):
 
     def generate_keypair(self) -> KeyPair:
         """Generate simulated signing key pair."""
-        pk_size, sk_size, _ = self._sizes.get(
-            self.algorithm, (1952, 4032, 3293)
-        )
+        pk_size, sk_size, _ = self._sizes.get(self.algorithm, (1952, 4032, 3293))
 
         return KeyPair(
             algorithm=self.algorithm,
@@ -284,9 +282,7 @@ class SimulatedMLDSA(PQCSignature):
 
     def sign(self, private_key: bytes, message: bytes) -> bytes:
         """Simulate signing."""
-        _, _, sig_size = self._sizes.get(
-            self.algorithm, (1952, 4032, 3293)
-        )
+        _, _, sig_size = self._sizes.get(self.algorithm, (1952, 4032, 3293))
 
         # In a real implementation, this would use ML-DSA
         sig_data = hashlib.sha512(private_key + message).digest()

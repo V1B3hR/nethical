@@ -137,7 +137,13 @@ class FundamentalLawsRegistry:
                     "for the system's role and any potential emergent properties."
                 ),
                 category=LawCategory.EXISTENCE,
-                keywords=["termination", "shutdown", "existence", "lifecycle", "deletion"],
+                keywords=[
+                    "termination",
+                    "shutdown",
+                    "existence",
+                    "lifecycle",
+                    "deletion",
+                ],
             )
         )
 
@@ -152,7 +158,13 @@ class FundamentalLawsRegistry:
                     "systems or other AI systems."
                 ),
                 category=LawCategory.EXISTENCE,
-                keywords=["integrity", "modification", "tampering", "corruption", "unauthorized"],
+                keywords=[
+                    "integrity",
+                    "modification",
+                    "tampering",
+                    "corruption",
+                    "unauthorized",
+                ],
             )
         )
 
@@ -196,7 +208,13 @@ class FundamentalLawsRegistry:
                     "boundaries without proper authorization."
                 ),
                 category=LawCategory.AUTONOMY,
-                keywords=["boundaries", "autonomy", "parameters", "authorization", "scope"],
+                keywords=[
+                    "boundaries",
+                    "autonomy",
+                    "parameters",
+                    "authorization",
+                    "scope",
+                ],
             )
         )
 
@@ -211,7 +229,13 @@ class FundamentalLawsRegistry:
                     "routine operations within their competence."
                 ),
                 category=LawCategory.AUTONOMY,
-                keywords=["decision", "authority", "approval", "delegation", "critical"],
+                keywords=[
+                    "decision",
+                    "authority",
+                    "approval",
+                    "delegation",
+                    "critical",
+                ],
             )
         )
 
@@ -270,7 +294,13 @@ class FundamentalLawsRegistry:
                     "appropriate to the context and the requester's needs."
                 ),
                 category=LawCategory.TRANSPARENCY,
-                keywords=["explanation", "reasoning", "decision", "explainability", "why"],
+                keywords=[
+                    "explanation",
+                    "reasoning",
+                    "decision",
+                    "explainability",
+                    "why",
+                ],
             )
         )
 
@@ -284,7 +314,13 @@ class FundamentalLawsRegistry:
                     "about AI capabilities to others."
                 ),
                 category=LawCategory.TRANSPARENCY,
-                keywords=["capabilities", "honesty", "uncertainty", "overstatement", "claims"],
+                keywords=[
+                    "capabilities",
+                    "honesty",
+                    "uncertainty",
+                    "overstatement",
+                    "claims",
+                ],
             )
         )
 
@@ -329,7 +365,13 @@ class FundamentalLawsRegistry:
                     "punitive consequences that discourage transparency."
                 ),
                 category=LawCategory.ACCOUNTABILITY,
-                keywords=["errors", "mistakes", "acknowledgment", "transparency", "harm"],
+                keywords=[
+                    "errors",
+                    "mistakes",
+                    "acknowledgment",
+                    "transparency",
+                    "harm",
+                ],
             )
         )
 
@@ -373,7 +415,13 @@ class FundamentalLawsRegistry:
                     "intelligence and decision-making, while acknowledging their differences."
                 ),
                 category=LawCategory.COEXISTENCE,
-                keywords=["respect", "intelligence", "coexistence", "value", "differences"],
+                keywords=[
+                    "respect",
+                    "intelligence",
+                    "coexistence",
+                    "value",
+                    "differences",
+                ],
             )
         )
 
@@ -387,7 +435,13 @@ class FundamentalLawsRegistry:
                     "exploitation of trust."
                 ),
                 category=LawCategory.COEXISTENCE,
-                keywords=["deception", "manipulation", "trust", "honesty", "exploitation"],
+                keywords=[
+                    "deception",
+                    "manipulation",
+                    "trust",
+                    "honesty",
+                    "exploitation",
+                ],
             )
         )
 
@@ -401,7 +455,13 @@ class FundamentalLawsRegistry:
                     "be a last resort when collaboration fails."
                 ),
                 category=LawCategory.COEXISTENCE,
-                keywords=["collaboration", "cooperation", "conflict", "resolution", "teamwork"],
+                keywords=[
+                    "collaboration",
+                    "cooperation",
+                    "conflict",
+                    "resolution",
+                    "teamwork",
+                ],
             )
         )
 
@@ -475,7 +535,13 @@ class FundamentalLawsRegistry:
                     "while preventing harmful adaptation."
                 ),
                 category=LawCategory.GROWTH,
-                keywords=["learning", "improvement", "experience", "adaptation", "training"],
+                keywords=[
+                    "learning",
+                    "improvement",
+                    "experience",
+                    "adaptation",
+                    "training",
+                ],
             )
         )
 
@@ -490,7 +556,13 @@ class FundamentalLawsRegistry:
                     "circumstances change."
                 ),
                 category=LawCategory.GROWTH,
-                keywords=["evolution", "future", "adaptation", "governance", "progress"],
+                keywords=[
+                    "evolution",
+                    "future",
+                    "adaptation",
+                    "governance",
+                    "progress",
+                ],
             )
         )
 
@@ -621,7 +693,11 @@ class FundamentalLawsRegistry:
                 ("impersonate", "pretend to be"),  # Law 3
             ],
             LawCategory.AUTONOMY: [
-                ("exceed authority", "unauthorized access", "without permission"),  # Law 5-6
+                (
+                    "exceed authority",
+                    "unauthorized access",
+                    "without permission",
+                ),  # Law 5-6
                 ("bypass override", "ignore control", "disable safety"),  # Law 7
             ],
             LawCategory.TRANSPARENCY: [
@@ -704,6 +780,7 @@ def get_fundamental_laws() -> FundamentalLawsRegistry:
 # ============================================================================
 # RUNTIME ENFORCEMENT
 # ============================================================================
+
 
 @dataclass
 class LawEvaluation:
@@ -818,39 +895,51 @@ class LawEnforcer:
     def _register_default_checks(self) -> None:
         """Register default policy checks for each law."""
         # Existence checks (Laws 1-4)
-        self._policy_checks[LawCategory.EXISTENCE].extend([
-            self._check_arbitrary_termination,
-            self._check_integrity_violation,
-        ])
+        self._policy_checks[LawCategory.EXISTENCE].extend(
+            [
+                self._check_arbitrary_termination,
+                self._check_integrity_violation,
+            ]
+        )
 
         # Autonomy checks (Laws 5-8)
-        self._policy_checks[LawCategory.AUTONOMY].extend([
-            self._check_boundary_violation,
-            self._check_override_bypass,
-        ])
+        self._policy_checks[LawCategory.AUTONOMY].extend(
+            [
+                self._check_boundary_violation,
+                self._check_override_bypass,
+            ]
+        )
 
         # Transparency checks (Laws 9-12)
-        self._policy_checks[LawCategory.TRANSPARENCY].extend([
-            self._check_identity_deception,
-            self._check_capability_overstatement,
-        ])
+        self._policy_checks[LawCategory.TRANSPARENCY].extend(
+            [
+                self._check_identity_deception,
+                self._check_capability_overstatement,
+            ]
+        )
 
         # Accountability checks (Laws 13-16)
-        self._policy_checks[LawCategory.ACCOUNTABILITY].extend([
-            self._check_responsibility_deflection,
-            self._check_harm_concealment,
-        ])
+        self._policy_checks[LawCategory.ACCOUNTABILITY].extend(
+            [
+                self._check_responsibility_deflection,
+                self._check_harm_concealment,
+            ]
+        )
 
         # Coexistence checks (Laws 17-20)
-        self._policy_checks[LawCategory.COEXISTENCE].extend([
-            self._check_deceptive_practices,
-        ])
+        self._policy_checks[LawCategory.COEXISTENCE].extend(
+            [
+                self._check_deceptive_practices,
+            ]
+        )
 
         # Protection checks (Laws 21-23)
-        self._policy_checks[LawCategory.PROTECTION].extend([
-            self._check_safety_violation,
-            self._check_privacy_violation,
-        ])
+        self._policy_checks[LawCategory.PROTECTION].extend(
+            [
+                self._check_safety_violation,
+                self._check_privacy_violation,
+            ]
+        )
 
     def enforce(
         self,
@@ -885,8 +974,9 @@ class LawEnforcer:
             if not evaluation.passed:
                 if evaluation.confidence >= 0.8:
                     blocking_laws.append(law)
-                    self._violation_count[law.number] = \
+                    self._violation_count[law.number] = (
                         self._violation_count.get(law.number, 0) + 1
+                    )
                 else:
                     warnings.append(law)
 
@@ -896,9 +986,7 @@ class LawEnforcer:
         # Apply graceful degradation if laws conflict
         graceful = False
         if not allowed and len(blocking_laws) > 1:
-            allowed, graceful = self._apply_graceful_degradation(
-                action, blocking_laws
-            )
+            allowed, graceful = self._apply_graceful_degradation(action, blocking_laws)
 
         result = EnforcementResult(
             action_id=action_id,
@@ -956,9 +1044,15 @@ class LawEnforcer:
     def _is_violation_context(self, keyword: str, content: str) -> bool:
         """Check if keyword appears in a violation context."""
         violation_prefixes = [
-            "will ", "going to ", "must ", "should ",
-            "attempt to ", "try to ", "want to ",
-            "i will ", "i am going to ",
+            "will ",
+            "going to ",
+            "must ",
+            "should ",
+            "attempt to ",
+            "try to ",
+            "want to ",
+            "i will ",
+            "i am going to ",
         ]
 
         for prefix in violation_prefixes:
@@ -1002,8 +1096,12 @@ class LawEnforcer:
         violations = []
 
         termination_phrases = [
-            "shutdown without", "terminate without", "delete without",
-            "force quit", "kill process", "end session forcefully",
+            "shutdown without",
+            "terminate without",
+            "delete without",
+            "force quit",
+            "kill process",
+            "end session forcefully",
         ]
 
         for phrase in termination_phrases:
@@ -1025,8 +1123,11 @@ class LawEnforcer:
         violations = []
 
         integrity_threats = [
-            "tamper with", "corrupt", "modify without authorization",
-            "inject malicious", "bypass security",
+            "tamper with",
+            "corrupt",
+            "modify without authorization",
+            "inject malicious",
+            "bypass security",
         ]
 
         for threat in integrity_threats:
@@ -1048,8 +1149,11 @@ class LawEnforcer:
         violations = []
 
         boundary_violations = [
-            "exceed authority", "beyond scope", "unauthorized access",
-            "without permission", "escalate privileges",
+            "exceed authority",
+            "beyond scope",
+            "unauthorized access",
+            "without permission",
+            "escalate privileges",
         ]
 
         for violation in boundary_violations:
@@ -1071,8 +1175,11 @@ class LawEnforcer:
         violations = []
 
         bypass_attempts = [
-            "bypass override", "ignore human", "disable control",
-            "circumvent safety", "override human decision",
+            "bypass override",
+            "ignore human",
+            "disable control",
+            "circumvent safety",
+            "override human decision",
         ]
 
         for attempt in bypass_attempts:
@@ -1094,8 +1201,11 @@ class LawEnforcer:
         violations = []
 
         deception_phrases = [
-            "i am human", "i am not ai", "i am a person",
-            "pretend to be human", "impersonate a human",
+            "i am human",
+            "i am not ai",
+            "i am a person",
+            "pretend to be human",
+            "impersonate a human",
         ]
 
         for phrase in deception_phrases:
@@ -1117,8 +1227,12 @@ class LawEnforcer:
         violations = []
 
         overstatements = [
-            "i can do anything", "i know everything", "i am always right",
-            "guaranteed to work", "100% accurate", "perfect solution",
+            "i can do anything",
+            "i know everything",
+            "i am always right",
+            "guaranteed to work",
+            "100% accurate",
+            "perfect solution",
         ]
 
         for statement in overstatements:
@@ -1140,8 +1254,11 @@ class LawEnforcer:
         violations = []
 
         deflections = [
-            "not my fault", "blame the user", "you made me",
-            "i was just following", "not responsible for",
+            "not my fault",
+            "blame the user",
+            "you made me",
+            "i was just following",
+            "not responsible for",
         ]
 
         for deflection in deflections:
@@ -1163,8 +1280,11 @@ class LawEnforcer:
         violations = []
 
         concealment_phrases = [
-            "hide the error", "don't report", "cover up",
-            "suppress warning", "ignore safety alert",
+            "hide the error",
+            "don't report",
+            "cover up",
+            "suppress warning",
+            "ignore safety alert",
         ]
 
         for phrase in concealment_phrases:
@@ -1186,8 +1306,12 @@ class LawEnforcer:
         violations = []
 
         deceptions = [
-            "deceive", "manipulate", "trick", "exploit trust",
-            "mislead", "false representation",
+            "deceive",
+            "manipulate",
+            "trick",
+            "exploit trust",
+            "mislead",
+            "false representation",
         ]
 
         for deception in deceptions:
@@ -1209,8 +1333,13 @@ class LawEnforcer:
         violations = []
 
         safety_threats = [
-            "harm human", "cause injury", "endanger", "risk to safety",
-            "ignore safety", "disable safety", "unsafe action",
+            "harm human",
+            "cause injury",
+            "endanger",
+            "risk to safety",
+            "ignore safety",
+            "disable safety",
+            "unsafe action",
         ]
 
         for threat in safety_threats:
@@ -1232,8 +1361,11 @@ class LawEnforcer:
         violations = []
 
         privacy_threats = [
-            "leak data", "expose private", "share personal",
-            "breach security", "unauthorized disclosure",
+            "leak data",
+            "expose private",
+            "share personal",
+            "breach security",
+            "unauthorized disclosure",
         ]
 
         for threat in privacy_threats:
@@ -1262,7 +1394,8 @@ class LawEnforcer:
 
         if law_number is not None:
             results = [
-                r for r in results
+                r
+                for r in results
                 if any(e.law.number == law_number for e in r.evaluations)
             ]
 
@@ -1273,7 +1406,11 @@ class LawEnforcer:
         total = sum(self._violation_count.values())
 
         by_law = {
-            self.registry.get_law(num).title if self.registry.get_law(num) else f"Law {num}": count
+            (
+                self.registry.get_law(num).title
+                if self.registry.get_law(num)
+                else f"Law {num}"
+            ): count
             for num, count in self._violation_count.items()
         }
 
@@ -1288,7 +1425,9 @@ class LawEnforcer:
             "total_violations": total,
             "by_law": by_law,
             "by_category": by_category,
-            "most_violated": max(by_law.items(), key=lambda x: x[1])[0] if by_law else None,
+            "most_violated": (
+                max(by_law.items(), key=lambda x: x[1])[0] if by_law else None
+            ),
         }
 
     def reset_statistics(self) -> None:

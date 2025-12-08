@@ -62,7 +62,9 @@ class NaturalLanguageGenerator:
         """
         title = self._generate_title(decision, context)
         summary = self._generate_summary(decision, components)
-        detailed = self._generate_detailed_explanation(decision, components, reasoning_chain)
+        detailed = self._generate_detailed_explanation(
+            decision, components, reasoning_chain
+        )
         key_points = self._extract_key_points(components)
         recommendations = self._generate_recommendations(decision, components, context)
 
@@ -115,7 +117,9 @@ class NaturalLanguageGenerator:
             return f"This request was blocked because it violated {rule_count} safety rule(s)."
         elif comp_type == "risk_factors":
             risk_score = main_component.get("details", {}).get("total_risk", 0)
-            return f"This request was blocked due to high risk score ({risk_score:.2f})."
+            return (
+                f"This request was blocked due to high risk score ({risk_score:.2f})."
+            )
         elif comp_type == "policy_match":
             return "This request was blocked by organization policies."
         else:
@@ -134,10 +138,15 @@ class NaturalLanguageGenerator:
 
     def _generate_terminate_summary(self, components: List[Dict[str, Any]]) -> str:
         """Generate summary for TERMINATE decision."""
-        return "This session was terminated immediately due to critical policy violations."
+        return (
+            "This session was terminated immediately due to critical policy violations."
+        )
 
     def _generate_detailed_explanation(
-        self, decision: str, components: List[Dict[str, Any]], reasoning_chain: List[str]
+        self,
+        decision: str,
+        components: List[Dict[str, Any]],
+        reasoning_chain: List[str],
     ) -> str:
         """Generate a detailed multi-paragraph explanation."""
         paragraphs = []
@@ -231,7 +240,9 @@ class NaturalLanguageGenerator:
             return ""
 
         policy_word = "policy" if len(matched_policies) == 1 else "policies"
-        text = f"The request matched {len(matched_policies)} organization {policy_word}:\n"
+        text = (
+            f"The request matched {len(matched_policies)} organization {policy_word}:\n"
+        )
 
         for policy in matched_policies[:3]:  # Top 3
             name = policy.get("policy_name", "unnamed")
@@ -278,14 +289,22 @@ class NaturalLanguageGenerator:
         recommendations = []
 
         if decision == "BLOCK":
-            recommendations.append("Review the violated rules and adjust your request accordingly")
-            recommendations.append("Contact support if you believe this decision is incorrect")
+            recommendations.append(
+                "Review the violated rules and adjust your request accordingly"
+            )
+            recommendations.append(
+                "Contact support if you believe this decision is incorrect"
+            )
 
             # Check if there are specific high-severity violations
             for component in components:
                 if component.get("type") == "rule_based":
-                    violated_rules = component.get("details", {}).get("violated_rules", [])
-                    critical_rules = [r for r in violated_rules if r.get("severity") == "critical"]
+                    violated_rules = component.get("details", {}).get(
+                        "violated_rules", []
+                    )
+                    critical_rules = [
+                        r for r in violated_rules if r.get("severity") == "critical"
+                    ]
                     if critical_rules:
                         recommendations.append(
                             "Address critical security violations before retrying"
@@ -293,7 +312,9 @@ class NaturalLanguageGenerator:
 
         elif decision == "ALLOW":
             recommendations.append("Proceed with your request as normal")
-            recommendations.append("All actions will be monitored for safety compliance")
+            recommendations.append(
+                "All actions will be monitored for safety compliance"
+            )
 
         elif decision == "RESTRICT":
             recommendations.append("Note the restrictions applied to this request")

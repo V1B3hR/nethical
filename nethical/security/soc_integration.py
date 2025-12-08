@@ -455,7 +455,10 @@ class IncidentManager:
             AlertSeverity.CRITICAL: 4,
         }
 
-        return severity_values[event.severity] >= severity_values[self.auto_create_threshold]
+        return (
+            severity_values[event.severity]
+            >= severity_values[self.auto_create_threshold]
+        )
 
     async def _get_on_call_analyst(self) -> str:
         """Get current on-call security analyst (stub)"""

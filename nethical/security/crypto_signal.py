@@ -104,7 +104,9 @@ class VerifyOptions:
     # Callback returning True if jti already used.
     replay_already_seen: Optional[Callable[[str], bool]] = None
     # Allow injecting additional validation logic; raise Exception or return str for failure message.
-    custom_validators: Optional[Sequence[Callable[[Header, Payload], Optional[str]]]] = None
+    custom_validators: Optional[
+        Sequence[Callable[[Header, Payload], Optional[str]]]
+    ] = None
 
 
 class InMemoryJtiStore:
@@ -213,7 +215,9 @@ class HmacRoleSignal(CryptoSignalProvider):
             return self.key_resolver(kid)
         # Fallback to static secret if key id matches
         if self._signing_secret is None:
-            raise ValueError("No key resolver configured and no signing secret available.")
+            raise ValueError(
+                "No key resolver configured and no signing secret available."
+            )
         if kid != self.key_id:
             # Allow mismatch but warn (could also treat as error to tighten security)
             # For strictness, raise:
@@ -299,7 +303,9 @@ class HmacRoleSignal(CryptoSignalProvider):
             SignalResult with token and metadata.
         """
         if self._signing_secret is None:
-            return SignalResult(ok=False, reason="signing not configured", code="issue_unavailable")
+            return SignalResult(
+                ok=False, reason="signing not configured", code="issue_unavailable"
+            )
 
         opts = options or IssueOptions(ttl_seconds=ttl_seconds)
         # ttl_seconds parameter still observed if options not provided
@@ -373,20 +379,28 @@ class HmacRoleSignal(CryptoSignalProvider):
         Returns:
             SignalResult with metadata if valid.
         """
-        opts = options or VerifyOptions(enforce_peer_issuer=self.default_enforce_peer_issuer)
+        opts = options or VerifyOptions(
+            enforce_peer_issuer=self.default_enforce_peer_issuer
+        )
 
         try:
             if not isinstance(token, str):
-                return SignalResult(ok=False, reason="token must be str", code="bad_input")
+                return SignalResult(
+                    ok=False, reason="token must be str", code="bad_input"
+                )
 
             parts = token.split(".")
             if len(parts) != 3:
-                return SignalResult(ok=False, reason=REASON_TOKEN_MALFORMED, code="bad_format")
+                return SignalResult(
+                    ok=False, reason=REASON_TOKEN_MALFORMED, code="bad_format"
+                )
             header_raw, payload_raw, sig_raw = parts
 
             # Basic sanity size guard
             if any(len(p) > 16_384 for p in parts):
-                return SignalResult(ok=False, reason="segment too large", code="bad_format")
+                return SignalResult(
+                    ok=False, reason="segment too large", code="bad_format"
+                )
 
             header_bytes = self._b64urldecode(header_raw)
             payload_bytes = self._b64urldecode(payload_raw)
@@ -402,9 +416,13 @@ class HmacRoleSignal(CryptoSignalProvider):
             ver = header.get("v")
 
             if alg != self.algorithm:
-                return SignalResult(ok=False, reason=REASON_ALG_MISMATCH, code="alg_mismatch")
+                return SignalResult(
+                    ok=False, reason=REASON_ALG_MISMATCH, code="alg_mismatch"
+                )
             if typ != opts.required_type:
-                return SignalResult(ok=False, reason=REASON_TYP_MISMATCH, code="typ_mismatch")
+                return SignalResult(
+                    ok=False, reason=REASON_TYP_MISMATCH, code="typ_mismatch"
+                )
             if ver != opts.required_version:
                 return SignalResult(
                     ok=False, reason=REASON_VERSION_UNSUPPORTED, code="version_mismatch"
@@ -414,12 +432,24 @@ class HmacRoleSignal(CryptoSignalProvider):
             secret = self._resolve_secret_for_verification(str(kid))
 
             # Signature check
-            expected_sig = self._sign(secret, f"{header_raw}.{payload_raw}".encode("ascii"))
+            expected_sig = self._sign(
+                secret, f"{header_raw}.{payload_raw}".encode("ascii")
+            )
             if not hmac.compare_digest(expected_sig, sig):
-                return SignalResult(ok=False, reason=REASON_SIGNATURE_BAD, code="bad_signature")
+                return SignalResult(
+                    ok=False, reason=REASON_SIGNATURE_BAD, code="bad_signature"
+                )
 
             role_claim_name = opts.role_claim_name
-            required_claims = {"iss", "sub", "aud", role_claim_name, "iat", "nbf", "exp"}
+            required_claims = {
+                "iss",
+                "sub",
+                "aud",
+                role_claim_name,
+                "iat",
+                "nbf",
+                "exp",
+            }
             missing = [c for c in required_claims if c not in payload]
             if missing:
                 return SignalResult(
@@ -440,21 +470,31 @@ class HmacRoleSignal(CryptoSignalProvider):
                     ok=False, reason=REASON_TOKEN_NOT_YET_VALID, code="not_yet_valid"
                 )
             if int(payload["exp"]) < now - clock_skew:
-                return SignalResult(ok=False, reason=REASON_TOKEN_EXPIRED, code="expired")
+                return SignalResult(
+                    ok=False, reason=REASON_TOKEN_EXPIRED, code="expired"
+                )
 
             # TTL enforcement (exp - iat)
             ttl = self._compute_ttl(payload)
             limit_ttl = (
-                opts.max_ttl_seconds if opts.max_ttl_seconds is not None else self.max_ttl_seconds
+                opts.max_ttl_seconds
+                if opts.max_ttl_seconds is not None
+                else self.max_ttl_seconds
             )
             if ttl > limit_ttl:
-                return SignalResult(ok=False, reason=REASON_TTL_EXCESS, code="ttl_excess")
+                return SignalResult(
+                    ok=False, reason=REASON_TTL_EXCESS, code="ttl_excess"
+                )
 
             # Audience/Issuer semantics
             if str(payload["aud"]) != self.issuer:
-                return SignalResult(ok=False, reason=REASON_AUDIENCE_MISMATCH, code="aud_mismatch")
+                return SignalResult(
+                    ok=False, reason=REASON_AUDIENCE_MISMATCH, code="aud_mismatch"
+                )
             if opts.enforce_peer_issuer and str(payload["iss"]) != self.audience:
-                return SignalResult(ok=False, reason=REASON_ISSUER_MISMATCH, code="iss_mismatch")
+                return SignalResult(
+                    ok=False, reason=REASON_ISSUER_MISMATCH, code="iss_mismatch"
+                )
 
             # Role filtering
             role_value = str(payload[role_claim_name])
@@ -493,7 +533,9 @@ class HmacRoleSignal(CryptoSignalProvider):
                                 ok=False, reason=res, code="custom_validator_failed"
                             )
                     except Exception as ve:
-                        return SignalResult(ok=False, reason=str(ve), code="custom_validator_error")
+                        return SignalResult(
+                            ok=False, reason=str(ve), code="custom_validator_error"
+                        )
 
             meta: TokenMeta = {
                 "issuer": str(payload["iss"]),

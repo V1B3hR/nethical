@@ -116,7 +116,9 @@ class QuotaEnforcer:
         }
 
         # Check agent quota
-        agent_check = self._check_entity_quota(agent_id, "agent", current_time, payload_size)
+        agent_check = self._check_entity_quota(
+            agent_id, "agent", current_time, payload_size
+        )
         if not agent_check["allowed"]:
             result.update(agent_check)
             return result
@@ -128,7 +130,9 @@ class QuotaEnforcer:
 
         # Check cohort quota if enabled
         if self.config.enable_cohort_isolation and cohort:
-            cohort_check = self._check_entity_quota(cohort, "cohort", current_time, payload_size)
+            cohort_check = self._check_entity_quota(
+                cohort, "cohort", current_time, payload_size
+            )
             if not cohort_check["allowed"]:
                 result.update(cohort_check)
                 return result
@@ -140,7 +144,9 @@ class QuotaEnforcer:
 
         # Check tenant quota if enabled
         if self.config.enable_tenant_isolation and tenant:
-            tenant_check = self._check_entity_quota(tenant, "tenant", current_time, payload_size)
+            tenant_check = self._check_entity_quota(
+                tenant, "tenant", current_time, payload_size
+            )
             if not tenant_check["allowed"]:
                 result.update(tenant_check)
                 return result
@@ -180,7 +186,9 @@ class QuotaEnforcer:
 
         # Get or create usage tracking
         if entity_id not in self.usage:
-            self.usage[entity_id] = QuotaUsage(entity_id=entity_id, entity_type=entity_type)
+            self.usage[entity_id] = QuotaUsage(
+                entity_id=entity_id, entity_type=entity_type
+            )
 
         usage = self.usage[entity_id]
 
@@ -242,7 +250,9 @@ class QuotaEnforcer:
     ):
         """Record usage for an entity."""
         if entity_id not in self.usage:
-            self.usage[entity_id] = QuotaUsage(entity_id=entity_id, entity_type=entity_type)
+            self.usage[entity_id] = QuotaUsage(
+                entity_id=entity_id, entity_type=entity_type
+            )
 
         usage = self.usage[entity_id]
         usage.requests_count += 1
@@ -330,7 +340,7 @@ _global_enforcer_lock = threading.Lock()
 
 def get_quota_enforcer(config: Optional[QuotaConfig] = None) -> QuotaEnforcer:
     """Get or create the global quota enforcer instance.
-    
+
     Thread-safe singleton access with double-checked locking pattern.
     """
     global _global_enforcer
@@ -344,13 +354,13 @@ def get_quota_enforcer(config: Optional[QuotaConfig] = None) -> QuotaEnforcer:
 
 def configure_quotas(config: QuotaConfig) -> QuotaEnforcer:
     """Configure the global quota enforcer.
-    
+
     Thread-safe reconfiguration of the global enforcer.
     Creates a new QuotaEnforcer with the provided config and sets it as the global instance.
-    
+
     Args:
         config: QuotaConfig with the desired settings
-        
+
     Returns:
         The newly configured global QuotaEnforcer instance
     """

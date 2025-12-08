@@ -333,7 +333,7 @@ class TestCircuitBreaker:
     def test_recovery(self):
         """Test circuit recovery through half-open state."""
         from nethical.edge.circuit_breaker import CircuitConfig
-        
+
         config = CircuitConfig(
             failure_threshold=3,
             recovery_timeout_seconds=0.1,  # Fast recovery for testing

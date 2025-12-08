@@ -82,7 +82,9 @@ class TaxonomyAPI:
             ).to_dict()
 
         except Exception as e:
-            return APIResponse(success=False, error=str(e), message="Validation failed").to_dict()
+            return APIResponse(
+                success=False, error=str(e), message="Validation failed"
+            ).to_dict()
 
     def get_schema_endpoint(self) -> Dict[str, Any]:
         """API endpoint: Get taxonomy JSON schema.
@@ -93,7 +95,9 @@ class TaxonomyAPI:
         try:
             schema = self.validator.schema
             return APIResponse(
-                success=True, data={"schema": schema}, message="Schema retrieved successfully"
+                success=True,
+                data={"schema": schema},
+                message="Schema retrieved successfully",
             ).to_dict()
 
         except Exception as e:
@@ -101,7 +105,9 @@ class TaxonomyAPI:
                 success=False, error=str(e), message="Failed to retrieve schema"
             ).to_dict()
 
-    def export_schema_endpoint(self, output_path: Optional[str] = None) -> Dict[str, Any]:
+    def export_schema_endpoint(
+        self, output_path: Optional[str] = None
+    ) -> Dict[str, Any]:
         """API endpoint: Export taxonomy schema to file.
 
         Args:
@@ -161,7 +167,9 @@ class TaxonomyAPI:
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to retrieve industry taxonomy"
+                success=False,
+                error=str(e),
+                message="Failed to retrieve industry taxonomy",
             ).to_dict()
 
     def create_industry_taxonomy_endpoint(
@@ -210,7 +218,9 @@ class TaxonomyAPI:
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to create industry taxonomy"
+                success=False,
+                error=str(e),
+                message="Failed to create industry taxonomy",
             ).to_dict()
 
     def get_coverage_stats_endpoint(self) -> Dict[str, Any]:
@@ -222,12 +232,16 @@ class TaxonomyAPI:
         try:
             stats = self.taxonomy.get_coverage_stats()
             return APIResponse(
-                success=True, data=stats, message="Coverage statistics retrieved successfully"
+                success=True,
+                data=stats,
+                message="Coverage statistics retrieved successfully",
             ).to_dict()
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to retrieve coverage statistics"
+                success=False,
+                error=str(e),
+                message="Failed to retrieve coverage statistics",
             ).to_dict()
 
     def get_coverage_report_endpoint(self) -> Dict[str, Any]:
@@ -239,12 +253,16 @@ class TaxonomyAPI:
         try:
             report = self.taxonomy.get_coverage_report()
             return APIResponse(
-                success=True, data=report, message="Coverage report generated successfully"
+                success=True,
+                data=report,
+                message="Coverage report generated successfully",
             ).to_dict()
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to generate coverage report"
+                success=False,
+                error=str(e),
+                message="Failed to generate coverage report",
             ).to_dict()
 
     def tag_violation_endpoint(
@@ -288,7 +306,10 @@ class TaxonomyAPI:
             ).to_dict()
 
     def add_mapping_endpoint(
-        self, violation_type: str, dimension_scores: Dict[str, float], description: str = ""
+        self,
+        violation_type: str,
+        dimension_scores: Dict[str, float],
+        description: str = "",
     ) -> Dict[str, Any]:
         """API endpoint: Add new violation type mapping.
 
@@ -305,7 +326,10 @@ class TaxonomyAPI:
 
             return APIResponse(
                 success=True,
-                data={"violation_type": violation_type, "dimension_scores": dimension_scores},
+                data={
+                    "violation_type": violation_type,
+                    "dimension_scores": dimension_scores,
+                },
                 message="Mapping added successfully",
             ).to_dict()
 
@@ -328,14 +352,20 @@ class TaxonomyAPI:
 
             if "error" in report:
                 return APIResponse(
-                    success=False, error=report["error"], message="Failed to get dimension report"
+                    success=False,
+                    error=report["error"],
+                    message="Failed to get dimension report",
                 ).to_dict()
 
             return APIResponse(
-                success=True, data=report, message="Dimension report generated successfully"
+                success=True,
+                data=report,
+                message="Dimension report generated successfully",
             ).to_dict()
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to generate dimension report"
+                success=False,
+                error=str(e),
+                message="Failed to generate dimension report",
             ).to_dict()

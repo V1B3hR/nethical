@@ -272,7 +272,9 @@ class PluginRegistry:
             conn.commit()
             conn.close()
 
-            logger.info(f"Registered plugin: {registration.name} v{registration.version}")
+            logger.info(
+                f"Registered plugin: {registration.name} v{registration.version}"
+            )
             return True
 
         except sqlite3.IntegrityError as e:
@@ -405,9 +407,9 @@ class PluginRegistry:
                 plugin.manifest_hash.encode(),
                 padding.PSS(
                     mgf=padding.MGF1(hashes.SHA256()),
-                    salt_length=padding.PSS.MAX_LENGTH
+                    salt_length=padding.PSS.MAX_LENGTH,
                 ),
-                hashes.SHA256()
+                hashes.SHA256(),
             )
             logger.info(f"Signature verified successfully for plugin {plugin_id}")
             return True
@@ -418,7 +420,9 @@ class PluginRegistry:
             logger.error(f"Error verifying signature for plugin {plugin_id}: {e}")
             return False
 
-    def check_version_compatibility(self, plugin_id: str, nethical_version: str) -> bool:
+    def check_version_compatibility(
+        self, plugin_id: str, nethical_version: str
+    ) -> bool:
         """
         Check if plugin is compatible with a Nethical version.
 
@@ -492,7 +496,11 @@ class PluginRegistry:
                 UPDATE plugins SET security_status = ?, updated_at = ?
                 WHERE plugin_id = ?
             """,
-                (new_status.value, datetime.now(timezone.utc).isoformat(), scan_result.plugin_id),
+                (
+                    new_status.value,
+                    datetime.now(timezone.utc).isoformat(),
+                    scan_result.plugin_id,
+                ),
             )
 
             conn.commit()
@@ -505,7 +513,9 @@ class PluginRegistry:
             logger.error(f"Failed to submit security scan: {e}")
             return False
 
-    def add_review(self, plugin_id: str, reviewer: str, rating: int, comment: str = "") -> bool:
+    def add_review(
+        self, plugin_id: str, reviewer: str, rating: int, comment: str = ""
+    ) -> bool:
         """
         Add a review for a plugin.
 
@@ -532,7 +542,13 @@ class PluginRegistry:
                 INSERT INTO reviews (plugin_id, reviewer, rating, comment, created_at)
                 VALUES (?, ?, ?, ?, ?)
             """,
-                (plugin_id, reviewer, rating, comment, datetime.now(timezone.utc).isoformat()),
+                (
+                    plugin_id,
+                    reviewer,
+                    rating,
+                    comment,
+                    datetime.now(timezone.utc).isoformat(),
+                ),
             )
 
             # Update plugin rating
@@ -612,13 +628,23 @@ class PluginRegistry:
             public_key_pem=data.get("public_key_pem"),
             manifest_hash=data.get("manifest_hash"),
             requires_nethical_version=data["requires_nethical_version"],
-            dependencies=json.loads(data["dependencies"]) if data["dependencies"] else [],
+            dependencies=(
+                json.loads(data["dependencies"]) if data["dependencies"] else []
+            ),
             tags=set(json.loads(data["tags"])) if data["tags"] else set(),
             homepage=data["homepage"] or "",
             repository=data["repository"] or "",
             license=data["license"] or "",
-            created_at=datetime.fromisoformat(data["created_at"]) if data["created_at"] else None,
-            updated_at=datetime.fromisoformat(data["updated_at"]) if data["updated_at"] else None,
+            created_at=(
+                datetime.fromisoformat(data["created_at"])
+                if data["created_at"]
+                else None
+            ),
+            updated_at=(
+                datetime.fromisoformat(data["updated_at"])
+                if data["updated_at"]
+                else None
+            ),
             downloads=data["downloads"],
             rating=data["rating"],
             review_count=data["review_count"],

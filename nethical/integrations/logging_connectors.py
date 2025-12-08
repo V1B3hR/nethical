@@ -129,7 +129,9 @@ class LogEntry:
         return json.dumps(self.to_dict(), ensure_ascii=False)
 
     @staticmethod
-    def from_log_record(record: logging.LogRecord, source: str = "python-logger") -> "LogEntry":
+    def from_log_record(
+        record: logging.LogRecord, source: str = "python-logger"
+    ) -> "LogEntry":
         # Attach extras if present
         md = {}
         for k, v in getattr(record, "__dict__", {}).items():
@@ -294,7 +296,9 @@ class SyslogConnector(LogConnector):
         base = f"<{pri}>{timestamp} {host} {entry.source}: {entry.message}"
         if self.include_metadata and entry.metadata:
             try:
-                base += " " + json.dumps(sanitize_metadata(entry.metadata), ensure_ascii=False)
+                base += " " + json.dumps(
+                    sanitize_metadata(entry.metadata), ensure_ascii=False
+                )
             except Exception:
                 pass
         return (base + "\n").encode("utf-8")
@@ -373,9 +377,9 @@ class CloudWatchConnector(LogConnector):
         if not self._client:
             return
         try:
-            groups = self._client.describe_log_groups(logGroupNamePrefix=self.log_group).get(
-                "logGroups", []
-            )
+            groups = self._client.describe_log_groups(
+                logGroupNamePrefix=self.log_group
+            ).get("logGroups", [])
             if not any(g.get("logGroupName") == self.log_group for g in groups):
                 self._client.create_log_group(logGroupName=self.log_group)
         except self._client.exceptions.ResourceAlreadyExistsException:  # type: ignore
@@ -497,7 +501,8 @@ class JSONFileConnector(LogConnector):
             return False
         try:
             return self.file.tell() >= self.max_bytes or (
-                self.filepath.exists() and self.filepath.stat().st_size >= self.max_bytes
+                self.filepath.exists()
+                and self.filepath.stat().st_size >= self.max_bytes
             )
         except Exception:
             return False
@@ -600,7 +605,9 @@ class MerkleAnchorConnector(LogConnector):
             return True
         try:
             if self._anchor is None:
-                logging.info(f"[NO-OP MerkleAnchor] Would anchor {len(self._buffer)} log entries.")
+                logging.info(
+                    f"[NO-OP MerkleAnchor] Would anchor {len(self._buffer)} log entries."
+                )
                 self._buffer = []
                 return True
 
@@ -728,7 +735,9 @@ class AggregatorHandler(logging.Handler):
         try:
             entry = LogEntry.from_log_record(record, source=self.source or record.name)
             # Map stdlib levels to our enum
-            self.aggregator.log(entry.level, entry.message, entry.source, **entry.metadata)
+            self.aggregator.log(
+                entry.level, entry.message, entry.source, **entry.metadata
+            )
         except Exception:
             self.handleError(record)
 

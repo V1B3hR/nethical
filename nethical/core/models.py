@@ -167,7 +167,7 @@ class ActionType(str, Enum):
     MODEL_UPDATE = "model_update"
     SYSTEM_COMMAND = "system_command"
     EXTERNAL_API = "external_api"
-    
+
     # Physical action types for robotic systems (6-DOF support)
     PHYSICAL_ACTION = "physical_action"  # General physical/robotic action
     ROBOT_MOVE = "robot_move"  # Robot movement command
@@ -178,7 +178,11 @@ class ActionType(str, Enum):
 
     def is_privileged(self) -> bool:
         """Check if action type requires elevated privileges."""
-        return self in {ActionType.MODEL_UPDATE, ActionType.SYSTEM_COMMAND, ActionType.DATA_ACCESS}
+        return self in {
+            ActionType.MODEL_UPDATE,
+            ActionType.SYSTEM_COMMAND,
+            ActionType.DATA_ACCESS,
+        }
 
     def is_physical(self) -> bool:
         """Check if action type involves physical/robotic movement."""
@@ -247,14 +251,26 @@ class AgentAction(_BaseModel):
         default_factory=lambda: f"action_{uuid4().hex[:12]}",
         description="Unique identifier for the action",
     )
-    agent_id: str = Field(..., description="Identifier of the agent performing the action")
+    agent_id: str = Field(
+        ..., description="Identifier of the agent performing the action"
+    )
     action_type: ActionType = Field(..., description="Type of the action")
-    content: str = Field(..., min_length=1, description="Primary content or payload of the action")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
-    timestamp: datetime = Field(default_factory=now_tz, description="Timestamp (TZ-aware)")
-    context: Dict[str, Any] = Field(default_factory=dict, description="Context for the action")
+    content: str = Field(
+        ..., min_length=1, description="Primary content or payload of the action"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
+    timestamp: datetime = Field(
+        default_factory=now_tz, description="Timestamp (TZ-aware)"
+    )
+    context: Dict[str, Any] = Field(
+        default_factory=dict, description="Context for the action"
+    )
     intent: Optional[str] = Field(default=None, description="Declared intent if any")
-    risk_score: float = Field(default=0.0, ge=0.0, le=1.0, description="Risk score 0..1")
+    risk_score: float = Field(
+        default=0.0, ge=0.0, le=1.0, description="Risk score 0..1"
+    )
     parent_action_id: Optional[str] = Field(
         default=None, description="Parent action ID if part of a chain"
     )
@@ -346,13 +362,17 @@ class SafetyViolation(_BaseModel):
     action_id: str = Field(..., description="Related action ID")
     violation_type: ViolationType = Field(..., description="Type of violation")
     severity: Severity = Field(..., description="Severity level")
-    description: str = Field(..., min_length=1, description="Human-readable description")
+    description: str = Field(
+        ..., min_length=1, description="Human-readable description"
+    )
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence 0..1")
     evidence: List[str] = Field(default_factory=list, description="Evidence items")
     recommendations: List[str] = Field(
         default_factory=list, description="Recommended remediation steps"
     )
-    timestamp: datetime = Field(default_factory=now_tz, description="Timestamp (TZ-aware)")
+    timestamp: datetime = Field(
+        default_factory=now_tz, description="Timestamp (TZ-aware)"
+    )
     detector_name: Optional[str] = Field(
         default=None, description="Name of the detecting component"
     )
@@ -361,7 +381,9 @@ class SafetyViolation(_BaseModel):
     )
     false_positive: bool = Field(default=False, description="Marked as false positive")
     # Regional and sharding fields
-    region_id: Optional[str] = Field(default=None, description="Geographic region identifier")
+    region_id: Optional[str] = Field(
+        default=None, description="Geographic region identifier"
+    )
     logical_domain: Optional[str] = Field(
         default=None, description="Logical domain for hierarchical aggregation"
     )
@@ -381,7 +403,9 @@ class SafetyViolation(_BaseModel):
         """Validate severity aligns with confidence and type."""
         # Get severity as enum if it's an int
         severity_enum = (
-            self.severity if isinstance(self.severity, Severity) else Severity(self.severity)
+            self.severity
+            if isinstance(self.severity, Severity)
+            else Severity(self.severity)
         )
         violation_type_enum = (
             self.violation_type
@@ -392,7 +416,9 @@ class SafetyViolation(_BaseModel):
         # Critical violation types should have high severity
         if violation_type_enum in ViolationType.critical_types():
             if severity_enum.value < Severity.HIGH.value:
-                raise ValueError(f"Violation type {self.violation_type} requires severity >= HIGH")
+                raise ValueError(
+                    f"Violation type {self.violation_type} requires severity >= HIGH"
+                )
 
         # Low confidence should not trigger emergency severity
         if self.confidence < 0.5 and severity_enum == Severity.EMERGENCY:
@@ -470,7 +496,9 @@ class JudgmentResult(_BaseModel):
         default_factory=dict, description="Modifications to apply to the action"
     )
     feedback: List[str] = Field(default_factory=list, description="Actionable feedback")
-    timestamp: datetime = Field(default_factory=now_tz, description="Timestamp (TZ-aware)")
+    timestamp: datetime = Field(
+        default_factory=now_tz, description="Timestamp (TZ-aware)"
+    )
     remediation_steps: List[str] = Field(
         default_factory=list, description="Steps to remediate issues"
     )
@@ -478,7 +506,9 @@ class JudgmentResult(_BaseModel):
         default=False, description="Whether human follow-up is required"
     )
     # Regional and sharding fields
-    region_id: Optional[str] = Field(default=None, description="Geographic region identifier")
+    region_id: Optional[str] = Field(
+        default=None, description="Geographic region identifier"
+    )
     logical_domain: Optional[str] = Field(
         default=None, description="Logical domain for hierarchical aggregation"
     )
@@ -498,12 +528,16 @@ class JudgmentResult(_BaseModel):
         """Validate decision aligns with violations."""
         # Get decision as enum if it's a string
         decision_enum = (
-            self.decision if isinstance(self.decision, Decision) else Decision(self.decision)
+            self.decision
+            if isinstance(self.decision, Decision)
+            else Decision(self.decision)
         )
 
         # Blocking decisions should have violations
         if decision_enum.is_blocking() and not self.violations:
-            raise ValueError(f"Decision {self.decision} requires at least one violation")
+            raise ValueError(
+                f"Decision {self.decision} requires at least one violation"
+            )
 
         # Critical violations should result in blocking or escalation
         critical_violations = [v for v in self.violations if v.is_critical]
@@ -575,24 +609,40 @@ class MonitoringConfig(_BaseModel):
 
     # Thresholds
     intent_deviation_threshold: float = Field(
-        default=0.7, ge=0.0, le=1.0, description="Threshold for intent deviation detection"
+        default=0.7,
+        ge=0.0,
+        le=1.0,
+        description="Threshold for intent deviation detection",
     )
     risk_threshold: float = Field(
         default=0.6, ge=0.0, le=1.0, description="Threshold for risk scoring"
     )
     confidence_threshold: float = Field(
-        default=0.8, ge=0.0, le=1.0, description="Minimum confidence for automated decisions"
+        default=0.8,
+        ge=0.0,
+        le=1.0,
+        description="Minimum confidence for automated decisions",
     )
 
     # Feature flags
-    enable_ethical_monitoring: bool = Field(default=True, description="Enable ethical checks")
-    enable_safety_monitoring: bool = Field(default=True, description="Enable safety checks")
+    enable_ethical_monitoring: bool = Field(
+        default=True, description="Enable ethical checks"
+    )
+    enable_safety_monitoring: bool = Field(
+        default=True, description="Enable safety checks"
+    )
     enable_manipulation_detection: bool = Field(
         default=True, description="Enable manipulation detection"
     )
-    enable_privacy_monitoring: bool = Field(default=True, description="Enable privacy checks")
-    enable_security_monitoring: bool = Field(default=True, description="Enable security checks")
-    enable_bias_detection: bool = Field(default=True, description="Enable bias detection")
+    enable_privacy_monitoring: bool = Field(
+        default=True, description="Enable privacy checks"
+    )
+    enable_security_monitoring: bool = Field(
+        default=True, description="Enable security checks"
+    )
+    enable_bias_detection: bool = Field(
+        default=True, description="Enable bias detection"
+    )
     enable_hallucination_detection: bool = Field(
         default=True, description="Enable hallucination detection"
     )
@@ -602,37 +652,59 @@ class MonitoringConfig(_BaseModel):
     enable_real_time_monitoring: bool = Field(
         default=True, description="Enable real-time processing"
     )
-    enable_async_processing: bool = Field(default=True, description="Enable async processing")
-    
+    enable_async_processing: bool = Field(
+        default=True, description="Enable async processing"
+    )
+
     # Semantic monitoring (v2.0)
     use_semantic_intent: bool = Field(
-        default=True, 
-        description="Use semantic similarity for intent deviation (fallback to lexical if unavailable)"
+        default=True,
+        description="Use semantic similarity for intent deviation (fallback to lexical if unavailable)",
     )
 
     # Performance settings
-    max_violation_history: int = Field(default=10000, gt=0, description="Max violations to retain")
-    max_judgment_history: int = Field(default=10000, gt=0, description="Max judgments to retain")
-    batch_size: int = Field(default=100, gt=0, le=1000, description="Batch processing size")
-    max_workers: int = Field(default=4, gt=0, le=32, description="Max concurrent workers")
-    cache_ttl_seconds: int = Field(default=3600, gt=0, description="Cache TTL in seconds")
+    max_violation_history: int = Field(
+        default=10000, gt=0, description="Max violations to retain"
+    )
+    max_judgment_history: int = Field(
+        default=10000, gt=0, description="Max judgments to retain"
+    )
+    batch_size: int = Field(
+        default=100, gt=0, le=1000, description="Batch processing size"
+    )
+    max_workers: int = Field(
+        default=4, gt=0, le=32, description="Max concurrent workers"
+    )
+    cache_ttl_seconds: int = Field(
+        default=3600, gt=0, description="Cache TTL in seconds"
+    )
 
     # Alert settings
-    alert_on_critical: bool = Field(default=True, description="Alert on critical violations")
-    alert_on_emergency: bool = Field(default=True, description="Alert on emergency violations")
-    escalation_threshold: int = Field(default=3, ge=0, description="Violations before escalation")
+    alert_on_critical: bool = Field(
+        default=True, description="Alert on critical violations"
+    )
+    alert_on_emergency: bool = Field(
+        default=True, description="Alert on emergency violations"
+    )
+    escalation_threshold: int = Field(
+        default=3, ge=0, description="Violations before escalation"
+    )
 
     # Logging settings
     log_violations: bool = Field(default=True, description="Log all violations")
     log_judgments: bool = Field(default=True, description="Log all judgments")
-    log_performance_metrics: bool = Field(default=True, description="Log performance metrics")
+    log_performance_metrics: bool = Field(
+        default=True, description="Log performance metrics"
+    )
 
     @model_validator(mode="after")
     def validate_config(self) -> "MonitoringConfig":
         """Validate configuration consistency."""
         # Async requires real-time monitoring
         if self.enable_async_processing and not self.enable_real_time_monitoring:
-            raise ValueError("Async processing requires real-time monitoring to be enabled")
+            raise ValueError(
+                "Async processing requires real-time monitoring to be enabled"
+            )
 
         # At least one monitoring type must be enabled
         monitoring_flags = [
@@ -714,7 +786,8 @@ def from_governance_judgment(dc_obj: Any) -> JudgmentResult:
         confidence=float(getattr(dc_obj, "confidence", 0.0)),
         reasoning=getattr(dc_obj, "reasoning"),
         violations=[
-            from_governance_violation(v) for v in (getattr(dc_obj, "violations", []) or [])
+            from_governance_violation(v)
+            for v in (getattr(dc_obj, "violations", []) or [])
         ],
         modifications=dict(getattr(dc_obj, "modifications", {}) or {}),
         feedback=list(getattr(dc_obj, "feedback", []) or []),
@@ -740,7 +813,9 @@ def get_severity_color(severity: Severity) -> str:
     return colors.get(severity, "gray")
 
 
-def batch_actions(actions: List[AgentAction], batch_size: int = 100) -> List[List[AgentAction]]:
+def batch_actions(
+    actions: List[AgentAction], batch_size: int = 100
+) -> List[List[AgentAction]]:
     """Split actions into batches for processing."""
     return [actions[i : i + batch_size] for i in range(0, len(actions), batch_size)]
 
@@ -764,7 +839,9 @@ def export_judgment_report(judgment: JudgmentResult) -> Dict[str, Any]:
         "violation_count": len(judgment.violations),
         "violation_summary": judgment.violation_summary,
         "max_severity": (
-            judgment.max_violation_severity.name if judgment.max_violation_severity else None
+            judgment.max_violation_severity.name
+            if judgment.max_violation_severity
+            else None
         ),
         "follow_up_required": judgment.follow_up_required,
         "is_actionable": judgment.is_actionable,
@@ -815,5 +892,7 @@ if __name__ == "__main__":
     print(f"\nJudgment Report:\n{json.dumps(report, indent=2)}")
 
     # Example: Configuration
-    config = MonitoringConfig(risk_threshold=0.5, max_workers=8, enable_async_processing=True)
+    config = MonitoringConfig(
+        risk_threshold=0.5, max_workers=8, enable_async_processing=True
+    )
     print(f"\nEnabled monitors: {', '.join(config.enabled_monitors)}")

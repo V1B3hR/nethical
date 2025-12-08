@@ -131,7 +131,10 @@ class PluginVerifier:
             )
 
         # Check trusted publisher
-        if self.trusted_publishers and manifest.publisher not in self.trusted_publishers:
+        if (
+            self.trusted_publishers
+            and manifest.publisher not in self.trusted_publishers
+        ):
             return VerificationResult(
                 status=VerificationStatus.UNTRUSTED_PUBLISHER,
                 plugin_name=manifest.name,

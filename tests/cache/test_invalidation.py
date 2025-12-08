@@ -173,7 +173,7 @@ class TestCacheHierarchy:
         hierarchy = CacheHierarchy()
 
         hierarchy.set("key1", "value1")
-        
+
         # Multiple gets to ensure L1 hit tracking
         result = hierarchy.get("key1")
         result = hierarchy.get("key1")  # Second get

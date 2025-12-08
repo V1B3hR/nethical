@@ -110,7 +110,9 @@ class PluginVersion:
         if not constraint:
             return True
 
-        return MarketplaceClient._version_satisfies_constraints(nethical_version, constraint)
+        return MarketplaceClient._version_satisfies_constraints(
+            nethical_version, constraint
+        )
 
 
 @dataclass
@@ -127,7 +129,9 @@ class PluginInfo:
     tags: Set[str] = field(default_factory=set)
     versions: List[PluginVersion] = field(default_factory=list)
     latest_version: str = "0.1.0"
-    dependencies: List[str] = field(default_factory=list)  # e.g., ["dep-a", "dep-b@>=1.0.0"]
+    dependencies: List[str] = field(
+        default_factory=list
+    )  # e.g., ["dep-a", "dep-b@>=1.0.0"]
     license: str = "MIT"
     homepage: Optional[str] = None
     repository: Optional[str] = None
@@ -303,15 +307,21 @@ class MarketplaceClient:
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_plugins_status ON plugins(install_status)"
             )
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_plugins_category ON plugins(category)")
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_plugins_rating ON plugins(rating)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_plugins_category ON plugins(category)"
+            )
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_plugins_rating ON plugins(rating)"
+            )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_plugins_downloads ON plugins(download_count)"
             )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_versions_plugin ON plugin_versions(plugin_id)"
             )
-            cursor.execute("CREATE INDEX IF NOT EXISTS idx_tags_plugin ON plugin_tags(plugin_id)")
+            cursor.execute(
+                "CREATE INDEX IF NOT EXISTS idx_tags_plugin ON plugin_tags(plugin_id)"
+            )
             cursor.execute(
                 "CREATE INDEX IF NOT EXISTS idx_deps_plugin ON plugin_dependencies(plugin_id)"
             )
@@ -348,7 +358,9 @@ class MarketplaceClient:
                     plugin_id = row["plugin_id"]
 
                     # Load tags
-                    cursor.execute("SELECT tag FROM plugin_tags WHERE plugin_id = ?", (plugin_id,))
+                    cursor.execute(
+                        "SELECT tag FROM plugin_tags WHERE plugin_id = ?", (plugin_id,)
+                    )
                     tags = {tag_row["tag"] for tag_row in cursor.fetchall()}
 
                     # Load dependencies
@@ -356,11 +368,14 @@ class MarketplaceClient:
                         "SELECT dependency FROM plugin_dependencies WHERE plugin_id = ?",
                         (plugin_id,),
                     )
-                    dependencies = [dep_row["dependency"] for dep_row in cursor.fetchall()]
+                    dependencies = [
+                        dep_row["dependency"] for dep_row in cursor.fetchall()
+                    ]
 
                     # Load versions
                     cursor.execute(
-                        "SELECT * FROM plugin_versions WHERE plugin_id = ?", (plugin_id,)
+                        "SELECT * FROM plugin_versions WHERE plugin_id = ?",
+                        (plugin_id,),
                     )
                     versions = []
                     for v_row in cursor.fetchall():
@@ -528,7 +543,9 @@ class MarketplaceClient:
 
                 if compatible_version:
                     latest_version = plugin.get_latest_version()
-                    if not latest_version or not latest_version.is_compatible(compatible_version):
+                    if not latest_version or not latest_version.is_compatible(
+                        compatible_version
+                    ):
                         continue
 
                 if query:
@@ -565,7 +582,9 @@ class MarketplaceClient:
         """
         lock = self._plugin_locks.setdefault(plugin_id, threading.RLock())
         with lock:
-            logger.info("Installing plugin '%s'%s", plugin_id, f"@{version}" if version else "")
+            logger.info(
+                "Installing plugin '%s'%s", plugin_id, f"@{version}" if version else ""
+            )
             plugin = self._get_plugin_or_raise(plugin_id)
 
             # Determine version to install
@@ -595,7 +614,9 @@ class MarketplaceClient:
                     plugin_id, installed_version
                 ):
                     logger.info(
-                        "Plugin '%s' is already installed at version %s", plugin_id, version
+                        "Plugin '%s' is already installed at version %s",
+                        plugin_id,
+                        version,
                     )
                     return InstallStatus.INSTALLED
 
@@ -616,7 +637,9 @@ class MarketplaceClient:
                         [
                             v.version
                             for v in dep_plugin.versions
-                            if self._version_satisfies_constraints(v.version, dep_constraint)
+                            if self._version_satisfies_constraints(
+                                v.version, dep_constraint
+                            )
                         ],
                         key=lambda x: self._parse_version_tuple(x),
                         reverse=True,
@@ -660,13 +683,17 @@ class MarketplaceClient:
                     )
 
                 # Update database
-                self._update_install_metadata(plugin_id, version, status=InstallStatus.INSTALLED)
+                self._update_install_metadata(
+                    plugin_id, version, status=InstallStatus.INSTALLED
+                )
                 logger.info("Installed plugin '%s' version %s", plugin_id, version)
                 return InstallStatus.INSTALLED
 
             except Exception as e:
                 logger.exception("Failed installing plugin '%s': %s", plugin_id, e)
-                self._update_install_metadata(plugin_id, None, status=InstallStatus.FAILED)
+                self._update_install_metadata(
+                    plugin_id, None, status=InstallStatus.FAILED
+                )
                 raise InstallationError(str(e)) from e
 
     def uninstall(self, plugin_id: str) -> bool:
@@ -725,9 +752,12 @@ class MarketplaceClient:
             for row in rows:
                 plugin_id = row["plugin_id"]
                 # Optional: Validate files exist; if not, mark as not installed
-                if not self._is_plugin_files_present(plugin_id, row["installed_version"]):
+                if not self._is_plugin_files_present(
+                    plugin_id, row["installed_version"]
+                ):
                     logger.warning(
-                        "Plugin '%s' marked installed but files missing. Fixing status.", plugin_id
+                        "Plugin '%s' marked installed but files missing. Fixing status.",
+                        plugin_id,
                     )
                     self._update_install_metadata(
                         plugin_id, None, status=InstallStatus.NOT_INSTALLED
@@ -748,7 +778,11 @@ class MarketplaceClient:
             Updated installation status
         """
         plugin = self._get_plugin_or_raise(plugin_id)
-        logger.info("Updating plugin '%s' to latest version %s", plugin_id, plugin.latest_version)
+        logger.info(
+            "Updating plugin '%s' to latest version %s",
+            plugin_id,
+            plugin.latest_version,
+        )
         return self.install(plugin_id, version=plugin.latest_version, force=True)
 
     def check_updates(self) -> List[str]:
@@ -769,13 +803,19 @@ class MarketplaceClient:
 
         with self._registry_lock:
             for row in rows:
-                plugin_id, installed_version = row["plugin_id"], row["installed_version"]
+                plugin_id, installed_version = (
+                    row["plugin_id"],
+                    row["installed_version"],
+                )
                 plugin = self._plugin_registry.get(plugin_id)
                 if not plugin:
                     continue
                 # Only suggest update if latest is greater than installed
                 if plugin.latest_version and installed_version:
-                    if self._compare_versions(plugin.latest_version, installed_version) > 0:
+                    if (
+                        self._compare_versions(plugin.latest_version, installed_version)
+                        > 0
+                    ):
                         updates_available.append(plugin_id)
         return updates_available
 
@@ -822,7 +862,9 @@ class MarketplaceClient:
             )
 
             # Replace tags
-            cursor.execute("DELETE FROM plugin_tags WHERE plugin_id = ?", (plugin_info.plugin_id,))
+            cursor.execute(
+                "DELETE FROM plugin_tags WHERE plugin_id = ?", (plugin_info.plugin_id,)
+            )
             for tag in plugin_info.tags:
                 cursor.execute(
                     """
@@ -833,7 +875,8 @@ class MarketplaceClient:
 
             # Replace dependencies
             cursor.execute(
-                "DELETE FROM plugin_dependencies WHERE plugin_id = ?", (plugin_info.plugin_id,)
+                "DELETE FROM plugin_dependencies WHERE plugin_id = ?",
+                (plugin_info.plugin_id,),
             )
             for dep in plugin_info.dependencies:
                 cursor.execute(
@@ -870,7 +913,9 @@ class MarketplaceClient:
         with self._registry_lock:
             self._plugin_registry[plugin_info.plugin_id] = plugin_info
 
-        logger.info("Registered/updated plugin '%s' in local marketplace", plugin_info.plugin_id)
+        logger.info(
+            "Registered/updated plugin '%s' in local marketplace", plugin_info.plugin_id
+        )
         return True
 
     def get_plugin_info(self, plugin_id: str) -> Optional[PluginInfo]:
@@ -967,12 +1012,12 @@ class MarketplaceClient:
         """Download a file to the cache directory with retries."""
         # Validate URL scheme for security
         parsed = urlparse(url)
-        if parsed.scheme not in ['http', 'https']:
+        if parsed.scheme not in ["http", "https"]:
             raise ValueError(
                 f"Unsupported URL scheme: {parsed.scheme}. "
                 f"Only http and https are allowed."
             )
-        
+
         safe_name = f"{plugin_id}-{version}"
         dest = self.cache_dir / safe_name
         # If already downloaded, reuse
@@ -983,14 +1028,19 @@ class MarketplaceClient:
         for attempt in range(1, self.download_retries + 2):
             try:
                 logger.info("Downloading %s (attempt %d)", url, attempt)
-                with urllib.request.urlopen(url, timeout=self.request_timeout_s) as resp:
+                with urllib.request.urlopen(
+                    url, timeout=self.request_timeout_s
+                ) as resp:
                     data = resp.read()
                 dest.write_bytes(data)
                 return dest
             except Exception as e:
                 last_error = e
                 logger.warning(
-                    "Download failed (attempt %d/%d): %s", attempt, self.download_retries + 1, e
+                    "Download failed (attempt %d/%d): %s",
+                    attempt,
+                    self.download_retries + 1,
+                    e,
                 )
                 time.sleep(min(2.0 * attempt, 5.0))
         assert last_error is not None
@@ -1033,7 +1083,9 @@ class MarketplaceClient:
                 # Non-archive: copy file
                 (dest_dir / file_path.name).write_bytes(file_path.read_bytes())
         except Exception as e:
-            raise InstallationError(f"Failed to extract archive '{file_path.name}': {e}") from e
+            raise InstallationError(
+                f"Failed to extract archive '{file_path.name}': {e}"
+            ) from e
 
     def _safe_extract_zip(self, zf: zipfile.ZipFile, path: Path):
         """Safely extract zip archive, preventing directory traversal attacks."""
@@ -1055,7 +1107,9 @@ class MarketplaceClient:
                     f"Archive member '{member.name}' would extract outside of {path}"
                 )
             if member.islnk() or member.issym():
-                raise InstallationError(f"Archive member '{member.name}' is a link (not allowed)")
+                raise InstallationError(
+                    f"Archive member '{member.name}' is a link (not allowed)"
+                )
             tar.extract(member, path)
 
     # -------------------------------------------------------------------------
@@ -1083,7 +1137,9 @@ class MarketplaceClient:
         package_init = plugin_dir / "__init__.py"
 
         if module_file.exists():
-            spec = importlib.util.spec_from_file_location(target_module, str(module_file))
+            spec = importlib.util.spec_from_file_location(
+                target_module, str(module_file)
+            )
         elif package_init.exists():
             spec = importlib.util.spec_from_file_location(plugin_id, str(package_init))
         else:

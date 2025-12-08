@@ -170,7 +170,11 @@ class AuditBlockchain:
     def _create_genesis_block(self):
         """Create the first block in the chain"""
         genesis = BlockchainBlock(
-            index=0, timestamp=datetime.now(timezone.utc), events=[], previous_hash="0", nonce=0
+            index=0,
+            timestamp=datetime.now(timezone.utc),
+            events=[],
+            previous_hash="0",
+            nonce=0,
         )
         genesis.mine_block(self.difficulty)
         self.chain.append(genesis)
@@ -256,7 +260,9 @@ class ForensicAnalyzer:
     def __init__(self, blockchain: AuditBlockchain):
         self.blockchain = blockchain
 
-    def analyze_user_activity(self, user_id: str, timeframe_hours: int = 24) -> Dict[str, Any]:
+    def analyze_user_activity(
+        self, user_id: str, timeframe_hours: int = 24
+    ) -> Dict[str, Any]:
         """Analyze user activity patterns"""
         end_time = datetime.now(timezone.utc)
         from datetime import timedelta
@@ -302,11 +308,15 @@ class ForensicAnalyzer:
         # Check for unusual access patterns
         unique_resources = set(e.resource for e in events)
         if len(unique_resources) > 50:
-            patterns.append(f"Unusual number of accessed resources: {len(unique_resources)}")
+            patterns.append(
+                f"Unusual number of accessed resources: {len(unique_resources)}"
+            )
 
         return patterns
 
-    def generate_timeline(self, start_time: datetime, end_time: datetime) -> List[Dict[str, Any]]:
+    def generate_timeline(
+        self, start_time: datetime, end_time: datetime
+    ) -> List[Dict[str, Any]]:
         """Generate event timeline for forensic analysis"""
         events = self.blockchain.search_events(start_time=start_time, end_time=end_time)
 
@@ -334,8 +344,12 @@ class ForensicAnalyzer:
             "chain_valid": is_valid,
             "total_blocks": len(self.blockchain.chain),
             "total_events": sum(len(block.events) for block in self.blockchain.chain),
-            "genesis_block_hash": self.blockchain.chain[0].hash if self.blockchain.chain else None,
-            "latest_block_hash": self.blockchain.chain[-1].hash if self.blockchain.chain else None,
+            "genesis_block_hash": (
+                self.blockchain.chain[0].hash if self.blockchain.chain else None
+            ),
+            "latest_block_hash": (
+                self.blockchain.chain[-1].hash if self.blockchain.chain else None
+            ),
         }
 
 
@@ -374,7 +388,9 @@ class ChainOfCustodyManager:
             "from_custodian": from_custodian,
             "to_custodian": to_custodian,
             "reason": reason,
-            "signature": DigitalSignature.sign_data(f"{evidence_id}:{to_custodian}".encode()),
+            "signature": DigitalSignature.sign_data(
+                f"{evidence_id}:{to_custodian}".encode()
+            ),
         }
 
         self.custody_records[evidence_id].append(record)
@@ -390,7 +406,9 @@ class ChainOfCustodyManager:
             "action": "accessed",
             "accessor": accessor,
             "purpose": purpose,
-            "signature": DigitalSignature.sign_data(f"{evidence_id}:{accessor}".encode()),
+            "signature": DigitalSignature.sign_data(
+                f"{evidence_id}:{accessor}".encode()
+            ),
         }
 
         self.custody_records[evidence_id].append(record)

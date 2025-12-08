@@ -269,7 +269,9 @@ class Phase567IntegratedGovernance:
 
         return results
 
-    def set_baseline_distribution(self, risk_scores: List[float], cohort: str = "default") -> bool:
+    def set_baseline_distribution(
+        self, risk_scores: List[float], cohort: str = "default"
+    ) -> bool:
         """Set baseline distribution for drift detection.
 
         Args:
@@ -372,7 +374,9 @@ class Phase567IntegratedGovernance:
                 "total_decisions": report.get("total_decisions", 0),
                 "ml_influenced_count": report.get("ml_influenced_count", 0),
                 "ml_influence_rate": report.get("ml_influence_rate", 0.0),
-                "classification_change_rate": report.get("classification_change_rate", 0.0),
+                "classification_change_rate": report.get(
+                    "classification_change_rate", 0.0
+                ),
             }
         else:
             status["components"]["blended_engine"] = {"enabled": False}
@@ -384,7 +388,8 @@ class Phase567IntegratedGovernance:
                 "enabled": True,
                 "total_alerts": stats["alerts"]["total"],
                 "tracked_agents": stats.get("tracked_agents", 0),
-                "alert_rate": stats["alerts"]["total"] / max(stats.get("tracked_agents", 1), 1),
+                "alert_rate": stats["alerts"]["total"]
+                / max(stats.get("tracked_agents", 1), 1),
             }
         else:
             status["components"]["anomaly_monitor"] = {"enabled": False}
@@ -439,9 +444,15 @@ class Phase567IntegratedGovernance:
             report = self.get_blending_metrics()
             lines.append(f"- Total Decisions: {report.get('total_decisions', 0)}")
             lines.append(f"- ML Influenced: {report.get('ml_influenced_count', 0)}")
-            lines.append(f"- ML Influence Rate: {report.get('ml_influence_rate', 0.0)*100:.1f}%")
-            lines.append(f"- Classification Changes: {report.get('classification_changes', 0)}")
-            lines.append(f"- Change Rate: {report.get('classification_change_rate', 0.0)*100:.1f}%")
+            lines.append(
+                f"- ML Influence Rate: {report.get('ml_influence_rate', 0.0)*100:.1f}%"
+            )
+            lines.append(
+                f"- Classification Changes: {report.get('classification_changes', 0)}"
+            )
+            lines.append(
+                f"- Change Rate: {report.get('classification_change_rate', 0.0)*100:.1f}%"
+            )
             lines.append("")
 
         # Anomaly statistics
@@ -451,7 +462,9 @@ class Phase567IntegratedGovernance:
             stats = self.get_anomaly_statistics()
             lines.append(f"- Total Alerts: {stats['alerts']['total']}")
             lines.append(f"- Tracked Agents: {stats.get('tracked_agents', 0)}")
-            lines.append(f"- Sequence Anomalies: {stats['alerts']['by_type'].get('sequence', 0)}")
+            lines.append(
+                f"- Sequence Anomalies: {stats['alerts']['by_type'].get('sequence', 0)}"
+            )
             lines.append(
                 f"- Distributional Anomalies: {stats['alerts']['by_type'].get('distributional', 0)}"
             )

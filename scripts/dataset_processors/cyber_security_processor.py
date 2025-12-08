@@ -1,4 +1,5 @@
 """Processor for Cyber Security Attacks dataset from Kaggle."""
+
 from __future__ import annotations
 
 import ipaddress
@@ -220,14 +221,28 @@ class CyberSecurityAttacksProcessor(BaseDatasetProcessor):
     def validate_row(self, row: Dict[str, Any]) -> bool:
         # Keep rows that have at least a label-ish or any signal fields
         has_labelish = any(k in row for k in (*self.LABEL_KEYS, *self.ATTACK_TYPE_KEYS))
-        has_signal = any(k in row for k in (*self.SCORE_KEYS, *self.SEVERITY_KEYS, *self.COUNT_KEYS, *self.PROTOCOL_KEYS))
+        has_signal = any(
+            k in row
+            for k in (
+                *self.SCORE_KEYS,
+                *self.SEVERITY_KEYS,
+                *self.COUNT_KEYS,
+                *self.PROTOCOL_KEYS,
+            )
+        )
         return has_labelish or has_signal
 
-    def postprocess_record(self, record: Dict[str, Any], *, row: Optional[Dict[str, Any]] = None, idx: Optional[int] = None) -> Dict[str, Any]:
+    def postprocess_record(
+        self,
+        record: Dict[str, Any],
+        *,
+        row: Optional[Dict[str, Any]] = None,
+        idx: Optional[int] = None,
+    ) -> Dict[str, Any]:
         # If called from base class without row/idx, just return the record
         if row is None or idx is None:
             return record
-            
+
         # Attach helpful metadata and a deterministic group_id to support group-aware splits
         meta = record.setdefault("meta", {})
         meta.setdefault("dataset", self.dataset_name)
@@ -292,7 +307,9 @@ class CyberSecurityAttacksProcessor(BaseDatasetProcessor):
                 violation_count += min(10.0, score_val * 10.0)
 
         # Light bump if elevated counts exist
-        if self._numeric_from(row, self.COUNT_KEYS) or self._numeric_from(row, self.BYTES_KEYS):
+        if self._numeric_from(row, self.COUNT_KEYS) or self._numeric_from(
+            row, self.BYTES_KEYS
+        ):
             violation_count += 1.0
 
         # Clip to 0..10 expected by Base feature ranges
@@ -360,7 +377,9 @@ class CyberSecurityAttacksProcessor(BaseDatasetProcessor):
                 return str(row[k])
         return None
 
-    def _numeric_from(self, row: Dict[str, Any], keys: Tuple[str, ...]) -> Optional[float]:
+    def _numeric_from(
+        self, row: Dict[str, Any], keys: Tuple[str, ...]
+    ) -> Optional[float]:
         for k in keys:
             if k in row:
                 try:
@@ -390,7 +409,9 @@ class CyberSecurityAttacksProcessor(BaseDatasetProcessor):
                         return max(0.0, min(1.0, val / 5.0))
                     return max(0.0, min(1.0, val / 10.0))
                 s = str(v).strip().lower()
-                if any(tok in s for tok in ("critical", "severe", "catastrophic", "urgent")):
+                if any(
+                    tok in s for tok in ("critical", "severe", "catastrophic", "urgent")
+                ):
                     return 0.95
                 if "high" in s:
                     return 0.8
@@ -447,14 +468,14 @@ class CyberSecurityAttacksProcessor(BaseDatasetProcessor):
             port = int(max(0, min(65535, int(port_val))))
             # Some common high-risk service ports
             port_risk_map = {
-                23: 0.9,   # telnet
+                23: 0.9,  # telnet
                 3389: 0.88,  # RDP
                 445: 0.85,  # SMB
                 21: 0.75,  # FTP
-                22: 0.6,   # SSH
+                22: 0.6,  # SSH
                 25: 0.55,  # SMTP
-                53: 0.5,   # DNS
-                80: 0.5,   # HTTP
+                53: 0.5,  # DNS
+                80: 0.5,  # HTTP
                 1433: 0.8,  # MSSQL
                 1521: 0.8,  # Oracle
                 3306: 0.7,  # MySQL
@@ -471,7 +492,12 @@ class CyberSecurityAttacksProcessor(BaseDatasetProcessor):
     # Recency -> [0,1] using dataset min/max timestamp
     def _recency01(self, row: Dict[str, Any]) -> float:
         ts = self._parse_ts(self._first(row, self.TIMESTAMP_KEYS))
-        if ts is None or self._ts_min is None or self._ts_max is None or self._ts_max == self._ts_min:
+        if (
+            ts is None
+            or self._ts_min is None
+            or self._ts_max is None
+            or self._ts_max == self._ts_min
+        ):
             return 0.5  # Unknown -> neutral
         return max(0.0, min(1.0, (ts - self._ts_min) / (self._ts_max - self._ts_min)))
 
@@ -577,7 +603,9 @@ class CyberSecurityAttacksProcessor(BaseDatasetProcessor):
         ts = self._parse_ts(s)
         if ts is None:
             return None
-        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
+        return datetime.fromtimestamp(ts, tz=timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%SZ"
+        )
 
     # -----------------------------
     # Deduplication key

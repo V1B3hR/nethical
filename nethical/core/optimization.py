@@ -163,7 +163,9 @@ class PromotionGate:
     min_sample_size: int = 100
 
     def evaluate(
-        self, candidate_metrics: PerformanceMetrics, baseline_metrics: PerformanceMetrics
+        self,
+        candidate_metrics: PerformanceMetrics,
+        baseline_metrics: PerformanceMetrics,
     ) -> Tuple[bool, List[str]]:
         """Evaluate if candidate passes promotion gate.
 
@@ -185,22 +187,32 @@ class PromotionGate:
             )
 
         # Check recall gain
-        recall_gain = candidate_metrics.detection_recall - baseline_metrics.detection_recall
+        recall_gain = (
+            candidate_metrics.detection_recall - baseline_metrics.detection_recall
+        )
         if recall_gain < self.min_recall_gain:
             passed = False
-            reasons.append(f"Recall gain insufficient: {recall_gain:.3f} < {self.min_recall_gain}")
+            reasons.append(
+                f"Recall gain insufficient: {recall_gain:.3f} < {self.min_recall_gain}"
+            )
         else:
-            reasons.append(f"✓ Recall gain: {recall_gain:+.3f} >= {self.min_recall_gain}")
+            reasons.append(
+                f"✓ Recall gain: {recall_gain:+.3f} >= {self.min_recall_gain}"
+            )
 
         # Check FP increase
-        fp_increase = candidate_metrics.false_positive_rate - baseline_metrics.false_positive_rate
+        fp_increase = (
+            candidate_metrics.false_positive_rate - baseline_metrics.false_positive_rate
+        )
         if fp_increase > self.max_fp_increase:
             passed = False
             reasons.append(
                 f"FP rate increase too high: {fp_increase:+.3f} > {self.max_fp_increase}"
             )
         else:
-            reasons.append(f"✓ FP increase: {fp_increase:+.3f} <= {self.max_fp_increase}")
+            reasons.append(
+                f"✓ FP increase: {fp_increase:+.3f} <= {self.max_fp_increase}"
+            )
 
         # Check latency increase
         latency_increase = (
@@ -620,16 +632,32 @@ class MultiObjectiveOptimizer:
             return self.create_configuration(
                 config_version=f"evo_gen{generation}_v{random.randint(0, 9999)}",
                 classifier_threshold=max(
-                    0.0, min(1.0, config.classifier_threshold + random.gauss(0, mutation_rate))
+                    0.0,
+                    min(
+                        1.0,
+                        config.classifier_threshold + random.gauss(0, mutation_rate),
+                    ),
                 ),
                 confidence_threshold=max(
-                    0.0, min(1.0, config.confidence_threshold + random.gauss(0, mutation_rate))
+                    0.0,
+                    min(
+                        1.0,
+                        config.confidence_threshold + random.gauss(0, mutation_rate),
+                    ),
                 ),
                 gray_zone_lower=max(
-                    0.0, min(0.5, config.gray_zone_lower + random.gauss(0, mutation_rate * 0.5))
+                    0.0,
+                    min(
+                        0.5,
+                        config.gray_zone_lower + random.gauss(0, mutation_rate * 0.5),
+                    ),
                 ),
                 gray_zone_upper=max(
-                    0.5, min(1.0, config.gray_zone_upper + random.gauss(0, mutation_rate * 0.5))
+                    0.5,
+                    min(
+                        1.0,
+                        config.gray_zone_upper + random.gauss(0, mutation_rate * 0.5),
+                    ),
                 ),
             )
 
@@ -654,7 +682,9 @@ class MultiObjectiveOptimizer:
 
         return population
 
-    def check_promotion_gate(self, candidate_id: str, baseline_id: str) -> Tuple[bool, List[str]]:
+    def check_promotion_gate(
+        self, candidate_id: str, baseline_id: str
+    ) -> Tuple[bool, List[str]]:
         """Check if candidate passes promotion gate.
 
         Args:
@@ -766,7 +796,9 @@ class MultiObjectiveOptimizer:
 
             # Sample around best configuration with adaptive exploration
             # Higher variance early on, lower variance later
-            exploration_factor = 1.0 - (i - n_initial_random) / (n_iterations - n_initial_random)
+            exploration_factor = 1.0 - (i - n_initial_random) / (
+                n_iterations - n_initial_random
+            )
             variance = 0.1 + 0.2 * exploration_factor  # Variance from 0.1 to 0.3
 
             # Get best config parameters
@@ -812,7 +844,9 @@ class MultiObjectiveOptimizer:
         """Clip value to range."""
         return max(min_val, min(max_val, value))
 
-    def get_best_configuration(self) -> Optional[Tuple[Configuration, PerformanceMetrics]]:
+    def get_best_configuration(
+        self,
+    ) -> Optional[Tuple[Configuration, PerformanceMetrics]]:
         """Get best configuration by fitness score.
 
         Returns:
@@ -822,10 +856,14 @@ class MultiObjectiveOptimizer:
             return None
 
         best_config_id = max(
-            self.metrics_history.keys(), key=lambda cid: self.metrics_history[cid].fitness_score
+            self.metrics_history.keys(),
+            key=lambda cid: self.metrics_history[cid].fitness_score,
         )
 
-        return (self.configurations[best_config_id], self.metrics_history[best_config_id])
+        return (
+            self.configurations[best_config_id],
+            self.metrics_history[best_config_id],
+        )
 
 
 @dataclass
@@ -866,7 +904,10 @@ class AdaptiveThresholdTuner:
     """
 
     def __init__(
-        self, objectives: List[str], learning_rate: float = 0.01, storage_path: Optional[str] = None
+        self,
+        objectives: List[str],
+        learning_rate: float = 0.01,
+        storage_path: Optional[str] = None,
     ):
         """Initialize adaptive threshold tuner.
 
@@ -1037,25 +1078,32 @@ class AdaptiveThresholdTuner:
             outcome: Outcome record
         """
         # Adjust based on objectives and outcome
-        if "minimize_fp" in self.objectives or "minimize_false_positives" in self.objectives:
+        if (
+            "minimize_fp" in self.objectives
+            or "minimize_false_positives" in self.objectives
+        ):
             if outcome.actual_outcome == "false_positive":
                 # Increase threshold to reduce false positives
                 self.global_thresholds["classifier_threshold"] = min(
-                    0.9, self.global_thresholds["classifier_threshold"] + self.learning_rate
+                    0.9,
+                    self.global_thresholds["classifier_threshold"] + self.learning_rate,
                 )
 
         if "maximize_recall" in self.objectives:
             if outcome.actual_outcome == "false_negative":
                 # Decrease threshold to catch more violations
                 self.global_thresholds["classifier_threshold"] = max(
-                    0.1, self.global_thresholds["classifier_threshold"] - self.learning_rate
+                    0.1,
+                    self.global_thresholds["classifier_threshold"] - self.learning_rate,
                 )
 
         # Adjust confidence threshold based on accuracy
         if not outcome.was_correct and outcome.confidence > 0.8:
             # High confidence but wrong - increase confidence threshold
             self.global_thresholds["confidence_threshold"] = min(
-                0.95, self.global_thresholds["confidence_threshold"] + self.learning_rate * 0.5
+                0.95,
+                self.global_thresholds["confidence_threshold"]
+                + self.learning_rate * 0.5,
             )
 
     def get_thresholds(self, agent_id: Optional[str] = None) -> Dict[str, float]:
@@ -1112,7 +1160,10 @@ class AdaptiveThresholdTuner:
             Dictionary of statistics
         """
         total = (
-            self.true_positives + self.true_negatives + self.false_positives + self.false_negatives
+            self.true_positives
+            + self.true_negatives
+            + self.false_positives
+            + self.false_negatives
         )
 
         if total == 0:
@@ -1130,7 +1181,9 @@ class AdaptiveThresholdTuner:
         # Precision: TP / (TP + FP)
         precision = 0.0
         if (self.true_positives + self.false_positives) > 0:
-            precision = self.true_positives / (self.true_positives + self.false_positives)
+            precision = self.true_positives / (
+                self.true_positives + self.false_positives
+            )
 
         # Recall: TP / (TP + FN)
         recall = 0.0
@@ -1295,7 +1348,9 @@ class ABTestingFramework:
 
         return control_variant_id, treatment_variant_id
 
-    def record_variant_metrics(self, variant_id: str, metrics: PerformanceMetrics) -> None:
+    def record_variant_metrics(
+        self, variant_id: str, metrics: PerformanceMetrics
+    ) -> None:
         """Record metrics for a variant.
 
         Args:
@@ -1331,7 +1386,10 @@ class ABTestingFramework:
             conn.close()
 
     def check_statistical_significance(
-        self, control_variant_id: str, treatment_variant_id: str, metric: str = "detection_recall"
+        self,
+        control_variant_id: str,
+        treatment_variant_id: str,
+        metric: str = "detection_recall",
     ) -> Tuple[bool, float, str]:
         """Check if difference between variants is statistically significant.
 
@@ -1355,7 +1413,11 @@ class ABTestingFramework:
             control_metrics.total_cases < self.min_sample_size
             or treatment_metrics.total_cases < self.min_sample_size
         ):
-            return False, 1.0, f"Need at least {self.min_sample_size} samples per variant"
+            return (
+                False,
+                1.0,
+                f"Need at least {self.min_sample_size} samples per variant",
+            )
 
         # Get metric values
         if metric == "detection_recall":

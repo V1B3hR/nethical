@@ -50,7 +50,9 @@ class BackendInstance:
 
         # Update average response time using exponential moving average
         alpha = 0.1  # Smoothing factor
-        self.avg_response_time = alpha * response_time + (1 - alpha) * self.avg_response_time
+        self.avg_response_time = (
+            alpha * response_time + (1 - alpha) * self.avg_response_time
+        )
 
     def get_health_score(self) -> float:
         """
@@ -184,7 +186,9 @@ class LoadBalancer:
             logger.info(f"Removed instance {instance_id}")
 
     def get_instance(
-        self, region_id: Optional[str] = None, exclude_instances: Optional[List[str]] = None
+        self,
+        region_id: Optional[str] = None,
+        exclude_instances: Optional[List[str]] = None,
     ) -> Optional[BackendInstance]:
         """
         Get next instance based on strategy.
@@ -240,7 +244,9 @@ class LoadBalancer:
         """Select instance with least active connections."""
         return min(instances, key=lambda x: x.active_connections)
 
-    def _weighted_round_robin(self, instances: List[BackendInstance]) -> BackendInstance:
+    def _weighted_round_robin(
+        self, instances: List[BackendInstance]
+    ) -> BackendInstance:
         """Weighted round-robin selection."""
         # Create weighted list
         weighted_instances = []
@@ -294,7 +300,9 @@ class LoadBalancer:
 
         for attempt in range(self.max_retries + 1):
             # Get instance
-            instance = self.get_instance(region_id=region_id, exclude_instances=excluded_instances)
+            instance = self.get_instance(
+                region_id=region_id, exclude_instances=excluded_instances
+            )
 
             if not instance:
                 logger.error("No available instances for request")
@@ -365,8 +373,12 @@ class LoadBalancer:
         Returns:
             Statistics dictionary
         """
-        healthy_instances = sum(1 for inst in self.instances.values() if inst.is_healthy)
-        total_connections = sum(inst.active_connections for inst in self.instances.values())
+        healthy_instances = sum(
+            1 for inst in self.instances.values() if inst.is_healthy
+        )
+        total_connections = sum(
+            inst.active_connections for inst in self.instances.values()
+        )
 
         instance_stats = []
         for inst in self.instances.values():
@@ -395,9 +407,13 @@ class LoadBalancer:
             "total_requests": self.total_requests,
             "failed_requests": self.failed_requests,
             "error_rate": (
-                self.failed_requests / self.total_requests * 100 if self.total_requests > 0 else 0
+                self.failed_requests / self.total_requests * 100
+                if self.total_requests > 0
+                else 0
             ),
             "active_connections": total_connections,
             "instances": instance_stats,
-            "regions": {region: len(instances) for region, instances in self.regions.items()},
+            "regions": {
+                region: len(instances) for region, instances in self.regions.items()
+            },
         }

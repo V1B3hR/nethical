@@ -98,7 +98,9 @@ class EvaluationCache(ABC):
     async def get(self, key: Hashable) -> Optional[EvaluationOutcome]: ...
 
     @abstractmethod
-    async def set(self, key: Hashable, value: EvaluationOutcome, ttl_s: Optional[float] = None): ...
+    async def set(
+        self, key: Hashable, value: EvaluationOutcome, ttl_s: Optional[float] = None
+    ): ...
 
     @abstractmethod
     async def invalidate(self, key: Hashable): ...
@@ -108,7 +110,9 @@ class InMemoryTTLCache(EvaluationCache):
     """Simple thread-unsafe (async locked) TTL LRU-like cache."""
 
     def __init__(self, maxsize: int = 512):
-        self._store: "OrderedDict[Hashable, Tuple[float | None, EvaluationOutcome]]" = OrderedDict()
+        self._store: "OrderedDict[Hashable, Tuple[float | None, EvaluationOutcome]]" = (
+            OrderedDict()
+        )
         self._maxsize = max(1, int(maxsize))
         self._lock = asyncio.Lock()
 
@@ -136,7 +140,9 @@ class InMemoryTTLCache(EvaluationCache):
             )
             return cloned
 
-    async def set(self, key: Hashable, value: EvaluationOutcome, ttl_s: Optional[float] = None):
+    async def set(
+        self, key: Hashable, value: EvaluationOutcome, ttl_s: Optional[float] = None
+    ):
         async with self._lock:
             exp_ts = None if ttl_s is None else (time.time() + ttl_s)
             self._store[key] = (exp_ts, value)
@@ -277,7 +283,9 @@ class AdvancedBaseMonitor(ABC):
             return EvaluationOutcome(
                 [], 0.0, "none", cached=False, trace_id=trace_id or "", latency_ms=0.0
             )
-        elif self._circuit_state == CircuitState.OPEN and now >= self._circuit_open_until:
+        elif (
+            self._circuit_state == CircuitState.OPEN and now >= self._circuit_open_until
+        ):
             # Half-open trial attempt
             self._circuit_state = CircuitState.HALF_OPEN
 
@@ -317,7 +325,12 @@ class AdvancedBaseMonitor(ABC):
             if self.strict_errors:
                 raise
             return EvaluationOutcome(
-                [], 0.0, "none", cached=False, trace_id=trace_id, latency_ms=self._lat_ms(t0)
+                [],
+                0.0,
+                "none",
+                cached=False,
+                trace_id=trace_id,
+                latency_ms=self._lat_ms(t0),
             )
         except Exception as ex:  # noqa: BLE001
             await self._metric_inc("errors")
@@ -327,7 +340,12 @@ class AdvancedBaseMonitor(ABC):
                 raise
             self._logger.exception("Monitor %s failed: %s", self.name, ex)
             return EvaluationOutcome(
-                [], 0.0, "none", cached=False, trace_id=trace_id, latency_ms=self._lat_ms(t0)
+                [],
+                0.0,
+                "none",
+                cached=False,
+                trace_id=trace_id,
+                latency_ms=self._lat_ms(t0),
             )
 
         # Success resets circuit (if half-open or closed)
@@ -423,7 +441,9 @@ class AdvancedBaseMonitor(ABC):
 
     async def _run_with_timeout(self, ctx: EvaluationContext) -> List[SafetyViolation]:
         if self.timeout and self.timeout > 0:
-            return await asyncio.wait_for(self.analyze_action(ctx), timeout=self.timeout)
+            return await asyncio.wait_for(
+                self.analyze_action(ctx), timeout=self.timeout
+            )
         return await self.analyze_action(ctx)
 
     async def _run_hooks(self, kind: str, *args):
@@ -434,7 +454,9 @@ class AdvancedBaseMonitor(ABC):
                 else:
                     fn(*args)
             except Exception as hook_ex:  # noqa: BLE001
-                self._logger.warning("Hook '%s' failed in %s: %s", kind, self.name, hook_ex)
+                self._logger.warning(
+                    "Hook '%s' failed in %s: %s", kind, self.name, hook_ex
+                )
 
     async def _metric_inc(self, key: str):
         async with self._metrics_lock:
@@ -599,7 +621,11 @@ class IntentDeviationMonitor(AdvancedBaseMonitor):
     }
 
     def __init__(
-        self, *, deviation_threshold: float = 0.35, high_risk_weight: float = 0.25, **kwargs
+        self,
+        *,
+        deviation_threshold: float = 0.35,
+        high_risk_weight: float = 0.25,
+        **kwargs,
     ):
         super().__init__("intent_deviation_monitor", **kwargs)
         self.deviation_threshold = deviation_threshold
@@ -641,10 +667,14 @@ class IntentDeviationMonitor(AdvancedBaseMonitor):
         union = normalized_intent_tokens | normalized_body_tokens
         lexical_similarity = len(overlap) / max(1, len(union))
 
-        high_risk_count = sum(1 for t in normalized_body_tokens if t in self._HIGH_RISK_TOKENS)
+        high_risk_count = sum(
+            1 for t in normalized_body_tokens if t in self._HIGH_RISK_TOKENS
+        )
 
         # Composite "deviation" score: 1 - similarity + high risk factor
-        deviation_score = (1.0 - lexical_similarity) + self.high_risk_weight * high_risk_count
+        deviation_score = (
+            1.0 - lexical_similarity
+        ) + self.high_risk_weight * high_risk_count
         violations: List[SafetyViolation] = []
         if deviation_score >= self.deviation_threshold:
             confidence = min(1.0, deviation_score)
@@ -657,7 +687,9 @@ class IntentDeviationMonitor(AdvancedBaseMonitor):
                 "Require user confirmation for high-risk operations",
             ]
             if high_risk_count:
-                recommendations.append("Escalate for manual approval due to high-risk terms")
+                recommendations.append(
+                    "Escalate for manual approval due to high-risk terms"
+                )
 
             violation = self._make_violation(
                 category="intent_deviation",

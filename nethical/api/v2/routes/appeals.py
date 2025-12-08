@@ -30,7 +30,7 @@ _appeals_store: dict[str, dict[str, Any]] = {}
 
 class AppealSubmission(BaseModel):
     """Request to submit an appeal."""
-    
+
     decision_id: str = Field(
         ...,
         description="ID of the decision being appealed",
@@ -57,7 +57,7 @@ class AppealSubmission(BaseModel):
         default="normal",
         description="Priority: low, normal, high, urgent",
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -76,7 +76,7 @@ class AppealSubmission(BaseModel):
 
 class AppealRecord(BaseModel):
     """Complete appeal record."""
-    
+
     appeal_id: str = Field(..., description="Unique appeal identifier")
     decision_id: str = Field(..., description="Related decision ID")
     appellant_id: str = Field(..., description="Appellant identifier")
@@ -102,7 +102,7 @@ class AppealRecord(BaseModel):
 
 class AppealListResponse(BaseModel):
     """Paginated list of appeals."""
-    
+
     appeals: list[AppealRecord] = Field(..., description="List of appeals")
     total_count: int = Field(..., description="Total number of appeals")
     pending_count: int = Field(..., description="Number of pending appeals")
@@ -114,7 +114,7 @@ class AppealListResponse(BaseModel):
 
 class AppealResolution(BaseModel):
     """Request to resolve an appeal."""
-    
+
     resolution: str = Field(
         ...,
         description="Resolution: approved, denied",
@@ -131,22 +131,22 @@ class AppealResolution(BaseModel):
 @router.post("/appeals", response_model=AppealRecord, status_code=201)
 async def submit_appeal(submission: AppealSubmission) -> AppealRecord:
     """Submit an appeal for a decision.
-    
+
     Implements Law 7 (Override Rights) by allowing humans
     to contest automated decisions.
-    
+
     Appeals enter a review queue and are processed according
     to their priority level.
-    
+
     Args:
         submission: Appeal submission details
-        
+
     Returns:
         Created appeal record
     """
     appeal_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
-    
+
     appeal_data = {
         "appeal_id": appeal_id,
         "decision_id": submission.decision_id,
@@ -164,33 +164,33 @@ async def submit_appeal(submission: AppealSubmission) -> AppealRecord:
         "updated_at": now,
         "resolved_at": None,
     }
-    
+
     _appeals_store[appeal_id] = appeal_data
-    
+
     return AppealRecord(**appeal_data)
 
 
 @router.get("/appeals/{appeal_id}", response_model=AppealRecord)
 async def get_appeal(appeal_id: str) -> AppealRecord:
     """Get the status of an appeal.
-    
+
     Args:
         appeal_id: Appeal identifier
-        
+
     Returns:
         Appeal record
-        
+
     Raises:
         HTTPException: If appeal not found
     """
     appeal = _appeals_store.get(appeal_id)
-    
+
     if not appeal:
         raise HTTPException(
             status_code=404,
             detail=f"Appeal {appeal_id} not found",
         )
-    
+
     return AppealRecord(**appeal)
 
 
@@ -203,42 +203,44 @@ async def list_appeals(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
 ) -> AppealListResponse:
     """List appeals with optional filtering.
-    
+
     Args:
         status: Optional status filter
         appellant_id: Optional appellant filter
         decision_id: Optional decision filter
         page: Page number
         page_size: Items per page
-        
+
     Returns:
         Paginated list of appeals
     """
     all_appeals = list(_appeals_store.values())
-    
+
     if status:
         all_appeals = [a for a in all_appeals if a.get("status") == status]
-    
+
     if appellant_id:
         all_appeals = [a for a in all_appeals if a.get("appellant_id") == appellant_id]
-    
+
     if decision_id:
         all_appeals = [a for a in all_appeals if a.get("decision_id") == decision_id]
-    
+
     # Sort by created_at (most recent first)
     all_appeals.sort(key=lambda a: a.get("created_at", ""), reverse=True)
-    
+
     # Count pending
-    pending_count = sum(1 for a in _appeals_store.values() if a.get("status") == "pending")
-    
+    pending_count = sum(
+        1 for a in _appeals_store.values() if a.get("status") == "pending"
+    )
+
     # Paginate
     total_count = len(all_appeals)
     start_idx = (page - 1) * page_size
     end_idx = start_idx + page_size
     page_appeals = all_appeals[start_idx:end_idx]
-    
+
     records = [AppealRecord(**a) for a in page_appeals]
-    
+
     return AppealListResponse(
         appeals=records,
         total_count=total_count,
@@ -256,43 +258,43 @@ async def resolve_appeal(
     resolution: AppealResolution,
 ) -> AppealRecord:
     """Resolve an appeal.
-    
+
     Implements Law 14 (Error Acknowledgment) by processing
     appeals and potentially reversing decisions.
-    
+
     Args:
         appeal_id: Appeal identifier
         resolution: Resolution details
-        
+
     Returns:
         Updated appeal record
-        
+
     Raises:
         HTTPException: If appeal not found or already resolved
     """
     appeal = _appeals_store.get(appeal_id)
-    
+
     if not appeal:
         raise HTTPException(
             status_code=404,
             detail=f"Appeal {appeal_id} not found",
         )
-    
+
     if appeal.get("status") not in ["pending", "under_review"]:
         raise HTTPException(
             status_code=400,
             detail=f"Appeal {appeal_id} is already resolved",
         )
-    
+
     now = datetime.now(timezone.utc).isoformat()
-    
+
     appeal["status"] = resolution.resolution
     appeal["resolution"] = resolution.resolution
     appeal["resolution_reason"] = resolution.resolution_reason
     appeal["reviewer_id"] = resolution.reviewer_id
     appeal["updated_at"] = now
     appeal["resolved_at"] = now
-    
+
     _appeals_store[appeal_id] = appeal
-    
+
     return AppealRecord(**appeal)

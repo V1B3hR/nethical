@@ -26,11 +26,19 @@ router = APIRouter(prefix="/kill-switch", tags=["kill-switch"])
 class ShutdownRequest(BaseModel):
     """Request model for emergency shutdown."""
 
-    mode: str = Field(default="graceful", description="Shutdown mode: immediate, graceful, or staged")
+    mode: str = Field(
+        default="graceful", description="Shutdown mode: immediate, graceful, or staged"
+    )
     cohort: Optional[str] = Field(default=None, description="Target cohort (optional)")
-    agent_id: Optional[str] = Field(default=None, description="Target agent ID (optional)")
-    sever_actuators: bool = Field(default=True, description="Whether to sever actuator connections")
-    isolate_hardware: bool = Field(default=False, description="Whether to activate hardware isolation")
+    agent_id: Optional[str] = Field(
+        default=None, description="Target agent ID (optional)"
+    )
+    sever_actuators: bool = Field(
+        default=True, description="Whether to sever actuator connections"
+    )
+    isolate_hardware: bool = Field(
+        default=False, description="Whether to activate hardware isolation"
+    )
 
 
 class ShutdownResponse(BaseModel):
@@ -50,25 +58,40 @@ class AgentRegistrationRequest(BaseModel):
 
     agent_id: str = Field(..., description="Unique agent identifier")
     cohort: str = Field(..., description="Cohort the agent belongs to")
-    priority: int = Field(default=0, description="Shutdown priority (higher = more critical)")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    priority: int = Field(
+        default=0, description="Shutdown priority (higher = more critical)"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class ActuatorRegistrationRequest(BaseModel):
     """Request model for actuator registration."""
 
     actuator_id: str = Field(..., description="Unique actuator identifier")
-    connection_type: str = Field(..., description="Connection type (network_tcp, serial, etc.)")
+    connection_type: str = Field(
+        ..., description="Connection type (network_tcp, serial, etc.)"
+    )
     agent_id: str = Field(..., description="ID of the controlling agent")
-    safe_state_config: Dict[str, Any] = Field(default_factory=dict, description="Safe state configuration")
-    metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
+    safe_state_config: Dict[str, Any] = Field(
+        default_factory=dict, description="Safe state configuration"
+    )
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Additional metadata"
+    )
 
 
 class HardwareIsolationRequest(BaseModel):
     """Request model for hardware isolation."""
 
-    level: str = Field(default="network_only", description="Isolation level: network_only, full_isolation, or airgap")
-    dry_run: bool = Field(default=False, description="If True, simulate without making changes")
+    level: str = Field(
+        default="network_only",
+        description="Isolation level: network_only, full_isolation, or airgap",
+    )
+    dry_run: bool = Field(
+        default=False, description="If True, simulate without making changes"
+    )
 
 
 class SignerRegistrationRequest(BaseModel):
@@ -81,10 +104,15 @@ class SignerRegistrationRequest(BaseModel):
 class SignedCommandRequest(BaseModel):
     """Request model for creating and executing signed commands."""
 
-    command_type: str = Field(..., description="Command type: kill_all, kill_cohort, kill_agent, sever_actuators, hardware_isolate")
+    command_type: str = Field(
+        ...,
+        description="Command type: kill_all, kill_cohort, kill_agent, sever_actuators, hardware_isolate",
+    )
     target: Optional[str] = Field(default=None, description="Target cohort or agent ID")
     ttl_seconds: int = Field(default=300, description="Time-to-live in seconds")
-    signatures: List[Dict[str, str]] = Field(default_factory=list, description="List of {signer_id, signature} pairs")
+    signatures: List[Dict[str, str]] = Field(
+        default_factory=list, description="List of {signer_id, signature} pairs"
+    )
 
 
 class StatusResponse(BaseModel):
@@ -171,12 +199,16 @@ async def emergency_shutdown(
 
 
 @router.post("/reset")
-async def reset_kill_switch(protocol=Depends(get_kill_switch_protocol)) -> Dict[str, Any]:
+async def reset_kill_switch(
+    protocol=Depends(get_kill_switch_protocol),
+) -> Dict[str, Any]:
     """Reset the kill switch system after activation."""
     success = protocol.reset()
     return {
         "success": success,
-        "message": "Kill switch reset successfully" if success else "Kill switch reset failed",
+        "message": (
+            "Kill switch reset successfully" if success else "Kill switch reset failed"
+        ),
     }
 
 

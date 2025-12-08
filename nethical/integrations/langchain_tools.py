@@ -60,7 +60,9 @@ from ..core.models import Decision, ActionType, AgentAction
 class NethicalGuardInput(BaseModel):
     """Input schema for NethicalGuardTool."""
 
-    action: str = Field(description="The action/content to evaluate for safety and ethics")
+    action: str = Field(
+        description="The action/content to evaluate for safety and ethics"
+    )
     agent_id: str = Field(
         default="default_agent", description="Agent identifier for tracking"
     )
@@ -136,8 +138,12 @@ class NethicalGuardTool(BaseTool):
         self.return_detailed_response = kwargs.pop(
             "return_detailed_response", self.return_detailed_response
         )
-        self.enable_shadow_mode = kwargs.pop("enable_shadow_mode", self.enable_shadow_mode)
-        self.enable_ml_blending = kwargs.pop("enable_ml_blending", self.enable_ml_blending)
+        self.enable_shadow_mode = kwargs.pop(
+            "enable_shadow_mode", self.enable_shadow_mode
+        )
+        self.enable_ml_blending = kwargs.pop(
+            "enable_ml_blending", self.enable_ml_blending
+        )
         self.enable_anomaly_detection = kwargs.pop(
             "enable_anomaly_detection", self.enable_anomaly_detection
         )
@@ -449,9 +455,7 @@ class LlamaGuardChain:
             self.chain = LLMChain(llm=llm, prompt=prompt)
 
         except ImportError as e:
-            raise ImportError(
-                f"Local LlamaGuard requires transformers and torch: {e}"
-            )
+            raise ImportError(f"Local LlamaGuard requires transformers and torch: {e}")
 
     def _init_api_chain(self):
         """Initialize API-based LlamaGuard chain."""
@@ -545,7 +549,9 @@ def chain_guards(
 
     # Parse Nethical decision
     if "BLOCK" in nethical_result or "ESCALATE" in nethical_result:
-        results["final_decision"] = "BLOCK" if "BLOCK" in nethical_result else "ESCALATE"
+        results["final_decision"] = (
+            "BLOCK" if "BLOCK" in nethical_result else "ESCALATE"
+        )
         results["blocked_by"] = "nethical"
     elif "WARN" in nethical_result:
         results["final_decision"] = "WARN"

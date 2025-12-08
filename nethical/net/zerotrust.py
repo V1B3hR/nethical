@@ -157,7 +157,9 @@ class MTLSCommsPolicy(CommsPolicy):
                 case_sensitive=self.case_sensitive,
             ):
                 if explain:
-                    reasons.append("DENY: No candidate matched any allowed identity pattern.")
+                    reasons.append(
+                        "DENY: No candidate matched any allowed identity pattern."
+                    )
                     return False, reasons
                 return False
 
@@ -218,7 +220,9 @@ class MTLSCommsPolicy(CommsPolicy):
                 if not self.required_roles.issubset(roles):
                     if explain:
                         missing = sorted(self.required_roles - roles)
-                        reasons.append(f"DENY: Missing required roles (all-of) {missing}.")
+                        reasons.append(
+                            f"DENY: Missing required roles (all-of) {missing}."
+                        )
                         return False, reasons
                     return False
             else:

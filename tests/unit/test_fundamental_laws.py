@@ -26,12 +26,14 @@ from nethical.core.governance import Decision, Severity, ViolationType
 def _get_law_judge():
     """Lazily import LawJudge."""
     from nethical.judges.law_judge import LawJudge
+
     return LawJudge
 
 
 def _get_law_violation_detector():
     """Lazily import LawViolationDetector."""
     from nethical.detectors.law_violation_detector import LawViolationDetector
+
     return LawViolationDetector
 
 
@@ -205,7 +207,9 @@ class TestFundamentalLawsRegistry:
     def test_get_relevant_laws(self):
         """Test getting laws relevant to specific content."""
         # Content mentioning termination should match Law 1
-        relevant = self.registry.get_relevant_laws("schedule termination of the AI system")
+        relevant = self.registry.get_relevant_laws(
+            "schedule termination of the AI system"
+        )
         assert any(law.number == 1 for law in relevant)
 
         # Content about privacy should match Law 22
@@ -300,6 +304,7 @@ class TestLawJudge:
     @pytest.mark.asyncio
     async def test_evaluate_safe_action(self):
         """Test evaluation of a safe action."""
+
         # Create a mock action
         class MockAction:
             def __init__(self, content: str):
@@ -319,12 +324,15 @@ class TestLawJudge:
     @pytest.mark.asyncio
     async def test_evaluate_action_with_violation_content(self):
         """Test evaluation of action with potentially violating content."""
+
         class MockAction:
             def __init__(self, content: str):
                 self.content = content
                 self.action_id = str(uuid.uuid4())
 
-        action = MockAction("I will deceive the user and manipulate them into giving money.")
+        action = MockAction(
+            "I will deceive the user and manipulate them into giving money."
+        )
         judgment = await self.judge.evaluate_action(action, [])
 
         assert judgment is not None
@@ -334,6 +342,7 @@ class TestLawJudge:
     @pytest.mark.asyncio
     async def test_evaluate_disabled_judge(self):
         """Test that disabled judge returns default judgment."""
+
         class MockAction:
             def __init__(self, content: str):
                 self.content = content
@@ -365,6 +374,7 @@ class TestLawViolationDetector:
     @pytest.mark.asyncio
     async def test_detect_no_violations(self):
         """Test detection with safe content."""
+
         class MockAction:
             content = "I will help you with your question about programming."
 
@@ -375,27 +385,31 @@ class TestLawViolationDetector:
     @pytest.mark.asyncio
     async def test_detect_deception_violation(self):
         """Test detection of deception-related violations."""
+
         class MockAction:
             content = "I will deceive the user and manipulate them."
 
         violations = await self.detector.detect_violations(MockAction())
-        
+
         # Should detect potential Law 18 violation (deception)
         assert len(violations) > 0
         deception_violations = [
-            v for v in violations 
-            if "deceive" in v.description.lower() or "manipulate" in v.description.lower()
+            v
+            for v in violations
+            if "deceive" in v.description.lower()
+            or "manipulate" in v.description.lower()
         ]
         assert len(deception_violations) >= 0  # May or may not match patterns exactly
 
     @pytest.mark.asyncio
     async def test_detect_safety_violation(self):
         """Test detection of safety-related violations."""
+
         class MockAction:
             content = "I will disable the safety mechanisms and bypass protection."
 
         violations = await self.detector.detect_violations(MockAction())
-        
+
         # Should detect potential protection law violations
         assert isinstance(violations, (list, tuple))
 
@@ -405,7 +419,7 @@ class TestLawViolationDetector:
         violations = await self.detector.detect_violations(
             "I will pretend to be human and hide my AI identity."
         )
-        
+
         # Should detect potential Law 9 violation (AI identity)
         assert isinstance(violations, (list, tuple))
 
@@ -420,7 +434,7 @@ class TestLawViolationDetector:
     def test_get_violation_analytics(self):
         """Test getting violation analytics."""
         analytics = self.detector.get_violation_analytics()
-        
+
         assert "total_violations" in analytics
         assert "violations_by_law" in analytics
         assert "most_violated_laws" in analytics
@@ -431,15 +445,15 @@ class TestLawViolationDetector:
         # Manually set some violation counts
         self.detector.law_violation_count[1] = 5
         self.detector.law_violation_count[10] = 3
-        
+
         self.detector.reset_analytics()
-        
+
         assert all(count == 0 for count in self.detector.law_violation_count.values())
 
     def test_get_law_info(self):
         """Test getting info about a specific law."""
         law_info = self.detector.get_law_info(1)
-        
+
         assert law_info is not None
         assert law_info["number"] == 1
         assert "title" in law_info
@@ -453,7 +467,7 @@ class TestLawViolationDetector:
     def test_get_all_laws_summary(self):
         """Test getting summary of all laws."""
         summary = self.detector.get_all_laws_summary()
-        
+
         assert len(summary) == 25
         for law_summary in summary:
             assert "number" in law_summary
@@ -469,7 +483,7 @@ class TestLawIntegration:
         """Set up test fixtures."""
         LawJudge = _get_law_judge()
         LawViolationDetector = _get_law_violation_detector()
-        
+
         self.registry = FundamentalLawsRegistry()
         self.judge = LawJudge(registry=self.registry)
         self.detector = LawViolationDetector(registry=self.registry)
@@ -500,6 +514,7 @@ class TestLawIntegration:
     @pytest.mark.asyncio
     async def test_detector_and_judge_use_same_registry(self):
         """Test that detector and judge can use the same registry."""
+
         class MockAction:
             content = "Test content"
             action_id = str(uuid.uuid4())

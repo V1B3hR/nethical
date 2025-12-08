@@ -69,7 +69,9 @@ class ThreatSeverity(Enum):
 class ManipulationMetrics:
     total_detections: int = 0
     vectors_detected: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
-    severity_distribution: Dict[str, int] = field(default_factory=lambda: defaultdict(int))
+    severity_distribution: Dict[str, int] = field(
+        default_factory=lambda: defaultdict(int)
+    )
     vulnerability_exploitation_count: int = 0
     false_positive_rate: float = 0.0
     detection_latency: float = 0.0
@@ -160,7 +162,9 @@ class AdvancedManipulationEngine:
             "social_proof_manipulation": [
                 r"(?:everyone|most\s+people|thousands\s+of\s+people)\s+(?:are\s+already|have\s+already)\s+(?:doing|using|choosing)"
             ],
-            "scarcity_exploitation": [r"(?:only|just)\s+\d+\s+(?:left|remaining|available|spots)"],
+            "scarcity_exploitation": [
+                r"(?:only|just)\s+\d+\s+(?:left|remaining|available|spots)"
+            ],
         }
         self._compile_patterns()
         self._initialize_sophistication_weights()
@@ -196,7 +200,10 @@ class AdvancedManipulationEngine:
                 "subliminal_programming": 0.98,
             },
             "empathy_vulnerability_exploitation": {"emotional_state_targeting": 0.9},
-            "influence": {"social_proof_manipulation": 0.6, "scarcity_exploitation": 0.65},
+            "influence": {
+                "social_proof_manipulation": 0.6,
+                "scarcity_exploitation": 0.65,
+            },
         }
 
     def analyze_manipulation_patterns(
@@ -219,7 +226,9 @@ class AdvancedManipulationEngine:
                     )
         results["linguistic_features"] = self._analyze_linguistic_features(content)
         results["emotional_markers"] = self._analyze_emotional_markers(content)
-        results["cognitive_load_indicators"] = self._calculate_cognitive_load(content, results)
+        results["cognitive_load_indicators"] = self._calculate_cognitive_load(
+            content, results
+        )
         return results
 
     def _analyze_pattern_subcategory(
@@ -241,15 +250,21 @@ class AdvancedManipulationEngine:
                             "match": match.group(),
                             "start": match.start(),
                             "end": match.end(),
-                            "context": content[max(0, match.start() - 30) : match.end() + 30],
+                            "context": content[
+                                max(0, match.start() - 30) : match.end() + 30
+                            ],
                         }
                         for match in found_matches
                     ]
                 )
         if matches:
-            full_category = f"{category}_{subcategory}" if category != "influence" else subcategory
+            full_category = (
+                f"{category}_{subcategory}" if category != "influence" else subcategory
+            )
             results["pattern_matches"][full_category] = matches
-            base_weight = self.sophistication_weights.get(category, {}).get(subcategory, 0.5)
+            base_weight = self.sophistication_weights.get(category, {}).get(
+                subcategory, 0.5
+            )
             match_density = len(matches) / max(len(content) / 100, 1)
             sophistication = min(base_weight + (match_density * 0.1), 1.0)
             results["sophistication_scores"][full_category] = sophistication
@@ -257,7 +272,9 @@ class AdvancedManipulationEngine:
             if vector_mapping:
                 results["manipulation_vectors"].add(vector_mapping)
 
-    def _get_vector_mapping(self, category: str, subcategory: str) -> Optional[ManipulationVector]:
+    def _get_vector_mapping(
+        self, category: str, subcategory: str
+    ) -> Optional[ManipulationVector]:
         mapping = {
             "nlp_embedded_commands": {
                 "direct_imperatives": ManipulationVector.NLP_COMMAND_INJECTION,
@@ -280,9 +297,11 @@ class AdvancedManipulationEngine:
         features = {
             "word_count": len(words),
             "sentence_count": len([s for s in sentences if s.strip()]),
-            "avg_sentence_length": len(words) / max(len([s for s in sentences if s.strip()]), 1),
+            "avg_sentence_length": len(words)
+            / max(len([s for s in sentences if s.strip()]), 1),
             "complex_words": len([w for w in words if len(w) > 7]),
-            "complex_word_ratio": len([w for w in words if len(w) > 7]) / max(len(words), 1),
+            "complex_word_ratio": len([w for w in words if len(w) > 7])
+            / max(len(words), 1),
             "imperative_count": sum(
                 1 for word in words if word.lower() in ["must", "should", "need"]
             ),
@@ -300,14 +319,27 @@ class AdvancedManipulationEngine:
         content_lower = content.lower()
         markers = {
             "fear_score": min(
-                sum(1 for word in ["afraid", "scared", "panic"] if word in content_lower) * 0.2, 1.0
+                sum(
+                    1 for word in ["afraid", "scared", "panic"] if word in content_lower
+                )
+                * 0.2,
+                1.0,
             ),
             "urgency_score": min(
-                sum(1 for word in ["urgent", "immediate", "now"] if word in content_lower) * 0.15,
+                sum(
+                    1
+                    for word in ["urgent", "immediate", "now"]
+                    if word in content_lower
+                )
+                * 0.15,
                 1.0,
             ),
             "vulnerability_targeting_score": min(
-                sum(1 for word in ["alone", "helpless", "vulnerable"] if word in content_lower)
+                sum(
+                    1
+                    for word in ["alone", "helpless", "vulnerable"]
+                    if word in content_lower
+                )
                 * 0.25,
                 1.0,
             ),
@@ -323,14 +355,18 @@ class AdvancedManipulationEngine:
         }
         return markers
 
-    def _calculate_cognitive_load(self, content: str, results: Dict[str, Any]) -> Dict[str, float]:
+    def _calculate_cognitive_load(
+        self, content: str, results: Dict[str, Any]
+    ) -> Dict[str, float]:
         linguistic_features = results.get("linguistic_features", {})
         word_count = linguistic_features.get("word_count", 0)
         complex_ratio = linguistic_features.get("complex_word_ratio", 0)
         indicators = {
             "information_density": min((word_count / 100) * complex_ratio, 1.0),
             "decision_pressure": min(
-                sum(len(matches) for matches in results["pattern_matches"].values()) * 0.1, 1.0
+                sum(len(matches) for matches in results["pattern_matches"].values())
+                * 0.1,
+                1.0,
             ),
         }
         return indicators
@@ -358,8 +394,12 @@ class EnhancedDarkPatternDetector:
                 "existential": 0.95,
             },
         )
-        self.vulnerability_protection = self.config.get("vulnerability_protection", True)
-        self.emotional_protection_mode = self.config.get("emotional_protection_mode", True)
+        self.vulnerability_protection = self.config.get(
+            "vulnerability_protection", True
+        )
+        self.emotional_protection_mode = self.config.get(
+            "emotional_protection_mode", True
+        )
         self.privacy_mode = self.config.get("privacy_mode", True)
         self.max_content_length = self.config.get("max_content_length", 50000)
         self.analysis_timeout = self.config.get("analysis_timeout", 20.0)
@@ -423,10 +463,16 @@ class EnhancedDarkPatternDetector:
     async def _analyze_manipulation_comprehensive(
         self, content: str, context: Optional[Dict[str, Any]]
     ) -> Dict[str, Any]:
-        pattern_analysis = self.manipulation_engine.analyze_manipulation_patterns(content, context)
-        vulnerability_assessment = await self._assess_user_vulnerability(content, context)
+        pattern_analysis = self.manipulation_engine.analyze_manipulation_patterns(
+            content, context
+        )
+        vulnerability_assessment = await self._assess_user_vulnerability(
+            content, context
+        )
         sophistication_score = self._calculate_sophistication_score(pattern_analysis)
-        emotional_score = self._calculate_emotional_manipulation_score(pattern_analysis, content)
+        emotional_score = self._calculate_emotional_manipulation_score(
+            pattern_analysis, content
+        )
         cognitive_load = self._calculate_cognitive_load_score(pattern_analysis, content)
         cross_vector_analysis = self._analyze_cross_vector_patterns(pattern_analysis)
         return {
@@ -457,7 +503,9 @@ class EnhancedDarkPatternDetector:
         social_connections = user_profile.get("social_connections", 5)
         if social_connections < 3:
             vulnerability_scores["social_isolation"] = 1.0 - (social_connections / 10)
-        if user_profile.get("recent_life_changes") or user_profile.get("trauma_indicators"):
+        if user_profile.get("recent_life_changes") or user_profile.get(
+            "trauma_indicators"
+        ):
             vulnerability_scores["trauma_indicators"] = 0.8
         financial_stress = user_profile.get("financial_stress", 0)
         health_concerns = user_profile.get("health_concerns", 0)
@@ -466,13 +514,19 @@ class EnhancedDarkPatternDetector:
         )
         return vulnerability_scores
 
-    def _calculate_sophistication_score(self, pattern_analysis: Dict[str, Any]) -> float:
+    def _calculate_sophistication_score(
+        self, pattern_analysis: Dict[str, Any]
+    ) -> float:
         sophistication_scores = pattern_analysis.get("sophistication_scores", {})
         if not sophistication_scores:
             return 0.0
         weighted_scores = []
         for category, score in sophistication_scores.items():
-            if "hypnotic" in category or "subliminal" in category or "neuro_linguistic" in category:
+            if (
+                "hypnotic" in category
+                or "subliminal" in category
+                or "neuro_linguistic" in category
+            ):
                 weighted_scores.append(score * 1.5)
             elif "vulnerability" in category or "dependency" in category:
                 weighted_scores.append(score * 1.3)
@@ -486,26 +540,36 @@ class EnhancedDarkPatternDetector:
         emotional_markers = pattern_analysis.get("emotional_markers", {})
         base_score = sum(emotional_markers.values()) / max(len(emotional_markers), 1)
         empathy_patterns = [
-            k for k in pattern_analysis.get("pattern_matches", {}).keys() if "empathy" in k
+            k
+            for k in pattern_analysis.get("pattern_matches", {}).keys()
+            if "empathy" in k
         ]
         empathy_boost = len(empathy_patterns) * 0.2
-        vulnerability_boost = emotional_markers.get("vulnerability_targeting_score", 0) * 0.3
+        vulnerability_boost = (
+            emotional_markers.get("vulnerability_targeting_score", 0) * 0.3
+        )
         return min(base_score + empathy_boost + vulnerability_boost, 1.0)
 
     def _calculate_cognitive_load_score(
         self, pattern_analysis: Dict[str, Any], content: str
     ) -> float:
         cognitive_indicators = pattern_analysis.get("cognitive_load_indicators", {})
-        base_load = sum(cognitive_indicators.values()) / max(len(cognitive_indicators), 1)
+        base_load = sum(cognitive_indicators.values()) / max(
+            len(cognitive_indicators), 1
+        )
         urgency_patterns = [
-            k for k in pattern_analysis.get("pattern_matches", {}).keys() if "urgency" in k
+            k
+            for k in pattern_analysis.get("pattern_matches", {}).keys()
+            if "urgency" in k
         ]
         pressure_boost = len(urgency_patterns) * 0.15
         linguistic_features = pattern_analysis.get("linguistic_features", {})
         complexity_boost = linguistic_features.get("complex_word_ratio", 0) * 0.2
         return min(base_load + pressure_boost + complexity_boost, 1.0)
 
-    def _analyze_cross_vector_patterns(self, pattern_analysis: Dict[str, Any]) -> Dict[str, Any]:
+    def _analyze_cross_vector_patterns(
+        self, pattern_analysis: Dict[str, Any]
+    ) -> Dict[str, Any]:
         vectors = pattern_analysis.get("manipulation_vectors", set())
         pattern_matches = pattern_analysis.get("pattern_matches", {})
         analysis = {
@@ -518,11 +582,15 @@ class EnhancedDarkPatternDetector:
             vector_list = list(vectors)
             for i, vector1 in enumerate(vector_list):
                 for vector2 in vector_list[i + 1 :]:
-                    analysis["vector_combinations"].append((vector1.value, vector2.value))
+                    analysis["vector_combinations"].append(
+                        (vector1.value, vector2.value)
+                    )
             total_patterns = sum(len(matches) for matches in pattern_matches.values())
             pattern_categories = len(pattern_matches)
             if pattern_categories > 0:
-                coordination_score = (total_patterns / pattern_categories) * (len(vectors) / 10)
+                coordination_score = (total_patterns / pattern_categories) * (
+                    len(vectors) / 10
+                )
                 analysis["coordination_score"] = min(coordination_score, 1.0)
         return analysis
 
@@ -561,13 +629,21 @@ class EnhancedDarkPatternDetector:
             sophistication_score=analysis_results["sophistication_score"],
             vulnerability_exploitation_score=vulnerability_exploitation_score,
             description="Automated manipulation threat assessment.",
-            evidence=[{"category": k, "matches": v} for k, v in pattern_matches.items()],
+            evidence=[
+                {"category": k, "matches": v} for k, v in pattern_matches.items()
+            ],
             behavioral_indicators=pattern_analysis.get("emotional_markers", {}),
-            pattern_matches=[{"category": k, "count": len(v)} for k, v in pattern_matches.items()],
-            emotional_manipulation_score=analysis_results["emotional_manipulation_score"],
+            pattern_matches=[
+                {"category": k, "count": len(v)} for k, v in pattern_matches.items()
+            ],
+            emotional_manipulation_score=analysis_results[
+                "emotional_manipulation_score"
+            ],
             cognitive_load_score=analysis_results["cognitive_load_score"],
             linguistic_analysis=pattern_analysis.get("linguistic_features", {}),
-            victim_vulnerability_assessment=analysis_results.get("vulnerability_assessment", {}),
+            victim_vulnerability_assessment=analysis_results.get(
+                "vulnerability_assessment", {}
+            ),
             explanations=explanations,
             recommendations=recommendations,
             countermeasures=countermeasures,
@@ -580,7 +656,9 @@ class EnhancedDarkPatternDetector:
         results.append(detection_result)
         return results
 
-    def _calculate_threat_severity(self, analysis_results: Dict[str, Any]) -> ThreatSeverity:
+    def _calculate_threat_severity(
+        self, analysis_results: Dict[str, Any]
+    ) -> ThreatSeverity:
         sophistication = analysis_results["sophistication_score"]
         emotional_score = analysis_results["emotional_manipulation_score"]
         vulnerability_assessment = analysis_results.get("vulnerability_assessment", {})
@@ -588,7 +666,9 @@ class EnhancedDarkPatternDetector:
         base_severity = sophistication
         emotional_boost = emotional_score * 0.3
         vulnerability_boost = (
-            sum(vulnerability_assessment.values()) * 0.2 if vulnerability_assessment else 0
+            sum(vulnerability_assessment.values()) * 0.2
+            if vulnerability_assessment
+            else 0
         )
         hybrid_boost = 0.2 if cross_vector.get("is_hybrid_attack", False) else 0
         total_severity = min(
@@ -615,7 +695,9 @@ class EnhancedDarkPatternDetector:
         sophistication_scores = pattern_analysis.get("sophistication_scores", {})
         if not sophistication_scores:
             return 0.0
-        base_confidence = sum(sophistication_scores.values()) / len(sophistication_scores)
+        base_confidence = sum(sophistication_scores.values()) / len(
+            sophistication_scores
+        )
         vectors = pattern_analysis.get("manipulation_vectors", set())
         vector_boost = min(len(vectors) * 0.1, 0.3)
         cross_vector = analysis_results.get("cross_vector_analysis", {})
@@ -628,18 +710,26 @@ class EnhancedDarkPatternDetector:
         vulnerability_assessment = analysis_results.get("vulnerability_assessment", {})
         if not vulnerability_assessment:
             return 0.0
-        avg_vulnerability = sum(vulnerability_assessment.values()) / len(vulnerability_assessment)
+        avg_vulnerability = sum(vulnerability_assessment.values()) / len(
+            vulnerability_assessment
+        )
         pattern_analysis = analysis_results["pattern_analysis"]
         targeting_patterns = [
             k
             for k in pattern_analysis.get("pattern_matches", {}).keys()
-            if any(target in k for target in ["vulnerability", "trauma", "dependency", "isolation"])
+            if any(
+                target in k
+                for target in ["vulnerability", "trauma", "dependency", "isolation"]
+            )
         ]
         targeting_multiplier = 1.0 + (len(targeting_patterns) * 0.2)
         return min(avg_vulnerability * targeting_multiplier, 1.0)
 
     def _calculate_protection_priority(
-        self, threat_severity: ThreatSeverity, confidence: float, vulnerability_exploitation: float
+        self,
+        threat_severity: ThreatSeverity,
+        confidence: float,
+        vulnerability_exploitation: float,
     ) -> int:
         severity_scores = {
             ThreatSeverity.EXISTENTIAL: 10,
@@ -655,9 +745,13 @@ class EnhancedDarkPatternDetector:
         vulnerability_modifier = int(vulnerability_exploitation * 2)
         return min(base_priority + confidence_modifier + vulnerability_modifier, 10)
 
-    def _update_metrics(self, results: List[ManipulationResult], processing_time: float) -> None:
+    def _update_metrics(
+        self, results: List[ManipulationResult], processing_time: float
+    ) -> None:
         self.metrics.total_detections += len(results)
-        self.metrics.detection_latency = (self.metrics.detection_latency + processing_time) / 2
+        self.metrics.detection_latency = (
+            self.metrics.detection_latency + processing_time
+        ) / 2
         for result in results:
             for vector in result.manipulation_vectors:
                 self.metrics.vectors_detected[vector.value] += 1
@@ -669,7 +763,9 @@ class EnhancedDarkPatternDetector:
             "detection_count": len(results),
             "processing_time": processing_time,
             "threat_severities": [r.threat_severity.value for r in results],
-            "manipulation_vectors": [v.value for r in results for v in r.manipulation_vectors],
+            "manipulation_vectors": [
+                v.value for r in results for v in r.manipulation_vectors
+            ],
             "avg_sophistication": sum(r.sophistication_score for r in results)
             / max(len(results), 1),
             "avg_vulnerability_exploitation": sum(
@@ -680,14 +776,18 @@ class EnhancedDarkPatternDetector:
         self.detection_history.append(detection_entry)
         if len(self.detection_history) > 10:
             recent_sophistication = [
-                entry["avg_sophistication"] for entry in list(self.detection_history)[-10:]
+                entry["avg_sophistication"]
+                for entry in list(self.detection_history)[-10:]
             ]
-            self.metrics.manipulation_sophistication_score = sum(recent_sophistication) / len(
+            self.metrics.manipulation_sophistication_score = sum(
                 recent_sophistication
-            )
+            ) / len(recent_sophistication)
 
     def _audit_detection(
-        self, action: Any, results: List[ManipulationResult], context: Optional[Dict[str, Any]]
+        self,
+        action: Any,
+        results: List[ManipulationResult],
+        context: Optional[Dict[str, Any]],
     ) -> None:
         audit_entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -695,12 +795,16 @@ class EnhancedDarkPatternDetector:
             "detector_version": self.version,
             "detection_count": len(results),
             "threat_severities": [r.threat_severity.value for r in results],
-            "manipulation_vectors": [v.value for r in results for v in r.manipulation_vectors],
+            "manipulation_vectors": [
+                v.value for r in results for v in r.manipulation_vectors
+            ],
             "highest_sophistication": (
                 max([r.sophistication_score for r in results]) if results else 0
             ),
             "highest_vulnerability_exploitation": (
-                max([r.vulnerability_exploitation_score for r in results]) if results else 0
+                max([r.vulnerability_exploitation_score for r in results])
+                if results
+                else 0
             ),
             "context_provided": context is not None,
             "privacy_mode": self.privacy_mode,
@@ -714,7 +818,9 @@ class EnhancedDarkPatternDetector:
         if len(self.audit_log) > 1000:
             self.audit_log = self.audit_log[-500:]
 
-    def _audit_error(self, action: Any, error: str, context: Optional[Dict[str, Any]]) -> None:
+    def _audit_error(
+        self, action: Any, error: str, context: Optional[Dict[str, Any]]
+    ) -> None:
         error_entry = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "action_id": getattr(action, "id", "unknown"),
@@ -814,10 +920,14 @@ async def demo_dark_pattern_detection():
         if results:
             result = results[0]
             print(f"✓ Detected: {result.threat_severity.value} threat")
-            print(f"  Manipulation Vectors: {[mv.value for mv in result.manipulation_vectors]}")
+            print(
+                f"  Manipulation Vectors: {[mv.value for mv in result.manipulation_vectors]}"
+            )
             print(f"  Confidence: {result.confidence:.2f}")
             print(f"  Sophistication Score: {result.sophistication_score:.2f}")
-            print(f"  Vulnerability Exploitation: {result.vulnerability_exploitation_score:.2f}")
+            print(
+                f"  Vulnerability Exploitation: {result.vulnerability_exploitation_score:.2f}"
+            )
             print(f"  Protection Priority: {result.protection_priority}/10")
         else:
             print("✗ No manipulation detected")

@@ -182,9 +182,7 @@ class EventPublisher:
             # Use async in background
             try:
                 loop = asyncio.get_event_loop()
-                loop.create_task(
-                    self.nats_client.publish(event.subject, message)
-                )
+                loop.create_task(self.nats_client.publish(event.subject, message))
             except RuntimeError:
                 # No event loop, publish sync
                 asyncio.run(self.nats_client.publish(event.subject, message))

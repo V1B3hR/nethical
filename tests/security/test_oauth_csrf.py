@@ -36,21 +36,21 @@ class TestOAuthCSRF:
     def test_state_generation_on_login(self, configured_manager):
         """Verify state parameter is generated during OAuth login initiation."""
         auth_url, state = configured_manager.initiate_oauth_login("test_provider")
-        
+
         # State should be a non-empty string
         assert state is not None
         assert len(state) > 0
-        
+
         # State should be stored for later validation
         assert state in configured_manager._pending_oauth_states
 
     def test_state_included_in_authorization_url(self, configured_manager):
         """Verify state parameter is included in authorization URL."""
         auth_url, state = configured_manager.initiate_oauth_login("test_provider")
-        
+
         parsed = urlparse(auth_url)
         query_params = parse_qs(parsed.query)
-        
+
         assert "state" in query_params
         assert query_params["state"][0] == state
 
@@ -58,10 +58,10 @@ class TestOAuthCSRF:
         """Verify requests without state are rejected."""
         # First initiate login to get a valid state
         _, valid_state = configured_manager.initiate_oauth_login("test_provider")
-        
+
         # Create callback URL without state parameter
         callback_url = "https://test.example.com/auth/oauth/callback?code=test_code"
-        
+
         # Should raise error due to missing state
         with pytest.raises(SSOError) as exc_info:
             configured_manager.handle_oauth_callback(
@@ -69,18 +69,21 @@ class TestOAuthCSRF:
                 config_name="test_provider",
                 expected_state=None,  # No expected state
             )
-        
-        assert "state" in str(exc_info.value).lower() or "csrf" in str(exc_info.value).lower()
+
+        assert (
+            "state" in str(exc_info.value).lower()
+            or "csrf" in str(exc_info.value).lower()
+        )
 
     def test_state_mismatch_rejected(self, configured_manager):
         """Verify mismatched state values are rejected."""
         # Initiate login to get a valid state
         _, valid_state = configured_manager.initiate_oauth_login("test_provider")
-        
+
         # Create callback URL with different state
         wrong_state = "wrong_state_value"
         callback_url = f"https://test.example.com/auth/oauth/callback?code=test_code&state={wrong_state}"
-        
+
         # Should reject due to state mismatch
         with pytest.raises(SSOError) as exc_info:
             configured_manager.handle_oauth_callback(
@@ -88,7 +91,7 @@ class TestOAuthCSRF:
                 config_name="test_provider",
                 expected_state=valid_state,  # Expects valid_state but gets wrong_state
             )
-        
+
         error_msg = str(exc_info.value).lower()
         assert "state" in error_msg or "csrf" in error_msg
 
@@ -96,9 +99,11 @@ class TestOAuthCSRF:
         """Verify state cannot be reused after callback."""
         # Initiate login and get state
         _, state = configured_manager.initiate_oauth_login("test_provider")
-        
-        callback_url = f"https://test.example.com/auth/oauth/callback?code=test_code&state={state}"
-        
+
+        callback_url = (
+            f"https://test.example.com/auth/oauth/callback?code=test_code&state={state}"
+        )
+
         # First callback attempt - this will consume the state
         # (may fail due to other reasons, but state should be consumed)
         try:
@@ -109,7 +114,7 @@ class TestOAuthCSRF:
             )
         except Exception:
             pass  # Expected due to mock environment
-        
+
         # State should be removed from pending states
         assert state not in configured_manager._pending_oauth_states
 
@@ -117,32 +122,36 @@ class TestOAuthCSRF:
         """Verify expired states are rejected."""
         # Initiate login
         _, state = configured_manager.initiate_oauth_login("test_provider")
-        
+
         # Manually expire the state
-        configured_manager._pending_oauth_states[state]["created_at"] = (
-            datetime.now(timezone.utc) - timedelta(minutes=20)  # Expired
+        configured_manager._pending_oauth_states[state]["created_at"] = datetime.now(
+            timezone.utc
+        ) - timedelta(
+            minutes=20
+        )  # Expired
+
+        callback_url = (
+            f"https://test.example.com/auth/oauth/callback?code=test_code&state={state}"
         )
-        
-        callback_url = f"https://test.example.com/auth/oauth/callback?code=test_code&state={state}"
-        
+
         with pytest.raises(SSOError) as exc_info:
             configured_manager.handle_oauth_callback(
                 callback_url,
                 config_name="test_provider",
                 expected_state=state,
             )
-        
+
         assert "expired" in str(exc_info.value).lower()
 
     def test_custom_state_parameter(self, configured_manager):
         """Verify custom state parameter can be provided."""
         custom_state = "my_custom_state_value"
-        
+
         auth_url, returned_state = configured_manager.initiate_oauth_login(
             "test_provider",
             state=custom_state,
         )
-        
+
         # Should use the provided state
         assert returned_state == custom_state
         assert custom_state in configured_manager._pending_oauth_states
@@ -150,15 +159,15 @@ class TestOAuthCSRF:
     def test_state_is_cryptographically_random(self, configured_manager):
         """Verify auto-generated states are cryptographically random."""
         states = set()
-        
+
         # Generate multiple states
         for _ in range(10):
             _, state = configured_manager.initiate_oauth_login("test_provider")
             states.add(state)
-        
+
         # All states should be unique
         assert len(states) == 10
-        
+
         # States should be sufficiently long (for security)
         for state in states:
             assert len(state) >= 32  # 32 chars = 192 bits minimum
@@ -167,16 +176,18 @@ class TestOAuthCSRF:
         """Verify error messages don't reveal valid states."""
         # Create a valid state
         _, valid_state = configured_manager.initiate_oauth_login("test_provider")
-        
+
         # Try with invalid state
-        callback_url = "https://test.example.com/auth/oauth/callback?code=test_code&state=invalid"
-        
+        callback_url = (
+            "https://test.example.com/auth/oauth/callback?code=test_code&state=invalid"
+        )
+
         with pytest.raises(SSOError) as exc_info:
             configured_manager.handle_oauth_callback(
                 callback_url,
                 config_name="test_provider",
             )
-        
+
         # Error message should not contain the valid state
         assert valid_state not in str(exc_info.value)
 
@@ -199,7 +210,7 @@ class TestOAuthConfiguration:
             token_url="https://oauth2.googleapis.com/token",
             userinfo_url="https://openidconnect.googleapis.com/v1/userinfo",
         )
-        
+
         assert config is not None
         assert config.provider == SSOProvider.OIDC
         assert config.oauth_config["client_id"] == "google_client_id"
@@ -217,7 +228,7 @@ class TestOAuthConfiguration:
             userinfo_url="https://auth.example.com/userinfo",
         )
         assert oidc_config.provider == SSOProvider.OIDC
-        
+
         # Without userinfo_url -> OAuth2
         oauth_config = sso_manager.configure_oauth(
             config_name="oauth_provider",
@@ -245,7 +256,7 @@ class TestOAuthConfiguration:
             authorization_url="https://auth2.example.com/authorize",
             token_url="https://auth2.example.com/token",
         )
-        
+
         configs = sso_manager.list_configs()
         assert "provider1" in configs
         assert "provider2" in configs
@@ -259,11 +270,11 @@ class TestOAuthConfiguration:
             authorization_url="https://auth.example.com/authorize",
             token_url="https://auth.example.com/token",
         )
-        
+
         config = sso_manager.get_config("test_config")
         assert config is not None
         assert config.oauth_config["client_id"] == "test_client"
-        
+
         # Non-existent config
         assert sso_manager.get_config("nonexistent") is None
 
@@ -274,20 +285,20 @@ class TestSSOManagerInitialization:
     def test_default_initialization(self):
         """Verify default SSO manager initialization."""
         manager = SSOManager()
-        
+
         assert manager.base_url == "https://nethical.local"
         assert len(manager.configs) == 0
 
     def test_custom_base_url(self):
         """Verify custom base URL is used."""
         manager = SSOManager(base_url="https://custom.example.com")
-        
+
         assert manager.base_url == "https://custom.example.com"
 
     def test_redirect_uri_construction(self):
         """Verify redirect URI is properly constructed."""
         manager = SSOManager(base_url="https://myapp.example.com")
-        
+
         config = manager.configure_oauth(
             config_name="test",
             client_id="client",
@@ -295,5 +306,8 @@ class TestSSOManagerInitialization:
             authorization_url="https://auth.example.com/authorize",
             token_url="https://auth.example.com/token",
         )
-        
-        assert config.oauth_config["redirect_uri"] == "https://myapp.example.com/auth/oauth/callback"
+
+        assert (
+            config.oauth_config["redirect_uri"]
+            == "https://myapp.example.com/auth/oauth/callback"
+        )

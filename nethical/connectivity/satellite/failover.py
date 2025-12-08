@@ -257,7 +257,10 @@ class FailoverManager:
             loss_score = max(
                 0,
                 1.0
-                - (metrics.packet_loss_percent / self.config.packet_loss_threshold_percent),
+                - (
+                    metrics.packet_loss_percent
+                    / self.config.packet_loss_threshold_percent
+                ),
             )
             self._satellite_quality_score = (latency_score + loss_score) / 2
         else:
@@ -455,9 +458,7 @@ class FailoverManager:
             "satellite_healthy": self._satellite_healthy,
             "terrestrial_quality_score": self._terrestrial_quality_score,
             "satellite_quality_score": self._satellite_quality_score,
-            "failover_count": len(
-                [e for e in self._failover_events if e.success]
-            ),
+            "failover_count": len([e for e in self._failover_events if e.success]),
             "last_failover": (
                 self._last_failover.isoformat() if self._last_failover else None
             ),

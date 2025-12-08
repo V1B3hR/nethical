@@ -119,9 +119,9 @@ class Position:
         dlon = math.radians(other.longitude - self.longitude)
 
         x = math.sin(dlon) * math.cos(lat2)
-        y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(lat2) * math.cos(
-            dlon
-        )
+        y = math.cos(lat1) * math.sin(lat2) - math.sin(lat1) * math.cos(
+            lat2
+        ) * math.cos(dlon)
 
         bearing = math.degrees(math.atan2(x, y))
         return (bearing + 360) % 360
@@ -467,9 +467,7 @@ class GPSTracker:
         if event in self._callbacks:
             self._callbacks[event].append(callback)
 
-    def get_position_history(
-        self, limit: Optional[int] = None
-    ) -> List[Position]:
+    def get_position_history(self, limit: Optional[int] = None) -> List[Position]:
         """
         Get position history.
 
@@ -516,7 +514,5 @@ class GPSTracker:
             ),
             "position_history_size": len(self._position_history),
             "geofence_count": len(self._geofences),
-            "active_geofences": [
-                f.name for f in self._geofences.values() if f.enabled
-            ],
+            "active_geofences": [f.name for f in self._geofences.values() if f.enabled],
         }

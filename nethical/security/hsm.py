@@ -71,6 +71,7 @@ log = logging.getLogger(__name__)
 
 class HSMProvider(str, Enum):
     """Supported HSM providers"""
+
     AWS_CLOUDHSM = "aws-cloudhsm"
     AZURE_DEDICATED_HSM = "azure-dedicated-hsm"
     GOOGLE_CLOUD_HSM = "google-cloud-hsm"
@@ -81,6 +82,7 @@ class HSMProvider(str, Enum):
 
 class KeyAlgorithm(str, Enum):
     """Supported key algorithms"""
+
     RSA_2048 = "rsa-2048"
     RSA_4096 = "rsa-4096"
     EC_P256 = "ec-p256"
@@ -95,6 +97,7 @@ class KeyAlgorithm(str, Enum):
 
 class KeyUsage(str, Enum):
     """Key usage types"""
+
     SIGN = "sign"
     VERIFY = "verify"
     ENCRYPT = "encrypt"
@@ -106,6 +109,7 @@ class KeyUsage(str, Enum):
 
 class HSMOperationStatus(str, Enum):
     """HSM operation status"""
+
     SUCCESS = "success"
     FAILURE = "failure"
     PENDING = "pending"
@@ -118,6 +122,7 @@ class HSMOperationStatus(str, Enum):
 @dataclass
 class HSMKeyInfo:
     """Information about a key stored in HSM"""
+
     key_id: str
     key_label: str
     algorithm: KeyAlgorithm
@@ -156,6 +161,7 @@ class HSMKeyInfo:
 @dataclass
 class HSMConfig:
     """HSM configuration"""
+
     provider: HSMProvider
     endpoint: Optional[str] = None
     credentials: Optional[Dict[str, str]] = None
@@ -183,6 +189,7 @@ class HSMConfig:
 @dataclass
 class HSMOperationResult:
     """Result of HSM operation"""
+
     status: HSMOperationStatus
     data: Optional[bytes] = None
     key_id: Optional[str] = None
@@ -199,6 +206,7 @@ class HSMOperationResult:
 @dataclass
 class KeyCeremonyConfig:
     """Key ceremony configuration for compliance"""
+
     require_dual_control: bool = True
     min_custodians: int = 2
     max_custodians: int = 5
@@ -211,6 +219,7 @@ class KeyCeremonyConfig:
 @dataclass
 class KeyCeremonyRecord:
     """Record of key ceremony for audit"""
+
     ceremony_id: str
     key_id: str
     ceremony_type: str  # "generation", "rotation", "destruction"
@@ -243,7 +252,7 @@ class KeyCeremonyRecord:
 class BaseHSMProvider(ABC):
     """
     Abstract base class for HSM providers.
-    
+
     All HSM providers must implement these methods to ensure
     consistent behavior across different hardware/cloud HSM solutions.
     """
@@ -350,10 +359,10 @@ class BaseHSMProvider(ABC):
 class SoftwareHSMProvider(BaseHSMProvider):
     """
     Software-based HSM fallback for development and testing.
-    
+
     WARNING: This provider does NOT provide hardware-level security.
     Use only for development, testing, or when hardware HSM is unavailable.
-    
+
     Fundamental Law 23 (Fail-Safe Design): This provides safe fallback
     when hardware HSM is unavailable.
     """
@@ -386,6 +395,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
     ) -> HSMOperationResult:
         """Generate a software key"""
         import time
+
         start_time = time.time()
 
         try:
@@ -397,8 +407,14 @@ class SoftwareHSMProvider(BaseHSMProvider):
                 key_material = secrets.token_bytes(key_size)
             elif algorithm in (KeyAlgorithm.RSA_2048, KeyAlgorithm.RSA_4096):
                 # Simulate RSA key pair (in production, use cryptography library)
-                key_material = secrets.token_bytes(256 if algorithm == KeyAlgorithm.RSA_2048 else 512)
-            elif algorithm in (KeyAlgorithm.EC_P256, KeyAlgorithm.EC_P384, KeyAlgorithm.EC_P521):
+                key_material = secrets.token_bytes(
+                    256 if algorithm == KeyAlgorithm.RSA_2048 else 512
+                )
+            elif algorithm in (
+                KeyAlgorithm.EC_P256,
+                KeyAlgorithm.EC_P384,
+                KeyAlgorithm.EC_P521,
+            ):
                 # Simulate EC key pair
                 key_size = {
                     KeyAlgorithm.EC_P256: 32,
@@ -455,6 +471,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
     ) -> HSMOperationResult:
         """Sign data using software key"""
         import time
+
         start_time = time.time()
 
         if key_id not in self._key_material:
@@ -491,6 +508,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
     ) -> HSMOperationResult:
         """Verify signature using software key"""
         import time
+
         start_time = time.time()
 
         if key_id not in self._key_material:
@@ -506,7 +524,11 @@ class SoftwareHSMProvider(BaseHSMProvider):
 
             latency = (time.time() - start_time) * 1000
             return HSMOperationResult(
-                status=HSMOperationStatus.SUCCESS if is_valid else HSMOperationStatus.FAILURE,
+                status=(
+                    HSMOperationStatus.SUCCESS
+                    if is_valid
+                    else HSMOperationStatus.FAILURE
+                ),
                 data=b"\x01" if is_valid else b"\x00",
                 key_id=key_id,
                 latency_ms=latency,
@@ -526,6 +548,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
     ) -> HSMOperationResult:
         """Encrypt data using software key"""
         import time
+
         start_time = time.time()
 
         if key_id not in self._key_material:
@@ -540,6 +563,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
             if len(key) not in (16, 24, 32):
                 from cryptography.hazmat.primitives import hashes
                 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
                 hkdf = HKDF(
                     algorithm=hashes.SHA256(),
                     length=32,
@@ -576,6 +600,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
     ) -> HSMOperationResult:
         """Decrypt data using software key"""
         import time
+
         start_time = time.time()
 
         if key_id not in self._key_material:
@@ -590,6 +615,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
             if len(key) not in (16, 24, 32):
                 from cryptography.hazmat.primitives import hashes
                 from cryptography.hazmat.primitives.kdf.hkdf import HKDF
+
                 hkdf = HKDF(
                     algorithm=hashes.SHA256(),
                     length=32,
@@ -618,7 +644,6 @@ class SoftwareHSMProvider(BaseHSMProvider):
                 status=HSMOperationStatus.FAILURE,
                 error_message=str(e),
             )
-
 
     async def get_key_info(self, key_id: str) -> Optional[HSMKeyInfo]:
         """Get key information"""
@@ -701,7 +726,7 @@ class SoftwareHSMProvider(BaseHSMProvider):
 class AWSCloudHSMProvider(BaseHSMProvider):
     """
     AWS CloudHSM provider implementation.
-    
+
     Requires AWS CloudHSM cluster and appropriate credentials.
     """
 
@@ -711,7 +736,9 @@ class AWSCloudHSMProvider(BaseHSMProvider):
             # In production, use boto3 and cloudhsm client
             # import boto3
             # self._client = boto3.client('cloudhsmv2', region_name=self.config.region)
-            log.info(f"AWS CloudHSM connection initiated: cluster={self.config.cluster_id}")
+            log.info(
+                f"AWS CloudHSM connection initiated: cluster={self.config.cluster_id}"
+            )
             self._connected = True
             return True
         except Exception as e:
@@ -741,7 +768,9 @@ class AWSCloudHSMProvider(BaseHSMProvider):
             metadata={"provider": "aws-cloudhsm"},
         )
 
-    async def sign(self, key_id: str, data: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
+    async def sign(
+        self, key_id: str, data: bytes, algorithm: Optional[str] = None
+    ) -> HSMOperationResult:
         """Sign using AWS CloudHSM"""
         log.info(f"AWS CloudHSM: Signing with key {key_id}")
         return HSMOperationResult(
@@ -750,7 +779,13 @@ class AWSCloudHSMProvider(BaseHSMProvider):
             key_id=key_id,
         )
 
-    async def verify(self, key_id: str, data: bytes, signature: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
+    async def verify(
+        self,
+        key_id: str,
+        data: bytes,
+        signature: bytes,
+        algorithm: Optional[str] = None,
+    ) -> HSMOperationResult:
         """Verify using AWS CloudHSM"""
         log.info(f"AWS CloudHSM: Verifying with key {key_id}")
         return HSMOperationResult(
@@ -791,7 +826,9 @@ class AWSCloudHSMProvider(BaseHSMProvider):
         log.info(f"AWS CloudHSM: Deleting key {key_id}")
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def rotate_key(self, key_id: str, retain_old: bool = True) -> HSMOperationResult:
+    async def rotate_key(
+        self, key_id: str, retain_old: bool = True
+    ) -> HSMOperationResult:
         """Rotate key in AWS CloudHSM"""
         log.info(f"AWS CloudHSM: Rotating key {key_id}")
         new_key_id = f"aws-hsm-{secrets.token_hex(16)}"
@@ -819,21 +856,52 @@ class AzureDedicatedHSMProvider(BaseHSMProvider):
         self._connected = False
         return True
 
-    async def generate_key(self, key_label: str, algorithm: KeyAlgorithm, usage: List[KeyUsage], expires_days: Optional[int] = None) -> HSMOperationResult:
+    async def generate_key(
+        self,
+        key_label: str,
+        algorithm: KeyAlgorithm,
+        usage: List[KeyUsage],
+        expires_days: Optional[int] = None,
+    ) -> HSMOperationResult:
         key_id = f"azure-hsm-{secrets.token_hex(16)}"
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def sign(self, key_id: str, data: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(64), key_id=key_id)
+    async def sign(
+        self, key_id: str, data: bytes, algorithm: Optional[str] = None
+    ) -> HSMOperationResult:
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(64),
+            key_id=key_id,
+        )
 
-    async def verify(self, key_id: str, data: bytes, signature: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=b"\x01", key_id=key_id, metadata={"verified": True})
+    async def verify(
+        self,
+        key_id: str,
+        data: bytes,
+        signature: bytes,
+        algorithm: Optional[str] = None,
+    ) -> HSMOperationResult:
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=b"\x01",
+            key_id=key_id,
+            metadata={"verified": True},
+        )
 
     async def encrypt(self, key_id: str, plaintext: bytes) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(len(plaintext) + 28), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(len(plaintext) + 28),
+            key_id=key_id,
+        )
 
     async def decrypt(self, key_id: str, ciphertext: bytes) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(max(1, len(ciphertext) - 28)), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(max(1, len(ciphertext) - 28)),
+            key_id=key_id,
+        )
 
     async def get_key_info(self, key_id: str) -> Optional[HSMKeyInfo]:
         return self._keys.get(key_id)
@@ -844,12 +912,18 @@ class AzureDedicatedHSMProvider(BaseHSMProvider):
     async def delete_key(self, key_id: str) -> HSMOperationResult:
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def rotate_key(self, key_id: str, retain_old: bool = True) -> HSMOperationResult:
+    async def rotate_key(
+        self, key_id: str, retain_old: bool = True
+    ) -> HSMOperationResult:
         new_key_id = f"azure-hsm-{secrets.token_hex(16)}"
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=new_key_id)
 
     async def get_public_key(self, key_id: str) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(32), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(32),
+            key_id=key_id,
+        )
 
 
 class GoogleCloudHSMProvider(BaseHSMProvider):
@@ -864,21 +938,52 @@ class GoogleCloudHSMProvider(BaseHSMProvider):
         self._connected = False
         return True
 
-    async def generate_key(self, key_label: str, algorithm: KeyAlgorithm, usage: List[KeyUsage], expires_days: Optional[int] = None) -> HSMOperationResult:
+    async def generate_key(
+        self,
+        key_label: str,
+        algorithm: KeyAlgorithm,
+        usage: List[KeyUsage],
+        expires_days: Optional[int] = None,
+    ) -> HSMOperationResult:
         key_id = f"gcp-hsm-{secrets.token_hex(16)}"
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def sign(self, key_id: str, data: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(64), key_id=key_id)
+    async def sign(
+        self, key_id: str, data: bytes, algorithm: Optional[str] = None
+    ) -> HSMOperationResult:
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(64),
+            key_id=key_id,
+        )
 
-    async def verify(self, key_id: str, data: bytes, signature: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=b"\x01", key_id=key_id, metadata={"verified": True})
+    async def verify(
+        self,
+        key_id: str,
+        data: bytes,
+        signature: bytes,
+        algorithm: Optional[str] = None,
+    ) -> HSMOperationResult:
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=b"\x01",
+            key_id=key_id,
+            metadata={"verified": True},
+        )
 
     async def encrypt(self, key_id: str, plaintext: bytes) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(len(plaintext) + 28), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(len(plaintext) + 28),
+            key_id=key_id,
+        )
 
     async def decrypt(self, key_id: str, ciphertext: bytes) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(max(1, len(ciphertext) - 28)), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(max(1, len(ciphertext) - 28)),
+            key_id=key_id,
+        )
 
     async def get_key_info(self, key_id: str) -> Optional[HSMKeyInfo]:
         return self._keys.get(key_id)
@@ -889,12 +994,18 @@ class GoogleCloudHSMProvider(BaseHSMProvider):
     async def delete_key(self, key_id: str) -> HSMOperationResult:
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def rotate_key(self, key_id: str, retain_old: bool = True) -> HSMOperationResult:
+    async def rotate_key(
+        self, key_id: str, retain_old: bool = True
+    ) -> HSMOperationResult:
         new_key_id = f"gcp-hsm-{secrets.token_hex(16)}"
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=new_key_id)
 
     async def get_public_key(self, key_id: str) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(32), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(32),
+            key_id=key_id,
+        )
 
 
 class YubiHSMProvider(BaseHSMProvider):
@@ -909,21 +1020,52 @@ class YubiHSMProvider(BaseHSMProvider):
         self._connected = False
         return True
 
-    async def generate_key(self, key_label: str, algorithm: KeyAlgorithm, usage: List[KeyUsage], expires_days: Optional[int] = None) -> HSMOperationResult:
+    async def generate_key(
+        self,
+        key_label: str,
+        algorithm: KeyAlgorithm,
+        usage: List[KeyUsage],
+        expires_days: Optional[int] = None,
+    ) -> HSMOperationResult:
         key_id = f"yubi-hsm-{secrets.token_hex(16)}"
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def sign(self, key_id: str, data: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(64), key_id=key_id)
+    async def sign(
+        self, key_id: str, data: bytes, algorithm: Optional[str] = None
+    ) -> HSMOperationResult:
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(64),
+            key_id=key_id,
+        )
 
-    async def verify(self, key_id: str, data: bytes, signature: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=b"\x01", key_id=key_id, metadata={"verified": True})
+    async def verify(
+        self,
+        key_id: str,
+        data: bytes,
+        signature: bytes,
+        algorithm: Optional[str] = None,
+    ) -> HSMOperationResult:
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=b"\x01",
+            key_id=key_id,
+            metadata={"verified": True},
+        )
 
     async def encrypt(self, key_id: str, plaintext: bytes) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(len(plaintext) + 28), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(len(plaintext) + 28),
+            key_id=key_id,
+        )
 
     async def decrypt(self, key_id: str, ciphertext: bytes) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(max(1, len(ciphertext) - 28)), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(max(1, len(ciphertext) - 28)),
+            key_id=key_id,
+        )
 
     async def get_key_info(self, key_id: str) -> Optional[HSMKeyInfo]:
         return self._keys.get(key_id)
@@ -934,12 +1076,18 @@ class YubiHSMProvider(BaseHSMProvider):
     async def delete_key(self, key_id: str) -> HSMOperationResult:
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def rotate_key(self, key_id: str, retain_old: bool = True) -> HSMOperationResult:
+    async def rotate_key(
+        self, key_id: str, retain_old: bool = True
+    ) -> HSMOperationResult:
         new_key_id = f"yubi-hsm-{secrets.token_hex(16)}"
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=new_key_id)
 
     async def get_public_key(self, key_id: str) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(32), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(32),
+            key_id=key_id,
+        )
 
 
 class ThalesLunaProvider(BaseHSMProvider):
@@ -954,21 +1102,52 @@ class ThalesLunaProvider(BaseHSMProvider):
         self._connected = False
         return True
 
-    async def generate_key(self, key_label: str, algorithm: KeyAlgorithm, usage: List[KeyUsage], expires_days: Optional[int] = None) -> HSMOperationResult:
+    async def generate_key(
+        self,
+        key_label: str,
+        algorithm: KeyAlgorithm,
+        usage: List[KeyUsage],
+        expires_days: Optional[int] = None,
+    ) -> HSMOperationResult:
         key_id = f"luna-hsm-{secrets.token_hex(16)}"
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def sign(self, key_id: str, data: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(64), key_id=key_id)
+    async def sign(
+        self, key_id: str, data: bytes, algorithm: Optional[str] = None
+    ) -> HSMOperationResult:
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(64),
+            key_id=key_id,
+        )
 
-    async def verify(self, key_id: str, data: bytes, signature: bytes, algorithm: Optional[str] = None) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=b"\x01", key_id=key_id, metadata={"verified": True})
+    async def verify(
+        self,
+        key_id: str,
+        data: bytes,
+        signature: bytes,
+        algorithm: Optional[str] = None,
+    ) -> HSMOperationResult:
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=b"\x01",
+            key_id=key_id,
+            metadata={"verified": True},
+        )
 
     async def encrypt(self, key_id: str, plaintext: bytes) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(len(plaintext) + 28), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(len(plaintext) + 28),
+            key_id=key_id,
+        )
 
     async def decrypt(self, key_id: str, ciphertext: bytes) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(max(1, len(ciphertext) - 28)), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(max(1, len(ciphertext) - 28)),
+            key_id=key_id,
+        )
 
     async def get_key_info(self, key_id: str) -> Optional[HSMKeyInfo]:
         return self._keys.get(key_id)
@@ -979,21 +1158,27 @@ class ThalesLunaProvider(BaseHSMProvider):
     async def delete_key(self, key_id: str) -> HSMOperationResult:
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=key_id)
 
-    async def rotate_key(self, key_id: str, retain_old: bool = True) -> HSMOperationResult:
+    async def rotate_key(
+        self, key_id: str, retain_old: bool = True
+    ) -> HSMOperationResult:
         new_key_id = f"luna-hsm-{secrets.token_hex(16)}"
         return HSMOperationResult(status=HSMOperationStatus.SUCCESS, key_id=new_key_id)
 
     async def get_public_key(self, key_id: str) -> HSMOperationResult:
-        return HSMOperationResult(status=HSMOperationStatus.SUCCESS, data=secrets.token_bytes(32), key_id=key_id)
+        return HSMOperationResult(
+            status=HSMOperationStatus.SUCCESS,
+            data=secrets.token_bytes(32),
+            key_id=key_id,
+        )
 
 
 def create_hsm_provider(config: HSMConfig) -> BaseHSMProvider:
     """
     Factory function to create HSM provider based on configuration.
-    
+
     Args:
         config: HSM configuration
-        
+
     Returns:
         Appropriate HSM provider instance
     """
@@ -1008,7 +1193,9 @@ def create_hsm_provider(config: HSMConfig) -> BaseHSMProvider:
 
     provider_class = providers.get(config.provider)
     if not provider_class:
-        log.warning(f"Unknown HSM provider: {config.provider}, falling back to software")
+        log.warning(
+            f"Unknown HSM provider: {config.provider}, falling back to software"
+        )
         return SoftwareHSMProvider(config)
 
     return provider_class(config)
@@ -1017,10 +1204,10 @@ def create_hsm_provider(config: HSMConfig) -> BaseHSMProvider:
 class KeyCeremonyManager:
     """
     Manages key ceremonies for compliance requirements.
-    
+
     Key ceremonies ensure proper procedures for key generation,
     rotation, and destruction in compliance with security standards.
-    
+
     Fundamental Law 15 (Audit Compliance): All key ceremonies are
     logged and auditable.
     """
@@ -1039,13 +1226,13 @@ class KeyCeremonyManager:
     ) -> str:
         """
         Start a new key ceremony.
-        
+
         Args:
             ceremony_type: Type of ceremony (generation, rotation, destruction)
             key_id: Key identifier
             custodians: List of custodian identifiers
             witness: Optional witness identifier
-            
+
         Returns:
             Ceremony ID
         """
@@ -1088,13 +1275,13 @@ class KeyCeremonyManager:
     ) -> KeyCeremonyRecord:
         """
         Complete a key ceremony.
-        
+
         Args:
             ceremony_id: Ceremony identifier
             public_key_hash: Hash of generated/rotated public key
             video_recording_id: Video recording identifier
             notes: Additional notes
-            
+
         Returns:
             Completed ceremony record
         """
@@ -1123,16 +1310,16 @@ class KeyCeremonyManager:
 class HSMAbstractionLayer:
     """
     Unified HSM abstraction layer for Nethical.
-    
+
     Provides a consistent interface for HSM operations across
     different providers with automatic failover to software fallback.
-    
+
     Use Cases:
     - Signing audit log Merkle roots (Law 15: Audit Compliance)
     - Policy signing and verification (Law 2: Right to Integrity)
     - JWT signing keys (Law 22: Digital Security)
     - Encryption key management (Law 22: Digital Security)
-    
+
     Fundamental Laws Alignment:
     - Law 2 (Right to Integrity): Tamper-resistant key storage
     - Law 15 (Audit Compliance): HSM-signed audit logs
@@ -1147,7 +1334,7 @@ class HSMAbstractionLayer:
     ):
         """
         Initialize HSM abstraction layer.
-        
+
         Args:
             config: HSM configuration
             ceremony_config: Optional key ceremony configuration
@@ -1160,12 +1347,14 @@ class HSMAbstractionLayer:
         if ceremony_config:
             self._ceremony_manager = KeyCeremonyManager(ceremony_config)
 
-        log.info(f"HSMAbstractionLayer initialized with provider: {config.provider.value}")
+        log.info(
+            f"HSMAbstractionLayer initialized with provider: {config.provider.value}"
+        )
 
     async def initialize(self) -> bool:
         """
         Initialize HSM connection.
-        
+
         Returns:
             True if connected (either to HSM or software fallback)
         """
@@ -1208,12 +1397,12 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Generate a signing key.
-        
+
         Args:
             key_label: Human-readable key label
             algorithm: Key algorithm
             expires_days: Key expiration in days
-            
+
         Returns:
             Operation result with key ID
         """
@@ -1235,12 +1424,12 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Generate an encryption key.
-        
+
         Args:
             key_label: Human-readable key label
             algorithm: Key algorithm
             expires_days: Key expiration in days
-            
+
         Returns:
             Operation result with key ID
         """
@@ -1261,14 +1450,14 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Sign a Merkle root for audit log integrity.
-        
+
         Fundamental Law 15 (Audit Compliance): HSM-signed Merkle roots
         ensure tamper-proof audit logs.
-        
+
         Args:
             key_id: Signing key identifier
             merkle_root: Merkle root bytes
-            
+
         Returns:
             Operation result with signature
         """
@@ -1283,12 +1472,12 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Verify a Merkle root signature.
-        
+
         Args:
             key_id: Signing key identifier
             merkle_root: Merkle root bytes
             signature: Signature to verify
-            
+
         Returns:
             Operation result with verification status
         """
@@ -1302,14 +1491,14 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Sign a policy hash for integrity verification.
-        
+
         Fundamental Law 2 (Right to Integrity): HSM-signed policies
         ensure policy integrity.
-        
+
         Args:
             key_id: Signing key identifier
             policy_hash: Policy hash bytes
-            
+
         Returns:
             Operation result with signature
         """
@@ -1324,12 +1513,12 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Verify a policy signature.
-        
+
         Args:
             key_id: Signing key identifier
             policy_hash: Policy hash bytes
             signature: Signature to verify
-            
+
         Returns:
             Operation result with verification status
         """
@@ -1343,14 +1532,14 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Encrypt sensitive data.
-        
+
         Fundamental Law 22 (Digital Security): Hardware-backed encryption
         for sensitive data protection.
-        
+
         Args:
             key_id: Encryption key identifier
             data: Data to encrypt
-            
+
         Returns:
             Operation result with ciphertext
         """
@@ -1364,11 +1553,11 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Decrypt sensitive data.
-        
+
         Args:
             key_id: Encryption key identifier
             ciphertext: Data to decrypt
-            
+
         Returns:
             Operation result with plaintext
         """
@@ -1382,11 +1571,11 @@ class HSMAbstractionLayer:
     ) -> HSMOperationResult:
         """
         Rotate a key.
-        
+
         Args:
             key_id: Key to rotate
             retain_old: Keep old key for decryption
-            
+
         Returns:
             Operation result with new key ID
         """
@@ -1409,7 +1598,9 @@ class HSMAbstractionLayer:
             "configured_provider": self.config.provider.value,
             "hsm_connected": self._provider.is_connected if self._provider else False,
             "fallback_active": (
-                self._software_fallback.is_connected if self._software_fallback else False
+                self._software_fallback.is_connected
+                if self._software_fallback
+                else False
             ),
             "fallback_enabled": self.config.fallback_to_software,
         }

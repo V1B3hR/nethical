@@ -64,7 +64,9 @@ class PolicyDiffAuditor:
     """Policy diff auditing and risk assessment."""
 
     def __init__(
-        self, storage_path: str = "policy_history", high_risk_fields: Optional[List[str]] = None
+        self,
+        storage_path: str = "policy_history",
+        high_risk_fields: Optional[List[str]] = None,
     ):
         """Initialize policy diff auditor.
 
@@ -275,7 +277,9 @@ class PolicyDiffAuditor:
             "removed": sum(1 for c in changes if c.change_type == ChangeType.REMOVED),
             "modified": sum(1 for c in changes if c.change_type == ChangeType.MODIFIED),
             "high_risk": sum(
-                1 for c in changes if c.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]
+                1
+                for c in changes
+                if c.risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]
             ),
         }
 
@@ -307,7 +311,9 @@ class PolicyDiffAuditor:
         recommendations = []
 
         if risk_level in [RiskLevel.HIGH, RiskLevel.CRITICAL]:
-            recommendations.append("⚠️ High-risk policy change detected - requires review")
+            recommendations.append(
+                "⚠️ High-risk policy change detected - requires review"
+            )
 
         # Check for removed fields
         removed = [c for c in changes if c.change_type == ChangeType.REMOVED]
@@ -319,7 +325,9 @@ class PolicyDiffAuditor:
         # Check for high-risk field changes
         high_risk = [c for c in changes if self._is_high_risk_field(c.path)]
         if high_risk:
-            recommendations.append(f"Review {len(high_risk)} security-critical field(s)")
+            recommendations.append(
+                f"Review {len(high_risk)} security-critical field(s)"
+            )
 
         # Check for threshold changes
         threshold_changes = [c for c in changes if "threshold" in c.path.lower()]
@@ -331,7 +339,9 @@ class PolicyDiffAuditor:
 
         return recommendations
 
-    def save_policy_version(self, policy: Dict[str, Any], version: str, description: str = ""):
+    def save_policy_version(
+        self, policy: Dict[str, Any], version: str, description: str = ""
+    ):
         """Save policy version to history.
 
         Args:
@@ -383,7 +393,9 @@ class PolicyDiffAuditor:
         """
         lines = []
         lines.append("=" * 60)
-        lines.append(f"Policy Diff Report: {diff_result.old_version} → {diff_result.new_version}")
+        lines.append(
+            f"Policy Diff Report: {diff_result.old_version} → {diff_result.new_version}"
+        )
         lines.append("=" * 60)
         lines.append(f"Timestamp: {diff_result.timestamp.isoformat()}")
         lines.append(f"Risk Level: {diff_result.risk_level.value.upper()}")
@@ -397,10 +409,19 @@ class PolicyDiffAuditor:
         lines.append("")
 
         # Changes by risk level
-        for risk_level in [RiskLevel.CRITICAL, RiskLevel.HIGH, RiskLevel.MEDIUM, RiskLevel.LOW]:
-            level_changes = [c for c in diff_result.changes if c.risk_level == risk_level]
+        for risk_level in [
+            RiskLevel.CRITICAL,
+            RiskLevel.HIGH,
+            RiskLevel.MEDIUM,
+            RiskLevel.LOW,
+        ]:
+            level_changes = [
+                c for c in diff_result.changes if c.risk_level == risk_level
+            ]
             if level_changes:
-                lines.append(f"{risk_level.value.upper()} Risk Changes ({len(level_changes)}):")
+                lines.append(
+                    f"{risk_level.value.upper()} Risk Changes ({len(level_changes)}):"
+                )
                 for change in level_changes:
                     symbol = {
                         ChangeType.ADDED: "+",
@@ -447,14 +468,22 @@ if __name__ == "__main__":
         old_policy = {
             "threshold": 0.5,
             "rate_limit": 100,
-            "security": {"enabled": True, "level": "standard", "authentication": "basic"},
+            "security": {
+                "enabled": True,
+                "level": "standard",
+                "authentication": "basic",
+            },
             "features": {"logging": True, "monitoring": False},
         }
 
         new_policy = {
             "threshold": 0.8,
             "rate_limit": 150,
-            "security": {"enabled": True, "level": "high", "authentication": "multi-factor"},
+            "security": {
+                "enabled": True,
+                "level": "high",
+                "authentication": "multi-factor",
+            },
             "features": {"logging": True, "monitoring": True, "alerts": True},
         }
 
@@ -471,7 +500,10 @@ if __name__ == "__main__":
         # Compare policies
         print("\n3. Comparing Policies...")
         diff_result = auditor.compare_policies(
-            old_policy=old_policy, new_policy=new_policy, old_version="v1.0", new_version="v2.0"
+            old_policy=old_policy,
+            new_policy=new_policy,
+            old_version="v1.0",
+            new_version="v2.0",
         )
 
         print(f"   ✓ Comparison complete")
@@ -489,9 +521,11 @@ if __name__ == "__main__":
         # Show detailed changes
         print("\n5. Detailed Changes:")
         for change in diff_result.changes[:5]:  # Show first 5 changes
-            symbol = {ChangeType.ADDED: "+", ChangeType.REMOVED: "-", ChangeType.MODIFIED: "~"}.get(
-                change.change_type, "?"
-            )
+            symbol = {
+                ChangeType.ADDED: "+",
+                ChangeType.REMOVED: "-",
+                ChangeType.MODIFIED: "~",
+            }.get(change.change_type, "?")
             print(f"   {symbol} {change.path} [{change.risk_level.value}]")
             if change.old_value is not None:
                 print(f"       old: {change.old_value}")

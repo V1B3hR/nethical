@@ -44,7 +44,9 @@ import pandas as pd
 # Logging Configuration
 # -----------------------------------------------------------------------------
 LOG_LEVEL = os.getenv("NETHICAL_PIPELINE_LOG_LEVEL", "INFO").upper()
-logging.basicConfig(level=LOG_LEVEL, format="[%(levelname)s] %(asctime)s %(name)s: %(message)s")
+logging.basicConfig(
+    level=LOG_LEVEL, format="[%(levelname)s] %(asctime)s %(name)s: %(message)s"
+)
 logger = logging.getLogger("nethical.data_pipeline")
 
 
@@ -124,7 +126,9 @@ class DataSchema:
             if col in df.columns:
                 actual_type = str(df[col].dtype)
                 if not self._type_compatible(actual_type, expected_type):
-                    errors.append(f"Column '{col}': expected {expected_type}, got {actual_type}")
+                    errors.append(
+                        f"Column '{col}': expected {expected_type}, got {actual_type}"
+                    )
 
         # Constraints
         for col, cdict in self.constraints.items():
@@ -136,19 +140,29 @@ class DataSchema:
             if "min" in cdict:
                 try:
                     if series.min() < cdict["min"]:
-                        errors.append(f"Column '{col}': value below minimum {cdict['min']}")
+                        errors.append(
+                            f"Column '{col}': value below minimum {cdict['min']}"
+                        )
                 except Exception:
-                    errors.append(f"Column '{col}': failed min comparison (non-numeric?)")
+                    errors.append(
+                        f"Column '{col}': failed min comparison (non-numeric?)"
+                    )
             if "max" in cdict:
                 try:
                     if series.max() > cdict["max"]:
-                        errors.append(f"Column '{col}': value above maximum {cdict['max']}")
+                        errors.append(
+                            f"Column '{col}': value above maximum {cdict['max']}"
+                        )
                 except Exception:
-                    errors.append(f"Column '{col}': failed max comparison (non-numeric?)")
+                    errors.append(
+                        f"Column '{col}': failed max comparison (non-numeric?)"
+                    )
             if "allowed_values" in cdict:
                 invalid = set(series.dropna().unique()) - set(cdict["allowed_values"])
                 if invalid:
-                    errors.append(f"Column '{col}': has disallowed values {sorted(list(invalid))}")
+                    errors.append(
+                        f"Column '{col}': has disallowed values {sorted(list(invalid))}"
+                    )
 
         return (len(errors) == 0, errors)
 
@@ -175,7 +189,9 @@ class DataSchema:
                 )
             for col in self.required_columns:
                 if not self._type_compatible(other.columns[col], self.columns[col]):
-                    raise SchemaCompatibilityError(f"Type mismatch for required column '{col}'")
+                    raise SchemaCompatibilityError(
+                        f"Type mismatch for required column '{col}'"
+                    )
 
     def _type_compatible(self, actual: str, expected: str) -> bool:
         type_map = {
@@ -189,7 +205,9 @@ class DataSchema:
         actual_norm = actual.lower()
         expected_norm = expected.lower()
         for canonical, aliases in type_map.items():
-            if (canonical in actual_norm or actual_norm in aliases) and expected_norm in aliases:
+            if (
+                canonical in actual_norm or actual_norm in aliases
+            ) and expected_norm in aliases:
                 return True
         # fallback partial
         return expected_norm in actual_norm or actual_norm in expected_norm
@@ -396,7 +414,9 @@ class DataPipeline:
                 "rows": len(df),
                 "columns": len(df.columns),
                 "column_names": list(df.columns),
-                "ingest_duration_seconds": (datetime.now(timezone.utc) - start).total_seconds(),
+                "ingest_duration_seconds": (
+                    datetime.now(timezone.utc) - start
+                ).total_seconds(),
                 "tag": tag,
                 "source_reference": str(source),
             },
@@ -418,11 +438,16 @@ class DataPipeline:
 
         # Persist
         self._persist_version(version)
-        logger.info(f"Ingestion complete. version_id={version_id} status={version.status.value}")
+        logger.info(
+            f"Ingestion complete. version_id={version_id} status={version.status.value}"
+        )
         return version
 
     def validate_data(
-        self, version_id: str, schema: Optional[DataSchema] = None, raise_on_fail: bool = False
+        self,
+        version_id: str,
+        schema: Optional[DataSchema] = None,
+        raise_on_fail: bool = False,
     ) -> tuple[bool, List[str]]:
         version = self._require_version(version_id)
         df = self._read_parquet(version.path)
@@ -511,15 +536,21 @@ class DataPipeline:
                 profile=self._basic_profile(df),
             )
             self._persist_version(new_version)
-            logger.info(f"Created processed version {new_version_id} (parent={version_id})")
+            logger.info(
+                f"Created processed version {new_version_id} (parent={version_id})"
+            )
             return new_version
         else:
             # Mutating metadata only on original version
             base_version.transformations.extend(applied)
-            base_version.metadata["last_preprocess_at"] = datetime.now(timezone.utc).isoformat()
+            base_version.metadata["last_preprocess_at"] = datetime.now(
+                timezone.utc
+            ).isoformat()
             base_version.profile = self._basic_profile(df)
             self._save_version_metadata(base_version)
-            logger.info(f"Updated version metadata without materialization: {version_id}")
+            logger.info(
+                f"Updated version metadata without materialization: {version_id}"
+            )
             return base_version
 
     def get_version(self, version_id: str) -> Optional[DataVersion]:
@@ -556,7 +587,9 @@ class DataPipeline:
     # ------------------------------------------------------------------
     # Internal Helpers
     # ------------------------------------------------------------------
-    def _dispatch_read(self, source: Union[str, Path], source_type: DataSource) -> pd.DataFrame:
+    def _dispatch_read(
+        self, source: Union[str, Path], source_type: DataSource
+    ) -> pd.DataFrame:
         if source_type == DataSource.LOCAL:
             return self._read_local(source)
         elif source_type == DataSource.HTTP:
@@ -602,7 +635,9 @@ class DataPipeline:
 
     def _read_http(self, url: str) -> pd.DataFrame:
         logger.info(f"Fetching remote CSV: {url}")
-        with urlopen(url) as resp:  # nosec - controlled usage for open HTTP CSV retrieval
+        with urlopen(
+            url
+        ) as resp:  # nosec - controlled usage for open HTTP CSV retrieval
             content_type = resp.headers.get("Content-Type", "")
             if "json" in content_type.lower():
                 return pd.read_json(resp)
@@ -614,7 +649,9 @@ class DataPipeline:
         sorted_cols = sorted(df.columns)
         normalized = df[sorted_cols]
         # Convert to canonical JSON lines
-        data_str = normalized.to_json(orient="records", date_format="iso", date_unit="s")
+        data_str = normalized.to_json(
+            orient="records", date_format="iso", date_unit="s"
+        )
         return hashlib.sha256(data_str.encode("utf-8")).hexdigest()
 
     def _infer_schema(self, df: pd.DataFrame) -> DataSchema:
@@ -628,7 +665,9 @@ class DataPipeline:
         )
 
     def _generate_version_id(self, checksum: str, suffix: Optional[str] = None) -> str:
-        base = f"v_{checksum[:10]}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        base = (
+            f"v_{checksum[:10]}_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
+        )
         if suffix:
             return f"{base}_{suffix}"
         return base
@@ -741,10 +780,14 @@ class DataPipeline:
 # -----------------------------------------------------------------------------
 def fetch_kaggle_dataset(url):
     """Legacy placeholder - prefer DataPipeline.ingest()"""
-    logger.info(f"Manual download required (Kaggle not integrated yet). Download from: {url}")
+    logger.info(
+        f"Manual download required (Kaggle not integrated yet). Download from: {url}"
+    )
 
 
-def ingest_all(dataset_list_path=Path("datasets/datasets"), download_dir=Path("data/external")):
+def ingest_all(
+    dataset_list_path=Path("datasets/datasets"), download_dir=Path("data/external")
+):
     """Legacy function; retained for backward compatibility."""
     download_dir.mkdir(parents=True, exist_ok=True)
     try:

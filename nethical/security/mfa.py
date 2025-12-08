@@ -129,7 +129,9 @@ class MFAManager:
 
         log.info("MFAManager initialized")
 
-    def setup_totp(self, user_id: str, issuer: str = "Nethical") -> Tuple[str, str, List[str]]:
+    def setup_totp(
+        self, user_id: str, issuer: str = "Nethical"
+    ) -> Tuple[str, str, List[str]]:
         """
         Set up TOTP-based MFA for a user
 
@@ -145,11 +147,11 @@ class MFAManager:
         except ImportError:
             log.warning("pyotp not installed, using fallback TOTP implementation")
             # Fallback: generate a base32 secret
-            totp_secret = secrets.token_urlsafe(20).replace("-", "").replace("_", "")[:32].upper()
-            # Create a basic provisioning URI
-            provisioning_uri = (
-                f"otpauth://totp/{issuer}:{user_id}?secret={totp_secret}&issuer={issuer}"
+            totp_secret = (
+                secrets.token_urlsafe(20).replace("-", "").replace("_", "")[:32].upper()
             )
+            # Create a basic provisioning URI
+            provisioning_uri = f"otpauth://totp/{issuer}:{user_id}?secret={totp_secret}&issuer={issuer}"
         else:
             # Generate TOTP secret
             totp_secret = pyotp.random_base32()
@@ -253,8 +255,7 @@ class MFAManager:
 
         # Remove attempts outside the window
         self._failed_attempts[user_id] = [
-            ts for ts in self._failed_attempts[user_id]
-            if ts > window_start
+            ts for ts in self._failed_attempts[user_id] if ts > window_start
         ]
 
         # Record this attempt
@@ -291,10 +292,9 @@ class MFAManager:
 
         now = datetime.now(timezone.utc)
         window_start = now - timedelta(minutes=5)
-        recent_attempts = len([
-            ts for ts in self._failed_attempts[user_id]
-            if ts > window_start
-        ])
+        recent_attempts = len(
+            [ts for ts in self._failed_attempts[user_id] if ts > window_start]
+        )
 
         return max(0, self.max_attempts - recent_attempts)
 
@@ -355,7 +355,9 @@ class MFAManager:
         else:
             self._record_failed_attempt(user_id)
             remaining = self.get_remaining_attempts(user_id)
-            log.warning(f"Invalid TOTP code for user {user_id}. {remaining} attempts remaining.")
+            log.warning(
+                f"Invalid TOTP code for user {user_id}. {remaining} attempts remaining."
+            )
 
         return is_valid
 
@@ -390,7 +392,9 @@ class MFAManager:
         log.warning(f"Invalid backup code for user {user_id}")
         return False
 
-    def verify_mfa(self, user_id: str, code: str, method: Optional[MFAMethod] = None) -> bool:
+    def verify_mfa(
+        self, user_id: str, code: str, method: Optional[MFAMethod] = None
+    ) -> bool:
         """
         Verify MFA code (auto-detect method if not specified)
 
@@ -552,7 +556,9 @@ class MFAManager:
             raise ValueError(f"MFA not set up for user {user_id}")
 
         backup_codes = self._generate_backup_codes()
-        self.user_mfa[user_id].backup_codes = [self._hash_code(code) for code in backup_codes]
+        self.user_mfa[user_id].backup_codes = [
+            self._hash_code(code) for code in backup_codes
+        ]
 
         log.info(f"Backup codes regenerated for user {user_id}")
         return backup_codes

@@ -11,7 +11,7 @@ from typing import Any, Optional
 
 class NethicalError(Exception):
     """Base exception for Nethical SDK errors."""
-    
+
     def __init__(
         self,
         message: str,
@@ -22,7 +22,7 @@ class NethicalError(Exception):
         self.message = message
         self.request_id = request_id
         self.details = details or {}
-    
+
     def __str__(self) -> str:
         parts = [self.message]
         if self.request_id:
@@ -32,22 +32,23 @@ class NethicalError(Exception):
 
 class AuthenticationError(NethicalError):
     """Raised when authentication fails.
-    
+
     This can occur when:
     - API key is missing
     - API key is invalid
     - API key has expired
     - Insufficient permissions
     """
+
     pass
 
 
 class RateLimitError(NethicalError):
     """Raised when rate limit is exceeded.
-    
+
     Contains information about when to retry.
     """
-    
+
     def __init__(
         self,
         message: str,
@@ -66,10 +67,10 @@ class RateLimitError(NethicalError):
 
 class ValidationError(NethicalError):
     """Raised when request validation fails.
-    
+
     Contains details about which fields failed validation.
     """
-    
+
     def __init__(
         self,
         message: str,
@@ -82,11 +83,11 @@ class ValidationError(NethicalError):
 
 class ServerError(NethicalError):
     """Raised when the server encounters an error.
-    
+
     This indicates a problem on the server side that may
     be transient.
     """
-    
+
     def __init__(
         self,
         message: str,
@@ -99,21 +100,23 @@ class ServerError(NethicalError):
 
 class TimeoutError(NethicalError):
     """Raised when a request times out."""
+
     pass
 
 
 class ConnectionError(NethicalError):
     """Raised when connection to the server fails."""
+
     pass
 
 
 class DecisionBlockedError(NethicalError):
     """Raised when a decision results in BLOCK or TERMINATE.
-    
+
     This is a convenience exception for when you want to
     treat blocked decisions as errors.
     """
-    
+
     def __init__(
         self,
         message: str,

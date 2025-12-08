@@ -196,7 +196,9 @@ def euclidean_distance_jit(vec1: np.ndarray, vec2: np.ndarray) -> float:
 
 
 @njit(cache=True, parallel=True)
-def batch_cosine_similarity_jit(vectors: np.ndarray, reference: np.ndarray) -> np.ndarray:
+def batch_cosine_similarity_jit(
+    vectors: np.ndarray, reference: np.ndarray
+) -> np.ndarray:
     """
     JIT-compiled batch cosine similarity calculation.
 
@@ -231,7 +233,9 @@ def batch_cosine_similarity_jit(vectors: np.ndarray, reference: np.ndarray) -> n
 
 
 @njit(cache=True)
-def detect_outliers_iqr_jit(values: np.ndarray, iqr_multiplier: float = 1.5) -> np.ndarray:
+def detect_outliers_iqr_jit(
+    values: np.ndarray, iqr_multiplier: float = 1.5
+) -> np.ndarray:
     """
     JIT-compiled outlier detection using IQR method.
 
@@ -257,7 +261,9 @@ def detect_outliers_iqr_jit(values: np.ndarray, iqr_multiplier: float = 1.5) -> 
 
 
 @njit(cache=True)
-def detect_outliers_zscore_jit(values: np.ndarray, threshold: float = 3.0) -> np.ndarray:
+def detect_outliers_zscore_jit(
+    values: np.ndarray, threshold: float = 3.0
+) -> np.ndarray:
     """
     JIT-compiled outlier detection using Z-score method.
 
@@ -288,7 +294,9 @@ def detect_outliers_zscore_jit(values: np.ndarray, threshold: float = 3.0) -> np
 
 
 @njit(cache=True, parallel=True)
-def extract_ngram_features_jit(token_ids: np.ndarray, n: int, vocab_size: int) -> np.ndarray:
+def extract_ngram_features_jit(
+    token_ids: np.ndarray, n: int, vocab_size: int
+) -> np.ndarray:
     """
     JIT-compiled n-gram feature extraction.
 
@@ -361,7 +369,9 @@ def matrix_multiply_jit(A: np.ndarray, B: np.ndarray) -> np.ndarray:
 # ============================================================================
 
 
-def benchmark_jit_speedup(func_jit: Callable, func_python: Callable, *args, **kwargs) -> dict:
+def benchmark_jit_speedup(
+    func_jit: Callable, func_python: Callable, *args, **kwargs
+) -> dict:
     """
     Benchmark JIT speedup compared to pure Python.
 

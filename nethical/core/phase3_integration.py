@@ -71,7 +71,9 @@ class Phase3IntegratedGovernance:
         )
 
         # Initialize all components
-        self.risk_engine = RiskEngine(redis_client=redis_client, key_prefix="nethical:risk")
+        self.risk_engine = RiskEngine(
+            redis_client=redis_client, key_prefix="nethical:risk"
+        )
 
         self.correlation_engine = CorrelationEngine(
             config_path=correlation_config_path,
@@ -142,15 +144,17 @@ class Phase3IntegratedGovernance:
         action_context = {"cohort": cohort, "has_violation": violation_detected}
 
         risk_score = self.risk_engine.calculate_risk_score(
-            agent_id=agent_id, violation_severity=violation_score, action_context=action_context
+            agent_id=agent_id,
+            violation_severity=violation_score,
+            action_context=action_context,
         )
 
         results["risk_score"] = risk_score
         results["risk_tier"] = self.risk_engine.get_tier(agent_id).value
 
         # 2. Check for elevated tier trigger
-        results["invoke_advanced_detectors"] = self.risk_engine.should_invoke_advanced_detectors(
-            agent_id
+        results["invoke_advanced_detectors"] = (
+            self.risk_engine.should_invoke_advanced_detectors(agent_id)
         )
 
         # 3. Track correlations
@@ -207,7 +211,10 @@ class Phase3IntegratedGovernance:
         return results
 
     def should_invoke_detector(
-        self, detector_name: str, agent_id: str, tier: DetectorTier = DetectorTier.STANDARD
+        self,
+        detector_name: str,
+        agent_id: str,
+        tier: DetectorTier = DetectorTier.STANDARD,
     ) -> bool:
         """Determine if a detector should be invoked for an agent.
 
@@ -314,12 +321,15 @@ class Phase3IntegratedGovernance:
         status = {
             "timestamp": datetime.now(timezone.utc).isoformat(),
             "components": {
-                "risk_engine": {"active_profiles": len(self.risk_engine.profiles), "enabled": True},
+                "risk_engine": {
+                    "active_profiles": len(self.risk_engine.profiles),
+                    "enabled": True,
+                },
                 "correlation_engine": {
                     "tracked_agents": len(self.correlation_engine.agent_windows),
-                    "enabled": self.correlation_engine.config.get("correlation_engine", {}).get(
-                        "enabled", True
-                    ),
+                    "enabled": self.correlation_engine.config.get(
+                        "correlation_engine", {}
+                    ).get("enabled", True),
                 },
                 "fairness_sampler": {
                     "active_jobs": len(self.fairness_sampler.jobs),

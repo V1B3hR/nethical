@@ -216,7 +216,11 @@ class NIST80053ControlMapper:
 
     def get_controls_by_family(self, family: str) -> List[ComplianceControl]:
         """Get all controls from a specific family (e.g., 'AC', 'IA')"""
-        return [control for control in self.controls.values() if control.id.startswith(family)]
+        return [
+            control
+            for control in self.controls.values()
+            if control.id.startswith(family)
+        ]
 
     def assess_control(
         self,
@@ -388,7 +392,10 @@ class ISO27001ControlMapper:
             requirement="Threat modeling and intelligence gathering",
             severity=ControlSeverity.HIGH,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["nethical/security/threat_modeling.py", "docs/security/threat_model.md"],
+            evidence=[
+                "nethical/security/threat_modeling.py",
+                "docs/security/threat_model.md",
+            ],
         )
 
         self.controls["A.5.9"] = ComplianceControl(
@@ -410,7 +417,10 @@ class ISO27001ControlMapper:
             requirement="Data classification scheme",
             severity=ControlSeverity.HIGH,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["policies/common/data_classification.yaml", "nethical/security/data_compliance.py"],
+            evidence=[
+                "policies/common/data_classification.yaml",
+                "nethical/security/data_compliance.py",
+            ],
         )
 
         self.controls["A.5.15"] = ComplianceControl(
@@ -432,7 +442,10 @@ class ISO27001ControlMapper:
             requirement="Incident response procedures",
             severity=ControlSeverity.HIGH,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["docs/compliance/INCIDENT_RESPONSE_POLICY.md", "nethical/security/soc_integration.py"],
+            evidence=[
+                "docs/compliance/INCIDENT_RESPONSE_POLICY.md",
+                "nethical/security/soc_integration.py",
+            ],
         )
 
         self.controls["A.5.28"] = ComplianceControl(
@@ -443,7 +456,10 @@ class ISO27001ControlMapper:
             requirement="Evidence collection and audit trails",
             severity=ControlSeverity.HIGH,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["nethical/security/audit_logging.py", "nethical/core/audit_merkle.py"],
+            evidence=[
+                "nethical/security/audit_logging.py",
+                "nethical/core/audit_merkle.py",
+            ],
         )
 
         self.controls["A.5.34"] = ComplianceControl(
@@ -454,7 +470,10 @@ class ISO27001ControlMapper:
             requirement="PII detection and protection",
             severity=ControlSeverity.CRITICAL,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["nethical/core/redaction_pipeline.py", "nethical/core/differential_privacy.py"],
+            evidence=[
+                "nethical/core/redaction_pipeline.py",
+                "nethical/core/differential_privacy.py",
+            ],
         )
 
         # A.6 People controls
@@ -522,7 +541,10 @@ class ISO27001ControlMapper:
             requirement="PII redaction and differential privacy",
             severity=ControlSeverity.HIGH,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["nethical/core/redaction_pipeline.py", "nethical/core/differential_privacy.py"],
+            evidence=[
+                "nethical/core/redaction_pipeline.py",
+                "nethical/core/differential_privacy.py",
+            ],
         )
 
         self.controls["A.8.15"] = ComplianceControl(
@@ -533,7 +555,10 @@ class ISO27001ControlMapper:
             requirement="Comprehensive audit logging with integrity protection",
             severity=ControlSeverity.HIGH,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["nethical/security/audit_logging.py", "nethical/core/audit_merkle.py"],
+            evidence=[
+                "nethical/security/audit_logging.py",
+                "nethical/core/audit_merkle.py",
+            ],
         )
 
         self.controls["A.8.16"] = ComplianceControl(
@@ -544,7 +569,11 @@ class ISO27001ControlMapper:
             requirement="Real-time monitoring and anomaly detection",
             severity=ControlSeverity.HIGH,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["nethical/monitors/", "nethical/observability/", "nethical/core/anomaly_detector.py"],
+            evidence=[
+                "nethical/monitors/",
+                "nethical/observability/",
+                "nethical/core/anomaly_detector.py",
+            ],
         )
 
         self.controls["A.8.24"] = ComplianceControl(
@@ -555,7 +584,11 @@ class ISO27001ControlMapper:
             requirement="Encryption and cryptographic controls",
             severity=ControlSeverity.CRITICAL,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["nethical/security/encryption.py", "nethical/security/quantum_crypto.py", "nethical/core/audit_merkle.py"],
+            evidence=[
+                "nethical/security/encryption.py",
+                "nethical/security/quantum_crypto.py",
+                "nethical/core/audit_merkle.py",
+            ],
         )
 
         self.controls["A.8.25"] = ComplianceControl(
@@ -577,7 +610,10 @@ class ISO27001ControlMapper:
             requirement="Policy diff and release management",
             severity=ControlSeverity.HIGH,
             implementation_status=ComplianceStatus.COMPLIANT,
-            evidence=["nethical/core/policy_diff.py", "nethical/policy/release_management.py"],
+            evidence=[
+                "nethical/core/policy_diff.py",
+                "nethical/policy/release_management.py",
+            ],
         )
 
     def get_control(self, control_id: str) -> Optional[ComplianceControl]:
@@ -586,7 +622,11 @@ class ISO27001ControlMapper:
 
     def get_controls_by_category(self, category: str) -> List[ComplianceControl]:
         """Get all controls from a specific category (e.g., 'A.5', 'A.6', 'A.8')"""
-        return [control for control in self.controls.values() if control.id.startswith(category)]
+        return [
+            control
+            for control in self.controls.values()
+            if control.id.startswith(category)
+        ]
 
     def assess_control(
         self,
@@ -610,19 +650,23 @@ class ISO27001ControlMapper:
         """Generate a compliance summary for ISO 27001"""
         total = len(self.controls)
         compliant = sum(
-            1 for c in self.controls.values()
+            1
+            for c in self.controls.values()
             if c.implementation_status == ComplianceStatus.COMPLIANT
         )
         partial = sum(
-            1 for c in self.controls.values()
+            1
+            for c in self.controls.values()
             if c.implementation_status == ComplianceStatus.PARTIAL
         )
         non_compliant = sum(
-            1 for c in self.controls.values()
+            1
+            for c in self.controls.values()
             if c.implementation_status == ComplianceStatus.NON_COMPLIANT
         )
         not_applicable = sum(
-            1 for c in self.controls.values()
+            1
+            for c in self.controls.values()
             if c.implementation_status == ComplianceStatus.NOT_APPLICABLE
         )
 
@@ -666,11 +710,17 @@ class ComplianceReportGenerator:
             1 for c in controls if c.implementation_status == ComplianceStatus.COMPLIANT
         )
         non_compliant = sum(
-            1 for c in controls if c.implementation_status == ComplianceStatus.NON_COMPLIANT
+            1
+            for c in controls
+            if c.implementation_status == ComplianceStatus.NON_COMPLIANT
         )
-        partial = sum(1 for c in controls if c.implementation_status == ComplianceStatus.PARTIAL)
+        partial = sum(
+            1 for c in controls if c.implementation_status == ComplianceStatus.PARTIAL
+        )
         not_applicable = sum(
-            1 for c in controls if c.implementation_status == ComplianceStatus.NOT_APPLICABLE
+            1
+            for c in controls
+            if c.implementation_status == ComplianceStatus.NOT_APPLICABLE
         )
 
         compliance_score = (compliant / total * 100) if total > 0 else 0.0
@@ -771,7 +821,11 @@ class EvidenceCollector:
 
     def get_evidence_by_control(self, control_id: str) -> List[ComplianceEvidence]:
         """Retrieve all evidence for a specific control"""
-        return [ev for ev in self.evidence_repository.values() if ev.control_id == control_id]
+        return [
+            ev
+            for ev in self.evidence_repository.values()
+            if ev.control_id == control_id
+        ]
 
     def generate_evidence_package(self, control_ids: List[str]) -> Dict[str, Any]:
         """Generate evidence package for auditor review"""

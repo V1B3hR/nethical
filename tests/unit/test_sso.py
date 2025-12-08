@@ -11,6 +11,7 @@ from urllib.parse import urlencode
 
 class SSOError(Exception):
     """Generic SSO-related error."""
+
     pass
 
 
@@ -170,7 +171,9 @@ class SSOManager:
         sep = "&" if "?" in idp_url else "?"
         return f"{idp_url}{sep}SAMLRequest=stub"
 
-    def handle_saml_response(self, *, saml_response: str, config_name: str) -> Dict[str, Any]:
+    def handle_saml_response(
+        self, *, saml_response: str, config_name: str
+    ) -> Dict[str, Any]:
         cfg = self.get_config(config_name)
         if not cfg or cfg.provider != SSOProvider.SAML or not cfg.saml_config:
             raise SSOError("Invalid SAML configuration")
@@ -240,7 +243,9 @@ class SSOManager:
         }
         return f"{cfg.oauth_config['authorization_url']}?{urlencode(params)}"
 
-    def handle_oauth_callback(self, *, authorization_response: str, config_name: str) -> Dict[str, Any]:
+    def handle_oauth_callback(
+        self, *, authorization_response: str, config_name: str
+    ) -> Dict[str, Any]:
         cfg = self.get_config(config_name)
         if not cfg or not cfg.oauth_config:
             raise SSOError("Invalid OAuth configuration")

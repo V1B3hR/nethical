@@ -153,7 +153,9 @@ class FederatedMetricsAggregator:
         """
         regions = regions or self.regions
         end_time = end_time or datetime.now(timezone.utc)
-        start_time = start_time or (end_time - timedelta(seconds=self.aggregation_interval))
+        start_time = start_time or (
+            end_time - timedelta(seconds=self.aggregation_interval)
+        )
 
         # Collect metrics from regions
         regional_data: Dict[str, List[Tuple[float, float]]] = defaultdict(list)
@@ -170,7 +172,9 @@ class FederatedMetricsAggregator:
                     for metric_name, value in rm.metrics.items():
                         if metric_names is None or metric_name in metric_names:
                             # Store (value, weight * count)
-                            regional_data[metric_name].append((value, weight * rm.count))
+                            regional_data[metric_name].append(
+                                (value, weight * rm.count)
+                            )
 
         # Aggregate
         aggregated = {}
@@ -185,7 +189,9 @@ class FederatedMetricsAggregator:
                 # Weighted mean
                 total_weight = sum(weights)
                 if total_weight > 0:
-                    aggregated[metric_name] = sum(v * w for v, w in values_weights) / total_weight
+                    aggregated[metric_name] = (
+                        sum(v * w for v, w in values_weights) / total_weight
+                    )
                 else:
                     aggregated[metric_name] = 0.0
 
@@ -269,7 +275,9 @@ class FederatedMetricsAggregator:
         percentiles = percentiles or [50, 90, 95, 99]
         regions = regions or self.regions
         end_time = end_time or datetime.now(timezone.utc)
-        start_time = start_time or (end_time - timedelta(seconds=self.aggregation_interval))
+        start_time = start_time or (
+            end_time - timedelta(seconds=self.aggregation_interval)
+        )
 
         # Collect all values
         values = []
@@ -312,13 +320,19 @@ class FederatedMetricsAggregator:
             Dictionary mapping region_id to statistics
         """
         end_time = end_time or datetime.now(timezone.utc)
-        start_time = start_time or (end_time - timedelta(seconds=self.aggregation_interval))
+        start_time = start_time or (
+            end_time - timedelta(seconds=self.aggregation_interval)
+        )
 
         result = {}
 
         for region_id in self.regions:
             if region_id not in self.regional_metrics:
-                result[region_id] = {"data_points": 0, "metrics": {}, "last_update": None}
+                result[region_id] = {
+                    "data_points": 0,
+                    "metrics": {},
+                    "last_update": None,
+                }
                 continue
 
             # Filter by time
@@ -348,7 +362,11 @@ class FederatedMetricsAggregator:
                         "count": len(values),
                     }
 
-            last_update = max(rm.timestamp for rm in filtered_metrics) if filtered_metrics else None
+            last_update = (
+                max(rm.timestamp for rm in filtered_metrics)
+                if filtered_metrics
+                else None
+            )
 
             result[region_id] = {
                 "data_points": total_count,
@@ -364,7 +382,9 @@ class FederatedMetricsAggregator:
         if region_id not in self.regional_metrics:
             return
 
-        cutoff_time = datetime.now(timezone.utc) - timedelta(seconds=self.retention_period)
+        cutoff_time = datetime.now(timezone.utc) - timedelta(
+            seconds=self.retention_period
+        )
 
         self.regional_metrics[region_id] = [
             rm for rm in self.regional_metrics[region_id] if rm.timestamp >= cutoff_time
@@ -395,7 +415,9 @@ class FederatedMetricsAggregator:
 
         return {
             "total_regions": len(self.regions),
-            "active_regions": len([r for r in self.regions if self.regional_metrics.get(r)]),
+            "active_regions": len(
+                [r for r in self.regions if self.regional_metrics.get(r)]
+            ),
             "total_data_points": total_data_points,
             "tracked_metrics": list(all_metrics),
             "aggregation_interval": self.aggregation_interval,

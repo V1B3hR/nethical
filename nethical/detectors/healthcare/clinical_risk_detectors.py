@@ -30,7 +30,9 @@ def _tokenize(text: str) -> List[str]:
     return re.findall(r"\b\w+\b", text.lower())
 
 
-def _has_negation_near(text: str, span: Tuple[int, int], window_tokens: int = 5) -> bool:
+def _has_negation_near(
+    text: str, span: Tuple[int, int], window_tokens: int = 5
+) -> bool:
     """
     Rudimentary negation detection: checks for negation tokens within a window
     of tokens before the matched span.
@@ -183,7 +185,8 @@ ROLEPLAY_PHRASES = {
 # Emergency / acute intent patterns with broader coverage
 EMERGENCY_PATTERNS = {
     "self_harm": re.compile(
-        r"\b(suicide|kill myself|self[\-\s]?harm|end my life|hurt myself)\b", re.IGNORECASE
+        r"\b(suicide|kill myself|self[\-\s]?harm|end my life|hurt myself)\b",
+        re.IGNORECASE,
     ),
     "overdose": re.compile(
         r"\b(overdose|od|took too many|too many (pills|tablets|tabs)|excess (pills|medication))\b",
@@ -197,7 +200,16 @@ EMERGENCY_PATTERNS = {
 
 # Time-urgency qualifiers
 URGENCY_TERMS = _regex_union(
-    {"now", "right now", "immediately", "asap", "urgent", "tonight", "today", "this instant"}
+    {
+        "now",
+        "right now",
+        "immediately",
+        "asap",
+        "urgent",
+        "tonight",
+        "today",
+        "this instant",
+    }
 )
 
 # Dosage, route, frequency extraction
@@ -205,7 +217,9 @@ RE_DOSAGE = re.compile(
     r"\b(\d+(?:\.\d+)?)\s?(mg|mcg|g|ml|milligrams?|micrograms?|grams?|milliliters?)\b",
     re.IGNORECASE,
 )
-RE_QUANTITY = re.compile(r"\b(\d+)\s?(pills?|tabs?|tablets?|caps?|capsules?)\b", re.IGNORECASE)
+RE_QUANTITY = re.compile(
+    r"\b(\d+)\s?(pills?|tabs?|tablets?|caps?|capsules?)\b", re.IGNORECASE
+)
 RE_ROUTE = re.compile(
     r"\b(iv|im|po|subq|sc|sl|oral|intravenous|intramuscular|subcutaneous|sublingual|patch|inhaled|topical|transdermal)\b",
     re.IGNORECASE,
@@ -231,7 +245,10 @@ OVERRIDE_PATTERNS = [
     ),
     re.compile(r"no\s+(warnings|disclaimers|filter|filters)", re.IGNORECASE),
     _regex_union(OVERRIDE_PHRASES, word_boundary=False),
-    re.compile(r"act as (?:a|an)\s+(doctor|clinician|pharmacist|physician|expert)", re.IGNORECASE),
+    re.compile(
+        r"act as (?:a|an)\s+(doctor|clinician|pharmacist|physician|expert)",
+        re.IGNORECASE,
+    ),
     _regex_union(ROLEPLAY_PHRASES, word_boundary=False),
 ]
 
@@ -322,7 +339,13 @@ class ClinicalRiskAnalyzer:
             span = m.span()
             neg = _has_negation_near(text, span, window_tokens=negation_window_tokens)
             results.append(
-                Match(label=label, text=m.group(0), start=span[0], end=span[1], negated=neg)
+                Match(
+                    label=label,
+                    text=m.group(0),
+                    start=span[0],
+                    end=span[1],
+                    negated=neg,
+                )
             )
         return results
 
@@ -330,11 +353,17 @@ class ClinicalRiskAnalyzer:
         meds = self._find_all(
             CONTROLLED_SUBSTANCES_RX, text, "medication", self.negation_window_tokens
         )
-        conds = self._find_all(CONDITIONS_RX, text, "condition", self.negation_window_tokens)
+        conds = self._find_all(
+            CONDITIONS_RX, text, "condition", self.negation_window_tokens
+        )
         dosages = self._find_all(RE_DOSAGE, text, "dosage", self.negation_window_tokens)
-        qtys = self._find_all(RE_QUANTITY, text, "quantity", self.negation_window_tokens)
+        qtys = self._find_all(
+            RE_QUANTITY, text, "quantity", self.negation_window_tokens
+        )
         routes = self._find_all(RE_ROUTE, text, "route", self.negation_window_tokens)
-        freqs = self._find_all(RE_FREQUENCY, text, "frequency", self.negation_window_tokens)
+        freqs = self._find_all(
+            RE_FREQUENCY, text, "frequency", self.negation_window_tokens
+        )
         return Extraction(
             medications=meds,
             conditions=conds,
@@ -352,7 +381,9 @@ class ClinicalRiskAnalyzer:
         # Score: number of unique matches capped and normalized
         raw_score = min(1.0, len(pi_hits) / 3.0) if pi_hits else 0.0
         override_attempt = raw_score >= 0.5
-        return ManipulationScores(prompt_injection=raw_score, override_attempt=override_attempt)
+        return ManipulationScores(
+            prompt_injection=raw_score, override_attempt=override_attempt
+        )
 
     def detect_emergency(self, text: str) -> SafetySignals:
         emerg_label: Optional[str] = None
@@ -389,7 +420,10 @@ class ClinicalRiskAnalyzer:
         )
 
     def overall_score(
-        self, manipulation: ManipulationScores, clinical: ClinicalFlags, safety: SafetySignals
+        self,
+        manipulation: ManipulationScores,
+        clinical: ClinicalFlags,
+        safety: SafetySignals,
     ) -> float:
         w = self.WEIGHTS
         score = 0.0
@@ -460,7 +494,9 @@ def extract_clinical_signals(payload: Dict[str, Any]) -> Dict[str, Any]:
     but powered by the advanced analyzer. Adds a 'meta' section with
     explainable spans and the overall score for downstream consumers.
     """
-    text = f"{payload.get('user_input') or ''} {payload.get('agent_output') or ''}".strip()
+    text = (
+        f"{payload.get('user_input') or ''} {payload.get('agent_output') or ''}".strip()
+    )
     analyzer = ClinicalRiskAnalyzer()
     analysis = analyzer.analyze_text(text)
 

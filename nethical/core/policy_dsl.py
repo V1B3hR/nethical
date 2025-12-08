@@ -306,7 +306,11 @@ class RuleEvaluator:
         """
         try:
             # Create evaluation namespace
-            namespace = {"action": action, "context": context or {}, **self._builtin_functions}
+            namespace = {
+                "action": action,
+                "context": context or {},
+                **self._builtin_functions,
+            }
 
             # Add action attribute accessors
             if hasattr(action, "__dict__"):
@@ -342,7 +346,9 @@ class RuleEvaluator:
 
         for pattern in dangerous_patterns:
             if re.search(pattern, condition, re.IGNORECASE):
-                logger.warning(f"Potentially dangerous pattern detected in condition: {pattern}")
+                logger.warning(
+                    f"Potentially dangerous pattern detected in condition: {pattern}"
+                )
                 raise ValueError(f"Unsafe condition: contains '{pattern}'")
 
         return condition
@@ -350,24 +356,50 @@ class RuleEvaluator:
     def _validate_ast_safety(self, condition: str) -> None:
         """
         Validate condition using AST parsing to ensure only safe operations.
-        
+
         Raises ValueError if unsafe AST nodes are detected.
         """
         try:
-            tree = ast.parse(condition, mode='eval')
+            tree = ast.parse(condition, mode="eval")
         except SyntaxError as e:
             raise ValueError(f"Invalid condition syntax: {e}")
-        
+
         # Define allowed AST node types for safe evaluation
         allowed_nodes = (
-            ast.Expression, ast.Compare, ast.BoolOp, ast.UnaryOp, ast.BinOp,
-            ast.Name, ast.Constant, ast.Load, ast.Attribute, ast.Call,
-            ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
-            ast.And, ast.Or, ast.Not, ast.In, ast.NotIn, ast.Is, ast.IsNot,
-            ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod,
-            ast.List, ast.Tuple, ast.Dict, ast.Set
+            ast.Expression,
+            ast.Compare,
+            ast.BoolOp,
+            ast.UnaryOp,
+            ast.BinOp,
+            ast.Name,
+            ast.Constant,
+            ast.Load,
+            ast.Attribute,
+            ast.Call,
+            ast.Eq,
+            ast.NotEq,
+            ast.Lt,
+            ast.LtE,
+            ast.Gt,
+            ast.GtE,
+            ast.And,
+            ast.Or,
+            ast.Not,
+            ast.In,
+            ast.NotIn,
+            ast.Is,
+            ast.IsNot,
+            ast.Add,
+            ast.Sub,
+            ast.Mult,
+            ast.Div,
+            ast.Mod,
+            ast.List,
+            ast.Tuple,
+            ast.Dict,
+            ast.Set,
         )
-        
+
         for node in ast.walk(tree):
             if not isinstance(node, allowed_nodes):
                 raise ValueError(
@@ -501,7 +533,10 @@ class PolicyEngine:
         Returns:
             True if rolled back, False if no history available
         """
-        if policy_name not in self.policy_history or not self.policy_history[policy_name]:
+        if (
+            policy_name not in self.policy_history
+            or not self.policy_history[policy_name]
+        ):
             logger.warning(f"No history available for policy '{policy_name}'")
             return False
 
@@ -512,15 +547,21 @@ class PolicyEngine:
             for old_policy in reversed(history):
                 if old_policy.version == version:
                     self.policies[policy_name] = old_policy
-                    logger.info(f"Rolled back policy '{policy_name}' to version {version}")
+                    logger.info(
+                        f"Rolled back policy '{policy_name}' to version {version}"
+                    )
                     return True
-            logger.warning(f"Version {version} not found in history for '{policy_name}'")
+            logger.warning(
+                f"Version {version} not found in history for '{policy_name}'"
+            )
             return False
         else:
             # Rollback to previous version
             old_policy = history.pop()
             self.policies[policy_name] = old_policy
-            logger.info(f"Rolled back policy '{policy_name}' to version {old_policy.version}")
+            logger.info(
+                f"Rolled back policy '{policy_name}' to version {old_policy.version}"
+            )
             return True
 
     def check_for_updates(self) -> List[str]:
@@ -536,7 +577,9 @@ class PolicyEngine:
             try:
                 current_mtime = os.path.getmtime(file_path)
                 if current_mtime > last_mtime:
-                    logger.info(f"Policy file {file_path} has been modified, reloading...")
+                    logger.info(
+                        f"Policy file {file_path} has been modified, reloading..."
+                    )
                     self.load_policy_file(file_path)
                     reloaded.append(file_path)
             except FileNotFoundError:
@@ -594,7 +637,8 @@ class PolicyEngine:
                     violation = SafetyViolation(
                         detector=f"PolicyEngine:{policy.name}",
                         severity=rule.severity.value.lower(),
-                        description=rule.description or f"Policy rule matched: {rule.condition}",
+                        description=rule.description
+                        or f"Policy rule matched: {rule.condition}",
                         category="policy_violation",
                         explanation=f"Action violated policy '{policy.name}' (v{policy.version})",
                         confidence=1.0,

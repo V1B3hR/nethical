@@ -13,19 +13,19 @@ Installation:
 
 Usage:
     from nethical_sdk import NethicalClient
-    
+
     client = NethicalClient(
         api_url="https://api.nethical.example.com",
         api_key="your-key"
     )
-    
+
     # Evaluate an action
     result = client.evaluate(
         agent_id="my-agent",
         action="Generate code to access database",
         action_type="code_generation"
     )
-    
+
     if result.decision != "ALLOW":
         print(f"Action blocked: {result.reason}")
 

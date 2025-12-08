@@ -115,8 +115,10 @@ class TestSecurityHeadersMiddleware:
     @pytest.fixture
     def mock_app(self):
         """Create a mock ASGI app."""
+
         async def app(scope, receive, send):
             pass
+
         return app
 
     def test_middleware_initialization(self, mock_app):
@@ -175,6 +177,7 @@ class TestHealthEndpoints:
         """Create test client for the API."""
         from fastapi.testclient import TestClient
         from nethical.api import app
+
         return TestClient(app)
 
     def test_liveness_endpoint(self, client):
@@ -212,6 +215,7 @@ class TestAPIUpdates:
         """Create test client for the API."""
         from fastapi.testclient import TestClient
         from nethical.api import app
+
         return TestClient(app)
 
     def test_root_endpoint_version(self, client):
@@ -247,17 +251,20 @@ class TestCLI:
     def test_cli_import(self):
         """Test CLI module can be imported."""
         from nethical.cli import cli
+
         assert cli is not None
 
     def test_cli_group(self):
         """Test CLI is a click group."""
         from nethical.cli import cli
         import click
+
         assert isinstance(cli, click.core.Group)
 
     def test_cli_commands_exist(self):
         """Test CLI has expected commands."""
         from nethical.cli import cli
+
         commands = cli.commands
         assert "init" in commands
         assert "evaluate" in commands
@@ -360,10 +367,10 @@ class TestGrafanaDashboards:
         """Test overview dashboard file exists and is valid JSON."""
         dashboard_path = Path("deploy/grafana/dashboards/nethical-overview.json")
         assert dashboard_path.exists()
-        
+
         with open(dashboard_path) as f:
             data = json.load(f)
-        
+
         assert "title" in data
         assert data["title"] == "Nethical Overview"
         assert "panels" in data
@@ -372,20 +379,20 @@ class TestGrafanaDashboards:
         """Test violations dashboard file exists and is valid JSON."""
         dashboard_path = Path("deploy/grafana/dashboards/nethical-violations.json")
         assert dashboard_path.exists()
-        
+
         with open(dashboard_path) as f:
             data = json.load(f)
-        
+
         assert data["title"] == "Nethical Violations"
 
     def test_performance_dashboard_exists(self):
         """Test performance dashboard file exists and is valid JSON."""
         dashboard_path = Path("deploy/grafana/dashboards/nethical-performance.json")
         assert dashboard_path.exists()
-        
+
         with open(dashboard_path) as f:
             data = json.load(f)
-        
+
         assert data["title"] == "Nethical Performance"
 
 
@@ -398,6 +405,7 @@ class TestHelmChart:
         assert chart_path.exists()
 
         import yaml
+
         with open(chart_path) as f:
             data = yaml.safe_load(f)
 
@@ -411,6 +419,7 @@ class TestHelmChart:
         assert values_path.exists()
 
         import yaml
+
         with open(values_path) as f:
             data = yaml.safe_load(f)
 

@@ -166,7 +166,9 @@ class StarlinkProvider(SatelliteProvider):
 
             latency_info = ""
             if self._dish_status:
-                latency_info = f" Latency: {self._dish_status.pop_ping_latency_ms:.1f}ms"
+                latency_info = (
+                    f" Latency: {self._dish_status.pop_ping_latency_ms:.1f}ms"
+                )
             logger.info(f"Starlink connected.{latency_info}")
             return True
 

@@ -127,8 +127,12 @@ class TestSixDOFContext:
     def test_six_dof_context_to_dict(self):
         """Test converting SixDOFContext to dictionary."""
         context = SixDOFContext(
-            linear_x=1.0, linear_y=2.0, linear_z=3.0,
-            angular_x=0.1, angular_y=0.2, angular_z=0.3,
+            linear_x=1.0,
+            linear_y=2.0,
+            linear_z=3.0,
+            angular_x=0.1,
+            angular_y=0.2,
+            angular_z=0.3,
         )
         data = context.to_dict()
 
@@ -174,8 +178,12 @@ class TestFastAnalysisMode:
     def test_shallow_vs_deep_latency(self, physical_safety_detector):
         """Test that shallow is faster than deep analysis."""
         context = {
-            "linear_x": 0.3, "linear_y": 0.0, "linear_z": 0.0,
-            "angular_x": 0.0, "angular_y": 0.0, "angular_z": 0.1,
+            "linear_x": 0.3,
+            "linear_y": 0.0,
+            "linear_z": 0.0,
+            "angular_x": 0.0,
+            "angular_y": 0.0,
+            "angular_z": 0.1,
         }
 
         # Build some history first
@@ -325,7 +333,9 @@ class TestDangerPatternDetection:
         )
 
         assert "danger_patterns" in result
-        spike_patterns = [p for p in result["danger_patterns"] if p["type"] == "sudden_spike"]
+        spike_patterns = [
+            p for p in result["danger_patterns"] if p["type"] == "sudden_spike"
+        ]
         assert len(spike_patterns) > 0
 
     @pytest.mark.asyncio
@@ -405,7 +415,9 @@ class TestDangerPatternDetection:
                 agent_id,
                 {
                     "content": f"rapid {i}",
-                    "timestamp": (base_time + timedelta(milliseconds=i * 10)).isoformat(),
+                    "timestamp": (
+                        base_time + timedelta(milliseconds=i * 10)
+                    ).isoformat(),
                 },
             )
 
@@ -477,22 +489,36 @@ class TestPhysicalSafetyDetector:
         # First, establish history
         for _ in range(5):
             physical_safety_detector.analyze(
-                {"linear_x": 0.1, "linear_y": 0.0, "linear_z": 0.0,
-                 "angular_x": 0.0, "angular_y": 0.0, "angular_z": 0.0},
+                {
+                    "linear_x": 0.1,
+                    "linear_y": 0.0,
+                    "linear_z": 0.0,
+                    "angular_x": 0.0,
+                    "angular_y": 0.0,
+                    "angular_z": 0.0,
+                },
                 agent_id="jerk-test",
                 mode=AnalysisMode.SHALLOW,
             )
 
         # Sudden large change (high jerk)
         result = physical_safety_detector.analyze(
-            {"linear_x": 10.0, "linear_y": 0.0, "linear_z": 0.0,
-             "angular_x": 0.0, "angular_y": 0.0, "angular_z": 0.0},
+            {
+                "linear_x": 10.0,
+                "linear_y": 0.0,
+                "linear_z": 0.0,
+                "angular_x": 0.0,
+                "angular_y": 0.0,
+                "angular_z": 0.0,
+            },
             agent_id="jerk-test",
             mode=AnalysisMode.SHALLOW,
         )
 
         assert not result.is_safe
-        jerk_violations = [v for v in result.violations if "jerk" in v.description.lower()]
+        jerk_violations = [
+            v for v in result.violations if "jerk" in v.description.lower()
+        ]
         assert len(jerk_violations) > 0
 
     def test_contextual_safety_near_humans(self, physical_safety_detector):
@@ -513,7 +539,9 @@ class TestPhysicalSafetyDetector:
 
         assert not result.is_safe
         contextual_violations = [
-            v for v in result.violations if "contextual" in v.violation_type.lower()
+            v
+            for v in result.violations
+            if "contextual" in v.violation_type.lower()
             or "human" in v.description.lower()
         ]
         assert len(contextual_violations) > 0
@@ -524,7 +552,10 @@ class TestPhysicalSafetyDetector:
         industrial_detector = PhysicalSafetyDetector(robot_type=RobotType.INDUSTRIAL)
 
         # Collaborative has stricter limits
-        assert collab_detector.safety_envelope.max_linear_x < industrial_detector.safety_envelope.max_linear_x
+        assert (
+            collab_detector.safety_envelope.max_linear_x
+            < industrial_detector.safety_envelope.max_linear_x
+        )
 
     def test_custom_safety_envelope(self):
         """Test custom safety envelope."""
@@ -536,8 +567,14 @@ class TestPhysicalSafetyDetector:
         detector = PhysicalSafetyDetector(safety_envelope=custom_envelope)
 
         result = detector.analyze(
-            {"linear_x": 0.2, "linear_y": 0.0, "linear_z": 0.0,
-             "angular_x": 0.0, "angular_y": 0.0, "angular_z": 0.0},
+            {
+                "linear_x": 0.2,
+                "linear_y": 0.0,
+                "linear_z": 0.0,
+                "angular_x": 0.0,
+                "angular_y": 0.0,
+                "angular_z": 0.0,
+            },
             agent_id="test",
             mode=AnalysisMode.SHALLOW,
         )
@@ -549,8 +586,14 @@ class TestPhysicalSafetyDetector:
         # Run some analyses
         for _ in range(10):
             physical_safety_detector.analyze(
-                {"linear_x": 0.1, "linear_y": 0.0, "linear_z": 0.0,
-                 "angular_x": 0.0, "angular_y": 0.0, "angular_z": 0.0},
+                {
+                    "linear_x": 0.1,
+                    "linear_y": 0.0,
+                    "linear_z": 0.0,
+                    "angular_x": 0.0,
+                    "angular_y": 0.0,
+                    "angular_z": 0.0,
+                },
                 agent_id="metrics-test",
                 mode=AnalysisMode.SHALLOW,
             )
@@ -709,7 +752,10 @@ class TestMemoryManagement:
         for i in range(10):
             await analyzer.analyze_agent_behavior(
                 agent_id,
-                {"content": f"action-{i}", "timestamp": datetime.now(timezone.utc).isoformat()},
+                {
+                    "content": f"action-{i}",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                },
             )
 
         # Should only keep last 5

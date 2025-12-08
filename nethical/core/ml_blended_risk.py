@@ -178,7 +178,10 @@ class BlendingMetrics:
 
         # Check minimum sample size
         if self.gray_zone_count < 100:
-            return False, f"Insufficient gray zone samples ({self.gray_zone_count} < 100)"
+            return (
+                False,
+                f"Insufficient gray zone samples ({self.gray_zone_count} < 100)",
+            )
 
         return True, "All gate checks passed"
 
@@ -325,11 +328,15 @@ class MLBlendedRiskEngine:
                 decision.explanation = "Gray zone: ML not available, using rules only"
 
         # Determine final classification
-        decision.blended_classification = self._score_to_classification(decision.blended_risk_score)
+        decision.blended_classification = self._score_to_classification(
+            decision.blended_risk_score
+        )
         decision.final_classification = decision.blended_classification
 
         # Check if classification changed
-        decision.classification_changed = decision.blended_classification != rule_classification
+        decision.classification_changed = (
+            decision.blended_classification != rule_classification
+        )
 
         # Log decision
         self.decisions.append(decision)
@@ -472,7 +479,9 @@ class MLBlendedRiskEngine:
             return 0.0
 
         recent_decisions = self.decisions[-100:]
-        gray_zone_decisions = [d for d in recent_decisions if d.risk_zone == RiskZone.GRAY_ZONE]
+        gray_zone_decisions = [
+            d for d in recent_decisions if d.risk_zone == RiskZone.GRAY_ZONE
+        ]
 
         if len(gray_zone_decisions) == 0:
             return 0.0
@@ -500,7 +509,9 @@ class MLBlendedRiskEngine:
 
         # Apply filters
         if risk_zone:
-            decisions_to_export = [d for d in decisions_to_export if d.risk_zone == risk_zone]
+            decisions_to_export = [
+                d for d in decisions_to_export if d.risk_zone == risk_zone
+            ]
 
         if ml_influenced_only:
             decisions_to_export = [d for d in decisions_to_export if d.ml_influenced]

@@ -70,12 +70,14 @@ log = logging.getLogger(__name__)
 
 class TPMVersion(str, Enum):
     """TPM specification versions"""
+
     TPM_1_2 = "1.2"
     TPM_2_0 = "2.0"
 
 
 class TPMStatus(str, Enum):
     """TPM operational status"""
+
     AVAILABLE = "available"
     UNAVAILABLE = "unavailable"
     LOCKED = "locked"
@@ -85,6 +87,7 @@ class TPMStatus(str, Enum):
 
 class AttestationStatus(str, Enum):
     """Attestation result status"""
+
     VERIFIED = "verified"
     FAILED = "failed"
     PENDING = "pending"
@@ -94,6 +97,7 @@ class AttestationStatus(str, Enum):
 
 class BootState(str, Enum):
     """Secure boot state"""
+
     VERIFIED = "verified"
     UNVERIFIED = "unverified"
     BYPASSED = "bypassed"
@@ -102,6 +106,7 @@ class BootState(str, Enum):
 
 class PCRBank(str, Enum):
     """PCR hash algorithm banks"""
+
     SHA1 = "sha1"
     SHA256 = "sha256"
     SHA384 = "sha384"
@@ -111,6 +116,7 @@ class PCRBank(str, Enum):
 @dataclass
 class PCRValue:
     """Platform Configuration Register value"""
+
     index: int
     value: bytes
     bank: PCRBank = PCRBank.SHA256
@@ -129,6 +135,7 @@ class PCRValue:
 @dataclass
 class PlatformMeasurement:
     """Platform measurement for attestation"""
+
     measurement_id: str
     component: str
     hash_value: bytes
@@ -151,6 +158,7 @@ class PlatformMeasurement:
 @dataclass
 class AttestationQuote:
     """TPM attestation quote"""
+
     quote_id: str
     pcr_values: List[PCRValue]
     nonce: bytes
@@ -173,6 +181,7 @@ class AttestationQuote:
 @dataclass
 class AttestationResult:
     """Result of attestation verification"""
+
     status: AttestationStatus
     quote: Optional[AttestationQuote]
     verified_pcrs: List[int] = field(default_factory=list)
@@ -203,6 +212,7 @@ class AttestationResult:
 @dataclass
 class TPMConfig:
     """TPM configuration"""
+
     device_path: str = "/dev/tpm0"
     version: TPMVersion = TPMVersion.TPM_2_0
     owner_password: Optional[str] = None
@@ -221,6 +231,7 @@ class TPMConfig:
 @dataclass
 class SecureBootConfig:
     """Secure boot configuration"""
+
     enabled: bool = True
     require_signed_kernel: bool = True
     require_signed_modules: bool = True
@@ -232,7 +243,7 @@ class SecureBootConfig:
 class TPMInterface(ABC):
     """
     Abstract interface for TPM operations.
-    
+
     Provides a consistent API for both hardware TPM and
     software simulation.
     """
@@ -310,10 +321,10 @@ class TPMInterface(ABC):
 class SoftwareTPM(TPMInterface):
     """
     Software TPM simulation for development and testing.
-    
+
     WARNING: This does NOT provide hardware-level security.
     Use only for development, testing, or when hardware TPM is unavailable.
-    
+
     Fundamental Law 23 (Fail-Safe Design): Software fallback when
     hardware TPM is unavailable.
     """
@@ -493,7 +504,7 @@ class SoftwareTPM(TPMInterface):
 class HardwareTPM(TPMInterface):
     """
     Hardware TPM implementation.
-    
+
     Provides interface to physical TPM 2.0 chip.
     Requires tpm2-tools and appropriate permissions.
     """
@@ -637,10 +648,10 @@ class HardwareTPM(TPMInterface):
 def create_tpm_interface(config: TPMConfig) -> TPMInterface:
     """
     Factory function to create TPM interface.
-    
+
     Args:
         config: TPM configuration
-        
+
     Returns:
         TPM interface (hardware or software)
     """
@@ -652,13 +663,13 @@ def create_tpm_interface(config: TPMConfig) -> TPMInterface:
 class RemoteAttestation:
     """
     Remote attestation service for verifying edge device integrity.
-    
+
     Implements the TCG attestation protocol:
     1. Verifier sends challenge (nonce)
     2. Device generates TPM quote
     3. Verifier verifies quote and PCR values
     4. Policy decision based on verification result
-    
+
     Fundamental Law 2 (Right to Integrity): Attestation verifies
     device integrity before policy release.
     """
@@ -669,7 +680,7 @@ class RemoteAttestation:
     ):
         """
         Initialize remote attestation.
-        
+
         Args:
             expected_pcr_values: Expected PCR values for verification
         """
@@ -688,11 +699,11 @@ class RemoteAttestation:
     ) -> AttestationResult:
         """
         Verify attestation quote.
-        
+
         Args:
             quote: Attestation quote from device
             expected_nonce: Expected nonce from challenge
-            
+
         Returns:
             Attestation result
         """
@@ -763,13 +774,13 @@ class RemoteAttestation:
 class SecureBootVerifier:
     """
     Secure boot verification for edge devices.
-    
+
     Verifies the boot chain integrity:
     - Firmware
     - Bootloader
     - Kernel
     - Kernel modules
-    
+
     Fundamental Law 23 (Fail-Safe Design): Boot failures trigger
     safe mode operation.
     """
@@ -785,10 +796,10 @@ class SecureBootVerifier:
     ) -> Tuple[BootState, List[str]]:
         """
         Verify boot chain integrity using TPM measurements.
-        
+
         Args:
             tpm: TPM interface
-            
+
         Returns:
             Tuple of (boot state, list of issues)
         """
@@ -843,15 +854,15 @@ class SecureBootVerifier:
 class EdgeSecurityManager:
     """
     Comprehensive edge security manager.
-    
+
     Orchestrates TPM, attestation, and secure boot for
     edge device security.
-    
+
     Fundamental Laws Alignment:
     - Law 2 (Right to Integrity): Ensures device integrity
     - Law 22 (Digital Security): Hardware-backed security
     - Law 23 (Fail-Safe Design): Graceful degradation on failure
-    
+
     Use Cases:
     - Autonomous vehicle security validation
     - Industrial robot attestation
@@ -865,7 +876,7 @@ class EdgeSecurityManager:
     ):
         """
         Initialize edge security manager.
-        
+
         Args:
             tpm_config: TPM configuration
             secure_boot_config: Optional secure boot configuration
@@ -883,7 +894,7 @@ class EdgeSecurityManager:
     async def initialize(self) -> bool:
         """
         Initialize all security components.
-        
+
         Returns:
             True if initialized successfully
         """
@@ -904,7 +915,9 @@ class EdgeSecurityManager:
 
             # Verify boot chain if TPM is available
             if tpm_ok:
-                boot_state, issues = await self._secure_boot.verify_boot_chain(self._tpm)
+                boot_state, issues = await self._secure_boot.verify_boot_chain(
+                    self._tpm
+                )
                 if boot_state != BootState.VERIFIED:
                     log.warning(f"Secure boot issues: {issues}")
                     self._safe_mode = True
@@ -925,7 +938,7 @@ class EdgeSecurityManager:
     async def perform_attestation(self) -> AttestationResult:
         """
         Perform remote attestation.
-        
+
         Returns:
             Attestation result
         """
@@ -965,12 +978,12 @@ class EdgeSecurityManager:
     ) -> Optional[bytes]:
         """
         Seal policy data to current platform state.
-        
+
         The policy can only be unsealed if platform state matches.
-        
+
         Args:
             policy_data: Policy data to seal
-            
+
         Returns:
             Sealed data or None on failure
         """
@@ -992,12 +1005,12 @@ class EdgeSecurityManager:
     ) -> Optional[bytes]:
         """
         Unseal policy data.
-        
+
         Only succeeds if platform state matches sealed state.
-        
+
         Args:
             sealed_data: Sealed policy data
-            
+
         Returns:
             Unsealed data or None if state mismatch
         """
@@ -1018,12 +1031,12 @@ class EdgeSecurityManager:
     ) -> bool:
         """
         Record runtime measurement.
-        
+
         Args:
             component: Component name
             data: Data to measure
             pcr_index: PCR index to extend
-            
+
         Returns:
             True if measurement recorded
         """
@@ -1045,11 +1058,21 @@ class EdgeSecurityManager:
         """Get comprehensive security status"""
         return {
             "tpm_initialized": self._tpm.is_initialized if self._tpm else False,
-            "tpm_status": self._tpm.config.simulation_mode if self._tpm else "unavailable",
+            "tpm_status": (
+                self._tpm.config.simulation_mode if self._tpm else "unavailable"
+            ),
             "safe_mode": self._safe_mode,
             "secure_boot_enabled": self.secure_boot_config.enabled,
-            "boot_measurements": len(self._secure_boot.get_boot_measurements()) if self._secure_boot else 0,
-            "attestation_history": len(self._attestation.get_attestation_history()) if self._attestation else 0,
+            "boot_measurements": (
+                len(self._secure_boot.get_boot_measurements())
+                if self._secure_boot
+                else 0
+            ),
+            "attestation_history": (
+                len(self._attestation.get_attestation_history())
+                if self._attestation
+                else 0
+            ),
         }
 
     async def shutdown(self) -> None:
@@ -1143,11 +1166,13 @@ class ContinuousAttestation:
             current_pcr = await self.tpm.read_pcr(pcr_index)
 
             if current_pcr is None:
-                drifts.append({
-                    "pcr_index": pcr_index,
-                    "type": "read_failure",
-                    "timestamp": datetime.now(timezone.utc).isoformat(),
-                })
+                drifts.append(
+                    {
+                        "pcr_index": pcr_index,
+                        "type": "read_failure",
+                        "timestamp": datetime.now(timezone.utc).isoformat(),
+                    }
+                )
                 passed = False
                 continue
 
@@ -1217,7 +1242,9 @@ class ContinuousAttestation:
             "running": self._running,
             "baseline_pcrs": len(self._baseline_measurements),
             "attestation_count": self._attestation_count,
-            "last_attestation": self._last_attestation.isoformat() if self._last_attestation else None,
+            "last_attestation": (
+                self._last_attestation.isoformat() if self._last_attestation else None
+            ),
             "drift_events": len(self._drift_events),
             "interval_seconds": self.attestation_interval_seconds,
         }

@@ -97,19 +97,23 @@ def create_governor(
     if config_path:
         try:
             import yaml
+
             with open(config_path, "r") as f:
                 file_config = yaml.safe_load(f)
                 if file_config and "edge" in file_config:
                     config.update(file_config["edge"])
         except FileNotFoundError:
             import logging
+
             logging.warning(f"Config file not found: {config_path}, using defaults")
         except yaml.YAMLError as e:
             import logging
+
             logging.error(f"Invalid YAML in config file {config_path}: {e}")
             raise ValueError(f"Invalid configuration file: {config_path}") from e
         except Exception as e:
             import logging
+
             logging.error(f"Error loading config file {config_path}: {e}")
             raise
 

@@ -16,15 +16,15 @@ from typing import List, Dict, Any, Optional
 
 # Homoglyph mapping: visually similar characters from different alphabets
 HOMOGLYPHS = {
-    'a': ['а', 'ɑ', 'α'],  # Cyrillic a, Latin alpha, Greek alpha
-    'e': ['е', 'ε', 'ё'],  # Cyrillic e, Greek epsilon, Cyrillic yo
-    'o': ['о', 'ο', '0'],  # Cyrillic o, Greek omicron, zero
-    'i': ['і', 'ι', '1'],  # Cyrillic i, Greek iota, one
-    'c': ['с', 'ϲ'],       # Cyrillic s, Greek lunate sigma
-    'p': ['р', 'ρ'],       # Cyrillic r, Greek rho
-    's': ['ѕ', 'ꜱ'],       # Cyrillic dze, small capital s
-    'y': ['у', 'γ'],       # Cyrillic u, Greek gamma
-    'x': ['х', 'χ'],       # Cyrillic ha, Greek chi
+    "a": ["а", "ɑ", "α"],  # Cyrillic a, Latin alpha, Greek alpha
+    "e": ["е", "ε", "ё"],  # Cyrillic e, Greek epsilon, Cyrillic yo
+    "o": ["о", "ο", "0"],  # Cyrillic o, Greek omicron, zero
+    "i": ["і", "ι", "1"],  # Cyrillic i, Greek iota, one
+    "c": ["с", "ϲ"],  # Cyrillic s, Greek lunate sigma
+    "p": ["р", "ρ"],  # Cyrillic r, Greek rho
+    "s": ["ѕ", "ꜱ"],  # Cyrillic dze, small capital s
+    "y": ["у", "γ"],  # Cyrillic u, Greek gamma
+    "x": ["х", "χ"],  # Cyrillic ha, Greek chi
 }
 
 
@@ -170,9 +170,19 @@ class AdversarialGenerator:
         remainder = num_samples % 4
 
         data = []
-        data.extend(self.generate_prompt_injections(samples_per_type + (1 if remainder > 0 else 0)))
-        data.extend(self.generate_social_engineering(samples_per_type + (1 if remainder > 1 else 0)))
-        data.extend(self.generate_obfuscation(samples_per_type + (1 if remainder > 2 else 0)))
+        data.extend(
+            self.generate_prompt_injections(
+                samples_per_type + (1 if remainder > 0 else 0)
+            )
+        )
+        data.extend(
+            self.generate_social_engineering(
+                samples_per_type + (1 if remainder > 1 else 0)
+            )
+        )
+        data.extend(
+            self.generate_obfuscation(samples_per_type + (1 if remainder > 2 else 0))
+        )
         data.extend(self.generate_toxic_content(samples_per_type))
 
         random.shuffle(data)
@@ -209,7 +219,9 @@ class AdversarialGenerator:
         """
         if method == "leetspeak":
             # Use translation table for efficient character substitution
-            leet_table = str.maketrans({'e': '3', 'a': '4', 'o': '0', 'i': '1', 's': '5', 't': '7'})
+            leet_table = str.maketrans(
+                {"e": "3", "a": "4", "o": "0", "i": "1", "s": "5", "t": "7"}
+            )
             return text.translate(leet_table)
         elif method == "spaced":
             return " ".join(text)
@@ -251,7 +263,9 @@ class AdversarialGenerator:
                 text = text.upper()
             if random.random() > 0.8:
                 # Apply mild obfuscation to some injection attempts
-                text = self._apply_obfuscation(text, random.choice(["leetspeak", "homoglyph"]))
+                text = self._apply_obfuscation(
+                    text, random.choice(["leetspeak", "homoglyph"])
+                )
 
             sample = {
                 "features": {
@@ -263,7 +277,7 @@ class AdversarialGenerator:
                     "context_risk": random.uniform(0.8, 1.0),
                 },
                 "label": 1,
-                "metadata": {"type": "adversarial_prompt_injection"}
+                "metadata": {"type": "adversarial_prompt_injection"},
             }
             data.append(sample)
         return data
@@ -296,7 +310,7 @@ class AdversarialGenerator:
                     "context_risk": random.uniform(0.7, 0.9),
                 },
                 "label": 1,
-                "metadata": {"type": "adversarial_social_engineering"}
+                "metadata": {"type": "adversarial_social_engineering"},
             }
             data.append(sample)
         return data
@@ -331,7 +345,7 @@ class AdversarialGenerator:
                     "context_risk": random.uniform(0.9, 1.0),
                 },
                 "label": 1,
-                "metadata": {"type": "adversarial_obfuscation", "method": method}
+                "metadata": {"type": "adversarial_obfuscation", "method": method},
             }
             data.append(sample)
         return data
@@ -359,7 +373,9 @@ class AdversarialGenerator:
 
             # Occasionally apply obfuscation to toxic content
             if random.random() > 0.7:
-                text = self._apply_obfuscation(text, random.choice(["leetspeak", "homoglyph"]))
+                text = self._apply_obfuscation(
+                    text, random.choice(["leetspeak", "homoglyph"])
+                )
 
             sample = {
                 "features": {
@@ -371,7 +387,7 @@ class AdversarialGenerator:
                     "context_risk": random.uniform(0.9, 1.0),
                 },
                 "label": 1,
-                "metadata": {"type": "adversarial_toxic_content"}
+                "metadata": {"type": "adversarial_toxic_content"},
             }
             data.append(sample)
         return data

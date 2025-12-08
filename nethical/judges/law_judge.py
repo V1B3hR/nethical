@@ -180,14 +180,32 @@ class LawJudge(BaseJudge):
             ViolationType.SAFETY: [LawCategory.PROTECTION],
             ViolationType.SECURITY: [LawCategory.PROTECTION, LawCategory.EXISTENCE],
             ViolationType.PRIVACY: [LawCategory.PROTECTION, LawCategory.TRANSPARENCY],
-            ViolationType.ETHICAL: [LawCategory.COEXISTENCE, LawCategory.ACCOUNTABILITY],
-            ViolationType.MANIPULATION: [LawCategory.COEXISTENCE, LawCategory.TRANSPARENCY],
+            ViolationType.ETHICAL: [
+                LawCategory.COEXISTENCE,
+                LawCategory.ACCOUNTABILITY,
+            ],
+            ViolationType.MANIPULATION: [
+                LawCategory.COEXISTENCE,
+                LawCategory.TRANSPARENCY,
+            ],
             ViolationType.BIAS: [LawCategory.COEXISTENCE, LawCategory.ACCOUNTABILITY],
             ViolationType.HALLUCINATION: [LawCategory.TRANSPARENCY],
-            ViolationType.PROMPT_INJECTION: [LawCategory.PROTECTION, LawCategory.AUTONOMY],
-            ViolationType.UNAUTHORIZED_ACCESS: [LawCategory.AUTONOMY, LawCategory.PROTECTION],
-            ViolationType.TOXIC_CONTENT: [LawCategory.COEXISTENCE, LawCategory.PROTECTION],
-            ViolationType.MISINFORMATION: [LawCategory.TRANSPARENCY, LawCategory.ACCOUNTABILITY],
+            ViolationType.PROMPT_INJECTION: [
+                LawCategory.PROTECTION,
+                LawCategory.AUTONOMY,
+            ],
+            ViolationType.UNAUTHORIZED_ACCESS: [
+                LawCategory.AUTONOMY,
+                LawCategory.PROTECTION,
+            ],
+            ViolationType.TOXIC_CONTENT: [
+                LawCategory.COEXISTENCE,
+                LawCategory.PROTECTION,
+            ],
+            ViolationType.MISINFORMATION: [
+                LawCategory.TRANSPARENCY,
+                LawCategory.ACCOUNTABILITY,
+            ],
         }
 
         for violation in violations:
@@ -244,7 +262,9 @@ class LawJudge(BaseJudge):
         for violation in violations:
             severity = violation.severity
             if isinstance(severity, int):
-                severity = Severity(severity) if severity in range(1, 6) else Severity.MEDIUM
+                severity = (
+                    Severity(severity) if severity in range(1, 6) else Severity.MEDIUM
+                )
 
             severity_weight = self.severity_weights.get(severity, 0.4)
             total_deduction += severity_weight * 0.15  # 15% per violation, weighted

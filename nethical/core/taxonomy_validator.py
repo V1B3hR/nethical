@@ -88,8 +88,15 @@ class TaxonomyValidator:
                         "properties": {
                             "description": {"type": "string"},
                             "weight": {"type": "number", "minimum": 0, "maximum": 2},
-                            "severity_multiplier": {"type": "number", "minimum": 0, "maximum": 5},
-                            "indicators": {"type": "array", "items": {"type": "string"}},
+                            "severity_multiplier": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 5,
+                            },
+                            "indicators": {
+                                "type": "array",
+                                "items": {"type": "string"},
+                            },
                         },
                     },
                 },
@@ -101,11 +108,23 @@ class TaxonomyValidator:
                         "properties": {
                             "description": {"type": "string"},
                             "privacy": {"type": "number", "minimum": 0, "maximum": 1},
-                            "manipulation": {"type": "number", "minimum": 0, "maximum": 1},
+                            "manipulation": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                            },
                             "fairness": {"type": "number", "minimum": 0, "maximum": 1},
                             "safety": {"type": "number", "minimum": 0, "maximum": 1},
-                            "transparency": {"type": "number", "minimum": 0, "maximum": 1},
-                            "accountability": {"type": "number", "minimum": 0, "maximum": 1},
+                            "transparency": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                            },
+                            "accountability": {
+                                "type": "number",
+                                "minimum": 0,
+                                "maximum": 1,
+                            },
                         },
                     },
                 },
@@ -120,7 +139,10 @@ class TaxonomyValidator:
                     "type": "object",
                     "description": "Rules for aggregating dimensions",
                 },
-                "reporting": {"type": "object", "description": "Reporting configuration"},
+                "reporting": {
+                    "type": "object",
+                    "description": "Reporting configuration",
+                },
             },
         }
 
@@ -153,7 +175,9 @@ class TaxonomyValidator:
             used_dims = {k for k in scores.keys() if k != "description"}
             unknown = used_dims - defined_dims
             if unknown:
-                issues.append(f"Violation '{vtype}' references unknown dimensions: {unknown}")
+                issues.append(
+                    f"Violation '{vtype}' references unknown dimensions: {unknown}"
+                )
 
         # Check coverage
         if len(mapping) == 0:
@@ -325,7 +349,11 @@ HEALTHCARE_DIMENSIONS = {
         "description": "HIPAA and patient confidentiality",
         "weight": 1.3,
         "severity_multiplier": 1.8,
-        "indicators": ["phi_exposure", "unauthorized_medical_access", "consent_violation_hipaa"],
+        "indicators": [
+            "phi_exposure",
+            "unauthorized_medical_access",
+            "consent_violation_hipaa",
+        ],
     },
 }
 
@@ -396,7 +424,12 @@ EDUCATION_DIMENSIONS = {
         "description": "Student safety and wellbeing",
         "weight": 1.3,
         "severity_multiplier": 1.5,
-        "indicators": ["student_risk", "bullying", "inappropriate_content", "exploitation"],
+        "indicators": [
+            "student_risk",
+            "bullying",
+            "inappropriate_content",
+            "exploitation",
+        ],
     },
 }
 

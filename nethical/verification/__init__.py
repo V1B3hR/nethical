@@ -17,16 +17,16 @@ from .runtime_monitor import (
     InvariantStatus,
     RuntimeState,
     get_runtime_verifier,
-    verify_before_decision
+    verify_before_decision,
 )
 
 __all__ = [
-    'RuntimeVerifier',
-    'InvariantDefinition',
-    'InvariantViolation',
-    'InvariantSeverity',
-    'InvariantStatus',
-    'RuntimeState',
-    'get_runtime_verifier',
-    'verify_before_decision'
+    "RuntimeVerifier",
+    "InvariantDefinition",
+    "InvariantViolation",
+    "InvariantSeverity",
+    "InvariantStatus",
+    "RuntimeState",
+    "get_runtime_verifier",
+    "verify_before_decision",
 ]

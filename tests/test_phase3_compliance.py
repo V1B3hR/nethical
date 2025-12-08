@@ -38,40 +38,46 @@ class TestGDPRComplianceValidator:
     def test_validate_article_5(self):
         """Test Article 5 (Principles) validation."""
         validator = GDPRComplianceValidator()
-        result = validator.validate_article_5({
-            "lawful_basis": True,
-            "purpose_documented": True,
-            "data_minimization": True,
-            "accuracy_controls": True,
-            "retention_policy": True,
-            "security_controls": True,
-        })
+        result = validator.validate_article_5(
+            {
+                "lawful_basis": True,
+                "purpose_documented": True,
+                "data_minimization": True,
+                "accuracy_controls": True,
+                "retention_policy": True,
+                "security_controls": True,
+            }
+        )
         assert result.status.value == "compliant"
         assert len(result.gaps) == 0
 
     def test_validate_article_5_partial(self):
         """Test Article 5 with partial compliance."""
         validator = GDPRComplianceValidator()
-        result = validator.validate_article_5({
-            "lawful_basis": True,
-            "purpose_documented": True,
-            "data_minimization": False,
-            "accuracy_controls": False,
-        })
+        result = validator.validate_article_5(
+            {
+                "lawful_basis": True,
+                "purpose_documented": True,
+                "data_minimization": False,
+                "accuracy_controls": False,
+            }
+        )
         assert result.status.value in ["partial", "non_compliant"]
         assert len(result.gaps) > 0
 
     def test_validate_article_22(self):
         """Test Article 22 (Automated Decision-Making) validation."""
         validator = GDPRComplianceValidator()
-        result = validator.validate_article_22({
-            "human_intervention_available": True,
-            "explanation_capability": True,
-            "logic_documented": True,
-            "significance_explained": True,
-            "appeal_mechanism": True,
-            "safeguards_implemented": True,
-        })
+        result = validator.validate_article_22(
+            {
+                "human_intervention_available": True,
+                "explanation_capability": True,
+                "logic_documented": True,
+                "significance_explained": True,
+                "appeal_mechanism": True,
+                "safeguards_implemented": True,
+            }
+        )
         assert result.status.value == "compliant"
 
     def test_validate_article_6_consent(self):
@@ -141,36 +147,40 @@ class TestEUAIActValidator:
     def test_validate_article_9(self):
         """Test Article 9 (Risk Management) validation."""
         validator = EUAIActValidator({"critical_infrastructure": True})
-        result = validator.validate_article_9({
-            "risk_process_established": True,
-            "risks_identified": True,
-            "mitigation_measures": True,
-            "continuous_monitoring": True,
-            "lifecycle_coverage": True,
-        })
+        result = validator.validate_article_9(
+            {
+                "risk_process_established": True,
+                "risks_identified": True,
+                "mitigation_measures": True,
+                "continuous_monitoring": True,
+                "lifecycle_coverage": True,
+            }
+        )
         assert result.status.value == "compliant"
 
     def test_run_conformity_assessment(self):
         """Test full conformity assessment."""
         validator = EUAIActValidator({"critical_infrastructure": True})
-        result = validator.run_conformity_assessment({
-            "risk_management": {
-                "risk_process_established": True,
-                "risks_identified": True,
-                "mitigation_measures": True,
-                "continuous_monitoring": True,
-            },
-            "data_governance": {
-                "governance_practices": True,
-                "data_quality_controls": True,
-                "bias_detection": True,
-            },
-            "logging": {
-                "automatic_logging": True,
-                "traceability": True,
-                "tamper_evident": True,
-            },
-        })
+        result = validator.run_conformity_assessment(
+            {
+                "risk_management": {
+                    "risk_process_established": True,
+                    "risks_identified": True,
+                    "mitigation_measures": True,
+                    "continuous_monitoring": True,
+                },
+                "data_governance": {
+                    "governance_practices": True,
+                    "data_quality_controls": True,
+                    "bias_detection": True,
+                },
+                "logging": {
+                    "automatic_logging": True,
+                    "traceability": True,
+                    "tamper_evident": True,
+                },
+            }
+        )
         assert result.risk_level == AIRiskLevel.HIGH
         assert len(result.article_results) > 0
 
@@ -242,7 +252,10 @@ class TestDataResidencyManager:
             content={"email": "user@example.com", "name": "John Doe"},
         )
         assert data_type == DataType.PII
-        assert classification in [DataClassification.PII, DataClassification.SENSITIVE_PII]
+        assert classification in [
+            DataClassification.PII,
+            DataClassification.SENSITIVE_PII,
+        ]
 
     def test_record_data_movement(self):
         """Test data movement recording."""

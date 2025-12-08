@@ -41,13 +41,13 @@ profile = cache.get("risk_profile_agent123")
 print(f"✓ Cached risk profile: {profile}")
 
 # Multiple operations
-cache.set_multiple({
-    "metric_latency": 45.3,
-    "metric_throughput": 1250,
-    "metric_error_rate": 0.02
-})
+cache.set_multiple(
+    {"metric_latency": 45.3, "metric_throughput": 1250, "metric_error_rate": 0.02}
+)
 
-metrics = cache.get_multiple(["metric_latency", "metric_throughput", "metric_error_rate"])
+metrics = cache.get_multiple(
+    ["metric_latency", "metric_throughput", "metric_error_rate"]
+)
 print(f"✓ Cached metrics: {metrics}")
 
 # Cache statistics
@@ -67,10 +67,18 @@ from nethical.core.load_balancer import LoadBalancer, LoadBalancingStrategy
 lb = LoadBalancer(strategy=LoadBalancingStrategy.REGION_AWARE, max_retries=2)
 
 # Add instances across regions
-lb.add_instance("us-east-1-primary", "us-east-1", "http://us-east-1.nethical.io:8000", weight=2)
-lb.add_instance("us-east-1-secondary", "us-east-1", "http://us-east-1.nethical.io:8001", weight=1)
-lb.add_instance("eu-west-1-primary", "eu-west-1", "http://eu-west-1.nethical.io:8000", weight=2)
-lb.add_instance("ap-south-1-primary", "ap-south-1", "http://ap-south-1.nethical.io:8000", weight=2)
+lb.add_instance(
+    "us-east-1-primary", "us-east-1", "http://us-east-1.nethical.io:8000", weight=2
+)
+lb.add_instance(
+    "us-east-1-secondary", "us-east-1", "http://us-east-1.nethical.io:8001", weight=1
+)
+lb.add_instance(
+    "eu-west-1-primary", "eu-west-1", "http://eu-west-1.nethical.io:8000", weight=2
+)
+lb.add_instance(
+    "ap-south-1-primary", "ap-south-1", "http://ap-south-1.nethical.io:8000", weight=2
+)
 
 print(f"✓ Load balancer initialized with {len(lb.instances)} instances")
 print(f"✓ Regions: {list(lb.regions.keys())}")
@@ -80,11 +88,13 @@ for region in ["us-east-1", "eu-west-1", "ap-south-1"]:
     instance = lb.get_instance(region_id=region)
     print(f"✓ Request from {region} -> {instance.instance_id} ({instance.endpoint})")
 
+
 # Execute mock requests
 def mock_governance_request(endpoint):
     """Mock governance request."""
     time.sleep(0.001)  # Simulate network latency
     return {"decision": "ALLOW", "endpoint": endpoint}
+
 
 print("\n✓ Executing 5 requests with load balancing:")
 for i in range(5):
@@ -111,8 +121,7 @@ from nethical.core.federated_metrics import FederatedMetricsAggregator
 
 # Initialize aggregator
 agg = FederatedMetricsAggregator(
-    regions=["us-east-1", "eu-west-1", "ap-south-1"],
-    aggregation_interval=60
+    regions=["us-east-1", "eu-west-1", "ap-south-1"], aggregation_interval=60
 )
 
 # Simulate regional metrics
@@ -125,12 +134,13 @@ regions_data = {
 print("✓ Submitting regional metrics:")
 for region, metrics in regions_data.items():
     agg.submit_regional_metrics(region, metrics, count=1000)
-    print(f"  - {region}: risk={metrics['risk_score']}, latency={metrics['latency_ms']}ms")
+    print(
+        f"  - {region}: risk={metrics['risk_score']}, latency={metrics['latency_ms']}ms"
+    )
 
 # Aggregate across regions
 global_metrics = agg.aggregate_metrics(
-    metric_names=["risk_score", "latency_ms", "throughput"],
-    aggregation_type="mean"
+    metric_names=["risk_score", "latency_ms", "throughput"], aggregation_type="mean"
 )
 
 print(f"\n✓ Global aggregated metrics:")
@@ -162,7 +172,7 @@ from nethical.core.jit_optimizations import (
     calculate_risk_score_jit,
     calculate_statistics_jit,
     cosine_similarity_jit,
-    detect_outliers_iqr_jit
+    detect_outliers_iqr_jit,
 )
 
 print(f"✓ JIT compilation available: {is_jit_available()}")
@@ -216,7 +226,7 @@ print("-" * 80)
 from nethical.core.gpu_acceleration import (
     is_gpu_available,
     get_gpu_info,
-    GPUAcceleratedInference
+    GPUAcceleratedInference,
 )
 
 gpu_available = is_gpu_available()
@@ -270,15 +280,13 @@ if ts_store.enabled:
         agent_id="agent_123",
         metric_name="risk_score",
         metric_value=0.75,
-        region_id="us-east-1"
+        region_id="us-east-1",
     )
     print(f"✓ Metric inserted: {success}")
-    
+
     # Query metrics
     metrics = ts_store.query_metrics(
-        agent_id="agent_123",
-        metric_name="risk_score",
-        limit=10
+        agent_id="agent_123", metric_name="risk_score", limit=10
     )
     print(f"✓ Metrics queried: {len(metrics)} results")
 else:
@@ -307,20 +315,16 @@ if es_store.enabled:
         decision="BLOCK",
         action_data={
             "stated_intent": "Access sensitive data",
-            "actual_action": "Query database"
+            "actual_action": "Query database",
         },
-        violations=[
-            {"type": "privacy", "severity": 4, "confidence": 0.9}
-        ],
-        region_id="us-east-1"
+        violations=[{"type": "privacy", "severity": 4, "confidence": 0.9}],
+        region_id="us-east-1",
     )
     print(f"✓ Audit log indexed: {success}")
-    
+
     # Search audit logs
     results = es_store.search_audit_logs(
-        query="sensitive data",
-        decision="BLOCK",
-        size=10
+        query="sensitive data", decision="BLOCK", size=10
     )
     print(f"✓ Search results: {results['hits']['total']['value']} matches")
 else:

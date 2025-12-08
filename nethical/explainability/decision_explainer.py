@@ -103,7 +103,9 @@ class DecisionExplainer:
             component, factors = self._explain_risk_scores(risk_scores)
             components.append(component)
             contributing_factors.update(factors)
-            reasoning_chain.append(f"Calculated risk score: {sum(risk_scores.values()):.2f}")
+            reasoning_chain.append(
+                f"Calculated risk score: {sum(risk_scores.values()):.2f}"
+            )
 
         # Analyze policy matches
         if policy_matches:
@@ -151,14 +153,19 @@ class DecisionExplainer:
         # Calculate weight based on severity
         severity_weights = {"critical": 1.0, "high": 0.8, "medium": 0.5, "low": 0.3}
         total_weight = sum(
-            severity_weights.get(rule.get("severity", "medium"), 0.5) for rule in violated_rules
+            severity_weights.get(rule.get("severity", "medium"), 0.5)
+            for rule in violated_rules
         ) / max(len(violated_rules), 1)
 
         description = f"Violated {len(violated_rules)} rule(s)"
         if violated_rules:
-            high_severity = [r for r in violated_rules if r.get("severity") in ["critical", "high"]]
+            high_severity = [
+                r for r in violated_rules if r.get("severity") in ["critical", "high"]
+            ]
             if high_severity:
-                description += f", including {len(high_severity)} critical/high severity"
+                description += (
+                    f", including {len(high_severity)} critical/high severity"
+                )
 
         component = ExplanationComponent(
             type=ExplanationType.RULE_BASED,
@@ -169,7 +176,9 @@ class DecisionExplainer:
         )
 
         factors = {
-            f"rule_{rule.get('name', i)}": severity_weights.get(rule.get("severity", "medium"), 0.5)
+            f"rule_{rule.get('name', i)}": severity_weights.get(
+                rule.get("severity", "medium"), 0.5
+            )
             for i, rule in enumerate(violated_rules)
         }
 
@@ -243,13 +252,17 @@ class DecisionExplainer:
         )
 
         factors = {
-            f"policy_{policy.get('name', i)}": 0.3 for i, policy in enumerate(policy_matches)
+            f"policy_{policy.get('name', i)}": 0.3
+            for i, policy in enumerate(policy_matches)
         }
 
         return component, factors
 
     def _generate_summary(
-        self, decision: str, components: List[ExplanationComponent], context: Dict[str, Any]
+        self,
+        decision: str,
+        components: List[ExplanationComponent],
+        context: Dict[str, Any],
     ) -> str:
         """Generate a high-level summary of the decision."""
         if decision == "BLOCK":

@@ -242,7 +242,9 @@ class PolicyValidator:
 
         return errors
 
-    def _validate_rules(self, rules: List[Dict[str, Any]]) -> Tuple[List[str], List[str]]:
+    def _validate_rules(
+        self, rules: List[Dict[str, Any]]
+    ) -> Tuple[List[str], List[str]]:
         """Validate rules.
 
         Args:
@@ -269,10 +271,18 @@ class PolicyValidator:
             if "action" in rule:
                 action = rule["action"]
                 if "decision" not in action and "effect" not in action:
-                    errors.append(f"Rule {i} action missing 'decision' or 'effect' field")
+                    errors.append(
+                        f"Rule {i} action missing 'decision' or 'effect' field"
+                    )
 
                 decision = action.get("decision") or action.get("effect")
-                if decision and decision not in ["ALLOW", "RESTRICT", "BLOCK", "DENY", "TERMINATE"]:
+                if decision and decision not in [
+                    "ALLOW",
+                    "RESTRICT",
+                    "BLOCK",
+                    "DENY",
+                    "TERMINATE",
+                ]:
                     errors.append(f"Rule {i} has invalid decision: {decision}")
 
             # Validate priority
@@ -331,8 +341,12 @@ class PolicyValidator:
                     )
 
                 # Check for description
-                if "metadata" not in rule or "description" not in rule.get("metadata", {}):
-                    suggestions.append(f"Rule '{rule_id}' should have a description in metadata")
+                if "metadata" not in rule or "description" not in rule.get(
+                    "metadata", {}
+                ):
+                    suggestions.append(
+                        f"Rule '{rule_id}' should have a description in metadata"
+                    )
 
         # Check for version
         if "version" not in policy:
@@ -380,11 +394,17 @@ class PolicySimulator:
 
             # Track rule matches
             for rule_id in matched_rules:
-                results["rule_matches"][rule_id] = results["rule_matches"].get(rule_id, 0) + 1
+                results["rule_matches"][rule_id] = (
+                    results["rule_matches"].get(rule_id, 0) + 1
+                )
 
             # Store case result
             results["case_results"].append(
-                {"input": test_case, "decision": decision, "matched_rules": matched_rules}
+                {
+                    "input": test_case,
+                    "decision": decision,
+                    "matched_rules": matched_rules,
+                }
             )
 
         # Calculate statistics
@@ -477,20 +497,26 @@ class PolicyImpactAnalyzer:
             Impact analysis
         """
         # Simulate both policies
-        current_results = self.simulator.simulate_policy(current_policy, historical_data)
+        current_results = self.simulator.simulate_policy(
+            current_policy, historical_data
+        )
         new_results = self.simulator.simulate_policy(new_policy, historical_data)
 
         # Identify affected rules
         affected_rules = self._identify_affected_rules(current_policy, new_policy)
 
         # Calculate rates
-        current_block_rate = current_results["decisions"].get("BLOCK", 0) / len(historical_data)
+        current_block_rate = current_results["decisions"].get("BLOCK", 0) / len(
+            historical_data
+        )
         new_block_rate = new_results["decisions"].get("BLOCK", 0) / len(historical_data)
 
         current_restrict_rate = current_results["decisions"].get("RESTRICT", 0) / len(
             historical_data
         )
-        new_restrict_rate = new_results["decisions"].get("RESTRICT", 0) / len(historical_data)
+        new_restrict_rate = new_results["decisions"].get("RESTRICT", 0) / len(
+            historical_data
+        )
 
         # Determine risk level
         block_delta = abs(new_block_rate - current_block_rate)
@@ -512,7 +538,9 @@ class PolicyImpactAnalyzer:
                 "New policy significantly decreases block rate - verify security implications"
             )
         if len(affected_rules) > 10:
-            recommendations.append("Large number of rules affected - consider phased deployment")
+            recommendations.append(
+                "Large number of rules affected - consider phased deployment"
+            )
 
         return PolicyImpactAnalysis(
             affected_rules=affected_rules,

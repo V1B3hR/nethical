@@ -97,7 +97,9 @@ class WebhookDelivery:
             "url": self.url,
             "status": self.status.value,
             "attempt_count": self.attempt_count,
-            "last_attempt": self.last_attempt.isoformat() if self.last_attempt else None,
+            "last_attempt": (
+                self.last_attempt.isoformat() if self.last_attempt else None
+            ),
             "response_code": self.response_code,
             "error_message": self.error_message,
             "duration_ms": self.duration_ms,
@@ -130,7 +132,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
         retry_delay: float = 1.0,
         backoff_factor: float = 1.5,
         secret: Optional[str] = None,
-        user_agent: Optional[str] = "nethical-webhook/1.0 (+https://github.com/V1B3hR/nethical)",
+        user_agent: Optional[
+            str
+        ] = "nethical-webhook/1.0 (+https://github.com/V1B3hR/nethical)",
         rate_limit_per_sec: Optional[float] = None,
         dry_run: bool = False,
         on_success: Optional[Callable[[WebhookDelivery], None]] = None,
@@ -156,7 +160,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
         # Validate URL scheme for security
         self._validate_url_scheme(url)
         self.url = url
-        self.headers = dict(headers) if headers else {"Content-Type": "application/json"}
+        self.headers = (
+            dict(headers) if headers else {"Content-Type": "application/json"}
+        )
         self.timeout = timeout
         self.max_retries = max(1, int(max_retries))
         self.retry_delay = max(0.0, float(retry_delay))
@@ -186,17 +192,17 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
     def _validate_url_scheme(url: str) -> None:
         """
         Validate URL scheme to prevent SSRF attacks.
-        
+
         Only http and https schemes are allowed.
-        
+
         Args:
             url: URL to validate
-            
+
         Raises:
             ValueError: If URL scheme is not http or https
         """
         parsed = urlparse(url)
-        if parsed.scheme not in ['http', 'https']:
+        if parsed.scheme not in ["http", "https"]:
             raise ValueError(
                 f"Unsupported URL scheme: {parsed.scheme}. "
                 f"Only http and https are allowed."
@@ -242,7 +248,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
 
     def _sign_payload(self, body: bytes) -> str:
         assert self.secret is not None
-        signature = hmac.new(self.secret.encode("utf-8"), body, hashlib.sha256).hexdigest()
+        signature = hmac.new(
+            self.secret.encode("utf-8"), body, hashlib.sha256
+        ).hexdigest()
         return f"sha256={signature}"
 
     def _read_response_excerpt(self, resp: HTTPResponse, limit: int = 512) -> str:
@@ -264,7 +272,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
         """Dispatch webhook"""
         import uuid
 
-        delivery = WebhookDelivery(delivery_id=str(uuid.uuid4())[:8], url=self.url, payload=payload)
+        delivery = WebhookDelivery(
+            delivery_id=str(uuid.uuid4())[:8], url=self.url, payload=payload
+        )
 
         # Prepare JSON upfront for deterministic signing and retries
         body_str = payload.to_json()
@@ -301,7 +311,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
         for attempt in range(1, self.max_retries + 1):
             delivery.attempt_count = attempt
             delivery.last_attempt = datetime.now(timezone.utc)
-            delivery.status = WebhookStatus.RETRYING if attempt > 1 else WebhookStatus.PENDING
+            delivery.status = (
+                WebhookStatus.RETRYING if attempt > 1 else WebhookStatus.PENDING
+            )
 
             # Rate limit if configured
             self._apply_rate_limit()
@@ -310,7 +322,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
             retry_after_secs: Optional[float] = None
             try:
                 # Prepare request
-                req = request.Request(self.url, data=body_bytes, headers=req_headers, method="POST")
+                req = request.Request(
+                    self.url, data=body_bytes, headers=req_headers, method="POST"
+                )
 
                 # Send request
                 with request.urlopen(req, timeout=self.timeout) as response:
@@ -318,7 +332,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
                     delivery.duration_ms = round(duration, 3)
                     delivery.response_code = response.getcode()
                     delivery.response_headers = self._headers_to_dict(response.headers)
-                    delivery.response_body_excerpt = self._read_response_excerpt(response)
+                    delivery.response_body_excerpt = self._read_response_excerpt(
+                        response
+                    )
 
                     if 200 <= response.getcode() < 300:
                         delivery.status = WebhookStatus.SUCCESS
@@ -345,7 +361,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
                 # Try to read a small excerpt of the error body
                 try:
                     excerpt = e.read(512)
-                    delivery.response_body_excerpt = excerpt.decode("utf-8", errors="replace")
+                    delivery.response_body_excerpt = excerpt.decode(
+                        "utf-8", errors="replace"
+                    )
                 except Exception:
                     pass
 
@@ -379,7 +397,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
                 delivery.duration_ms = round(duration, 3)
                 last_err = e
                 delivery.error_message = str(e)
-                logging.error(f"Webhook failed (exception): {delivery.delivery_id} - {e}")
+                logging.error(
+                    f"Webhook failed (exception): {delivery.delivery_id} - {e}"
+                )
 
             # Decide retry
             if delivery.status == WebhookStatus.SUCCESS:
@@ -521,7 +541,10 @@ class SlackWebhookDispatcher(HTTPWebhookDispatcher):
                 },
             ]
             if fields:
-                field_list = [{"type": "mrkdwn", "text": f"*{k}:*\n{v}"} for k, v in fields.items()]
+                field_list = [
+                    {"type": "mrkdwn", "text": f"*{k}:*\n{v}"}
+                    for k, v in fields.items()
+                ]
                 blocks.append({"type": "section", "fields": field_list})
             # Add a context with timestamp
             blocks.append(
@@ -547,7 +570,9 @@ class SlackWebhookDispatcher(HTTPWebhookDispatcher):
                 attachment["fields"] = [
                     {"title": k, "value": v, "short": True} for k, v in fields.items()
                 ]
-            return self.send_message(text=f"*{severity.upper()}*", attachments=[attachment])
+            return self.send_message(
+                text=f"*{severity.upper()}*", attachments=[attachment]
+            )
 
 
 class DiscordWebhookDispatcher(HTTPWebhookDispatcher):
@@ -614,7 +639,9 @@ class DiscordWebhookDispatcher(HTTPWebhookDispatcher):
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
         if fields:
-            embed["fields"] = [{"name": k, "value": v, "inline": True} for k, v in fields.items()]
+            embed["fields"] = [
+                {"name": k, "value": v, "inline": True} for k, v in fields.items()
+            ]
         return self.send_message(content="", embeds=[embed])
 
 
@@ -646,7 +673,10 @@ class GenericAPIIntegration(APIIntegration):
     """
 
     def __init__(
-        self, base_url: str, api_key: Optional[str] = None, auth_header: str = "Authorization"
+        self,
+        base_url: str,
+        api_key: Optional[str] = None,
+        auth_header: str = "Authorization",
     ):
         """
         Initialize API integration
@@ -737,7 +767,9 @@ class WebhookManager:
                 )
 
         with ThreadPoolExecutor(max_workers=max(1, self.max_workers)) as executor:
-            futures = [executor.submit(_send, name, wh) for name, wh in self.webhooks.items()]
+            futures = [
+                executor.submit(_send, name, wh) for name, wh in self.webhooks.items()
+            ]
             for fut in as_completed(futures):
                 name, delivery = fut.result()
                 results[name] = delivery
@@ -759,7 +791,9 @@ class WebhookManager:
 
 if __name__ == "__main__":
     # Demo usage
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s"
+    )
     print("Webhook integration initialized")
 
     # Example (replace with actual URLs)

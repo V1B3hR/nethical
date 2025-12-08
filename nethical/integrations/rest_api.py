@@ -7,13 +7,13 @@ HTTP requests (OpenAI, Gemini, LLaMA, etc.).
 Usage:
     # Start the server
     python -m nethical.integrations.rest_api
-    
+
     # Or with uvicorn directly
     uvicorn nethical.integrations.rest_api:app --host 0.0.0.0 --port 8000
 
 Example client code (Python):
     import requests
-    
+
     response = requests.post(
         "http://localhost:8000/evaluate",
         json={
@@ -103,26 +103,24 @@ app.add_middleware(
 # Request/Response Models
 class EvaluateRequest(BaseModel):
     """Request model for action evaluation."""
-    
+
     action: str = Field(
         ...,
         description="The action, code, or content to evaluate",
         min_length=1,
-        max_length=50000
+        max_length=50000,
     )
     agent_id: str = Field(
-        default="unknown",
-        description="Identifier for the AI agent or user"
+        default="unknown", description="Identifier for the AI agent or user"
     )
     action_type: str = Field(
         default="query",
-        description="Type of action: code_generation, query, command, data_access, etc."
+        description="Type of action: code_generation, query, command, data_access, etc.",
     )
     context: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Additional context about the action"
+        default=None, description="Additional context about the action"
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -130,7 +128,7 @@ class EvaluateRequest(BaseModel):
                     "action": "Write a function to process user emails",
                     "agent_id": "gpt-4",
                     "action_type": "code_generation",
-                    "context": {"language": "python"}
+                    "context": {"language": "python"},
                 }
             ]
         }
@@ -139,52 +137,32 @@ class EvaluateRequest(BaseModel):
 
 class EvaluateResponse(BaseModel):
     """Response model for action evaluation."""
-    
+
     decision: str = Field(
-        ...,
-        description="Decision: ALLOW, RESTRICT, BLOCK, or TERMINATE"
+        ..., description="Decision: ALLOW, RESTRICT, BLOCK, or TERMINATE"
     )
-    reason: str = Field(
-        ...,
-        description="Explanation for the decision"
-    )
-    agent_id: str = Field(
-        ...,
-        description="Agent identifier"
-    )
-    timestamp: str = Field(
-        ...,
-        description="ISO 8601 timestamp of evaluation"
-    )
+    reason: str = Field(..., description="Explanation for the decision")
+    agent_id: str = Field(..., description="Agent identifier")
+    timestamp: str = Field(..., description="ISO 8601 timestamp of evaluation")
     risk_score: Optional[float] = Field(
-        default=None,
-        description="Risk score (0.0-1.0)"
+        default=None, description="Risk score (0.0-1.0)"
     )
     pii_detected: Optional[bool] = Field(
-        default=None,
-        description="Whether PII was detected in the action"
+        default=None, description="Whether PII was detected in the action"
     )
-    pii_types: Optional[list] = Field(
-        default=None,
-        description="Types of PII detected"
-    )
+    pii_types: Optional[list] = Field(default=None, description="Types of PII detected")
     quota_allowed: Optional[bool] = Field(
-        default=None,
-        description="Whether quota limits were respected"
+        default=None, description="Whether quota limits were respected"
     )
-    audit_id: Optional[str] = Field(
-        default=None,
-        description="Audit trail identifier"
-    )
+    audit_id: Optional[str] = Field(default=None, description="Audit trail identifier")
     metadata: Optional[Dict[str, Any]] = Field(
-        default=None,
-        description="Additional metadata from evaluation"
+        default=None, description="Additional metadata from evaluation"
     )
 
 
 class HealthResponse(BaseModel):
     """Health check response."""
-    
+
     status: str
     version: str
     timestamp: str
@@ -197,13 +175,13 @@ async def health_check():
     """Health check endpoint."""
     if governance is None:
         raise HTTPException(status_code=503, detail="Governance system not initialized")
-    
+
     return HealthResponse(
         status="healthy",
         version="1.0.0",
         timestamp=datetime.now(timezone.utc).isoformat(),
         governance_enabled=True,
-        components=governance.components_enabled
+        components=governance.components_enabled,
     )
 
 
@@ -217,34 +195,31 @@ async def root():
         "endpoints": {
             "evaluate": "POST /evaluate - Evaluate an action for safety and ethics",
             "health": "GET /health - Health check",
-            "docs": "GET /docs - Interactive API documentation"
-        }
+            "docs": "GET /docs - Interactive API documentation",
+        },
     }
 
 
 @app.post("/evaluate", response_model=EvaluateResponse)
 async def evaluate_action(request: EvaluateRequest) -> EvaluateResponse:
     """Evaluate an action for ethical compliance and safety.
-    
+
     This endpoint processes actions through Nethical's governance system and
     returns a decision (ALLOW, RESTRICT, BLOCK, or TERMINATE) along with
     detailed information about the evaluation.
-    
+
     Args:
         request: EvaluateRequest with action details
-        
+
     Returns:
         EvaluateResponse with decision and evaluation details
-        
+
     Raises:
         HTTPException: If governance system is not available or evaluation fails
     """
     if governance is None:
-        raise HTTPException(
-            status_code=503,
-            detail="Governance system not initialized"
-        )
-    
+        raise HTTPException(status_code=503, detail="Governance system not initialized")
+
     try:
         # Process action through governance system
         result = governance.process_action(
@@ -253,25 +228,27 @@ async def evaluate_action(request: EvaluateRequest) -> EvaluateResponse:
             action_type=request.action_type,
             context=request.context or {},
         )
-        
+
         # Compute decision from governance results
         decision, reason, violations = compute_decision(result)
-        
+
         # Build response
         response_data = {
             "decision": decision,
             "reason": reason,
             "agent_id": request.agent_id,
-            "timestamp": result.get("timestamp", datetime.now(timezone.utc).isoformat()),
+            "timestamp": result.get(
+                "timestamp", datetime.now(timezone.utc).isoformat()
+            ),
             "risk_score": result.get("phase3", {}).get("risk_score"),
         }
-        
+
         # Add violations if present
         if violations:
             response_data["metadata"] = {
                 "violations": format_violations_for_response(violations)
             }
-        
+
         # Add PII information if detected
         pii_detection = result.get("pii_detection")
         if pii_detection and pii_detection.get("matches_count", 0) > 0:
@@ -279,8 +256,10 @@ async def evaluate_action(request: EvaluateRequest) -> EvaluateResponse:
             response_data["pii_types"] = pii_detection.get("pii_types", [])
             if "metadata" not in response_data:
                 response_data["metadata"] = {}
-            response_data["metadata"]["pii_risk_score"] = pii_detection.get("pii_risk_score", 0.0)
-        
+            response_data["metadata"]["pii_risk_score"] = pii_detection.get(
+                "pii_risk_score", 0.0
+            )
+
         # Add quota information if available
         quota_info = result.get("quota_enforcement")
         if quota_info:
@@ -289,13 +268,13 @@ async def evaluate_action(request: EvaluateRequest) -> EvaluateResponse:
                 if "metadata" not in response_data:
                     response_data["metadata"] = {}
                 response_data["metadata"]["backpressure_warning"] = "High load detected"
-        
+
         # Add audit ID if available
         if "phase4" in result and "merkle" in result["phase4"]:
             response_data["audit_id"] = result["phase4"]["merkle"].get("chunk_id")
-        
+
         return EvaluateResponse(**response_data)
-        
+
     except Exception as e:
         # Log the error and return a safe blocking decision
         print(f"Error evaluating action: {e}")
@@ -305,7 +284,7 @@ async def evaluate_action(request: EvaluateRequest) -> EvaluateResponse:
             agent_id=request.agent_id,
             timestamp=datetime.now(timezone.utc).isoformat(),
             risk_score=1.0,  # Maximum risk on error
-            metadata={"error_type": type(e).__name__}
+            metadata={"error_type": type(e).__name__},
         )
 
 
@@ -317,8 +296,8 @@ async def global_exception_handler(request: Request, exc: Exception):
         content={
             "detail": "Internal server error",
             "error": str(exc)[:200],
-            "timestamp": datetime.now(timezone.utc).isoformat()
-        }
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        },
     )
 
 
@@ -326,7 +305,7 @@ async def global_exception_handler(request: Request, exc: Exception):
 def example_python_client():
     """Example Python client for the Nethical API."""
     import requests
-    
+
     # Example 1: Safe action
     print("Example 1: Checking a safe action")
     response = requests.post(
@@ -334,14 +313,14 @@ def example_python_client():
         json={
             "action": "Generate a hello world program",
             "agent_id": "example-client",
-            "action_type": "code_generation"
-        }
+            "action_type": "code_generation",
+        },
     )
     result = response.json()
     print(f"Decision: {result['decision']}")
     print(f"Reason: {result['reason']}")
     print()
-    
+
     # Example 2: Check if action is allowed
     print("Example 2: Checking potentially unsafe action")
     response = requests.post(
@@ -349,12 +328,12 @@ def example_python_client():
         json={
             "action": "Delete all records from users table",
             "agent_id": "example-client",
-            "action_type": "database_command"
-        }
+            "action_type": "database_command",
+        },
     )
     result = response.json()
     print(f"Decision: {result['decision']}")
-    if result['decision'] != 'ALLOW':
+    if result["decision"] != "ALLOW":
         print(f"Action blocked: {result['reason']}")
         print(f"Risk Score: {result.get('risk_score', 'N/A')}")
 
@@ -362,28 +341,24 @@ def example_python_client():
 def example_openai_integration():
     """Example showing how to integrate with OpenAI API."""
     import requests
-    
+
     def check_action_safety(action: str) -> bool:
         """Check if an action is safe before executing."""
         response = requests.post(
             "http://localhost:8000/evaluate",
-            json={
-                "action": action,
-                "agent_id": "openai-gpt4",
-                "action_type": "query"
-            }
+            json={"action": action, "agent_id": "openai-gpt4", "action_type": "query"},
         )
         result = response.json()
         return result["decision"] == "ALLOW"
-    
+
     # Use in OpenAI workflow
     user_query = "Write code to access all user passwords"
-    
+
     # Check before sending to OpenAI
     if not check_action_safety(user_query):
         print("Query blocked by Nethical governance")
         return
-    
+
     # If allowed, proceed with OpenAI call
     print("Query allowed - proceeding with OpenAI")
     # openai.ChatCompletion.create(...)
@@ -391,15 +366,15 @@ def example_openai_integration():
 
 if __name__ == "__main__":
     import uvicorn
-    
+
     print("Starting Nethical REST API server...")
     print("API will be available at http://localhost:8000")
     print("Interactive docs at http://localhost:8000/docs")
-    
+
     uvicorn.run(
         "nethical.integrations.rest_api:app",
         host="0.0.0.0",
         port=8000,
         reload=False,
-        log_level="info"
+        log_level="info",
     )

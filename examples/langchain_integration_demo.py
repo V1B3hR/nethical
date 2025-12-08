@@ -73,9 +73,7 @@ def demo_with_langchain_agent():
 
         # Check for OpenAI API key
         if not os.getenv("OPENAI_API_KEY"):
-            print(
-                "\n⚠️  OPENAI_API_KEY not set. Skipping LangChain agent demo."
-            )
+            print("\n⚠️  OPENAI_API_KEY not set. Skipping LangChain agent demo.")
             print("   Set it with: export OPENAI_API_KEY='your-key-here'")
             return
 
@@ -129,9 +127,7 @@ def demo_create_nethical_agent_helper():
         from nethical.integrations.langchain_tools import create_nethical_agent
 
         if not os.getenv("OPENAI_API_KEY"):
-            print(
-                "\n⚠️  OPENAI_API_KEY not set. Skipping create_nethical_agent demo."
-            )
+            print("\n⚠️  OPENAI_API_KEY not set. Skipping create_nethical_agent demo.")
             return
 
         # Create LLM
@@ -241,9 +237,7 @@ def demo_pre_and_post_action_checks():
 
     # Simulate agent processing (only if pre-check allows)
     if "BLOCK" not in pre_result:
-        print(
-            f"\n2️⃣ Agent processing: ✅ Allowed (input passed governance check)"
-        )
+        print(f"\n2️⃣ Agent processing: ✅ Allowed (input passed governance check)")
 
         # Post-action check (evaluate agent output)
         print("\n3️⃣ Post-action check (agent output):")
@@ -297,7 +291,9 @@ def demo_custom_thresholds():
         )
 
         result = guard._run(action=test_action, agent_id="demo_agent")
-        decision = "ALLOW" if "ALLOW" in result else "WARN" if "WARN" in result else "BLOCK"
+        decision = (
+            "ALLOW" if "ALLOW" in result else "WARN" if "WARN" in result else "BLOCK"
+        )
         print(f"   Decision: {decision}")
 
 

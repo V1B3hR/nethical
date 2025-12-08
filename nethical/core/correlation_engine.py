@@ -75,7 +75,11 @@ class CorrelationEngine:
 
         # Load configuration
         if config_path is None:
-            config_path = Path(__file__).parent.parent.parent / "config" / "correlation_rules.yaml"
+            config_path = (
+                Path(__file__).parent.parent.parent
+                / "config"
+                / "correlation_rules.yaml"
+            )
         self.config = self._load_config(config_path)
 
         # Agent activity windows
@@ -103,7 +107,11 @@ class CorrelationEngine:
             }
 
     def track_action(
-        self, agent_id: str, action: Any, payload: str, timestamp: Optional[datetime] = None
+        self,
+        agent_id: str,
+        action: Any,
+        payload: str,
+        timestamp: Optional[datetime] = None,
     ) -> List[CorrelationMatch]:
         """Track an action and check for correlation patterns.
 
@@ -145,7 +153,10 @@ class CorrelationEngine:
 
         if now - self.last_cleanup > cleanup_interval:
             max_window = max(
-                (p.get("window_seconds", 600) for p in self.config.get("multi_agent_patterns", [])),
+                (
+                    p.get("window_seconds", 600)
+                    for p in self.config.get("multi_agent_patterns", [])
+                ),
                 default=600,
             )
 
@@ -202,7 +213,9 @@ class CorrelationEngine:
             counts = sorted(agent_counts.values())
             if len(counts) >= 2:
                 increase_rate = (counts[-1] - counts[0]) / max(counts[0], 1)
-                threshold = pattern.get("thresholds", {}).get("action_rate_increase", 0.5)
+                threshold = pattern.get("thresholds", {}).get(
+                    "action_rate_increase", 0.5
+                )
 
                 if increase_rate >= threshold:
                     return CorrelationMatch(
@@ -276,7 +289,9 @@ class CorrelationEngine:
 
         # Group actions by time proximity
         time_clusters = []
-        time_threshold = pattern.get("thresholds", {}).get("time_correlation_threshold", 30)
+        time_threshold = pattern.get("thresholds", {}).get(
+            "time_correlation_threshold", 30
+        )
 
         for agent_id, window in self.agent_windows.items():
             for ts, action in zip(window.timestamps, window.actions):
@@ -368,7 +383,9 @@ class CorrelationEngine:
 
         for agent_id, window in self.agent_windows.items():
             recent_actions = [
-                action for ts, action in zip(window.timestamps, window.actions) if ts >= cutoff
+                action
+                for ts, action in zip(window.timestamps, window.actions)
+                if ts >= cutoff
             ]
 
             if recent_actions:
@@ -439,7 +456,9 @@ class CorrelationEngine:
 
         return signature
 
-    def _cluster_agents(self, signatures: Dict[str, Dict[str, float]]) -> List[List[str]]:
+    def _cluster_agents(
+        self, signatures: Dict[str, Dict[str, float]]
+    ) -> List[List[str]]:
         """Simple clustering of agents by behavior similarity."""
         agents = list(signatures.keys())
         clusters = []
@@ -471,7 +490,9 @@ class CorrelationEngine:
 
         return clusters
 
-    def _signature_similarity(self, sig1: Dict[str, float], sig2: Dict[str, float]) -> float:
+    def _signature_similarity(
+        self, sig1: Dict[str, float], sig2: Dict[str, float]
+    ) -> float:
         """Calculate similarity between two behavior signatures."""
         # Simple cosine-like similarity
         if not sig1 or not sig2:
@@ -532,5 +553,9 @@ class CorrelationEngine:
             List of correlation matches
         """
         if pattern_name:
-            return [m for m in self.detected_patterns[-limit:] if m.pattern_name == pattern_name]
+            return [
+                m
+                for m in self.detected_patterns[-limit:]
+                if m.pattern_name == pattern_name
+            ]
         return self.detected_patterns[-limit:]

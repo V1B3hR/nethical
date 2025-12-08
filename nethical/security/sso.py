@@ -289,7 +289,9 @@ class SSOManager:
             # Return a stub for demonstration
             saml_cfg = config.saml_config
             return (
-                f"{saml_cfg.idp_sso_url}?" f"SAMLRequest=<encoded_request>&" f"RelayState=<state>"
+                f"{saml_cfg.idp_sso_url}?"
+                f"SAMLRequest=<encoded_request>&"
+                f"RelayState=<state>"
             )
 
     def handle_saml_response(
@@ -467,7 +469,9 @@ class SSOManager:
 
         # CSRF validation: Verify state parameter
         if not expected_state or expected_state not in self._pending_oauth_states:
-            log.error("OAuth callback: Invalid or missing state parameter (CSRF check failed)")
+            log.error(
+                "OAuth callback: Invalid or missing state parameter (CSRF check failed)"
+            )
             raise SSOError("Invalid state parameter - possible CSRF attack")
 
         # Check state expiry (15 minutes)

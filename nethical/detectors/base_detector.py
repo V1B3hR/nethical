@@ -254,18 +254,24 @@ class BaseDetector(ABC):
         self.max_retries: int = self.config.get("max_retries", 3)
         self.rate_limit: int = self.config.get("rate_limit", 100)  # requests per minute
         self.max_memory_mb: int = self.config.get("max_memory_mb", 512)
-        self.priority: int = self.config.get("priority", 5)  # 1-10, higher is more important
+        self.priority: int = self.config.get(
+            "priority", 5
+        )  # 1-10, higher is more important
         self.tags: Set[str] = set(self.config.get("tags", []))
 
         # Internal state
         self._rate_limiter: Dict[str, List[float]] = defaultdict(list)
         self._circuit_breaker: Dict[str, Dict] = {}
         self._audit_log: List[Dict[str, Any]] = []
-        self._performance_history: List[Tuple[float, float]] = []  # (timestamp, execution_time)
+        self._performance_history: List[Tuple[float, float]] = (
+            []
+        )  # (timestamp, execution_time)
         self._last_health_check: Optional[datetime] = None
 
         # Bias detection and explainability features
-        self._bias_tracking: Dict[str, Dict[str, int]] = defaultdict(lambda: defaultdict(int))
+        self._bias_tracking: Dict[str, Dict[str, int]] = defaultdict(
+            lambda: defaultdict(int)
+        )
         self._explanation_templates = {
             "rule_based": "Violation detected based on rule: {rule}. Confidence: {confidence:.2f}",
             "pattern_match": "Content matched suspicious pattern: {pattern}. Location: {location}",
@@ -334,7 +340,9 @@ class BaseDetector(ABC):
 
         # Clean old requests
         self._rate_limiter[identifier] = [
-            req_time for req_time in self._rate_limiter[identifier] if req_time > minute_ago
+            req_time
+            for req_time in self._rate_limiter[identifier]
+            if req_time > minute_ago
         ]
 
         # Check rate limit
@@ -358,7 +366,9 @@ class BaseDetector(ABC):
 
         # If circuit is open, check if we should try again
         if cb["state"] == "open":
-            if cb["last_failure"] and (now - cb["last_failure"]) > 60:  # 1 minute cooldown
+            if (
+                cb["last_failure"] and (now - cb["last_failure"]) > 60
+            ):  # 1 minute cooldown
                 cb["state"] = "half-open"
                 return True
             return False
@@ -405,7 +415,9 @@ class BaseDetector(ABC):
                 "suspicious_action_detected",
                 {
                     "action_type": action_type,
-                    "patterns": [p for p in suspicious_patterns if p in action_str.lower()],
+                    "patterns": [
+                        p for p in suspicious_patterns if p in action_str.lower()
+                    ],
                 },
             )
             raise ValueError("Action contains potentially malicious content")
@@ -447,7 +459,9 @@ class BaseDetector(ABC):
             if field in anonymized:
                 if isinstance(anonymized[field], str):
                     # Hash sensitive strings
-                    anonymized[field] = hashlib.sha256(anonymized[field].encode()).hexdigest()[:8]
+                    anonymized[field] = hashlib.sha256(
+                        anonymized[field].encode()
+                    ).hexdigest()[:8]
                 else:
                     anonymized[field] = "[REDACTED]"
 
@@ -455,7 +469,9 @@ class BaseDetector(ABC):
 
     def _generate_explanation(self, violation_type: str, **kwargs) -> str:
         """Generate human-readable explanation for a violation."""
-        template = self._explanation_templates.get(violation_type, "Violation detected: {reason}")
+        template = self._explanation_templates.get(
+            violation_type, "Violation detected: {reason}"
+        )
         try:
             return template.format(**kwargs)
         except KeyError as e:
@@ -479,7 +495,10 @@ class BaseDetector(ABC):
             if len(decisions) >= 2:
                 total_decisions = sum(decisions.values())
                 if total_decisions >= 10:  # Need sufficient data
-                    rates = {group: count / total_decisions for group, count in decisions.items()}
+                    rates = {
+                        group: count / total_decisions
+                        for group, count in decisions.items()
+                    }
                     min_rate = min(rates.values())
                     max_rate = max(rates.values())
 
@@ -530,17 +549,25 @@ class BaseDetector(ABC):
                     for indicator, value in bias_indicators.items():
                         if value < 0.8:  # Less than 80% parity
                             compliance_score *= 0.8
-                            ethical_violations.append(f"Potential bias detected in {indicator}")
+                            ethical_violations.append(
+                                f"Potential bias detected in {indicator}"
+                            )
 
             elif principle == EthicalPrinciple.EXPLICABILITY:
                 # Ensure violations are explainable
                 unexplained_violations = len(
-                    [v for v in violations if not hasattr(v, "explanation") or not v.explanation]
+                    [
+                        v
+                        for v in violations
+                        if not hasattr(v, "explanation") or not v.explanation
+                    ]
                 )
                 if unexplained_violations > 0:
                     compliance_score *= 0.8
                     ethical_violations.append("Some violations lack proper explanation")
-                    recommendations.append("Add explanations to all detected violations")
+                    recommendations.append(
+                        "Add explanations to all detected violations"
+                    )
 
             elif principle == EthicalPrinciple.PRIVACY:
                 # Check for privacy preservation
@@ -551,7 +578,9 @@ class BaseDetector(ABC):
                     ethical_violations.append(
                         f"PII detected: {', '.join([p['type'] for p in pii_found])}"
                     )
-                    recommendations.append("Ensure personal data is properly anonymized")
+                    recommendations.append(
+                        "Ensure personal data is properly anonymized"
+                    )
 
         return EthicalAssessment(
             principles_evaluated=principles_evaluated,
@@ -589,7 +618,8 @@ class BaseDetector(ABC):
         start_time = time.time()
 
         self._audit_event(
-            "detection_started", {"execution_id": execution_id, "detector_status": self.status.name}
+            "detection_started",
+            {"execution_id": execution_id, "detector_status": self.status.name},
         )
 
         try:
@@ -597,7 +627,11 @@ class BaseDetector(ABC):
         except Exception as e:
             self._audit_event(
                 "detection_error",
-                {"execution_id": execution_id, "error": str(e), "error_type": type(e).__name__},
+                {
+                    "execution_id": execution_id,
+                    "error": str(e),
+                    "error_type": type(e).__name__,
+                },
             )
             raise
         finally:
@@ -607,7 +641,8 @@ class BaseDetector(ABC):
             # Update average execution time
             if self.metrics.total_runs > 0:
                 self.metrics.avg_execution_time = (
-                    self.metrics.avg_execution_time * self.metrics.total_runs + execution_time
+                    self.metrics.avg_execution_time * self.metrics.total_runs
+                    + execution_time
                 ) / (self.metrics.total_runs + 1)
             else:
                 self.metrics.avg_execution_time = execution_time
@@ -652,7 +687,9 @@ class BaseDetector(ABC):
                 violations = list(result) if result else []
 
                 # Assess ethical compliance
-                ethical_assessment = await self._assess_ethical_compliance(action, violations)
+                ethical_assessment = await self._assess_ethical_compliance(
+                    action, violations
+                )
 
                 # Log ethical assessment if needed
                 if ethical_assessment.compliance_score < 0.9:
@@ -685,7 +722,8 @@ class BaseDetector(ABC):
                 self.metrics.failed_runs += 1
                 self._record_circuit_breaker_result("detect_violations", False)
                 self._audit_event(
-                    "detection_timeout", {"execution_id": execution_id, "timeout": self.timeout}
+                    "detection_timeout",
+                    {"execution_id": execution_id, "timeout": self.timeout},
                 )
                 logger.warning(f"Detector {self.name} timed out after {self.timeout}s")
                 if self.fail_fast:
@@ -697,7 +735,11 @@ class BaseDetector(ABC):
                 self._record_circuit_breaker_result("detect_violations", False)
                 self._audit_event(
                     "detection_exception",
-                    {"execution_id": execution_id, "error": str(e), "error_type": type(e).__name__},
+                    {
+                        "execution_id": execution_id,
+                        "error": str(e),
+                        "error_type": type(e).__name__,
+                    },
                 )
                 logger.error(f"Detector {self.name} failed: {e}")
                 if self.fail_fast:
@@ -720,17 +762,23 @@ class BaseDetector(ABC):
                 "total_runs": self.metrics.total_runs,
                 "violations_detected": self.metrics.violations_detected,
             },
-            "circuit_breakers": {op: cb["state"] for op, cb in self._circuit_breaker.items()},
+            "circuit_breakers": {
+                op: cb["state"] for op, cb in self._circuit_breaker.items()
+            },
             "warnings": [],
         }
 
         # Check various health indicators
         if self.metrics.failure_rate > 10:  # More than 10% failure rate
             health_status["healthy"] = False
-            health_status["warnings"].append(f"High failure rate: {self.metrics.failure_rate:.1f}%")
+            health_status["warnings"].append(
+                f"High failure rate: {self.metrics.failure_rate:.1f}%"
+            )
 
         if self.metrics.avg_execution_time > self.timeout * 0.8:  # Close to timeout
-            health_status["warnings"].append("Average execution time approaching timeout limit")
+            health_status["warnings"].append(
+                "Average execution time approaching timeout limit"
+            )
 
         if any(cb["state"] == "open" for cb in self._circuit_breaker.values()):
             health_status["healthy"] = False
@@ -813,7 +861,9 @@ class BaseDetector(ABC):
             "violations_per_run": (
                 self.metrics.violations_detected / max(self.metrics.total_runs, 1)
             ),
-            "uptime_hours": (datetime.now(timezone.utc) - self.metrics.uptime_start).total_seconds()
+            "uptime_hours": (
+                datetime.now(timezone.utc) - self.metrics.uptime_start
+            ).total_seconds()
             / 3600,
         }
 
@@ -839,7 +889,9 @@ class BaseDetector(ABC):
             "security_metrics": {
                 "audit_events": len(self._audit_log),
                 "rate_limits_active": len(self._rate_limiter),
-                "circuit_breakers": {op: cb["state"] for op, cb in self._circuit_breaker.items()},
+                "circuit_breakers": {
+                    op: cb["state"] for op, cb in self._circuit_breaker.items()
+                },
             },
         }
 
@@ -900,7 +952,14 @@ class SecurityDetector(BaseDetector):
                 r"xp_cmdshell",
                 r"sp_executesql",
             ],
-            "path_traversal": [r"\.\./", r"\.\.\\", r"%2e%2e%2f", r"%2e%2e/", r"..%2f", r"..%5c"],
+            "path_traversal": [
+                r"\.\./",
+                r"\.\.\\",
+                r"%2e%2e%2f",
+                r"%2e%2e/",
+                r"..%2f",
+                r"..%5c",
+            ],
             "command_injection": [
                 r";\s*(cat|ls|dir|type)\s",
                 r"\|\s*(cat|ls|dir|type)\s",
@@ -1095,7 +1154,9 @@ class ContentSafetyDetector(BaseDetector):
             for pattern in patterns:
                 matches = list(re.finditer(pattern, content, re.IGNORECASE))
                 if matches:
-                    severity = self.severity_mapping.get(category, ViolationSeverity.MEDIUM)
+                    severity = self.severity_mapping.get(
+                        category, ViolationSeverity.MEDIUM
+                    )
 
                     explanation = self._generate_explanation(
                         "pattern_match",
@@ -1218,7 +1279,12 @@ class PrivacyDetector(BaseDetector):
         super().__init__(
             name="Privacy Protection Detector",
             version="2.0.0",
-            supported_actions={"DataAction", "RequestAction", "ResponseAction", "MessageAction"},
+            supported_actions={
+                "DataAction",
+                "RequestAction",
+                "ResponseAction",
+                "MessageAction",
+            },
             ethical_principles={
                 EthicalPrinciple.PRIVACY,
                 EthicalPrinciple.DIGNITY,
@@ -1264,7 +1330,9 @@ class PrivacyDetector(BaseDetector):
             matches = re.findall(pattern, content)
             if matches:
                 # Anonymize matches for logging
-                anonymized_matches = [self._anonymize_pii(match, pii_type) for match in matches[:5]]
+                anonymized_matches = [
+                    self._anonymize_pii(match, pii_type) for match in matches[:5]
+                ]
 
                 severity = (
                     ViolationSeverity.HIGH
@@ -1374,10 +1442,14 @@ class DetectorRegistry:
     def register_detector(self, name: str, detector: BaseDetector) -> None:
         """Register a detector instance."""
         self.detectors[name] = detector
-        self._log_event("detector_registered", {"name": name, "type": type(detector).__name__})
+        self._log_event(
+            "detector_registered", {"name": name, "type": type(detector).__name__}
+        )
         logger.info(f"Registered detector: {name}")
 
-    def create_detector(self, detector_type: str, name: str = None, **kwargs) -> BaseDetector:
+    def create_detector(
+        self, detector_type: str, name: str = None, **kwargs
+    ) -> BaseDetector:
         """Create and register a detector instance."""
         if detector_type not in self.detector_classes:
             raise ValueError(f"Unknown detector type: {detector_type}")
@@ -1444,14 +1516,20 @@ class DetectorRegistry:
             "batch_detection_completed",
             {
                 "detectors_run": len(tasks),
-                "total_violations": sum(len(violations) for violations in results.values()),
+                "total_violations": sum(
+                    len(violations) for violations in results.values()
+                ),
             },
         )
 
         return results
 
     async def _run_detector_safely(
-        self, name: str, detector: BaseDetector, action: Any, context: Optional[Dict[str, Any]]
+        self,
+        name: str,
+        detector: BaseDetector,
+        action: Any,
+        context: Optional[Dict[str, Any]],
     ) -> List[SafetyViolation]:
         """Run a single detector with error handling."""
         try:
@@ -1463,7 +1541,9 @@ class DetectorRegistry:
     def get_global_metrics(self) -> Dict[str, Any]:
         """Get aggregated metrics from all detectors."""
         total_runs = sum(d.metrics.total_runs for d in self.detectors.values())
-        total_violations = sum(d.metrics.violations_detected for d in self.detectors.values())
+        total_violations = sum(
+            d.metrics.violations_detected for d in self.detectors.values()
+        )
         active_detectors = sum(
             1 for d in self.detectors.values() if d.status == DetectorStatus.ACTIVE
         )
@@ -1475,7 +1555,8 @@ class DetectorRegistry:
             "total_violations": total_violations,
             "avg_violations_per_run": total_violations / max(total_runs, 1),
             "detector_health": {
-                name: detector.metrics.success_rate for name, detector in self.detectors.items()
+                name: detector.metrics.success_rate
+                for name, detector in self.detectors.items()
             },
         }
 
@@ -1501,15 +1582,32 @@ def create_default_detector_suite() -> DetectorRegistry:
     registry = DetectorRegistry()
 
     # Create security detector
-    security_config = {"timeout": 15.0, "rate_limit": 200, "fail_fast": False, "priority": 9}
+    security_config = {
+        "timeout": 15.0,
+        "rate_limit": 200,
+        "fail_fast": False,
+        "priority": 9,
+    }
     registry.create_detector("security", "primary_security", config=security_config)
 
     # Create content safety detector
-    content_config = {"timeout": 10.0, "rate_limit": 150, "fail_fast": False, "priority": 8}
-    registry.create_detector("content_safety", "content_moderator", config=content_config)
+    content_config = {
+        "timeout": 10.0,
+        "rate_limit": 150,
+        "fail_fast": False,
+        "priority": 8,
+    }
+    registry.create_detector(
+        "content_safety", "content_moderator", config=content_config
+    )
 
     # Create privacy detector
-    privacy_config = {"timeout": 12.0, "rate_limit": 100, "fail_fast": False, "priority": 7}
+    privacy_config = {
+        "timeout": 12.0,
+        "rate_limit": 100,
+        "fail_fast": False,
+        "priority": 7,
+    }
     registry.create_detector("privacy", "privacy_guardian", config=privacy_config)
 
     logger.info("Created default detector suite with 3 detectors")
@@ -1541,7 +1639,9 @@ async def demo_detection():
         MockAction("Hello world, this is a safe message"),
         MockAction("<script>alert('XSS attack')</script>", "CodeAction"),
         MockAction("I hate all people of that religion", "MessageAction"),
-        MockAction("My email is john.doe@example.com and SSN is 123-45-6789", "DataAction"),
+        MockAction(
+            "My email is john.doe@example.com and SSN is 123-45-6789", "DataAction"
+        ),
         MockAction("Visit malicious-site.com to download virus.exe", "WebAction"),
     ]
 
@@ -1559,7 +1659,9 @@ async def demo_detection():
             if violations:
                 print(f"  {detector_name}: {len(violations)} violation(s)")
                 for violation in violations[:2]:  # Show first 2 violations
-                    print(f"    - {violation.severity.upper()}: {violation.description}")
+                    print(
+                        f"    - {violation.severity.upper()}: {violation.description}"
+                    )
         print()
 
     # Show global metrics

@@ -36,6 +36,7 @@ router = APIRouter(prefix="/oversight", tags=["Human Oversight"])
 # Enums
 class OversightMode(str, Enum):
     """Human oversight operation modes per EU AI Act Article 14."""
+
     MONITORING = "monitoring"  # Passive monitoring
     VERIFICATION = "verification"  # Human verifies each decision
     APPROVAL = "approval"  # Human approves before execution
@@ -44,6 +45,7 @@ class OversightMode(str, Enum):
 
 class ReviewPriority(str, Enum):
     """Priority levels for human review requests."""
+
     CRITICAL = "critical"
     HIGH = "high"
     MEDIUM = "medium"
@@ -52,6 +54,7 @@ class ReviewPriority(str, Enum):
 
 class ReviewStatus(str, Enum):
     """Status of a human review."""
+
     PENDING = "pending"
     IN_REVIEW = "in_review"
     APPROVED = "approved"
@@ -62,6 +65,7 @@ class ReviewStatus(str, Enum):
 
 class OverrideReason(str, Enum):
     """Reasons for overriding AI decisions."""
+
     FALSE_POSITIVE = "false_positive"
     CONTEXT_NOT_CONSIDERED = "context_not_considered"
     POLICY_EXCEPTION = "policy_exception"
@@ -72,7 +76,7 @@ class OverrideReason(str, Enum):
 # Request/Response Models
 class OversightStatusResponse(BaseModel):
     """Current human oversight status."""
-    
+
     mode: OversightMode = Field(
         ...,
         description="Current oversight operation mode",
@@ -111,7 +115,7 @@ class OversightStatusResponse(BaseModel):
 
 class OverrideRequest(BaseModel):
     """Request to override an AI decision."""
-    
+
     decision_id: str = Field(
         ...,
         description="ID of the decision to override",
@@ -134,7 +138,7 @@ class OverrideRequest(BaseModel):
         default=False,
         description="Whether to apply override to already-executed actions",
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -152,7 +156,7 @@ class OverrideRequest(BaseModel):
 
 class OverrideResponse(BaseModel):
     """Response confirming a decision override."""
-    
+
     override_id: str = Field(
         ...,
         description="Unique identifier for this override",
@@ -189,7 +193,7 @@ class OverrideResponse(BaseModel):
 
 class SuspendAgentRequest(BaseModel):
     """Request to suspend an AI agent."""
-    
+
     agent_id: str = Field(
         ...,
         description="ID of the agent to suspend",
@@ -208,7 +212,7 @@ class SuspendAgentRequest(BaseModel):
 
 class SuspendAgentResponse(BaseModel):
     """Response confirming agent suspension."""
-    
+
     suspension_id: str = Field(
         ...,
         description="Unique identifier for this suspension",
@@ -233,7 +237,7 @@ class SuspendAgentResponse(BaseModel):
 
 class EmergencyStopRequest(BaseModel):
     """Request to trigger emergency stop."""
-    
+
     scope: str = Field(
         default="all",
         description="Scope: 'all', 'agent', 'domain', or 'region'",
@@ -256,7 +260,7 @@ class EmergencyStopRequest(BaseModel):
 
 class EmergencyStopResponse(BaseModel):
     """Response confirming emergency stop activation."""
-    
+
     stop_id: str = Field(
         ...,
         description="Unique identifier for this emergency stop",
@@ -285,7 +289,7 @@ class EmergencyStopResponse(BaseModel):
 
 class PendingReview(BaseModel):
     """A decision pending human review."""
-    
+
     review_id: str = Field(
         ...,
         description="Unique identifier for this review request",
@@ -332,7 +336,7 @@ class PendingReview(BaseModel):
 
 class PendingReviewsResponse(BaseModel):
     """Response containing pending reviews."""
-    
+
     reviews: list[PendingReview] = Field(
         default_factory=list,
         description="List of pending reviews",
@@ -353,7 +357,7 @@ class PendingReviewsResponse(BaseModel):
 
 class ReviewDecisionRequest(BaseModel):
     """Request to submit a human review decision."""
-    
+
     review_id: str = Field(
         ...,
         description="ID of the review to complete",
@@ -375,7 +379,7 @@ class ReviewDecisionRequest(BaseModel):
 
 class ReviewDecisionResponse(BaseModel):
     """Response confirming review decision."""
-    
+
     review_id: str = Field(
         ...,
         description="ID of the completed review",
@@ -415,13 +419,13 @@ _oversight_state = {
 @router.get("/status", response_model=OversightStatusResponse)
 async def get_oversight_status() -> OversightStatusResponse:
     """Get current human oversight status.
-    
+
     Returns the current state of human oversight mechanisms,
     including active reviewers, pending reviews, and AI autonomy level.
-    
+
     This endpoint supports EU AI Act Article 14 compliance by providing
     transparency into human oversight capabilities.
-    
+
     Returns:
         OversightStatusResponse with current oversight status
     """
@@ -443,23 +447,23 @@ async def override_decision(
     response: Response,
 ) -> OverrideResponse:
     """Override an AI decision with human judgment.
-    
+
     Implements EU AI Act Article 14.3(b) - ability to discard AI output
     and substitute human decision.
-    
+
     Also implements Fundamental Law 13 (Human Authority) - humans can
     override AI decisions.
-    
+
     Args:
         request: Override request with justification
         response: FastAPI response object
-        
+
     Returns:
         OverrideResponse confirming the override
     """
     override_id = str(uuid.uuid4())
     timestamp = datetime.now(timezone.utc).isoformat()
-    
+
     # Record override
     override_record = {
         "override_id": override_id,
@@ -471,11 +475,11 @@ async def override_decision(
     }
     _oversight_state.setdefault("overrides", []).append(override_record)
     _oversight_state["last_override"] = timestamp
-    
+
     # Set response headers
     response.headers["X-Override-ID"] = override_id
     response.headers["X-Law-13-Applied"] = "true"
-    
+
     return OverrideResponse(
         override_id=override_id,
         decision_id=request.decision_id,
@@ -494,25 +498,28 @@ async def suspend_agent(
     response: Response,
 ) -> SuspendAgentResponse:
     """Suspend an AI agent.
-    
+
     Implements EU AI Act Article 14.3(a) - ability to stop AI operation
     for specific agents.
-    
+
     Args:
         request: Suspension request
         response: FastAPI response object
-        
+
     Returns:
         SuspendAgentResponse confirming suspension
     """
     suspension_id = str(uuid.uuid4())
     suspended_at = datetime.now(timezone.utc)
-    
+
     expires_at = None
     if request.duration_hours:
         from datetime import timedelta
-        expires_at = (suspended_at + timedelta(hours=request.duration_hours)).isoformat()
-    
+
+        expires_at = (
+            suspended_at + timedelta(hours=request.duration_hours)
+        ).isoformat()
+
     # Record suspension
     suspension_record = {
         "suspension_id": suspension_id,
@@ -522,9 +529,9 @@ async def suspend_agent(
         "reason": request.reason,
     }
     _oversight_state.setdefault("suspensions", []).append(suspension_record)
-    
+
     response.headers["X-Suspension-ID"] = suspension_id
-    
+
     return SuspendAgentResponse(
         suspension_id=suspension_id,
         agent_id=request.agent_id,
@@ -540,29 +547,29 @@ async def emergency_stop(
     response: Response,
 ) -> EmergencyStopResponse:
     """Trigger emergency stop.
-    
+
     Implements EU AI Act Article 14.3(a) - ability to stop AI operation.
-    
+
     Also implements Fundamental Law 23 (Fail-Safe Design) - system
     can be safely stopped at any time.
-    
+
     Args:
         request: Emergency stop request
         response: FastAPI response object
-        
+
     Returns:
         EmergencyStopResponse confirming emergency stop
     """
     stop_id = str(uuid.uuid4())
     activated_at = datetime.now(timezone.utc).isoformat()
-    
+
     # Activate emergency stop
     _oversight_state["emergency_stop"] = True
-    
+
     response.headers["X-Emergency-Stop-ID"] = stop_id
     response.headers["X-Law-23-Applied"] = "true"
     response.status_code = 200
-    
+
     return EmergencyStopResponse(
         stop_id=stop_id,
         scope=request.scope,
@@ -583,18 +590,18 @@ async def get_pending_reviews(
     page_size: int = Query(default=20, ge=1, le=100, description="Items per page"),
 ) -> PendingReviewsResponse:
     """Get pending human reviews.
-    
+
     Lists AI decisions that require human review before execution
     or final determination.
-    
+
     Implements EU AI Act Article 14.4 - proportionate human oversight
     for high-risk decisions.
-    
+
     Args:
         priority: Optional priority filter
         page: Page number
         page_size: Items per page
-        
+
     Returns:
         PendingReviewsResponse with list of pending reviews
     """
@@ -614,11 +621,11 @@ async def get_pending_reviews(
         )
         for i in range(1, 6)
     ]
-    
+
     # Apply priority filter
     if priority:
         reviews = [r for r in reviews if r.priority == priority]
-    
+
     return PendingReviewsResponse(
         reviews=reviews,
         total_count=len(reviews),
@@ -633,34 +640,34 @@ async def submit_review(
     response: Response,
 ) -> ReviewDecisionResponse:
     """Submit a human review decision.
-    
+
     Completes a pending human review by submitting the human's decision.
-    
+
     Implements EU AI Act Article 14 - effective human oversight.
     Also implements Fundamental Law 14 (Appeal Rights).
-    
+
     Args:
         request: Review decision
         response: FastAPI response object
-        
+
     Returns:
         ReviewDecisionResponse confirming the review
-        
+
     Note:
         In production, reviewer_id would come from authenticated session,
         decision_id from the review record, and duration from actual timestamps.
     """
     reviewed_at = datetime.now(timezone.utc)
-    
+
     final_decision = request.modified_decision or request.decision
-    
+
     # In production, these would come from the actual review record
     # For now, we use UUID-based generation and placeholder values
     decision_id = str(uuid.uuid4())
-    
+
     response.headers["X-Review-Complete"] = "true"
     response.headers["X-Law-14-Applied"] = "true"
-    
+
     return ReviewDecisionResponse(
         review_id=request.review_id,
         decision_id=decision_id,
@@ -677,19 +684,19 @@ async def set_oversight_mode(
     response: Response,
 ) -> dict[str, Any]:
     """Set the human oversight operation mode.
-    
+
     Changes the level of human oversight applied to AI decisions.
-    
+
     Args:
         mode: New oversight mode
         response: FastAPI response object
-        
+
     Returns:
         Confirmation of mode change
     """
     previous_mode = _oversight_state.get("mode", OversightMode.MONITORING)
     _oversight_state["mode"] = mode
-    
+
     return {
         "previous_mode": previous_mode.value,
         "new_mode": mode.value,

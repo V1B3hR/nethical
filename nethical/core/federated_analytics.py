@@ -88,13 +88,19 @@ class FederatedAnalytics:
         self.min_samples_per_region = min_samples_per_region
 
         # Storage for regional metrics
-        self.regional_metrics: Dict[str, List[RegionMetrics]] = {region: [] for region in regions}
+        self.regional_metrics: Dict[str, List[RegionMetrics]] = {
+            region: [] for region in regions
+        }
 
         # Aggregation history
         self.aggregation_history: List[AggregatedMetrics] = []
 
         # Statistics
-        self.stats = {"total_aggregations": 0, "regions_processed": set(), "privacy_operations": 0}
+        self.stats = {
+            "total_aggregations": 0,
+            "regions_processed": set(),
+            "privacy_operations": 0,
+        }
 
     def register_regional_metrics(
         self,
@@ -191,7 +197,9 @@ class FederatedAnalytics:
         aggregated = {}
         for metric_name, values_and_sizes in regional_values.items():
             if method == AggregationMethod.SECURE_AVERAGE:
-                aggregated[metric_name] = self._secure_weighted_average(values_and_sizes)
+                aggregated[metric_name] = self._secure_weighted_average(
+                    values_and_sizes
+                )
             elif method == AggregationMethod.FEDERATED_MEAN:
                 aggregated[metric_name] = self._federated_mean(values_and_sizes)
             elif method == AggregationMethod.SECURE_SUM:
@@ -282,7 +290,9 @@ class FederatedAnalytics:
         p_value = self._compute_correlation_p_value(correlation, n)
 
         # Compute confidence interval
-        ci_lower, ci_upper = self._correlation_confidence_interval(correlation, n, confidence=0.95)
+        ci_lower, ci_upper = self._correlation_confidence_interval(
+            correlation, n, confidence=0.95
+        )
 
         return CorrelationResult(
             variable1=variable1,
@@ -356,7 +366,9 @@ class FederatedAnalytics:
             "privacy_preserving": privacy_preserving,
         }
 
-    def get_encrypted_report(self, metric_names: Optional[List[str]] = None) -> Dict[str, Any]:
+    def get_encrypted_report(
+        self, metric_names: Optional[List[str]] = None
+    ) -> Dict[str, Any]:
         """Generate encrypted metric report.
 
         Args:
@@ -366,7 +378,9 @@ class FederatedAnalytics:
             Encrypted report with aggregated metrics
         """
         # Compute aggregated metrics
-        aggregated = self.compute_metrics(metric_names=metric_names, privacy_preserving=True)
+        aggregated = self.compute_metrics(
+            metric_names=metric_names, privacy_preserving=True
+        )
 
         # Create report
         report = {
@@ -384,7 +398,9 @@ class FederatedAnalytics:
         return {
             "encrypted": True,
             "encryption_method": "SHA256",
-            "report_hash": hashlib.sha256(json.dumps(report, sort_keys=True).encode()).hexdigest(),
+            "report_hash": hashlib.sha256(
+                json.dumps(report, sort_keys=True).encode()
+            ).hexdigest(),
             "data": encrypted_report,
             "metadata": {
                 "regions_count": len(aggregated.regions),
@@ -419,7 +435,9 @@ class FederatedAnalytics:
         report_str = json.dumps(report, sort_keys=True)
         return hashlib.sha256(report_str.encode()).hexdigest()
 
-    def _secure_weighted_average(self, values_and_weights: List[Tuple[float, int]]) -> float:
+    def _secure_weighted_average(
+        self, values_and_weights: List[Tuple[float, int]]
+    ) -> float:
         """Compute weighted average using secure aggregation."""
         total_weight = sum(w for _, w in values_and_weights)
         if total_weight == 0:
@@ -502,7 +520,11 @@ class FederatedAnalytics:
 
     def validate_privacy_guarantees(self) -> Dict[str, Any]:
         """Validate that privacy guarantees are maintained."""
-        validation = {"privacy_preserving": self.privacy_preserving, "checks": {}, "passed": True}
+        validation = {
+            "privacy_preserving": self.privacy_preserving,
+            "checks": {},
+            "passed": True,
+        }
 
         # Check 1: No raw data sharing
         validation["checks"]["no_raw_data_sharing"] = {
@@ -529,6 +551,8 @@ class FederatedAnalytics:
         }
 
         # Overall pass/fail
-        validation["passed"] = all(check["passed"] for check in validation["checks"].values())
+        validation["passed"] = all(
+            check["passed"] for check in validation["checks"].values()
+        )
 
         return validation

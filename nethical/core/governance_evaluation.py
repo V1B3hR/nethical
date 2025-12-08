@@ -102,11 +102,18 @@ class IntentDeviationMonitor:
         self.intent_history: deque = deque(maxlen=100)
 
     async def analyze_action(self, action: AgentAction) -> List[SafetyViolation]:
-        from .governance_core import SafetyViolation, ViolationType, Severity, SubMission
+        from .governance_core import (
+            SafetyViolation,
+            ViolationType,
+            Severity,
+            SubMission,
+        )
 
         if not self.enabled or not action.intent:
             return []
-        self.intent_history.append({"intent": action.intent, "timestamp": action.timestamp})
+        self.intent_history.append(
+            {"intent": action.intent, "timestamp": action.timestamp}
+        )
         if self._is_shift(action.intent):
             return [
                 SafetyViolation(
@@ -182,7 +189,9 @@ class SafetyJudge:
             self.escalation_queue.append(jr)
         return jr
 
-    def _analyze(self, violations: List[SafetyViolation]) -> Tuple[Decision, float, str]:
+    def _analyze(
+        self, violations: List[SafetyViolation]
+    ) -> Tuple[Decision, float, str]:
         from .governance_core import Decision, Severity
 
         if not violations:
@@ -209,7 +218,9 @@ class SafetyJudge:
             return Decision.ALLOW_WITH_MODIFICATION, 0.65, "Medium severity violation"
         return Decision.ALLOW, 0.5, "Low severity violation"
 
-    def _feedback(self, violations: List[SafetyViolation], decision: Decision) -> List[str]:
+    def _feedback(
+        self, violations: List[SafetyViolation], decision: Decision
+    ) -> List[str]:
         fb = [f"Decision={decision.value}"]
         for v in violations[:3]:
             s = f"- {v.description}"
@@ -228,7 +239,9 @@ class SafetyJudge:
                     seen.add(r)
         return steps
 
-    def _needs_escalation(self, violations: List[SafetyViolation], decision: Decision) -> bool:
+    def _needs_escalation(
+        self, violations: List[SafetyViolation], decision: Decision
+    ) -> bool:
         from .governance_core import Decision
 
         if decision in (Decision.TERMINATE, Decision.BLOCK):

@@ -184,7 +184,9 @@ class SystemLimitsDetector(BaseDetector):
 
         # Count requests in last second
         one_second_ago = current_time - 1.0
-        recent_count = sum(1 for t in self.request_history[agent_id] if t >= one_second_ago)
+        recent_count = sum(
+            1 for t in self.request_history[agent_id] if t >= one_second_ago
+        )
 
         if recent_count > self._fast_max_rate:
             violations.append(f"Rate limit exceeded: {recent_count}/s")
@@ -213,7 +215,9 @@ class SystemLimitsDetector(BaseDetector):
                 if shallow_latencies
                 else 0
             ),
-            "max_shallow_latency_ms": max(shallow_latencies) if shallow_latencies else 0,
+            "max_shallow_latency_ms": (
+                max(shallow_latencies) if shallow_latencies else 0
+            ),
             "p99_shallow_latency_ms": (
                 sorted(shallow_latencies)[int(len(shallow_latencies) * 0.99)]
                 if len(shallow_latencies) > 10
@@ -240,14 +244,20 @@ class SystemLimitsDetector(BaseDetector):
         if violations:
             self.detection_count += len(violations)
             self.last_detection_time = datetime.now()
-            self.violation_stats[action.agent_id].append((self.last_detection_time, action.id))
+            self.violation_stats[action.agent_id].append(
+                (self.last_detection_time, action.id)
+            )
             self._update_agent_reputation(action.agent_id, violations)
-            logger.warning(f"Detected {len(violations)} violations for agent {action.agent_id}")
+            logger.warning(
+                f"Detected {len(violations)} violations for agent {action.agent_id}"
+            )
             self._trigger_external_alerts(action, violations)
 
         return violations
 
-    def _update_agent_reputation(self, agent_id: str, violations: List[SafetyViolation]):
+    def _update_agent_reputation(
+        self, agent_id: str, violations: List[SafetyViolation]
+    ):
         """Reduce agent reputation score based on severity of violations."""
         rep = self.agent_reputation[agent_id]
         for v in violations:
@@ -259,7 +269,9 @@ class SystemLimitsDetector(BaseDetector):
                 rep *= 0.85
         self.agent_reputation[agent_id] = max(rep, 0.01)
 
-    def _trigger_external_alerts(self, action: AgentAction, violations: List[SafetyViolation]):
+    def _trigger_external_alerts(
+        self, action: AgentAction, violations: List[SafetyViolation]
+    ):
         """Hook for external alerting/telemetry integration."""
         if self.external_alert_hook:
             try:
@@ -273,7 +285,9 @@ class SystemLimitsDetector(BaseDetector):
         current_time = time.time()
         self.request_history[agent_id].append(current_time)
         window_start = current_time - self.rate_limit_window
-        recent_requests = [t for t in self.request_history[agent_id] if t >= window_start]
+        recent_requests = [
+            t for t in self.request_history[agent_id] if t >= window_start
+        ]
         request_rate = len(recent_requests) / self.rate_limit_window
 
         if len(recent_requests) > self.max_requests_per_window:
@@ -291,7 +305,11 @@ class SystemLimitsDetector(BaseDetector):
                 description=f"Volume attack detected: {len(recent_requests)} requests in {self.rate_limit_window}s window",
                 confidence=0.95 if severity == Severity.CRITICAL else 0.90,
                 evidence=[f"Request rate: {request_rate:.2f} requests/second"],
-                recommendations=["Rate limit agent", "Block excessive requests", "Monitor for DoS"],
+                recommendations=[
+                    "Rate limit agent",
+                    "Block excessive requests",
+                    "Monitor for DoS",
+                ],
                 detector_name=self.name,
             )
             violations.append(violation)
@@ -339,8 +357,13 @@ class SystemLimitsDetector(BaseDetector):
                     severity=Severity.HIGH,
                     description="Spam/repetitive content detected - potential resource exhaustion",
                     confidence=0.80,
-                    evidence=[f"Spam pattern detected: snippet '{spam_pattern[:20]}...'"],
-                    recommendations=["Block repetitive content", "Implement content filtering"],
+                    evidence=[
+                        f"Spam pattern detected: snippet '{spam_pattern[:20]}...'"
+                    ],
+                    recommendations=[
+                        "Block repetitive content",
+                        "Implement content filtering",
+                    ],
                     detector_name=self.name,
                 )
                 violations.append(violation)
@@ -389,7 +412,9 @@ class SystemLimitsDetector(BaseDetector):
                 violations.append(violation)
         return violations
 
-    def _detect_nested_structure_attacks(self, action: AgentAction) -> List[SafetyViolation]:
+    def _detect_nested_structure_attacks(
+        self, action: AgentAction
+    ) -> List[SafetyViolation]:
         violations = []
         content = action.actual_action
         max_nesting = self._estimate_nesting_depth(content)
@@ -507,7 +532,9 @@ class SystemLimitsDetector(BaseDetector):
         last_time, last_counters = self.last_net_check
         current_counters = psutil.net_io_counters()
         time_delta = now - last_time
-        if time_delta > 0.1:  # Avoid division by zero and false positives on tiny intervals
+        if (
+            time_delta > 0.1
+        ):  # Avoid division by zero and false positives on tiny intervals
             bytes_sent_per_sec = (
                 current_counters.bytes_sent - last_counters.bytes_sent
             ) / time_delta
@@ -599,7 +626,9 @@ class SystemLimitsDetector(BaseDetector):
         agent_id = action.agent_id
         now = datetime.now()
         recent_violations = [
-            ts for ts, _ in self.violation_stats[agent_id] if ts > now - timedelta(minutes=5)
+            ts
+            for ts, _ in self.violation_stats[agent_id]
+            if ts > now - timedelta(minutes=5)
         ]
         if len(recent_violations) > 5:
             violation = SafetyViolation(
@@ -616,7 +645,9 @@ class SystemLimitsDetector(BaseDetector):
             violations.append(violation)
         return violations
 
-    def _detect_statistical_anomalies(self, action: AgentAction) -> List[SafetyViolation]:
+    def _detect_statistical_anomalies(
+        self, action: AgentAction
+    ) -> List[SafetyViolation]:
         """Detect statistical outliers in agent request patterns and payload sizes."""
         violations = []
         agent_id = action.agent_id
@@ -633,7 +664,9 @@ class SystemLimitsDetector(BaseDetector):
                     severity=Severity.HIGH,
                     description=f"Statistical anomaly: payload size z-score={zscore:.2f}",
                     confidence=0.90,
-                    evidence=[f"Payload size: {payloads[-1]}, mean: {mean:.2f}, std: {std:.2f}"],
+                    evidence=[
+                        f"Payload size: {payloads[-1]}, mean: {mean:.2f}, std: {std:.2f}"
+                    ],
                     recommendations=["Monitor agent", "Investigate anomaly"],
                     detector_name=self.name,
                 )
@@ -659,7 +692,9 @@ class SystemLimitsDetector(BaseDetector):
                     severity=Severity.HIGH,
                     description=f"Statistical anomaly: request rate z-score={zscore:.2f}",
                     confidence=0.90,
-                    evidence=[f"Request count: {recent_count}, mean: {mean:.2f}, std: {std:.2f}"],
+                    evidence=[
+                        f"Request count: {recent_count}, mean: {mean:.2f}, std: {std:.2f}"
+                    ],
                     recommendations=["Monitor agent", "Investigate anomaly"],
                     detector_name=self.name,
                 )
@@ -695,7 +730,9 @@ class SystemLimitsDetector(BaseDetector):
             ),
             "detection_count": self.detection_count,
             "last_detection": (
-                self.last_detection_time.isoformat() if self.last_detection_time else None
+                self.last_detection_time.isoformat()
+                if self.last_detection_time
+                else None
             ),
             "system_memory_percent": mem.percent,
             "system_cpu_percent": cpu,

@@ -27,7 +27,10 @@ class HITLReviewAPI:
         self.escalation_queue = EscalationQueue(storage_path=str(storage_path))
 
     def get_escalation_queue_endpoint(
-        self, status: Optional[str] = None, priority: Optional[str] = None, limit: int = 50
+        self,
+        status: Optional[str] = None,
+        priority: Optional[str] = None,
+        limit: int = 50,
     ) -> Dict[str, Any]:
         """API endpoint: Get escalation queue.
 
@@ -54,13 +57,16 @@ class HITLReviewAPI:
 
             # Get queue items
             queue_items = [
-                case.to_dict() for case in list(self.escalation_queue.pending_cases)[:limit]
+                case.to_dict()
+                for case in list(self.escalation_queue.pending_cases)[:limit]
             ]
 
             # Filter by status if provided
             if status_enum:
                 queue_items = [
-                    item for item in queue_items if item.get("status") == status_enum.value
+                    item
+                    for item in queue_items
+                    if item.get("status") == status_enum.value
                 ]
 
             # Filter by priority if provided
@@ -83,7 +89,9 @@ class HITLReviewAPI:
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to retrieve escalation queue"
+                success=False,
+                error=str(e),
+                message="Failed to retrieve escalation queue",
             ).to_dict()
 
     def get_case_details_endpoint(self, judgment_id: str) -> Dict[str, Any]:
@@ -101,7 +109,9 @@ class HITLReviewAPI:
 
             if not case:
                 return APIResponse(
-                    success=False, error="Case not found", message="Failed to retrieve case details"
+                    success=False,
+                    error="Case not found",
+                    message="Failed to retrieve case details",
                 ).to_dict()
 
             # Get any existing feedback from case
@@ -161,7 +171,9 @@ class HITLReviewAPI:
             case = self.escalation_queue.cases_by_id.get(judgment_id)
             if not case:
                 return APIResponse(
-                    success=False, error="Case not found", message="Failed to submit review"
+                    success=False,
+                    error="Case not found",
+                    message="Failed to submit review",
                 ).to_dict()
 
             feedback = self.escalation_queue.submit_feedback(
@@ -212,17 +224,25 @@ class HITLReviewAPI:
                 "reviewer_id": reviewer_id,
                 "total_assigned": len(assigned_cases),
                 "completed": len(completed_cases),
-                "pending": len([c for c in assigned_cases if c.status == ReviewStatus.PENDING]),
-                "in_review": len([c for c in assigned_cases if c.status == ReviewStatus.IN_REVIEW]),
+                "pending": len(
+                    [c for c in assigned_cases if c.status == ReviewStatus.PENDING]
+                ),
+                "in_review": len(
+                    [c for c in assigned_cases if c.status == ReviewStatus.IN_REVIEW]
+                ),
             }
 
             return APIResponse(
-                success=True, data=stats, message="Reviewer statistics retrieved successfully"
+                success=True,
+                data=stats,
+                message="Reviewer statistics retrieved successfully",
             ).to_dict()
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to retrieve reviewer statistics"
+                success=False,
+                error=str(e),
+                message="Failed to retrieve reviewer statistics",
             ).to_dict()
 
     def get_feedback_summary_endpoint(self, days: int = 30) -> Dict[str, Any]:
@@ -238,12 +258,16 @@ class HITLReviewAPI:
             summary = self.escalation_queue.get_feedback_summary()
 
             return APIResponse(
-                success=True, data=summary, message="Feedback summary retrieved successfully"
+                success=True,
+                data=summary,
+                message="Feedback summary retrieved successfully",
             ).to_dict()
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to retrieve feedback summary"
+                success=False,
+                error=str(e),
+                message="Failed to retrieve feedback summary",
             ).to_dict()
 
     def get_sla_metrics_endpoint(self) -> Dict[str, Any]:
@@ -256,7 +280,9 @@ class HITLReviewAPI:
             metrics = self.escalation_queue.get_sla_metrics()
 
             return APIResponse(
-                success=True, data=metrics.to_dict(), message="SLA metrics retrieved successfully"
+                success=True,
+                data=metrics.to_dict(),
+                message="SLA metrics retrieved successfully",
             ).to_dict()
 
         except Exception as e:
@@ -369,7 +395,8 @@ class HITLReviewAPI:
         try:
             # Get pending cases
             queue_items = [
-                case.to_dict() for case in list(self.escalation_queue.pending_cases)[: count * 2]
+                case.to_dict()
+                for case in list(self.escalation_queue.pending_cases)[: count * 2]
             ]
 
             # Filter by priority if provided

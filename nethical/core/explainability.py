@@ -85,7 +85,10 @@ class DecisionExplainer:
         }
 
     def explain_decision(
-        self, decision: str, judgment_data: Dict[str, Any], include_ml_explanation: bool = False
+        self,
+        decision: str,
+        judgment_data: Dict[str, Any],
+        include_ml_explanation: bool = False,
     ) -> DecisionExplanation:
         """Generate explanation for a decision.
 
@@ -108,7 +111,11 @@ class DecisionExplainer:
 
         # Get matched rules
         rules_matched = judgment_data.get("matched_rules", [])
-        if isinstance(rules_matched, list) and rules_matched and isinstance(rules_matched[0], dict):
+        if (
+            isinstance(rules_matched, list)
+            and rules_matched
+            and isinstance(rules_matched[0], dict)
+        ):
             rules_matched = [r.get("id", str(r)) for r in rules_matched]
 
         # Get threshold comparisons
@@ -134,7 +141,9 @@ class DecisionExplainer:
             metadata=judgment_data,
         )
 
-    def _extract_primary_reason(self, decision: str, judgment_data: Dict[str, Any]) -> str:
+    def _extract_primary_reason(
+        self, decision: str, judgment_data: Dict[str, Any]
+    ) -> str:
         """Extract primary reason for decision.
 
         Args:
@@ -180,7 +189,9 @@ class DecisionExplainer:
 
         return "standard governance evaluation"
 
-    def _extract_contributing_factors(self, judgment_data: Dict[str, Any]) -> List[Dict[str, Any]]:
+    def _extract_contributing_factors(
+        self, judgment_data: Dict[str, Any]
+    ) -> List[Dict[str, Any]]:
         """Extract contributing factors from judgment data.
 
         Args:
@@ -239,7 +250,9 @@ class DecisionExplainer:
 
         return factors
 
-    def _extract_threshold_comparisons(self, judgment_data: Dict[str, Any]) -> Dict[str, Any]:
+    def _extract_threshold_comparisons(
+        self, judgment_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Extract threshold comparisons.
 
         Args:
@@ -291,7 +304,9 @@ class DecisionExplainer:
             Natural language explanation
         """
         # Start with base template
-        base_template = self.explanation_templates.get(decision, "Action resulted in {decision}.")
+        base_template = self.explanation_templates.get(
+            decision, "Action resulted in {decision}."
+        )
 
         # Build additional details
         additional_parts = []
@@ -301,11 +316,15 @@ class DecisionExplainer:
             factor_summaries = []
             for factor in contributing_factors:
                 if factor.get("category") == "violation":
-                    factor_summaries.append(f"{factor['value']} violation(s) were identified")
+                    factor_summaries.append(
+                        f"{factor['value']} violation(s) were identified"
+                    )
                 elif factor.get("category") == "risk":
                     factor_summaries.append(f"risk score of {factor['value']:.2f}")
                 elif factor.get("category") == "ethics":
-                    factor_summaries.append(f"{factor['value']} ethical dimension(s) flagged")
+                    factor_summaries.append(
+                        f"{factor['value']} ethical dimension(s) flagged"
+                    )
 
             if factor_summaries:
                 additional_parts.append(
@@ -329,7 +348,9 @@ class DecisionExplainer:
                     )
 
         additional_details = (
-            ". ".join(additional_parts) if additional_parts else "No additional details available"
+            ". ".join(additional_parts)
+            if additional_parts
+            else "No additional details available"
         )
 
         # Format final explanation
@@ -339,7 +360,9 @@ class DecisionExplainer:
 
         return explanation
 
-    def explain_policy_match(self, matched_rule: Dict[str, Any], facts: Dict[str, Any]) -> str:
+    def explain_policy_match(
+        self, matched_rule: Dict[str, Any], facts: Dict[str, Any]
+    ) -> str:
         """Explain why a policy rule matched.
 
         Args:
@@ -358,11 +381,15 @@ class DecisionExplainer:
         # Add condition information if available
         when_condition = matched_rule.get("when", {})
         if when_condition:
-            explanation += "The rule condition evaluated to true based on the provided facts. "
+            explanation += (
+                "The rule condition evaluated to true based on the provided facts. "
+            )
 
         return explanation
 
-    def generate_decision_tree_viz(self, judgment_data: Dict[str, Any]) -> Dict[str, Any]:
+    def generate_decision_tree_viz(
+        self, judgment_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """Generate decision tree visualization data.
 
         Args:
@@ -462,7 +489,9 @@ class TransparencyReportGenerator:
             total_violations += len(violations)
             for violation in violations:
                 vtype = (
-                    violation if isinstance(violation, str) else violation.get("type", "unknown")
+                    violation
+                    if isinstance(violation, str)
+                    else violation.get("type", "unknown")
                 )
                 violation_types[vtype] = violation_types.get(vtype, 0) + 1
 
@@ -470,7 +499,8 @@ class TransparencyReportGenerator:
         explanations = []
         for decision_data in decisions[:10]:  # Sample first 10
             explanation = self.explainer.explain_decision(
-                decision=decision_data.get("decision", "UNKNOWN"), judgment_data=decision_data
+                decision=decision_data.get("decision", "UNKNOWN"),
+                judgment_data=decision_data,
             )
             explanations.append(
                 {

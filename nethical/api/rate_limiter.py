@@ -32,10 +32,11 @@ logger = logging.getLogger(__name__)
 @dataclass
 class RateLimitConfig:
     """Rate limit configuration parameters."""
-    requests_per_second: float = 5.0       # Burst rate
-    requests_per_minute: int = 100         # Sustained rate
-    cleanup_interval: int = 300            # Seconds between GC for inactive identities
-    idle_eviction_seconds: int = 600       # Remove identities idle for > this
+
+    requests_per_second: float = 5.0  # Burst rate
+    requests_per_minute: int = 100  # Sustained rate
+    cleanup_interval: int = 300  # Seconds between GC for inactive identities
+    idle_eviction_seconds: int = 600  # Remove identities idle for > this
 
 
 class TokenBucketLimiter:
@@ -57,10 +58,12 @@ class TokenBucketLimiter:
         logger.info(
             "Rate limiter initialized: %.2f req/s burst, %d req/min sustained",
             self.config.requests_per_second,
-            self.config.requests_per_minute
+            self.config.requests_per_minute,
         )
 
-    async def is_allowed(self, identity: str) -> Tuple[bool, Optional[float], Dict[str, int]]:
+    async def is_allowed(
+        self, identity: str
+    ) -> Tuple[bool, Optional[float], Dict[str, int]]:
         """
         Determine if the identity is allowed to make a request now.
 
@@ -85,11 +88,13 @@ class TokenBucketLimiter:
                     "limit": self.config.requests_per_minute,
                     "burst_limit": int(self.config.requests_per_second),
                     "remaining": 0,
-                    "reset": int(oldest + 60)
+                    "reset": int(oldest + 60),
                 }
                 logger.warning(
                     "Sustained rate exceeded identity=%s %d/%d req/min",
-                    identity, minute_count, self.config.requests_per_minute
+                    identity,
+                    minute_count,
+                    self.config.requests_per_minute,
                 )
                 return False, retry_after, info
 
@@ -113,11 +118,13 @@ class TokenBucketLimiter:
                     "limit": self.config.requests_per_minute,
                     "burst_limit": int(self.config.requests_per_second),
                     "remaining": max(0, self.config.requests_per_minute - minute_count),
-                    "reset": int(bucket[0] + 60) if bucket else int(now + 60)
+                    "reset": int(bucket[0] + 60) if bucket else int(now + 60),
                 }
                 logger.warning(
                     "Burst rate exceeded identity=%s %d/%.2f req/s",
-                    identity, second_count, self.config.requests_per_second
+                    identity,
+                    second_count,
+                    self.config.requests_per_second,
                 )
                 return False, retry_after, info
 
@@ -127,7 +134,7 @@ class TokenBucketLimiter:
                 "limit": self.config.requests_per_minute,
                 "burst_limit": int(self.config.requests_per_second),
                 "remaining": max(0, self.config.requests_per_minute - len(bucket)),
-                "reset": int(bucket[0] + 60) if bucket else int(now + 60)
+                "reset": int(bucket[0] + 60) if bucket else int(now + 60),
             }
 
             # Periodic cleanup
@@ -149,12 +156,14 @@ class TokenBucketLimiter:
             self._locks.pop(identity, None)
 
         if to_remove:
-            logger.debug("Rate limiter cleanup removed %d inactive identities", len(to_remove))
+            logger.debug(
+                "Rate limiter cleanup removed %d inactive identities", len(to_remove)
+            )
         self._last_cleanup = now
 
     def get_stats(self) -> Dict[str, int]:
         """Return current limiter stats."""
         return {
             "active_identities": len(self._buckets),
-            "total_locks": len(self._locks)
+            "total_locks": len(self._locks),
         }

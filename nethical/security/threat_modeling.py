@@ -172,7 +172,9 @@ class ThreatIntelligenceFeed:
         source: str,
     ) -> str:
         """Add a threat indicator."""
-        indicator_id = hashlib.sha256(f"{indicator_type}:{value}".encode()).hexdigest()[:16]
+        indicator_id = hashlib.sha256(f"{indicator_type}:{value}".encode()).hexdigest()[
+            :16
+        ]
 
         self.indicators[indicator_id] = {
             "type": indicator_type,
@@ -186,10 +188,14 @@ class ThreatIntelligenceFeed:
         self.last_update = datetime.now()
         return indicator_id
 
-    def get_indicators(self, indicator_type: Optional[str] = None) -> List[Dict[str, Any]]:
+    def get_indicators(
+        self, indicator_type: Optional[str] = None
+    ) -> List[Dict[str, Any]]:
         """Get threat indicators, optionally filtered by type."""
         if indicator_type:
-            return [ind for ind in self.indicators.values() if ind["type"] == indicator_type]
+            return [
+                ind for ind in self.indicators.values() if ind["type"] == indicator_type
+            ]
         return list(self.indicators.values())
 
     def check_indicator(self, value: str) -> Optional[Dict[str, Any]]:
@@ -248,16 +254,22 @@ class STRIDEAnalyzer:
 
     def get_threats_by_category(self, category: ThreatCategory) -> List[Threat]:
         """Get all threats in a specific STRIDE category."""
-        return [threat for threat in self.threats.values() if threat.category == category]
+        return [
+            threat for threat in self.threats.values() if threat.category == category
+        ]
 
     def get_threats_by_severity(self, severity: ThreatSeverity) -> List[Threat]:
         """Get all threats with a specific severity."""
-        return [threat for threat in self.threats.values() if threat.severity == severity]
+        return [
+            threat for threat in self.threats.values() if threat.severity == severity
+        ]
 
     def get_threats_by_component(self, component: str) -> List[Threat]:
         """Get all threats affecting a specific component."""
         return [
-            threat for threat in self.threats.values() if component in threat.affected_components
+            threat
+            for threat in self.threats.values()
+            if component in threat.affected_components
         ]
 
     def generate_stride_report(self) -> Dict[str, Any]:
@@ -432,11 +444,17 @@ class SecurityRequirementsTraceability:
         """Calculate coverage statistics."""
         total = len(self.requirements)
         if total == 0:
-            return {"implementation_coverage": 0.0, "test_coverage": 0.0, "threat_coverage": 0.0}
+            return {
+                "implementation_coverage": 0.0,
+                "test_coverage": 0.0,
+                "threat_coverage": 0.0,
+            }
 
         implemented = sum(1 for req in self.requirements.values() if req.implemented_in)
         tested = sum(1 for req in self.requirements.values() if req.test_cases)
-        linked_to_threats = sum(1 for req in self.requirements.values() if req.related_threats)
+        linked_to_threats = sum(
+            1 for req in self.requirements.values() if req.related_threats
+        )
 
         return {
             "implementation_coverage": implemented / total,

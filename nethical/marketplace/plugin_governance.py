@@ -32,7 +32,9 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 if not logger.handlers:
     handler = logging.StreamHandler()
-    handler.setFormatter(logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s"))
+    handler.setFormatter(
+        logging.Formatter("[%(asctime)s] %(levelname)s %(name)s: %(message)s")
+    )
     logger.addHandler(handler)
 logger.setLevel(logging.INFO)
 
@@ -102,7 +104,9 @@ class SecurityScanResult:
     risk_score: int = 0
     fingerprint: Optional[str] = None
 
-    def add_vulnerability(self, description: str, level: SecurityLevel = SecurityLevel.MEDIUM):
+    def add_vulnerability(
+        self, description: str, level: SecurityLevel = SecurityLevel.MEDIUM
+    ):
         """Add a security vulnerability (legacy string-based)."""
         self.vulnerabilities.append(f"[{level.value.upper()}] {description}")
         self._adjust_level_and_passed(level)
@@ -117,8 +121,14 @@ class SecurityScanResult:
         self.risk_score += SEVERITY_WEIGHTS.get(finding.severity, 0)
         self._adjust_level_and_passed(finding.severity)
         # Mirror structured findings into legacy lists for backward compatibility
-        if finding.severity in (SecurityLevel.HIGH, SecurityLevel.CRITICAL, SecurityLevel.MEDIUM):
-            self.vulnerabilities.append(f"[{finding.severity.value.upper()}] {finding.description}")
+        if finding.severity in (
+            SecurityLevel.HIGH,
+            SecurityLevel.CRITICAL,
+            SecurityLevel.MEDIUM,
+        ):
+            self.vulnerabilities.append(
+                f"[{finding.severity.value.upper()}] {finding.description}"
+            )
         else:
             self.warnings.append(finding.description)
 
@@ -213,7 +223,9 @@ class CompatibilityReport:
     warnings: List[str] = field(default_factory=list)
     test_results: Dict[str, bool] = field(default_factory=dict)
 
-    def add_test_result(self, test_name: str, passed: bool, details: Optional[str] = None):
+    def add_test_result(
+        self, test_name: str, passed: bool, details: Optional[str] = None
+    ):
         """Add a test result."""
         self.test_results[test_name] = passed
         if not passed:
@@ -274,7 +286,9 @@ class PluginGovernance:
             "aws_secret_access_key": re.compile(
                 r'(?i)aws(.{0,20})?(secret|access).{0,20}?[:=]\s*[\'"]?[A-Za-z0-9/+=]{40}[\'"]?'
             ),
-            "private_key": re.compile(r"-----BEGIN (?:RSA|EC|DSA|OPENSSH) PRIVATE KEY-----"),
+            "private_key": re.compile(
+                r"-----BEGIN (?:RSA|EC|DSA|OPENSSH) PRIVATE KEY-----"
+            ),
             "token_like": re.compile(
                 r'(?i)(api|access|secret|token|key)[\s:_-]*[\'"]?([A-Za-z0-9_\-]{16,})[\'"]?'
             ),
@@ -298,7 +312,10 @@ class PluginGovernance:
     # --------------------------
 
     def security_scan(
-        self, plugin_id: str, plugin_code: Optional[str] = None, plugin_path: Optional[str] = None
+        self,
+        plugin_id: str,
+        plugin_code: Optional[str] = None,
+        plugin_path: Optional[str] = None,
     ) -> SecurityScanResult:
         """Perform security scanning on a plugin.
 
@@ -313,7 +330,9 @@ class PluginGovernance:
         start_time = time.perf_counter()
 
         result = SecurityScanResult(
-            plugin_id=plugin_id, scan_date=datetime.now(), security_level=SecurityLevel.SAFE
+            plugin_id=plugin_id,
+            scan_date=datetime.now(),
+            security_level=SecurityLevel.SAFE,
         )
 
         sources: List[Tuple[str, str]] = []  # list of (file_path, code)
@@ -377,7 +396,12 @@ class PluginGovernance:
             return
 
         # Helper: record finding
-        def add(rule_id: str, msg: str, severity: SecurityLevel, node: Optional[ast.AST] = None):
+        def add(
+            rule_id: str,
+            msg: str,
+            severity: SecurityLevel,
+            node: Optional[ast.AST] = None,
+        ):
             if rule_id in self.allowlist_rules:
                 return
             # Escalate if denylisted or strict mode
@@ -429,7 +453,12 @@ class PluginGovernance:
                                 else SecurityLevel.MEDIUM
                             )
                         )
-                        add(f"import_{mod}", f"Import of sensitive module '{mod}'", sev, node)
+                        add(
+                            f"import_{mod}",
+                            f"Import of sensitive module '{mod}'",
+                            sev,
+                            node,
+                        )
 
             if isinstance(node, ast.ImportFrom):
                 mod = (node.module or "").split(".")[0]
@@ -443,7 +472,12 @@ class PluginGovernance:
                             else SecurityLevel.MEDIUM
                         )
                     )
-                    add(f"from_{mod}_import", f"Import from sensitive module '{mod}'", sev, node)
+                    add(
+                        f"from_{mod}_import",
+                        f"Import from sensitive module '{mod}'",
+                        sev,
+                        node,
+                    )
 
             # Calls: exec/eval/compile/__import__, os.system, subprocess.*, pickle.loads
             if isinstance(node, ast.Call):
@@ -537,7 +571,11 @@ class PluginGovernance:
                 line_num = code.count("\n", 0, m.start()) + 1
                 excerpt = self._extract_line(code, line_num)
                 # Reduce chance of false positives for token-like by checking variable names and length
-                severity = SecurityLevel.MEDIUM if rule_id == "token_like" else SecurityLevel.HIGH
+                severity = (
+                    SecurityLevel.MEDIUM
+                    if rule_id == "token_like"
+                    else SecurityLevel.HIGH
+                )
                 result.add_finding(
                     Finding(
                         rule_id=f"secret_{rule_id}",
@@ -680,7 +718,9 @@ class PluginGovernance:
             mad = sum(abs(x - median) for x in latencies_sorted) / len(latencies_sorted)
             result.jitter_ms = mad
 
-        result.throughput_ops_per_sec = iterations / total_time if total_time > 0 else 0.0
+        result.throughput_ops_per_sec = (
+            iterations / total_time if total_time > 0 else 0.0
+        )
         result.memory_usage_mb = peak / (1024 * 1024)  # approximate peak during run
         # CPU usage percent would require psutil or OS-specific resource measurement.
         # Keep a heuristic based on work done (unspecified here).
@@ -730,7 +770,8 @@ class PluginGovernance:
             plugin_id=plugin_id,
             test_date=datetime.now(),
             nethical_version=nethical_version,
-            python_version=python_version or f"{sys.version_info.major}.{sys.version_info.minor}",
+            python_version=python_version
+            or f"{sys.version_info.major}.{sys.version_info.minor}",
             compatible=True,
         )
 
@@ -738,7 +779,9 @@ class PluginGovernance:
         if attempt_import:
             try:
                 __import__(plugin_id)
-                report.add_test_result("import_test", True, "Plugin imports successfully")
+                report.add_test_result(
+                    "import_test", True, "Plugin imports successfully"
+                )
             except Exception as e:
                 report.add_test_result("import_test", False, f"Import failed: {e}")
 
@@ -790,7 +833,10 @@ class PluginGovernance:
             compatibility_result = self.compatibility_test(plugin_id)
 
         # Check certification requirements
-        high_risk = security_result.security_level in (SecurityLevel.HIGH, SecurityLevel.CRITICAL)
+        high_risk = security_result.security_level in (
+            SecurityLevel.HIGH,
+            SecurityLevel.CRITICAL,
+        )
         requirements_met = (
             security_result.passed
             and not high_risk
@@ -907,7 +953,9 @@ class PluginGovernance:
                 "compatible": compatibility_result.compatible,
                 "nethical_version": compatibility_result.nethical_version,
                 "python_version": compatibility_result.python_version,
-                "tests_passed": sum(1 for p in compatibility_result.test_results.values() if p),
+                "tests_passed": sum(
+                    1 for p in compatibility_result.test_results.values() if p
+                ),
                 "tests_total": len(compatibility_result.test_results),
                 "issues": compatibility_result.issues,
                 "warnings": compatibility_result.warnings,

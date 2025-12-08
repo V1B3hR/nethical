@@ -134,10 +134,16 @@ class OfflineFallback:
                 new_mode = OfflineMode.OFFLINE
 
             # Track offline duration
-            if new_mode == OfflineMode.OFFLINE and self._current_mode != OfflineMode.OFFLINE:
+            if (
+                new_mode == OfflineMode.OFFLINE
+                and self._current_mode != OfflineMode.OFFLINE
+            ):
                 self._offline_since = time.time()
                 logger.warning("Entering offline mode")
-            elif new_mode == OfflineMode.ONLINE and self._current_mode == OfflineMode.OFFLINE:
+            elif (
+                new_mode == OfflineMode.ONLINE
+                and self._current_mode == OfflineMode.OFFLINE
+            ):
                 if self._offline_since:
                     duration = time.time() - self._offline_since
                     logger.info(f"Returning online after {duration:.1f}s offline")

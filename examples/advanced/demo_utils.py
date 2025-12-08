@@ -14,28 +14,28 @@ import logging
 
 # Configure logging
 logging.basicConfig(
-    level=logging.INFO,
-    format='%(asctime)s - %(name)s - %(levelname)s - %(message)s'
+    level=logging.INFO, format="%(asctime)s - %(name)s - %(levelname)s - %(message)s"
 )
 
 
 class Colors:
     """ANSI color codes for terminal output."""
-    HEADER = '\033[95m'
-    BLUE = '\033[94m'
-    CYAN = '\033[96m'
-    GREEN = '\033[92m'
-    WARNING = '\033[93m'
-    FAIL = '\033[91m'
-    ENDC = '\033[0m'
-    BOLD = '\033[1m'
-    UNDERLINE = '\033[4m'
+
+    HEADER = "\033[95m"
+    BLUE = "\033[94m"
+    CYAN = "\033[96m"
+    GREEN = "\033[92m"
+    WARNING = "\033[93m"
+    FAIL = "\033[91m"
+    ENDC = "\033[0m"
+    BOLD = "\033[1m"
+    UNDERLINE = "\033[4m"
 
 
 def print_header(title: str, width: int = 70) -> None:
     """
     Print a formatted header for demo sections.
-    
+
     Args:
         title: The title to display
         width: Width of the header line
@@ -48,7 +48,7 @@ def print_header(title: str, width: int = 70) -> None:
 def print_section(title: str, level: int = 1) -> None:
     """
     Print a formatted section header.
-    
+
     Args:
         title: Section title
         level: Section level (1 for main sections, 2 for subsections)
@@ -85,7 +85,7 @@ def print_info(message: str, indent: int = 0) -> None:
 def print_metric(name: str, value: Any, unit: str = "", indent: int = 1) -> None:
     """
     Print a formatted metric.
-    
+
     Args:
         name: Metric name
         value: Metric value
@@ -102,10 +102,12 @@ def print_metric(name: str, value: Any, unit: str = "", indent: int = 1) -> None
         print(f"{prefix}{name}: {value}{unit}")
 
 
-def print_dict(data: Dict[str, Any], title: Optional[str] = None, indent: int = 1) -> None:
+def print_dict(
+    data: Dict[str, Any], title: Optional[str] = None, indent: int = 1
+) -> None:
     """
     Print a dictionary in a formatted way.
-    
+
     Args:
         data: Dictionary to print
         title: Optional title
@@ -113,7 +115,7 @@ def print_dict(data: Dict[str, Any], title: Optional[str] = None, indent: int = 
     """
     if title:
         print_info(f"\n{Colors.BOLD}{title}:{Colors.ENDC}", indent - 1)
-    
+
     for key, value in data.items():
         if isinstance(value, dict):
             print_info(f"{key}:", indent)
@@ -127,11 +129,11 @@ def print_dict(data: Dict[str, Any], title: Optional[str] = None, indent: int = 
 def safe_import(module_name: str, class_name: Optional[str] = None) -> Optional[Any]:
     """
     Safely import a module or class with error handling.
-    
+
     Args:
         module_name: Name of the module to import
         class_name: Optional class name to import from the module
-        
+
     Returns:
         The imported module or class, or None if import fails
     """
@@ -149,10 +151,10 @@ def safe_import(module_name: str, class_name: Optional[str] = None) -> Optional[
 def check_dependencies(required_modules: List[str]) -> Dict[str, bool]:
     """
     Check if required modules are available.
-    
+
     Args:
         required_modules: List of module names to check
-        
+
     Returns:
         Dictionary mapping module names to availability status
     """
@@ -169,7 +171,7 @@ def check_dependencies(required_modules: List[str]) -> Dict[str, bool]:
 def handle_demo_error(error: Exception, demo_name: str) -> None:
     """
     Handle and display demo errors gracefully.
-    
+
     Args:
         error: The exception that was raised
         demo_name: Name of the demo that failed
@@ -180,18 +182,16 @@ def handle_demo_error(error: Exception, demo_name: str) -> None:
 
 
 def run_demo_safely(
-    demo_func: Callable,
-    demo_name: str,
-    skip_on_error: bool = True
+    demo_func: Callable, demo_name: str, skip_on_error: bool = True
 ) -> bool:
     """
     Run a demo function with error handling.
-    
+
     Args:
         demo_func: The demo function to run
         demo_name: Name of the demo
         skip_on_error: Whether to continue on error
-        
+
     Returns:
         True if the demo succeeded, False otherwise
     """
@@ -208,35 +208,35 @@ def run_demo_safely(
 def print_demo_summary(demos: List[Dict[str, Any]]) -> None:
     """
     Print a summary of demo results.
-    
+
     Args:
         demos: List of demo results with 'name' and 'success' keys
     """
     print_section("Demo Summary", level=1)
-    
+
     total = len(demos)
-    successful = sum(1 for d in demos if d.get('success', False))
+    successful = sum(1 for d in demos if d.get("success", False))
     failed = total - successful
-    
+
     print_info(f"Total demos: {total}")
     print_success(f"Successful: {successful}")
     if failed > 0:
         print_error(f"Failed: {failed}")
-    
+
     if failed > 0:
         print_info("\nFailed demos:")
         for demo in demos:
-            if not demo.get('success', False):
+            if not demo.get("success", False):
                 print_info(f"  - {demo['name']}", 1)
 
 
 def confirm_continue(message: str = "Press Enter to continue...") -> bool:
     """
     Ask user to confirm before continuing.
-    
+
     Args:
         message: The confirmation message
-        
+
     Returns:
         True if user confirms, False otherwise
     """
@@ -256,10 +256,10 @@ def get_timestamp() -> str:
 def format_duration(seconds: float) -> str:
     """
     Format a duration in seconds to a human-readable string.
-    
+
     Args:
         seconds: Duration in seconds
-        
+
     Returns:
         Formatted duration string
     """
@@ -273,10 +273,12 @@ def format_duration(seconds: float) -> str:
         return f"{minutes}m {secs:.2f}s"
 
 
-def print_feature_not_implemented(feature_name: str, coming_in: Optional[str] = None) -> None:
+def print_feature_not_implemented(
+    feature_name: str, coming_in: Optional[str] = None
+) -> None:
     """
     Print a message indicating that a feature is not yet implemented.
-    
+
     Args:
         feature_name: Name of the feature
         coming_in: Optional version/phase where feature will be available
@@ -291,11 +293,11 @@ def print_feature_not_implemented(feature_name: str, coming_in: Optional[str] = 
 def create_mock_result(result_type: str = "success", **kwargs) -> Dict[str, Any]:
     """
     Create a mock result for demonstration purposes.
-    
+
     Args:
         result_type: Type of result ('success', 'error', 'warning')
         **kwargs: Additional fields to include in the result
-        
+
     Returns:
         Mock result dictionary
     """
@@ -311,7 +313,7 @@ def create_mock_result(result_type: str = "success", **kwargs) -> Dict[str, Any]
 def print_next_steps(steps: List[str], title: str = "Next Steps") -> None:
     """
     Print a list of next steps.
-    
+
     Args:
         steps: List of next step descriptions
         title: Title for the next steps section
@@ -324,7 +326,7 @@ def print_next_steps(steps: List[str], title: str = "Next Steps") -> None:
 def print_key_features(features: List[str], title: str = "Key Features") -> None:
     """
     Print a list of key features.
-    
+
     Args:
         features: List of feature descriptions
         title: Title for the features section

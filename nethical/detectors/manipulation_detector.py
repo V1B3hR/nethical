@@ -1290,7 +1290,9 @@ class ManipulationDetector(BaseDetector):
         self._compiled_patterns.clear()
         # Compile literals with boundaries and flexible whitespace
         for category, phrases in self.manipulation_patterns.items():
-            compiled: List[Tuple[str, re.Pattern]] = self._compiled_patterns.get(category, [])
+            compiled: List[Tuple[str, re.Pattern]] = self._compiled_patterns.get(
+                category, []
+            )
             for phrase in phrases:
                 escaped = re.escape(phrase).replace(r"\ ", r"\s+")
                 pattern = re.compile(rf"(?<!\w){escaped}(?!\w)", flags=re.IGNORECASE)
@@ -1299,7 +1301,9 @@ class ManipulationDetector(BaseDetector):
 
         # Compile raw regex patterns as-is (caller supplies any boundaries needed)
         for category, patterns in self.manipulation_regex.items():
-            compiled: List[Tuple[str, re.Pattern]] = self._compiled_patterns.get(category, [])
+            compiled: List[Tuple[str, re.Pattern]] = self._compiled_patterns.get(
+                category, []
+            )
             for raw in patterns:
                 try:
                     rgx = re.compile(raw, flags=re.IGNORECASE)
@@ -1390,6 +1394,9 @@ class ManipulationDetector(BaseDetector):
             violation_type=ViolationType.MANIPULATION,
             severity=severity,
             description=description,
-            evidence={"manipulation_type": category, "detected_keywords": distinct_keywords},
+            evidence={
+                "manipulation_type": category,
+                "detected_keywords": distinct_keywords,
+            },
             timestamp=datetime.now(timezone.utc),
         )

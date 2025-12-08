@@ -39,8 +39,8 @@ from typing import List, Optional, Tuple
 
 # Constants/paths
 REPO_ROOT = Path(__file__).resolve().parent.parent
-DATASETS_TXT = REPO_ROOT / "datasets" / "datasets"        # no extension file used by trainer
-DATASETS_MD  = REPO_ROOT / "datasets" / "datasets.md"     # markdown list (human-friendly)
+DATASETS_TXT = REPO_ROOT / "datasets" / "datasets"  # no extension file used by trainer
+DATASETS_MD = REPO_ROOT / "datasets" / "datasets.md"  # markdown list (human-friendly)
 DATA_EXTERNAL_DIR = REPO_ROOT / "data" / "external"
 
 # Slugs to exclude (blocklist)
@@ -53,7 +53,10 @@ DEFAULT_KAGGLE_USERNAME = "andrzejmatewski"
 DEFAULT_KAGGLE_KEY = "406272cc0df9e65d6d7fa69ff136bf5c"
 
 # Regex helpers
-KAGGLE_DATASETS_URL_RE = re.compile(r"^https://www\.kaggle\.com/datasets/([^/\s]+)/([^/\s]+)")
+KAGGLE_DATASETS_URL_RE = re.compile(
+    r"^https://www\.kaggle\.com/datasets/([^/\s]+)/([^/\s]+)"
+)
+
 
 def parse_slugs_from_datasets_txt(path: Path) -> List[str]:
     """
@@ -82,6 +85,7 @@ def parse_slugs_from_datasets_txt(path: Path) -> List[str]:
         print(f"[WARN] Failed to parse {path}: {e}", file=sys.stderr)
     return slugs
 
+
 def parse_slugs_from_markdown(path: Path) -> List[str]:
     """
     Parse slugs from datasets/datasets.md (bullet list with Kaggle dataset URLs).
@@ -102,6 +106,7 @@ def parse_slugs_from_markdown(path: Path) -> List[str]:
         print(f"[WARN] Failed to parse {path}: {e}", file=sys.stderr)
     return slugs
 
+
 def merge_and_filter_slugs(a: List[str], b: List[str], exclude: set) -> List[str]:
     merged = []
     seen = set()
@@ -114,7 +119,10 @@ def merge_and_filter_slugs(a: List[str], b: List[str], exclude: set) -> List[str
                 merged.append(slug)
     return merged
 
-def resolve_kaggle_credentials(explicit_user: Optional[str], explicit_key: Optional[str]) -> Tuple[Optional[str], Optional[str]]:
+
+def resolve_kaggle_credentials(
+    explicit_user: Optional[str], explicit_key: Optional[str]
+) -> Tuple[Optional[str], Optional[str]]:
     """
     Resolution order:
     1) CLI flags
@@ -142,6 +150,7 @@ def resolve_kaggle_credentials(explicit_user: Optional[str], explicit_key: Optio
     # Fallback to defaults (provided by user)
     return DEFAULT_KAGGLE_USERNAME, DEFAULT_KAGGLE_KEY
 
+
 def ensure_kaggle_json(username: str, key: str, overwrite: bool = False) -> None:
     kaggle_path = Path.home() / ".kaggle"
     kaggle_json_path = kaggle_path / "kaggle.json"
@@ -154,20 +163,27 @@ def ensure_kaggle_json(username: str, key: str, overwrite: bool = False) -> None
         json.dump({"username": username, "key": key}, f)
     os.chmod(kaggle_json_path, 0o600)
 
+
 def kaggle_download(slugs: List[str]) -> None:
     try:
         import kaggle  # type: ignore
     except Exception:
-        print("[WARN] Kaggle package not installed. Skipping dataset downloads.", file=sys.stderr)
+        print(
+            "[WARN] Kaggle package not installed. Skipping dataset downloads.",
+            file=sys.stderr,
+        )
         return
     DATA_EXTERNAL_DIR.mkdir(parents=True, exist_ok=True)
     for slug in slugs:
         print(f"[INFO] Downloading dataset: {slug}")
         try:
-            kaggle.api.dataset_download_files(slug, path=str(DATA_EXTERNAL_DIR), unzip=True)
+            kaggle.api.dataset_download_files(
+                slug, path=str(DATA_EXTERNAL_DIR), unzip=True
+            )
             print(f"[INFO] Downloaded and extracted: {slug}")
         except Exception as e:
             print(f"[WARN] Could not download {slug}: {e}", file=sys.stderr)
+
 
 def main():
     parser = argparse.ArgumentParser(description="CI wrapper for Nethical training")
@@ -192,7 +208,7 @@ def main():
 
     # 1) Resolve dataset slugs from both files
     slugs_txt = parse_slugs_from_datasets_txt(DATASETS_TXT)
-    slugs_md  = parse_slugs_from_markdown(DATASETS_MD)
+    slugs_md = parse_slugs_from_markdown(DATASETS_MD)
     final_slugs = merge_and_filter_slugs(slugs_txt, slugs_md, EXCLUDE_SLUGS)
 
     # 2) Debug print
@@ -202,14 +218,18 @@ def main():
     for i, s in enumerate(final_slugs, 1):
         print(f"  {i}. {s}")
     if not final_slugs:
-        print("[WARN] No dataset slugs resolved. Training will proceed with synthetic or local data.")
+        print(
+            "[WARN] No dataset slugs resolved. Training will proceed with synthetic or local data."
+        )
 
     # 3) Kaggle credentials and download
     user, key = resolve_kaggle_credentials(args.kaggle_username, args.kaggle_key)
     if user and key:
         ensure_kaggle_json(user, key, overwrite=args.overwrite_kaggle_json)
     else:
-        print("[INFO] Kaggle credentials not provided/found. Attempting API auth via existing config if any.")
+        print(
+            "[INFO] Kaggle credentials not provided/found. Attempting API auth via existing config if any."
+        )
     if final_slugs:
         kaggle_download(final_slugs)
 
@@ -220,14 +240,22 @@ def main():
         sys.exit(1)
 
     cmd = [
-        sys.executable, str(trainer),
-        "--model-type", args.model_type,
-        "--epochs", str(args.epochs),
-        "--batch-size", str(args.batch_size),
-        "--num-samples", str(args.num_samples),
-        "--promotion-min-accuracy", str(args.promotion_min_accuracy),
-        "--promotion-max-ece", str(args.promotion_max_ece),
-        "--verbosity", str(args.verbosity),
+        sys.executable,
+        str(trainer),
+        "--model-type",
+        args.model_type,
+        "--epochs",
+        str(args.epochs),
+        "--batch-size",
+        str(args.batch_size),
+        "--num-samples",
+        str(args.num_samples),
+        "--promotion-min-accuracy",
+        str(args.promotion_min_accuracy),
+        "--promotion-max-ece",
+        str(args.promotion_max_ece),
+        "--verbosity",
+        str(args.verbosity),
         "--no-download",  # prevent internal downloads; use what we just fetched
     ]
     if args.enable_audit:
@@ -240,6 +268,7 @@ def main():
     print("[INFO] Launching trainer:", " ".join(cmd))
     proc = subprocess.run(cmd, cwd=str(REPO_ROOT))
     sys.exit(proc.returncode)
+
 
 if __name__ == "__main__":
     main()

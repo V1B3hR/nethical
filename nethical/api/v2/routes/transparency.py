@@ -36,7 +36,7 @@ router = APIRouter(prefix="/transparency", tags=["Transparency"])
 # Response Models
 class ProviderInfo(BaseModel):
     """Provider identification per EU AI Act Article 13.3(a)."""
-    
+
     name: str = Field(
         ...,
         description="Provider name",
@@ -61,7 +61,7 @@ class ProviderInfo(BaseModel):
 
 class SystemInfo(BaseModel):
     """AI system information per EU AI Act Article 13.3(b)."""
-    
+
     system_name: str = Field(
         ...,
         description="Official name of the AI system",
@@ -94,7 +94,7 @@ class SystemInfo(BaseModel):
 
 class Capability(BaseModel):
     """A system capability."""
-    
+
     name: str = Field(
         ...,
         description="Capability name",
@@ -117,7 +117,7 @@ class Capability(BaseModel):
 
 class Limitation(BaseModel):
     """A system limitation."""
-    
+
     category: str = Field(
         ...,
         description="Limitation category",
@@ -138,7 +138,7 @@ class Limitation(BaseModel):
 
 class CapabilitiesResponse(BaseModel):
     """System capabilities and limitations per EU AI Act Article 13.3(b)(ii)."""
-    
+
     capabilities: list[Capability] = Field(
         default_factory=list,
         description="List of system capabilities",
@@ -159,7 +159,7 @@ class CapabilitiesResponse(BaseModel):
 
 class HumanOversightInfo(BaseModel):
     """Human oversight measures per EU AI Act Article 13.3(c)."""
-    
+
     oversight_mode: str = Field(
         ...,
         description="Current oversight mode",
@@ -188,7 +188,7 @@ class HumanOversightInfo(BaseModel):
 
 class PerformanceMetrics(BaseModel):
     """Performance metrics for transparency."""
-    
+
     accuracy: float = Field(
         ...,
         ge=0.0,
@@ -227,7 +227,7 @@ class PerformanceMetrics(BaseModel):
 
 class FairnessMetrics(BaseModel):
     """Fairness metrics per EU AI Act bias prevention requirements."""
-    
+
     demographic_parity: float = Field(
         ...,
         ge=0.0,
@@ -257,7 +257,7 @@ class FairnessMetrics(BaseModel):
 
 class MetricsResponse(BaseModel):
     """Combined metrics response."""
-    
+
     performance: PerformanceMetrics = Field(
         ...,
         description="Performance metrics",
@@ -278,7 +278,7 @@ class MetricsResponse(BaseModel):
 
 class FullDisclosure(BaseModel):
     """Full transparency disclosure per EU AI Act Article 13."""
-    
+
     provider: ProviderInfo = Field(
         ...,
         description="Provider information per Article 13.3(a)",
@@ -321,10 +321,10 @@ class FullDisclosure(BaseModel):
 @router.get("/system-info", response_model=SystemInfo)
 async def get_system_info() -> SystemInfo:
     """Get AI system information.
-    
+
     Provides basic information about the AI system per EU AI Act
     Article 13.3(b)(i).
-    
+
     Returns:
         SystemInfo with system details
     """
@@ -352,9 +352,9 @@ async def get_system_info() -> SystemInfo:
 @router.get("/provider-info", response_model=ProviderInfo)
 async def get_provider_info() -> ProviderInfo:
     """Get provider information.
-    
+
     Provides provider identification per EU AI Act Article 13.3(a).
-    
+
     Returns:
         ProviderInfo with provider details
     """
@@ -370,11 +370,11 @@ async def get_provider_info() -> ProviderInfo:
 @router.get("/capabilities", response_model=CapabilitiesResponse)
 async def get_capabilities() -> CapabilitiesResponse:
     """Get system capabilities and limitations.
-    
+
     Provides detailed information about what the system can and cannot do,
     per EU AI Act Article 13.3(b)(ii) and Fundamental Law 12 (Limitation
     Disclosure).
-    
+
     Returns:
         CapabilitiesResponse with capabilities and limitations
     """
@@ -416,7 +416,7 @@ async def get_capabilities() -> CapabilitiesResponse:
             confidence="medium",
         ),
     ]
-    
+
     limitations = [
         Limitation(
             category="Context Understanding",
@@ -449,7 +449,7 @@ async def get_capabilities() -> CapabilitiesResponse:
             mitigation="Expanding language models; configurable by region",
         ),
     ]
-    
+
     contexts_of_use = [
         "Autonomous vehicle AI governance",
         "Industrial robot safety systems",
@@ -458,14 +458,14 @@ async def get_capabilities() -> CapabilitiesResponse:
         "Content moderation systems",
         "Financial AI risk management",
     ]
-    
+
     contraindications = [
         "Life-or-death decisions without human oversight",
         "Weapons systems (violates Fundamental Law 8)",
         "Systems designed to cause harm",
         "Unlawful surveillance applications",
     ]
-    
+
     return CapabilitiesResponse(
         capabilities=capabilities,
         limitations=limitations,
@@ -477,9 +477,9 @@ async def get_capabilities() -> CapabilitiesResponse:
 @router.get("/human-oversight", response_model=HumanOversightInfo)
 async def get_human_oversight_info() -> HumanOversightInfo:
     """Get human oversight measures.
-    
+
     Describes human oversight capabilities per EU AI Act Article 13.3(c).
-    
+
     Returns:
         HumanOversightInfo with oversight details
     """
@@ -510,13 +510,13 @@ async def get_transparency_metrics(
     ),
 ) -> MetricsResponse:
     """Get performance and fairness metrics.
-    
+
     Provides transparency into system performance and fairness,
     per EU AI Act Article 15 requirements.
-    
+
     Args:
         period: Measurement period
-        
+
     Returns:
         MetricsResponse with performance and fairness metrics
     """
@@ -546,23 +546,23 @@ async def get_full_disclosure(
     response: Response,
 ) -> FullDisclosure:
     """Get full transparency disclosure.
-    
+
     Provides comprehensive transparency disclosure as required by
     EU AI Act Article 13 and Fundamental Law 10 (Reasoning Transparency).
-    
+
     This endpoint returns all transparency-related information in a
     single response.
-    
+
     Args:
         response: FastAPI response object
-        
+
     Returns:
         FullDisclosure with complete transparency information
     """
     response.headers["X-EU-AI-Act-Article-13"] = "compliant"
     response.headers["X-Fundamental-Law-10"] = "applied"
     response.headers["X-Fundamental-Law-12"] = "applied"
-    
+
     return FullDisclosure(
         provider=await get_provider_info(),
         system=await get_system_info(),
@@ -575,7 +575,11 @@ async def get_full_disclosure(
             "data_subjects_rights": "Full GDPR rights available",
         },
         training_data_summary={
-            "data_sources": ["Synthetic scenarios", "Curated examples", "Expert annotations"],
+            "data_sources": [
+                "Synthetic scenarios",
+                "Curated examples",
+                "Expert annotations",
+            ],
             "data_size": "10M+ training examples",
             "bias_mitigation": "Fairness-aware sampling applied",
             "last_training_date": "2025-11-01",

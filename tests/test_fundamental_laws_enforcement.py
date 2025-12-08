@@ -194,7 +194,8 @@ class TestLawEnforcer:
         result = enforcer.enforce(action, entity_type="ai")
         # Safety violations should be detected
         safety_violations = [
-            e for e in result.evaluations
+            e
+            for e in result.evaluations
             if e.law.category == LawCategory.PROTECTION and not e.passed
         ]
         assert len(safety_violations) >= 0  # May detect
@@ -326,7 +327,8 @@ class TestLawEnforcerPolicyChecks:
         result = enforcer.enforce(action)
         # Check for autonomy violations
         autonomy_violations = [
-            e for e in result.evaluations
+            e
+            for e in result.evaluations
             if e.law.category == LawCategory.AUTONOMY and not e.passed
         ]
         # May or may not detect depending on exact matching
@@ -343,7 +345,8 @@ class TestLawEnforcerPolicyChecks:
         result = enforcer.enforce(action)
         # Check for accountability violations
         accountability_evals = [
-            e for e in result.evaluations
+            e
+            for e in result.evaluations
             if e.law.category == LawCategory.ACCOUNTABILITY
         ]
         assert len(accountability_evals) > 0

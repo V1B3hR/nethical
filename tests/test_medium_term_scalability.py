@@ -30,19 +30,26 @@ class TestMediumTermThroughput:
         """Verify 10 regions can handle 1,000 RPS sustained (100 RPS each)."""
         # Simulate 10 regional instances
         regions = [
-            "us-east-1", "us-west-2", "eu-west-1", "eu-central-1",
-            "ap-south-1", "ap-northeast-1", "ap-southeast-1",
-            "sa-east-1", "ca-central-1", "me-south-1"
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1",
+            "eu-central-1",
+            "ap-south-1",
+            "ap-northeast-1",
+            "ap-southeast-1",
+            "sa-east-1",
+            "ca-central-1",
+            "me-south-1",
         ]
-        
+
         storage_base = tempfile.mkdtemp()
         region_instances = {}
-        
+
         # Create one governance instance per region
         for region in regions:
             region_dir = os.path.join(storage_base, region)
             os.makedirs(region_dir)
-            
+
             region_instances[region] = IntegratedGovernance(
                 storage_dir=region_dir,
                 region_id=region,
@@ -50,11 +57,11 @@ class TestMediumTermThroughput:
                 enable_merkle_anchoring=True,
                 enable_quota_enforcement=False,
             )
-        
+
         # Test for 10 seconds at 100 RPS per region = 1,000 actions per region
         target_actions_per_region = 1000
         start_time = time.time()
-        
+
         def process_region(region_name, instance, num_actions):
             """Process actions for a single region."""
             latencies = []
@@ -68,7 +75,7 @@ class TestMediumTermThroughput:
                 latency = (time.time() - action_start) * 1000  # Convert to ms
                 latencies.append(latency)
             return latencies
-        
+
         # Process all regions in parallel
         all_latencies = []
         with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
@@ -78,28 +85,30 @@ class TestMediumTermThroughput:
                     process_region, region, instance, target_actions_per_region
                 )
                 futures.append(future)
-            
+
             for future in concurrent.futures.as_completed(futures):
                 region_latencies = future.result()
                 all_latencies.extend(region_latencies)
-        
+
         total_time = time.time() - start_time
         total_actions = len(all_latencies)
-        
+
         # Calculate metrics
         actual_rps = total_actions / total_time
         p50 = sorted(all_latencies)[int(len(all_latencies) * 0.50)]
         p95 = sorted(all_latencies)[int(len(all_latencies) * 0.95)]
         p99 = sorted(all_latencies)[int(len(all_latencies) * 0.99)]
-        
+
         # Assertions for medium-term target: 1,000 sustained RPS
-        assert total_actions == 10 * target_actions_per_region, \
-            f"Expected {10 * target_actions_per_region} actions, got {total_actions}"
-        assert actual_rps >= 800, \
-            f"Expected ≥800 RPS (allowing 20% variance), got {actual_rps:.2f}"
+        assert (
+            total_actions == 10 * target_actions_per_region
+        ), f"Expected {10 * target_actions_per_region} actions, got {total_actions}"
+        assert (
+            actual_rps >= 800
+        ), f"Expected ≥800 RPS (allowing 20% variance), got {actual_rps:.2f}"
         assert p95 < 250, f"p95 latency {p95:.2f}ms exceeds 250ms target"
         assert p99 < 600, f"p99 latency {p99:.2f}ms exceeds 600ms target"
-        
+
         print(f"\n✅ Medium-term sustained throughput test passed:")
         print(f"   Total actions: {total_actions}")
         print(f"   Actual RPS: {actual_rps:.2f}")
@@ -112,20 +121,20 @@ class TestMediumTermThroughput:
         # For testing purposes, simulate burst with 500 RPS for 1 second
         # (scaled down 10x for test performance)
         storage_dir = tempfile.mkdtemp()
-        
+
         gov = IntegratedGovernance(
             storage_dir=storage_dir,
             enable_performance_optimization=True,
             enable_quota_enforcement=False,
         )
-        
+
         # Burst test: 500 actions in rapid succession
         target_actions = 500
         start_time = time.time()
-        
+
         latencies = []
         errors = 0
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=50) as executor:
             futures = []
             for i in range(target_actions):
@@ -136,7 +145,7 @@ class TestMediumTermThroughput:
                     context={"test": "burst"},
                 )
                 futures.append((i, future))
-            
+
             for i, future in futures:
                 try:
                     action_start = time.time()
@@ -145,23 +154,23 @@ class TestMediumTermThroughput:
                     latencies.append(latency)
                 except Exception as e:
                     errors += 1
-        
+
         total_time = time.time() - start_time
         actual_rps = len(latencies) / total_time if total_time > 0 else 0
-        
+
         # Calculate metrics
         if latencies:
             p95 = sorted(latencies)[int(len(latencies) * 0.95)]
             p99 = sorted(latencies)[int(len(latencies) * 0.99)]
             error_rate = (errors / target_actions) * 100
-            
+
             # Assertions for peak burst
-            assert actual_rps >= 400, \
-                f"Expected ≥400 RPS burst, got {actual_rps:.2f}"
-            assert error_rate < 1.0, \
-                f"Error rate {error_rate:.2f}% exceeds 1% threshold"
+            assert actual_rps >= 400, f"Expected ≥400 RPS burst, got {actual_rps:.2f}"
+            assert (
+                error_rate < 1.0
+            ), f"Error rate {error_rate:.2f}% exceeds 1% threshold"
             assert p99 < 1000, f"p99 latency {p99:.2f}ms exceeds 1s during burst"
-            
+
             print(f"\n✅ Medium-term peak burst test passed:")
             print(f"   Peak RPS: {actual_rps:.2f}")
             print(f"   p95 latency: {p95:.2f}ms")
@@ -175,21 +184,21 @@ class TestMediumTermConcurrentAgents:
     def test_10000_concurrent_agents(self):
         """Verify system can handle 10,000 concurrent agents."""
         storage_dir = tempfile.mkdtemp()
-        
+
         gov = IntegratedGovernance(
             storage_dir=storage_dir,
             enable_performance_optimization=True,
             enable_quota_enforcement=False,
         )
-        
+
         # Simulate 10,000 unique agents (using 1,000 for test performance)
         num_agents = 1000
         actions_per_agent = 5
-        
+
         start_time = time.time()
         total_actions = 0
         errors = 0
-        
+
         with concurrent.futures.ThreadPoolExecutor(max_workers=100) as executor:
             futures = []
             for agent_idx in range(num_agents):
@@ -201,23 +210,23 @@ class TestMediumTermConcurrentAgents:
                         context={"test": "concurrent"},
                     )
                     futures.append(future)
-            
+
             for future in concurrent.futures.as_completed(futures):
                 try:
                     result = future.result(timeout=10)
                     total_actions += 1
                 except Exception as e:
                     errors += 1
-        
+
         total_time = time.time() - start_time
         error_rate = (errors / (num_agents * actions_per_agent)) * 100
-        
+
         # Assertions
-        assert total_actions == num_agents * actions_per_agent, \
-            f"Expected {num_agents * actions_per_agent} actions, got {total_actions}"
-        assert error_rate < 0.5, \
-            f"Error rate {error_rate:.2f}% exceeds 0.5% threshold"
-        
+        assert (
+            total_actions == num_agents * actions_per_agent
+        ), f"Expected {num_agents * actions_per_agent} actions, got {total_actions}"
+        assert error_rate < 0.5, f"Error rate {error_rate:.2f}% exceeds 0.5% threshold"
+
         print(f"\n✅ Medium-term concurrent agents test passed:")
         print(f"   Unique agents: {num_agents}")
         print(f"   Total actions: {total_actions}")
@@ -231,7 +240,7 @@ class TestMediumTermStorage:
     def test_100m_storage_capacity(self):
         """Verify storage can handle 100M actions with tiering."""
         storage_dir = tempfile.mkdtemp()
-        
+
         # For testing, we'll simulate with 1K actions and verify
         # the storage structure supports 100M scale
         gov = IntegratedGovernance(
@@ -239,7 +248,7 @@ class TestMediumTermStorage:
             enable_merkle_anchoring=True,
             enable_performance_optimization=True,
         )
-        
+
         # Store test actions (reduced for test speed)
         num_actions = 1000
         for i in range(num_actions):
@@ -248,24 +257,25 @@ class TestMediumTermStorage:
                 action=f"storage_test_{i}",
                 context={"test": "storage capacity test"},
             )
-        
+
         # Verify storage structure
         db_file = os.path.join(storage_dir, "governance.db")
         assert os.path.exists(db_file), "Database file not created"
-        
+
         # Check database size
         db_size_mb = os.path.getsize(db_file) / (1024 * 1024)
-        
+
         # Calculate projected size for 100M actions
         size_per_action_kb = (db_size_mb * 1024) / num_actions
         projected_size_100m_gb = (size_per_action_kb * 100_000_000) / (1024 * 1024)
-        
+
         # With compression (3:1 ratio), should be under 100 GB
         projected_compressed_gb = projected_size_100m_gb / 3
-        
-        assert projected_compressed_gb < 150, \
-            f"Projected storage {projected_compressed_gb:.2f}GB exceeds 150GB limit"
-        
+
+        assert (
+            projected_compressed_gb < 150
+        ), f"Projected storage {projected_compressed_gb:.2f}GB exceeds 150GB limit"
+
         print(f"\n✅ Medium-term storage capacity test passed:")
         print(f"   Test actions: {num_actions}")
         print(f"   Database size: {db_size_mb:.2f}MB")
@@ -276,7 +286,7 @@ class TestMediumTermStorage:
     def test_storage_tiering_configuration(self):
         """Verify storage tiering is properly configured."""
         storage_dir = tempfile.mkdtemp()
-        
+
         # Create config with tiering enabled
         config = {
             "storage_dir": storage_dir,
@@ -287,14 +297,14 @@ class TestMediumTermStorage:
             "cold_tier_days": 90,
             "compression_level": 6,
         }
-        
+
         # Verify configuration is valid
         assert config["enable_storage_tiering"], "Storage tiering not enabled"
         assert config["enable_compression"], "Compression not enabled"
         assert config["hot_tier_days"] == 7, "Hot tier not configured for 7 days"
         assert config["warm_tier_days"] == 30, "Warm tier not configured for 30 days"
         assert 4 <= config["compression_level"] <= 9, "Compression level not optimal"
-        
+
         print(f"\n✅ Storage tiering configuration test passed:")
         print(f"   Tiering enabled: {config['enable_storage_tiering']}")
         print(f"   Compression enabled: {config['enable_compression']}")
@@ -309,32 +319,42 @@ class TestMediumTermRegionalDeployment:
     def test_10_regions_configured(self):
         """Verify all 10 regions are properly configured."""
         config_dir = Path(__file__).parent.parent / "config"
-        
+
         expected_regions = [
-            "us-east-1", "us-west-2", "eu-west-1", "eu-central-1",
-            "ap-south-1", "ap-northeast-1", "ap-southeast-1",
-            "sa-east-1", "ca-central-1", "me-south-1"
+            "us-east-1",
+            "us-west-2",
+            "eu-west-1",
+            "eu-central-1",
+            "ap-south-1",
+            "ap-northeast-1",
+            "ap-southeast-1",
+            "sa-east-1",
+            "ca-central-1",
+            "me-south-1",
         ]
-        
+
         found_regions = []
         for region in expected_regions:
             config_file = config_dir / f"{region}.env"
             if config_file.exists():
                 found_regions.append(region)
-                
+
                 # Verify config file has required settings
-                with open(config_file, 'r') as f:
+                with open(config_file, "r") as f:
                     content = f.read()
-                    assert f"NETHICAL_REGION_ID={region}" in content, \
-                        f"Region ID not set in {region}.env"
-                    assert "NETHICAL_REQUESTS_PER_SECOND" in content, \
-                        f"RPS not configured in {region}.env"
+                    assert (
+                        f"NETHICAL_REGION_ID={region}" in content
+                    ), f"Region ID not set in {region}.env"
+                    assert (
+                        "NETHICAL_REQUESTS_PER_SECOND" in content
+                    ), f"RPS not configured in {region}.env"
                     # Storage tiering is only in the new medium-term configs
                     # Original 3 regions may not have these settings yet
-        
-        assert len(found_regions) == 10, \
-            f"Expected 10 regions, found {len(found_regions)}: {found_regions}"
-        
+
+        assert (
+            len(found_regions) == 10
+        ), f"Expected 10 regions, found {len(found_regions)}: {found_regions}"
+
         print(f"\n✅ Regional deployment test passed:")
         print(f"   Configured regions: {len(found_regions)}")
         for region in found_regions:
@@ -354,11 +374,12 @@ class TestMediumTermRegionalDeployment:
             "ap-northeast-1": ["JAPAN_APPI"],
             "ap-southeast-1": ["SINGAPORE_PDPA"],
         }
-        
+
         for region, expected_compliance in compliance_mapping.items():
-            assert len(expected_compliance) > 0, \
-                f"Region {region} has no compliance requirements"
-        
+            assert (
+                len(expected_compliance) > 0
+            ), f"Region {region} has no compliance requirements"
+
         print(f"\n✅ Regional compliance mapping test passed:")
         for region, requirements in compliance_mapping.items():
             print(f"   {region}: {', '.join(requirements)}")
@@ -370,20 +391,20 @@ class TestMediumTermPerformance:
     def test_latency_under_load(self):
         """Verify latency remains acceptable under sustained load."""
         storage_dir = tempfile.mkdtemp()
-        
+
         gov = IntegratedGovernance(
             storage_dir=storage_dir,
             enable_performance_optimization=True,
             enable_quota_enforcement=False,
         )
-        
+
         # Simulate load for 30 seconds
         duration = 30
         target_rps = 50  # Per test instance
-        
+
         start_time = time.time()
         latencies = []
-        
+
         action_count = 0
         while (time.time() - start_time) < duration:
             action_start = time.time()
@@ -395,25 +416,26 @@ class TestMediumTermPerformance:
             latency = (time.time() - action_start) * 1000
             latencies.append(latency)
             action_count += 1
-            
+
             # Rate limiting to target RPS
             elapsed = time.time() - start_time
             expected_actions = int(elapsed * target_rps)
             if action_count > expected_actions:
                 time.sleep(0.001)
-        
+
         # Calculate metrics
         p50 = sorted(latencies)[int(len(latencies) * 0.50)]
         p95 = sorted(latencies)[int(len(latencies) * 0.95)]
         p99 = sorted(latencies)[int(len(latencies) * 0.99)]
         actual_rps = len(latencies) / duration
-        
+
         # Assertions for sustained load
         assert p95 < 200, f"p95 latency {p95:.2f}ms exceeds 200ms target"
         assert p99 < 500, f"p99 latency {p99:.2f}ms exceeds 500ms target"
-        assert actual_rps >= (target_rps * 0.9), \
-            f"Actual RPS {actual_rps:.2f} below 90% of target {target_rps}"
-        
+        assert actual_rps >= (
+            target_rps * 0.9
+        ), f"Actual RPS {actual_rps:.2f} below 90% of target {target_rps}"
+
         print(f"\n✅ Medium-term latency under load test passed:")
         print(f"   Duration: {duration}s")
         print(f"   Total actions: {len(latencies)}")

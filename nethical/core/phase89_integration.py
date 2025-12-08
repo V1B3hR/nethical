@@ -124,7 +124,9 @@ class Phase89IntegratedGovernance:
         )
 
         # Phase 9: Optimization
-        self.optimizer = MultiObjectiveOptimizer(storage_path=str(storage_path / "optimization.db"))
+        self.optimizer = MultiObjectiveOptimizer(
+            storage_path=str(storage_path / "optimization.db")
+        )
 
         # F4: Adaptive Thresholds & Tuning
         self.adaptive_tuner = AdaptiveThresholdTuner(
@@ -133,7 +135,9 @@ class Phase89IntegratedGovernance:
             storage_path=str(storage_path / "adaptive_tuning.db"),
         )
 
-        self.ab_testing = ABTestingFramework(storage_path=str(storage_path / "ab_testing.db"))
+        self.ab_testing = ABTestingFramework(
+            storage_path=str(storage_path / "ab_testing.db")
+        )
 
         # Configuration
         self.auto_escalate_on_block = auto_escalate_on_block
@@ -170,7 +174,10 @@ class Phase89IntegratedGovernance:
             return True, ReviewPriority.HIGH
 
         # Low confidence decisions
-        if self.auto_escalate_on_low_confidence and confidence < self.low_confidence_threshold:
+        if (
+            self.auto_escalate_on_low_confidence
+            and confidence < self.low_confidence_threshold
+        ):
             # More violations = higher priority
             if len(violations) >= 3:
                 return True, ReviewPriority.HIGH
@@ -203,7 +210,9 @@ class Phase89IntegratedGovernance:
         Returns:
             Processing result with escalation info
         """
-        should_escalate, priority = self.should_escalate(decision, confidence, violations)
+        should_escalate, priority = self.should_escalate(
+            decision, confidence, violations
+        )
 
         result = {
             "judgment_id": judgment_id,
@@ -430,7 +439,9 @@ class Phase89IntegratedGovernance:
         else:
             raise ValueError(f"Unknown technique: {technique}")
 
-    def check_promotion_gate(self, candidate_id: str, baseline_id: str) -> Tuple[bool, List[str]]:
+    def check_promotion_gate(
+        self, candidate_id: str, baseline_id: str
+    ) -> Tuple[bool, List[str]]:
         """Check if candidate passes promotion gate.
 
         Args:
@@ -456,7 +467,9 @@ class Phase89IntegratedGovernance:
             self.active_config = self.optimizer.configurations[config_id]
         return promoted
 
-    def get_best_configuration(self) -> Optional[Tuple[Configuration, PerformanceMetrics]]:
+    def get_best_configuration(
+        self,
+    ) -> Optional[Tuple[Configuration, PerformanceMetrics]]:
         """Get best configuration by fitness.
 
         Returns:
@@ -565,7 +578,9 @@ class Phase89IntegratedGovernance:
             "performance_stats": stats,
         }
 
-    def get_adaptive_thresholds(self, agent_id: Optional[str] = None) -> Dict[str, float]:
+    def get_adaptive_thresholds(
+        self, agent_id: Optional[str] = None
+    ) -> Dict[str, float]:
         """Get current adaptive thresholds.
 
         Args:
@@ -609,7 +624,9 @@ class Phase89IntegratedGovernance:
         Returns:
             Tuple of (control_variant_id, treatment_variant_id)
         """
-        return self.ab_testing.create_ab_test(control_config, treatment_config, traffic_split)
+        return self.ab_testing.create_ab_test(
+            control_config, treatment_config, traffic_split
+        )
 
     def record_ab_metrics(self, variant_id: str, metrics: PerformanceMetrics) -> None:
         """Record metrics for A/B test variant.
@@ -621,7 +638,10 @@ class Phase89IntegratedGovernance:
         self.ab_testing.record_variant_metrics(variant_id, metrics)
 
     def check_ab_significance(
-        self, control_variant_id: str, treatment_variant_id: str, metric: str = "detection_recall"
+        self,
+        control_variant_id: str,
+        treatment_variant_id: str,
+        metric: str = "detection_recall",
     ) -> Tuple[bool, float, str]:
         """Check statistical significance of A/B test.
 
@@ -650,7 +670,9 @@ class Phase89IntegratedGovernance:
         Returns:
             New traffic percentage
         """
-        return self.ab_testing.gradual_rollout(treatment_variant_id, target_traffic, step_size)
+        return self.ab_testing.gradual_rollout(
+            treatment_variant_id, target_traffic, step_size
+        )
 
     def rollback_variant(self, variant_id: str) -> bool:
         """Rollback A/B test variant.

@@ -27,7 +27,7 @@ _decision_store: dict[str, dict[str, Any]] = {}
 
 class DecisionRecord(BaseModel):
     """Complete record of a governance decision."""
-    
+
     decision_id: str = Field(..., description="Unique decision identifier")
     decision: str = Field(..., description="ALLOW, RESTRICT, BLOCK, or TERMINATE")
     agent_id: str = Field(..., description="Agent that requested the action")
@@ -51,7 +51,7 @@ class DecisionRecord(BaseModel):
 
 class DecisionListResponse(BaseModel):
     """Paginated list of decisions."""
-    
+
     decisions: list[DecisionRecord] = Field(..., description="List of decisions")
     total_count: int = Field(..., description="Total number of decisions")
     page: int = Field(..., description="Current page number")
@@ -76,27 +76,27 @@ def _get_decision(decision_id: str) -> Optional[dict[str, Any]]:
 @router.get("/decisions/{decision_id}", response_model=DecisionRecord)
 async def get_decision(decision_id: str) -> DecisionRecord:
     """Retrieve a specific decision by ID.
-    
+
     This endpoint supports Law 10 (Reasoning Transparency) by providing
     access to historical decisions and their reasoning.
-    
+
     Args:
         decision_id: Unique identifier of the decision
-        
+
     Returns:
         DecisionRecord with full decision details
-        
+
     Raises:
         HTTPException: If decision not found
     """
     decision = _get_decision(decision_id)
-    
+
     if not decision:
         raise HTTPException(
             status_code=404,
             detail=f"Decision {decision_id} not found",
         )
-    
+
     return DecisionRecord(
         decision_id=decision.get("decision_id", decision_id),
         decision=decision.get("decision", "UNKNOWN"),
@@ -122,37 +122,39 @@ async def list_decisions(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
 ) -> DecisionListResponse:
     """List recent decisions with optional filtering.
-    
+
     Supports pagination and filtering by agent ID and decision type.
     Implements Law 15 (Audit Compliance) for decision history access.
-    
+
     Args:
         agent_id: Optional filter by agent
         decision: Optional filter by decision type
         page: Page number (1-indexed)
         page_size: Number of items per page
-        
+
     Returns:
         Paginated list of decisions
     """
     # Filter decisions
     all_decisions = list(_decision_store.values())
-    
+
     if agent_id:
         all_decisions = [d for d in all_decisions if d.get("agent_id") == agent_id]
-    
+
     if decision:
-        all_decisions = [d for d in all_decisions if d.get("decision") == decision.upper()]
-    
+        all_decisions = [
+            d for d in all_decisions if d.get("decision") == decision.upper()
+        ]
+
     # Sort by timestamp (most recent first)
     all_decisions.sort(key=lambda d: d.get("timestamp", ""), reverse=True)
-    
+
     # Paginate
     total_count = len(all_decisions)
     start_idx = (page - 1) * page_size
     end_idx = start_idx + page_size
     page_decisions = all_decisions[start_idx:end_idx]
-    
+
     # Convert to records
     records = [
         DecisionRecord(
@@ -172,7 +174,7 @@ async def list_decisions(
         )
         for d in page_decisions
     ]
-    
+
     return DecisionListResponse(
         decisions=records,
         total_count=total_count,

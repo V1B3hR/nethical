@@ -128,7 +128,8 @@ class EnhancedRedactionPipeline:
 
         # Compile patterns for efficiency
         self.compiled_patterns = {
-            pii_type: re.compile(pattern) for pii_type, pattern in self.PII_PATTERNS.items()
+            pii_type: re.compile(pattern)
+            for pii_type, pattern in self.PII_PATTERNS.items()
         }
 
         # Audit trail storage
@@ -165,7 +166,9 @@ class EnhancedRedactionPipeline:
                 context = text[start:end] if include_context else ""
 
                 # Calculate confidence based on context
-                confidence = self._calculate_confidence(pii_type, match.group(), context)
+                confidence = self._calculate_confidence(
+                    pii_type, match.group(), context
+                )
 
                 if confidence >= self.min_confidence:
                     matches.append(
@@ -223,7 +226,9 @@ class EnhancedRedactionPipeline:
             # Generate redaction token
             if self.enable_reversible:
                 # Create reversible token with encryption
-                redaction_token = self._create_reversible_token(match.matched_text, match.pii_type)
+                redaction_token = self._create_reversible_token(
+                    match.matched_text, match.pii_type
+                )
                 redaction_map[redaction_token] = match.matched_text
             else:
                 # Create non-reversible redacted placeholder
@@ -237,7 +242,9 @@ class EnhancedRedactionPipeline:
             # Apply redaction
             start = match.start_pos + offset
             end = match.end_pos + offset
-            redacted_text = redacted_text[:start] + redaction_token + redacted_text[end:]
+            redacted_text = (
+                redacted_text[:start] + redaction_token + redacted_text[end:]
+            )
 
             # Update offset
             offset += len(redaction_token) - (match.end_pos - match.start_pos)
@@ -322,7 +329,9 @@ class EnhancedRedactionPipeline:
             # Only detect critical PII in minimal mode
             return pii_type in [PIIType.SSN, PIIType.CREDIT_CARD, PIIType.PASSPORT]
 
-    def _calculate_confidence(self, pii_type: PIIType, matched_text: str, context: str) -> float:
+    def _calculate_confidence(
+        self, pii_type: PIIType, matched_text: str, context: str
+    ) -> float:
         """Calculate confidence score for PII match based on context.
 
         Args:
@@ -414,9 +423,9 @@ class EnhancedRedactionPipeline:
     ):
         """Log redaction action to audit trail."""
         entry = RedactionAuditEntry(
-            entry_id=hashlib.sha256(f"{datetime.now().isoformat()}{action}".encode()).hexdigest()[
-                :16
-            ],
+            entry_id=hashlib.sha256(
+                f"{datetime.now().isoformat()}{action}".encode()
+            ).hexdigest()[:16],
             timestamp=datetime.now(),
             action=action,
             pii_types=pii_types,
@@ -467,7 +476,9 @@ class EnhancedRedactionPipeline:
             return 0.96  # Target is >95%
         return sum(self.stats["accuracy_scores"]) / len(self.stats["accuracy_scores"])
 
-    def validate_detection_accuracy(self, test_cases: List[Tuple[str, List[PIIType]]]) -> float:
+    def validate_detection_accuracy(
+        self, test_cases: List[Tuple[str, List[PIIType]]]
+    ) -> float:
         """Validate PII detection accuracy against test cases.
 
         Args:

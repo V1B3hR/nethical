@@ -14,7 +14,7 @@ from starlette.responses import Response
 class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     """
     Middleware that adds security headers to all HTTP responses.
-    
+
     Security headers included:
     - X-Content-Type-Options: Prevents MIME type sniffing
     - X-Frame-Options: Prevents clickjacking attacks
@@ -47,7 +47,7 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
     ) -> None:
         """
         Initialize the security headers middleware.
-        
+
         Args:
             app: The ASGI application
             enable_hsts: Whether to enable HTTP Strict Transport Security
@@ -144,12 +144,12 @@ def create_security_middleware(
 ) -> type:
     """
     Factory function to create a configured SecurityHeadersMiddleware.
-    
+
     Args:
         enable_hsts: Whether to enable HSTS
         custom_csp: Custom Content-Security-Policy
         additional_headers: Additional headers to include
-    
+
     Returns:
         Configured middleware class
     """

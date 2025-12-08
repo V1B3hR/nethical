@@ -155,7 +155,11 @@ class PatternProfiler:
         """Extract relevant features from context."""
         features = {}
         relevant_keys = [
-            "agent_type", "domain", "environment", "user_role", "session_type"
+            "agent_type",
+            "domain",
+            "environment",
+            "user_role",
+            "session_type",
         ]
 
         for key in relevant_keys:

@@ -234,7 +234,9 @@ class PluginSubmission:
         self.add_note(f"Reviewer assigned: {reviewer}", actor="system")
         return True
 
-    def transition(self, new_status: ReviewStatus, note: str, actor: str = "system") -> None:
+    def transition(
+        self, new_status: ReviewStatus, note: str, actor: str = "system"
+    ) -> None:
         """Transition submission status with auditing."""
         ts = utcnow()
         self.status = new_status
@@ -349,9 +351,15 @@ class CommunityManager:
         # Infra
         self._lock = threading.RLock()
         self._store = (
-            _JsonlStore(os.path.join(self.storage_dir, "store")) if persist_jsonl else None
+            _JsonlStore(os.path.join(self.storage_dir, "store"))
+            if persist_jsonl
+            else None
         )
-        self._audit = AuditLogger(os.path.join(self.storage_dir, "audit")) if enable_audit else None
+        self._audit = (
+            AuditLogger(os.path.join(self.storage_dir, "audit"))
+            if enable_audit
+            else None
+        )
 
     # --------------------------
     # Submissions
@@ -440,7 +448,9 @@ class CommunityManager:
         subs.sort(key=lambda s: s.submission_date, reverse=True)
         return subs
 
-    def assign_reviewer(self, submission_id: str, reviewer: str, *, actor: str = "system") -> bool:
+    def assign_reviewer(
+        self, submission_id: str, reviewer: str, *, actor: str = "system"
+    ) -> bool:
         """Assign a reviewer to a submission."""
         with self._lock:
             sub = self._submissions.get(submission_id)
@@ -450,13 +460,19 @@ class CommunityManager:
             if changed and self._audit:
                 self._audit.log_event(
                     "reviewer_assigned",
-                    {"submission_id": submission_id, "reviewer": reviewer, "actor": actor},
+                    {
+                        "submission_id": submission_id,
+                        "reviewer": reviewer,
+                        "actor": actor,
+                    },
                 )
             if changed and self._store:
                 self._store.append_submission(sub)
             return changed
 
-    def approve_submission(self, submission_id: str, *, actor: str = "reviewer") -> bool:
+    def approve_submission(
+        self, submission_id: str, *, actor: str = "reviewer"
+    ) -> bool:
         """Approve a plugin submission.
 
         Args:
@@ -468,13 +484,16 @@ class CommunityManager:
         with self._lock:
             submission = self._submissions.get(submission_id)
             if submission:
-                submission.transition(ReviewStatus.APPROVED, "Submission approved", actor=actor)
+                submission.transition(
+                    ReviewStatus.APPROVED, "Submission approved", actor=actor
+                )
 
                 if self._store:
                     self._store.append_submission(submission)
                 if self._audit:
                     self._audit.log_event(
-                        "submission_approved", {"submission_id": submission_id, "actor": actor}
+                        "submission_approved",
+                        {"submission_id": submission_id, "actor": actor},
                     )
                 return True
             return False
@@ -504,12 +523,18 @@ class CommunityManager:
                 if self._audit:
                     self._audit.log_event(
                         "submission_rejected",
-                        {"submission_id": submission_id, "reason": reason, "actor": actor},
+                        {
+                            "submission_id": submission_id,
+                            "reason": reason,
+                            "actor": actor,
+                        },
                     )
                 return True
             return False
 
-    def request_changes(self, submission_id: str, note: str, *, actor: str = "reviewer") -> bool:
+    def request_changes(
+        self, submission_id: str, note: str, *, actor: str = "reviewer"
+    ) -> bool:
         """Move submission to NEEDS_CHANGES with a note."""
         note = note.strip() or "Changes requested"
         with self._lock:
@@ -606,7 +631,11 @@ class CommunityManager:
                     if counted and self._audit:
                         self._audit.log_event(
                             "review_helpful_voted",
-                            {"review_id": review_id, "plugin_id": plugin_id, "voter": voter},
+                            {
+                                "review_id": review_id,
+                                "plugin_id": plugin_id,
+                                "voter": voter,
+                            },
                         )
                     if counted and self._store:
                         self._store.append_review(r)
@@ -638,7 +667,9 @@ class CommunityManager:
                     return True
         return False
 
-    def get_reviews(self, plugin_id: str, include_moderated: bool = False) -> List[PluginReview]:
+    def get_reviews(
+        self, plugin_id: str, include_moderated: bool = False
+    ) -> List[PluginReview]:
         """Get all reviews for a plugin.
 
         Args:
@@ -693,21 +724,29 @@ class CommunityManager:
         approved = sum(1 for s in submissions if s.status == ReviewStatus.APPROVED)
         pending = sum(1 for s in submissions if s.status == ReviewStatus.PENDING)
         rejected = sum(1 for s in submissions if s.status == ReviewStatus.REJECTED)
-        needs_changes = sum(1 for s in submissions if s.status == ReviewStatus.NEEDS_CHANGES)
+        needs_changes = sum(
+            1 for s in submissions if s.status == ReviewStatus.NEEDS_CHANGES
+        )
 
         # Time-to-approval metrics
         approval_durations: List[float] = []
         for s in submissions:
             created_ts = next(
-                (e.ts for e in s.status_history if e.status == ReviewStatus.PENDING), None
+                (e.ts for e in s.status_history if e.status == ReviewStatus.PENDING),
+                None,
             )
             approved_ts = next(
-                (e.ts for e in s.status_history if e.status == ReviewStatus.APPROVED), None
+                (e.ts for e in s.status_history if e.status == ReviewStatus.APPROVED),
+                None,
             )
             if created_ts and approved_ts:
                 approval_durations.append((approved_ts - created_ts).total_seconds())
 
-        avg_tta = sum(approval_durations) / len(approval_durations) if approval_durations else None
+        avg_tta = (
+            sum(approval_durations) / len(approval_durations)
+            if approval_durations
+            else None
+        )
 
         # Helpful votes across author's plugins
         helpful_votes_total = 0
@@ -719,7 +758,9 @@ class CommunityManager:
                     total_reviews += 1
 
         acceptance_rate = (approved / total) if total else 0.0
-        helpful_votes_per_review = (helpful_votes_total / total_reviews) if total_reviews else 0.0
+        helpful_votes_per_review = (
+            (helpful_votes_total / total_reviews) if total_reviews else 0.0
+        )
 
         return {
             "author": author,
@@ -745,7 +786,12 @@ class CommunityManager:
             "total_reviews": len(reviews),
             "rating_histogram": hist,
             "positive_share": round(
-                (sum(1 for r in reviews if r.is_positive()) / len(reviews)) if reviews else 0.0, 4
+                (
+                    (sum(1 for r in reviews if r.is_positive()) / len(reviews))
+                    if reviews
+                    else 0.0
+                ),
+                4,
             ),
             "helpful_votes_total": sum(r.helpful_votes for r in reviews),
         }
@@ -774,14 +820,21 @@ class CommunityManager:
         helpful_norm = min(helpful_votes / 100.0, 1.0)
 
         # Blend with weights (tunable)
-        score = 0.5 * rating_norm + 0.2 * volume_weight + 0.2 * approval_ratio + 0.1 * helpful_norm
+        score = (
+            0.5 * rating_norm
+            + 0.2 * volume_weight
+            + 0.2 * approval_ratio
+            + 0.1 * helpful_norm
+        )
         return max(0.0, min(1.0, score))
 
     # --------------------------
     # Templates
     # --------------------------
 
-    def get_contribution_template(self, template_name: str = "default") -> ContributionTemplate:
+    def get_contribution_template(
+        self, template_name: str = "default"
+    ) -> ContributionTemplate:
         """Get contribution template.
 
         Args:
@@ -824,7 +877,9 @@ class CommunityManager:
             by_status = Counter(s.status.value for s in self._submissions.values())
             total_reviews = sum(len(v) for v in self._reviews.values())
             total_plugins = len({s.plugin_id for s in self._submissions.values()})
-            assigned = sum(len(s.assigned_reviewers) for s in self._submissions.values())
+            assigned = sum(
+                len(s.assigned_reviewers) for s in self._submissions.values()
+            )
 
         return {
             "storage_dir": self.storage_dir,

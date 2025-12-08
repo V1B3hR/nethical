@@ -200,7 +200,10 @@ class PolicyEnforcer:
 
         # Check trust level using numeric comparison
         if trust_level.numeric_value < segment.min_trust_level.numeric_value:
-            return False, f"Insufficient trust level: {trust_level} < {segment.min_trust_level}"
+            return (
+                False,
+                f"Insufficient trust level: {trust_level} < {segment.min_trust_level}",
+            )
 
         # Check service authorization
         if service not in segment.allowed_services:
@@ -549,7 +552,9 @@ class ZeroTrustController:
         if device_id and device_id in self.device_health_cache:
             device_health = self.device_health_cache[device_id]
 
-        valid, trust_level = self.auth_engine.verify_session(session_token, device_health)
+        valid, trust_level = self.auth_engine.verify_session(
+            session_token, device_health
+        )
 
         if not valid:
             return False, "Invalid session"
@@ -612,7 +617,9 @@ class RateLimiter:
         self.burst_size = burst_size
         self._buckets: Dict[str, Dict[str, Any]] = {}
         self._lock = __import__("threading").RLock()
-        log.info(f"RateLimiter initialized: {requests_per_minute}/min, burst={burst_size}")
+        log.info(
+            f"RateLimiter initialized: {requests_per_minute}/min, burst={burst_size}"
+        )
 
     def check_rate(self, identity: str) -> tuple[bool, int]:
         """
@@ -764,8 +771,7 @@ class AnomalyDetector:
         timestamps = [r["timestamp"] for r in pattern[-10:]]
         if len(timestamps) >= 2:
             intervals = [
-                timestamps[i] - timestamps[i - 1]
-                for i in range(1, len(timestamps))
+                timestamps[i] - timestamps[i - 1] for i in range(1, len(timestamps))
             ]
             avg_interval = sum(intervals) / len(intervals)
 

@@ -8,9 +8,9 @@ government, and healthcare requirements.
 
 Key Features:
 - Adversarial example detection using input perturbation analysis
-- Chaos Quantification: Utilizing chaos theory to identify chaotic behavior in 
+- Chaos Quantification: Utilizing chaos theory to identify chaotic behavior in
   time-series data to detect subtle input perturbations added by adversarial attacks
-- Defense Perturbation: A novel methodology to detect robust adversarial examples 
+- Defense Perturbation: A novel methodology to detect robust adversarial examples
   with the same input transformations the adversarial examples are robust to
 - Model poisoning detection via gradient monitoring
 - Differential privacy with epsilon-delta guarantees
@@ -25,6 +25,7 @@ from enum import Enum
 from abc import ABC, abstractmethod
 import numpy as np
 import logging
+
 
 class AdversarialAttackType(Enum):
     """Types of adversarial attacks on ML models."""
@@ -184,7 +185,7 @@ class DefensePerturbationResult:
             "prediction_stability": self.prediction_stability,
             "confidence": self.confidence,
             "detection_method": self.detection_method,
-            "timestamp": self.timestamp. isoformat(),
+            "timestamp": self.timestamp.isoformat(),
         }
 
 
@@ -208,10 +209,12 @@ class AdversarialDetectionResult:
         return {
             "is_adversarial": self.is_adversarial,
             "confidence": self.confidence,
-            "attack_type": self.attack_type. value if self.attack_type else None,
+            "attack_type": self.attack_type.value if self.attack_type else None,
             "perturbation_magnitude": self.perturbation_magnitude,
             "detection_method": self.detection_method,
-            "chaos_analysis": self.chaos_analysis.to_dict() if self.chaos_analysis else None,
+            "chaos_analysis": (
+                self.chaos_analysis.to_dict() if self.chaos_analysis else None
+            ),
             "defense_perturbation_analysis": (
                 self.defense_perturbation_analysis.to_dict()
                 if self.defense_perturbation_analysis
@@ -238,7 +241,9 @@ class PoisoningDetectionResult:
         return {
             "is_poisoned": self.is_poisoned,
             "confidence": self.confidence,
-            "poisoning_type": self.poisoning_type.value if self.poisoning_type else None,
+            "poisoning_type": (
+                self.poisoning_type.value if self.poisoning_type else None
+            ),
             "affected_samples": self.affected_samples,
             "gradient_anomaly_score": self.gradient_anomaly_score,
             "detection_method": self.detection_method,
@@ -341,10 +346,10 @@ class ExplainabilityReport:
 
 class ChaosQuantificationSystem:
     """
-    Chaos Quantification System for Adversarial Detection. 
+    Chaos Quantification System for Adversarial Detection.
 
     Utilizes chaos theory to identify chaotic behavior in time-series data
-    to detect subtle input perturbations added by adversarial attacks. 
+    to detect subtle input perturbations added by adversarial attacks.
 
     Key Techniques:
     - Lyapunov Exponent Calculation: Measures sensitivity to initial conditions
@@ -427,7 +432,12 @@ class ChaosQuantificationSystem:
 
         # Compute composite chaos score
         chaos_score = self._compute_chaos_score(
-            lyapunov_exp, corr_dim, entropy_measures, recurrence_metrics, fractal_dim, hurst_exp
+            lyapunov_exp,
+            corr_dim,
+            entropy_measures,
+            recurrence_metrics,
+            fractal_dim,
+            hurst_exp,
         )
 
         # Determine if chaotic and if it indicates adversarial perturbation
@@ -454,14 +464,14 @@ class ChaosQuantificationSystem:
             confidence=confidence,
         )
 
-        self.analysis_history. append(result)
+        self.analysis_history.append(result)
         return result
 
     def _prepare_time_series(self, data: np.ndarray) -> np.ndarray:
         """Prepare input data as 1D time series."""
         if isinstance(data, list):
             data = np.array(data)
-        return data.flatten(). astype(np.float64)
+        return data.flatten().astype(np.float64)
 
     def _extend_time_series(self, series: np.ndarray) -> np.ndarray:
         """Extend short time series using interpolation."""
@@ -510,7 +520,7 @@ class ChaosQuantificationSystem:
         """
         Calculate the largest Lyapunov exponent using Wolf's algorithm.
 
-        Positive Lyapunov exponent indicates chaos (sensitivity to initial conditions). 
+        Positive Lyapunov exponent indicates chaos (sensitivity to initial conditions).
         Adversarial perturbations often exhibit chaotic signatures.
 
         Args:
@@ -573,7 +583,7 @@ class ChaosQuantificationSystem:
 
     def _calculate_correlation_dimension(self, series: np.ndarray) -> float:
         """
-        Calculate correlation dimension using Grassberger-Procaccia algorithm. 
+        Calculate correlation dimension using Grassberger-Procaccia algorithm.
 
         Measures the fractal dimension of the strange attractor.
 
@@ -592,16 +602,16 @@ class ChaosQuantificationSystem:
 
             # Sample points for efficiency
             sample_size = min(500, n_points)
-            indices = np.random. choice(n_points, sample_size, replace=False)
+            indices = np.random.choice(n_points, sample_size, replace=False)
             sampled = embedded[indices]
 
             # Calculate pairwise distances
             distances = []
             for i in range(sample_size):
                 for j in range(i + 1, sample_size):
-                    dist = np.linalg. norm(sampled[i] - sampled[j])
+                    dist = np.linalg.norm(sampled[i] - sampled[j])
                     if dist > 0:
-                        distances. append(dist)
+                        distances.append(dist)
 
             if len(distances) < 10:
                 return 0.0
@@ -685,9 +695,11 @@ class ChaosQuantificationSystem:
         except Exception:
             return 0.0
 
-    def _approximate_entropy(self, series: np.ndarray, m: int = 2, r: Optional[float] = None) -> float:
+    def _approximate_entropy(
+        self, series: np.ndarray, m: int = 2, r: Optional[float] = None
+    ) -> float:
         """
-        Calculate Approximate Entropy (ApEn). 
+        Calculate Approximate Entropy (ApEn).
 
         Measures regularity and unpredictability of time series.
 
@@ -708,7 +720,9 @@ class ChaosQuantificationSystem:
                 r = 0.2 * np.std(series)
 
             def _phi(m_val: int) -> float:
-                patterns = np.array([series[i:i + m_val] for i in range(n - m_val + 1)])
+                patterns = np.array(
+                    [series[i : i + m_val] for i in range(n - m_val + 1)]
+                )
                 n_patterns = len(patterns)
 
                 counts = np.zeros(n_patterns)
@@ -725,9 +739,11 @@ class ChaosQuantificationSystem:
         except Exception:
             return 0.0
 
-    def _sample_entropy(self, series: np.ndarray, m: int = 2, r: Optional[float] = None) -> float:
+    def _sample_entropy(
+        self, series: np.ndarray, m: int = 2, r: Optional[float] = None
+    ) -> float:
         """
-        Calculate Sample Entropy (SampEn). 
+        Calculate Sample Entropy (SampEn).
 
         Similar to ApEn but without self-matching, providing less bias.
 
@@ -748,7 +764,7 @@ class ChaosQuantificationSystem:
                 r = 0.2 * np.std(series)
 
             def _count_matches(m_val: int) -> int:
-                patterns = np.array([series[i:i + m_val] for i in range(n - m_val)])
+                patterns = np.array([series[i : i + m_val] for i in range(n - m_val)])
                 n_patterns = len(patterns)
                 count = 0
 
@@ -770,7 +786,9 @@ class ChaosQuantificationSystem:
         except Exception:
             return 0.0
 
-    def _permutation_entropy(self, series: np.ndarray, order: int = 3, delay: int = 1) -> float:
+    def _permutation_entropy(
+        self, series: np.ndarray, order: int = 3, delay: int = 1
+    ) -> float:
         """
         Calculate Permutation Entropy.
 
@@ -794,11 +812,14 @@ class ChaosQuantificationSystem:
             patterns = []
 
             for i in range(n_patterns):
-                pattern = tuple(np.argsort([series[i + j * delay] for j in range(order)]))
-                patterns. append(pattern)
+                pattern = tuple(
+                    np.argsort([series[i + j * delay] for j in range(order)])
+                )
+                patterns.append(pattern)
 
             # Count pattern frequencies
             from collections import Counter
+
             pattern_counts = Counter(patterns)
             total = len(patterns)
 
@@ -882,7 +903,7 @@ class ChaosQuantificationSystem:
                     recurrence_matrix[i, j] = 1 if dist < threshold else 0
 
             # Calculate metrics
-            recurrence_rate = np.sum(recurrence_matrix) / (sample_size ** 2)
+            recurrence_rate = np.sum(recurrence_matrix) / (sample_size**2)
 
             # Determinism: percentage of recurrence points in diagonal lines
             determinism = self._calculate_determinism(recurrence_matrix)
@@ -983,7 +1004,7 @@ class ChaosQuantificationSystem:
                     line_length += 1
                 else:
                     if line_length >= 2:
-                        line_lengths. append(line_length)
+                        line_lengths.append(line_length)
                     line_length = 0
 
             if line_length >= 2:
@@ -993,9 +1014,10 @@ class ChaosQuantificationSystem:
             return 0.0
 
         from collections import Counter
+
         length_counts = Counter(line_lengths)
-        total = sum(length_counts. values())
-        probs = np.array([count / total for count in length_counts. values()])
+        total = sum(length_counts.values())
+        probs = np.array([count / total for count in length_counts.values()])
 
         return -np.sum(probs * np.log2(probs + 1e-10))
 
@@ -1015,7 +1037,7 @@ class ChaosQuantificationSystem:
                     line_length = 0
 
             if line_length >= 2:
-                line_lengths. append(line_length)
+                line_lengths.append(line_length)
 
         return np.mean(line_lengths) if line_lengths else 0.0
 
@@ -1048,7 +1070,7 @@ class ChaosQuantificationSystem:
             counts = []
 
             for k in range(2, min(8, int(np.log2(n)))):
-                box_size = 1.0 / (2 ** k)
+                box_size = 1.0 / (2**k)
                 n_boxes_x = int(np.ceil(1.0 / box_size))
                 n_boxes_y = int(np.ceil(1.0 / box_size))
 
@@ -1074,7 +1096,7 @@ class ChaosQuantificationSystem:
 
     def _calculate_hurst_exponent(self, series: np.ndarray) -> float:
         """
-        Calculate Hurst exponent using R/S analysis. 
+        Calculate Hurst exponent using R/S analysis.
 
         H < 0.5: Anti-persistent (mean-reverting)
         H = 0.5: Random walk
@@ -1100,7 +1122,7 @@ class ChaosQuantificationSystem:
             n_values = []
 
             for k in range(2, max_k + 1):
-                subset_size = 2 ** k
+                subset_size = 2**k
                 n_subsets = n // subset_size
 
                 if n_subsets == 0:
@@ -1108,7 +1130,7 @@ class ChaosQuantificationSystem:
 
                 rs_list = []
                 for i in range(n_subsets):
-                    subset = series[i * subset_size:(i + 1) * subset_size]
+                    subset = series[i * subset_size : (i + 1) * subset_size]
 
                     # Mean-adjusted cumulative sum
                     mean = np.mean(subset)
@@ -1121,7 +1143,7 @@ class ChaosQuantificationSystem:
                     s = np.std(subset)
 
                     if s > 0:
-                        rs_list. append(r / s)
+                        rs_list.append(r / s)
 
                 if rs_list:
                     rs_values.append(np.log(np.mean(rs_list)))
@@ -1167,11 +1189,11 @@ class ChaosQuantificationSystem:
         scores.append(lyap_score * 0.25)
 
         # Entropy contribution (higher = more chaotic)
-        avg_entropy = np.mean(list(entropy_measures. values()))
+        avg_entropy = np.mean(list(entropy_measures.values()))
         scores.append(avg_entropy * 0.25)
 
         # Determinism contribution (lower determinism = more chaotic)
-        det = recurrence_metrics. get("determinism", 0.5)
+        det = recurrence_metrics.get("determinism", 0.5)
         scores.append((1.0 - det) * 0.15)
 
         # Recurrence rate (very low or very high can indicate anomaly)
@@ -1223,11 +1245,14 @@ class ChaosQuantificationSystem:
             # Significant deviation from baseline indicates adversarial
             lyap_diff = abs(lyapunov_exp - baseline_lyap)
             entropy_diff = abs(
-                np.mean(list(entropy_measures. values()))
+                np.mean(list(entropy_measures.values()))
                 - np.mean(list(baseline_entropy.values()))
             )
 
-            if lyap_diff > self.lyapunov_threshold or entropy_diff > self.entropy_threshold:
+            if (
+                lyap_diff > self.lyapunov_threshold
+                or entropy_diff > self.entropy_threshold
+            ):
                 return True
 
         # Without baseline, use absolute thresholds
@@ -1301,13 +1326,19 @@ class ChaosQuantificationSystem:
 
         return {
             "total_analyses": len(self.analysis_history),
-            "chaotic_count": sum(1 for r in self.analysis_history if r. is_chaotic),
+            "chaotic_count": sum(1 for r in self.analysis_history if r.is_chaotic),
             "adversarial_count": sum(
                 1 for r in self.analysis_history if r.is_adversarial_perturbation
             ),
-            "average_chaos_score": np.mean([r.chaos_score for r in self.analysis_history]),
-            "average_lyapunov": np.mean([r.lyapunov_exponent for r in self.analysis_history]),
-            "average_confidence": np.mean([r.confidence for r in self.analysis_history]),
+            "average_chaos_score": np.mean(
+                [r.chaos_score for r in self.analysis_history]
+            ),
+            "average_lyapunov": np.mean(
+                [r.lyapunov_exponent for r in self.analysis_history]
+            ),
+            "average_confidence": np.mean(
+                [r.confidence for r in self.analysis_history]
+            ),
         }
 
 
@@ -1333,7 +1364,9 @@ class InputTransformation(ABC):
 class GeometricTransformations(InputTransformation):
     """Geometric input transformations."""
 
-    def apply(self, data: np.ndarray, transformation: str = "rotation", **params) -> np.ndarray:
+    def apply(
+        self, data: np.ndarray, transformation: str = "rotation", **params
+    ) -> np.ndarray:
         """Apply geometric transformation."""
         if transformation == "rotation":
             return self._rotate(data, params.get("angle", 5))
@@ -1366,7 +1399,7 @@ class GeometricTransformations(InputTransformation):
         cos_a, sin_a = np.cos(angle_rad), np.sin(angle_rad)
 
         if data.ndim == 2:
-            h, w = data. shape
+            h, w = data.shape
             center = (h // 2, w // 2)
             rotated = np.zeros_like(data)
 
@@ -1412,7 +1445,7 @@ class GeometricTransformations(InputTransformation):
         if data.ndim < 2:
             return data
 
-        h, w = data. shape[:2]
+        h, w = data.shape[:2]
         sheared = np.zeros_like(data)
 
         for i in range(h):
@@ -1426,7 +1459,9 @@ class GeometricTransformations(InputTransformation):
 class IntensityTransformations(InputTransformation):
     """Color and intensity transformations."""
 
-    def apply(self, data: np.ndarray, transformation: str = "brightness", **params) -> np.ndarray:
+    def apply(
+        self, data: np.ndarray, transformation: str = "brightness", **params
+    ) -> np.ndarray:
         """Apply intensity transformation."""
         if transformation == "brightness":
             return self._adjust_brightness(data, params.get("factor", 1.1))
@@ -1447,7 +1482,7 @@ class IntensityTransformations(InputTransformation):
 
     def _adjust_brightness(self, data: np.ndarray, factor: float) -> np.ndarray:
         """Adjust brightness by factor."""
-        return np.clip(data * factor, data.min(), data. max())
+        return np.clip(data * factor, data.min(), data.max())
 
     def _adjust_contrast(self, data: np.ndarray, factor: float) -> np.ndarray:
         """Adjust contrast by factor."""
@@ -1457,7 +1492,7 @@ class IntensityTransformations(InputTransformation):
     def _gamma_correction(self, data: np.ndarray, gamma: float) -> np.ndarray:
         """Apply gamma correction."""
         # Normalize to [0, 1], apply gamma, rescale
-        data_min, data_max = data.min(), data. max()
+        data_min, data_max = data.min(), data.max()
         if data_max - data_min == 0:
             return data
         normalized = (data - data_min) / (data_max - data_min)
@@ -1479,7 +1514,7 @@ class IntensityTransformations(InputTransformation):
         # Flatten, compute histogram, equalize
         flat = channel.flatten()
         hist, bins = np.histogram(flat, bins=256, density=True)
-        cdf = hist. cumsum()
+        cdf = hist.cumsum()
         cdf = cdf / cdf[-1]  # Normalize
 
         # Map values
@@ -1488,14 +1523,16 @@ class IntensityTransformations(InputTransformation):
             return channel
 
         normalized = (channel - data_min) / (data_max - data_min) * 255
-        equalized = np.interp(normalized. flatten(), np.arange(256), cdf * 255)
+        equalized = np.interp(normalized.flatten(), np.arange(256), cdf * 255)
         return equalized.reshape(channel.shape) / 255 * (data_max - data_min) + data_min
 
 
 class NoiseTransformations(InputTransformation):
     """Noise-based transformations."""
 
-    def apply(self, data: np.ndarray, transformation: str = "gaussian", **params) -> np.ndarray:
+    def apply(
+        self, data: np.ndarray, transformation: str = "gaussian", **params
+    ) -> np.ndarray:
         """Apply noise transformation."""
         if transformation == "gaussian":
             return self._add_gaussian_noise(data, params.get("std", 0.01))
@@ -1516,24 +1553,24 @@ class NoiseTransformations(InputTransformation):
 
     def _add_gaussian_noise(self, data: np.ndarray, std: float) -> np.ndarray:
         """Add Gaussian noise."""
-        noise = np.random.normal(0, std * np.std(data), data. shape)
+        noise = np.random.normal(0, std * np.std(data), data.shape)
         return data + noise
 
     def _add_salt_pepper_noise(self, data: np.ndarray, prob: float) -> np.ndarray:
         """Add salt and pepper noise."""
         result = data.copy()
-        mask = np.random. random(data.shape)
+        mask = np.random.random(data.shape)
 
         # Salt
-        result[mask < prob / 2] = data. max()
+        result[mask < prob / 2] = data.max()
         # Pepper
-        result[mask > 1 - prob / 2] = data. min()
+        result[mask > 1 - prob / 2] = data.min()
 
         return result
 
     def _add_speckle_noise(self, data: np.ndarray, std: float) -> np.ndarray:
         """Add speckle (multiplicative) noise."""
-        noise = np.random. normal(1, std, data.shape)
+        noise = np.random.normal(1, std, data.shape)
         return data * noise
 
     def _add_poisson_noise(self, data: np.ndarray) -> np.ndarray:
@@ -1541,13 +1578,15 @@ class NoiseTransformations(InputTransformation):
         # Ensure positive values
         data_positive = data - data.min() + 1
         noisy = np.random.poisson(data_positive)
-        return noisy. astype(data. dtype) + data. min() - 1
+        return noisy.astype(data.dtype) + data.min() - 1
 
 
 class FilterTransformations(InputTransformation):
     """Spatial filtering transformations."""
 
-    def apply(self, data: np.ndarray, transformation: str = "gaussian_blur", **params) -> np.ndarray:
+    def apply(
+        self, data: np.ndarray, transformation: str = "gaussian_blur", **params
+    ) -> np.ndarray:
         """Apply filter transformation."""
         if transformation == "gaussian_blur":
             return self._gaussian_blur(data, params.get("kernel_size", 3))
@@ -1570,13 +1609,15 @@ class FilterTransformations(InputTransformation):
         # Create Gaussian kernel
         sigma = kernel_size / 6.0
         x = np.arange(kernel_size) - kernel_size // 2
-        kernel_1d = np.exp(-x ** 2 / (2 * sigma ** 2))
+        kernel_1d = np.exp(-(x**2) / (2 * sigma**2))
         kernel_1d = kernel_1d / kernel_1d.sum()
 
         # Apply separable convolution
         result = data.copy()
         if data.ndim >= 1:
-            result = np.convolve(result. flatten(), kernel_1d, mode='same'). reshape(data.shape)
+            result = np.convolve(result.flatten(), kernel_1d, mode="same").reshape(
+                data.shape
+            )
 
         return result
 
@@ -1586,19 +1627,19 @@ class FilterTransformations(InputTransformation):
             # 1D median filter
             result = np.zeros_like(data)
             pad = kernel_size // 2
-            padded = np.pad(data, pad, mode='edge')
+            padded = np.pad(data, pad, mode="edge")
             for i in range(len(data)):
-                result[i] = np.median(padded[i:i + kernel_size])
+                result[i] = np.median(padded[i : i + kernel_size])
             return result
 
         # 2D median filter
         result = np.zeros_like(data)
         pad = kernel_size // 2
-        padded = np.pad(data, pad, mode='edge')
+        padded = np.pad(data, pad, mode="edge")
 
         for i in range(data.shape[0]):
             for j in range(data.shape[1]):
-                window = padded[i:i + kernel_size, j:j + kernel_size]
+                window = padded[i : i + kernel_size, j : j + kernel_size]
                 result[i, j] = np.median(window)
 
         return result
@@ -1608,24 +1649,20 @@ class FilterTransformations(InputTransformation):
         if data.ndim < 2:
             # Simple 1D sharpening
             kernel = np.array([-1, 3, -1])
-            return np.convolve(data, kernel, mode='same')
+            return np.convolve(data, kernel, mode="same")
 
         # 2D sharpening kernel
-        kernel = np.array([
-            [0, -1, 0],
-            [-1, 5, -1],
-            [0, -1, 0]
-        ])
+        kernel = np.array([[0, -1, 0], [-1, 5, -1], [0, -1, 0]])
 
         result = np.zeros_like(data)
-        padded = np.pad(data, 1, mode='edge')
+        padded = np.pad(data, 1, mode="edge")
 
-        for i in range(data. shape[0]):
+        for i in range(data.shape[0]):
             for j in range(data.shape[1]):
-                window = padded[i:i + 3, j:j + 3]
+                window = padded[i : i + 3, j : j + 3]
                 result[i, j] = np.sum(window * kernel)
 
-        return np.clip(result, data.min(), data. max())
+        return np.clip(result, data.min(), data.max())
 
     def _bilateral_filter(self, data: np.ndarray) -> np.ndarray:
         """Apply bilateral filter (simplified)."""
@@ -1633,14 +1670,16 @@ class FilterTransformations(InputTransformation):
         spatial_blurred = self._gaussian_blur(data, 5)
         # Weight by intensity similarity
         intensity_diff = np.abs(data - spatial_blurred)
-        weight = np.exp(-intensity_diff ** 2 / (2 * 0.1 ** 2))
+        weight = np.exp(-(intensity_diff**2) / (2 * 0.1**2))
         return weight * data + (1 - weight) * spatial_blurred
 
 
 class CompressionTransformations(InputTransformation):
     """Compression-based transformations."""
 
-    def apply(self, data: np.ndarray, transformation: str = "quantization", **params) -> np.ndarray:
+    def apply(
+        self, data: np.ndarray, transformation: str = "quantization", **params
+    ) -> np.ndarray:
         """Apply compression transformation."""
         if transformation == "quantization":
             return self._quantize(data, params.get("levels", 32))
@@ -1680,13 +1719,13 @@ class CompressionTransformations(InputTransformation):
 
         for i in range(0, h - block_size + 1, block_size):
             for j in range(0, w - block_size + 1, block_size):
-                block = result[i:i + block_size, j:j + block_size]
+                block = result[i : i + block_size, j : j + block_size]
                 if block.size == block_size * block_size:
                     # Simple DCT-like quantization simulation
                     block_mean = np.mean(block)
                     # Reduce high frequency detail based on quality
                     smoothed = block_mean + (block - block_mean) * quality_factor
-                    result[i:i + block_size, j:j + block_size] = smoothed
+                    result[i : i + block_size, j : j + block_size] = smoothed
 
         return result
 
@@ -1779,11 +1818,13 @@ class DefensePerturbationSystem:
                     transformed_data = transformer.apply(
                         input_data.copy(),
                         transformation=transform_name,
-                        **transform_params
+                        **transform_params,
                     )
                     transformed_prediction = model_prediction_func(transformed_data)
 
-                    prediction_changed = str(transformed_prediction) != str(original_prediction)
+                    prediction_changed = str(transformed_prediction) != str(
+                        original_prediction
+                    )
 
                     if prediction_changed:
                         vulnerable_transformations.append(full_name)
@@ -1807,14 +1848,18 @@ class DefensePerturbationSystem:
                     total_tests += 1
 
         # Calculate metrics
-        prediction_stability = 1.0 - (prediction_changes / total_tests) if total_tests > 0 else 1.0
-        robustness_score = len(robust_transformations) / total_tests if total_tests > 0 else 0.0
+        prediction_stability = (
+            1.0 - (prediction_changes / total_tests) if total_tests > 0 else 1.0
+        )
+        robustness_score = (
+            len(robust_transformations) / total_tests if total_tests > 0 else 0.0
+        )
 
         # Determine if this is a robust adversarial example
         # Robust adversarial = maintains adversarial effect across transformations
         is_robust_adversarial = (
-            robustness_score > self.robustness_threshold and
-            prediction_stability > self.prediction_stability_threshold
+            robustness_score > self.robustness_threshold
+            and prediction_stability > self.prediction_stability_threshold
         )
 
         # Calculate confidence
@@ -1848,7 +1893,7 @@ class DefensePerturbationSystem:
 
         # Boost confidence with more tests
         test_factor = min(1.0, total_tests / 10)
-        base_confidence *= (0.5 + 0.5 * test_factor)
+        base_confidence *= 0.5 + 0.5 * test_factor
 
         return min(1.0, base_confidence)
 
@@ -1946,10 +1991,14 @@ class AdversarialDefenseSystem:
         """
         # Convert inputs to numpy arrays
         input_array = self._to_numpy(input_data)
-        baseline_array = self._to_numpy(baseline_input) if baseline_input is not None else None
+        baseline_array = (
+            self._to_numpy(baseline_input) if baseline_input is not None else None
+        )
 
         # Calculate perturbation magnitude
-        perturbation_magnitude = self._calculate_perturbation(input_data, baseline_input)
+        perturbation_magnitude = self._calculate_perturbation(
+            input_data, baseline_input
+        )
 
         # Get predictions if model function provided
         original_prediction = None
@@ -1960,7 +2009,9 @@ class AdversarialDefenseSystem:
                 if baseline_input is not None:
                     original_prediction = model_prediction_func(baseline_input)
             except Exception as e:
-                logging.exception("Model prediction failed in adversarial example detection.")
+                logging.exception(
+                    "Model prediction failed in adversarial example detection."
+                )
 
         # Run chaos analysis if enabled
         chaos_result = None
@@ -1970,7 +2021,9 @@ class AdversarialDefenseSystem:
                     input_array, baseline_array
                 )
             except Exception as e:
-                logging.exception("Chaos analysis failed in adversarial example detection.")
+                logging.exception(
+                    "Chaos analysis failed in adversarial example detection."
+                )
 
         # Run defense perturbation if enabled
         defense_result = None
@@ -1980,7 +2033,9 @@ class AdversarialDefenseSystem:
                     input_array, model_prediction_func, adversarial_prediction
                 )
             except Exception as e:
-                logging.exception("Defense perturbation analysis failed in adversarial example detection.")
+                logging.exception(
+                    "Defense perturbation analysis failed in adversarial example detection."
+                )
 
         # Determine if adversarial
         is_adversarial = self._is_adversarial(
@@ -1995,8 +2050,12 @@ class AdversarialDefenseSystem:
         # Identify attack type
         attack_type = None
         if is_adversarial:
-            consistency_score = defense_result.prediction_stability if defense_result else 0.5
-            attack_type = self._identify_attack_type(perturbation_magnitude, consistency_score)
+            consistency_score = (
+                defense_result.prediction_stability if defense_result else 0.5
+            )
+            attack_type = self._identify_attack_type(
+                perturbation_magnitude, consistency_score
+            )
 
         result = AdversarialDetectionResult(
             is_adversarial=is_adversarial,
@@ -2137,7 +2196,9 @@ class AdversarialDefenseSystem:
             "adversarial_count": adversarial_count,
             "clean_count": clean_count,
             "adversarial_rate": adversarial_count / len(self.detection_history),
-            "average_confidence": np.mean([r.confidence for r in self.detection_history]),
+            "average_confidence": np.mean(
+                [r.confidence for r in self.detection_history]
+            ),
             "average_perturbation": np.mean(
                 [r.perturbation_magnitude for r in self.detection_history]
             ),
@@ -2221,8 +2282,8 @@ class ModelPoisoningDetector:
 
         # Determine if poisoned (convert to Python bool to ensure proper identity checks)
         is_poisoned = bool(
-            gradient_score > self.gradient_threshold or
-            loss_score > self.loss_anomaly_threshold
+            gradient_score > self.gradient_threshold
+            or loss_score > self.loss_anomaly_threshold
         )
 
         # Identify poisoning type
@@ -2253,7 +2314,9 @@ class ModelPoisoningDetector:
             return 0.0
 
         # Calculate statistics from history
-        all_gradients = np.concatenate([g.flatten() for g in self._gradient_history[:-1]])
+        all_gradients = np.concatenate(
+            [g.flatten() for g in self._gradient_history[:-1]]
+        )
         mean = np.mean(all_gradients)
         std = np.std(all_gradients)
 
@@ -2411,7 +2474,9 @@ class DifferentialPrivacyManager:
         if self.mechanism == PrivacyMechanism.LAPLACE:
             noise = self._laplace_noise(sensitivity, self.budget.epsilon)
         elif self.mechanism == PrivacyMechanism.GAUSSIAN:
-            noise = self._gaussian_noise(sensitivity, self.budget.epsilon, self.budget.delta)
+            noise = self._gaussian_noise(
+                sensitivity, self.budget.epsilon, self.budget.delta
+            )
         else:
             noise = self._laplace_noise(sensitivity, self.budget.epsilon)
 
@@ -2422,13 +2487,15 @@ class DifferentialPrivacyManager:
         self.budget.query_count += 1
 
         # Log query
-        self.query_log.append({
-            "query_id": len(self.query_log) + 1,
-            "original_value": value,
-            "noised_value": noised_value,
-            "epsilon_cost": epsilon_cost,
-            "timestamp": datetime.now().isoformat(),
-        })
+        self.query_log.append(
+            {
+                "query_id": len(self.query_log) + 1,
+                "original_value": value,
+                "noised_value": noised_value,
+                "epsilon_cost": epsilon_cost,
+                "timestamp": datetime.now().isoformat(),
+            }
+        )
 
         return noised_value, True
 
@@ -2587,7 +2654,9 @@ class FederatedLearningCoordinator:
         if all_gradients:
             averaged = np.mean(all_gradients, axis=0)
             return {
-                "averaged_gradients": averaged.tolist() if isinstance(averaged, np.ndarray) else averaged,
+                "averaged_gradients": (
+                    averaged.tolist() if isinstance(averaged, np.ndarray) else averaged
+                ),
                 "update_count": len(updates),
             }
 
@@ -2613,7 +2682,9 @@ class FederatedLearningCoordinator:
             "total_rounds": len(self.rounds),
             "average_accuracy": np.mean([r.validation_accuracy for r in self.rounds]),
             "total_participants": sum(r.participant_count for r in self.rounds),
-            "poisoning_detected_rounds": sum(1 for r in self.rounds if r.poisoning_detected),
+            "poisoning_detected_rounds": sum(
+                1 for r in self.rounds if r.poisoning_detected
+            ),
         }
 
 
@@ -2725,7 +2796,9 @@ class ExplainableAISystem:
         sorted_features = sorted(importance.items(), key=lambda x: x[1], reverse=True)
 
         # Build explanation
-        explanation_parts = [f"The prediction '{prediction}' was made based on the following factors:"]
+        explanation_parts = [
+            f"The prediction '{prediction}' was made based on the following factors:"
+        ]
 
         for i, (feature, imp) in enumerate(sorted_features[:3]):
             value = features.get(feature, "unknown")
@@ -2770,9 +2843,7 @@ class ExplainableAISystem:
                 [r.confidence_score for r in self.explanation_history]
             ),
             "explanation_method": self.explanation_method,
-            "explanations": [
-                r.to_dict() for r in self.explanation_history[:100]
-            ],
+            "explanations": [r.to_dict() for r in self.explanation_history[:100]],
         }
 
 
@@ -2841,35 +2912,40 @@ class AIMLSecurityManager:
                 "enabled": self.adversarial_defense is not None,
                 "statistics": (
                     self.adversarial_defense.get_detection_statistics()
-                    if self.adversarial_defense else {}
+                    if self.adversarial_defense
+                    else {}
                 ),
             },
             "poisoning_detection": {
                 "enabled": self.poisoning_detector is not None,
                 "statistics": (
                     self.poisoning_detector.get_detection_statistics()
-                    if self.poisoning_detector else {}
+                    if self.poisoning_detector
+                    else {}
                 ),
             },
             "differential_privacy": {
                 "enabled": self.privacy_manager is not None,
                 "privacy_loss": (
                     self.privacy_manager.get_privacy_loss()
-                    if self.privacy_manager else {}
+                    if self.privacy_manager
+                    else {}
                 ),
             },
             "federated_learning": {
                 "enabled": self.federated_coordinator is not None,
                 "statistics": (
                     self.federated_coordinator.get_training_statistics()
-                    if self.federated_coordinator else {}
+                    if self.federated_coordinator
+                    else {}
                 ),
             },
             "explainable_ai": {
                 "enabled": self.explainable_ai is not None,
                 "report": (
                     {"total_explanations": len(self.explainable_ai.explanation_history)}
-                    if self.explainable_ai else {}
+                    if self.explainable_ai
+                    else {}
                 ),
             },
         }
@@ -2888,4 +2964,3 @@ class AIMLSecurityManager:
                 "explainability_enabled": self.explainable_ai is not None,
             },
         }
-

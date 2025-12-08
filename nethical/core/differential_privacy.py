@@ -44,7 +44,8 @@ class PrivacyBudget:
         """Consume privacy budget."""
         if amount > self.remaining:
             raise ValueError(
-                f"Insufficient privacy budget. Requested: {amount}, " f"Remaining: {self.remaining}"
+                f"Insufficient privacy budget. Requested: {amount}, "
+                f"Remaining: {self.remaining}"
             )
         self.consumed += amount
         self.remaining = self.epsilon - self.consumed
@@ -116,7 +117,9 @@ class DifferentialPrivacy:
         # Privacy-utility tradeoff tracking
         self.tradeoff_history: List[PrivacyMetrics] = []
 
-    def add_noise(self, value: float, sensitivity: float, operation: str = "metric_query") -> float:
+    def add_noise(
+        self, value: float, sensitivity: float, operation: str = "metric_query"
+    ) -> float:
         """Add noise to a value for differential privacy.
 
         Args:
@@ -225,7 +228,10 @@ class DifferentialPrivacy:
         return vector + noise
 
     def add_noise_to_aggregated_metrics(
-        self, metrics: Dict[str, float], sensitivity: float = 1.0, noise_level: float = 0.1
+        self,
+        metrics: Dict[str, float],
+        sensitivity: float = 1.0,
+        noise_level: float = 0.1,
     ) -> Dict[str, float]:
         """Add noise to aggregated metrics for privacy.
 
@@ -243,7 +249,9 @@ class DifferentialPrivacy:
             # Scale sensitivity by noise level
             effective_sensitivity = sensitivity * noise_level
 
-            noised_value = self.add_noise(value, effective_sensitivity, f"aggregate_metric_{key}")
+            noised_value = self.add_noise(
+                value, effective_sensitivity, f"aggregate_metric_{key}"
+            )
 
             noised_metrics[key] = noised_value
 
@@ -301,7 +309,9 @@ class DifferentialPrivacy:
 
         return np.array(clipped)
 
-    def _calculate_dp_sgd_privacy_cost(self, config: DPTrainingConfig, batch_size: int) -> float:
+    def _calculate_dp_sgd_privacy_cost(
+        self, config: DPTrainingConfig, batch_size: int
+    ) -> float:
         """Calculate privacy cost for a DP-SGD step.
 
         This is a simplified calculation. In production, use a proper
@@ -527,7 +537,8 @@ class PrivacyAudit:
         # Check if privacy guarantees are adequate
         if self.dp_manager.budget.epsilon > 3.0:
             violations.append(
-                "Epsilon value may be too high for GDPR Article 25 " "(data protection by design)"
+                "Epsilon value may be too high for GDPR Article 25 "
+                "(data protection by design)"
             )
 
         # Check if audit trail exists
@@ -576,7 +587,9 @@ class PrivacyAudit:
                 "DP-SGD for model training",
             ],
             "risk_assessment": {
-                "privacy_breach_risk": "Low" if budget_status["epsilon_total"] < 2.0 else "Medium",
+                "privacy_breach_risk": (
+                    "Low" if budget_status["epsilon_total"] < 2.0 else "Medium"
+                ),
                 "re_identification_risk": (
                     "Low" if budget_status["epsilon_total"] < 1.0 else "Medium"
                 ),

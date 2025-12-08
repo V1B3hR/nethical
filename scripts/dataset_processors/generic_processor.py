@@ -25,13 +25,56 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
 
     # Heuristic field hints (lowercased keys are used)
     _SEVERITY_KEYS = ("severity", "priority", "risk", "level", "grade", "impact")
-    _COUNT_KEYS = ("count", "frequency", "freq", "number", "total", "hits", "events", "occurrences")
-    _VIOLATION_KEYS = ("attack", "threat", "alert", "violation", "incident", "anomaly", "breach")
-    _LABEL_KEYS = ("label", "class", "target", "prediction", "result", "classification", "is_malicious")
+    _COUNT_KEYS = (
+        "count",
+        "frequency",
+        "freq",
+        "number",
+        "total",
+        "hits",
+        "events",
+        "occurrences",
+    )
+    _VIOLATION_KEYS = (
+        "attack",
+        "threat",
+        "alert",
+        "violation",
+        "incident",
+        "anomaly",
+        "breach",
+    )
+    _LABEL_KEYS = (
+        "label",
+        "class",
+        "target",
+        "prediction",
+        "result",
+        "classification",
+        "is_malicious",
+    )
     _TIME_KEYS = ("timestamp", "time", "date", "datetime", "event_time", "ingest_time")
-    _CONTEXT_KEYS = ("source", "destination", "src", "dst", "user", "username", "account",
-                     "device", "host", "hostname", "ip", "src_ip", "dst_ip", "port",
-                     "src_port", "dst_port", "protocol", "asset", "role")
+    _CONTEXT_KEYS = (
+        "source",
+        "destination",
+        "src",
+        "dst",
+        "user",
+        "username",
+        "account",
+        "device",
+        "host",
+        "hostname",
+        "ip",
+        "src_ip",
+        "dst_ip",
+        "port",
+        "src_port",
+        "dst_port",
+        "protocol",
+        "asset",
+        "role",
+    )
 
     # Severity scale map
     _SEVERITY_MAP = {
@@ -46,13 +89,44 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
 
     # Label indicator lists
     _MALICIOUS_TOKENS = {
-        "malicious", "attack", "threat", "anomaly", "intrusion", "breach", "suspicious",
-        "true positive", "tp", "1", "yes", "y", "true", "bad", "harmful", "dangerous",
-        "malware", "phishing", "ransomware", "c2", "command and control",
+        "malicious",
+        "attack",
+        "threat",
+        "anomaly",
+        "intrusion",
+        "breach",
+        "suspicious",
+        "true positive",
+        "tp",
+        "1",
+        "yes",
+        "y",
+        "true",
+        "bad",
+        "harmful",
+        "dangerous",
+        "malware",
+        "phishing",
+        "ransomware",
+        "c2",
+        "command and control",
     }
     _BENIGN_TOKENS = {
-        "benign", "normal", "safe", "legitimate", "false", "negative", "0", "no", "n",
-        "false positive", "fp", "good", "clean", "allow", "whitelisted",
+        "benign",
+        "normal",
+        "safe",
+        "legitimate",
+        "false",
+        "negative",
+        "0",
+        "no",
+        "n",
+        "false positive",
+        "fp",
+        "good",
+        "clean",
+        "allow",
+        "whitelisted",
     }
 
     def __init__(
@@ -63,7 +137,12 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
         # Optional tuning for frequency normalization (raw -> [0,1] within this max)
         frequency_max_hint: float = 100.0,
         # Optional time horizon for recency scoring (seconds)
-        recency_horizons: Tuple[int, int, int, int] = (3600, 86400, 7 * 86400, 30 * 86400),  # 1h, 1d, 7d, 30d
+        recency_horizons: Tuple[int, int, int, int] = (
+            3600,
+            86400,
+            7 * 86400,
+            30 * 86400,
+        ),  # 1h, 1d, 7d, 30d
     ):
         super().__init__(dataset_name, output_dir)
         self.frequency_max_hint = max(1.0, float(frequency_max_hint))
@@ -100,11 +179,13 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
                     continue
                 # Enrich metadata
                 meta = rec.setdefault("meta", {})
-                meta.update({
-                    "dataset": self.dataset_name,  # ensured by base, but keep explicit
-                    "record_index": i,
-                    "source_path": str(input_path),
-                })
+                meta.update(
+                    {
+                        "dataset": self.dataset_name,  # ensured by base, but keep explicit
+                        "record_index": i,
+                        "source_path": str(input_path),
+                    }
+                )
                 records.append(rec)
             except Exception as e:
                 logger.warning(f"[{self.dataset_name}] Error processing row {i}: {e}")
@@ -112,10 +193,15 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
 
         # Summarize
         try:
-            from .base_processor import DatasetStats  # local import to avoid cycles if any
+            from .base_processor import (
+                DatasetStats,
+            )  # local import to avoid cycles if any
+
             stats = DatasetStats.compute(records)
-            logger.info(f"[{self.dataset_name}] Processed {stats.num_records} records "
-                        f"(labels={stats.label_distribution})")
+            logger.info(
+                f"[{self.dataset_name}] Processed {stats.num_records} records "
+                f"(labels={stats.label_distribution})"
+            )
         except Exception:
             logger.info(f"[{self.dataset_name}] Processed {len(records)} records")
 
@@ -143,10 +229,17 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
         """Keep rows that have at least one indicative field for features or label."""
         kl = {k.lower() for k in row.keys()}
         # Must have at least one field we know how to map
-        has_signal = any(k in kl for k in (
-            *self._SEVERITY_KEYS, *self._COUNT_KEYS, *self._VIOLATION_KEYS,
-            *self._TIME_KEYS, *self._CONTEXT_KEYS, *self._LABEL_KEYS
-        ))
+        has_signal = any(
+            k in kl
+            for k in (
+                *self._SEVERITY_KEYS,
+                *self._COUNT_KEYS,
+                *self._VIOLATION_KEYS,
+                *self._TIME_KEYS,
+                *self._CONTEXT_KEYS,
+                *self._LABEL_KEYS,
+            )
+        )
         return has_signal
 
     def postprocess_record(self, record: Dict[str, Any]) -> Dict[str, Any]:
@@ -288,7 +381,9 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
             if key in rlow:
                 v = self.safe_float(rlow.get(key), 0.0)
                 if v > 0:
-                    best = max(best, self.normalize_feature(v, 0.0, self.frequency_max_hint))
+                    best = max(
+                        best, self.normalize_feature(v, 0.0, self.frequency_max_hint)
+                    )
         return best
 
     def _extract_recency(self, rlow: Dict[str, Any]) -> float:
@@ -337,7 +432,10 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
         for user_key in ("user", "username", "account"):
             if user_key in rlow:
                 s = str(rlow[user_key]).lower()
-                if any(tok in s for tok in ("root", "admin", "administrator", "svc", "system")):
+                if any(
+                    tok in s
+                    for tok in ("root", "admin", "administrator", "svc", "system")
+                ):
                     risk = max(risk, 0.7)
 
         # Services/ports often seen in lateral movement/exfil
@@ -351,15 +449,31 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
         # Protocol hints
         if "protocol" in rlow:
             proto = str(rlow["protocol"]).lower()
-            if any(tok in proto for tok in ("smb", "rdp", "vnc", "ftp", "telnet", "http")):
+            if any(
+                tok in proto for tok in ("smb", "rdp", "vnc", "ftp", "telnet", "http")
+            ):
                 risk = max(risk, 0.6)
 
         # Asset roles
         if "role" in rlow or "asset" in rlow or "hostname" in rlow:
-            val = (str(rlow.get("role", "")) + " " +
-                   str(rlow.get("asset", "")) + " " +
-                   str(rlow.get("hostname", ""))).lower()
-            if any(tok in val for tok in ("dc", "domain controller", "prod", "database", "db", "gateway")):
+            val = (
+                str(rlow.get("role", ""))
+                + " "
+                + str(rlow.get("asset", ""))
+                + " "
+                + str(rlow.get("hostname", ""))
+            ).lower()
+            if any(
+                tok in val
+                for tok in (
+                    "dc",
+                    "domain controller",
+                    "prod",
+                    "database",
+                    "db",
+                    "gateway",
+                )
+            ):
                 risk = max(risk, 0.7)
 
         return max(0.0, min(1.0, float(risk)))
@@ -370,7 +484,9 @@ class GenericSecurityProcessor(BaseDatasetProcessor):
     @staticmethod
     def _is_truthy_string(s: str) -> bool:
         s = s.strip().lower()
-        return s in {"1", "true", "yes", "y", "t"} or any(tok in s for tok in ("true positive", "tp"))
+        return s in {"1", "true", "yes", "y", "t"} or any(
+            tok in s for tok in ("true positive", "tp")
+        )
 
     @staticmethod
     def _parse_datetime(val: Any) -> Optional[datetime]:

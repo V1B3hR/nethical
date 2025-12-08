@@ -36,7 +36,9 @@ class PolicyEngine:
         defaults = self.rules.get("defaults", {}) or {}
         self.default_decision: str = str(defaults.get("decision", "RESTRICT")).upper()
         self.deny_overrides: bool = bool(defaults.get("deny_overrides", True))
-        self.strict: bool = bool(defaults.get("strict", False))  # if True, unknown ops raise
+        self.strict: bool = bool(
+            defaults.get("strict", False)
+        )  # if True, unknown ops raise
 
     @staticmethod
     def load(path: str, region: Region) -> "PolicyEngine":
@@ -229,7 +231,9 @@ class PolicyEngine:
 
             # Generic {"op": "...", "left": "...", "right": ...}
             if "op" in cond and "left" in cond:
-                return self._eval_op(cond["op"], cond["left"], cond.get("right", None), facts)
+                return self._eval_op(
+                    cond["op"], cond["left"], cond.get("right", None), facts
+                )
 
             # Operator-as-key mapping e.g., {"==": ["a.b", 1]}
             if len(cond) == 1:
@@ -261,7 +265,9 @@ class PolicyEngine:
                 raise
             return False
 
-    def _eval_op(self, op: str, left_path: str, right_val: Any, facts: Dict[str, Any]) -> bool:
+    def _eval_op(
+        self, op: str, left_path: str, right_val: Any, facts: Dict[str, Any]
+    ) -> bool:
         op = str(op).lower().strip()
         left_val = self._get_fact(left_path, facts)
 

@@ -244,7 +244,9 @@ class SecretScanner:
                         "secret_type": "high_entropy_string",
                         "pattern": "entropy_check",
                         "entropy": entropy,
-                        "match": candidate[:50] + "..." if len(candidate) > 50 else candidate,
+                        "match": (
+                            candidate[:50] + "..." if len(candidate) > 50 else candidate
+                        ),
                         "file_path": file_path,
                         "timestamp": datetime.now(timezone.utc).isoformat(),
                     }
@@ -504,7 +506,9 @@ class SecretRotationManager:
         elif secret.secret_type == SecretType.ENCRYPTION_KEY:
             new_secret = generator.generate_encryption_key(new_secret_id)
         else:
-            log.warning(f"Rotation not supported for secret type: {secret.secret_type.value}")
+            log.warning(
+                f"Rotation not supported for secret type: {secret.secret_type.value}"
+            )
             return secret
 
         # Update metadata
@@ -552,7 +556,9 @@ class SecretRotationManager:
                             "secret_id": secret.secret_id,
                             "secret_type": secret.secret_type.value,
                             "last_rotated": (
-                                secret.last_rotated.isoformat() if secret.last_rotated else None
+                                secret.last_rotated.isoformat()
+                                if secret.last_rotated
+                                else None
                             ),
                             "rotation_interval_days": policy.rotation_interval_days,
                             "auto_rotate": policy.auto_rotate,
@@ -794,7 +800,9 @@ class SecretManagementSystem:
 
                 # Update Vault if available
                 if self.vault and self.vault.connected:
-                    self.vault.store_secret(f"secrets/{new_secret.secret_id}", new_secret)
+                    self.vault.store_secret(
+                        f"secrets/{new_secret.secret_id}", new_secret
+                    )
 
         return rotated
 

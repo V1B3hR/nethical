@@ -123,7 +123,10 @@ class ShadowMetrics:
     def accuracy(self) -> float:
         """Calculate accuracy."""
         total = (
-            self.true_positives + self.true_negatives + self.false_positives + self.false_negatives
+            self.true_positives
+            + self.true_negatives
+            + self.false_positives
+            + self.false_negatives
         )
         if total == 0:
             return 0.0
@@ -145,7 +148,9 @@ class ShadowMetrics:
 
     def get_calibration_error(self) -> float:
         """Calculate Expected Calibration Error (ECE)."""
-        total_samples = sum(bin_data["total"] for bin_data in self.calibration_bins.values())
+        total_samples = sum(
+            bin_data["total"] for bin_data in self.calibration_bins.values()
+        )
         if total_samples == 0:
             return 0.0
 
@@ -247,7 +252,9 @@ class MLShadowClassifier:
         ml_classification = self._score_to_classification(ml_risk_score)
 
         # Compare with rule-based outcome
-        scores_agree = abs(ml_risk_score - rule_risk_score) <= self.score_agreement_threshold
+        scores_agree = (
+            abs(ml_risk_score - rule_risk_score) <= self.score_agreement_threshold
+        )
         classifications_agree = ml_classification == rule_classification
 
         # Create prediction record
@@ -314,7 +321,9 @@ class MLShadowClassifier:
         score = 1.0 - math.exp(-2 * score)  # Sigmoid-like transformation
 
         # Adjust confidence based on feature completeness
-        available_features = sum(1 for k in self.feature_weights.keys() if k in features)
+        available_features = sum(
+            1 for k in self.feature_weights.keys() if k in features
+        )
         confidence *= available_features / len(self.feature_weights)
 
         return min(score, 1.0), min(confidence, 1.0)
@@ -409,9 +418,9 @@ class MLShadowClassifier:
         # Recent predictions analysis
         if len(self.predictions) > 0:
             recent_predictions = self.predictions[-100:]
-            recent_agreement = sum(1 for p in recent_predictions if p.classifications_agree) / len(
-                recent_predictions
-            )
+            recent_agreement = sum(
+                1 for p in recent_predictions if p.classifications_agree
+            ) / len(recent_predictions)
             report["recent_classification_agreement"] = recent_agreement
 
         return report

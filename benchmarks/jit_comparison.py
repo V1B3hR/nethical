@@ -77,7 +77,11 @@ def compare_implementations(
     jit_results = benchmark_function(jit_func, args, iterations)
     python_results = benchmark_function(python_func, args, iterations)
 
-    speedup = python_results["mean_ms"] / jit_results["mean_ms"] if jit_results["mean_ms"] > 0 else 0
+    speedup = (
+        python_results["mean_ms"] / jit_results["mean_ms"]
+        if jit_results["mean_ms"] > 0
+        else 0
+    )
 
     return {
         "name": name,
@@ -89,6 +93,7 @@ def compare_implementations(
 
 
 # Pure Python implementations for comparison
+
 
 def python_risk_score(
     severities: np.ndarray,
@@ -147,7 +152,7 @@ def python_outlier_detection(
 
     mean = sum(values) / len(values)
     variance = sum((v - mean) ** 2 for v in values) / len(values)
-    std = variance ** 0.5
+    std = variance**0.5
 
     if std == 0:
         return np.zeros(len(values), dtype=bool)

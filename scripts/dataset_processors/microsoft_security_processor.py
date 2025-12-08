@@ -1,4 +1,5 @@
 """Processor for Microsoft Security Incident Prediction dataset."""
+
 from __future__ import annotations
 
 import logging
@@ -28,9 +29,20 @@ class MicrosoftSecurityProcessor(BaseDatasetProcessor):
     """
 
     # Common field aliases seen across Microsoft security datasets
-    _ALERT_COUNT_KEYS: Tuple[str, ...] = ("AlertCount", "NumberOfAlerts", "Alert Counts", "Alerts", "AlertsCount")
+    _ALERT_COUNT_KEYS: Tuple[str, ...] = (
+        "AlertCount",
+        "NumberOfAlerts",
+        "Alert Counts",
+        "Alerts",
+        "AlertsCount",
+    )
     _SEVERITY_KEYS: Tuple[str, ...] = ("Severity", "AlertSeverity", "IncidentSeverity")
-    _INCIDENT_GRADE_KEYS: Tuple[str, ...] = ("IncidentGrade", "Incident Grade", "Classification", "Label")
+    _INCIDENT_GRADE_KEYS: Tuple[str, ...] = (
+        "IncidentGrade",
+        "Incident Grade",
+        "Classification",
+        "Label",
+    )
 
     # Timestamps possibly present for recency computation
     _DATETIME_KEYS: Tuple[str, ...] = (
@@ -44,7 +56,14 @@ class MicrosoftSecurityProcessor(BaseDatasetProcessor):
     )
 
     # Contextual identifiers that increase context_risk
-    _CONTEXT_KEYS: Tuple[str, ...] = ("DeviceId", "OrgId", "DetectorId", "UserId", "AccountId", "TenantId")
+    _CONTEXT_KEYS: Tuple[str, ...] = (
+        "DeviceId",
+        "OrgId",
+        "DetectorId",
+        "UserId",
+        "AccountId",
+        "TenantId",
+    )
 
     def __init__(
         self,
@@ -103,7 +122,9 @@ class MicrosoftSecurityProcessor(BaseDatasetProcessor):
         return None
 
     @staticmethod
-    def _parse_datetime_any(row: Dict[str, Any], keys: Tuple[str, ...]) -> Optional[datetime]:
+    def _parse_datetime_any(
+        row: Dict[str, Any], keys: Tuple[str, ...]
+    ) -> Optional[datetime]:
         raw = MicrosoftSecurityProcessor._first_non_empty(row, keys)
         if raw is None:
             return None
@@ -229,7 +250,9 @@ class MicrosoftSecurityProcessor(BaseDatasetProcessor):
 
     def _context_risk(self, row: Dict[str, Any]) -> float:
         """Heuristic: increase risk if multiple contextual identifiers are present."""
-        present = sum(1 for k in self._CONTEXT_KEYS if k in row and str(row[k]).strip() != "")
+        present = sum(
+            1 for k in self._CONTEXT_KEYS if k in row and str(row[k]).strip() != ""
+        )
         # 0..3+ presence -> 0.0..0.7
         if present <= 0:
             return 0.0
@@ -347,7 +370,9 @@ class MicrosoftSecurityProcessor(BaseDatasetProcessor):
         out = self.deduplicate(out)
         after = len(out)
         if after < before:
-            logger.info(f"[{self.dataset_name}] Deduplicated records: {before} -> {after}")
+            logger.info(
+                f"[{self.dataset_name}] Deduplicated records: {before} -> {after}"
+            )
 
         # Basic stats in logs
         logger.info(f"[{self.dataset_name}] Processed {len(out)} records")

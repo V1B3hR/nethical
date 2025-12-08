@@ -70,9 +70,7 @@ class L2RedisCache:
         self._misses = 0
         self._errors = 0
 
-        logger.info(
-            f"L2RedisCache initialized: {self.config.host}:{self.config.port}"
-        )
+        logger.info(f"L2RedisCache initialized: {self.config.host}:{self.config.port}")
 
     def connect(self) -> bool:
         """

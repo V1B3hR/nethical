@@ -624,9 +624,7 @@ class SatelliteCache:
         conflict = sum(
             1 for e in self._cache.values() if e.sync_state == SyncState.CONFLICT
         )
-        error = sum(
-            1 for e in self._cache.values() if e.sync_state == SyncState.ERROR
-        )
+        error = sum(1 for e in self._cache.values() if e.sync_state == SyncState.ERROR)
 
         return {
             "synced": synced,

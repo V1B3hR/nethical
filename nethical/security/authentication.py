@@ -180,6 +180,7 @@ class PKICertificateValidator:
         cryptography library's certificate verification.
         """
         import warnings
+
         warnings.warn(
             "PKICertificateValidator._validate_certificate_chain is a stub. "
             "Certificate chain validation is not performed. "
@@ -204,6 +205,7 @@ class PKICertificateValidator:
         TODO: Implement CRL fetching and checking.
         """
         import warnings
+
         warnings.warn(
             "PKICertificateValidator._check_crl is a stub. "
             "CRL checking is not performed. "
@@ -228,6 +230,7 @@ class PKICertificateValidator:
         TODO: Implement OCSP stapling check.
         """
         import warnings
+
         warnings.warn(
             "PKICertificateValidator._check_ocsp is a stub. "
             "OCSP checking is not performed. "
@@ -254,6 +257,7 @@ class PKICertificateValidator:
             Dictionary with subject DN, email, CN, etc.
         """
         import warnings
+
         warnings.warn(
             "PKICertificateValidator.extract_user_info is a stub. "
             "Returns mock data, not actual certificate info. "
@@ -551,6 +555,7 @@ class LDAPConnector:
             NotImplementedError: If called in production mode (when production_mode=True)
         """
         import warnings
+
         warnings.warn(
             "LDAPConnector.authenticate is a STUB implementation that accepts any 8+ character password. "
             "This creates a CRITICAL security vulnerability in production. "
@@ -589,13 +594,16 @@ class LDAPConnector:
             List of group DNs or names
         """
         import warnings
+
         warnings.warn(
             "LDAPConnector.get_user_groups is a stub that returns mock data. "
             "Implement actual LDAP group lookup for production use.",
             UserWarning,
             stacklevel=2,
         )
-        log.warning(f"LDAP get_user_groups is STUBBED (returns mock data) for user {username}")
+        log.warning(
+            f"LDAP get_user_groups is STUBBED (returns mock data) for user {username}"
+        )
         return ["cn=Users,dc=example,dc=gov", "cn=Developers,dc=example,dc=gov"]
 
     async def get_clearance_level(self, username: str) -> ClearanceLevel:
@@ -685,12 +693,16 @@ class MilitaryGradeAuthProvider:
                     )
 
                 # Extract user info from certificate
-                user_info = self.pki_validator.extract_user_info(credentials.certificate)
+                user_info = self.pki_validator.extract_user_info(
+                    credentials.certificate
+                )
                 log.info(f"Certificate validated for {user_info.get('common_name')}")
 
             # Step 2: LDAP/AD authentication (if configured and credentials provided)
             if self.ldap_connector and credentials.ldap_credentials:
-                username = credentials.ldap_credentials.get("username", credentials.user_id)
+                username = credentials.ldap_credentials.get(
+                    "username", credentials.user_id
+                )
                 password = credentials.ldap_credentials.get("password", "")
 
                 ldap_valid = await self.ldap_connector.authenticate(username, password)
@@ -702,7 +714,9 @@ class MilitaryGradeAuthProvider:
                 log.info(f"LDAP authentication successful for {username}")
 
             # Step 3: Multi-factor authentication
-            mfa_valid = await self.mfa_engine.challenge(credentials.user_id, credentials.mfa_code)
+            mfa_valid = await self.mfa_engine.challenge(
+                credentials.user_id, credentials.mfa_code
+            )
 
             if not mfa_valid:
                 if credentials.mfa_code is None:
@@ -715,7 +729,9 @@ class MilitaryGradeAuthProvider:
                     )
                 else:
                     # MFA code invalid
-                    return self._create_failure_result(credentials.user_id, "Invalid MFA code")
+                    return self._create_failure_result(
+                        credentials.user_id, "Invalid MFA code"
+                    )
 
             # Step 4: Determine clearance level
             clearance_level = await self._get_clearance_level(credentials.user_id)
@@ -749,7 +765,9 @@ class MilitaryGradeAuthProvider:
         except Exception as e:
             log.error(f"Authentication error: {e}")
             self._log_auth_event(
-                user_id=credentials.user_id, event_type="authentication_error", error=str(e)
+                user_id=credentials.user_id,
+                event_type="authentication_error",
+                error=str(e),
             )
             return self._create_failure_result(
                 credentials.user_id, f"Authentication error: {str(e)}"
@@ -780,7 +798,9 @@ class MilitaryGradeAuthProvider:
             user_id=user_id, event_type="authentication_failure", error=error_message
         )
 
-        return AuthResult(authenticated=False, user_id=user_id, error_message=error_message)
+        return AuthResult(
+            authenticated=False, user_id=user_id, error_message=error_message
+        )
 
     def _log_auth_event(
         self,

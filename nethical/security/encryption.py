@@ -168,7 +168,10 @@ class KeyManagementService:
             key_material = self._generate_key_in_hsm(algorithm)
         else:
             # Software-based key generation
-            if algorithm in (EncryptionAlgorithm.AES_256_GCM, EncryptionAlgorithm.AES_256_CBC):
+            if algorithm in (
+                EncryptionAlgorithm.AES_256_GCM,
+                EncryptionAlgorithm.AES_256_CBC,
+            ):
                 key_material = secrets.token_bytes(32)  # 256 bits
             elif algorithm == EncryptionAlgorithm.CHACHA20_POLY1305:
                 key_material = secrets.token_bytes(32)  # 256 bits
@@ -305,7 +308,9 @@ class MilitaryGradeEncryption:
         self.kms = KeyManagementService(hsm_config)
 
         # Generate master key
-        self.master_key_id = self.kms.generate_key(key_id="master-key", algorithm=default_algorithm)
+        self.master_key_id = self.kms.generate_key(
+            key_id="master-key", algorithm=default_algorithm
+        )
 
         # Track key rotation schedule
         self._rotation_schedule: Dict[str, datetime] = {}
@@ -361,7 +366,9 @@ class MilitaryGradeEncryption:
             # ciphertext = aesgcm.encrypt(nonce, plaintext, additional_data)
 
             # Stub implementation
-            ciphertext, tag = self._encrypt_aes_gcm(key, nonce, plaintext, additional_data)
+            ciphertext, tag = self._encrypt_aes_gcm(
+                key, nonce, plaintext, additional_data
+            )
 
             encrypted = EncryptedData(
                 ciphertext=ciphertext,
@@ -498,7 +505,9 @@ class MilitaryGradeEncryption:
 
         return plaintext
 
-    async def encrypt_governance_decision(self, decision_data: Dict[str, Any]) -> EncryptedData:
+    async def encrypt_governance_decision(
+        self, decision_data: Dict[str, Any]
+    ) -> EncryptedData:
         """
         Encrypt governance decision with metadata
 

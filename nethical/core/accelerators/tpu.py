@@ -40,7 +40,12 @@ from typing import Any, Dict, Optional
 
 import numpy as np
 
-from . import AcceleratorBackend, AcceleratorConfig, AcceleratorInfo, AcceleratorInterface
+from . import (
+    AcceleratorBackend,
+    AcceleratorConfig,
+    AcceleratorInfo,
+    AcceleratorInterface,
+)
 
 __all__ = [
     "TPUVersion",
@@ -271,6 +276,7 @@ def get_tpu_info() -> Dict[str, Any]:
         runtime_info = {}
         try:
             import torch_xla.runtime as xr
+
             runtime_info = {
                 "world_size": xr.world_size(),
                 "global_ordinal": xr.global_ordinal(),
@@ -530,6 +536,7 @@ class TPUAccelerator(AcceleratorInterface):
         # TPU memory info is limited via torch_xla
         try:
             import torch_xla.debug.metrics as met
+
             metrics = met.metrics_report()
             return {
                 "total_gb": memory_gb,
@@ -546,6 +553,7 @@ class TPUAccelerator(AcceleratorInterface):
             # Clear XLA caches if available
             try:
                 import torch_xla
+
                 torch_xla._XLAC._xla_step_marker(
                     torch_xla._XLAC._xla_get_default_device(),
                     [],

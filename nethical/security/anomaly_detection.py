@@ -133,7 +133,9 @@ class LSTMSequenceDetector:
             )
 
         # Analyze sequence pattern
-        anomaly_score = await self._compute_sequence_anomaly(self._sequence_buffer[agent_id])
+        anomaly_score = await self._compute_sequence_anomaly(
+            self._sequence_buffer[agent_id]
+        )
 
         is_anomalous = anomaly_score > self.threshold
         severity = self._compute_severity(anomaly_score)
@@ -207,7 +209,9 @@ class LSTMSequenceDetector:
         else:
             return "low"
 
-    async def train_on_data(self, training_data: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def train_on_data(
+        self, training_data: List[Dict[str, Any]]
+    ) -> Dict[str, Any]:
         """
         Train LSTM model on historical data
 
@@ -303,7 +307,9 @@ class TransformerContextAnalyzer:
 
         is_anomalous = anomaly_score > self.threshold
         severity = (
-            "critical" if anomaly_score > 0.9 else "high" if anomaly_score > 0.7 else "medium"
+            "critical"
+            if anomaly_score > 0.9
+            else "high" if anomaly_score > 0.7 else "medium"
         )
 
         result = AnomalyDetectionResult(
@@ -351,7 +357,9 @@ class TransformerContextAnalyzer:
 
         # Check for privilege context mismatch
         event_privilege = event.get("privilege_level", 0)
-        avg_privilege = sum(h.get("privilege_level", 0) for h in history) / max(len(history), 1)
+        avg_privilege = sum(h.get("privilege_level", 0) for h in history) / max(
+            len(history), 1
+        )
 
         if event_privilege > avg_privilege + 2:
             anomaly_score += 0.4
@@ -424,7 +432,11 @@ class GraphRelationshipAnalyzer:
         anomaly_score = await self._detect_graph_anomalies(agent_id, resource_id)
 
         is_anomalous = anomaly_score > 0.6
-        severity = "high" if anomaly_score > 0.8 else "medium" if anomaly_score > 0.6 else "low"
+        severity = (
+            "high"
+            if anomaly_score > 0.8
+            else "medium" if anomaly_score > 0.6 else "low"
+        )
 
         result = AnomalyDetectionResult(
             is_anomalous=is_anomalous,
@@ -448,7 +460,9 @@ class GraphRelationshipAnalyzer:
 
         return result
 
-    async def _update_graph(self, agent_id: str, resource_id: str, action_type: str) -> None:
+    async def _update_graph(
+        self, agent_id: str, resource_id: str, action_type: str
+    ) -> None:
         """Update graph with new relationship"""
         if agent_id not in self._graph_data:
             self._graph_data[agent_id] = {"resources": [], "actions": []}
@@ -525,7 +539,11 @@ class InsiderThreatDetector:
         threat_score = await self._compute_threat_score(user_id, event)
 
         is_threat = threat_score > self.sensitivity
-        severity = "critical" if threat_score > 0.9 else "high" if threat_score > 0.7 else "medium"
+        severity = (
+            "critical"
+            if threat_score > 0.9
+            else "high" if threat_score > 0.7 else "medium"
+        )
 
         result = AnomalyDetectionResult(
             is_anomalous=is_threat,
@@ -620,11 +638,19 @@ class APTBehavioralDetector:
                 "weight": 0.3,
             },
             "persistence": {
-                "patterns": ["scheduled_task", "service_creation", "registry_modification"],
+                "patterns": [
+                    "scheduled_task",
+                    "service_creation",
+                    "registry_modification",
+                ],
                 "weight": 0.5,
             },
             "lateral_movement": {
-                "patterns": ["remote_execution", "credential_theft", "privilege_escalation"],
+                "patterns": [
+                    "remote_execution",
+                    "credential_theft",
+                    "privilege_escalation",
+                ],
                 "weight": 0.7,
             },
             "collection": {
@@ -632,7 +658,11 @@ class APTBehavioralDetector:
                 "weight": 0.6,
             },
             "exfiltration": {
-                "patterns": ["data_compressed", "data_encrypted", "external_connection"],
+                "patterns": [
+                    "data_compressed",
+                    "data_encrypted",
+                    "external_connection",
+                ],
                 "weight": 0.9,
             },
         }
@@ -701,7 +731,9 @@ class APTBehavioralDetector:
 
         # Check for multi-stage attack
         if len(self._campaign_tracking[agent_id]) > 5:
-            unique_stages = set(e.get("type", "") for e in self._campaign_tracking[agent_id])
+            unique_stages = set(
+                e.get("type", "") for e in self._campaign_tracking[agent_id]
+            )
             if len(unique_stages) > 3:
                 score += 0.3
 
@@ -754,7 +786,9 @@ class AdvancedAnomalyDetectionEngine:
             enable_apt: Enable APT detection
         """
         self.lstm_detector = LSTMSequenceDetector() if enable_lstm else None
-        self.transformer_analyzer = TransformerContextAnalyzer() if enable_transformer else None
+        self.transformer_analyzer = (
+            TransformerContextAnalyzer() if enable_transformer else None
+        )
         self.graph_analyzer = GraphRelationshipAnalyzer() if enable_graph else None
         self.insider_detector = InsiderThreatDetector() if enable_insider else None
         self.apt_detector = APTBehavioralDetector() if enable_apt else None
@@ -788,7 +822,9 @@ class AdvancedAnomalyDetectionEngine:
 
         # Transformer context analysis
         if self.transformer_analyzer:
-            result = await self.transformer_analyzer.analyze_context(agent_id, event, context)
+            result = await self.transformer_analyzer.analyze_context(
+                agent_id, event, context
+            )
             if result.is_anomalous:
                 results.append(result)
 

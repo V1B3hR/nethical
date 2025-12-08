@@ -109,7 +109,9 @@ class Vulnerability:
             "discovered_by": self.discovered_by,
             "discovered_at": self.discovered_at.isoformat(),
             "assigned_to": self.assigned_to,
-            "target_fix_date": self.target_fix_date.isoformat() if self.target_fix_date else None,
+            "target_fix_date": (
+                self.target_fix_date.isoformat() if self.target_fix_date else None
+            ),
             "fixed_at": self.fixed_at.isoformat() if self.fixed_at else None,
             "verified_at": self.verified_at.isoformat() if self.verified_at else None,
             "references": self.references,
@@ -286,7 +288,10 @@ class VulnerabilityScanner:
         return vuln_id
 
     def update_vulnerability_status(
-        self, vuln_id: str, status: VulnerabilityStatus, assigned_to: Optional[str] = None
+        self,
+        vuln_id: str,
+        status: VulnerabilityStatus,
+        assigned_to: Optional[str] = None,
     ) -> None:
         """Update vulnerability status."""
         if vuln_id in self.vulnerabilities:
@@ -304,15 +309,21 @@ class VulnerabilityScanner:
     def set_fix_deadline(self, vuln_id: str, days: int) -> None:
         """Set fix deadline based on severity SLA."""
         if vuln_id in self.vulnerabilities:
-            self.vulnerabilities[vuln_id].target_fix_date = datetime.now() + timedelta(days=days)
+            self.vulnerabilities[vuln_id].target_fix_date = datetime.now() + timedelta(
+                days=days
+            )
 
     def get_vulnerabilities_by_severity(
         self, severity: VulnerabilitySeverity
     ) -> List[Vulnerability]:
         """Get vulnerabilities by severity."""
-        return [vuln for vuln in self.vulnerabilities.values() if vuln.severity == severity]
+        return [
+            vuln for vuln in self.vulnerabilities.values() if vuln.severity == severity
+        ]
 
-    def get_vulnerabilities_by_status(self, status: VulnerabilityStatus) -> List[Vulnerability]:
+    def get_vulnerabilities_by_status(
+        self, status: VulnerabilityStatus
+    ) -> List[Vulnerability]:
         """Get vulnerabilities by status."""
         return [vuln for vuln in self.vulnerabilities.values() if vuln.status == status]
 
@@ -433,7 +444,9 @@ class RedTeamManager:
         rules_of_engagement: List[str],
     ) -> str:
         """Create a new red team engagement."""
-        engagement_id = hashlib.sha256(f"{name}:{start_date.isoformat()}".encode()).hexdigest()[:16]
+        engagement_id = hashlib.sha256(
+            f"{name}:{start_date.isoformat()}".encode()
+        ).hexdigest()[:16]
 
         engagement = RedTeamEngagement(
             id=engagement_id,
@@ -485,7 +498,9 @@ class PurpleTeamManager:
         objectives: List[str],
     ) -> str:
         """Create a new purple team exercise."""
-        exercise_id = hashlib.sha256(f"{name}:{start_date.isoformat()}".encode()).hexdigest()[:16]
+        exercise_id = hashlib.sha256(
+            f"{name}:{start_date.isoformat()}".encode()
+        ).hexdigest()[:16]
 
         exercise = PurpleTeamExercise(
             id=exercise_id,
@@ -562,14 +577,18 @@ class BugBountyProgram:
             if is_valid:
                 self.submissions[submission_id]["status"] = "validated"
                 severity = self.submissions[submission_id]["severity"]
-                self.submissions[submission_id]["reward_amount"] = self.rewards.get(severity, 0.0)
+                self.submissions[submission_id]["reward_amount"] = self.rewards.get(
+                    severity, 0.0
+                )
             else:
                 self.submissions[submission_id]["status"] = "rejected"
 
     def get_program_stats(self) -> Dict[str, Any]:
         """Get bug bounty program statistics."""
         total_submissions = len(self.submissions)
-        validated = sum(1 for s in self.submissions.values() if s["status"] == "validated")
+        validated = sum(
+            1 for s in self.submissions.values() if s["status"] == "validated"
+        )
         total_rewards = sum(s["reward_amount"] for s in self.submissions.values())
 
         return {
@@ -637,7 +656,9 @@ class PenetrationTestingFramework:
             },
             "purple_team_exercises": {
                 "total": len(self.purple_team_manager.exercises),
-                "exercises": [ex.to_dict() for ex in self.purple_team_manager.exercises.values()],
+                "exercises": [
+                    ex.to_dict() for ex in self.purple_team_manager.exercises.values()
+                ],
             },
             "bug_bounty": self.bug_bounty_program.get_program_stats(),
             "generated_at": datetime.now().isoformat(),

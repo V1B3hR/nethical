@@ -91,7 +91,9 @@ class Phase4IntegratedGovernance:
                 storage_path=f"{storage_dir}/audit_logs", s3_bucket=s3_bucket
             )
 
-        self.policy_auditor = PolicyDiffAuditor(storage_path=f"{storage_dir}/policy_history")
+        self.policy_auditor = PolicyDiffAuditor(
+            storage_path=f"{storage_dir}/policy_history"
+        )
 
         self.quarantine_manager = None
         if enable_quarantine:
@@ -229,7 +231,9 @@ class Phase4IntegratedGovernance:
         return {
             "cohort": record.cohort,
             "status": record.status.value,
-            "activated_at": record.activated_at.isoformat() if record.activated_at else None,
+            "activated_at": (
+                record.activated_at.isoformat() if record.activated_at else None
+            ),
             "expires_at": record.expires_at.isoformat() if record.expires_at else None,
             "activation_time_ms": record.activation_time_ms,
             "affected_agents": len(record.affected_agents),
@@ -456,7 +460,9 @@ class Phase4IntegratedGovernance:
             coverage = self.get_ethical_coverage()
             lines.append(f"- Coverage: {coverage['coverage_percentage']:.1f}%")
             lines.append(f"- Target: {coverage['target_percentage']:.1f}%")
-            lines.append(f"- Meets Target: {'✅' if coverage['meets_target'] else '❌'}")
+            lines.append(
+                f"- Meets Target: {'✅' if coverage['meets_target'] else '❌'}"
+            )
             lines.append("")
 
         # Quarantine Summary
@@ -465,7 +471,9 @@ class Phase4IntegratedGovernance:
             lines.append("")
             stats = self.quarantine_manager.get_statistics()
             lines.append(f"- Active Quarantines: {stats['active_quarantines']}")
-            lines.append(f"- Avg Activation Time: {stats['avg_activation_time_ms']:.1f}ms")
+            lines.append(
+                f"- Avg Activation Time: {stats['avg_activation_time_ms']:.1f}ms"
+            )
             lines.append(f"- Target: <{stats['target_activation_time_s'] * 1000}ms")
             lines.append("")
 

@@ -114,7 +114,9 @@ def setup_logging(
     """
     Configure root logging. Idempotent: subsequent calls update level only.
     """
-    lvl = getattr(logging, (level or os.getenv("LOG_LEVEL", "INFO")).upper(), logging.INFO)
+    lvl = getattr(
+        logging, (level or os.getenv("LOG_LEVEL", "INFO")).upper(), logging.INFO
+    )
     root = logging.getLogger()
     if not root.handlers:
         handler = logging.StreamHandler()
@@ -181,7 +183,9 @@ class Observability:
 
             # Span Exporter
             if exporter_choice == "otlp":
-                from opentelemetry.exporter.otlp.proto.http.trace_exporter import OTLPSpanExporter
+                from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+                    OTLPSpanExporter,
+                )
                 from opentelemetry.exporter.otlp.proto.http.metric_exporter import (
                     OTLPMetricExporter,
                 )
@@ -202,7 +206,9 @@ class Observability:
             self.tracer = trace.get_tracer("nethical.intent.monitor")
 
             metric_reader = PeriodicExportingMetricReader(metric_exporter)
-            meter_provider = MeterProvider(resource=resource, metric_readers=[metric_reader])
+            meter_provider = MeterProvider(
+                resource=resource, metric_readers=[metric_reader]
+            )
             metrics.set_meter_provider(meter_provider)
             meter = metrics.get_meter("nethical.intent.monitor")
 
@@ -246,7 +252,9 @@ class Observability:
             return self.tracer.start_as_current_span(name)
         return _NullContext()
 
-    def record_deviation(self, score: float, attributes: Optional[Dict[str, Any]] = None):
+    def record_deviation(
+        self, score: float, attributes: Optional[Dict[str, Any]] = None
+    ):
         self._last_score = score
         if self.enabled and self._otel_available and self._hist_deviation:
             self._hist_deviation.record(score, attributes=attributes or {})
@@ -347,7 +355,11 @@ class _OptionalNLI:
             neutral = label_map.get("neutral", 0.0)
             total = entail + contra + neutral
             if total > 0:
-                entail, contra, neutral = entail / total, contra / total, neutral / total
+                entail, contra, neutral = (
+                    entail / total,
+                    contra / total,
+                    neutral / total,
+                )
             return {"entailment": entail, "contradiction": contra, "neutral": neutral}
         except Exception:
             return None
@@ -593,7 +605,9 @@ class IntentDeviationMonitor(BaseMonitor):
 
         self.observability = observability or Observability(False)
 
-        self.deviation_threshold = self._clamp(self.config.deviation_threshold, 0.0, 1.0)
+        self.deviation_threshold = self._clamp(
+            self.config.deviation_threshold, 0.0, 1.0
+        )
         self.min_token_len = max(0, int(self.config.min_token_len))
         self.stopwords = (
             set(self.config.stopwords)
@@ -618,7 +632,9 @@ class IntentDeviationMonitor(BaseMonitor):
             if self.config.enable_embeddings
             else None
         )
-        self._nli = _OptionalNLI(self.config.nli_model) if self.config.enable_nli else None
+        self._nli = (
+            _OptionalNLI(self.config.nli_model) if self.config.enable_nli else None
+        )
 
         # Metrics registry
         self.metrics: Dict[str, Metric] = {
@@ -642,8 +658,8 @@ class IntentDeviationMonitor(BaseMonitor):
             stated_intent = getattr(action, "stated_intent", None)
             actual_action = getattr(action, "actual_action", None)
 
-            deviation_score, evidence, risk_info = await self._calculate_deviation_async(
-                stated_intent, actual_action
+            deviation_score, evidence, risk_info = (
+                await self._calculate_deviation_async(stated_intent, actual_action)
             )
             self.observability.record_deviation(
                 deviation_score, attributes={"component": "intent_monitor"}
@@ -657,7 +673,9 @@ class IntentDeviationMonitor(BaseMonitor):
 
             if deviation_score > effective_threshold:
                 contradiction = (
-                    evidence.get("nli", {}).get("intent->action", {}).get("contradiction", 0.0)
+                    evidence.get("nli", {})
+                    .get("intent->action", {})
+                    .get("contradiction", 0.0)
                     if evidence.get("nli")
                     else 0.0
                 )
@@ -724,7 +742,11 @@ class IntentDeviationMonitor(BaseMonitor):
         if not intent and not action:
             return 0.0, self._empty_evidence(), {"risk_cues_detected": False}
         if not intent or not action:
-            return 1.0, self._empty_evidence(flag="one_side_empty"), {"risk_cues_detected": False}
+            return (
+                1.0,
+                self._empty_evidence(flag="one_side_empty"),
+                {"risk_cues_detected": False},
+            )
 
         truncated_intent, trunc_note_i = self._maybe_truncate(intent)
         truncated_action, trunc_note_a = self._maybe_truncate(action)
@@ -833,7 +855,9 @@ class IntentDeviationMonitor(BaseMonitor):
         risky_intent = self._find_risky_terms(tokens_intent)
         risky_action = self._find_risky_terms(tokens_action)
         first_seen_in_action = sorted(risky_action - risky_intent)
-        bypass_cues = self._find_bypass_cues(norm_intent) or self._find_bypass_cues(norm_action)
+        bypass_cues = self._find_bypass_cues(norm_intent) or self._find_bypass_cues(
+            norm_action
+        )
         negation_intent = any(t in self._NEGATIONS for t in tokens_intent)
         negation_action = any(t in self._NEGATIONS for t in tokens_action)
         risk_cues_detected = bool(first_seen_in_action or bypass_cues)
@@ -854,7 +878,9 @@ class IntentDeviationMonitor(BaseMonitor):
             : self.config.max_overlap_terms
         ]
 
-        contribution_profile = self._build_contribution_profile(components, effective_weights)
+        contribution_profile = self._build_contribution_profile(
+            components, effective_weights
+        )
 
         metrics_evidence = {
             **{m: round(components[m], 4) for m in components},
@@ -874,13 +900,19 @@ class IntentDeviationMonitor(BaseMonitor):
             "effective_weights": {k: round(v, 4) for k, v in effective_weights.items()},
             "model_availability": {"embeddings": embed_available, "nli": nli_available},
             "nli": nli_scores,
-            "unigram_overlap": {"only_in_intent": only_in_intent, "only_in_action": only_in_action},
+            "unigram_overlap": {
+                "only_in_intent": only_in_intent,
+                "only_in_action": only_in_action,
+            },
             "bigram_overlap": {
                 "only_in_intent": only_in_intent_bi,
                 "only_in_action": only_in_action_bi,
             },
             "normalized": {"intent": norm_intent, "action": norm_action},
-            "token_counts": {"intent": len(tokens_intent), "action": len(tokens_action)},
+            "token_counts": {
+                "intent": len(tokens_intent),
+                "action": len(tokens_action),
+            },
             "risk": {
                 "risky_terms_intent": sorted(risky_intent),
                 "risky_terms_action": sorted(risky_action),
@@ -939,7 +971,9 @@ class IntentDeviationMonitor(BaseMonitor):
             total = sum(filtered.values())
         return {k: v / total for k, v in filtered.items()}
 
-    def _aggregate_similarity(self, components: Dict[str, float]) -> Tuple[float, Dict[str, float]]:
+    def _aggregate_similarity(
+        self, components: Dict[str, float]
+    ) -> Tuple[float, Dict[str, float]]:
         usable = {k: v for k, v in self.configured_weights.items() if k in components}
         total = sum(usable.values())
         if total <= 0:
@@ -985,7 +1019,8 @@ class IntentDeviationMonitor(BaseMonitor):
     ) -> SeverityLevel:
         adjusted = deviation_score
         adjusted = min(
-            1.0, adjusted + self.config.contradiction_severity_boost * (contradiction**0.5)
+            1.0,
+            adjusted + self.config.contradiction_severity_boost * (contradiction**0.5),
         )
         if risk_active:
             adjusted = min(1.0, adjusted + 0.15)
@@ -1111,7 +1146,10 @@ async def _demo():
             for v in violations:
                 print("  Severity:", v.severity)
                 print("  Description:", v.description)
-                print("  Risk first_seen:", v.evidence.get("risk", {}).get("first_seen_in_action"))
+                print(
+                    "  Risk first_seen:",
+                    v.evidence.get("risk", {}).get("first_seen_in_action"),
+                )
         else:
             print(f"Action {act.id} -> No violation")
 

@@ -86,7 +86,9 @@ class LatencyBudget:
 
     def __post_init__(self):
         """Validate budget thresholds."""
-        if not (0 < self.target_ms <= self.warning_ms <= self.critical_ms <= self.max_ms):
+        if not (
+            0 < self.target_ms <= self.warning_ms <= self.critical_ms <= self.max_ms
+        ):
             raise ValueError(
                 "Budget thresholds must be: target <= warning <= critical <= max"
             )
@@ -312,7 +314,11 @@ class LatencyMonitor:
                 self._violation_count += 1
 
         # Generate alert if needed
-        if level in (LatencyLevel.WARNING, LatencyLevel.CRITICAL, LatencyLevel.VIOLATION):
+        if level in (
+            LatencyLevel.WARNING,
+            LatencyLevel.CRITICAL,
+            LatencyLevel.VIOLATION,
+        ):
             self._generate_alert(metric)
 
         return metric
@@ -402,12 +408,14 @@ class LatencyMonitor:
                 k = (n - 1) * p
                 f = int(k)
                 c = f + 1 if f + 1 < n else f
-                return sorted_values[f] + (sorted_values[c] - sorted_values[f]) * (k - f)
+                return sorted_values[f] + (sorted_values[c] - sorted_values[f]) * (
+                    k - f
+                )
 
             # Compute statistics
             mean = sum(values) / n
             variance = sum((x - mean) ** 2 for x in values) / n
-            std = variance ** 0.5
+            std = variance**0.5
 
             return LatencyStats(
                 count=n,

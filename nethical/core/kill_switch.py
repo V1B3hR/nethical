@@ -649,9 +649,9 @@ class ActuatorSevering:
             # Set reconnection cooldown
             from datetime import timedelta
 
-            actuator.reconnection_allowed_at = datetime.now(
-                timezone.utc
-            ) + timedelta(seconds=self.config.reconnection_cooldown_s)
+            actuator.reconnection_allowed_at = datetime.now(timezone.utc) + timedelta(
+                seconds=self.config.reconnection_cooldown_s
+            )
 
             # Log the event
             self._log_severing_event(actuator_id, actor, True)
@@ -659,7 +659,9 @@ class ActuatorSevering:
             logger.info("Severed actuator %s", actuator_id)
             return True, None
 
-    def sever_agent_actuators(self, agent_id: str, actor: str = "system") -> KillSwitchResult:
+    def sever_agent_actuators(
+        self, agent_id: str, actor: str = "system"
+    ) -> KillSwitchResult:
         """Sever all actuators for a specific agent.
 
         Args:
@@ -762,12 +764,12 @@ class ActuatorSevering:
             actuator.state = ActuatorState.CONNECTED
             actuator.reconnection_allowed_at = None
 
-            logger.info("Authorized reconnection for actuator %s by %s", actuator_id, actor)
+            logger.info(
+                "Authorized reconnection for actuator %s by %s", actuator_id, actor
+            )
             return True
 
-    def _log_severing_event(
-        self, actuator_id: str, actor: str, success: bool
-    ) -> None:
+    def _log_severing_event(self, actuator_id: str, actor: str, success: bool) -> None:
         """Log a severing event with cryptographic signature.
 
         Args:
@@ -955,7 +957,9 @@ class CryptoSignedCommands:
             return False
 
         command.signatures.append((signer_id, signature))
-        logger.info("Added signature from %s to command %s", signer_id, command.command_id)
+        logger.info(
+            "Added signature from %s to command %s", signer_id, command.command_id
+        )
         return True
 
     def _verify_signature(
@@ -1356,7 +1360,9 @@ class HardwareIsolation:
                 try:
                     logger.info("Re-enabled interface %s", interface)
                 except Exception as e:
-                    errors.append(f"Failed to re-enable interface {interface}: {str(e)}")
+                    errors.append(
+                        f"Failed to re-enable interface {interface}: {str(e)}"
+                    )
 
             self._disabled_interfaces.clear()
 
@@ -1426,7 +1432,9 @@ class HardwareIsolation:
         """
         return {
             "is_isolated": self._is_isolated,
-            "isolation_level": self._isolation_level.value if self._is_isolated else None,
+            "isolation_level": (
+                self._isolation_level.value if self._is_isolated else None
+            ),
             "disabled_interfaces": len(self._disabled_interfaces),
             "injected_rules": len(self._injected_rules),
             "isolated_processes": len(self._isolated_processes),

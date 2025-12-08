@@ -60,7 +60,9 @@ class RedisCache:
         self._fallback_cache: Dict[str, Any] = {}
 
         if not REDIS_AVAILABLE:
-            logger.warning("Redis not available. Install redis-py with: pip install redis")
+            logger.warning(
+                "Redis not available. Install redis-py with: pip install redis"
+            )
             self.enabled = False
             return
 
@@ -315,7 +317,11 @@ class RedisCache:
             Dictionary with cache stats
         """
         if not self.enabled:
-            return {"enabled": False, "type": "fallback", "keys": len(self._fallback_cache)}
+            return {
+                "enabled": False,
+                "type": "fallback",
+                "keys": len(self._fallback_cache),
+            }
 
         try:
             info = self.client.info("stats")

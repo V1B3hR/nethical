@@ -65,7 +65,7 @@ class NATSClient:
         # Fallback in-memory queue
         self._memory_queue: Dict[str, List[Dict]] = {}
         self._subscribers: Dict[str, List[Callable]] = {}
-        
+
         # Compiled pattern cache for efficient matching
         self._pattern_cache: Dict[str, str] = {}  # pattern -> prefix for * patterns
 
@@ -211,7 +211,10 @@ class NATSClient:
 
         if self._connected and self._js:
             try:
-                consumer_name = durable or f"{self.config.consumer_prefix}_{subject.replace('.', '_')}"
+                consumer_name = (
+                    durable
+                    or f"{self.config.consumer_prefix}_{subject.replace('.', '_')}"
+                )
 
                 async def message_handler(msg):
                     try:
@@ -248,7 +251,7 @@ class NATSClient:
                 if pattern not in self._pattern_cache:
                     self._pattern_cache[pattern] = pattern[:-1]
                 prefix = self._pattern_cache[pattern]
-                
+
                 if subject.startswith(prefix):
                     for callback in callbacks:
                         try:

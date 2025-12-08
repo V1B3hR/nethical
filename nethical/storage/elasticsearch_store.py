@@ -54,7 +54,9 @@ class ElasticsearchAuditStore:
         self.index_prefix = index_prefix
 
         if not ELASTICSEARCH_AVAILABLE:
-            logger.warning("Elasticsearch not available. Install with: pip install elasticsearch")
+            logger.warning(
+                "Elasticsearch not available. Install with: pip install elasticsearch"
+            )
             self.enabled = False
             return
 
@@ -353,7 +355,11 @@ class ElasticsearchAuditStore:
 
             # Build search body
             body = {
-                "query": {"bool": {"must": must_clauses if must_clauses else [{"match_all": {}}]}},
+                "query": {
+                    "bool": {
+                        "must": must_clauses if must_clauses else [{"match_all": {}}]
+                    }
+                },
                 "size": size,
                 "from": from_,
                 "sort": [{sort_by: {"order": sort_order}}],
@@ -412,7 +418,11 @@ class ElasticsearchAuditStore:
 
             body = {
                 "size": 0,
-                "query": {"bool": {"must": must_clauses if must_clauses else [{"match_all": {}}]}},
+                "query": {
+                    "bool": {
+                        "must": must_clauses if must_clauses else [{"match_all": {}}]
+                    }
+                },
                 "aggs": {
                     "total_actions": {"value_count": {"field": "action_id"}},
                     "decisions": {"terms": {"field": "decision"}},
@@ -420,7 +430,10 @@ class ElasticsearchAuditStore:
                     "avg_risk_score": {"avg": {"field": "risk_score"}},
                     "max_risk_score": {"max": {"field": "risk_score"}},
                     "timeline": {
-                        "date_histogram": {"field": "timestamp", "calendar_interval": "1h"}
+                        "date_histogram": {
+                            "field": "timestamp",
+                            "calendar_interval": "1h",
+                        }
                     },
                 },
             }

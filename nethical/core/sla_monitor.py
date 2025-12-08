@@ -142,13 +142,20 @@ class SLAMonitor:
         if not self.latency_window.timestamps:
             return
 
-        cutoff = datetime.now(timezone.utc) - timedelta(seconds=self.window_size_seconds)
+        cutoff = datetime.now(timezone.utc) - timedelta(
+            seconds=self.window_size_seconds
+        )
 
-        while self.latency_window.timestamps and self.latency_window.timestamps[0] < cutoff:
+        while (
+            self.latency_window.timestamps
+            and self.latency_window.timestamps[0] < cutoff
+        ):
             self.latency_window.measurements.popleft()
             self.latency_window.timestamps.popleft()
 
-    def _calculate_percentile(self, measurements: List[float], percentile: float) -> float:
+    def _calculate_percentile(
+        self, measurements: List[float], percentile: float
+    ) -> float:
         """Calculate percentile from measurements.
 
         Args:
@@ -262,7 +269,10 @@ class SLAMonitor:
                     }
                 )
                 results["overall_status"] = SLAStatus.BREACH
-            elif status == SLAStatus.WARNING and results["overall_status"] == SLAStatus.COMPLIANT:
+            elif (
+                status == SLAStatus.WARNING
+                and results["overall_status"] == SLAStatus.COMPLIANT
+            ):
                 results["overall_status"] = SLAStatus.WARNING
 
         self.last_breach_check = datetime.now(timezone.utc)
@@ -281,7 +291,11 @@ class SLAMonitor:
         # Calculate uptime metrics
         total_measurements = metrics["sample_count"]
         breach_count = len(
-            [b for b in self.breaches if b.timestamp > datetime.now(timezone.utc) - timedelta(hours=24)]
+            [
+                b
+                for b in self.breaches
+                if b.timestamp > datetime.now(timezone.utc) - timedelta(hours=24)
+            ]
         )
 
         # P95 specific check (primary SLA)
@@ -316,7 +330,10 @@ class SLAMonitor:
         self.current_load_multiplier = multiplier
 
         self.load_history.append(
-            {"timestamp": datetime.now(timezone.utc).isoformat(), "multiplier": multiplier}
+            {
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+                "multiplier": multiplier,
+            }
         )
 
     def validate_under_load(

@@ -11,25 +11,25 @@ from .ethics_benchmark import (
     BenchmarkCase,
     DetectionResult,
     ViolationType,
-    BenchmarkMetrics
+    BenchmarkMetrics,
 )
 from .threshold_config import (
     ThresholdVersionManager,
     Threshold,
     ThresholdType,
     ThresholdConfig,
-    DEFAULT_THRESHOLDS
+    DEFAULT_THRESHOLDS,
 )
 
 __all__ = [
-    'EthicsBenchmark',
-    'BenchmarkCase',
-    'DetectionResult',
-    'ViolationType',
-    'BenchmarkMetrics',
-    'ThresholdVersionManager',
-    'Threshold',
-    'ThresholdType',
-    'ThresholdConfig',
-    'DEFAULT_THRESHOLDS',
+    "EthicsBenchmark",
+    "BenchmarkCase",
+    "DetectionResult",
+    "ViolationType",
+    "BenchmarkMetrics",
+    "ThresholdVersionManager",
+    "Threshold",
+    "ThresholdType",
+    "ThresholdConfig",
+    "DEFAULT_THRESHOLDS",
 ]

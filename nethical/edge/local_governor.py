@@ -200,12 +200,18 @@ class EdgeGovernor:
 
             # Build result
             latency_ms = (time.perf_counter() - start_time) * 1000
-            
+
             # Calculate confidence from detection result
             confidence = 1.0
-            if detection_result and detection_result.confidences and len(detection_result.confidences) > 0:
-                confidence = sum(detection_result.confidences) / len(detection_result.confidences)
-            
+            if (
+                detection_result
+                and detection_result.confidences
+                and len(detection_result.confidences) > 0
+            ):
+                confidence = sum(detection_result.confidences) / len(
+                    detection_result.confidences
+                )
+
             decision = EdgeDecision(
                 decision=decision_type,
                 risk_score=risk_score,
@@ -263,14 +269,19 @@ class EdgeGovernor:
             results.append(result)
         return results
 
-    def _calculate_risk_score(self, detection_result: Optional["DetectionResult"]) -> float:
+    def _calculate_risk_score(
+        self, detection_result: Optional["DetectionResult"]
+    ) -> float:
         """Calculate risk score from detection result."""
         if detection_result is None:
             return 0.0
 
         # Use JIT-optimized calculation if available
         try:
-            from ..core.jit_optimizations import calculate_risk_score_jit, NUMBA_AVAILABLE
+            from ..core.jit_optimizations import (
+                calculate_risk_score_jit,
+                NUMBA_AVAILABLE,
+            )
 
             if NUMBA_AVAILABLE and detection_result.severities:
                 severities = np.array(detection_result.severities, dtype=np.float64)

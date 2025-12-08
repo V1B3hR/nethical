@@ -17,7 +17,7 @@ from typing import Optional
 @dataclass
 class Violation:
     """Violation message (mirrors proto)."""
-    
+
     id: str
     type: str
     severity: str
@@ -29,7 +29,7 @@ class Violation:
 @dataclass
 class Explanation:
     """Explanation message (mirrors proto)."""
-    
+
     summary: str
     risk_factors: list[str] = field(default_factory=list)
     decision_rationale: str = ""
@@ -40,7 +40,7 @@ class Explanation:
 @dataclass
 class EvaluateRequest:
     """Evaluate request message (mirrors proto)."""
-    
+
     agent_id: str
     action: str
     action_type: str = "query"
@@ -54,7 +54,7 @@ class EvaluateRequest:
 @dataclass
 class EvaluateResponse:
     """Evaluate response message (mirrors proto)."""
-    
+
     decision: str
     decision_id: str
     risk_score: float = 0.0
@@ -72,7 +72,7 @@ class EvaluateResponse:
 @dataclass
 class Decision:
     """Decision record message (mirrors proto)."""
-    
+
     decision_id: str
     decision: str
     agent_id: str
@@ -91,7 +91,7 @@ class Decision:
 @dataclass
 class Policy:
     """Policy message (mirrors proto)."""
-    
+
     policy_id: str
     name: str
     description: str

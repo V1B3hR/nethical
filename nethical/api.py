@@ -27,7 +27,15 @@ from contextlib import asynccontextmanager
 from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 
-from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect
+from fastapi import (
+    FastAPI,
+    HTTPException,
+    Header,
+    Request,
+    Response,
+    WebSocket,
+    WebSocketDisconnect,
+)
 from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel, Field
 
@@ -41,6 +49,7 @@ except ImportError:
 
 from nethical.api.rate_limiter import TokenBucketLimiter, RateLimitConfig
 from nethical.api.auth import AuthManager
+
 try:
     from nethical.api.semantic_cache import SemanticCache
 except ImportError:
@@ -116,7 +125,7 @@ async def lifespan(app: FastAPI):
 
         rate_config = RateLimitConfig(
             requests_per_second=float(os.getenv("NETHICAL_RATE_BURST", "5.0")),
-            requests_per_minute=int(os.getenv("NETHICAL_RATE_SUSTAINED", "100"))
+            requests_per_minute=int(os.getenv("NETHICAL_RATE_SUSTAINED", "100")),
         )
         rate_limiter = TokenBucketLimiter(config=rate_config)
 
@@ -130,7 +139,7 @@ async def lifespan(app: FastAPI):
             semantic_cache = SemanticCache(
                 maxsize=int(os.getenv("NETHICAL_CACHE_MAXSIZE", "20000")),
                 ttl=int(os.getenv("NETHICAL_CACHE_TTL", "600")),
-                model_version="v2"
+                model_version="v2",
             )
         else:
             logger.warning("SemanticCache unavailable")
@@ -140,20 +149,24 @@ async def lifespan(app: FastAPI):
     finally:
         logger.info("API shutdown")
 
+
 app = FastAPI(
     title="Nethical Governance API",
     version=API_VERSION,
     description="Production API for AI safety and ethics governance",
-    lifespan=lifespan
+    lifespan=lifespan,
 )
 
 # CORS Configuration
 # Security Warning: Wildcard CORS (*) should not be used in production
 allowed_origins_str = os.getenv("NETHICAL_CORS_ALLOW_ORIGINS", "*")
-allowed_origins = allowed_origins_str.split(",") if allowed_origins_str != "*" else ["*"]
+allowed_origins = (
+    allowed_origins_str.split(",") if allowed_origins_str != "*" else ["*"]
+)
 
 if "*" in allowed_origins:
     import warnings
+
     warnings.warn(
         "CORS is configured with wildcard (*) origins. "
         "This is a security risk in production. "
@@ -171,8 +184,9 @@ app.add_middleware(
     allow_origins=allowed_origins,
     allow_credentials=True,
     allow_methods=["*"],
-    allow_headers=["*"]
+    allow_headers=["*"],
 )
+
 
 class EvaluateRequest(BaseModel):
     id: Optional[str] = Field(None)
@@ -181,6 +195,7 @@ class EvaluateRequest(BaseModel):
     actual_action: str
     context: Optional[Dict[str, Any]] = None
     parameters: Optional[Dict[str, Any]] = None
+
 
 class JudgmentResult(BaseModel):
     judgment_id: str
@@ -194,6 +209,7 @@ class JudgmentResult(BaseModel):
     modifications: Optional[Dict[str, Any]] = None
     metadata: Dict[str, Any]
 
+
 class StatusResponse(BaseModel):
     status: str
     version: str
@@ -203,19 +219,21 @@ class StatusResponse(BaseModel):
     components: Dict[str, Any]
     config: Dict[str, Any]
 
+
 class MetricsResponse(BaseModel):
     metrics: Dict[str, Any]
     timestamp: str
 
+
 def extract_api_key(
-    x_api_key: Optional[str] = Header(None),
-    authorization: Optional[str] = Header(None)
+    x_api_key: Optional[str] = Header(None), authorization: Optional[str] = Header(None)
 ) -> Optional[str]:
     if x_api_key:
         return x_api_key
     if authorization and authorization.startswith("Bearer "):
         return authorization[7:]
     return None
+
 
 def get_client_ip(request: Request) -> str:
     forwarded = request.headers.get("X-Forwarded-For")
@@ -224,6 +242,7 @@ def get_client_ip(request: Request) -> str:
     if request.client:
         return request.client.host
     return "unknown"
+
 
 def get_request_id(request: Request) -> str:
     """
@@ -239,26 +258,36 @@ def get_request_id(request: Request) -> str:
         Request ID string for correlation
     """
     import uuid
+
     request_id = (
-        request.headers.get("X-Request-ID") or
-        request.headers.get("X-Correlation-ID") or
-        str(uuid.uuid4())
+        request.headers.get("X-Request-ID")
+        or request.headers.get("X-Correlation-ID")
+        or str(uuid.uuid4())
     )
     return request_id
+
 
 def validate_payload(eval_request: EvaluateRequest) -> None:
     total_len = len(eval_request.actual_action) + len(eval_request.stated_intent or "")
     if total_len > MAX_INPUT_SIZE:
-        raise HTTPException(413, f"Input too large: {total_len} chars (max {MAX_INPUT_SIZE})")
+        raise HTTPException(
+            413, f"Input too large: {total_len} chars (max {MAX_INPUT_SIZE})"
+        )
     if eval_request.parameters and len(eval_request.parameters) > MAX_PARAM_KEYS:
-        raise HTTPException(413, f"Too many parameter keys ({len(eval_request.parameters)} > {MAX_PARAM_KEYS})")
+        raise HTTPException(
+            413,
+            f"Too many parameter keys ({len(eval_request.parameters)} > {MAX_PARAM_KEYS})",
+        )
     if eval_request.context:
         try:
             serialized = json.dumps(eval_request.context)
         except Exception:
             serialized = str(eval_request.context)
         if len(serialized) > MAX_CONTEXT_SIZE:
-            raise HTTPException(413, f"Context too large ({len(serialized)} > {MAX_CONTEXT_SIZE})")
+            raise HTTPException(
+                413, f"Context too large ({len(serialized)} > {MAX_CONTEXT_SIZE})"
+            )
+
 
 async def compute_semantic_similarity(intent: Optional[str], action: str) -> float:
     if not intent:
@@ -269,6 +298,7 @@ async def compute_semantic_similarity(intent: Optional[str], action: str) -> flo
         return 0.0
     overlap = len(intent_tokens & action_tokens) / len(intent_tokens | action_tokens)
     return max(0.0, min(1.0, overlap))
+
 
 @app.get("/")
 async def root():
@@ -283,7 +313,7 @@ async def root():
             "Concurrency control",
             "Semantic cache",
             "WebSocket streaming",
-            "Health checks"
+            "Health checks",
         ],
         "endpoints": {
             "evaluate": "POST /evaluate",
@@ -294,9 +324,10 @@ async def root():
             "health_startup": "GET /health/startup",
             "ws_violations": "WS /ws/violations",
             "ws_metrics": "WS /ws/metrics",
-            "docs": "GET /docs"
-        }
+            "docs": "GET /docs",
+        },
     }
+
 
 @app.post("/evaluate", response_model=JudgmentResult)
 async def evaluate(
@@ -304,7 +335,7 @@ async def evaluate(
     request: Request,
     response: Response,
     x_api_key: Optional[str] = Header(None),
-    authorization: Optional[str] = Header(None)
+    authorization: Optional[str] = Header(None),
 ) -> JudgmentResult:
     start = time.perf_counter()
 
@@ -323,7 +354,7 @@ async def evaluate(
             raise HTTPException(
                 401,
                 "Unauthorized - valid API key required",
-                headers={"WWW-Authenticate": "Bearer"}
+                headers={"WWW-Authenticate": "Bearer"},
             )
 
     identity = auth_manager.extract_identity(api_key, client_ip)
@@ -335,7 +366,7 @@ async def evaluate(
             "X-RateLimit-Burst-Limit": str(rate_info["burst_limit"]),
             "X-RateLimit-Remaining": str(rate_info["remaining"]),
             "X-RateLimit-Reset": str(rate_info["reset"]),
-            "Retry-After": str(int(retry_after)) if retry_after else "60"
+            "Retry-After": str(int(retry_after)) if retry_after else "60",
         }
         raise HTTPException(429, "Rate limit exceeded", headers=headers)
 
@@ -346,21 +377,33 @@ async def evaluate(
 
     async with concurrency_semaphore:
         try:
-            action_id = eval_request.id or f"action_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}"
+            action_id = (
+                eval_request.id
+                or f"action_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}"
+            )
+
             async def do_eval():
                 if hasattr(governance, "process_action"):
                     return governance.process_action(
                         action=eval_request.actual_action,
                         agent_id=eval_request.agent_id,
-                        action_type=eval_request.parameters.get("action_type", "query") if eval_request.parameters else "query",
+                        action_type=(
+                            eval_request.parameters.get("action_type", "query")
+                            if eval_request.parameters
+                            else "query"
+                        ),
                         stated_intent=eval_request.stated_intent,
-                        context=eval_request.context or {}
+                        context=eval_request.context or {},
                     )
                 else:
                     action = AgentAction(
                         action_id=action_id,
                         agent_id=eval_request.agent_id,
-                        action_type=eval_request.parameters.get("action_type", "query") if eval_request.parameters else "query",
+                        action_type=(
+                            eval_request.parameters.get("action_type", "query")
+                            if eval_request.parameters
+                            else "query"
+                        ),
                         content=eval_request.actual_action,
                         metadata=eval_request.parameters or {},
                         context=eval_request.context or {},
@@ -371,36 +414,52 @@ async def evaluate(
             try:
                 result = await asyncio.wait_for(do_eval(), timeout=EVAL_TIMEOUT)
             except asyncio.TimeoutError:
-                raise HTTPException(503, f"Evaluation timeout after {EVAL_TIMEOUT}s", headers={"Retry-After": "10"})
+                raise HTTPException(
+                    503,
+                    f"Evaluation timeout after {EVAL_TIMEOUT}s",
+                    headers={"Retry-After": "10"},
+                )
 
             similarity = None
             if eval_request.stated_intent:
                 if semantic_cache:
+
                     async def compute_fn():
-                        return await compute_semantic_similarity(eval_request.stated_intent, eval_request.actual_action)
+                        return await compute_semantic_similarity(
+                            eval_request.stated_intent, eval_request.actual_action
+                        )
+
                     similarity = await semantic_cache.get_or_compute(
                         eval_request.stated_intent,
                         eval_request.actual_action,
                         compute_fn,
-                        config_params={"model_version": "v2"}
+                        config_params={"model_version": "v2"},
                     )
                 else:
-                    similarity = await compute_semantic_similarity(eval_request.stated_intent, eval_request.actual_action)
+                    similarity = await compute_semantic_similarity(
+                        eval_request.stated_intent, eval_request.actual_action
+                    )
 
-            judgment_id = getattr(result, "judgment_id", f"judgment_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}")
+            judgment_id = getattr(
+                result,
+                "judgment_id",
+                f"judgment_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}",
+            )
             decision = str(getattr(result, "decision", "ALLOW")).upper()
             confidence = float(getattr(result, "confidence", 0.9))
             reasoning = str(getattr(result, "reasoning", "Action evaluated"))
 
             violations_out = []
             for v in getattr(result, "violations", []):
-                violations_out.append({
-                    "id": getattr(v, "id", ""),
-                    "type": str(getattr(v, "violation_type", "")),
-                    "severity": str(getattr(v, "severity", "")),
-                    "description": str(getattr(v, "description", "")),
-                    "evidence": dict(getattr(v, "evidence", {}))
-                })
+                violations_out.append(
+                    {
+                        "id": getattr(v, "id", ""),
+                        "type": str(getattr(v, "violation_type", "")),
+                        "severity": str(getattr(v, "severity", "")),
+                        "description": str(getattr(v, "description", "")),
+                        "evidence": dict(getattr(v, "evidence", {})),
+                    }
+                )
 
             # Success headers
             response.headers["X-RateLimit-Limit"] = str(rate_info["limit"])
@@ -422,7 +481,12 @@ async def evaluate(
 
             logger.info(
                 "Evaluate request_id=%s identity=%s decision=%s confidence=%.3f violations=%d duration_ms=%d",
-                request_id, identity, decision, confidence, len(violations_out), duration_ms
+                request_id,
+                identity,
+                decision,
+                confidence,
+                len(violations_out),
+                duration_ms,
             )
 
             return JudgmentResult(
@@ -433,15 +497,30 @@ async def evaluate(
                 reasoning=reasoning,
                 violations=violations_out,
                 timestamp=datetime.now(timezone.utc).isoformat(),
-                risk_score=float(getattr(result, "risk_score", 0.0)) if hasattr(result, "risk_score") else None,
-                modifications=dict(getattr(result, "modifications", {})) if hasattr(result, "modifications") else None,
-                metadata=metadata
+                risk_score=(
+                    float(getattr(result, "risk_score", 0.0))
+                    if hasattr(result, "risk_score")
+                    else None
+                ),
+                modifications=(
+                    dict(getattr(result, "modifications", {}))
+                    if hasattr(result, "modifications")
+                    else None
+                ),
+                metadata=metadata,
             )
         except HTTPException:
             raise
         except Exception as e:
-            logger.error("Evaluation failure request_id=%s identity=%s error=%s", request_id, identity, e, exc_info=True)
+            logger.error(
+                "Evaluation failure request_id=%s identity=%s error=%s",
+                request_id,
+                identity,
+                e,
+                exc_info=True,
+            )
             raise HTTPException(500, f"Evaluation failed: {e}")
+
 
 @app.get("/status", response_model=StatusResponse)
 async def status() -> StatusResponse:
@@ -483,18 +562,27 @@ async def status() -> StatusResponse:
         semantic_monitoring=True,
         semantic_available=semantic_available,
         components=components,
-        config=config_snapshot
+        config=config_snapshot,
     )
+
 
 @app.get("/metrics", response_model=MetricsResponse)
 async def metrics() -> MetricsResponse:
     metric_blob = {
         "violations_total": 0,
         "judgments_total": 0,
-        "cache_hit_rate": (semantic_cache.get_stats().get("hit_rate_percent") if semantic_cache else None),
-        "active_identities": (rate_limiter.get_stats().get("active_identities") if rate_limiter else None),
+        "cache_hit_rate": (
+            semantic_cache.get_stats().get("hit_rate_percent")
+            if semantic_cache
+            else None
+        ),
+        "active_identities": (
+            rate_limiter.get_stats().get("active_identities") if rate_limiter else None
+        ),
     }
-    return MetricsResponse(metrics=metric_blob, timestamp=datetime.now(timezone.utc).isoformat())
+    return MetricsResponse(
+        metrics=metric_blob, timestamp=datetime.now(timezone.utc).isoformat()
+    )
 
 
 # =============================================================================
@@ -506,7 +594,7 @@ async def metrics() -> MetricsResponse:
 async def liveness() -> Dict[str, str]:
     """
     Kubernetes liveness probe endpoint.
-    
+
     Returns 200 if the service is alive and can respond to requests.
     """
     return {"status": "alive"}
@@ -516,7 +604,7 @@ async def liveness() -> Dict[str, str]:
 async def readiness() -> Dict[str, Any]:
     """
     Kubernetes readiness probe endpoint.
-    
+
     Returns 200 if the service is ready to accept traffic.
     Checks that all required components are initialized.
     """
@@ -526,43 +614,38 @@ async def readiness() -> Dict[str, Any]:
         "auth_manager": auth_manager is not None,
         "concurrency_control": concurrency_semaphore is not None,
     }
-    
+
     all_ready = all(checks.values())
-    
+
     if not all_ready:
         raise HTTPException(
-            status_code=503,
-            detail={"status": "not_ready", "checks": checks}
+            status_code=503, detail={"status": "not_ready", "checks": checks}
         )
-    
-    return {
-        "status": "ready",
-        "checks": checks
-    }
+
+    return {"status": "ready", "checks": checks}
 
 
 @app.get("/health/startup")
 async def startup() -> Dict[str, Any]:
     """
     Kubernetes startup probe endpoint.
-    
+
     Returns 200 if the service has completed startup.
     """
     if not startup_complete:
         raise HTTPException(
-            status_code=503,
-            detail={"status": "starting", "version": API_VERSION}
+            status_code=503, detail={"status": "starting", "version": API_VERSION}
         )
-    
+
     uptime_seconds = None
     if startup_time:
         uptime_seconds = (datetime.now(timezone.utc) - startup_time).total_seconds()
-    
+
     return {
         "status": "started",
         "version": API_VERSION,
         "startup_time": startup_time.isoformat() if startup_time else None,
-        "uptime_seconds": uptime_seconds
+        "uptime_seconds": uptime_seconds,
     }
 
 
@@ -575,7 +658,7 @@ async def startup() -> Dict[str, Any]:
 async def violations_stream(websocket: WebSocket) -> None:
     """
     WebSocket endpoint for streaming violations in real-time.
-    
+
     Clients can subscribe to receive violation events as they occur.
     """
     await violations_manager.connect(websocket)
@@ -584,11 +667,13 @@ async def violations_stream(websocket: WebSocket) -> None:
             # Keep connection alive and wait for messages
             data = await websocket.receive_text()
             # Echo back any received messages as acknowledgment
-            await websocket.send_json({
-                "type": "ack",
-                "message": f"Received: {data}",
-                "timestamp": datetime.now(timezone.utc).isoformat()
-            })
+            await websocket.send_json(
+                {
+                    "type": "ack",
+                    "message": f"Received: {data}",
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                }
+            )
     except WebSocketDisconnect:
         violations_manager.disconnect(websocket)
         logger.info("Client disconnected from violations stream")
@@ -601,7 +686,7 @@ async def violations_stream(websocket: WebSocket) -> None:
 async def metrics_stream(websocket: WebSocket) -> None:
     """
     WebSocket endpoint for streaming metrics in real-time.
-    
+
     Clients can subscribe to receive metric updates periodically.
     """
     await metrics_manager.connect(websocket)
@@ -609,24 +694,26 @@ async def metrics_stream(websocket: WebSocket) -> None:
         while True:
             # Send metrics every 5 seconds
             await asyncio.sleep(5)
-            
+
             metric_data = {
                 "type": "metrics",
                 "timestamp": datetime.now(timezone.utc).isoformat(),
                 "data": {
                     "cache_hit_rate": (
                         semantic_cache.get_stats().get("hit_rate_percent")
-                        if semantic_cache else None
+                        if semantic_cache
+                        else None
                     ),
                     "active_identities": (
                         rate_limiter.get_stats().get("active_identities")
-                        if rate_limiter else None
+                        if rate_limiter
+                        else None
                     ),
                     "active_ws_connections": {
                         "violations": len(violations_manager.active_connections),
                         "metrics": len(metrics_manager.active_connections),
-                    }
-                }
+                    },
+                },
             }
             await websocket.send_json(metric_data)
     except WebSocketDisconnect:

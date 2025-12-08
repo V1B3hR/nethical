@@ -9,12 +9,12 @@ from .policy_verifier import (
     PolicyVerifier,
     FundamentalLawsVerifier,
     VerificationResult,
-    VerificationReport
+    VerificationReport,
 )
 
 __all__ = [
-    'PolicyVerifier',
-    'FundamentalLawsVerifier',
-    'VerificationResult',
-    'VerificationReport'
+    "PolicyVerifier",
+    "FundamentalLawsVerifier",
+    "VerificationResult",
+    "VerificationReport",
 ]

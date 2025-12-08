@@ -91,7 +91,9 @@ class OneWebProvider(SatelliteProvider):
         """
         try:
             self.state = ConnectionState.CONNECTING
-            logger.info(f"Connecting to OneWeb via terminal at {self._terminal_address}")
+            logger.info(
+                f"Connecting to OneWeb via terminal at {self._terminal_address}"
+            )
 
             # Check terminal connectivity
             terminal_ok = await self._check_terminal_connectivity()

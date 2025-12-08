@@ -115,7 +115,11 @@ class DetectorPack:
     def from_dict(data: Dict[str, Any]) -> "DetectorPack":
         """Deserialize from a dict."""
         industry_val = data.get("industry")
-        industry = Industry(industry_val) if industry_val in {i.value for i in Industry} else None
+        industry = (
+            Industry(industry_val)
+            if industry_val in {i.value for i in Industry}
+            else None
+        )
 
         created_at_raw = data.get("created_at")
         if isinstance(created_at_raw, str):
@@ -206,7 +210,9 @@ def _contains(text: str, needle: str) -> bool:
     return needle.lower() in text.lower()
 
 
-def _score_match(pack: DetectorPack, query: Optional[str], use_case: Optional[str]) -> int:
+def _score_match(
+    pack: DetectorPack, query: Optional[str], use_case: Optional[str]
+) -> int:
     """Compute a relevance score for a pack given optional query and use_case."""
     if query is None and use_case is None:
         return 0
@@ -259,7 +265,9 @@ class DetectorPackRegistry:
 
     # ------------- Core CRUD -------------
 
-    def register_pack(self, pack: DetectorPack, *, allow_override: bool = False) -> None:
+    def register_pack(
+        self, pack: DetectorPack, *, allow_override: bool = False
+    ) -> None:
         """Register a detector pack.
 
         Args:
@@ -268,9 +276,13 @@ class DetectorPackRegistry:
         """
         pack.validate()
         if pack.pack_id in self._packs and not allow_override:
-            raise DuplicatePackError(f"DetectorPack with id '{pack.pack_id}' already exists.")
+            raise DuplicatePackError(
+                f"DetectorPack with id '{pack.pack_id}' already exists."
+            )
         if pack.pack_id in self._packs and allow_override:
-            logger.warning("Overriding existing DetectorPack with id '%s'", pack.pack_id)
+            logger.warning(
+                "Overriding existing DetectorPack with id '%s'", pack.pack_id
+            )
 
         self._packs[pack.pack_id] = pack
         self._index_pack_into_industry(pack)
@@ -426,7 +438,10 @@ class DetectorPackRegistry:
             results = [p for _, p in sorted(scored, key=lambda sp: sp[1].name.lower())]
         else:
             # Default: relevance
-            results = [p for _, p in sorted(scored, key=lambda sp: (-sp[0], sp[1].name.lower()))]
+            results = [
+                p
+                for _, p in sorted(scored, key=lambda sp: (-sp[0], sp[1].name.lower()))
+            ]
 
         if limit is not None and limit >= 0:
             results = results[:limit]
@@ -435,7 +450,11 @@ class DetectorPackRegistry:
     def find_packs_by_detector(self, detector_identifier: str) -> List[DetectorPack]:
         """Find packs that include a specific detector by id/name."""
         needle = detector_identifier.lower().strip()
-        return [p for p in self._packs.values() if any(needle in d.lower() for d in p.detectors)]
+        return [
+            p
+            for p in self._packs.values()
+            if any(needle in d.lower() for d in p.detectors)
+        ]
 
     # ------------- Import / Export -------------
 
@@ -519,7 +538,11 @@ class DetectorPackRegistry:
                 "compliance_standards": ["SOX", "PCI-DSS"],
             },
             industry=Industry.FINANCIAL,
-            use_cases=["fraud-detection", "compliance-monitoring", "transaction-screening"],
+            use_cases=[
+                "fraud-detection",
+                "compliance-monitoring",
+                "transaction-screening",
+            ],
             tags={"financial", "compliance", "fraud", "certified"},
             version="2.0.0",
         )
@@ -541,7 +564,11 @@ class DetectorPackRegistry:
                 "compliance_standards": ["HIPAA"],
             },
             industry=Industry.HEALTHCARE,
-            use_cases=["patient-data-protection", "hipaa-compliance", "medical-records"],
+            use_cases=[
+                "patient-data-protection",
+                "hipaa-compliance",
+                "medical-records",
+            ],
             tags={"healthcare", "hipaa", "compliance", "certified"},
         )
         self.register_pack(healthcare_pack)
@@ -581,7 +608,11 @@ class DetectorPackRegistry:
                 "max_severity": "high",
             },
             industry=Industry.TECHNOLOGY,
-            use_cases=["secret-detection", "supply-chain-security", "license-compliance"],
+            use_cases=[
+                "secret-detection",
+                "supply-chain-security",
+                "license-compliance",
+            ],
             tags={"technology", "security", "secrets", "devsecops"},
         )
         self.register_pack(technology_pack)
@@ -596,9 +627,16 @@ class DetectorPackRegistry:
                 "ai-generated-content",
                 "citation-checker",
             ],
-            configuration={"plagiarism_threshold": 0.85, "ai_content_sensitivity": "medium"},
+            configuration={
+                "plagiarism_threshold": 0.85,
+                "ai_content_sensitivity": "medium",
+            },
             industry=Industry.EDUCATION,
-            use_cases=["plagiarism-detection", "academic-integrity", "citation-compliance"],
+            use_cases=[
+                "plagiarism-detection",
+                "academic-integrity",
+                "citation-compliance",
+            ],
             tags={"education", "integrity", "ai-content"},
         )
         self.register_pack(education_pack)
@@ -619,7 +657,11 @@ class DetectorPackRegistry:
                 "compliance_standards": ["PCI-DSS"],
             },
             industry=Industry.RETAIL,
-            use_cases=["pci-compliance", "payment-security", "customer-data-protection"],
+            use_cases=[
+                "pci-compliance",
+                "payment-security",
+                "customer-data-protection",
+            ],
             tags={"retail", "pci", "compliance"},
         )
         self.register_pack(retail_pack)
@@ -634,7 +676,10 @@ class DetectorPackRegistry:
                 "foia-compliance",
                 "sensitive-entity-detector",
             ],
-            configuration={"classifications": ["CUI", "FOUO", "SBU"], "auto_redaction": True},
+            configuration={
+                "classifications": ["CUI", "FOUO", "SBU"],
+                "auto_redaction": True,
+            },
             industry=Industry.GOVERNMENT,
             use_cases=["data-classification", "foia-compliance", "sensitive-data"],
             tags={"government", "classification", "compliance"},

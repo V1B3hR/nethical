@@ -25,15 +25,15 @@ if config.config_file_name is not None:
 # Target metadata for autogenerate
 target_metadata = None
 
+
 # Database URL from environment or config
 def get_url():
     """Get database URL from environment or alembic config."""
     return os.getenv(
         "DATABASE_URL",
         config.get_main_option(
-            "sqlalchemy.url",
-            "postgresql://nethical:nethical@localhost:5432/nethical"
-        )
+            "sqlalchemy.url", "postgresql://nethical:nethical@localhost:5432/nethical"
+        ),
     )
 
 
@@ -68,7 +68,7 @@ def run_migrations_online() -> None:
     """
     configuration = config.get_section(config.config_ini_section)
     configuration["sqlalchemy.url"] = get_url()
-    
+
     connectable = engine_from_config(
         configuration,
         prefix="sqlalchemy.",
@@ -76,10 +76,7 @@ def run_migrations_online() -> None:
     )
 
     with connectable.connect() as connection:
-        context.configure(
-            connection=connection,
-            target_metadata=target_metadata
-        )
+        context.configure(connection=connection, target_metadata=target_metadata)
 
         with context.begin_transaction():
             context.run_migrations()

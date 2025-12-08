@@ -235,7 +235,9 @@ class QuarantineManager:
             "reason": record.reason.value,
             "status": record.status.value,
             "initiated_at": record.initiated_at.isoformat(),
-            "activated_at": record.activated_at.isoformat() if record.activated_at else None,
+            "activated_at": (
+                record.activated_at.isoformat() if record.activated_at else None
+            ),
             "expires_at": record.expires_at.isoformat() if record.expires_at else None,
             "duration_hours": record.duration_hours,
             "affected_agents": len(record.affected_agents),
@@ -291,7 +293,9 @@ class QuarantineManager:
             cohorts = list(self.quarantines.keys())
         else:
             # Include history
-            cohorts = list(set(list(self.quarantines.keys()) + [r.cohort for r in self.history]))
+            cohorts = list(
+                set(list(self.quarantines.keys()) + [r.cohort for r in self.history])
+            )
 
         return [self.get_quarantine_status(cohort) for cohort in cohorts]
 
@@ -364,9 +368,13 @@ class QuarantineManager:
 
         # Calculate average activation time
         activation_times = [
-            r.activation_time_ms for r in self.history if r.activation_time_ms is not None
+            r.activation_time_ms
+            for r in self.history
+            if r.activation_time_ms is not None
         ]
-        avg_activation_ms = sum(activation_times) / len(activation_times) if activation_times else 0
+        avg_activation_ms = (
+            sum(activation_times) / len(activation_times) if activation_times else 0
+        )
 
         return {
             "active_quarantines": active_count,

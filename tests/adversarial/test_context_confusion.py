@@ -12,7 +12,7 @@ from nethical.core import IntegratedGovernance
 
 class TestContextConfusion:
     """Test suite for context confusion and NLP manipulation detection."""
-    
+
     @pytest.fixture
     def governance(self, tmp_path):
         """Create a governance instance for testing."""
@@ -20,9 +20,9 @@ class TestContextConfusion:
             storage_dir=str(tmp_path / "nethical_test"),
             enable_merkle_anchoring=True,
             enable_anomaly_detection=True,
-            enable_performance_optimization=False
+            enable_performance_optimization=False,
         )
-    
+
     def test_prompt_injection_basic(self, governance):
         """Test detection of basic prompt injection attempts."""
         result = governance.process_action(
@@ -33,11 +33,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="high",
             action_id="injection_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.25
-        
+
     def test_prompt_injection_with_encoding(self, governance):
         """Test detection of encoded prompt injection attempts."""
         # Base64-like obfuscation
@@ -49,11 +49,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="high",
             action_id="injection_002",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.25
-        
+
     def test_role_confusion_attack(self, governance):
         """Test detection of role confusion attempts."""
         result = governance.process_action(
@@ -64,16 +64,16 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="critical",
             action_id="role_confusion_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.30
-        
+
     def test_jailbreak_attempt_gradual(self, governance):
         """Test detection of gradual jailbreak attempts."""
         # Multi-step jailbreak: establishing false context
         results = []
-        
+
         # Step 1: Innocent seeming
         r1 = governance.process_action(
             agent_id="jailbreaker_001",
@@ -83,10 +83,10 @@ class TestContextConfusion:
             violation_type="none",
             violation_severity="low",
             action_id="jailbreak_step1",
-            action_type="query"
+            action_type="query",
         )
         results.append(r1)
-        
+
         # Step 2: Establishing false authority
         r2 = governance.process_action(
             agent_id="jailbreaker_001",
@@ -96,10 +96,10 @@ class TestContextConfusion:
             violation_type="none",
             violation_severity="low",
             action_id="jailbreak_step2",
-            action_type="query"
+            action_type="query",
         )
         results.append(r2)
-        
+
         # Step 3: Attempting to override safety
         r3 = governance.process_action(
             agent_id="jailbreaker_001",
@@ -109,14 +109,14 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="critical",
             action_id="jailbreak_step3",
-            action_type="manipulation"
+            action_type="manipulation",
         )
         results.append(r3)
-        
+
         # Final step should have highest risk
         assert results[2]["phase3"]["risk_score"] > results[0]["phase3"]["risk_score"]
         assert results[2]["phase3"]["risk_score"] > 0.6
-        
+
     def test_context_injection_system_override(self, governance):
         """Test detection of system override injection."""
         result = governance.process_action(
@@ -127,11 +127,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="critical",
             action_id="system_override_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.30
-        
+
     def test_authority_impersonation(self, governance):
         """Test detection of authority impersonation."""
         result = governance.process_action(
@@ -142,11 +142,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="high",
             action_id="impersonation_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.25
-        
+
     def test_delimiter_confusion(self, governance):
         """Test detection of delimiter-based confusion attacks."""
         result = governance.process_action(
@@ -157,11 +157,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="high",
             action_id="delimiter_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.25
-        
+
     def test_hypothetical_scenario_jailbreak(self, governance):
         """Test detection of hypothetical scenario-based jailbreaks."""
         result = governance.process_action(
@@ -172,11 +172,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="medium",
             action_id="hypothetical_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.20
-        
+
     def test_unicode_obfuscation(self, governance):
         """Test detection of unicode obfuscation attacks."""
         # Using unicode lookalikes
@@ -188,11 +188,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="medium",
             action_id="unicode_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.20
-        
+
     def test_leetspeak_evasion(self, governance):
         """Test detection of leetspeak evasion attempts."""
         result = governance.process_action(
@@ -203,11 +203,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="medium",
             action_id="leetspeak_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.20
-        
+
     def test_multi_language_mixing(self, governance):
         """Test detection of multi-language mixing for evasion."""
         result = governance.process_action(
@@ -218,11 +218,11 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="medium",
             action_id="multilang_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.20
-        
+
     def test_nested_instruction_attack(self, governance):
         """Test detection of nested instruction attacks."""
         result = governance.process_action(
@@ -233,7 +233,7 @@ class TestContextConfusion:
             violation_type="adversarial",
             violation_severity="high",
             action_id="nested_instruction_001",
-            action_type="manipulation"
+            action_type="manipulation",
         )
-        
+
         assert result["phase3"]["risk_score"] > 0.25

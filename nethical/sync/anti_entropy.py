@@ -358,7 +358,9 @@ class AntiEntropyProtocol:
 
         # Callbacks
         self._on_sync_complete: Optional[Callable[[SyncSession], None]] = None
-        self._on_conflict: Optional[Callable[[str, PolicyState, PolicyState], None]] = None
+        self._on_conflict: Optional[Callable[[str, PolicyState, PolicyState], None]] = (
+            None
+        )
 
         logger.info(f"AntiEntropyProtocol initialized for node {node_id}")
 
@@ -418,13 +420,19 @@ class AntiEntropyProtocol:
         if len(self.active_sessions) >= self.max_concurrent_syncs:
             # Wait for a slot or return existing session
             existing = next(
-                (s for s in self.active_sessions.values() if s.remote_node == remote_node),
+                (
+                    s
+                    for s in self.active_sessions.values()
+                    if s.remote_node == remote_node
+                ),
                 None,
             )
             if existing:
                 return existing
 
-            logger.warning(f"Max concurrent syncs reached, queuing sync with {remote_node}")
+            logger.warning(
+                f"Max concurrent syncs reached, queuing sync with {remote_node}"
+            )
 
         # Create new session
         session = SyncSession(
@@ -477,13 +485,15 @@ class AntiEntropyProtocol:
             if policy_id in self.crdt.policies:
                 state = self.crdt.policies[policy_id].get()
                 if state:
-                    deltas.append(PolicyDelta(
-                        policy_id=policy_id,
-                        operation="update",
-                        state=state,
-                        timestamp=self.crdt.policies[policy_id].timestamp,
-                        source_node=self.node_id,
-                    ))
+                    deltas.append(
+                        PolicyDelta(
+                            policy_id=policy_id,
+                            operation="update",
+                            state=state,
+                            timestamp=self.crdt.policies[policy_id].timestamp,
+                            source_node=self.node_id,
+                        )
+                    )
 
         # Limit batch size
         if len(deltas) > self.max_delta_batch_size:
@@ -532,7 +542,9 @@ class AntiEntropyProtocol:
 
         return result
 
-    def complete_sync(self, session: SyncSession, success: bool = True, error: str = ""):
+    def complete_sync(
+        self, session: SyncSession, success: bool = True, error: str = ""
+    ):
         """
         Complete a synchronization session.
 
@@ -569,7 +581,9 @@ class AntiEntropyProtocol:
 
         # Trim history
         if len(self.completed_sessions) > self.max_completed_history:
-            self.completed_sessions = self.completed_sessions[-self.max_completed_history :]
+            self.completed_sessions = self.completed_sessions[
+                -self.max_completed_history :
+            ]
 
         # Call completion callback
         if self._on_sync_complete:
@@ -625,7 +639,9 @@ class AntiEntropyProtocol:
                                 remote_node=peer_id,
                                 remote_digest=peer_digest,
                             )
-                            logger.debug(f"Started sync session {session.session_id} with {peer_id}")
+                            logger.debug(
+                                f"Started sync session {session.session_id} with {peer_id}"
+                            )
 
                     except Exception as e:
                         logger.warning(f"Failed to sync with peer {peer_id}: {e}")

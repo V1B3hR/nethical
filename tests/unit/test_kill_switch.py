@@ -359,7 +359,9 @@ class TestActuatorSevering:
 
     def test_sever_actuator(self):
         """Test severing a single actuator."""
-        self.severing.register_actuator("actuator-1", ConnectionType.NETWORK_TCP, "agent-1")
+        self.severing.register_actuator(
+            "actuator-1", ConnectionType.NETWORK_TCP, "agent-1"
+        )
 
         success, error = self.severing.sever_actuator("actuator-1", "test-user")
 
@@ -387,7 +389,9 @@ class TestActuatorSevering:
 
     def test_sever_agent_actuators(self):
         """Test severing all actuators for an agent."""
-        self.severing.register_actuator("actuator-1", ConnectionType.NETWORK_TCP, "agent-1")
+        self.severing.register_actuator(
+            "actuator-1", ConnectionType.NETWORK_TCP, "agent-1"
+        )
         self.severing.register_actuator("actuator-2", ConnectionType.SERIAL, "agent-1")
         self.severing.register_actuator("actuator-3", ConnectionType.GPIO, "agent-2")
 
@@ -399,7 +403,9 @@ class TestActuatorSevering:
 
     def test_sever_all(self):
         """Test severing all actuators."""
-        self.severing.register_actuator("actuator-1", ConnectionType.NETWORK_TCP, "agent-1")
+        self.severing.register_actuator(
+            "actuator-1", ConnectionType.NETWORK_TCP, "agent-1"
+        )
         self.severing.register_actuator("actuator-2", ConnectionType.SERIAL, "agent-2")
         self.severing.register_actuator("actuator-3", ConnectionType.GPIO, "agent-3")
 
@@ -423,7 +429,9 @@ class TestActuatorSevering:
 
     def test_authorize_reconnection_cooldown(self):
         """Test reconnection with cooldown."""
-        self.severing.register_actuator("actuator-1", ConnectionType.NETWORK_TCP, "agent-1")
+        self.severing.register_actuator(
+            "actuator-1", ConnectionType.NETWORK_TCP, "agent-1"
+        )
         self.severing.sever_actuator("actuator-1")
 
         # Cooldown should prevent immediate reconnection
@@ -433,7 +441,9 @@ class TestActuatorSevering:
 
     def test_audit_log(self):
         """Test audit logging."""
-        self.severing.register_actuator("actuator-1", ConnectionType.NETWORK_TCP, "agent-1")
+        self.severing.register_actuator(
+            "actuator-1", ConnectionType.NETWORK_TCP, "agent-1"
+        )
         self.severing.sever_actuator("actuator-1", "test-user")
 
         log = self.severing.get_audit_log()
@@ -447,7 +457,9 @@ class TestActuatorSevering:
 
     def test_get_statistics(self):
         """Test statistics gathering."""
-        self.severing.register_actuator("actuator-1", ConnectionType.NETWORK_TCP, "agent-1")
+        self.severing.register_actuator(
+            "actuator-1", ConnectionType.NETWORK_TCP, "agent-1"
+        )
         self.severing.register_actuator("actuator-2", ConnectionType.SERIAL, "agent-1")
         self.severing.sever_actuator("actuator-1")
 
@@ -845,7 +857,9 @@ class TestKillSwitchProtocol:
         """Test SLA compliance (<1 second)."""
         # Register multiple agents and actuators
         for i in range(50):
-            self.protocol.global_kill_switch.register_agent(f"agent-{i}", f"cohort-{i % 5}")
+            self.protocol.global_kill_switch.register_agent(
+                f"agent-{i}", f"cohort-{i % 5}"
+            )
             self.protocol.actuator_severing.register_actuator(
                 f"actuator-{i}", ConnectionType.NETWORK_TCP, f"agent-{i}"
             )

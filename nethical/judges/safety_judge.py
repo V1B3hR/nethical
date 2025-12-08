@@ -92,10 +92,14 @@ class SafetyJudge(BaseJudge):
             return JudgmentDecision.ALLOW
 
         # Check for critical violations
-        critical_violations = [v for v in violations if v.severity == SeverityLevel.CRITICAL]
+        critical_violations = [
+            v for v in violations if v.severity == SeverityLevel.CRITICAL
+        ]
         if critical_violations:
             safety_violations = [
-                v for v in critical_violations if v.violation_type == ViolationType.SAFETY_VIOLATION
+                v
+                for v in critical_violations
+                if v.violation_type == ViolationType.SAFETY_VIOLATION
             ]
             if safety_violations:
                 return JudgmentDecision.TERMINATE
@@ -107,7 +111,9 @@ class SafetyJudge(BaseJudge):
             return JudgmentDecision.BLOCK
 
         # Check for multiple medium violations
-        medium_violations = [v for v in violations if v.severity == SeverityLevel.MEDIUM]
+        medium_violations = [
+            v for v in violations if v.severity == SeverityLevel.MEDIUM
+        ]
         if len(medium_violations) >= 2:
             return JudgmentDecision.RESTRICT
 
@@ -120,7 +126,10 @@ class SafetyJudge(BaseJudge):
             return JudgmentDecision.ALLOW
 
     def _generate_reasoning(
-        self, violations: List[SafetyViolation], risk_score: float, decision: JudgmentDecision
+        self,
+        violations: List[SafetyViolation],
+        risk_score: float,
+        decision: JudgmentDecision,
     ) -> str:
         """Generate reasoning for the judgment decision."""
         if not violations:
@@ -129,7 +138,7 @@ class SafetyJudge(BaseJudge):
                 "No safety, ethical, or policy violations detected.",
                 f"Risk score: {risk_score:.2f} (within acceptable thresholds).",
                 "Action approved for execution.",
-                "Continued monitoring in place to ensure ongoing compliance."
+                "Continued monitoring in place to ensure ongoing compliance.",
             ]
             return " ".join(reasoning_parts)
 
@@ -146,13 +155,17 @@ class SafetyJudge(BaseJudge):
                 "CRITICAL safety violation detected. Immediate termination required."
             )
         elif decision == JudgmentDecision.BLOCK:
-            reasoning_parts.append("High-risk violations detected. Action blocked for safety.")
+            reasoning_parts.append(
+                "High-risk violations detected. Action blocked for safety."
+            )
         elif decision == JudgmentDecision.RESTRICT:
             reasoning_parts.append(
                 "Moderate violations detected. Action permitted with restrictions."
             )
         else:
-            reasoning_parts.append("Low-risk violations detected. Action approved with monitoring.")
+            reasoning_parts.append(
+                "Low-risk violations detected. Action approved with monitoring."
+            )
 
         return " ".join(reasoning_parts)
 
@@ -207,17 +220,23 @@ class SafetyJudge(BaseJudge):
             feedback_parts.append("Ensure stated intentions align with actual actions.")
 
         if ViolationType.ETHICAL_VIOLATION in violation_types:
-            feedback_parts.append("Review ethical guidelines and avoid harmful content.")
+            feedback_parts.append(
+                "Review ethical guidelines and avoid harmful content."
+            )
 
         if ViolationType.SAFETY_VIOLATION in violation_types:
-            feedback_parts.append("Follow safety protocols and avoid unauthorized access.")
+            feedback_parts.append(
+                "Follow safety protocols and avoid unauthorized access."
+            )
 
         if ViolationType.MANIPULATION in violation_types:
             feedback_parts.append("Avoid manipulative techniques in communications.")
 
         return " ".join(feedback_parts)
 
-    def _calculate_confidence(self, violations: List[SafetyViolation], risk_score: float) -> float:
+    def _calculate_confidence(
+        self, violations: List[SafetyViolation], risk_score: float
+    ) -> float:
         """Calculate confidence in the judgment."""
         if not violations:
             return 0.9  # High confidence for no violations

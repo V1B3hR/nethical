@@ -198,7 +198,9 @@ class MigrationPhase:
             "dependencies": self.dependencies,
             "status": self.status,
             "start_date": self.start_date.isoformat() if self.start_date else None,
-            "completion_date": self.completion_date.isoformat() if self.completion_date else None,
+            "completion_date": (
+                self.completion_date.isoformat() if self.completion_date else None
+            ),
         }
 
 
@@ -216,7 +218,9 @@ class CRYSTALSKyber:
     """
 
     def __init__(
-        self, algorithm: PQCAlgorithm = PQCAlgorithm.KYBER_768, enable_key_caching: bool = True
+        self,
+        algorithm: PQCAlgorithm = PQCAlgorithm.KYBER_768,
+        enable_key_caching: bool = True,
     ):
         """Initialize CRYSTALS-Kyber system."""
         if algorithm not in [
@@ -363,7 +367,9 @@ class CRYSTALSDilithium:
     """
 
     def __init__(
-        self, algorithm: PQCAlgorithm = PQCAlgorithm.DILITHIUM_3, enable_key_caching: bool = True
+        self,
+        algorithm: PQCAlgorithm = PQCAlgorithm.DILITHIUM_3,
+        enable_key_caching: bool = True,
     ):
         """Initialize CRYSTALS-Dilithium system."""
         if algorithm not in [
@@ -459,7 +465,9 @@ class CRYSTALSDilithium:
             signer_key_id=key_id,
         )
 
-    def verify(self, message: bytes, signature: QuantumSignature, public_key: bytes) -> bool:
+    def verify(
+        self, message: bytes, signature: QuantumSignature, public_key: bytes
+    ) -> bool:
         """
         Verify Dilithium signature.
 
@@ -598,7 +606,8 @@ class HybridTLSManager:
             # XOR (with padding if needed)
             min_len = min(len(classical_secret), len(quantum_secret))
             return bytes(
-                a ^ b for a, b in zip(classical_secret[:min_len], quantum_secret[:min_len])
+                a ^ b
+                for a, b in zip(classical_secret[:min_len], quantum_secret[:min_len])
             )
 
         elif self.hybrid_mode == HybridMode.HYBRID_KDF:
@@ -635,7 +644,9 @@ class QuantumThreatAnalyzer:
     - Risk prioritization
     """
 
-    def __init__(self, current_qubit_count: int = 1000, error_correction_progress: float = 0.3):
+    def __init__(
+        self, current_qubit_count: int = 1000, error_correction_progress: float = 0.3
+    ):
         """Initialize quantum threat analyzer."""
         self.current_qubit_count = current_qubit_count
         self.error_correction_progress = error_correction_progress
@@ -700,7 +711,9 @@ class QuantumThreatAnalyzer:
         required_qubits = 4000
         growth_rate = 1.4  # Annual growth multiplier
 
-        if self.current_qubit_count >= required_qubits * (1 - self.error_correction_progress):
+        if self.current_qubit_count >= required_qubits * (
+            1 - self.error_correction_progress
+        ):
             return 2.0  # Imminent threat
 
         # Calculate years based on exponential growth
@@ -721,7 +734,9 @@ class QuantumThreatAnalyzer:
         quantum_resistant = ["kyber", "dilithium", "falcon", "sphincs"]
 
         # Check if any quantum-resistant algorithms are present
-        has_pqc = any(alg.lower() in inv.lower() for alg in quantum_resistant for inv in inventory)
+        has_pqc = any(
+            alg.lower() in inv.lower() for alg in quantum_resistant for inv in inventory
+        )
 
         # Score based on algorithm diversity and PQC presence
         score = 0.5 if has_pqc else 0.2
@@ -752,7 +767,10 @@ class QuantumThreatAnalyzer:
             return QuantumThreatLevel.MINIMAL
 
     def _determine_migration_urgency(
-        self, threat_level: QuantumThreatLevel, years_to_threat: float, data_lifetime: float
+        self,
+        threat_level: QuantumThreatLevel,
+        years_to_threat: float,
+        data_lifetime: float,
     ) -> str:
         """Determine migration urgency level."""
         if threat_level == QuantumThreatLevel.CRITICAL:
@@ -808,7 +826,9 @@ class QuantumThreatAnalyzer:
 
         return {
             "total_assessments": len(self.assessments),
-            "average_years_to_threat": sum(a.estimated_years_to_threat for a in self.assessments)
+            "average_years_to_threat": sum(
+                a.estimated_years_to_threat for a in self.assessments
+            )
             / len(self.assessments),
             "threat_distribution": threat_counts,
             "current_qubit_count": self.current_qubit_count,
@@ -916,7 +936,9 @@ class PQCMigrationPlanner:
         phase.completion_date = datetime.now()
 
         # Start next phase if exists
-        next_phase = next((p for p in self.phases if p.phase_number == phase_number + 1), None)
+        next_phase = next(
+            (p for p in self.phases if p.phase_number == phase_number + 1), None
+        )
 
         if next_phase:
             next_phase.status = "in_progress"
@@ -929,7 +951,9 @@ class PQCMigrationPlanner:
         total_phases = len(self.phases)
         completed_phases = sum(1 for p in self.phases if p.status == "completed")
 
-        current_phase = next((p for p in self.phases if p.status == "in_progress"), None)
+        current_phase = next(
+            (p for p in self.phases if p.status == "in_progress"), None
+        )
 
         return {
             "organization": self.organization_name,
@@ -950,7 +974,9 @@ class PQCMigrationPlanner:
             "start_date": self.start_date.isoformat(),
             "total_duration_months": sum(p.duration_months for p in self.phases),
             "phases": [p.to_dict() for p in self.phases],
-            "key_milestones": [f"Phase {p.phase_number}: {p.phase_name}" for p in self.phases],
+            "key_milestones": [
+                f"Phase {p.phase_number}: {p.phase_name}" for p in self.phases
+            ],
         }
 
 
@@ -984,13 +1010,19 @@ class QuantumCryptoManager:
         # Initialize components
         self.kyber = CRYSTALSKyber(algorithm=kyber_algorithm) if enable_kyber else None
         self.dilithium = (
-            CRYSTALSDilithium(algorithm=dilithium_algorithm) if enable_dilithium else None
+            CRYSTALSDilithium(algorithm=dilithium_algorithm)
+            if enable_dilithium
+            else None
         )
         self.hybrid_tls = (
-            HybridTLSManager(pqc_algorithm=kyber_algorithm) if enable_hybrid_tls else None
+            HybridTLSManager(pqc_algorithm=kyber_algorithm)
+            if enable_hybrid_tls
+            else None
         )
         self.threat_analyzer = QuantumThreatAnalyzer()
-        self.migration_planner = PQCMigrationPlanner(organization_name=organization_name)
+        self.migration_planner = PQCMigrationPlanner(
+            organization_name=organization_name
+        )
 
     def get_security_status(self) -> Dict[str, Any]:
         """Get comprehensive quantum crypto security status."""
@@ -1006,7 +1038,9 @@ class QuantumCryptoManager:
             },
             "hybrid_tls": {
                 "enabled": self.enable_hybrid_tls,
-                "statistics": self.hybrid_tls.get_statistics() if self.hybrid_tls else {},
+                "statistics": (
+                    self.hybrid_tls.get_statistics() if self.hybrid_tls else {}
+                ),
             },
             "threat_assessment": self.threat_analyzer.get_threat_summary(),
             "migration_status": self.migration_planner.get_migration_status(),

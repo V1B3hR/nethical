@@ -150,7 +150,9 @@ class ActionReplayer:
         try:
             datetime.fromisoformat(timestamp.replace("Z", "+00:00"))
         except ValueError as e:
-            raise ValueError(f"Invalid timestamp format: {timestamp}. Use ISO 8601 format.") from e
+            raise ValueError(
+                f"Invalid timestamp format: {timestamp}. Use ISO 8601 format."
+            ) from e
 
         self.current_timestamp = timestamp
         self.start_timestamp = timestamp
@@ -176,7 +178,10 @@ class ActionReplayer:
         self.end_timestamp = end_time
 
     def get_actions(
-        self, agent_ids: Optional[List[str]] = None, limit: Optional[int] = None, offset: int = 0
+        self,
+        agent_ids: Optional[List[str]] = None,
+        limit: Optional[int] = None,
+        offset: int = 0,
     ) -> List[Dict[str, Any]]:
         """
         Retrieve actions for replay based on current time settings.
@@ -208,7 +213,9 @@ class ActionReplayer:
             Total count of actions
         """
         return self.persistence.count_actions(
-            start_time=self.start_timestamp, end_time=self.end_timestamp, agent_ids=agent_ids
+            start_time=self.start_timestamp,
+            end_time=self.end_timestamp,
+            agent_ids=agent_ids,
         )
 
     def _reconstruct_action(self, action_data: Dict[str, Any]) -> AgentAction:
@@ -218,7 +225,11 @@ class ActionReplayer:
             agent_id=action_data["agent_id"],
             action_type=ActionType(action_data["action_type"]),
             content=action_data["content"],
-            metadata=json.loads(action_data["metadata"]) if action_data.get("metadata") else {},
+            metadata=(
+                json.loads(action_data["metadata"])
+                if action_data.get("metadata")
+                else {}
+            ),
             timestamp=datetime.fromisoformat(action_data["timestamp"]),
             intent=action_data.get("intent"),
             risk_score=action_data.get("risk_score", 0.0),
@@ -261,12 +272,14 @@ class ActionReplayer:
         for action_data in actions_data:
             action_id = action_data["action_id"]
             original_judgment = original_judgments.get(action_id)
-            original_decision = original_judgment["decision"] if original_judgment else None
+            original_decision = (
+                original_judgment["decision"] if original_judgment else None
+            )
 
             # For now, simulate a policy check with simple logic
             # In production, this would use the actual governance system with the new policy
-            new_decision, confidence, reasoning, violations_count = self._simulate_policy_check(
-                action_data, new_policy, governance_system
+            new_decision, confidence, reasoning, violations_count = (
+                self._simulate_policy_check(action_data, new_policy, governance_system)
             )
 
             results.append(
@@ -286,7 +299,10 @@ class ActionReplayer:
         return results
 
     def _simulate_policy_check(
-        self, action_data: Dict[str, Any], policy_name: str, governance_system: Optional[Any] = None
+        self,
+        action_data: Dict[str, Any],
+        policy_name: str,
+        governance_system: Optional[Any] = None,
     ) -> Tuple[str, float, str, int]:
         """
         Simulate policy check for an action.
@@ -390,7 +406,9 @@ class ActionReplayer:
         # Get baseline results
         if baseline_policy.lower() == "current":
             action_ids = [a["action_id"] for a in actions_data]
-            baseline_judgments = self.persistence.query_judgments_by_action_ids(action_ids)
+            baseline_judgments = self.persistence.query_judgments_by_action_ids(
+                action_ids
+            )
             baseline_results = {
                 action_id: judgment["decision"]
                 for action_id, judgment in baseline_judgments.items()
@@ -492,7 +510,9 @@ class ActionReplayer:
         # Get time range stats if we have actions
         if total_actions > 0:
             all_actions = self.persistence.query_actions(limit=1)
-            latest_action = self.persistence.query_actions(limit=1, offset=total_actions - 1)
+            latest_action = self.persistence.query_actions(
+                limit=1, offset=total_actions - 1
+            )
 
             first_timestamp = all_actions[0]["timestamp"] if all_actions else None
             last_timestamp = latest_action[0]["timestamp"] if latest_action else None

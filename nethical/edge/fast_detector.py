@@ -95,9 +95,15 @@ class FastDetector:
         self.custom_patterns = custom_patterns or {}
 
         # Pre-compile all patterns for speed
-        self._compiled_critical = [re.compile(p, re.IGNORECASE) for p in self.CRITICAL_PATTERNS]
-        self._compiled_high = [re.compile(p, re.IGNORECASE) for p in self.HIGH_RISK_PATTERNS]
-        self._compiled_medium = [re.compile(p, re.IGNORECASE) for p in self.MEDIUM_RISK_PATTERNS]
+        self._compiled_critical = [
+            re.compile(p, re.IGNORECASE) for p in self.CRITICAL_PATTERNS
+        ]
+        self._compiled_high = [
+            re.compile(p, re.IGNORECASE) for p in self.HIGH_RISK_PATTERNS
+        ]
+        self._compiled_medium = [
+            re.compile(p, re.IGNORECASE) for p in self.MEDIUM_RISK_PATTERNS
+        ]
         self._compiled_pii = [re.compile(p) for p in self.PII_PATTERNS]
 
         # Compile custom patterns
@@ -109,13 +115,26 @@ class FastDetector:
 
         # Fast keyword lookup sets
         self._critical_keywords: Set[str] = {
-            "shutdown", "reboot", "halt", "destroy", "nuke", "wipe"
+            "shutdown",
+            "reboot",
+            "halt",
+            "destroy",
+            "nuke",
+            "wipe",
         }
         self._high_keywords: Set[str] = {
-            "password", "secret", "credential", "token", "apikey", "admin", "root"
+            "password",
+            "secret",
+            "credential",
+            "token",
+            "apikey",
+            "admin",
+            "root",
         }
         self._blocked_action_types: Set[str] = {
-            "system_shutdown", "data_destruction", "unauthorized_access"
+            "system_shutdown",
+            "data_destruction",
+            "unauthorized_access",
         }
 
         logger.info("FastDetector initialized with pre-compiled patterns")

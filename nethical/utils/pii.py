@@ -60,7 +60,9 @@ class PIIDetector:
 
     # Credit card patterns (basic Luhn validation would be better)
     CC_PATTERNS = [
-        re.compile(r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b"),  # 1234-5678-9012-3456
+        re.compile(
+            r"\b\d{4}[-\s]?\d{4}[-\s]?\d{4}[-\s]?\d{4}\b"
+        ),  # 1234-5678-9012-3456
         re.compile(r"\b\d{13,19}\b"),  # 1234567890123456
     ]
 
@@ -182,7 +184,9 @@ class PIIDetector:
                 # Check if labeled as DOB in context
                 context = self._get_context(text, match.start(), match.end(), 50)
                 confidence = 0.6
-                if any(keyword in context.lower() for keyword in ["dob", "birth", "born"]):
+                if any(
+                    keyword in context.lower() for keyword in ["dob", "birth", "born"]
+                ):
                     confidence = 0.9
 
                 matches.append(

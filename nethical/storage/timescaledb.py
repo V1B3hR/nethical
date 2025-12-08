@@ -60,7 +60,9 @@ class TimescaleDBStore:
         self.enabled = enabled and PSYCOPG2_AVAILABLE
 
         if not PSYCOPG2_AVAILABLE:
-            logger.warning("psycopg2 not available. Install with: pip install psycopg2-binary")
+            logger.warning(
+                "psycopg2 not available. Install with: pip install psycopg2-binary"
+            )
             self.enabled = False
             return
 

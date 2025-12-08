@@ -143,7 +143,9 @@ class BaseJudge(ABC, Generic[TAction, TViolation, TResult]):
         self,
         name: str,
         *,
-        trace_hook: Optional[Callable[[str, Dict[str, Any]], Awaitable[None] | None]] = None,
+        trace_hook: Optional[
+            Callable[[str, Dict[str, Any]], Awaitable[None] | None]
+        ] = None,
     ) -> None:
         self.name: str = name
         self.enabled: bool = True

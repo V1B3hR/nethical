@@ -69,25 +69,34 @@ class TransparencyReportGenerator:
             A TransparencyReport with complete analysis
         """
         from datetime import timezone
+
         now = datetime.now(timezone.utc)
         period_start = now - timedelta(days=period_days)
 
         # Filter data to period
         period_decisions = [
-            d for d in decisions if self._parse_timestamp(d.get("timestamp")) >= period_start
+            d
+            for d in decisions
+            if self._parse_timestamp(d.get("timestamp")) >= period_start
         ]
         period_violations = [
-            v for v in violations if self._parse_timestamp(v.get("timestamp")) >= period_start
+            v
+            for v in violations
+            if self._parse_timestamp(v.get("timestamp")) >= period_start
         ]
 
         # Generate report components
         summary = self._generate_summary(period_decisions, period_violations)
         decision_breakdown = self._analyze_decision_breakdown(period_decisions)
-        violation_trends = self._analyze_violation_trends(period_violations, period_days)
+        violation_trends = self._analyze_violation_trends(
+            period_violations, period_days
+        )
         policy_effectiveness = self._analyze_policy_effectiveness(
             period_decisions, period_violations, policies
         )
-        key_insights = self._extract_key_insights(summary, decision_breakdown, violation_trends)
+        key_insights = self._extract_key_insights(
+            summary, decision_breakdown, violation_trends
+        )
         recommendations = self._generate_recommendations(
             summary, decision_breakdown, policy_effectiveness
         )
@@ -153,7 +162,9 @@ class TransparencyReportGenerator:
             "restrict_rate": decision_types.get("RESTRICT", 0) / total_decisions * 100,
         }
 
-    def _analyze_decision_breakdown(self, decisions: List[Dict[str, Any]]) -> Dict[str, int]:
+    def _analyze_decision_breakdown(
+        self, decisions: List[Dict[str, Any]]
+    ) -> Dict[str, int]:
         """Analyze breakdown of decisions by various categories."""
         breakdown = {
             "by_decision": defaultdict(int),
@@ -238,7 +249,9 @@ class TransparencyReportGenerator:
             policy_name = policy.get("name", "unnamed")
 
             # Count how many times this policy triggered
-            triggers = sum(1 for d in decisions if policy_name in d.get("matched_policies", []))
+            triggers = sum(
+                1 for d in decisions if policy_name in d.get("matched_policies", [])
+            )
 
             # Count how many violations it prevented
             prevented = sum(
@@ -283,7 +296,9 @@ class TransparencyReportGenerator:
         if len(total_violations) >= 7:
             recent_week = sum(total_violations[-7:])
             previous_week = (
-                sum(total_violations[-14:-7]) if len(total_violations) >= 14 else recent_week
+                sum(total_violations[-14:-7])
+                if len(total_violations) >= 14
+                else recent_week
             )
 
             if previous_week > 0:
@@ -313,7 +328,8 @@ class TransparencyReportGenerator:
         if by_hour:
             peak_hour = max(by_hour.items(), key=lambda x: x[1])
             insights.append(
-                f"Peak activity occurs at {peak_hour[0]:02d}:00 with " f"{peak_hour[1]} decisions"
+                f"Peak activity occurs at {peak_hour[0]:02d}:00 with "
+                f"{peak_hour[1]} decisions"
             )
 
         return insights
@@ -328,7 +344,9 @@ class TransparencyReportGenerator:
         recommendations = []
 
         # Policy effectiveness recommendations
-        ineffective_policies = [name for name, score in policy_effectiveness.items() if score < 0.3]
+        ineffective_policies = [
+            name for name, score in policy_effectiveness.items() if score < 0.3
+        ]
         if ineffective_policies:
             recommendations.append(
                 f"Review {len(ineffective_policies)} low-effectiveness policies: "
@@ -350,10 +368,14 @@ class TransparencyReportGenerator:
         violation_severities = summary.get("violation_severities", {})
         critical_violations = violation_severities.get("critical", 0)
         if critical_violations > 10:
-            recommendations.append(f"Address {critical_violations} critical violations immediately")
+            recommendations.append(
+                f"Address {critical_violations} critical violations immediately"
+            )
 
         # General recommendations
-        recommendations.append("Continue monitoring trends and adjust policies as needed")
+        recommendations.append(
+            "Continue monitoring trends and adjust policies as needed"
+        )
         recommendations.append("Review this report with stakeholders monthly")
 
         return recommendations
@@ -361,6 +383,7 @@ class TransparencyReportGenerator:
     def _parse_timestamp(self, timestamp: Any) -> Optional[datetime]:
         """Parse timestamp from various formats."""
         from datetime import timezone
+
         if isinstance(timestamp, datetime):
             # Ensure timezone-aware
             if timestamp.tzinfo is None:

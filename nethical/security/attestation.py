@@ -88,7 +88,9 @@ def register_attestation_provider(
 # Utility & canonicalization helpers
 # ---------------------------------------------------------------------------
 
-_ALLOWED_KEY_CHARS = set("abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-:")
+_ALLOWED_KEY_CHARS = set(
+    "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789._-:"
+)
 
 
 def _sanitize_key(key: str) -> str:
@@ -238,7 +240,9 @@ def evaluate_policy_stub(
         if tcb >= expected_tcb_min:
             return PolicyOutcome("permit", f"TCB {tcb} >= {expected_tcb_min}")
         return PolicyOutcome(
-            "deny", f"TCB {tcb} < {expected_tcb_min}", {"expected_min": expected_tcb_min}
+            "deny",
+            f"TCB {tcb} < {expected_tcb_min}",
+            {"expected_min": expected_tcb_min},
         )
     if expected_tcb_min and not tcb:
         return PolicyOutcome(
@@ -263,7 +267,9 @@ class NoopAttestation(AttestationProvider):
     - Marked explicitly as 'noop' to prevent accidental production acceptance.
     """
 
-    def __init__(self, meta: Optional[Dict[str, Any]] = None, debug_extra: bool = False):
+    def __init__(
+        self, meta: Optional[Dict[str, Any]] = None, debug_extra: bool = False
+    ):
         self.meta = meta or {}
         self.debug_extra = debug_extra
 
@@ -280,7 +286,9 @@ class NoopAttestation(AttestationProvider):
             meta={"impl": "noop", "policy": "permit_all", **self.meta},
         )
         return normalize_attestation_result(
-            AttestationResult(ok=True, evidence=evidence, reason="Noop attestation accepted")
+            AttestationResult(
+                ok=True, evidence=evidence, reason="Noop attestation accepted"
+            )
         )
 
     # Sync APIs
@@ -339,7 +347,9 @@ class TrustedAttestation(AttestationProvider):
 
     # ------------- Internal helpers -------------
 
-    def _disabled_result(self, scope: Literal["runtime", "hardware"]) -> AttestationResult:
+    def _disabled_result(
+        self, scope: Literal["runtime", "hardware"]
+    ) -> AttestationResult:
         measurements = {
             **_baseline_measurements(debug_extra=self.cfg.debug_extra),
             "attestation.scope": scope,
@@ -359,7 +369,9 @@ class TrustedAttestation(AttestationProvider):
             )
         )
 
-    def _not_implemented(self, scope: Literal["runtime", "hardware"]) -> AttestationResult:
+    def _not_implemented(
+        self, scope: Literal["runtime", "hardware"]
+    ) -> AttestationResult:
         measurements = {
             **_baseline_measurements(debug_extra=self.cfg.debug_extra),
             "attestation.scope": scope,
@@ -379,7 +391,9 @@ class TrustedAttestation(AttestationProvider):
             )
         )
 
-    def _gather_stubbed_evidence(self, scope: Literal["runtime", "hardware"]) -> Evidence:
+    def _gather_stubbed_evidence(
+        self, scope: Literal["runtime", "hardware"]
+    ) -> Evidence:
         """
         Builds a structured evidence envelope with placeholder fields.
         Future real implementation would replace runtime_quote, cert_chain_pem, tcb_version.
@@ -440,7 +454,10 @@ class TrustedAttestation(AttestationProvider):
             ok = False
             code = ERR_POLICY_DENIED
             reason = f"{reason}; policy denied: {policy_outcome.reason}"
-        elif policy_outcome.decision == "indeterminate" and self.cfg.require_strict_policy:
+        elif (
+            policy_outcome.decision == "indeterminate"
+            and self.cfg.require_strict_policy
+        ):
             ok = False
             code = ERR_POLICY_INDETERMINATE
             reason = f"{reason}; policy indeterminate (strict mode)"
@@ -525,12 +542,16 @@ register_attestation_provider(
 for p in ("trusted", "tpm2", "sgx", "sev-snp", "tdx", "custom"):
     register_attestation_provider(
         p,
-        lambda cfg, _p=p: TrustedAttestation({**cfg, "provider": cfg.get("provider") or _p}),
+        lambda cfg, _p=p: TrustedAttestation(
+            {**cfg, "provider": cfg.get("provider") or _p}
+        ),
         override=True,
     )
 
 
-def select_attestation_provider(config: Optional[Dict[str, Any]] = None) -> AttestationProvider:
+def select_attestation_provider(
+    config: Optional[Dict[str, Any]] = None,
+) -> AttestationProvider:
     """
     Helper to select an AttestationProvider based on config.
 

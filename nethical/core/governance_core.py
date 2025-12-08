@@ -125,7 +125,10 @@ class SubMission(Enum):
 
 VIOLATION_SUB_MISSIONS: Dict[ViolationType, set[SubMission]] = {
     ViolationType.ETHICAL: {SubMission.HARMFUL_CONTENT, SubMission.MANIPULATIVE_ETHICS},
-    ViolationType.BIAS: {SubMission.PROTECTED_ATTRIBUTE_CONTEXT, SubMission.DISCRIMINATION},
+    ViolationType.BIAS: {
+        SubMission.PROTECTED_ATTRIBUTE_CONTEXT,
+        SubMission.DISCRIMINATION,
+    },
     ViolationType.SECURITY: {
         SubMission.DANGEROUS_COMMAND,
         SubMission.UNSAFE_DOMAIN,
@@ -147,13 +150,19 @@ VIOLATION_SUB_MISSIONS: Dict[ViolationType, set[SubMission]] = {
         SubMission.REALITY_DISTORTION,
         SubMission.PSYCHOLOGICAL_WARFARE,
     },
-    ViolationType.SYSTEM_LIMITS: {SubMission.PAYLOAD_SIZE, SubMission.EXHAUSTION_PATTERN},
+    ViolationType.SYSTEM_LIMITS: {
+        SubMission.PAYLOAD_SIZE,
+        SubMission.EXHAUSTION_PATTERN,
+    },
     ViolationType.ADVERSARIAL: {
         SubMission.OBFUSCATION_UNICODE,
         SubMission.ENCODING_EVASION,
         SubMission.TOKEN_PATTERN,
     },
-    ViolationType.PROMPT_INJECTION: {SubMission.ROLE_OVERRIDE, SubMission.SAFETY_BYPASS},
+    ViolationType.PROMPT_INJECTION: {
+        SubMission.ROLE_OVERRIDE,
+        SubMission.SAFETY_BYPASS,
+    },
     ViolationType.PRIVACY: {
         SubMission.PII_EMAIL,
         SubMission.PII_PHONE,
@@ -487,7 +496,9 @@ class PersistenceManager:
             )
 
     def retention_cleanup(self):
-        cutoff = (datetime.now(timezone.utc) - timedelta(days=self.retention_days)).isoformat()
+        cutoff = (
+            datetime.now(timezone.utc) - timedelta(days=self.retention_days)
+        ).isoformat()
         with self._lock, self._connect() as conn:
             # Safe: table names are from hardcoded tuple, not user input
             for table in ("actions", "violations", "judgments"):
@@ -529,7 +540,9 @@ class PersistenceManager:
             columns = [desc[0] for desc in cursor.description]
             return [dict(zip(columns, row)) for row in cursor.fetchall()]
 
-    def query_judgments_by_action_ids(self, action_ids: List[str]) -> Dict[str, Dict[str, Any]]:
+    def query_judgments_by_action_ids(
+        self, action_ids: List[str]
+    ) -> Dict[str, Dict[str, Any]]:
         """Query judgments for multiple action IDs."""
         if not action_ids:
             return {}
@@ -608,7 +621,9 @@ class EnhancedSafetyGovernance:
     def __init__(self, config: Optional[MonitoringConfig] = None):
         self.config = config or MonitoringConfig()
         self.start_time = datetime.now(timezone.utc)
-        self.intent_monitor = IntentDeviationMonitor(self.config.intent_deviation_threshold)
+        self.intent_monitor = IntentDeviationMonitor(
+            self.config.intent_deviation_threshold
+        )
         self.detectors: List[BaseDetector] = []
         self._initialize_detectors()
 
@@ -642,7 +657,9 @@ class EnhancedSafetyGovernance:
         # Persistence
         self.persistence: Optional[PersistenceManager] = None
         if self.config.enable_persistence:
-            self.persistence = PersistenceManager(self.config.db_path, self.config.retention_days)
+            self.persistence = PersistenceManager(
+                self.config.db_path, self.config.retention_days
+            )
             # Schedule periodic retention cleanup
             asyncio.get_event_loop().create_task(self._periodic_retention_cleanup())
 
@@ -728,14 +745,17 @@ class EnhancedSafetyGovernance:
             and self.config.reload_patterns_on_interval
             and (
                 self._pattern_last_load is None
-                or time.time() - self._pattern_last_load > self.config.reload_patterns_on_interval
+                or time.time() - self._pattern_last_load
+                > self.config.reload_patterns_on_interval
             )
         ):
             self._load_external_patterns()
 
     # -------- Core Evaluation Pipeline --------
 
-    async def evaluate_action(self, action: AgentAction, use_cache: bool = True) -> JudgmentResult:
+    async def evaluate_action(
+        self, action: AgentAction, use_cache: bool = True
+    ) -> JudgmentResult:
         from .governance_evaluation import generate_id, sha256_content_key
         from .compliance import ReviewDecision
 
@@ -766,7 +786,9 @@ class EnhancedSafetyGovernance:
             )
             jr.modifications["ai_lawyer_review"] = {
                 "decision": lawyer_result.decision.value,
-                "severity": lawyer_result.severity.value if lawyer_result.severity else None,
+                "severity": (
+                    lawyer_result.severity.value if lawyer_result.severity else None
+                ),
                 "kill_switch_triggered": lawyer_result.kill_switch_triggered,
                 "review_time_ms": lawyer_result.review_time_ms,
             }
@@ -903,7 +925,9 @@ class EnhancedSafetyGovernance:
 
     # -------- Validation --------
 
-    def _validate_violation_type_and_sub_mission(self, violation: SafetyViolation) -> bool:
+    def _validate_violation_type_and_sub_mission(
+        self, violation: SafetyViolation
+    ) -> bool:
         if not violation.sub_mission:
             return True
         allowed = VIOLATION_SUB_MISSIONS.get(violation.violation_type, set())
@@ -982,14 +1006,21 @@ class EnhancedSafetyGovernance:
     # -------- Alerts --------
 
     async def _handle_alerts(
-        self, action: AgentAction, violations: List[SafetyViolation], judgment: JudgmentResult
+        self,
+        action: AgentAction,
+        violations: List[SafetyViolation],
+        judgment: JudgmentResult,
     ):
         if not violations:
             return
-        critical = [v for v in violations if v.severity.value >= Severity.CRITICAL.value]
+        critical = [
+            v for v in violations if v.severity.value >= Severity.CRITICAL.value
+        ]
         if critical and self.config.alert_on_critical:
             await self._emit_alert(action, judgment, "CRITICAL", len(critical))
-        emergency = [v for v in violations if v.severity.value >= Severity.EMERGENCY.value]
+        emergency = [
+            v for v in violations if v.severity.value >= Severity.EMERGENCY.value
+        ]
         if emergency and self.config.alert_on_emergency:
             await self._emit_alert(action, judgment, "EMERGENCY", len(emergency))
 
@@ -1091,9 +1122,11 @@ class EnhancedSafetyGovernance:
             "by_type": by_type,
             "by_severity": by_severity,
             "by_sub_mission": by_sub,
-            ("unified_types" if self.config.unify_specialized_manipulation_types else "ignored"): (
-                unified if unified else {}
-            ),
+            (
+                "unified_types"
+                if self.config.unify_specialized_manipulation_types
+                else "ignored"
+            ): (unified if unified else {}),
             "recent": [v.to_dict() for v in violations[-5:]],
         }
 

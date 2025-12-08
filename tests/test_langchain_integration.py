@@ -255,12 +255,22 @@ class TestNethicalGuardToolCore:
         assert tool.warn_threshold == 0.5
 
         # Test WARN decision with custom thresholds
-        result = {"phase3": {"risk_score": 0.6}, "phase4": {}, "phase567": {}, "phase89": {}}
+        result = {
+            "phase3": {"risk_score": 0.6},
+            "phase4": {},
+            "phase567": {},
+            "phase89": {},
+        }
         decision = tool._make_decision(result)
         assert decision == "WARN"
 
         # Test BLOCK decision with custom thresholds
-        result = {"phase3": {"risk_score": 0.85}, "phase4": {}, "phase567": {}, "phase89": {}}
+        result = {
+            "phase3": {"risk_score": 0.85},
+            "phase4": {},
+            "phase567": {},
+            "phase89": {},
+        }
         decision = tool._make_decision(result)
         assert decision == "BLOCK"
 
@@ -328,7 +338,10 @@ class TestChainGuards:
 
     def test_chain_guards_nethical_only(self, temp_storage):
         """Test chain_guards with only Nethical guard."""
-        from nethical.integrations.langchain_tools import NethicalGuardTool, chain_guards
+        from nethical.integrations.langchain_tools import (
+            NethicalGuardTool,
+            chain_guards,
+        )
 
         tool = NethicalGuardTool(storage_dir=temp_storage)
         tool.governance = Mock(spec=IntegratedGovernance)

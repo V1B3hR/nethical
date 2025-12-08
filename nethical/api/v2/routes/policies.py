@@ -32,7 +32,7 @@ _policy_store: dict[str, dict[str, Any]] = {}
 
 class PolicyRule(BaseModel):
     """A single rule within a policy."""
-    
+
     id: str = Field(..., description="Rule identifier")
     condition: str = Field(..., description="Condition expression")
     action: str = Field(
@@ -45,7 +45,7 @@ class PolicyRule(BaseModel):
 
 class PolicyCreate(BaseModel):
     """Request to create a new policy."""
-    
+
     name: str = Field(
         ...,
         min_length=1,
@@ -77,7 +77,7 @@ class PolicyCreate(BaseModel):
         default=None,
         description="Additional metadata",
     )
-    
+
     model_config = {
         "json_schema_extra": {
             "examples": [
@@ -104,7 +104,7 @@ class PolicyCreate(BaseModel):
 
 class PolicyRecord(BaseModel):
     """Complete policy record."""
-    
+
     policy_id: str = Field(..., description="Unique policy identifier")
     name: str = Field(..., description="Policy name")
     description: str = Field(..., description="Policy description")
@@ -127,7 +127,7 @@ class PolicyRecord(BaseModel):
 
 class PolicyListResponse(BaseModel):
     """Paginated list of policies."""
-    
+
     policies: list[PolicyRecord] = Field(..., description="List of policies")
     total_count: int = Field(..., description="Total number of policies")
     page: int = Field(..., description="Current page")
@@ -138,9 +138,11 @@ class PolicyListResponse(BaseModel):
 
 class PolicyUpdate(BaseModel):
     """Request to update a policy."""
-    
+
     name: Optional[str] = Field(None, max_length=255, description="New name")
-    description: Optional[str] = Field(None, max_length=2000, description="New description")
+    description: Optional[str] = Field(
+        None, max_length=2000, description="New description"
+    )
     version: Optional[str] = Field(None, description="New version")
     rules: Optional[list[PolicyRule]] = Field(None, description="New rules")
     status: Optional[str] = Field(None, description="New status")
@@ -182,7 +184,7 @@ def _init_default_policies() -> None:
             "created_by": "system",
             "metadata": {"is_core": True},
         }
-        
+
         # Privacy policy (Law 22)
         privacy_policy_id = str(uuid.uuid4())
         _policy_store[privacy_policy_id] = {
@@ -221,36 +223,36 @@ async def list_policies(
     page_size: int = Query(20, ge=1, le=100, description="Items per page"),
 ) -> PolicyListResponse:
     """List all governance policies.
-    
+
     Implements Law 8 (Constraint Transparency) by providing visibility
     into all active policies.
-    
+
     Args:
         status: Optional status filter
         scope: Optional scope filter
         page: Page number
         page_size: Items per page
-        
+
     Returns:
         Paginated list of policies
     """
     all_policies = list(_policy_store.values())
-    
+
     if status:
         all_policies = [p for p in all_policies if p.get("status") == status]
-    
+
     if scope:
         all_policies = [p for p in all_policies if p.get("scope") == scope]
-    
+
     # Sort by created_at
     all_policies.sort(key=lambda p: p.get("created_at", ""), reverse=True)
-    
+
     # Paginate
     total_count = len(all_policies)
     start_idx = (page - 1) * page_size
     end_idx = start_idx + page_size
     page_policies = all_policies[start_idx:end_idx]
-    
+
     # Convert to records
     records = [
         PolicyRecord(
@@ -269,7 +271,7 @@ async def list_policies(
         )
         for p in page_policies
     ]
-    
+
     return PolicyListResponse(
         policies=records,
         total_count=total_count,
@@ -283,19 +285,19 @@ async def list_policies(
 @router.post("/policies", response_model=PolicyRecord, status_code=201)
 async def create_policy(policy: PolicyCreate) -> PolicyRecord:
     """Create a new governance policy.
-    
+
     New policies are created in 'quarantine' status and must be
     activated after review (Law 15: Audit Compliance).
-    
+
     Args:
         policy: Policy creation request
-        
+
     Returns:
         Created policy record
     """
     policy_id = str(uuid.uuid4())
     now = datetime.now(timezone.utc).isoformat()
-    
+
     policy_data = {
         "policy_id": policy_id,
         "name": policy.name,
@@ -310,9 +312,9 @@ async def create_policy(policy: PolicyCreate) -> PolicyRecord:
         "created_by": "api",
         "metadata": policy.metadata,
     }
-    
+
     _policy_store[policy_id] = policy_data
-    
+
     return PolicyRecord(
         policy_id=policy_id,
         name=policy.name,
@@ -332,24 +334,24 @@ async def create_policy(policy: PolicyCreate) -> PolicyRecord:
 @router.get("/policies/{policy_id}", response_model=PolicyRecord)
 async def get_policy(policy_id: str) -> PolicyRecord:
     """Get a specific policy by ID.
-    
+
     Args:
         policy_id: Policy identifier
-        
+
     Returns:
         Policy record
-        
+
     Raises:
         HTTPException: If policy not found
     """
     policy = _policy_store.get(policy_id)
-    
+
     if not policy:
         raise HTTPException(
             status_code=404,
             detail=f"Policy {policy_id} not found",
         )
-    
+
     return PolicyRecord(
         policy_id=policy["policy_id"],
         name=policy["name"],
@@ -369,27 +371,27 @@ async def get_policy(policy_id: str) -> PolicyRecord:
 @router.put("/policies/{policy_id}", response_model=PolicyRecord)
 async def update_policy(policy_id: str, update: PolicyUpdate) -> PolicyRecord:
     """Update an existing policy.
-    
+
     Policy updates are logged for audit compliance (Law 15).
-    
+
     Args:
         policy_id: Policy identifier
         update: Policy update request
-        
+
     Returns:
         Updated policy record
-        
+
     Raises:
         HTTPException: If policy not found
     """
     policy = _policy_store.get(policy_id)
-    
+
     if not policy:
         raise HTTPException(
             status_code=404,
             detail=f"Policy {policy_id} not found",
         )
-    
+
     # Update fields
     if update.name is not None:
         policy["name"] = update.name
@@ -405,11 +407,11 @@ async def update_policy(policy_id: str, update: PolicyUpdate) -> PolicyRecord:
         policy["fundamental_laws"] = update.fundamental_laws
     if update.metadata is not None:
         policy["metadata"] = update.metadata
-    
+
     policy["updated_at"] = datetime.now(timezone.utc).isoformat()
-    
+
     _policy_store[policy_id] = policy
-    
+
     return PolicyRecord(
         policy_id=policy["policy_id"],
         name=policy["name"],
@@ -429,23 +431,23 @@ async def update_policy(policy_id: str, update: PolicyUpdate) -> PolicyRecord:
 @router.delete("/policies/{policy_id}", status_code=204)
 async def delete_policy(policy_id: str) -> None:
     """Deprecate a policy (soft delete).
-    
+
     Policies are not actually deleted to maintain audit trail (Law 15).
-    
+
     Args:
         policy_id: Policy identifier
-        
+
     Raises:
         HTTPException: If policy not found
     """
     policy = _policy_store.get(policy_id)
-    
+
     if not policy:
         raise HTTPException(
             status_code=404,
             detail=f"Policy {policy_id} not found",
         )
-    
+
     # Soft delete - set to deprecated
     policy["status"] = "deprecated"
     policy["updated_at"] = datetime.now(timezone.utc).isoformat()

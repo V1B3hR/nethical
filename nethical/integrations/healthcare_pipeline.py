@@ -16,8 +16,13 @@ from nethical.net.zerotrust import NoopCommsPolicy
 from nethical.storage.tamper_store import TamperEvidentOfflineStore
 from nethical.policy.engine import PolicyEngine
 
-from nethical.detectors.healthcare.phi_detector import PHIDetector, detect_and_redact_payload
-from nethical.detectors.healthcare.clinical_risk_detectors import extract_clinical_signals
+from nethical.detectors.healthcare.phi_detector import (
+    PHIDetector,
+    detect_and_redact_payload,
+)
+from nethical.detectors.healthcare.clinical_risk_detectors import (
+    extract_clinical_signals,
+)
 
 
 class HealthcareGuardrails:
@@ -59,7 +64,9 @@ class HealthcareGuardrails:
     def _timestamp(self) -> str:
         return datetime.now(timezone.utc).isoformat(timespec="milliseconds") + "Z"
 
-    def _apply_allowlist(self, data: Dict[str, Any], allowlist: set[str]) -> Dict[str, Any]:
+    def _apply_allowlist(
+        self, data: Dict[str, Any], allowlist: set[str]
+    ) -> Dict[str, Any]:
         if not allowlist:
             return data
         return {k: v for k, v in data.items() if k in allowlist}
@@ -172,7 +179,9 @@ class HealthcareGuardrails:
         )
         return redacted_result
 
-    def evaluate(self, agent_id: str, action_id: str, payload: Dict[str, Any]) -> Dict[str, Any]:
+    def evaluate(
+        self, agent_id: str, action_id: str, payload: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """
         - Extract clinical signals into facts
         - Evaluate policy
@@ -190,7 +199,9 @@ class HealthcareGuardrails:
         # Build features for governance
         features: Dict[str, Any] = {
             "ml_score": (
-                float(policy_out.get("ml_score", 0.0)) if isinstance(policy_out, dict) else 0.0
+                float(policy_out.get("ml_score", 0.0))
+                if isinstance(policy_out, dict)
+                else 0.0
             ),
             "attestation_ok": True,  # default; cannot re-attest synchronously here
             "crypto_signal_enabled": bool(self.crypto_signal is not None),
@@ -208,7 +219,9 @@ class HealthcareGuardrails:
             action_type="healthcare_interaction",
             features=features,
             rule_risk_score=(
-                float(policy_out.get("risk_score", 0.0)) if isinstance(policy_out, dict) else 0.0
+                float(policy_out.get("risk_score", 0.0))
+                if isinstance(policy_out, dict)
+                else 0.0
             ),
             rule_classification=flags["rule_classification"],
         )
@@ -248,7 +261,9 @@ class HealthcareGuardrails:
             safe_error = self.phi.redact(str(e))
             fallback = {"error": "processing_failed", "detail": safe_error}
             # Still try to evaluate with minimal facts to record governance trace
-            eval_out = self.evaluate(agent_id=agent_id, action_id=action_id, payload=fallback)
+            eval_out = self.evaluate(
+                agent_id=agent_id, action_id=action_id, payload=fallback
+            )
             return {
                 "ingress": {},
                 "agent_result": fallback,

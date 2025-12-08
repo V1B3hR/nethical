@@ -204,7 +204,9 @@ class PerformanceOptimizer:
         """
         if detector_name not in self.detector_metrics:
             tier = self.detector_registry.get(detector_name, DetectorTier.STANDARD)
-            self.detector_metrics[detector_name] = DetectorMetrics(name=detector_name, tier=tier)
+            self.detector_metrics[detector_name] = DetectorMetrics(
+                name=detector_name, tier=tier
+            )
 
         self.detector_metrics[detector_name].update(cpu_time_ms, was_cached)
 

@@ -189,9 +189,7 @@ class L1MemoryCache:
         """
         with self._lock:
             now = time.time()
-            expired_keys = [
-                k for k, v in self._cache.items() if now > v.expires_at
-            ]
+            expired_keys = [k for k, v in self._cache.items() if now > v.expires_at]
             for key in expired_keys:
                 del self._cache[key]
                 self._expired += 1

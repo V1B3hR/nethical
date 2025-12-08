@@ -81,7 +81,9 @@ class RiskProfile:
             "severity_score": self.severity_score,
             "frequency_score": self.frequency_score,
             "recency_score": self.recency_score,
-            "tier_history": [(ts.isoformat(), tier.value) for ts, tier in self.tier_history],
+            "tier_history": [
+                (ts.isoformat(), tier.value) for ts, tier in self.tier_history
+            ],
         }
 
     @classmethod
@@ -133,7 +135,12 @@ class RiskEngine:
         self.profiles: Dict[str, RiskProfile] = {}
 
         # Weights for multi-factor fusion
-        self.weights = {"behavior": 0.3, "severity": 0.3, "frequency": 0.2, "recency": 0.2}
+        self.weights = {
+            "behavior": 0.3,
+            "severity": 0.3,
+            "frequency": 0.2,
+            "recency": 0.2,
+        }
 
     def calculate_risk_score(
         self, agent_id: str, violation_severity: float, action_context: Dict[str, Any]
@@ -202,7 +209,9 @@ class RiskEngine:
 
         return decayed_score
 
-    def _calculate_behavior_score(self, profile: RiskProfile, context: Dict[str, Any]) -> float:
+    def _calculate_behavior_score(
+        self, profile: RiskProfile, context: Dict[str, Any]
+    ) -> float:
         """Calculate behavior-based risk component."""
         # Simple heuristic: ratio of violations to actions
         if profile.total_actions == 0:
@@ -233,7 +242,9 @@ class RiskEngine:
 
     def _calculate_recency_score(self, profile: RiskProfile) -> float:
         """Calculate recency-based risk component."""
-        time_since_last = (datetime.now(timezone.utc) - profile.last_update).total_seconds()
+        time_since_last = (
+            datetime.now(timezone.utc) - profile.last_update
+        ).total_seconds()
 
         # Score decreases with time (recent = higher risk)
         # Max score at 0 seconds, min at 24 hours

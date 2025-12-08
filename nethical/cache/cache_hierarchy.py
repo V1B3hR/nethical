@@ -103,9 +103,15 @@ class CacheHierarchy:
         from .l3_global import L3GlobalCache
 
         # Initialize caches
-        self.l1 = l1_cache if l1_cache else L1MemoryCache() if self.config.enable_l1 else None
-        self.l2 = l2_cache if l2_cache else L2RedisCache() if self.config.enable_l2 else None
-        self.l3 = l3_cache if l3_cache else L3GlobalCache() if self.config.enable_l3 else None
+        self.l1 = (
+            l1_cache if l1_cache else L1MemoryCache() if self.config.enable_l1 else None
+        )
+        self.l2 = (
+            l2_cache if l2_cache else L2RedisCache() if self.config.enable_l2 else None
+        )
+        self.l3 = (
+            l3_cache if l3_cache else L3GlobalCache() if self.config.enable_l3 else None
+        )
 
         # Initialize satellite cache if enabled
         self.satellite = None
@@ -116,7 +122,11 @@ class CacheHierarchy:
                 default_ttl_seconds=self.config.satellite_ttl_seconds,
                 compression_enabled=self.config.compression_enabled,
             )
-            self.satellite = satellite_cache if satellite_cache else SatelliteCache(config=sat_config)
+            self.satellite = (
+                satellite_cache
+                if satellite_cache
+                else SatelliteCache(config=sat_config)
+            )
 
         # Metrics
         self._l1_hits = 0
@@ -291,7 +301,13 @@ class CacheHierarchy:
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get hierarchy metrics."""
-        total = self._l1_hits + self._l2_hits + self._l3_hits + self._satellite_hits + self._misses
+        total = (
+            self._l1_hits
+            + self._l2_hits
+            + self._l3_hits
+            + self._satellite_hits
+            + self._misses
+        )
 
         return {
             "l1_hits": self._l1_hits,
@@ -305,14 +321,17 @@ class CacheHierarchy:
             "l3_hit_rate": self._l3_hits / total if total > 0 else 0.0,
             "satellite_hit_rate": self._satellite_hits / total if total > 0 else 0.0,
             "cumulative_hit_rate": (
-                (self._l1_hits + self._l2_hits + self._l3_hits + self._satellite_hits) / total
+                (self._l1_hits + self._l2_hits + self._l3_hits + self._satellite_hits)
+                / total
                 if total > 0
                 else 0.0
             ),
             "l1_metrics": self.l1.get_metrics() if self.l1 else None,
             "l2_metrics": self.l2.get_metrics() if self.l2 else None,
             "l3_metrics": self.l3.get_metrics() if self.l3 else None,
-            "satellite_metrics": self.satellite.get_metrics() if self.satellite else None,
+            "satellite_metrics": (
+                self.satellite.get_metrics() if self.satellite else None
+            ),
         }
 
     async def sync_satellite(self) -> int:

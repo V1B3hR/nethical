@@ -16,14 +16,14 @@ def pytest_addoption(parser):
         "--run-extended",
         action="store_true",
         default=False,
-        help="Run extended/long-running tests (e.g., 10-minute load tests)"
+        help="Run extended/long-running tests (e.g., 10-minute load tests)",
     )
-    
+
     parser.addoption(
         "--run-soak",
         action="store_true",
         default=False,
-        help="Run soak tests (2-hour tests)"
+        help="Run soak tests (2-hour tests)",
     )
 
 
@@ -35,15 +35,9 @@ def pytest_configure(config):
     config.addinivalue_line(
         "markers", "extended: marks tests that require --run-extended flag"
     )
-    config.addinivalue_line(
-        "markers", "soak: marks tests that require --run-soak flag"
-    )
-    config.addinivalue_line(
-        "markers", "security: marks security-related tests"
-    )
-    config.addinivalue_line(
-        "markers", "integration: marks integration tests"
-    )
+    config.addinivalue_line("markers", "soak: marks tests that require --run-soak flag")
+    config.addinivalue_line("markers", "security: marks security-related tests")
+    config.addinivalue_line("markers", "integration: marks integration tests")
 
 
 # =============================================================================
@@ -63,7 +57,7 @@ def temp_dir():
 def governance_instance(temp_dir):
     """Create a basic IntegratedGovernance instance for testing."""
     from nethical.core.integrated_governance import IntegratedGovernance
-    
+
     return IntegratedGovernance(
         storage_dir=temp_dir,
         enable_quota_enforcement=True,
@@ -74,7 +68,7 @@ def governance_instance(temp_dir):
 def governance_with_region(temp_dir):
     """Create an IntegratedGovernance instance with region configured."""
     from nethical.core.integrated_governance import IntegratedGovernance
-    
+
     return IntegratedGovernance(
         storage_dir=temp_dir,
         region_id="us-east-1",
@@ -86,7 +80,7 @@ def governance_with_region(temp_dir):
 def governance_eu_region(temp_dir):
     """Create an IntegratedGovernance instance for EU region."""
     from nethical.core.integrated_governance import IntegratedGovernance
-    
+
     return IntegratedGovernance(
         storage_dir=temp_dir,
         region_id="eu-west-1",
@@ -98,7 +92,7 @@ def governance_eu_region(temp_dir):
 def mfa_manager():
     """Create an MFAManager instance for testing."""
     from nethical.security.mfa import MFAManager
-    
+
     return MFAManager(
         max_attempts=5,
         lockout_duration_minutes=15,
@@ -109,7 +103,7 @@ def mfa_manager():
 def sso_manager():
     """Create an SSOManager instance for testing."""
     from nethical.security.sso import SSOManager
-    
+
     return SSOManager(base_url="https://test.nethical.local")
 
 
@@ -117,7 +111,7 @@ def sso_manager():
 def encryption_service():
     """Create a MilitaryGradeEncryption instance for testing."""
     from nethical.security.encryption import MilitaryGradeEncryption
-    
+
     return MilitaryGradeEncryption()
 
 
@@ -125,7 +119,7 @@ def encryption_service():
 def key_management_service():
     """Create a KeyManagementService instance for testing."""
     from nethical.security.encryption import KeyManagementService
-    
+
     return KeyManagementService()
 
 
@@ -136,22 +130,22 @@ def key_management_service():
 
 class MockRedis:
     """Mock Redis client for testing without Redis server."""
-    
+
     def __init__(self):
         self._data = {}
         self._expires = {}
-    
+
     def get(self, key):
         """Get a value from the mock store."""
         return self._data.get(key)
-    
+
     def set(self, key, value, ex=None):
         """Set a value in the mock store."""
         self._data[key] = value
         if ex:
             self._expires[key] = ex
         return True
-    
+
     def delete(self, *keys):
         """Delete keys from the mock store."""
         count = 0
@@ -160,14 +154,14 @@ class MockRedis:
                 del self._data[key]
                 count += 1
         return count
-    
+
     def exists(self, *keys):
         """Check if keys exist in the mock store."""
         return sum(1 for key in keys if key in self._data)
-    
+
     def incr(self, key):
         """Increment a value.
-        
+
         Note: Redis INCR creates the key with value 1 if it doesn't exist,
         or returns an error if the value is not a number.
         """
@@ -178,16 +172,16 @@ class MockRedis:
             return self._data[key]
         except (ValueError, TypeError):
             raise ValueError(f"value at key '{key}' is not an integer or out of range")
-    
+
     def expire(self, key, seconds):
         """Set expiry on a key."""
         self._expires[key] = seconds
         return True
-    
+
     def ttl(self, key):
         """Get TTL for a key."""
         return self._expires.get(key, -1)
-    
+
     def hset(self, name, key=None, value=None, mapping=None):
         """Set hash fields."""
         if name not in self._data:
@@ -197,17 +191,17 @@ class MockRedis:
         elif key is not None:
             self._data[name][key] = value
         return 1
-    
+
     def hget(self, name, key):
         """Get a hash field."""
         if name not in self._data:
             return None
         return self._data[name].get(key)
-    
+
     def hgetall(self, name):
         """Get all hash fields."""
         return self._data.get(name, {})
-    
+
     def hdel(self, name, *keys):
         """Delete hash fields."""
         if name not in self._data:
@@ -218,11 +212,11 @@ class MockRedis:
                 del self._data[name][key]
                 count += 1
         return count
-    
+
     def ping(self):
         """Check connection."""
         return True
-    
+
     def flushall(self):
         """Clear all data."""
         self._data.clear()
@@ -240,7 +234,7 @@ def mock_redis():
 def governance_with_mock_redis(temp_dir, mock_redis):
     """Create governance instance with mock Redis."""
     from nethical.core.integrated_governance import IntegratedGovernance
-    
+
     return IntegratedGovernance(
         storage_dir=temp_dir,
         redis_client=mock_redis,
@@ -255,7 +249,7 @@ def governance_with_mock_redis(temp_dir, mock_redis):
 
 class TestDataFactory:
     """Factory for creating test data objects."""
-    
+
     @staticmethod
     def create_agent_action(
         agent_id="test_agent",
@@ -265,14 +259,14 @@ class TestDataFactory:
     ):
         """Create an AgentAction for testing."""
         from nethical.core.models import AgentAction
-        
+
         return AgentAction(
             agent_id=agent_id,
             action=action,
             action_type=action_type,
             context=context or {},
         )
-    
+
     @staticmethod
     def create_mfa_user(mfa_manager, user_id="test_user", enable=True):
         """Create a user with MFA set up."""
@@ -285,7 +279,7 @@ class TestDataFactory:
             "provisioning_uri": uri,
             "backup_codes": backup_codes,
         }
-    
+
     @staticmethod
     def create_oauth_config(
         sso_manager,

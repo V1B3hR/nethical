@@ -119,7 +119,9 @@ class PerformanceProfiler:
     """Profile function and method performance"""
 
     def __init__(
-        self, results_dir: Union[str, Path] = "profiling_results", enabled: Optional[bool] = None
+        self,
+        results_dir: Union[str, Path] = "profiling_results",
+        enabled: Optional[bool] = None,
     ):
         # Enable/disable can be controlled by env var, default enabled
         if enabled is None:
@@ -323,7 +325,10 @@ class PerformanceProfiler:
             )
             self._save_benchmarks()
         logger.info(
-            "Set benchmark '%s': %.2fms (tolerance: ±%.1f%%)", name, baseline_ms, tolerance_pct
+            "Set benchmark '%s': %.2fms (tolerance: ±%.1f%%)",
+            name,
+            baseline_ms,
+            tolerance_pct,
         )
 
     def get_results(self, function_name: Optional[str] = None) -> Dict[str, Any]:
@@ -370,17 +375,23 @@ class PerformanceProfiler:
             if self.benchmarks:
                 report.append("BENCHMARKS")
                 report.append("-" * 80)
-                for name, benchmark in sorted(self.benchmarks.items(), key=lambda x: x[0]):
+                for name, benchmark in sorted(
+                    self.benchmarks.items(), key=lambda x: x[0]
+                ):
                     report.append(f"  {name}:")
                     report.append(f"    Baseline: {benchmark.baseline_ms:.2f}ms")
                     report.append(f"    Tolerance: ±{benchmark.tolerance_pct}%")
                     if benchmark.samples:
                         recent_avg = statistics.mean(benchmark.samples)
-                        is_regression, pct_change = benchmark.check_regression(recent_avg)
+                        is_regression, pct_change = benchmark.check_regression(
+                            recent_avg
+                        )
                         status = "REGRESSION" if is_regression else "OK"
                         report.append(f"    Recent Avg: {recent_avg:.2f}ms")
                         report.append(f"    Status: {status} ({pct_change:+.1f}%)")
-                    report.append(f"    Last Updated: {benchmark.last_updated.isoformat()}")
+                    report.append(
+                        f"    Last Updated: {benchmark.last_updated.isoformat()}"
+                    )
                     report.append("")
 
             # Results
@@ -497,7 +508,8 @@ class PerformanceProfiler:
                             samples=[],  # Do not restore historical samples to keep file small
                             last_updated=datetime.fromisoformat(
                                 bench_data.get(
-                                    "last_updated", datetime.now(timezone.utc).isoformat()
+                                    "last_updated",
+                                    datetime.now(timezone.utc).isoformat(),
                                 )
                             ),
                         )

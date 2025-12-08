@@ -13,14 +13,14 @@ from typing import Any, Optional
 @dataclass
 class Violation:
     """A detected policy or law violation."""
-    
+
     id: str
     type: str
     severity: str
     description: str
     law_reference: Optional[str] = None
     evidence: dict[str, Any] = field(default_factory=dict)
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "Violation":
         """Create from dictionary."""
@@ -37,7 +37,7 @@ class Violation:
 @dataclass
 class EvaluateRequest:
     """Request to evaluate an action."""
-    
+
     action: str
     agent_id: str = "unknown"
     action_type: str = "query"
@@ -50,7 +50,7 @@ class EvaluateRequest:
 @dataclass
 class EvaluateResponse:
     """Response from action evaluation."""
-    
+
     decision: str
     decision_id: str
     reason: str
@@ -64,13 +64,11 @@ class EvaluateResponse:
     audit_id: Optional[str] = None
     cache_hit: bool = False
     fundamental_laws_checked: list[int] = field(default_factory=list)
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "EvaluateResponse":
         """Create from dictionary."""
-        violations = [
-            Violation.from_dict(v) for v in data.get("violations", [])
-        ]
+        violations = [Violation.from_dict(v) for v in data.get("violations", [])]
         return cls(
             decision=data.get("decision", "BLOCK"),
             decision_id=data.get("decision_id", ""),
@@ -86,11 +84,11 @@ class EvaluateResponse:
             cache_hit=data.get("cache_hit", False),
             fundamental_laws_checked=data.get("fundamental_laws_checked", []),
         )
-    
+
     def is_allowed(self) -> bool:
         """Check if the action is allowed."""
         return self.decision == "ALLOW"
-    
+
     def is_blocked(self) -> bool:
         """Check if the action is blocked."""
         return self.decision in ("BLOCK", "TERMINATE")
@@ -99,7 +97,7 @@ class EvaluateResponse:
 @dataclass
 class Decision:
     """A governance decision record."""
-    
+
     decision_id: str
     decision: str
     agent_id: str
@@ -113,13 +111,11 @@ class Decision:
     timestamp: str = ""
     latency_ms: int = 0
     audit_id: Optional[str] = None
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "Decision":
         """Create from dictionary."""
-        violations = [
-            Violation.from_dict(v) for v in data.get("violations", [])
-        ]
+        violations = [Violation.from_dict(v) for v in data.get("violations", [])]
         return cls(
             decision_id=data.get("decision_id", ""),
             decision=data.get("decision", ""),
@@ -140,13 +136,13 @@ class Decision:
 @dataclass
 class PolicyRule:
     """A rule within a policy."""
-    
+
     id: str
     condition: str
     action: str
     priority: int = 0
     description: Optional[str] = None
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "PolicyRule":
         """Create from dictionary."""
@@ -162,7 +158,7 @@ class PolicyRule:
 @dataclass
 class Policy:
     """A governance policy."""
-    
+
     policy_id: str
     name: str
     description: str
@@ -175,7 +171,7 @@ class Policy:
     updated_at: str = ""
     created_by: Optional[str] = None
     metadata: Optional[dict[str, Any]] = None
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "Policy":
         """Create from dictionary."""
@@ -199,13 +195,13 @@ class Policy:
 @dataclass
 class FairnessMetric:
     """A fairness metric."""
-    
+
     metric_name: str
     value: float
     threshold: float
     status: str
     description: str
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "FairnessMetric":
         """Create from dictionary."""
@@ -221,7 +217,7 @@ class FairnessMetric:
 @dataclass
 class GroupFairness:
     """Fairness metrics for a group."""
-    
+
     group_id: str
     group_name: str
     sample_size: int
@@ -230,7 +226,7 @@ class GroupFairness:
     block_rate: float
     avg_risk_score: float
     disparity_index: float
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "GroupFairness":
         """Create from dictionary."""
@@ -249,7 +245,7 @@ class GroupFairness:
 @dataclass
 class FairnessReport:
     """A fairness report."""
-    
+
     report_id: str
     overall_fairness_score: float
     metrics: list[FairnessMetric] = field(default_factory=list)
@@ -259,7 +255,7 @@ class FairnessReport:
     timestamp: str = ""
     period_start: str = ""
     period_end: str = ""
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "FairnessReport":
         """Create from dictionary."""
@@ -281,7 +277,7 @@ class FairnessReport:
 @dataclass
 class Appeal:
     """An appeal record."""
-    
+
     appeal_id: str
     decision_id: str
     appellant_id: str
@@ -297,7 +293,7 @@ class Appeal:
     created_at: str = ""
     updated_at: str = ""
     resolved_at: Optional[str] = None
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "Appeal":
         """Create from dictionary."""
@@ -323,7 +319,7 @@ class Appeal:
 @dataclass
 class AuditRecord:
     """An audit record."""
-    
+
     audit_id: str
     event_type: str
     entity_id: str
@@ -338,7 +334,7 @@ class AuditRecord:
     fundamental_laws: list[int] = field(default_factory=lambda: [15])
     timestamp: str = ""
     verified: bool = True
-    
+
     @classmethod
     def from_dict(cls, data: dict) -> "AuditRecord":
         """Create from dictionary."""

@@ -34,7 +34,9 @@ class ExplainabilityAPI:
         """
         try:
             explanation = self.explainer.explain_decision(
-                decision=decision, judgment_data=judgment_data, include_ml_explanation=include_ml
+                decision=decision,
+                judgment_data=judgment_data,
+                include_ml_explanation=include_ml,
             )
 
             return APIResponse(
@@ -88,7 +90,9 @@ class ExplainabilityAPI:
                 success=False, error=str(e), message="Failed to explain policy match"
             ).to_dict()
 
-    def get_decision_tree_endpoint(self, judgment_data: Dict[str, Any]) -> Dict[str, Any]:
+    def get_decision_tree_endpoint(
+        self, judgment_data: Dict[str, Any]
+    ) -> Dict[str, Any]:
         """API endpoint: Get decision tree visualization.
 
         Args:
@@ -127,10 +131,14 @@ class ExplainabilityAPI:
             report = self.report_generator.generate_report(decisions, time_period)
 
             return APIResponse(
-                success=True, data=report, message="Transparency report generated successfully"
+                success=True,
+                data=report,
+                message="Transparency report generated successfully",
             ).to_dict()
 
         except Exception as e:
             return APIResponse(
-                success=False, error=str(e), message="Failed to generate transparency report"
+                success=False,
+                error=str(e),
+                message="Failed to generate transparency report",
             ).to_dict()
