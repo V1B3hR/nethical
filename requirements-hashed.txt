@@ -176,9 +176,9 @@ docstring-parser==0.17.0 \
     --hash=sha256:583de4a309722b3315439bb31d64ba3eebada841f2e2cee23b99df001434c912 \
     --hash=sha256:cf2569abd23dce8099b300f9b4fa8191e9582dda731fd533daf54c4551658708
     # via anthropic
-fastapi==0.123.6 \
-    --hash=sha256:3294c127a33e945c778227e615ddfe527824e4dae56276e87e08c159ecb74058 \
-    --hash=sha256:48ec836abdc781b7e9f0f804963a82719c5ad681d24c35bba0b939e2e86b8a6a
+fastapi==0.124.0 \
+    --hash=sha256:260cd178ad75e6d259991f2fd9b0fee924b224850079df576a3ba604ce58f4e6 \
+    --hash=sha256:91596bdc6dde303c318f06e8d2bc75eafb341fc793a0c9c92c0bc1db1ac52480
     # via -r requirements.txt
 h11==0.16.0 \
     --hash=sha256:4e35b956cf45792e4caa5885e69fba00bdbc6ffafbfa020300e549b208ee5ff1 \

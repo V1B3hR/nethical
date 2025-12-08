@@ -11,7 +11,7 @@ argon2-cffi==25.1.0
 #   pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
 
 # Web server framework (optional - for API server)
-fastapi==0.123.6
+fastapi==0.124.0
 uvicorn==0.38.0
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
