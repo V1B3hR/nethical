@@ -147,7 +147,7 @@ def ensure_kaggle_json(username: str, key: str, overwrite: bool = False) -> None
     kaggle_json_path = kaggle_path / "kaggle.json"
     kaggle_path.mkdir(parents=True, exist_ok=True)
     if kaggle_json_path.exists() and not overwrite:
-        print(f("[INFO] Kaggle credentials already present at {kaggle_json_path}"))
+        print(f"[INFO] Kaggle credentials already present at {kaggle_json_path}")
         return
     print(f"[INFO] Writing Kaggle credentials to {kaggle_json_path}")
     with open(kaggle_json_path, "w") as f:
