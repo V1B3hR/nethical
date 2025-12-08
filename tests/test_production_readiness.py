@@ -35,7 +35,7 @@ from nethical.explainability.quarterly_transparency import (
 )
 
 # Section 11: Release & Change
-from nethical.policy.release_management import PolicyPack, DeploymentStage, CanaryConfig
+from nethical.policy.release_management import PolicyPack, DeploymentStage
 
 # Section 12: Compliance
 from nethical.security.data_compliance import (
