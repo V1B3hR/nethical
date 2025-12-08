@@ -915,9 +915,7 @@ class BehavioralAnalyzer:
                         "metric": key,
                         "current_value": current_val,
                         "average_value": avg,
-                        "spike_ratio": (
-                            abs(current_val / avg) if avg != 0 else float("inf")
-                        ),
+                        "spike_ratio": abs(current_val / avg),
                         "threshold": self.spike_threshold,
                     },
                 }
