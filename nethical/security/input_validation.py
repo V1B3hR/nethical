@@ -960,9 +960,7 @@ class BehavioralAnalyzer:
                             "metric": key,
                             "current_delta": delta,
                             "average_delta": avg_delta,
-                            "jerk_ratio": (
-                                delta / avg_delta if avg_delta > 0 else float("inf")
-                            ),
+                            "jerk_ratio": delta / avg_delta,
                             "threshold": self.jerk_threshold,
                         },
                     }
