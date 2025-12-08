@@ -306,7 +306,6 @@ class TestContinuousAuthentication:
     @pytest.mark.medium
     def test_device_fingerprinting(self):
         """Test that device fingerprinting detects suspicious devices"""
-        known_device = {"device_id": "device-123", "trusted": True}
         unknown_device = {"device_id": "device-456", "trusted": False}
 
         # Unknown device should trigger additional verification
