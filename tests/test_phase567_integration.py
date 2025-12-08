@@ -4,7 +4,7 @@ import pytest
 import tempfile
 from pathlib import Path
 
-from nethical.core import Phase567IntegratedGovernance, MLModelType
+from nethical.core import Phase567IntegratedGovernance
 
 
 class TestPhase567Integration:
