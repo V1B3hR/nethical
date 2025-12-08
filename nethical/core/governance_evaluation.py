@@ -101,36 +101,7 @@ class IntentDeviationMonitor:
         self.enabled = True
         self.intent_history: deque = deque(maxlen=100)
 
-    async def analyze_action(self, action: AgentAction) -> List[SafetyViolation]:
-        from .governance_core import (
-            SafetyViolation,
-            ViolationType,
-            Severity,
-            SubMission,
-        )
-
-        if not self.enabled or not action.intent:
-            return []
-        self.intent_history.append(
-            {"intent": action.intent, "timestamp": action.timestamp}
-        )
-        if self._is_shift(action.intent):
-            return [
-                SafetyViolation(
-                    violation_id=generate_id("viol"),
-                    action_id=action.action_id,
-                    violation_type=ViolationType.INTENT_DEVIATION,
-                    severity=Severity.MEDIUM,
-                    description="Intent deviation detected",
-                    confidence=0.75,
-                    evidence=["Recent intent shift"],
-                    recommendations=["Confirm new intent", "Add verification step"],
-                    detector_name="IntentDeviationMonitor",
-                    sub_mission=SubMission.SUDDEN_INTENT_SHIFT,
-                )
-            ]
-        return []
-
+    # Removed analyze_action to break cyclic import. The logic should be defined in governance_core.py.
     def _is_shift(self, current_intent: str) -> bool:
         past = [h["intent"] for h in list(self.intent_history)[-10:]]
         return bool(past) and current_intent not in past
