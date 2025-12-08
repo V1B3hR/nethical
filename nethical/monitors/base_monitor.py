@@ -95,15 +95,18 @@ class RollingCounter:
 
 class EvaluationCache(ABC):
     @abstractmethod
-    async def get(self, key: Hashable) -> Optional[EvaluationOutcome]: ...
+    async def get(self, key: Hashable) -> Optional[EvaluationOutcome]:
+        pass
 
     @abstractmethod
     async def set(
         self, key: Hashable, value: EvaluationOutcome, ttl_s: Optional[float] = None
-    ): ...
+    ):
+        pass
 
     @abstractmethod
-    async def invalidate(self, key: Hashable): ...
+    async def invalidate(self, key: Hashable):
+        pass
 
 
 class InMemoryTTLCache(EvaluationCache):
