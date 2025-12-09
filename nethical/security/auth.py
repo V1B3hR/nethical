@@ -1,7 +1,7 @@
 """
 Authentication and authorization module
 
-This module provides JWT-based authentication with support for: 
+This module provides JWT-based authentication with support for:  
 - Access and refresh tokens
 - Token revocation
 - API key management
@@ -17,7 +17,6 @@ Security Features:
 
 from __future__ import annotations
 
-import hashlib
 import bcrypt
 import logging
 import os
@@ -74,9 +73,9 @@ class TokenPayload:
             "sub": self.user_id,
             "type": self.token_type.value,
             "iat": int(self.issued_at.timestamp()),
-            "exp": int(self. expires_at.timestamp()),
-            "jti": self.jti,
-            "scope": self. scope,
+            "exp": int(self.expires_at.timestamp()),
+            "jti": self. jti,
+            "scope":  self.scope,
         }
 
     @classmethod
@@ -93,11 +92,11 @@ class TokenPayload:
 
     def is_expired(self) -> bool:
         """Check if token is expired"""
-        return datetime.now(timezone.utc) > self.expires_at
+        return datetime.now(timezone. utc) > self.expires_at
 
 
 @dataclass
-class APIKey: 
+class APIKey:  
     """API Key metadata"""
 
     key_id: str
@@ -143,10 +142,10 @@ class AuthManager:
         Initialize AuthManager with secure secret key handling
         
         Args:
-            secret_key: JWT signing secret.  If None, reads from JWT_SECRET env var. 
+            secret_key: JWT signing secret.   If None, reads from JWT_SECRET env var.  
                        Falls back to auto-generated ephemeral key with warning.
             access_token_expiry: Access token lifetime (default: 1 hour)
-            refresh_token_expiry:  Refresh token lifetime (default: 7 days)
+            refresh_token_expiry:   Refresh token lifetime (default:  7 days)
             revocation_store: Optional callback to persist revoked token JTIs
             revocation_checker: Optional callback to check if JTI is revoked
             
@@ -163,21 +162,21 @@ class AuthManager:
                 secret_key = secrets.token_urlsafe(32)
                 warnings.warn(
                     "AuthManager initialized without explicit secret_key or JWT_SECRET environment variable. "
-                    "Auto-generated key will be lost on restart, invalidating all tokens.  "
+                    "Auto-generated key will be lost on restart, invalidating all tokens.   "
                     "For production, set JWT_SECRET environment variable.",
                     UserWarning,
                     stacklevel=2,
                 )
                 log.warning(
-                    "AuthManager:  No secret_key provided and JWT_SECRET not set. "
-                    "Auto-generated ephemeral key will not persist across restarts. "
+                    "AuthManager:   No secret_key provided and JWT_SECRET not set. "
+                    "Auto-generated ephemeral key will not persist across restarts.  "
                     "Set JWT_SECRET environment variable for production."
                 )
         
         # Block insecure literal secret
-        if secret_key == self._INSECURE_SECRET:
+        if secret_key == self._INSECURE_SECRET: 
             raise ValueError(
-                f"Refusing to use insecure literal secret '{self._INSECURE_SECRET}'. "
+                f"Refusing to use insecure literal secret '{self._INSECURE_SECRET}'.  "
                 "Set JWT_SECRET environment variable or provide a cryptographically secure secret_key."
             )
         
@@ -185,8 +184,8 @@ class AuthManager:
         if len(secret_key) < 16:
             raise ValueError(
                 f"secret_key too short ({len(secret_key)} chars). "
-                "Use at least 16 characters for cryptographic security.  "
-                "Recommended:  32+ characters or set JWT_SECRET environment variable."
+                "Use at least 16 characters for cryptographic security.   "
+                "Recommended:   32+ characters or set JWT_SECRET environment variable."
             )
         
         self.secret_key = secret_key
@@ -202,7 +201,7 @@ class AuthManager:
         if not revocation_store:
             log.warning(
                 "AuthManager: Token revocation storage is in-memory only. "
-                "Revoked tokens will be lost on restart.  For production, "
+                "Revoked tokens will be lost on restart.   For production, "
                 "provide revocation_store and revocation_checker callbacks."
             )
 
@@ -232,22 +231,22 @@ class AuthManager:
         )
 
     def _decode_token(self, token: str) -> TokenPayload:
-        try:
+        try: 
             payload_data = jwt.decode(
                 token,
                 self.secret_key,
                 algorithms=["HS256"],
                 options={
-                    "require":  ["sub", "type", "iat", "exp", "jti"],
+                    "require":   ["sub", "type", "iat", "exp", "jti"],
                 },
             )
             payload = TokenPayload.from_dict(payload_data)
-            if self._is_token_revoked(payload.jti):
+            if self._is_token_revoked(payload. jti):
                 raise InvalidTokenError("Token has been revoked")
             return payload
         except jwt.ExpiredSignatureError:
             raise TokenExpiredError("Token has expired")
-        except jwt.InvalidTokenError as e:
+        except jwt. InvalidTokenError as e:
             raise InvalidTokenError(f"Invalid token: {e}")
         except (ValueError, KeyError) as e:
             raise InvalidTokenError(f"Failed to decode token: {e}")
@@ -268,11 +267,11 @@ class AuthManager:
         log.info(f"Created access token for user {user_id}")
         return token, payload
 
-    def create_refresh_token(self, user_id: str) -> Tuple[str, TokenPayload]: 
+    def create_refresh_token(self, user_id: str) -> Tuple[str, TokenPayload]:  
         now = datetime.now(timezone.utc)
         payload = TokenPayload(
             user_id=user_id,
-            token_type=TokenType. REFRESH,
+            token_type=TokenType.REFRESH,
             issued_at=now,
             expires_at=now + self.refresh_token_expiry,
             jti=secrets.token_urlsafe(16),
@@ -303,7 +302,7 @@ class AuthManager:
             key_id=key_id,
             key_hash=key_hash,
             name=name,
-            created_at=datetime. now(timezone.utc),
+            created_at=datetime.now(timezone.utc),
             expires_at=expires_at,
         )
 
