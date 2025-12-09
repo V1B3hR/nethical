@@ -48,13 +48,18 @@ jobs:
 
       - name: Install Trivy
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install. sh | sudo sh -s -- -b /usr/local/bin
+          set -e
+          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
+          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources. list.d/trivy.list
+          sudo apt-get update
+          sudo apt-get install -y trivy
+          trivy --version
 
       - name:  Determine image to scan
-        id: image
+        id:  image
         run: |
-          if [ -n "${{ github.event.inputs.image }}" ]; then
-            echo "image=${{ github.event.inputs. image }}" >> $GITHUB_OUTPUT
+          if [ -n "${{ github. event.inputs.image }}" ]; then
+            echo "image=${{ github.event.inputs.image }}" >> $GITHUB_OUTPUT
           else
             echo "image=v1b3hr/nethical: latest" >> $GITHUB_OUTPUT
           fi
