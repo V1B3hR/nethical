@@ -73,7 +73,7 @@ class TokenPayload:
             "sub": self.user_id,
             "type": self.token_type.value,
             "iat": int(self.issued_at.timestamp()),
-            "exp": int(self.expires_at.timestamp()),
+            "exp":  int(self.expires_at. timestamp()),
             "jti": self. jti,
             "scope":  self.scope,
         }
@@ -92,7 +92,7 @@ class TokenPayload:
 
     def is_expired(self) -> bool:
         """Check if token is expired"""
-        return datetime.now(timezone. utc) > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
 
 @dataclass
@@ -104,7 +104,7 @@ class APIKey:
     name: str
     created_at: datetime
     expires_at: Optional[datetime] = None
-    last_used_at: Optional[datetime] = None
+    last_used_at:  Optional[datetime] = None
     enabled: bool = True
 
     def is_expired(self) -> bool:
@@ -116,7 +116,7 @@ class APIKey:
         return self.enabled and not self.is_expired()
 
 
-class AuthManager:
+class AuthManager: 
     """
     Authentication Manager with secure JWT handling
     
@@ -133,7 +133,7 @@ class AuthManager:
     def __init__(
         self,
         secret_key: Optional[str] = None,
-        access_token_expiry: timedelta = timedelta(hours=1),
+        access_token_expiry:  timedelta = timedelta(hours=1),
         refresh_token_expiry: timedelta = timedelta(days=7),
         revocation_store: Optional[Callable[[str], None]] = None,
         revocation_checker: Optional[Callable[[str], bool]] = None,
@@ -174,7 +174,7 @@ class AuthManager:
                 )
         
         # Block insecure literal secret
-        if secret_key == self._INSECURE_SECRET: 
+        if secret_key == self._INSECURE_SECRET:
             raise ValueError(
                 f"Refusing to use insecure literal secret '{self._INSECURE_SECRET}'.  "
                 "Set JWT_SECRET environment variable or provide a cryptographically secure secret_key."
@@ -188,7 +188,7 @@ class AuthManager:
                 "Recommended:   32+ characters or set JWT_SECRET environment variable."
             )
         
-        self.secret_key = secret_key
+        self. secret_key = secret_key
         self.access_token_expiry = access_token_expiry
         self.refresh_token_expiry = refresh_token_expiry
 
@@ -211,7 +211,7 @@ class AuthManager:
     def revoked_tokens(self) -> set[str]:
         return self._revoked_tokens
 
-    def _is_token_revoked(self, jti: str) -> bool:
+    def _is_token_revoked(self, jti:  str) -> bool:
         if jti in self._revoked_tokens:
             return True
         if self._revocation_checker:
@@ -224,8 +224,8 @@ class AuthManager:
             self._revocation_store(jti)
 
     def _encode_token(self, payload: TokenPayload) -> str:
-        return jwt.encode(
-            payload. to_dict(),
+        return jwt. encode(
+            payload.to_dict(),
             self.secret_key,
             algorithm="HS256",
         )
@@ -241,7 +241,7 @@ class AuthManager:
                 },
             )
             payload = TokenPayload.from_dict(payload_data)
-            if self._is_token_revoked(payload. jti):
+            if self._is_token_revoked(payload.jti):
                 raise InvalidTokenError("Token has been revoked")
             return payload
         except jwt.ExpiredSignatureError:
@@ -254,10 +254,10 @@ class AuthManager:
     def create_access_token(
         self, user_id: str, scope: Optional[str] = None
     ) -> Tuple[str, TokenPayload]:
-        now = datetime.now(timezone.utc)
+        now = datetime. now(timezone.utc)
         payload = TokenPayload(
             user_id=user_id,
-            token_type=TokenType. ACCESS,
+            token_type=TokenType.ACCESS,
             issued_at=now,
             expires_at=now + self.access_token_expiry,
             scope=scope,
@@ -267,7 +267,7 @@ class AuthManager:
         log.info(f"Created access token for user {user_id}")
         return token, payload
 
-    def create_refresh_token(self, user_id: str) -> Tuple[str, TokenPayload]:  
+    def create_refresh_token(self, user_id:  str) -> Tuple[str, TokenPayload]:  
         now = datetime.now(timezone.utc)
         payload = TokenPayload(
             user_id=user_id,
@@ -283,9 +283,9 @@ class AuthManager:
     def verify_token(self, token: str) -> TokenPayload:
         return self._decode_token(token)
 
-    def revoke_token(self, token: str) -> None:
+    def revoke_token(self, token:  str) -> None:
         payload = self._decode_token(token)
-        self._store_revocation(payload. jti)
+        self._store_revocation(payload.jti)
         log.info(f"Revoked token {payload.jti} for user {payload.user_id}")
 
     def create_api_key(
@@ -318,8 +318,8 @@ class AuthManager:
                 api_key.is_valid() and
                 bcrypt.checkpw(raw_key.encode(), api_key.key_hash.encode())
             ):
-                api_key.last_used_at = datetime.now(timezone.utc)
-                log.info(f"API key {key_id} verified")
+                api_key.last_used_at = datetime.now(timezone. utc)
+                log.info("API key verified")
                 return key_id
 
         log.warning("Invalid API key attempt")
