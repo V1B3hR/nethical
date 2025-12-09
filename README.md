@@ -29,9 +29,12 @@
   ![Focus](https://img.shields.io/badge/focus-AI_Safety_%26_Alignment-red.svg)
   ![Ethics](https://img.shields.io/badge/ethics-25_Fundamental_Laws-purple.svg)
 </div>
+ 
+ 
+ Give a ⭐ and visit: https://github.com/sponsors/V1B3hR to sponsorship my project.
 
 ---
- Give a ⭐ and visit: https://github.com/sponsors/V1B3hR to sponsorship my project.
+
 
 <a name="purpose"></a>
 ## 🎯 Purpose: What is Nethical?
