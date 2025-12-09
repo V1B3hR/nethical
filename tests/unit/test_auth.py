@@ -10,12 +10,8 @@ from nethical.security.auth import (
     TokenPayload,
     TokenType,
     APIKey,
-    AuthenticationError,
     TokenExpiredError,
     InvalidTokenError,
-    authenticate_request,
-    get_auth_manager,
-    set_auth_manager,
 )
 
 
@@ -151,7 +147,6 @@ class TestAuthManager:
     def setup_method(self):
         """Set up test fixtures"""
         self.auth = AuthManager(secret_key="test-secret-key")
-        set_auth_manager(self.auth)
     
     def test_initialization(self):
         """Test auth manager initialization"""
@@ -433,6 +428,86 @@ class TestAuthIntegration:
         for user, token in tokens.items():
             payload = self.auth.verify_token(token)
             assert payload.user_id == user
+
+
+class TestAuthManagerSecurity:
+    """Test cases for AuthManager security features"""
+    
+    def test_blocks_insecure_literal_secret(self):
+        """Test that AuthManager blocks the literal string 'secret'"""
+        with pytest.raises(ValueError) as exc_info:
+            AuthManager(secret_key="secret")
+        
+        assert "insecure literal secret" in str(exc_info.value).lower()
+        assert "secret" in str(exc_info.value)
+    
+    def test_blocks_short_secret_key(self):
+        """Test that AuthManager blocks keys shorter than 16 characters"""
+        with pytest.raises(ValueError) as exc_info:
+            AuthManager(secret_key="short")
+        
+        assert "too short" in str(exc_info.value).lower()
+        assert "16" in str(exc_info.value)
+    
+    def test_accepts_valid_secret_key(self):
+        """Test that AuthManager accepts valid secret keys"""
+        # 16 character key (minimum)
+        auth = AuthManager(secret_key="1234567890123456")
+        assert auth.secret_key == "1234567890123456"
+        
+        # Longer key (recommended)
+        long_key = "this-is-a-very-secure-and-long-secret-key-12345678"
+        auth = AuthManager(secret_key=long_key)
+        assert auth.secret_key == long_key
+    
+    def test_environment_variable_jwt_secret(self, monkeypatch):
+        """Test that AuthManager reads JWT_SECRET from environment"""
+        test_secret = "environment-secret-key-at-least-16-chars"
+        monkeypatch.setenv("JWT_SECRET", test_secret)
+        
+        # Create AuthManager without explicit secret_key
+        auth = AuthManager()
+        assert auth.secret_key == test_secret
+    
+    def test_environment_variable_blocks_insecure_secret(self, monkeypatch):
+        """Test that insecure secret is blocked even from environment"""
+        monkeypatch.setenv("JWT_SECRET", "secret")
+        
+        with pytest.raises(ValueError) as exc_info:
+            AuthManager()
+        
+        assert "insecure literal secret" in str(exc_info.value).lower()
+    
+    def test_auto_generates_ephemeral_key_with_warning(self, monkeypatch):
+        """Test that AuthManager auto-generates key and warns when no secret provided"""
+        # Remove JWT_SECRET if it exists
+        monkeypatch.delenv("JWT_SECRET", raising=False)
+        
+        # Should generate ephemeral key and issue warning
+        with pytest.warns(UserWarning, match="Auto-generated key will be lost on restart"):
+            auth = AuthManager()
+        
+        # Should have a valid key
+        assert auth.secret_key is not None
+        assert len(auth.secret_key) >= 16
+    
+    def test_jti_generation_in_tokens(self):
+        """Test that tokens include secure JTI (JWT ID)"""
+        auth = AuthManager(secret_key="test-secret-key-12345678")
+        
+        token1, payload1 = auth.create_access_token("user1")
+        token2, payload2 = auth.create_access_token("user1")
+        
+        # Both tokens should have JTI
+        assert payload1.jti is not None
+        assert payload2.jti is not None
+        
+        # JTIs should be unique
+        assert payload1.jti != payload2.jti
+        
+        # JTI should be URL-safe and non-empty
+        assert len(payload1.jti) > 0
+        assert payload1.jti.isalnum() or '-' in payload1.jti or '_' in payload1.jti
 
 
 if __name__ == "__main__":
