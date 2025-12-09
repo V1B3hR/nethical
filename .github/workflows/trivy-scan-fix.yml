@@ -15,18 +15,18 @@ jobs:
   trivy-scan:
     runs-on:  ubuntu-latest
     permissions: 
-            contents: read
-    env:  
+      contents: read
+    env: 
       TRIVY_CACHE_DIR: ~/. cache/trivy
 
-    steps:  
+    steps: 
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name:  Show disk usage (before cleanup)
+      - name: Show disk usage (before cleanup)
         run: df -h
 
-      - name:  Aggressive runner cleanup (free disk)
+      - name: Aggressive runner cleanup (free disk)
         run: |
           sudo rm -rf /usr/share/dotnet \
             /opt/ghc \
@@ -41,39 +41,18 @@ jobs:
 
       - name: Cache Trivy DB
         uses: actions/cache@v4
-        with:
+        with: 
           path:  ${{ env.TRIVY_CACHE_DIR }}
-          key:  trivy-db-${{ github.run_id }}
+          key: trivy-db-${{ github.run_id }}
           restore-keys: trivy-db-
 
-      - name: Install Trivy
-        run: |
-          set -e
-          wget -qO - https://aquasecurity.github.io/trivy-repo/deb/public.key | sudo apt-key add -
-          echo "deb https://aquasecurity.github.io/trivy-repo/deb $(lsb_release -sc) main" | sudo tee -a /etc/apt/sources.list. d/trivy.list
-          sudo apt-get update
-          sudo apt-get install -y trivy
-          trivy --version
-
-      - name: Determine image to scan
-        id: image
-        run:  |
-          if [ -n "${{ github.event.inputs.image }}" ]; then
-            echo "image=${{ github.event. inputs.image }}" >> $GITHUB_OUTPUT
-          else
-            echo "image=v1b3hr/nethical: latest" >> $GITHUB_OUTPUT
-          fi
-
-      - name:  Run Trivy (Container Scan)
-        env:
-          TRIVY_CACHE_DIR:  ${{ env.TRIVY_CACHE_DIR }}
-        run: |
-          trivy image \
-            --cache-dir "${TRIVY_CACHE_DIR}" \
-            --skip-version-check \
-            --format table \
-            --exit-code 1 \
-            "${{ steps. image.outputs.image }}"
+      - name: Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: ${{ github.event.inputs.image || 'v1b3hr/nethical:latest' }}
+          format: 'table'
+          exit-code: '1'
+          cache-dir: ${{ env.TRIVY_CACHE_DIR }}
 
       - name: Show disk usage (after scan)
         if: always()
