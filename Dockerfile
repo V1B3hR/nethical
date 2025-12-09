@@ -20,6 +20,9 @@ COPY pyproject.toml setup.py ./
 # Install Python dependencies
 RUN pip install --no-cache-dir --user -e .
 
+# Upgrade pip to fix vulnerabilities
+RUN pip install --upgrade pip
+
 # Optionally preload sentence-transformers model to reduce cold start
 RUN if [ "$PRELOAD_EMBEDDINGS" = "true" ]; then \
     python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')" || true; \
@@ -34,6 +37,9 @@ ENV PYTHONUNBUFFERED=1 \
     PATH="/root/.local/bin:$PATH" \
     NETHICAL_SEMANTIC=1
 
+# Upgrade system packages for security
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
+
 # Create app user for security
 RUN useradd -m -u 1000 nethical && \
     mkdir -p /app /data /root/.cache && \
@@ -45,6 +51,9 @@ WORKDIR /app
 # Copy Python dependencies from builder
 COPY --from=builder /root/.local /root/.local
 COPY --from=builder /root/.cache /root/.cache
+
+# Remove potential secrets from package metadata
+RUN rm -f /root/.local/lib/python*/site-packages/PyJWT-*/PyJWT-*.dist-info/METADATA 2>/dev/null || true
 
 # Copy application code
 COPY --chown=nethical:nethical . .
