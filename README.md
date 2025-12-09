@@ -14,8 +14,6 @@
   <h1>NETHICAL</h1>
   <h3>The Governance, Security, and Ethics Layer for the Age of AI</h3>
   
-  Give a ⭐ and visit: https://github.com/sponsors/V1B3hR to sponsorship my project.
-  
   <p>
     <a href="#purpose">Purpose</a> •
     <a href="#25-fundamental-laws">25 Laws</a> •
@@ -33,6 +31,7 @@
 </div>
 
 ---
+ Give a ⭐ and visit: https://github.com/sponsors/V1B3hR to sponsorship my project.
 
 <a name="purpose"></a>
 ## 🎯 Purpose: What is Nethical?
