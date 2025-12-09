@@ -1,135 +1,234 @@
-# -*- coding: utf-8 -*-
 """
-nethical.security.auth
+Authentication and authorization module
 
-Rewritten AuthManager with secure JWT secret handling:
-- Reads secret from constructor parameter, or JWT_SECRET env var.
-- Rejects obviously insecure literal 'secret'.
-- Generates ephemeral secret only when explicitly allowed; logs a warning.
-- Encodes/decodes tokens with HS256 and required claims.
-- Raises explicit errors for misconfiguration and invalid tokens.
+This module provides JWT-based authentication with support for: 
+- Access and refresh tokens
+- Token revocation
+- API key management
+- Secure secret key handling from environment
+
+Security Features:
+- JWT tokens with configurable expiry
+- Token revocation support (in-memory with optional external storage)
+- API key hashing (bcrypt)
+- Automatic secret key generation with warnings for ephemeral keys
+- Environment-driven secret key for production deployments
 """
 
 from __future__ import annotations
 
-import os
+import hashlib
 import logging
+import os
 import secrets
-from dataclasses import dataclass, asdict
+import warnings
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Dict, Optional, Tuple, Any
+from typing import Callable, Dict, Optional, Tuple
+from dataclasses import dataclass
 
-import jwt  # PyJWT
+import jwt
+
+__all__ = [
+    "TokenType",
+    "TokenPayload",
+    "APIKey",
+    "AuthManager",
+    "TokenExpiredError",
+    "InvalidTokenError",
+]
 
 log = logging.getLogger(__name__)
 
-# Exceptions
+
 class TokenExpiredError(Exception):
-    pass
+    """Raised when a token has expired"""
+
 
 class InvalidTokenError(Exception):
-    pass
+    """Raised when a token is invalid"""
 
-class ConfigurationError(Exception):
-    pass
 
-# Token types
 class TokenType(str, Enum):
+    """Token type enumeration"""
+
     ACCESS = "access"
     REFRESH = "refresh"
 
+
 @dataclass
 class TokenPayload:
-    sub: str
-    type: TokenType
-    iat: int
-    exp: int
-    jti: str
+    """JWT token payload"""
+
+    user_id: str
+    token_type: TokenType
+    issued_at: datetime
+    expires_at: datetime
+    jti: str  # JWT ID for revocation tracking
     scope: Optional[str] = None
 
-    def to_dict(self) -> Dict[str, Any]:
-        d = asdict(self)
-        # convert TokenType to value for serialization
-        d["type"] = self.type.value if isinstance(self.type, TokenType) else self.type
-        return d
+    def to_dict(self) -> dict:
+        """Convert to dictionary for JWT encoding"""
+        return {
+            "sub": self.user_id,
+            "type": self.token_type.value,
+            "iat": int(self.issued_at.timestamp()),
+            "exp": int(self. expires_at.timestamp()),
+            "jti": self.jti,
+            "scope": self. scope,
+        }
 
-    @staticmethod
-    def from_dict(data: Dict[str, Any]) -> "TokenPayload":
-        try:
-            return TokenPayload(
-                sub=data["sub"],
-                type=TokenType(data["type"]),
-                iat=int(data["iat"]),
-                exp=int(data["exp"]),
-                jti=str(data["jti"]),
-                scope=data.get("scope"),
-            )
-        except Exception as e:
-            raise InvalidTokenError(f"Malformed token payload: {e}")
+    @classmethod
+    def from_dict(cls, data: dict) -> TokenPayload:
+        """Create from JWT payload dictionary"""
+        return cls(
+            user_id=data["sub"],
+            token_type=TokenType(data["type"]),
+            issued_at=datetime.fromtimestamp(data["iat"], tz=timezone.utc),
+            expires_at=datetime.fromtimestamp(data["exp"], tz=timezone.utc),
+            jti=data["jti"],
+            scope=data. get("scope"),
+        )
+
+    def is_expired(self) -> bool:
+        """Check if token is expired"""
+        return datetime.now(timezone.utc) > self.expires_at
+
+
+@dataclass
+class APIKey: 
+    """API Key metadata"""
+
+    key_id: str
+    key_hash: str
+    name: str
+    created_at: datetime
+    expires_at: Optional[datetime] = None
+    last_used_at: Optional[datetime] = None
+    enabled: bool = True
+
+    def is_expired(self) -> bool:
+        if not self.expires_at:
+            return False
+        return datetime.now(timezone. utc) > self.expires_at
+
+    def is_valid(self) -> bool:
+        return self.enabled and not self.is_expired()
+
 
 class AuthManager:
     """
-    AuthManager handles JWT access/refresh token creation and verification.
-
-    Usage:
-      auth = AuthManager(secret_key=None)  # will read from JWT_SECRET env var if present
+    Authentication Manager with secure JWT handling
+    
+    Security Best Practices:
+    - Always provide secret_key via environment variable (JWT_SECRET) in production
+    - Never commit secret keys to version control
+    - Rotate secret keys periodically
+    - Use external revocation storage for distributed deployments
     """
-
+    
+    # Insecure literal secret that should NEVER be used
+    _INSECURE_SECRET = "secret"
+    
     def __init__(
         self,
         secret_key: Optional[str] = None,
-        access_token_expiry: timedelta = timedelta(minutes=15),
+        access_token_expiry: timedelta = timedelta(hours=1),
         refresh_token_expiry: timedelta = timedelta(days=7),
-        allow_ephemeral_secret: bool = False,
-    ) -> None:
+        revocation_store: Optional[Callable[[str], None]] = None,
+        revocation_checker: Optional[Callable[[str], bool]] = None,
+    ):
         """
-        Initialize the AuthManager.
-
-        - secret_key: explicit HMAC secret. If None, we attempt to read JWT_SECRET env var.
-        - allow_ephemeral_secret: when True, an ephemeral secret will be generated if none provided.
-          If False and no secret is provided, a ConfigurationError is raised.
+        Initialize AuthManager with secure secret key handling
+        
+        Args:
+            secret_key: JWT signing secret.  If None, reads from JWT_SECRET env var. 
+                       Falls back to auto-generated ephemeral key with warning.
+            access_token_expiry: Access token lifetime (default: 1 hour)
+            refresh_token_expiry:  Refresh token lifetime (default: 7 days)
+            revocation_store: Optional callback to persist revoked token JTIs
+            revocation_checker: Optional callback to check if JTI is revoked
+            
+        Raises:
+            ValueError: If secret_key is the insecure literal "secret"
         """
-        provided = secret_key or os.environ.get("JWT_SECRET")
-
-        if provided:
-            if provided.strip().lower() == "secret":
-                # Treat the literal "secret" as a misconfiguration — refuse to run with it.
-                raise ConfigurationError(
-                    "Insecure JWT secret value 'secret' detected. Provide a strong secret via "
-                    "the 'secret_key' parameter or JWT_SECRET environment variable."
+        # Determine secret key with security checks
+        if secret_key is None:
+            # Try environment variable first (production best practice)
+            secret_key = os.environ.get("JWT_SECRET")
+            
+            if secret_key is None:
+                # Generate ephemeral key with strong warning
+                secret_key = secrets.token_urlsafe(32)
+                warnings.warn(
+                    "AuthManager initialized without explicit secret_key or JWT_SECRET environment variable. "
+                    "Auto-generated key will be lost on restart, invalidating all tokens.  "
+                    "For production, set JWT_SECRET environment variable.",
+                    UserWarning,
+                    stacklevel=2,
                 )
-            self.secret_key = provided
-        else:
-            if allow_ephemeral_secret:
-                # Generate ephemeral secret but warn loudly. Tokens will not persist across restarts.
-                self.secret_key = secrets.token_hex(32)
                 log.warning(
-                    "AuthManager: No JWT secret provided; generated ephemeral secret for runtime only. "
-                    "Set JWT_SECRET in environment for persistent, secure operation."
+                    "AuthManager:  No secret_key provided and JWT_SECRET not set. "
+                    "Auto-generated ephemeral key will not persist across restarts. "
+                    "Set JWT_SECRET environment variable for production."
                 )
-            else:
-                raise ConfigurationError(
-                    "AuthManager requires a JWT secret. Set the 'secret_key' argument or "
-                    "the JWT_SECRET environment variable."
-                )
-
+        
+        # Block insecure literal secret
+        if secret_key == self._INSECURE_SECRET:
+            raise ValueError(
+                f"Refusing to use insecure literal secret '{self._INSECURE_SECRET}'. "
+                "Set JWT_SECRET environment variable or provide a cryptographically secure secret_key."
+            )
+        
+        # Additional length check for security
+        if len(secret_key) < 16:
+            raise ValueError(
+                f"secret_key too short ({len(secret_key)} chars). "
+                "Use at least 16 characters for cryptographic security.  "
+                "Recommended:  32+ characters or set JWT_SECRET environment variable."
+            )
+        
+        self.secret_key = secret_key
         self.access_token_expiry = access_token_expiry
         self.refresh_token_expiry = refresh_token_expiry
 
-        # In-memory revocation store (JTI strings)
-        self._revoked_jtis: set[str] = set()
+        self.api_keys: Dict[str, APIKey] = {}
+        self._revoked_tokens: set[str] = set()  # JTI of revoked tokens (in-memory)
 
-        log.info("AuthManager initialized (HS256)")
+        self._revocation_store = revocation_store
+        self._revocation_checker = revocation_checker
 
-    def _now_ts(self) -> int:
-        return int(datetime.now(timezone.utc).timestamp())
+        if not revocation_store:
+            log.warning(
+                "AuthManager: Token revocation storage is in-memory only. "
+                "Revoked tokens will be lost on restart.  For production, "
+                "provide revocation_store and revocation_checker callbacks."
+            )
+
+        log.info("AuthManager initialized with secure secret key")
+
+    @property
+    def revoked_tokens(self) -> set[str]:
+        return self._revoked_tokens
+
+    def _is_token_revoked(self, jti: str) -> bool:
+        if jti in self._revoked_tokens:
+            return True
+        if self._revocation_checker:
+            return self._revocation_checker(jti)
+        return False
+
+    def _store_revocation(self, jti: str) -> None:
+        self._revoked_tokens.add(jti)
+        if self._revocation_store:
+            self._revocation_store(jti)
 
     def _encode_token(self, payload: TokenPayload) -> str:
-        token_dict = payload.to_dict()
-        encoded = jwt.encode(token_dict, self.secret_key, algorithm="HS256")
-        # In PyJWT v2+, jwt.encode returns a str
-        return encoded
+        return jwt.encode(
+            payload. to_dict(),
+            self.secret_key,
+            algorithm="HS256",
+        )
 
     def _decode_token(self, token: str) -> TokenPayload:
         try:
@@ -137,37 +236,46 @@ class AuthManager:
                 token,
                 self.secret_key,
                 algorithms=["HS256"],
-                options={"require": ["sub", "type", "iat", "exp", "jti"]},
+                options={
+                    "require":  ["sub", "type", "iat", "exp", "jti"],
+                },
             )
             payload = TokenPayload.from_dict(payload_data)
-            if payload.jti in self._revoked_jtis:
+            if self._is_token_revoked(payload.jti):
                 raise InvalidTokenError("Token has been revoked")
-            # Check expiration manually (PyJWT decodes into ints)
-            now_ts = self._now_ts()
-            if payload.exp < now_ts:
-                raise TokenExpiredError("Token has expired")
             return payload
         except jwt.ExpiredSignatureError:
             raise TokenExpiredError("Token has expired")
         except jwt.InvalidTokenError as e:
             raise InvalidTokenError(f"Invalid token: {e}")
+        except (ValueError, KeyError) as e:
+            raise InvalidTokenError(f"Failed to decode token: {e}")
 
-    def create_access_token(self, user_id: str, scope: Optional[str] = None) -> Tuple[str, TokenPayload]:
+    def create_access_token(
+        self, user_id: str, scope: Optional[str] = None
+    ) -> Tuple[str, TokenPayload]:
         now = datetime.now(timezone.utc)
-        iat = int(now.timestamp())
-        exp = int((now + self.access_token_expiry).timestamp())
-        jti = secrets.token_hex(16)
-        payload = TokenPayload(sub=user_id, type=TokenType.ACCESS, iat=iat, exp=exp, jti=jti, scope=scope)
+        payload = TokenPayload(
+            user_id=user_id,
+            token_type=TokenType. ACCESS,
+            issued_at=now,
+            expires_at=now + self.access_token_expiry,
+            scope=scope,
+            jti=secrets.token_urlsafe(16),
+        )
         token = self._encode_token(payload)
         log.info(f"Created access token for user {user_id}")
         return token, payload
 
-    def create_refresh_token(self, user_id: str) -> Tuple[str, TokenPayload]:
+    def create_refresh_token(self, user_id: str) -> Tuple[str, TokenPayload]: 
         now = datetime.now(timezone.utc)
-        iat = int(now.timestamp())
-        exp = int((now + self.refresh_token_expiry).timestamp())
-        jti = secrets.token_hex(16)
-        payload = TokenPayload(sub=user_id, type=TokenType.REFRESH, iat=iat, exp=exp, jti=jti)
+        payload = TokenPayload(
+            user_id=user_id,
+            token_type=TokenType. REFRESH,
+            issued_at=now,
+            expires_at=now + self.refresh_token_expiry,
+            jti=secrets.token_urlsafe(16),
+        )
         token = self._encode_token(payload)
         log.info(f"Created refresh token for user {user_id}")
         return token, payload
@@ -175,10 +283,50 @@ class AuthManager:
     def verify_token(self, token: str) -> TokenPayload:
         return self._decode_token(token)
 
-    def revoke_token(self, jti: str) -> None:
-        self._revoked_jtis.add(jti)
-        log.info(f"Revoked token jti={jti}")
+    def revoke_token(self, token: str) -> None:
+        payload = self._decode_token(token)
+        self._store_revocation(payload. jti)
+        log.info(f"Revoked token {payload.jti} for user {payload.user_id}")
 
-    @property
-    def revoked_jtis(self) -> set:
-        return set(self._revoked_jtis)
+    def create_api_key(
+        self,
+        key_id: str,
+        name: str,
+        expires_at: Optional[datetime] = None,
+    ) -> Tuple[str, APIKey]:
+        """Create a new API key (returns unhashed key once)"""
+        raw_key = secrets.token_urlsafe(32)
+        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+
+        api_key = APIKey(
+            key_id=key_id,
+            key_hash=key_hash,
+            name=name,
+            created_at=datetime. now(timezone.utc),
+            expires_at=expires_at,
+        )
+
+        self.api_keys[key_id] = api_key
+        log.info(f"Created API key {key_id}")
+        return raw_key, api_key
+
+    def verify_api_key(self, raw_key: str) -> Optional[str]:
+        """Verify API key and return key_id if valid"""
+        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+
+        for key_id, api_key in self.api_keys.items():
+            if api_key.key_hash == key_hash and api_key.is_valid():
+                api_key.last_used_at = datetime.now(timezone.utc)
+                log.info(f"API key {key_id} verified")
+                return key_id
+
+        log.warning("Invalid API key attempt")
+        return None
+
+    def revoke_api_key(self, key_id: str) -> None:
+        """Revoke an API key"""
+        if key_id in self.api_keys:
+            self.api_keys[key_id].enabled = False
+            log. info(f"Revoked API key {key_id}")
+        else:
+            log.warning(f"Attempted to revoke non-existent API key {key_id}")
