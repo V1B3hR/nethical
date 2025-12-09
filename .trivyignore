@@ -1,0 +1,12 @@
+# Trivy Ignore Patterns
+# 
+# This file configures Trivy to skip scanning specific files or patterns
+# that are known to produce false positives or are not part of our codebase.
+
+# Ignore JWT examples in PyJWT library documentation
+# This is not our code - it's the library's own example documentation
+# The string "secret" appears in PyJWT's METADATA file as an example,
+# not as an actual secret in our codebase.
+**/dist-info/METADATA
+**/site-packages/**/METADATA
+**/*.dist-info/**

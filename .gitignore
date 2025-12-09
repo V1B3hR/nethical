@@ -58,6 +58,8 @@ logs/
 *. pem
 *.key
 *.crt
+*.p12
+*.pfx
 secrets/
 . secrets/
 
