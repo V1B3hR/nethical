@@ -4,7 +4,7 @@ on:
   workflow_dispatch:
     inputs: 
       image:
-        description:  'Image to scan (optional). If empty, workflow builds the repo image.'
+        description: 'Image to scan (optional). If empty, workflow builds the repo image.'
         required: false
         default: ''
   push: 
@@ -13,11 +13,11 @@ on:
 
 jobs:
   trivy-scan:
-    runs-on:  ubuntu-latest
+    runs-on: ubuntu-latest
     permissions: 
       contents: read
     env: 
-      TRIVY_CACHE_DIR: ~/. cache/trivy
+      TRIVY_CACHE_DIR: ~/.cache/trivy
 
     steps: 
       - name: Checkout repository
@@ -39,10 +39,16 @@ jobs:
           sudo rm -rf /tmp/* /var/lib/docker/tmp/* || true
           df -h
 
+      # NEW: Build Docker image if not specified
+      - name: Build Docker image
+        if: github.event.inputs.image == ''
+        run: |
+          docker build -t v1b3hr/nethical:latest .
+
       - name: Cache Trivy DB
         uses: actions/cache@v4
         with: 
-          path:  ${{ env.TRIVY_CACHE_DIR }}
+          path: ${{ env.TRIVY_CACHE_DIR }}
           key: trivy-db-${{ github.run_id }}
           restore-keys: trivy-db-
 
