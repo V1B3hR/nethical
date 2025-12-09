@@ -2,12 +2,12 @@ name: Trivy Container Scan (fixed)
 
 on:
   workflow_dispatch:
-    inputs:
+    inputs: 
       image:
-        description: 'Image to scan (optional). If empty, workflow builds the repo image.'
+        description:  'Image to scan (optional). If empty, workflow builds the repo image.'
         required: false
         default: ''
-  push:
+  push: 
     branches:
       - main
 
@@ -16,10 +16,10 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
             contents: read
-    env:
+    env: 
       TRIVY_CACHE_DIR: ~/. cache/trivy
 
-    steps:
+    steps: 
       - name: Checkout repository
         uses: actions/checkout@v4
 
@@ -43,23 +43,32 @@ jobs:
         uses: actions/cache@v4
         with:
           path:  ${{ env.TRIVY_CACHE_DIR }}
-          key:  trivy-db-${{ github. run_id }}
+          key: trivy-db-${{ github. run_id }}
           restore-keys: trivy-db-
 
       - name: Install Trivy
         run: |
-          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
+          curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install. sh | sudo sh -s -- -b /usr/local/bin
 
-      - name: Run Trivy (Container Scan)
+      - name:  Determine image to scan
+        id: image
+        run: |
+          if [ -n "${{ github.event.inputs.image }}" ]; then
+            echo "image=${{ github.event.inputs. image }}" >> $GITHUB_OUTPUT
+          else
+            echo "image=v1b3hr/nethical: latest" >> $GITHUB_OUTPUT
+          fi
+
+      - name:  Run Trivy (Container Scan)
         env:
-          TRIVY_CACHE_DIR: ${{ env. TRIVY_CACHE_DIR }}
+          TRIVY_CACHE_DIR:  ${{ env.TRIVY_CACHE_DIR }}
         run: |
           trivy image \
             --cache-dir "${TRIVY_CACHE_DIR}" \
             --skip-version-check \
             --format table \
             --exit-code 1 \
-            "${{ steps.image.outputs. image }}"
+            "${{ steps. image.outputs.image }}"
 
       - name: Show disk usage (after scan)
         if: always()
