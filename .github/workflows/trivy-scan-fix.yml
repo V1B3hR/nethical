@@ -17,8 +17,7 @@ jobs:
     permissions:
             contents: read
     env:
-      TRIVY_CACHE_DIR: ~/.cache/trivy
-      TRIVY_TEMP_DIR: /tmp/trivy-tmp
+      TRIVY_CACHE_DIR: ~/. cache/trivy
 
     steps:
       - name: Checkout repository
@@ -27,7 +26,7 @@ jobs:
       - name: Show disk usage (before cleanup)
         run: df -h
 
-      - name: Aggressive runner cleanup (free disk)
+      - name:  Aggressive runner cleanup (free disk)
         run: |
           sudo rm -rf /usr/share/dotnet \
             /opt/ghc \
@@ -38,26 +37,29 @@ jobs:
             /opt/hostedtoolcache/Python || true
           sudo docker system prune -af --volumes || true
           sudo rm -rf /tmp/* /var/lib/docker/tmp/* || true
-          mkdir -p "${TRIVY_TEMP_DIR}"
           df -h
 
       - name: Cache Trivy DB
         uses: actions/cache@v4
+        with:
+          path:  ${{ env.TRIVY_CACHE_DIR }}
+          key:  trivy-db-${{ github. run_id }}
+          restore-keys: trivy-db-
 
+      - name: Install Trivy
+        run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
 
       - name: Run Trivy (Container Scan)
         env:
-          TRIVY_CACHE_DIR: ${{ env.TRIVY_CACHE_DIR }}
-          TRIVY_TEMP_DIR: ${{ env.TRIVY_TEMP_DIR }}
+          TRIVY_CACHE_DIR: ${{ env. TRIVY_CACHE_DIR }}
         run: |
           trivy image \
             --cache-dir "${TRIVY_CACHE_DIR}" \
-            --temp-dir "${TRIVY_TEMP_DIR}" \
             --skip-version-check \
             --format table \
             --exit-code 1 \
-            "${{ steps.image.outputs.image }}"
+            "${{ steps.image.outputs. image }}"
 
       - name: Show disk usage (after scan)
         if: always()
