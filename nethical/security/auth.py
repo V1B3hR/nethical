@@ -18,6 +18,7 @@ Security Features:
 from __future__ import annotations
 
 import hashlib
+import bcrypt
 import logging
 import os
 import secrets
@@ -296,7 +297,7 @@ class AuthManager:
     ) -> Tuple[str, APIKey]:
         """Create a new API key (returns unhashed key once)"""
         raw_key = secrets.token_urlsafe(32)
-        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
+        key_hash = bcrypt.hashpw(raw_key.encode(), bcrypt.gensalt()).decode()
 
         api_key = APIKey(
             key_id=key_id,
@@ -312,10 +313,12 @@ class AuthManager:
 
     def verify_api_key(self, raw_key: str) -> Optional[str]:
         """Verify API key and return key_id if valid"""
-        key_hash = hashlib.sha256(raw_key.encode()).hexdigest()
 
         for key_id, api_key in self.api_keys.items():
-            if api_key.key_hash == key_hash and api_key.is_valid():
+            if (
+                api_key.is_valid() and
+                bcrypt.checkpw(raw_key.encode(), api_key.key_hash.encode())
+            ):
                 api_key.last_used_at = datetime.now(timezone.utc)
                 log.info(f"API key {key_id} verified")
                 return key_id
