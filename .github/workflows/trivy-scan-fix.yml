@@ -15,7 +15,7 @@ jobs:
   trivy-scan:
     runs-on: ubuntu-latest
     permissions:
-      contents: read
+            contents: read
     env:
       TRIVY_CACHE_DIR: ~/.cache/trivy
       TRIVY_TEMP_DIR: /tmp/trivy-tmp
@@ -43,33 +43,7 @@ jobs:
 
       - name: Cache Trivy DB
         uses: actions/cache@v4
-        with:
-          path: |
-            ~/.cache/trivy
-            /home/runner/.cache/trivy
-          key: trivy-db-${{ runner.os }}-${{ github.ref }}-${{ hashFiles('**/Dockerfile') }}
-          restore-keys: trivy-db-${{ runner.os }}-
 
-      - name: Build docker image (when no image was provided)
-        if: ${{ github.event.inputs.image == '' }}
-        run: |
-          image_repo="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
-          docker build -t "${image_repo}:latest" .
-
-      - name: Determine image to scan (force lowercase)
-        id: image
-        run: |
-          if [ -n "${{ github.event.inputs.image }}" ]; then
-            image_input="${{ github.event.inputs.image }}"
-            image=$(echo "${image_input}" | tr '[:upper:]' '[:lower:]')
-          else
-            image_repo="$(echo "${GITHUB_REPOSITORY}" | tr '[:upper:]' '[:lower:]')"
-            image="${image_repo}:latest"
-          fi
-          echo "image=${image}" >> "$GITHUB_OUTPUT"
-
-      - name: Install Trivy (pinned)
-        run: |
           curl -sfL https://raw.githubusercontent.com/aquasecurity/trivy/main/contrib/install.sh | sudo sh -s -- -b /usr/local/bin
 
       - name: Run Trivy (Container Scan)
