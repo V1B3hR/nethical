@@ -505,9 +505,11 @@ class TestAuthManagerSecurity:
         # JTIs should be unique
         assert payload1.jti != payload2.jti
         
-        # JTI should be URL-safe and non-empty
+        # JTI should be URL-safe (alphanumeric plus - and _) and non-empty
         assert len(payload1.jti) > 0
-        assert payload1.jti.isalnum() or '-' in payload1.jti or '_' in payload1.jti
+        import re
+        assert re.match(r'^[A-Za-z0-9_-]+$', payload1.jti), f"JTI contains invalid characters: {payload1.jti}"
+        assert re.match(r'^[A-Za-z0-9_-]+$', payload2.jti), f"JTI contains invalid characters: {payload2.jti}"
 
 
 if __name__ == "__main__":
