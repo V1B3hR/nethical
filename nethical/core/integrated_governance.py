@@ -16,6 +16,7 @@ from pathlib import Path
 import time
 import hashlib
 from functools import lru_cache
+from collections import OrderedDict
 
 # Phase 3 imports
 from .risk_engine import RiskEngine
@@ -361,14 +362,15 @@ class IntegratedGovernance:
             pool_size=db_pool_size
         )
         
-        # PII detection cache storage (using instance-level dict for lru_cache compatibility)
-        self._pii_cache: Dict[str, Tuple[List[Any], float]] = {}
+        # PII detection cache storage (using OrderedDict for proper LRU eviction)
+        self._pii_cache: OrderedDict[str, Tuple[List[Any], float]] = OrderedDict()
         self._pii_cache_hits = 0
         self._pii_cache_misses = 0
         
         # Merkle batching for async anchoring
         self._merkle_pending: List[Dict[str, Any]] = []
-        self._merkle_batch_lock = asyncio.Lock() if enable_merkle_anchoring else None
+        self._merkle_batch_lock = None  # Will be created lazily when needed
+        self._merkle_anchoring_enabled = enable_merkle_anchoring
         
         # Component flags
         self.components_enabled = {
@@ -530,9 +532,11 @@ class IntegratedGovernance:
         # Compute content hash for cache key
         content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
         
-        # Check cache
+        # Check cache (move to end for LRU)
         if content_hash in self._pii_cache:
             self._pii_cache_hits += 1
+            # Move to end to mark as recently used
+            self._pii_cache.move_to_end(content_hash)
             return self._pii_cache[content_hash]
         
         # Cache miss - compute
@@ -540,19 +544,22 @@ class IntegratedGovernance:
         matches = self.pii_detector.detect_all(content)
         risk = self.pii_detector.calculate_pii_risk_score(matches) if matches else 0.0
         
-        # Store in cache (LRU eviction if needed)
+        # Store in cache with proper LRU eviction
         if len(self._pii_cache) >= self.pii_cache_size:
-            # Simple FIFO eviction (could be improved to true LRU)
-            first_key = next(iter(self._pii_cache))
-            del self._pii_cache[first_key]
+            # Remove least recently used (first item)
+            self._pii_cache.popitem(last=False)
         
         self._pii_cache[content_hash] = (matches, risk)
         return (matches, risk)
 
     async def _process_merkle_batch(self) -> None:
         """Process pending Merkle anchoring events in batch (async background task)."""
-        if not self.merkle_anchor or not self._merkle_batch_lock:
+        if not self.merkle_anchor:
             return
+        
+        # Create lock lazily if needed
+        if self._merkle_batch_lock is None:
+            self._merkle_batch_lock = asyncio.Lock()
             
         async with self._merkle_batch_lock:
             if not self._merkle_pending:
@@ -575,7 +582,7 @@ class IntegratedGovernance:
         violation_severity: Optional[str],
         pii_risk: float,
         quota_result: Optional[Dict[str, Any]],
-    ) -> Dict[str, Any]:
+    ) -> Tuple[Dict[str, Any], float]:
         """Process Phase 3 (Risk & Correlation) asynchronously.
         
         Returns:

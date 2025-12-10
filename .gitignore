@@ -76,3 +76,7 @@ secrets/
 # Kubernetes secrets (if generated locally)
 *-secret.yaml
 sealed-secret.yaml
+
+# Test data directories
+test_unified_data*/
+test_governance*/
