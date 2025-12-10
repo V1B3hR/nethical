@@ -14,7 +14,6 @@ from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
 
 from ..core import IntegratedGovernance, EmbeddingProvider
-from ..core.models import Decision
 
 logger = logging.getLogger(__name__)
 
