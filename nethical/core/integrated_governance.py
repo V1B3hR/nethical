@@ -16,7 +16,6 @@ from pathlib import Path
 import time
 import hashlib
 import logging
-from functools import lru_cache
 from collections import OrderedDict
 
 logger = logging.getLogger(__name__)
