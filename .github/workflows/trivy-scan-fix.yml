@@ -59,10 +59,6 @@ jobs:
           format: 'table'
           exit-code: '1'
           cache-dir: ${{ env.TRIVY_CACHE_DIR }}
-          skip-files: |
-            **/dist-info/METADATA
-            **/site-packages/**/METADATA
-            **/*.dist-info/**
 
       - name: Show disk usage (after scan)
         if: always()
