@@ -1120,7 +1120,7 @@ class IntegratedGovernance:
                 # Schedule async batch processing (non-blocking)
                 # Only create task if there's a running event loop
                 try:
-                    loop = asyncio.get_running_loop()
+                    asyncio.get_running_loop()
                     asyncio.create_task(self._process_merkle_batch())
                 except RuntimeError:
                     # No event loop running - process synchronously in background
