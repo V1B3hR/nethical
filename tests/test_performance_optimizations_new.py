@@ -91,8 +91,8 @@ class TestPIICaching:
         content1 = "My email is test1@example.com"
         content2 = "My email is test2@example.com"
         
-        result1 = governance_optimized._cached_pii_detection(content1)
-        result2 = governance_optimized._cached_pii_detection(content2)
+        governance_optimized._cached_pii_detection(content1)
+        governance_optimized._cached_pii_detection(content2)
         
         # Both should be cache misses
         assert governance_optimized._pii_cache_misses == 2
