@@ -146,7 +146,6 @@ class TestMerkleBatching:
     
     def test_merkle_pending_accumulation(self, governance_optimized):
         """Test that events accumulate in pending queue."""
-        initial_pending = len(governance_optimized._merkle_pending)
         
         # Process a few actions
         for i in range(5):
