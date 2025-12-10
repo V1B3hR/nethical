@@ -19,7 +19,7 @@ from typing import Dict, List, Optional, Set, Tuple, Any
 from enum import Enum
 
 from .embedding_engine import EmbeddingEngine, EmbeddingResult
-from .fundamental_laws import FundamentalLaw, LawCategory, get_fundamental_laws
+from .fundamental_laws import get_fundamental_laws
 
 logger = logging.getLogger(__name__)
 
