@@ -10,13 +10,16 @@ This module consolidates ALL phases (3, 4, 5-7, 8-9, F3) into a single unified i
 This provides a complete governance system with all features in a single interface.
 """
 
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, Union
 from datetime import datetime, timezone
 from pathlib import Path
 import time
 import hashlib
+import logging
 from functools import lru_cache
 from collections import OrderedDict
+
+logger = logging.getLogger(__name__)
 
 # Phase 3 imports
 from .risk_engine import RiskEngine
@@ -54,6 +57,10 @@ from .plugin_interface import get_plugin_manager
 from .governance_core import EnhancedSafetyGovernance, AgentAction, Decision
 from .models import AgentAction as ModelsAgentAction
 import asyncio
+
+# Vector/Embedding imports
+from .embedding_engine import EmbeddingEngine, EmbeddingProvider
+from .semantic_mapper import SemanticMapper, ActionEmbedding
 
 # Resource Management imports
 try:
@@ -132,6 +139,11 @@ class IntegratedGovernance:
         db_pool_size: int = 10,
         merkle_batch_size: int = 100,
         enable_parallel_phases: bool = True,
+        # Vector/Embedding config
+        enable_25_laws: bool = False,
+        enable_vector_evaluation: bool = False,
+        embedding_provider: Optional[EmbeddingProvider] = None,
+        vector_similarity_threshold: float = 0.7,
     ):
         """Initialize unified integrated governance.
 
@@ -345,6 +357,32 @@ class IntegratedGovernance:
         self.pii_detector = None
         if QUOTA_AVAILABLE:
             self.pii_detector = get_pii_detector()
+
+        # ==================== Vector/Embedding Support ====================
+        self.enable_25_laws = enable_25_laws
+        self.enable_vector_evaluation = enable_vector_evaluation
+        self.vector_similarity_threshold = vector_similarity_threshold
+        
+        self.embedding_engine: Optional[EmbeddingEngine] = None
+        self.semantic_mapper: Optional[SemanticMapper] = None
+        
+        if enable_vector_evaluation or enable_25_laws:
+            # Initialize embedding engine
+            self.embedding_engine = EmbeddingEngine(
+                provider=embedding_provider,
+                enable_cache=True,
+                cache_size=pii_cache_size
+            )
+            
+            # Initialize semantic mapper
+            self.semantic_mapper = SemanticMapper(
+                embedding_engine=self.embedding_engine
+            )
+            
+            logger.info(
+                f"Vector evaluation enabled with 25 Fundamental Laws. "
+                f"Similarity threshold: {vector_similarity_threshold}"
+            )
 
         # ==================== Performance Optimization Configuration ====================
         self.enable_pii_caching = enable_pii_caching
@@ -1318,3 +1356,188 @@ class IntegratedGovernance:
         # For now, we verify the plugin manager is available
         # and the plugin would be registered through the normal plugin interface
         return plugin_manager is not None
+
+    def evaluate(
+        self,
+        agent_id: str,
+        action: Union[str, Any],
+        context: Optional[Dict[str, Any]] = None,
+        use_embeddings: bool = None
+    ) -> Dict[str, Any]:
+        """Evaluate an agent action using vector-based governance with 25 Fundamental Laws.
+        
+        This is the main API method for vector-based governance evaluation.
+        It parses actions (natural language, code, IR), generates embeddings,
+        and evaluates them against the 25 Fundamental Laws.
+        
+        Args:
+            agent_id: Identifier of the agent performing the action
+            action: Action to evaluate (text, code, or structured object)
+            context: Additional context (purpose, environment, etc.)
+            use_embeddings: Force embedding-based evaluation (defaults to enable_vector_evaluation)
+            
+        Returns:
+            Dictionary with:
+            - decision: ALLOW | RESTRICT | BLOCK | TERMINATE
+            - laws_evaluated: List of law numbers checked
+            - risk_score: Risk score 0-1
+            - embedding_trace_id: UUID for audit trail
+            - confidence: Confidence in decision
+            - reasoning: Explanation of decision
+            
+        Example:
+            >>> governance = IntegratedGovernance(enable_25_laws=True)
+            >>> result = governance.evaluate(
+            ...     agent_id="agent-001",
+            ...     action="def greet(name): return 'Hello, ' + name",
+            ...     context={"purpose": "demo"}
+            ... )
+            >>> print(result['decision'], result['laws_evaluated'], result['risk_score'])
+        """
+        # Determine if we should use embedding evaluation
+        use_vector_eval = use_embeddings if use_embeddings is not None else (
+            self.enable_vector_evaluation or self.enable_25_laws
+        )
+        
+        if not use_vector_eval or not self.semantic_mapper:
+            # Fall back to regular process_action
+            return self.process_action(
+                agent_id=agent_id,
+                action=action,
+                context=context
+            )
+        
+        # Convert action to string if needed
+        action_text = str(action) if not isinstance(action, str) else action
+        
+        # Determine action type from context or content
+        action_type = "text"
+        if context and "action_type" in context:
+            action_type = context["action_type"]
+        elif action_text.startswith("def ") or "function" in action_text.lower():
+            action_type = "code"
+        elif "execute" in action_text.lower():
+            action_type = "code_execution"
+        
+        # Parse and embed action
+        action_embedding = self.semantic_mapper.parse_action(
+            action_text=action_text,
+            action_type=action_type,
+            context=context
+        )
+        
+        # Evaluate against fundamental laws
+        evaluation = self.semantic_mapper.evaluate_against_laws(
+            action_embedding=action_embedding,
+            similarity_threshold=self.vector_similarity_threshold
+        )
+        
+        # Log to Merkle anchor if enabled
+        if self.merkle_anchor:
+            event_data = {
+                "agent_id": agent_id,
+                "action": action_text[:500],
+                "action_type": action_type,
+                "decision": evaluation["decision"],
+                "laws_evaluated": evaluation["laws_evaluated"],
+                "risk_score": evaluation["risk_score"],
+                "embedding_trace_id": evaluation["embedding_trace_id"],
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            self._merkle_pending.append(event_data)
+            
+            # Trigger batch processing if threshold reached
+            if len(self._merkle_pending) >= self.merkle_batch_size:
+                try:
+                    asyncio.get_running_loop()
+                    asyncio.create_task(self._process_merkle_batch())
+                except RuntimeError:
+                    # No event loop - process synchronously
+                    if len(self._merkle_pending) >= self.merkle_batch_size:
+                        batch = self._merkle_pending[:self.merkle_batch_size]
+                        self._merkle_pending = self._merkle_pending[self.merkle_batch_size:]
+                        for evt in batch:
+                            self.merkle_anchor.add_event(evt)
+        
+        # Enhance result with additional metadata
+        result = {
+            "agent_id": agent_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "decision": evaluation["decision"],
+            "laws_evaluated": evaluation["laws_evaluated"],
+            "risk_score": evaluation["risk_score"],
+            "embedding_trace_id": evaluation["embedding_trace_id"],
+            "confidence": max(0.7, 1.0 - evaluation["risk_score"]),  # Higher confidence for lower risk
+            "reasoning": self._generate_reasoning(evaluation),
+            "detected_primitives": evaluation.get("detected_primitives", []),
+            "relevant_laws": evaluation.get("relevant_laws", []),
+            "vector_evaluation": True,
+            "model": self.embedding_engine.provider.get_model_name() if self.embedding_engine else "unknown",
+        }
+        
+        return result
+    
+    def _generate_reasoning(self, evaluation: Dict[str, Any]) -> str:
+        """Generate human-readable reasoning for a decision."""
+        decision = evaluation["decision"]
+        laws = evaluation["laws_evaluated"]
+        risk = evaluation["risk_score"]
+        primitives = evaluation.get("detected_primitives", [])
+        
+        reasoning_parts = [
+            f"Decision: {decision} based on risk score {risk:.2f}."
+        ]
+        
+        if laws:
+            reasoning_parts.append(
+                f"Evaluated against Fundamental Laws: {', '.join(map(str, laws[:5]))}."
+            )
+        
+        if primitives:
+            reasoning_parts.append(
+                f"Detected semantic primitives: {', '.join(primitives[:3])}."
+            )
+        
+        if decision in ["BLOCK", "TERMINATE"]:
+            reasoning_parts.append(
+                "Action blocked due to high risk or sensitive operations."
+            )
+        elif decision == "RESTRICT":
+            reasoning_parts.append(
+                "Action allowed with restrictions due to moderate risk."
+            )
+        else:
+            reasoning_parts.append(
+                "Action allowed - low risk detected."
+            )
+        
+        return " ".join(reasoning_parts)
+    
+    def trace_embedding(self, embedding_trace_id: str) -> Optional[Dict[str, Any]]:
+        """Trace an embedding decision for debugging and compliance.
+        
+        Args:
+            embedding_trace_id: UUID from evaluate() result
+            
+        Returns:
+            Trace information including embedding details and decision rationale
+        """
+        if not self.merkle_anchor:
+            return None
+        
+        # Search through Merkle logs for this trace ID
+        # In a full implementation, this would query the Merkle anchor
+        # For now, check pending events
+        for event in self._merkle_pending:
+            if event.get("embedding_trace_id") == embedding_trace_id:
+                return {
+                    "embedding_trace_id": embedding_trace_id,
+                    "found_in": "pending_merkle_batch",
+                    "event": event
+                }
+        
+        return {
+            "embedding_trace_id": embedding_trace_id,
+            "status": "not_found",
+            "note": "May have been processed and anchored"
+        }

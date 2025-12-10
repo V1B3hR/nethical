@@ -70,10 +70,19 @@ def AgentAction(
 
 
 __version__ = "0.1.0"
+
+# Import vector API components
+from .api.vector_api import Nethical, Agent, EvaluationResult, create_nethical
+
 __all__ = [
     "SafetyGovernance",
     "AgentAction",
     "SafetyViolation",
     "JudgmentResult",
     "MonitoringConfig",
+    # Vector API
+    "Nethical",
+    "Agent",
+    "EvaluationResult",
+    "create_nethical",
 ]

@@ -97,6 +97,23 @@ from .phase89_integration import Phase89IntegratedGovernance
 # Unified Integration (All Phases)
 from .integrated_governance import IntegratedGovernance
 
+# Vector/Embedding support
+from .embedding_engine import (
+    EmbeddingEngine,
+    EmbeddingProvider,
+    EmbeddingResult,
+    SimpleEmbeddingProvider,
+    OpenAIEmbeddingProvider,
+    HuggingFaceEmbeddingProvider,
+    cosine_similarity,
+)
+from .semantic_mapper import (
+    SemanticMapper,
+    SemanticPrimitive,
+    PolicyVector,
+    ActionEmbedding,
+)
+
 # F2: Detector & Policy Extensibility
 from .plugin_interface import (
     DetectorPlugin,
@@ -237,6 +254,18 @@ __all__ = [
     "Phase89IntegratedGovernance",
     # Unified Integration (All Phases)
     "IntegratedGovernance",
+    # Vector/Embedding support
+    "EmbeddingEngine",
+    "EmbeddingProvider",
+    "EmbeddingResult",
+    "SimpleEmbeddingProvider",
+    "OpenAIEmbeddingProvider",
+    "HuggingFaceEmbeddingProvider",
+    "cosine_similarity",
+    "SemanticMapper",
+    "SemanticPrimitive",
+    "PolicyVector",
+    "ActionEmbedding",
     # F2: Detector & Policy Extensibility
     "DetectorPlugin",
     "PluginManager",
