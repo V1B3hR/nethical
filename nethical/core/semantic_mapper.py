@@ -153,8 +153,11 @@ class SemanticMapper:
         )
     
     def _initialize_policy_vectors(self):
-        """Pre-compute embeddings for all fundamental laws."""
-        # fundamental_laws.laws is a list, not a dict
+        """Pre-compute embeddings for all fundamental laws.
+        
+        Note: fundamental_laws.laws is a list of FundamentalLaw objects,
+        not a dictionary. We iterate directly over the list.
+        """
         for law in self.fundamental_laws.laws:
             # Create policy text combining title and description
             policy_text = f"{law.title}. {law.description}"
@@ -290,7 +293,8 @@ class SemanticMapper:
         for law_num, policy_vec in self.policy_vectors.items():
             # Compute similarity
             similarity = action_embedding.embedding.similarity(policy_vec.embedding)
-            # Normalize to [0, 1]
+            # Normalize cosine similarity from [-1, 1] to [0, 1]
+            # where 1 = identical, 0 = orthogonal, -1 = opposite
             similarity = (similarity + 1.0) / 2.0
             
             # Check if law is relevant

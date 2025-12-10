@@ -8,6 +8,7 @@ making it easy to use Nethical with vector-based governance and the 25 Fundament
 from __future__ import annotations
 
 import logging
+import yaml
 from dataclasses import dataclass
 from typing import Dict, List, Optional, Any, Union
 from pathlib import Path
@@ -140,8 +141,6 @@ class Nethical:
     
     def _load_config(self, config_path: str) -> Dict[str, Any]:
         """Load configuration from YAML file."""
-        import yaml
-        
         path = Path(config_path)
         if not path.exists():
             logger.warning(f"Config file not found: {config_path}")

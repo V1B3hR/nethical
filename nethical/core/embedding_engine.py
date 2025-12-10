@@ -24,6 +24,9 @@ from uuid import uuid4
 
 logger = logging.getLogger(__name__)
 
+# Configuration constants
+MAX_INPUT_TEXT_LENGTH = 500  # Maximum characters to store in embedding result
+
 
 @dataclass
 class EmbeddingResult:
@@ -285,7 +288,7 @@ class EmbeddingEngine:
             vector=vector,
             model=self.provider.get_model_name(),
             dimensions=self.provider.get_dimensions(),
-            input_text=text[:500],  # Store truncated text for debugging
+            input_text=text[:MAX_INPUT_TEXT_LENGTH],  # Store truncated text for debugging
             input_hash=input_hash,
             metadata=metadata or {},
             timestamp=datetime.now(timezone.utc)
