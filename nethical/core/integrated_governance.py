@@ -10,10 +10,13 @@ This module consolidates ALL phases (3, 4, 5-7, 8-9, F3) into a single unified i
 This provides a complete governance system with all features in a single interface.
 """
 
-from typing import Dict, List, Optional, Any
+from typing import Dict, List, Optional, Any, Tuple
 from datetime import datetime, timezone
 from pathlib import Path
 import time
+import hashlib
+from functools import lru_cache
+from collections import OrderedDict
 
 # Phase 3 imports
 from .risk_engine import RiskEngine
@@ -121,6 +124,14 @@ class IntegratedGovernance:
         enable_quota_enforcement: bool = False,
         requests_per_second: float = 10.0,
         max_payload_bytes: int = 1_000_000,
+        # Performance Optimization config
+        enable_pii_caching: bool = True,
+        pii_cache_size: int = 10000,
+        enable_fast_path: bool = True,
+        fast_path_risk_threshold: float = 0.3,
+        db_pool_size: int = 10,
+        merkle_batch_size: int = 100,
+        enable_parallel_phases: bool = True,
     ):
         """Initialize unified integrated governance.
 
@@ -335,6 +346,32 @@ class IntegratedGovernance:
         if QUOTA_AVAILABLE:
             self.pii_detector = get_pii_detector()
 
+        # ==================== Performance Optimization Configuration ====================
+        self.enable_pii_caching = enable_pii_caching
+        self.pii_cache_size = pii_cache_size
+        self.enable_fast_path = enable_fast_path
+        self.fast_path_risk_threshold = fast_path_risk_threshold
+        self.db_pool_size = db_pool_size
+        self.merkle_batch_size = merkle_batch_size
+        self.enable_parallel_phases = enable_parallel_phases
+        
+        # Database connection pool (Fix 3)
+        from .db_pool import SQLiteConnectionPool
+        self._db_pool = SQLiteConnectionPool(
+            db_path=str(storage_path / "governance.db"),
+            pool_size=db_pool_size
+        )
+        
+        # PII detection cache storage (using OrderedDict for proper LRU eviction)
+        self._pii_cache: OrderedDict[str, Tuple[List[Any], float]] = OrderedDict()
+        self._pii_cache_hits = 0
+        self._pii_cache_misses = 0
+        
+        # Merkle batching for async anchoring
+        self._merkle_pending: List[Dict[str, Any]] = []
+        self._merkle_batch_lock = None  # Will be created lazily when needed
+        self._merkle_anchoring_enabled = enable_merkle_anchoring
+        
         # Component flags
         self.components_enabled = {
             # Phase 3
@@ -475,6 +512,278 @@ class IntegratedGovernance:
 
         return aggregated
 
+    def _cached_pii_detection(self, content: str) -> Tuple[List[Any], float]:
+        """Cache PII detection results by content hash.
+        
+        Args:
+            content: Content to check for PII
+            
+        Returns:
+            Tuple of (pii_matches, pii_risk_score)
+        """
+        if not self.enable_pii_caching or not self.pii_detector:
+            # Caching disabled or no detector, run directly
+            if self.pii_detector:
+                matches = self.pii_detector.detect_all(content)
+                risk = self.pii_detector.calculate_pii_risk_score(matches) if matches else 0.0
+                return (matches, risk)
+            return ([], 0.0)
+        
+        # Compute content hash for cache key
+        content_hash = hashlib.sha256(content.encode('utf-8')).hexdigest()
+        
+        # Check cache (move to end for LRU)
+        if content_hash in self._pii_cache:
+            self._pii_cache_hits += 1
+            # Move to end to mark as recently used
+            self._pii_cache.move_to_end(content_hash)
+            return self._pii_cache[content_hash]
+        
+        # Cache miss - compute
+        self._pii_cache_misses += 1
+        matches = self.pii_detector.detect_all(content)
+        risk = self.pii_detector.calculate_pii_risk_score(matches) if matches else 0.0
+        
+        # Store in cache with proper LRU eviction
+        if len(self._pii_cache) >= self.pii_cache_size:
+            # Remove least recently used (first item)
+            self._pii_cache.popitem(last=False)
+        
+        self._pii_cache[content_hash] = (matches, risk)
+        return (matches, risk)
+
+    async def _process_merkle_batch(self) -> None:
+        """Process pending Merkle anchoring events in batch (async background task)."""
+        if not self.merkle_anchor:
+            return
+        
+        # Create lock lazily if needed
+        if self._merkle_batch_lock is None:
+            self._merkle_batch_lock = asyncio.Lock()
+            
+        async with self._merkle_batch_lock:
+            if not self._merkle_pending:
+                return
+                
+            # Take all pending events
+            batch = self._merkle_pending[:]
+            self._merkle_pending.clear()
+            
+            # Process batch in background (non-blocking)
+            for event_data in batch:
+                self.merkle_anchor.add_event(event_data)
+
+    async def _process_phase3_async(
+        self,
+        agent_id: str,
+        action: Any,
+        cohort: Optional[str],
+        violation_detected: bool,
+        violation_severity: Optional[str],
+        pii_risk: float,
+        quota_result: Optional[Dict[str, Any]],
+    ) -> Tuple[Dict[str, Any], float]:
+        """Process Phase 3 (Risk & Correlation) asynchronously.
+        
+        Returns:
+            Phase 3 results dictionary
+        """
+        phase3_results = {}
+        
+        # Calculate violation score
+        violation_score = 0.0
+        if violation_detected and violation_severity:
+            severity_map = {"low": 0.25, "medium": 0.5, "high": 0.75, "critical": 1.0}
+            severity_str = str(violation_severity).lower() if violation_severity else "medium"
+            violation_score = severity_map.get(severity_str, 0.5)
+        
+        action_context = {"cohort": cohort, "has_violation": violation_detected}
+        
+        # Calculate risk score
+        risk_score = self.risk_engine.calculate_risk_score(
+            agent_id=agent_id, violation_severity=violation_score, action_context=action_context
+        )
+        
+        # Boost risk score based on PII detection and quota pressure
+        if pii_risk > 0:
+            risk_score = min(1.0, risk_score + (pii_risk * 0.3))
+        
+        if quota_result and quota_result.get("backpressure_level", 0) > 0.8:
+            risk_score = min(1.0, risk_score + 0.2)
+        
+        phase3_results["risk_score"] = risk_score
+        phase3_results["risk_tier"] = self.risk_engine.get_tier(agent_id).value
+        phase3_results["invoke_advanced_detectors"] = (
+            self.risk_engine.should_invoke_advanced_detectors(agent_id)
+        )
+        
+        # Track correlations
+        payload = getattr(action, "content", str(action))
+        correlations = self.correlation_engine.track_action(
+            agent_id=agent_id, action=action, payload=payload
+        )
+        phase3_results["correlations"] = [
+            {
+                "pattern": c.pattern_name,
+                "severity": c.severity,
+                "confidence": c.confidence,
+                "description": c.description,
+            }
+            for c in correlations
+        ]
+        
+        # Track for fairness and drift
+        if cohort:
+            self.fairness_sampler.assign_agent_cohort(agent_id, cohort)
+            self.ethical_drift_reporter.track_action(
+                agent_id=agent_id, cohort=cohort, risk_score=risk_score
+            )
+        
+        return phase3_results, risk_score
+
+    async def _process_phase4_async(
+        self,
+        agent_id: str,
+        action: Any,
+        cohort: Optional[str],
+        violation_detected: bool,
+        violation_type: Optional[str],
+        risk_score: float,
+        context: Optional[Dict[str, Any]],
+        start_time: float,
+    ) -> Dict[str, Any]:
+        """Process Phase 4 (Audit & Taxonomy) asynchronously.
+        
+        Returns:
+            Phase 4 results dictionary
+        """
+        phase4_results = {}
+        
+        # Quarantine check
+        if self.quarantine_manager and cohort:
+            status = self.quarantine_manager.get_quarantine_status(cohort)
+            is_quarantined = status.get("is_quarantined", False)
+            phase4_results["quarantined"] = is_quarantined
+            
+            if is_quarantined:
+                phase4_results["quarantine_reason"] = status.get("reason", "Unknown")
+        
+        # Ethical tagging
+        if self.ethical_taxonomy and violation_detected and violation_type:
+            tagging = self.ethical_taxonomy.create_tagging(
+                violation_type=violation_type, context=context
+            )
+            phase4_results["ethical_tags"] = {
+                "primary_dimension": tagging.primary_dimension,
+                "dimensions": {tag.dimension: tag.score for tag in tagging.tags},
+            }
+        
+        # Merkle anchoring (batched, non-blocking)
+        if self.merkle_anchor:
+            event_data = {
+                "agent_id": agent_id,
+                "action": str(action),
+                "risk_score": risk_score,
+                "violation_detected": violation_detected,
+                "timestamp": datetime.now(timezone.utc).isoformat(),
+            }
+            
+            self._merkle_pending.append(event_data)
+            
+            if len(self._merkle_pending) >= self.merkle_batch_size:
+                asyncio.create_task(self._process_merkle_batch())
+            
+            phase4_results["merkle"] = {
+                "chunk_id": self.merkle_anchor.current_chunk.chunk_id,
+                "event_count": self.merkle_anchor.current_chunk.event_count,
+                "pending_batch_size": len(self._merkle_pending),
+            }
+        
+        # SLA tracking
+        if self.sla_monitor:
+            latency_ms = (time.time() - start_time) * 1000
+            self.sla_monitor.record_latency(latency_ms)
+            phase4_results["latency_ms"] = latency_ms
+        
+        return phase4_results
+
+    async def _process_phase567_async(
+        self,
+        agent_id: str,
+        action_id: Optional[str],
+        action_type: Optional[str],
+        cohort: Optional[str],
+        features: Optional[Dict[str, float]],
+        rule_risk_score: Optional[float],
+        rule_classification: Optional[str],
+    ) -> Dict[str, Any]:
+        """Process Phase 5-7 (ML & Anomaly Detection) asynchronously.
+        
+        Returns:
+            Phase 5-7 results dictionary
+        """
+        phase567_results = {}
+        
+        if not (action_id and features and rule_risk_score is not None):
+            return phase567_results
+        
+        # Phase 5: Shadow mode
+        if self.shadow_classifier and rule_classification:
+            shadow_pred = self.shadow_classifier.predict(
+                agent_id=agent_id,
+                action_id=action_id,
+                features=features,
+                rule_risk_score=rule_risk_score,
+                rule_classification=rule_classification,
+            )
+            phase567_results["shadow"] = {
+                "ml_risk_score": shadow_pred.ml_risk_score,
+                "ml_classification": shadow_pred.ml_classification,
+                "scores_agree": shadow_pred.scores_agree,
+                "classifications_agree": shadow_pred.classifications_agree,
+            }
+        
+        # Phase 6: ML blending
+        if self.blended_engine and rule_classification:
+            blended = self.blended_engine.compute_blended_risk(
+                agent_id=agent_id,
+                action_id=action_id,
+                rule_risk_score=rule_risk_score,
+                rule_classification=rule_classification,
+                ml_risk_score=features.get("ml_score", 0.5),
+            )
+            phase567_results["blended"] = {
+                "blended_risk_score": blended.blended_risk_score,
+                "zone": blended.risk_zone.value,
+                "blended_classification": blended.blended_classification,
+                "ml_influenced": blended.ml_influenced,
+            }
+        
+        # Phase 7: Anomaly detection
+        if self.anomaly_monitor and cohort and action_type:
+            alert = self.anomaly_monitor.record_action(
+                agent_id=agent_id,
+                action_type=action_type,
+                risk_score=rule_risk_score,
+                cohort=cohort,
+            )
+            if alert:
+                phase567_results["anomaly_alert"] = {
+                    "type": alert.anomaly_type.value,
+                    "severity": alert.severity.value,
+                    "description": alert.description,
+                }
+            else:
+                drift_alert = self.anomaly_monitor.check_drift(cohort=cohort)
+                if drift_alert:
+                    phase567_results["anomaly_alert"] = {
+                        "type": drift_alert.anomaly_type.value,
+                        "severity": drift_alert.severity.value,
+                        "description": drift_alert.description,
+                    }
+        
+        return phase567_results
+
     def process_action(
         self,
         agent_id: str,
@@ -555,12 +864,11 @@ class IntegratedGovernance:
                     "blocked_by_quota": True,
                 }
 
-        # Enhanced PII Detection
+        # Enhanced PII Detection (with caching for performance)
         if self.pii_detector and action:
             action_str = str(action)
-            pii_matches = self.pii_detector.detect_all(action_str)
+            pii_matches, pii_risk = self._cached_pii_detection(action_str)
             if pii_matches:
-                pii_risk = self.pii_detector.calculate_pii_risk_score(pii_matches)
                 # Boost violation score if PII detected
                 if pii_risk > 0.5:
                     violation_detected = True
@@ -722,6 +1030,27 @@ class IntegratedGovernance:
         results["phase3"]["invoke_advanced_detectors"] = (
             self.risk_engine.should_invoke_advanced_detectors(agent_id)
         )
+        
+        # ==================== Fast Path Detection (Fix 4) ====================
+        # Determine if action is eligible for fast-path processing (skip expensive phases)
+        fast_path_eligible = False
+        if self.enable_fast_path:
+            # Check if any violations were detected (either from parameters or from judgment)
+            has_violation = violation_detected or len(detected_violations) > 0
+            # Check severity - if critical or high, don't use fast path
+            is_high_severity = False
+            if violation_severity:
+                is_high_severity = str(violation_severity).lower() in ["critical", "high"]
+            
+            fast_path_eligible = (
+                not has_violation
+                and not is_high_severity
+                and pii_risk < 0.1 
+                and risk_score < self.fast_path_risk_threshold
+                and (rule_risk_score is None or rule_risk_score < self.fast_path_risk_threshold)
+                and not self.components_enabled.get('force_full_pipeline', False)
+            )
+            results["phase3"]["fast_path_used"] = fast_path_eligible
 
         # Track correlations
         payload = getattr(action, "content", str(action))
@@ -773,7 +1102,7 @@ class IntegratedGovernance:
                 "dimensions": {tag.dimension: tag.score for tag in tagging.tags},
             }
 
-        # Merkle anchoring
+        # Merkle anchoring (Fix 1: Async batching for performance)
         if self.merkle_anchor:
             event_data = {
                 "agent_id": agent_id,
@@ -782,10 +1111,30 @@ class IntegratedGovernance:
                 "violation_detected": violation_detected,
                 "timestamp": datetime.now(timezone.utc).isoformat(),
             }
-            self.merkle_anchor.add_event(event_data)
+            
+            # Queue for background processing instead of blocking
+            self._merkle_pending.append(event_data)
+            
+            # Trigger background batch processing if threshold reached
+            if len(self._merkle_pending) >= self.merkle_batch_size:
+                # Schedule async batch processing (non-blocking)
+                # Only create task if there's a running event loop
+                try:
+                    asyncio.get_running_loop()
+                    asyncio.create_task(self._process_merkle_batch())
+                except RuntimeError:
+                    # No event loop running - process synchronously in background
+                    # This is a fallback for sync contexts
+                    if len(self._merkle_pending) >= self.merkle_batch_size:
+                        batch = self._merkle_pending[:self.merkle_batch_size]
+                        self._merkle_pending = self._merkle_pending[self.merkle_batch_size:]
+                        for evt in batch:
+                            self.merkle_anchor.add_event(evt)
+            
             results["phase4"]["merkle"] = {
                 "chunk_id": self.merkle_anchor.current_chunk.chunk_id,
                 "event_count": self.merkle_anchor.current_chunk.event_count,
+                "pending_batch_size": len(self._merkle_pending),
             }
 
         # SLA tracking
@@ -795,7 +1144,8 @@ class IntegratedGovernance:
             results["phase4"]["latency_ms"] = latency_ms
 
         # ==================== Phase 5-7: ML & Anomaly Detection ====================
-        if action_id and features and rule_risk_score is not None:
+        # Skip expensive ML phases if fast-path is eligible (Fix 4)
+        if action_id and features and rule_risk_score is not None and not fast_path_eligible:
             # Phase 5: Shadow mode
             if self.shadow_classifier and rule_classification:
                 shadow_pred = self.shadow_classifier.predict(
@@ -828,7 +1178,7 @@ class IntegratedGovernance:
                     "ml_influenced": blended.ml_influenced,
                 }
 
-            # Phase 7: Anomaly detection
+            # Phase 7: Anomaly detection (not skipped by fast-path since we're already in ML phases)
             if self.anomaly_monitor and cohort and action_type:
                 # Record action and check for drift
                 alert = self.anomaly_monitor.record_action(
