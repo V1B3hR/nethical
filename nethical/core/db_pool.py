@@ -7,7 +7,6 @@ and improve performance for high-throughput scenarios.
 import sqlite3
 from queue import Queue, Empty
 from contextlib import contextmanager
-from typing import Optional
 from pathlib import Path
 
 
