@@ -16,8 +16,8 @@ jobs:
     runs-on: ubuntu-latest
     permissions: 
       contents: read
-    env: 
-      TRIVY_CACHE_DIR: ~/.cache/trivy
+    env:
+      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
 
     steps: 
       - name: Checkout repository
