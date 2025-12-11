@@ -53,7 +53,7 @@ from .data_minimization import DataMinimization
 from .plugin_interface import get_plugin_manager
 
 # Governance/Safety imports
-from .governance_core import EnhancedSafetyGovernance, AgentAction, Decision
+from .governance_core import EnhancedSafetyGovernance, AgentAction,
 import asyncio
 
 # Vector/Embedding imports
