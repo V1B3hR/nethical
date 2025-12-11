@@ -30,6 +30,7 @@ pandas==2.3.3
 
 # Configuration and data formats
 PyYAML==6.0.3
+jsonschema>=4.19.0,<5.0.0
 
 # Security
 cryptography==44.0.3
