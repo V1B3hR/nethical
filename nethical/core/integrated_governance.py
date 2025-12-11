@@ -54,7 +54,6 @@ from .plugin_interface import get_plugin_manager
 
 # Governance/Safety imports
 from .governance_core import EnhancedSafetyGovernance, AgentAction, Decision
-from .models import AgentAction as ModelsAgentAction
 import asyncio
 
 # Vector/Embedding imports
