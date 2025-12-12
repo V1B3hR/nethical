@@ -23,7 +23,7 @@ Law Alignment:
 
 import uuid
 from datetime import datetime, timezone, timedelta
-from typing import Sequence, Dict, List, Set, Tuple
+from typing import Sequence, Dict, List, Set
 from collections import defaultdict
 
 from ..base_detector import BaseDetector
