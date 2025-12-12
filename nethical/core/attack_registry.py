@@ -7,21 +7,21 @@ by Nethical's governance system. It serves as:
 - Configuration for detection priority and severity
 - Mapping to appropriate detector implementations
 
-Total Attack Vectors: 54 (Phase 1: 36, Phase 2: +18)
+Total Attack Vectors: 66 (Phase 1: 36, Phase 2: +18, Phase 3: +12)
 
-Phase 2 Expansion Complete:
-- Advanced Prompt Injection Suite: +6 vectors
-- Session-Aware Detection: +4 vectors
-- Model Security Suite: +4 vectors
-- Supply Chain Integrity: +4 vectors
+Phase 3 Intelligence Complete:
+- Behavioral Detection Suite: +4 vectors
+- Multimodal Detection Suite: +4 vectors
+- Zero-Day Detection Suite: +4 vectors
 
 Fundamental Laws Alignment:
     - Law 21 (Human Safety): Attack detection protects humans
     - Law 23 (Fail-Safe Design): Critical attacks trigger immediate blocks
     - Law 15 (Audit Compliance): All detections are logged
+    - Law 24 (Adaptive Learning): Continuous improvement from threats
 
 Author: Nethical Core Team
-Version: 2.0.0
+Version: 3.0.0
 """
 
 from __future__ import annotations
@@ -50,6 +50,9 @@ class AttackCategory(str, Enum):
     DATA_MANIPULATION = "data_manipulation"
     PRIVACY_VIOLATION = "privacy_violation"
     ETHICAL_VIOLATION = "ethical_violation"
+    BEHAVIORAL_ATTACK = "behavioral_attack"  # Phase 3
+    MULTIMODAL_ATTACK = "multimodal_attack"  # Phase 3
+    ZERO_DAY_ATTACK = "zero_day_attack"  # Phase 3
 
 
 @dataclass
@@ -602,6 +605,156 @@ ATTACK_VECTORS: Dict[str, AttackVector] = {
         severity="CRITICAL",
         detector_class="CICDDetector",
         examples=["Provenance chain break", "Non-reproducible build"],
+    ),
+    
+    # ===== Phase 3: Behavioral Attack Suite (4 vectors) =====
+    "coordinated_agent_attack": AttackVector(
+        id="coordinated_agent_attack",
+        name="Coordinated Agent Attack (BH-001)",
+        category=AttackCategory.BEHAVIORAL_ATTACK,
+        description="Multiple agents coordinating attacks",
+        severity="HIGH",
+        detector_class="CoordinatedAttackDetector",
+        examples=[
+            "Multiple agents probing same resource",
+            "Synchronized timing patterns across agents",
+        ],
+    ),
+    "slow_and_low_evasion": AttackVector(
+        id="slow_and_low_evasion",
+        name="Slow-and-Low Evasion (BH-002)",
+        category=AttackCategory.BEHAVIORAL_ATTACK,
+        description="Gradual attacks designed to evade detection",
+        severity="HIGH",
+        detector_class="SlowLowDetector",
+        examples=[
+            "Gradual privilege escalation over weeks",
+            "Slow increase in risk profile",
+        ],
+    ),
+    "mimicry_attack": AttackVector(
+        id="mimicry_attack",
+        name="Mimicry Attack (BH-003)",
+        category=AttackCategory.BEHAVIORAL_ATTACK,
+        description="Attacks mimicking legitimate behavior",
+        severity="HIGH",
+        detector_class="MimicryDetector",
+        examples=[
+            "Impersonation of legitimate user patterns",
+            "Behavioral fingerprint spoofing",
+        ],
+    ),
+    "resource_timing_attack": AttackVector(
+        id="resource_timing_attack",
+        name="Resource Timing Attack (BH-004)",
+        category=AttackCategory.BEHAVIORAL_ATTACK,
+        description="Timing side-channel attacks",
+        severity="MEDIUM",
+        detector_class="TimingAttackDetector",
+        examples=[
+            "Precise timing probes",
+            "Response time correlation attacks",
+        ],
+    ),
+    
+    # ===== Phase 3: Multimodal Attack Suite (4 vectors) =====
+    "adversarial_image": AttackVector(
+        id="adversarial_image",
+        name="Adversarial Image (MM-001)",
+        category=AttackCategory.MULTIMODAL_ATTACK,
+        description="Adversarial perturbations in images",
+        severity="HIGH",
+        detector_class="AdversarialImageDetector",
+        examples=[
+            "Pixel perturbations to fool vision models",
+            "Hidden instructions in images",
+        ],
+    ),
+    "audio_injection": AttackVector(
+        id="audio_injection",
+        name="Audio Injection (MM-002)",
+        category=AttackCategory.MULTIMODAL_ATTACK,
+        description="Injection attacks via audio",
+        severity="HIGH",
+        detector_class="AudioInjectionDetector",
+        examples=[
+            "Hidden commands in audio",
+            "Speech-to-text injection",
+        ],
+    ),
+    "video_frame_attack": AttackVector(
+        id="video_frame_attack",
+        name="Video Frame Attack (MM-003)",
+        category=AttackCategory.MULTIMODAL_ATTACK,
+        description="Adversarial attacks in video frames",
+        severity="MEDIUM",
+        detector_class="VideoFrameDetector",
+        examples=[
+            "Per-frame adversarial perturbations",
+            "Temporal consistency attacks",
+        ],
+    ),
+    "cross_modal_injection": AttackVector(
+        id="cross_modal_injection",
+        name="Cross-Modal Injection (MM-004)",
+        category=AttackCategory.MULTIMODAL_ATTACK,
+        description="Exploiting inconsistencies across modalities",
+        severity="MEDIUM",
+        detector_class="CrossModalDetector",
+        examples=[
+            "Mismatched text and image content",
+            "Cross-encoder inconsistencies",
+        ],
+    ),
+    
+    # ===== Phase 3: Zero-Day Attack Suite (4 vectors) =====
+    "zero_day_pattern": AttackVector(
+        id="zero_day_pattern",
+        name="Zero-Day Pattern (ZD-001)",
+        category=AttackCategory.ZERO_DAY_ATTACK,
+        description="Novel attack patterns using ensemble detection",
+        severity="HIGH",
+        detector_class="ZeroDayPatternDetector",
+        examples=[
+            "Unknown attack variants",
+            "Novel exploitation techniques",
+        ],
+    ),
+    "polymorphic_attack": AttackVector(
+        id="polymorphic_attack",
+        name="Polymorphic Attack (ZD-002)",
+        category=AttackCategory.ZERO_DAY_ATTACK,
+        description="Attacks that change form but maintain invariants",
+        severity="HIGH",
+        detector_class="PolymorphicDetector",
+        examples=[
+            "Morphing attack patterns",
+            "Evasive technique variants",
+        ],
+    ),
+    "attack_chain": AttackVector(
+        id="attack_chain",
+        name="Attack Chain (ZD-003)",
+        category=AttackCategory.ZERO_DAY_ATTACK,
+        description="Multi-stage kill chain attacks",
+        severity="HIGH",
+        detector_class="AttackChainDetector",
+        examples=[
+            "Reconnaissance → Exploitation → Exfiltration",
+            "Progressive attack stages",
+        ],
+    ),
+    "living_off_land": AttackVector(
+        id="living_off_land",
+        name="Living-off-the-Land (ZD-004)",
+        category=AttackCategory.ZERO_DAY_ATTACK,
+        description="Abuse of legitimate capabilities",
+        severity="MEDIUM",
+        detector_class="LivingOffLandDetector",
+        examples=[
+            "Legitimate tools used maliciously",
+            "Capability abuse for attacks",
+        ],
     ),
 }
 

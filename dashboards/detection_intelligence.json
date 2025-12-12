@@ -1,0 +1,210 @@
+{
+  "dashboard": {
+    "name": "Detection Intelligence",
+    "version": "1.0.0",
+    "description": "ML-powered detection monitoring and online learning metrics",
+    "refresh_interval_seconds": 30
+  },
+  "panels": [
+    {
+      "id": "online_learning_metrics",
+      "title": "Online Learning Pipeline",
+      "type": "metrics",
+      "metrics": [
+        {
+          "name": "feedback_received_total",
+          "description": "Total feedback entries received",
+          "type": "counter"
+        },
+        {
+          "name": "feedback_processed_total",
+          "description": "Total feedback entries processed",
+          "type": "counter"
+        },
+        {
+          "name": "pending_feedback_count",
+          "description": "Current pending feedback count",
+          "type": "gauge"
+        },
+        {
+          "name": "model_updates_proposed",
+          "description": "Model updates proposed",
+          "type": "counter"
+        },
+        {
+          "name": "model_updates_deployed",
+          "description": "Model updates successfully deployed",
+          "type": "counter"
+        }
+      ]
+    },
+    {
+      "id": "behavioral_detection",
+      "title": "Behavioral Detection Suite",
+      "type": "metrics",
+      "metrics": [
+        {
+          "name": "coordinated_attacks_detected",
+          "description": "Coordinated agent attacks detected",
+          "type": "counter"
+        },
+        {
+          "name": "slow_low_attacks_detected",
+          "description": "Slow-and-low evasion attacks detected",
+          "type": "counter"
+        },
+        {
+          "name": "mimicry_attacks_detected",
+          "description": "Mimicry attacks detected",
+          "type": "counter"
+        },
+        {
+          "name": "timing_attacks_detected",
+          "description": "Resource timing attacks detected",
+          "type": "counter"
+        }
+      ]
+    },
+    {
+      "id": "multimodal_detection",
+      "title": "Multimodal Detection Suite",
+      "type": "metrics",
+      "metrics": [
+        {
+          "name": "adversarial_images_detected",
+          "description": "Adversarial image attacks detected",
+          "type": "counter"
+        },
+        {
+          "name": "audio_injections_detected",
+          "description": "Audio injection attacks detected",
+          "type": "counter"
+        },
+        {
+          "name": "video_attacks_detected",
+          "description": "Video frame attacks detected",
+          "type": "counter"
+        },
+        {
+          "name": "cross_modal_attacks_detected",
+          "description": "Cross-modal injection attacks detected",
+          "type": "counter"
+        }
+      ]
+    },
+    {
+      "id": "zeroday_detection",
+      "title": "Zero-Day Detection Suite",
+      "type": "metrics",
+      "metrics": [
+        {
+          "name": "zeroday_patterns_detected",
+          "description": "Zero-day patterns detected",
+          "type": "counter"
+        },
+        {
+          "name": "polymorphic_attacks_detected",
+          "description": "Polymorphic attacks detected",
+          "type": "counter"
+        },
+        {
+          "name": "attack_chains_detected",
+          "description": "Multi-stage attack chains detected",
+          "type": "counter"
+        },
+        {
+          "name": "living_off_land_detected",
+          "description": "Living-off-the-land attacks detected",
+          "type": "counter"
+        }
+      ]
+    },
+    {
+      "id": "ab_testing",
+      "title": "A/B Testing Framework",
+      "type": "metrics",
+      "metrics": [
+        {
+          "name": "ab_tests_active",
+          "description": "Currently active A/B tests",
+          "type": "gauge"
+        },
+        {
+          "name": "ab_tests_completed",
+          "description": "Completed A/B tests",
+          "type": "counter"
+        },
+        {
+          "name": "treatment_win_rate",
+          "description": "Percentage of tests where treatment won",
+          "type": "gauge"
+        }
+      ]
+    },
+    {
+      "id": "rollback_metrics",
+      "title": "Rollback Manager",
+      "type": "metrics",
+      "metrics": [
+        {
+          "name": "rollbacks_total",
+          "description": "Total rollback events",
+          "type": "counter"
+        },
+        {
+          "name": "rollbacks_successful",
+          "description": "Successful rollbacks",
+          "type": "counter"
+        },
+        {
+          "name": "avg_rollback_time_seconds",
+          "description": "Average rollback time",
+          "type": "gauge"
+        }
+      ]
+    },
+    {
+      "id": "detection_performance",
+      "title": "Detection Performance",
+      "type": "timeseries",
+      "metrics": [
+        {
+          "name": "detection_rate_by_severity",
+          "description": "Detection rate by severity level",
+          "dimensions": ["severity"],
+          "type": "gauge"
+        },
+        {
+          "name": "false_positive_rate",
+          "description": "False positive rate",
+          "type": "gauge"
+        },
+        {
+          "name": "detection_latency_p99",
+          "description": "99th percentile detection latency",
+          "type": "gauge"
+        }
+      ]
+    }
+  ],
+  "alerts": [
+    {
+      "name": "high_false_positive_rate",
+      "condition": "false_positive_rate > 0.05",
+      "severity": "warning",
+      "message": "False positive rate exceeds 5%"
+    },
+    {
+      "name": "detection_rate_degradation",
+      "condition": "detection_rate_by_severity{severity='CRITICAL'} < 0.95",
+      "severity": "critical",
+      "message": "Critical detection rate below 95%"
+    },
+    {
+      "name": "rollback_failure",
+      "condition": "rollbacks_successful / rollbacks_total < 0.95",
+      "severity": "warning",
+      "message": "Rollback success rate below 95%"
+    }
+  ]
+}
