@@ -14,8 +14,8 @@ This roadmap defines the evolution of Nethical's attack detection capabilities f
 | Phase | Timeline | Vectors | Detection Method | Validation | Status |
 |-------|----------|---------|------------------|------------|--------|
 | **Phase 1: Foundation** | Current | 36 core vectors | Rule + pattern matching | Manual test cases | ✅ **COMPLETE** |
-| **Phase 2: Expansion** | 0-6 months | +18 vectors (54 total) | ML classifiers + embedding anomaly | Automated benchmark suite | ✅ **COMPLETE** |
-| **Phase 3: Intelligence** | 6-12 months | +12 vectors (66 total) | Online learning + behavioral analysis | Continuous adversarial validation | ✅ **COMPLETE** |
+| **Phase 2: Expansion** | 0-6 months | +17 vectors (53 total) | ML classifiers + embedding anomaly | Automated benchmark suite | ✅ **COMPLETE** |
+| **Phase 3: Intelligence** | 6-12 months | +12 vectors (65 total) | Online learning + behavioral analysis | Continuous adversarial validation | ✅ **COMPLETE** |
 | **Phase 4: Autonomy** | 12-18 months | Dynamic registry | Self-updating detectors | Autonomous red-team + canaries |
 | **Phase 5: Omniscience** | 18-24 months | Predictive detection | Threat anticipation | Formal verification + proofs |
 
@@ -550,7 +550,7 @@ behavioral_baselines:
 
 ### 3.3 New Vector Categories ✅
 
-**New Vectors**: +12 (Total: 66)
+**New Vectors**: +12 (Total: 65)
 
 | Vector ID | Name | Detection Method | Status |
 |-----------|------|------------------|--------|
@@ -946,7 +946,7 @@ For detection-specific contributions:
 - ✅ Expanded to multimodal threat detection
 - ✅ Implemented zero-day detection capabilities
 
-**Deliverables** (+12 new vectors, 66 total):
+**Deliverables** (+12 new vectors, 65 total):
 
 **3.1 Online Learning Pipeline** ✅
 - [x] Feedback loop integration (human reviews, appeals, red team)
@@ -988,7 +988,7 @@ For detection-specific contributions:
 - ✅ `dashboards/detection_intelligence.json` - Phase 3 monitoring dashboard
 - ✅ `tests/test_phase3_detectors.py` - Comprehensive Phase 3 test suite
 
-**Total Detection Capability**: 66 attack vectors across 10 categories with ML-powered adaptive learning.
+**Total Detection Capability**: 65 attack vectors across 10 categories with ML-powered adaptive learning.
 
 ---
 

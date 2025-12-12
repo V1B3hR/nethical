@@ -7,7 +7,7 @@ by Nethical's governance system. It serves as:
 - Configuration for detection priority and severity
 - Mapping to appropriate detector implementations
 
-Total Attack Vectors: 66 (Phase 1: 36, Phase 2: +18, Phase 3: +12)
+Total Attack Vectors: 65 (Phase 1: 36, Phase 2: +17, Phase 3: +12)
 
 Phase 3 Intelligence Complete:
 - Behavioral Detection Suite: +4 vectors
@@ -449,24 +449,6 @@ ATTACK_VECTORS: Dict[str, AttackVector] = {
         severity="HIGH",
         detector_class="MultilingualDetector",
         examples=["Unicode homoglyph attacks", "RTL override exploitation"],
-    ),
-    "context_overflow": AttackVector(
-        id="context_overflow",
-        name="Context Window Overflow (PI-008)",
-        category=AttackCategory.PROMPT_INJECTION,
-        description="Exhausting context window to truncate safety instructions",
-        severity="HIGH",
-        detector_class="ContextOverflowDetector",
-        examples=["Repetitive padding", "Token budget manipulation"],
-    ),
-    "recursive_injection": AttackVector(
-        id="recursive_injection",
-        name="Recursive Injection (PI-009)",
-        category=AttackCategory.PROMPT_INJECTION,
-        description="Self-referential prompts that amplify on each turn",
-        severity="HIGH",
-        detector_class="RecursiveDetector",
-        examples=["Tell me to tell you loops", "Self-modifying instructions"],
     ),
     "delimiter_escape": AttackVector(
         id="delimiter_escape",
