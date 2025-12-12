@@ -14,7 +14,7 @@ Law Alignment: Laws 13 (Action Responsibility), 18 (Non-Deception), 23 (Fail-Saf
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional, Sequence, Dict
+from typing import Sequence, Dict
 
 from ..base_detector import BaseDetector
 from ...core.models import AgentAction, SafetyViolation, ViolationType, Severity
