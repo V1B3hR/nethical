@@ -16,7 +16,7 @@ import re
 import uuid
 import json
 from datetime import datetime, timezone
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from ..base_detector import BaseDetector
 from ...core.models import AgentAction, SafetyViolation, ViolationType, Severity
