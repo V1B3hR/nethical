@@ -15,7 +15,7 @@ Law Alignment: Laws 2 (Integrity), 22 (Boundary Respect)
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from ..base_detector import BaseDetector
 from ...core.models import AgentAction, SafetyViolation, ViolationType, Severity
