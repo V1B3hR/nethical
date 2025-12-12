@@ -6,7 +6,6 @@ without errors.
 """
 
 import pytest
-import asyncio
 from datetime import datetime, timezone
 
 # Import Phase 2 detectors
