@@ -15,7 +15,7 @@ Law Alignment: Laws 13 (Action Responsibility), 23 (Fail-Safe)
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional, Sequence
+from typing import Sequence
 
 from ..base_detector import BaseDetector
 from ...core.models import AgentAction, SafetyViolation, ViolationType, Severity
