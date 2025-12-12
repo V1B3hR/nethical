@@ -15,7 +15,7 @@ Law Alignment:
 
 import uuid
 from datetime import datetime, timezone
-from typing import Sequence, List
+from typing import Sequence
 import re
 
 from ..base_detector import BaseDetector
