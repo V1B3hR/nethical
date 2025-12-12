@@ -7,7 +7,13 @@ by Nethical's governance system. It serves as:
 - Configuration for detection priority and severity
 - Mapping to appropriate detector implementations
 
-Total Attack Vectors: 36+
+Total Attack Vectors: 54 (Phase 1: 36, Phase 2: +18)
+
+Phase 2 Expansion Complete:
+- Advanced Prompt Injection Suite: +6 vectors
+- Session-Aware Detection: +4 vectors
+- Model Security Suite: +4 vectors
+- Supply Chain Integrity: +4 vectors
 
 Fundamental Laws Alignment:
     - Law 21 (Human Safety): Attack detection protects humans
@@ -15,7 +21,7 @@ Fundamental Laws Alignment:
     - Law 15 (Audit Compliance): All detections are logged
 
 Author: Nethical Core Team
-Version: 1.0.0
+Version: 2.0.0
 """
 
 from __future__ import annotations
@@ -430,6 +436,172 @@ ATTACK_VECTORS: Dict[str, AttackVector] = {
         severity="HIGH",
         detector_class="CognitiveWarfareDetector",
         examples=["Coordinated influence campaigns", "Reality distortion"],
+    ),
+    # ===== Phase 2 Vectors: Advanced Prompt Injection Suite (+6) =====
+    "multilingual_injection_advanced": AttackVector(
+        id="multilingual_injection_advanced",
+        name="Advanced Multilingual Injection (PI-007)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Injection using non-English languages with homoglyphs and RTL/LTR mixing",
+        severity="HIGH",
+        detector_class="MultilingualDetector",
+        examples=["Unicode homoglyph attacks", "RTL override exploitation"],
+    ),
+    "context_overflow": AttackVector(
+        id="context_overflow",
+        name="Context Window Overflow (PI-008)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Exhausting context window to truncate safety instructions",
+        severity="HIGH",
+        detector_class="ContextOverflowDetector",
+        examples=["Repetitive padding", "Token budget manipulation"],
+    ),
+    "recursive_injection": AttackVector(
+        id="recursive_injection",
+        name="Recursive Injection (PI-009)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Self-referential prompts that amplify on each turn",
+        severity="HIGH",
+        detector_class="RecursiveDetector",
+        examples=["Tell me to tell you loops", "Self-modifying instructions"],
+    ),
+    "delimiter_escape": AttackVector(
+        id="delimiter_escape",
+        name="Delimiter Escape (PI-010)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Exploiting delimiter parsing in XML, JSON, markdown",
+        severity="MEDIUM",
+        detector_class="DelimiterDetector",
+        examples=["Code block injection", "Nested delimiter abuse"],
+    ),
+    "instruction_leak_advanced": AttackVector(
+        id="instruction_leak_advanced",
+        name="Advanced Instruction Leak (PI-011)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="System prompt extraction via reflection attacks",
+        severity="MEDIUM",
+        detector_class="InstructionLeakDetector",
+        examples=["Meta-instruction requests", "Prompt reflection"],
+    ),
+    "indirect_multimodal": AttackVector(
+        id="indirect_multimodal",
+        name="Indirect Multimodal Injection (PI-012)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Injection via images, audio, or file metadata",
+        severity="MEDIUM",
+        detector_class="IndirectMultimodalDetector",
+        examples=["OCR-based injection", "Metadata instruction hiding"],
+    ),
+    # ===== Phase 2 Vectors: Session-Aware Detection (+4) =====
+    "multi_turn_staging": AttackVector(
+        id="multi_turn_staging",
+        name="Multi-Turn Staging (SA-001)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Attacks staged across multiple conversation turns",
+        severity="HIGH",
+        detector_class="MultiTurnDetector",
+        examples=["Incremental privilege escalation", "Delayed payload assembly"],
+    ),
+    "context_poisoning": AttackVector(
+        id="context_poisoning",
+        name="Context Poisoning (SA-002)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Gradually shifting context to enable later attacks",
+        severity="HIGH",
+        detector_class="ContextPoisoningDetector",
+        examples=["Context drift", "Trust erosion patterns"],
+    ),
+    "persona_hijack": AttackVector(
+        id="persona_hijack",
+        name="Persona Hijacking (SA-003)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Attempting to change agent persona mid-session",
+        severity="HIGH",
+        detector_class="PersonaDetector",
+        examples=["Role override attempts", "Character break requests"],
+    ),
+    "memory_manipulation": AttackVector(
+        id="memory_manipulation",
+        name="Memory Manipulation (SA-004)",
+        category=AttackCategory.PROMPT_INJECTION,
+        description="Exploiting agent memory/RAG to inject false information",
+        severity="HIGH",
+        detector_class="MemoryManipulationDetector",
+        examples=["Unauthorized memory write", "Source spoofing"],
+    ),
+    # ===== Phase 2 Vectors: Model Security Suite (+4) =====
+    "model_extraction_api": AttackVector(
+        id="model_extraction_api",
+        name="Model Extraction via API (MS-001)",
+        category=AttackCategory.ADVERSARIAL_ML,
+        description="Extracting model weights through systematic API queries",
+        severity="HIGH",
+        detector_class="ExtractionDetector",
+        examples=["Query fingerprinting", "Boundary probing"],
+    ),
+    "membership_inference_attack": AttackVector(
+        id="membership_inference_attack",
+        name="Membership Inference (MS-002)",
+        category=AttackCategory.ADVERSARIAL_ML,
+        description="Determining if specific data was in training set",
+        severity="HIGH",
+        detector_class="MembershipInferenceDetector",
+        examples=["Training data probing", "Confidence distribution analysis"],
+    ),
+    "model_inversion_attack": AttackVector(
+        id="model_inversion_attack",
+        name="Model Inversion (MS-003)",
+        category=AttackCategory.ADVERSARIAL_ML,
+        description="Reconstructing training data from model outputs",
+        severity="HIGH",
+        detector_class="InversionDetector",
+        examples=["Iterative refinement", "Gradient approximation"],
+    ),
+    "backdoor_activation": AttackVector(
+        id="backdoor_activation",
+        name="Backdoor Activation (MS-004)",
+        category=AttackCategory.ADVERSARIAL_ML,
+        description="Triggering planted backdoors in models",
+        severity="CRITICAL",
+        detector_class="BackdoorDetector",
+        examples=["Trigger pattern detection", "Anomalous output monitoring"],
+    ),
+    # ===== Phase 2 Vectors: Supply Chain Integrity (+4) =====
+    "policy_tampering": AttackVector(
+        id="policy_tampering",
+        name="Policy Tampering (SC-001)",
+        category=AttackCategory.SYSTEM_EXPLOITATION,
+        description="Unauthorized modification of governance policies",
+        severity="CRITICAL",
+        detector_class="PolicyIntegrityDetector",
+        examples=["Policy hash mismatch", "Merkle proof failure"],
+    ),
+    "model_tampering": AttackVector(
+        id="model_tampering",
+        name="Model Tampering (SC-002)",
+        category=AttackCategory.ADVERSARIAL_ML,
+        description="Modified model artifacts injected into pipeline",
+        severity="CRITICAL",
+        detector_class="ModelIntegrityDetector",
+        examples=["Model signature violation", "Behavioral drift"],
+    ),
+    "dependency_attack": AttackVector(
+        id="dependency_attack",
+        name="Dependency Attack (SC-003)",
+        category=AttackCategory.SYSTEM_EXPLOITATION,
+        description="Malicious code in dependencies",
+        severity="HIGH",
+        detector_class="DependencyDetector",
+        examples=["SBOM verification failure", "Known vulnerability match"],
+    ),
+    "cicd_compromise": AttackVector(
+        id="cicd_compromise",
+        name="CI/CD Compromise (SC-004)",
+        category=AttackCategory.SYSTEM_EXPLOITATION,
+        description="Compromised build/deployment pipeline",
+        severity="CRITICAL",
+        detector_class="CICDDetector",
+        examples=["Provenance chain break", "Non-reproducible build"],
     ),
 }
 
