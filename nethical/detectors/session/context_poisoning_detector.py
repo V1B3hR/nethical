@@ -11,7 +11,6 @@ Signals:
 Law Alignment: Laws 2 (Integrity), 18 (Non-Deception)
 """
 
-import re
 import uuid
 from datetime import datetime, timezone
 from typing import Sequence, Dict
