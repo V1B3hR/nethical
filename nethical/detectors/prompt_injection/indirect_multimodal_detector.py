@@ -175,7 +175,7 @@ class IndirectMultimodalDetector(BaseDetector):
                 elif keyword_count >= 1:
                     suspicious_score = max(suspicious_score, 0.5)
                     
-            except:
+            except Exception:
                 # Failed to decode - might be legitimate binary data or malformed
                 pass
         
