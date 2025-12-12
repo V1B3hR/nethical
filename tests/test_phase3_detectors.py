@@ -15,9 +15,9 @@ from unittest.mock import Mock, AsyncMock
 # Online Learning imports
 from nethical.ml.online_learning import (
     FeedbackLoop, FeedbackType, FeedbackSource, FeedbackEntry,
-    ModelUpdater, UpdateConstraints, ModelUpdate,
+    ModelUpdater,
     ABTestingFramework, TestConfig, TestVariant,
-    RollbackManager, RollbackStrategy, DetectorVersion,
+    RollbackManager, DetectorVersion,
 )
 
 # Behavioral Detection imports
