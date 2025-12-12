@@ -202,7 +202,7 @@
     },
     {
       "name": "rollback_failure",
-      "condition": "rollbacks_successful / rollbacks_total < 0.95",
+      "condition": "rollbacks_total > 0 && rollbacks_successful / rollbacks_total < 0.95",
       "severity": "warning",
       "message": "Rollback success rate below 95%"
     }
