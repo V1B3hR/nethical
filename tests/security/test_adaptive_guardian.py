@@ -728,7 +728,7 @@ class TestPerformanceBenchmarks:
         guardian = AdaptiveGuardian()
         
         # Force SPRINT mode by clearing threats
-        guardian._track_analyzer.set_external_threat_level(0.0)
+        guardian.set_external_threat_level(0.0)
         
         # Warm up
         for _ in range(10):
@@ -790,11 +790,11 @@ class TestCrossModuleCorrelation:
         initial_status = guardian.get_status()
         initial_score = initial_status["threat_analysis"]["overall_score"]
         
-        # Record correlations
+        # Record correlations using public API
         for _ in range(10):
-            guardian._track_analyzer.record_correlation("Module1", "Module2")
-            guardian._track_analyzer.record_correlation("Module2", "Module3")
-            guardian._track_analyzer.record_correlation("Module1", "Module3")
+            guardian.record_correlation("Module1", "Module2")
+            guardian.record_correlation("Module2", "Module3")
+            guardian.record_correlation("Module1", "Module3")
         
         updated_status = guardian.get_status()
         updated_score = updated_status["threat_analysis"]["overall_score"]

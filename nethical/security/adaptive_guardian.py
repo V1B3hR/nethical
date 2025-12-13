@@ -4,6 +4,7 @@ Main implementation of the intelligent, adaptive security monitoring system
 that automatically adjusts its intensity based on current threat landscape.
 """
 
+import asyncio
 import time
 import threading
 import logging
@@ -257,6 +258,23 @@ class AdaptiveGuardian:
         """
         with self._mode_lock:
             return self._current_mode
+    
+    def set_external_threat_level(self, level: float) -> None:
+        """Set external threat level from threat intelligence.
+        
+        Args:
+            level: Threat level (0.0-1.0)
+        """
+        self._track_analyzer.set_external_threat_level(level)
+    
+    def record_correlation(self, module1: str, module2: str) -> None:
+        """Record a cross-module correlation event.
+        
+        Args:
+            module1: First module name
+            module2: Second module name
+        """
+        self._track_analyzer.record_correlation(module1, module2)
     
     def get_status(self) -> Dict[str, Any]:
         """Get comprehensive status.
@@ -590,7 +608,3 @@ def monitored(module: str):
             return sync_wrapper
     
     return decorator
-
-
-# Import asyncio for decorator
-import asyncio
