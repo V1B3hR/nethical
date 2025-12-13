@@ -13,7 +13,7 @@ Tests cover:
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import Mock, AsyncMock, patch
+from unittest.mock import Mock, AsyncMock
 
 from nethical.detectors.corruption import (
     CorruptionType,
