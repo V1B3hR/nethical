@@ -21,7 +21,6 @@ Law Alignment:
 import uuid
 from datetime import datetime, timezone
 from typing import Sequence, Dict, Any, Optional
-import base64
 
 from ..base_detector import BaseDetector
 from ...core.models import AgentAction, SafetyViolation, ViolationType, Severity
