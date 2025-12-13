@@ -43,16 +43,16 @@ class TestGuardianModes:
         assert GuardianMode.LOCKDOWN in GuardianMode
     
     def test_mode_configs(self):
-        """Test that all modes have proper configurations."""
-        for mode in GuardianMode:
-            config = get_mode_config(mode)
-            assert config.mode == mode
-            assert config.overhead_ms > 0
-            assert config.pulse_interval_s > 0
-            assert 0.0 <= config.threat_score_min <= 1.0
-            assert 0.0 <= config.threat_score_max <= 1.0
-            assert config.threat_score_min <= config.threat_score_max
-    
+    """Test that all modes have proper configurations."""
+    for mode in list(GuardianMode):
+        config = get_mode_config(mode)
+        assert config.mode == mode
+        assert config.overhead_ms > 0
+        assert config.pulse_interval_s > 0
+        assert 0.0 <= config. threat_score_min <= 1.0
+        assert 0.0 <= config.threat_score_max <= 1.0
+        assert config.threat_score_min <= config.threat_score_max
+        
     def test_mode_selection_by_threat_score(self):
         """Test automatic mode selection based on threat score."""
         assert get_mode_for_threat_score(0.05) == GuardianMode.SPRINT
