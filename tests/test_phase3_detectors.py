@@ -10,7 +10,6 @@ Tests for Phase 3 components:
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import Mock, AsyncMock
 
 # Online Learning imports
 from nethical.ml.online_learning import (
