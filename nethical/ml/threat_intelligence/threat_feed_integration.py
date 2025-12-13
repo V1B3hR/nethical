@@ -9,7 +9,6 @@ Component: Threat Anticipation
 """
 
 import asyncio
-import hashlib
 import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
