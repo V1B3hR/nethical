@@ -20,9 +20,7 @@ from nethical.ml.threat_intelligence import (
     ThreatSeverity,
     PredictiveModeler,
     AttackPrediction,
-    ThreatEvolutionModel,
     ProactiveHardener,
-    HardeningAction,
     HardeningPriority,
 )
 
