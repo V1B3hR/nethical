@@ -11,8 +11,7 @@ Version: 1.0.0
 import logging
 from typing import Any, Optional, Sequence
 
-from ..base_detector import BaseDetector, SafetyViolation, ViolationSeverity
-from ...core.models import AgentAction
+from ..base_detector import BaseDetector, SafetyViolation, ViolationSeverity, DetectorStatus
 from .intelligence_engine import IntelligenceEngine
 from .corruption_types import RiskLevel, RecommendedAction
 
@@ -56,7 +55,6 @@ class CorruptionDetector(BaseDetector):
     
     async def detect_violations(self, action: Any) -> Sequence[SafetyViolation] | None:
         """Detect corruption violations in the action."""
-        from ..base_detector import DetectorStatus
         if self.status != DetectorStatus.ACTIVE:
             return None
         

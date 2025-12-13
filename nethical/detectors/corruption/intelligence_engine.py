@@ -142,7 +142,7 @@ class IntelligenceEngine:
         for pattern_def in self.pattern_library.get_all_patterns():
             for pattern in pattern_def.patterns:
                 try:
-                    matches = re.findall(pattern, content_lower, re.IGNORECASE | re.MULTILINE)
+                    matches = re.findall(pattern, content_lower, re.MULTILINE)
                     
                     if matches:
                         # Skip if pattern requires context and we don't have strong signals
