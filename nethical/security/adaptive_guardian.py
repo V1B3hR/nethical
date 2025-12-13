@@ -114,7 +114,7 @@ class AdaptiveGuardian:
         self._stats = GuardianStatistics()
         
         # Initialize mode durations
-        for mode in GuardianMode:
+        for mode in list(GuardianMode):
             self._stats.mode_durations[mode] = 0.0
         
         # Start watchdog
