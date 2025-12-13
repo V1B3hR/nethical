@@ -10,7 +10,6 @@ The Guardian automatically monitors and adapts security intensity.
 
 import asyncio
 import time
-from typing import List, Optional
 
 from nethical.security.adaptive_guardian import (
     AdaptiveGuardian,
