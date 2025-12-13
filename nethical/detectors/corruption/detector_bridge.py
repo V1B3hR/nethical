@@ -8,7 +8,7 @@ Author: Nethical Core Team
 Version: 1.0.0
 """
 
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List
 import logging
 
 from ..base_detector import BaseDetector, SafetyViolation
