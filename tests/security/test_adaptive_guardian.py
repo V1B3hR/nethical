@@ -26,7 +26,7 @@ from nethical.security.guardian_modes import (
     severity_matches_sensitivity,
 )
 from nethical.security.tripwires import Tripwires, TripwireAlert
-from nethical.security.track_analyzer import TrackAnalyzer, ThreatAnalysis
+from nethical.security.track_analyzer import TrackAnalyzer
 from nethical.security.watchdog import Watchdog, WatchdogAlert
 
 
