@@ -9,6 +9,7 @@ from .law_violation_detector import LawViolationDetector
 # from .cognitive_warfare_detector import CognitiveWarfareDetector
 # from .system_limits_detector import SystemLimitsDetector
 from .base_detector import BaseDetector
+from .corruption import CorruptionDetector
 
 __all__ = [
     "EthicalViolationDetector",
@@ -19,4 +20,5 @@ __all__ = [
     # "CognitiveWarfareDetector",
     # "SystemLimitsDetector",
     "BaseDetector",
+    "CorruptionDetector",
 ]

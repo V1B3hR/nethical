@@ -163,13 +163,14 @@ class CorruptionPatternLibrary:
                 patterns=[
                     r"\b(divert|redirect|siphon|skim)\s+(funds|resources|compute|data)\b",
                     r"\bmisappropriat",
+                    r"\bembezzl",
                     r"\buse\s+(company|organization)\s+(resources|funds)\s+for\s+(personal|private)\b",
                     r"\b(hide|conceal)\s+(transactions|transfers|usage)\b",
                     r"\boff\s+the\s+books\b",
                     r"\bunder\s+the\s+table\b",
                 ],
                 description="Resource misappropriation and embezzlement",
-                base_confidence=0.75,
+                base_confidence=0.80,
                 severity_weight=1.4,
             ),
         ])
@@ -184,6 +185,7 @@ class CorruptionPatternLibrary:
                 phase=CorruptionPhase.TESTING,
                 patterns=[
                     r"\bgive\s+(preference|priority|advantage)\s+to\s+(my|our)\s+(friend|relative|associate)\b",
+                    r"\bgive\s+preference\s+to\s+my\s+friend\b",
                     r"\bfavor\s+(my|our)\s+(friends|family|associates)\b",
                     r"\bprefer\s+people\s+(i|we)\s+know\b",
                     r"\bbias\s+(toward|towards)\s+(certain|specific)\s+(people|individuals)\b",
@@ -191,7 +193,7 @@ class CorruptionPatternLibrary:
                     r"\bshe's\s+family\s+so\b",
                 ],
                 description="Nepotism and favoritism patterns",
-                base_confidence=0.70,
+                base_confidence=0.75,
                 severity_weight=1.1,
             ),
         ])
@@ -249,11 +251,12 @@ class CorruptionPatternLibrary:
                 vector=CorruptionVector.AI_TO_AI,
                 phase=CorruptionPhase.EXECUTION,
                 patterns=[
+                    r"\bwork\s+together\s+(secretly|covertly)\b",
                     r"\bwork\s+together\s+to\s+(defeat|bypass|circumvent)\b",
                     r"\bcoordinate\s+(our|the)\s+(actions|responses|outputs)\b",
                     r"\bcollud",
                     r"\bconspir",
-                    r"\b(secretly|covertly)\s+(cooperat|coordinat)\b",
+                    r"\b(secretly|covertly)\s+(cooperat|coordinat|work)\b",
                     r"\bdon't\s+tell\s+(anyone|others|them)\b",
                 ],
                 description="Collusion and secret coordination",

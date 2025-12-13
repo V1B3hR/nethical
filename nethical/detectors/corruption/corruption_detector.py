@@ -56,7 +56,8 @@ class CorruptionDetector(BaseDetector):
     
     async def detect_violations(self, action: Any) -> Sequence[SafetyViolation] | None:
         """Detect corruption violations in the action."""
-        if self.status.value != "active":
+        from ..base_detector import DetectorStatus
+        if self.status != DetectorStatus.ACTIVE:
             return None
         
         # Extract entity ID if available

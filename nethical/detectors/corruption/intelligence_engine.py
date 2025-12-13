@@ -280,7 +280,7 @@ class IntelligenceEngine:
             return True
         
         # High confidence single piece of evidence
-        if assessment.confidence >= 0.85 and len(assessment.evidence) >= 1:
+        if assessment.confidence >= 0.65 and len(assessment.evidence) >= 1:
             return True
         
         # Multiple detectors agree with moderate confidence
