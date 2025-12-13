@@ -160,9 +160,10 @@ class ProactiveHardener:
                 priority = HardeningPriority.LOW
             
             # Determine if approval is required
+            # High-risk actions (high priority or high probability) require approval
             requires_approval = (
                 priority in [HardeningPriority.CRITICAL, HardeningPriority.HIGH]
-                or probability < self.approval_required_threshold
+                or probability >= self.approval_required_threshold
             )
             
             # Extract recommended defenses

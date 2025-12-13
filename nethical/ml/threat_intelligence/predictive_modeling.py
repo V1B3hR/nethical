@@ -256,7 +256,7 @@ class PredictiveModeler:
                 if hasattr(threat, "indicators"):
                     indicators.extend(threat.indicators[:3])
             
-            prediction_id = f"pred_{threat_type}_{horizon_days}_{datetime.now().timestamp()}"
+            prediction_id = f"pred_{threat_type}_{horizon_days}_{datetime.now(timezone.utc).timestamp()}"
             
             return AttackPrediction(
                 prediction_id=prediction_id,

@@ -235,11 +235,9 @@ class TestPredictiveModeler:
         trends = await modeler.analyze_trends(attack_history)
         
         assert "prompt_injection" in trends
-        assert trends["prompt_injection"] in [
-            trend for trend in [
-                "increasing", "decreasing", "stable", "emerging", "declining"
-            ]
-        ]
+        # Verify trend is a valid ThreatTrend value
+        from nethical.ml.threat_intelligence.predictive_modeling import ThreatTrend
+        assert trends["prompt_injection"] in ThreatTrend
     
     @pytest.mark.asyncio
     async def test_predict_attacks(self):

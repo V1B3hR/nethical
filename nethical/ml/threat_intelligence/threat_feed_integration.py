@@ -145,7 +145,9 @@ class ThreatFeedIntegrator:
         """
         try:
             # Check for duplicates
-            if threat.threat_id in self.threats:
+            is_update = threat.threat_id in self.threats
+            
+            if is_update:
                 logger.info(f"Threat {threat.threat_id} already exists, updating")
                 existing = self.threats[threat.threat_id]
                 
@@ -176,7 +178,7 @@ class ThreatFeedIntegrator:
             return {
                 "status": "success",
                 "threat_id": threat.threat_id,
-                "action": "updated" if threat.threat_id in self.threats else "created",
+                "action": "updated" if is_update else "created",
                 "severity": threat.severity.value,
             }
             

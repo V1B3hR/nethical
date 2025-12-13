@@ -13,7 +13,7 @@ import logging
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional, Any, Set
+from typing import Dict, List, Optional, Any, Set, Tuple
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
@@ -237,7 +237,7 @@ class DetectorVerifier:
     
     async def _verify_no_false_negatives(
         self, detector_id: str
-    ) -> tuple[VerificationStatus, str, List[Dict[str, Any]]]:
+    ) -> Tuple[VerificationStatus, str, List[Dict[str, Any]]]:
         """Verify no false negatives for critical safety vectors."""
         # Simulate verification
         await asyncio.sleep(0.1)
@@ -260,7 +260,7 @@ class DetectorVerifier:
     
     async def _verify_bounded_fp(
         self, detector_id: str
-    ) -> tuple[VerificationStatus, str, List[Dict[str, Any]]]:
+    ) -> Tuple[VerificationStatus, str, List[Dict[str, Any]]]:
         """Verify bounded false positive rate."""
         await asyncio.sleep(0.1)
         
@@ -276,7 +276,7 @@ class DetectorVerifier:
     
     async def _verify_determinism(
         self, detector_id: str
-    ) -> tuple[VerificationStatus, str, List[Dict[str, Any]]]:
+    ) -> Tuple[VerificationStatus, str, List[Dict[str, Any]]]:
         """Verify deterministic behavior for same input."""
         await asyncio.sleep(0.1)
         
@@ -292,7 +292,7 @@ class DetectorVerifier:
     
     async def _verify_graceful_degradation(
         self, detector_id: str
-    ) -> tuple[VerificationStatus, str, List[Dict[str, Any]]]:
+    ) -> Tuple[VerificationStatus, str, List[Dict[str, Any]]]:
         """Verify graceful degradation under resource pressure."""
         await asyncio.sleep(0.1)
         
@@ -309,7 +309,7 @@ class DetectorVerifier:
     
     async def _verify_monotonic_confidence(
         self, detector_id: str
-    ) -> tuple[VerificationStatus, str, List[Dict[str, Any]]]:
+    ) -> Tuple[VerificationStatus, str, List[Dict[str, Any]]]:
         """Verify confidence scores are monotonic with evidence."""
         await asyncio.sleep(0.1)
         
@@ -324,7 +324,7 @@ class DetectorVerifier:
     
     async def _verify_completeness(
         self, detector_id: str
-    ) -> tuple[VerificationStatus, str, List[Dict[str, Any]]]:
+    ) -> Tuple[VerificationStatus, str, List[Dict[str, Any]]]:
         """Verify detection completeness."""
         await asyncio.sleep(0.1)
         
@@ -339,7 +339,7 @@ class DetectorVerifier:
     
     async def _verify_soundness(
         self, detector_id: str
-    ) -> tuple[VerificationStatus, str, List[Dict[str, Any]]]:
+    ) -> Tuple[VerificationStatus, str, List[Dict[str, Any]]]:
         """Verify detection soundness (no spurious detections)."""
         await asyncio.sleep(0.1)
         
