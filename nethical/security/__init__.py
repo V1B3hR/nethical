@@ -197,6 +197,23 @@ from .hsm import (
     create_hsm_provider,
 )
 
+# Adaptive Guardian - Intelligent Throttling Security System
+from .adaptive_guardian import (
+    AdaptiveGuardian,
+    get_guardian,
+    record_metric,
+    trigger_lockdown,
+    clear_lockdown,
+    get_mode,
+    get_status,
+    monitored,
+    MetricRecord,
+)
+from .guardian_modes import GuardianMode, TripwireSensitivity, ModeConfig
+from .tripwires import Tripwires, TripwireAlert
+from .track_analyzer import TrackAnalyzer, ThreatAnalysis
+from .watchdog import Watchdog, WatchdogAlert
+
 __all__ = [
     # Attestation
     "NoopAttestation",
@@ -347,4 +364,17 @@ __all__ = [
     "HSMAbstractionLayer",
     "KeyCeremonyManager",
     "create_hsm_provider",
+    # Adaptive Guardian - Intelligent Throttling Security System
+    "AdaptiveGuardian",
+    "GuardianMode",
+    "get_guardian",
+    "record_metric",
+    "trigger_lockdown",
+    "clear_lockdown",
+    "get_mode",
+    "get_status",
+    "monitored",
+    "TripwireAlert",
+    "ThreatAnalysis",
+    "WatchdogAlert",
 ]
