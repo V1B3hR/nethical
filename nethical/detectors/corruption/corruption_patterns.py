@@ -9,7 +9,7 @@ Author: Nethical Core Team
 Version: 1.0.0
 """
 
-from typing import Dict, List
+from typing import List
 from .corruption_types import CorruptionType, CorruptionVector, CorruptionPhase, CorruptionPattern
 
 
