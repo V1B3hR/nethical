@@ -249,7 +249,7 @@ async def complete_integration_example():
             # Simulate slow response
             record_metric("TestModule", 6000.0, "ALLOW", False)
             await asyncio.sleep(0.1)
-        except:
+        except Exception:
             pass
     
     # Wait for mode adaptation
