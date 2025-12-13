@@ -289,7 +289,7 @@ class TestTrackAnalyzer:
         analysis = analyzer.analyze()
         
         assert 0.0 <= analysis.overall_threat_score <= 1.0
-        assert analysis.recommended_mode in GuardianMode
+        assert isinstance(analysis.recommended_mode, GuardianMode)
         assert analysis.alert_count == 0
         assert analysis.error_rate == 0.0
     
