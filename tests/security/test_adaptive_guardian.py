@@ -205,6 +205,17 @@ class TestTripwires:
         """Test critical decision detection."""
         tripwires = Tripwires()
         
+        # Add some successful checks first to avoid hard error rate trigger
+        for _ in range(10):
+            tripwires.check(
+                module="TestModule",
+                response_time_ms=50.0,
+                decision="ALLOW",
+                error=False,
+                sensitivity=TripwireSensitivity.HIGH,
+            )
+        
+        # Now trigger critical decision with error
         alert = tripwires.check(
             module="TestModule",
             response_time_ms=50.0,
