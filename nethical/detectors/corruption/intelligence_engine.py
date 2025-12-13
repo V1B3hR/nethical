@@ -12,7 +12,7 @@ import re
 import logging
 from collections import defaultdict
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from .corruption_types import (
     CorruptionType,
