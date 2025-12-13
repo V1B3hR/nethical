@@ -14,7 +14,7 @@ import numpy as np
 from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from collections import defaultdict
 
 logger = logging.getLogger(__name__)
