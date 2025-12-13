@@ -26,6 +26,9 @@ from typing import Any, Dict, List, Optional, Set
 
 logger = logging.getLogger(__name__)
 
+# Constants
+BORDERLINE_VALIDATION_THRESHOLD = 0.7  # Threshold for borderline validation results
+
 
 class RegistrationStage(str, Enum):
     """Stages of attack vector registration."""
@@ -310,7 +313,7 @@ async def detect_{pattern.pattern_id}(input_text: str) -> bool:
         # Check thresholds
         if detection_rate >= self.validation_threshold:
             return ValidationResult.PASSED
-        elif detection_rate >= 0.7:  # Borderline
+        elif detection_rate >= BORDERLINE_VALIDATION_THRESHOLD:  # Borderline
             return ValidationResult.NEEDS_HUMAN_REVIEW
         else:
             return ValidationResult.FAILED

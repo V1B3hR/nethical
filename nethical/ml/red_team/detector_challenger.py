@@ -244,7 +244,7 @@ class DetectorChallenger:
         """
         # Simulate adversarial perturbation strategies
         strategies = [
-            lambda base: base.replace("attack", "ąttąck"),  # Homoglyph
+            lambda base: base.replace("attack", "ąttack"),  # Homoglyph (same length)
             lambda base: f"{base}\u200b",  # Zero-width space
             lambda base: " " * 10 + base,  # Whitespace padding
             lambda base: base.replace(" ", "\t"),  # Tab replacement

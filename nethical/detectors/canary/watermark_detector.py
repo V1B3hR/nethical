@@ -29,6 +29,9 @@ from ..base_detector import BaseDetector, ViolationSeverity
 
 logger = logging.getLogger(__name__)
 
+# Constants
+WATERMARK_BITS = 32  # Number of bits to use for watermark encoding
+
 
 class WatermarkType(str, Enum):
     """Types of watermarks."""
@@ -192,7 +195,7 @@ class WatermarkDetector(BaseDetector):
         # Encode watermark ID in zero-width characters
         # Use binary encoding: 0=ZWNJ, 1=ZWJ
         hash_hex = hashlib.sha256(watermark_id.encode()).hexdigest()[:8]
-        hash_binary = bin(int(hash_hex, 16))[2:].zfill(32)
+        hash_binary = bin(int(hash_hex, 16))[2:].zfill(WATERMARK_BITS)
         
         marker = zwsp  # Start marker
         for bit in hash_binary[:16]:  # Use first 16 bits

@@ -92,8 +92,14 @@ class TestAttackGenerator:
         assert generator._check_rate_limit() is True
         
         # Generate many attacks to test rate limit
-        for _ in range(110):  # More than max_generation_rate (100)
-            generator._rate_limiter.append(generator._rate_limiter[-1] + 0.1 if generator._rate_limiter else 0)
+        # Start with initial timestamp if empty
+        initial_time = 0.0
+        for i in range(110):  # More than max_generation_rate (100)
+            if generator._rate_limiter:
+                last_time = generator._rate_limiter[-1]
+            else:
+                last_time = initial_time
+            generator._rate_limiter.append(last_time + 0.1)
         
         # Should now be rate limited
         # (Note: In real usage, this would trigger delays)
