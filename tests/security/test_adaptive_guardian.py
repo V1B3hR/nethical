@@ -7,7 +7,6 @@ watchdog, cross-module correlation, manual lockdown, and performance.
 import asyncio
 import time
 import pytest
-from unittest.mock import Mock, patch
 
 from nethical.security.adaptive_guardian import (
     AdaptiveGuardian,
