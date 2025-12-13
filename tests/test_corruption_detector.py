@@ -24,7 +24,6 @@ from nethical.detectors.corruption import (
     CorruptionDetector,
     IntelligenceEngine,
     CorruptionPatternLibrary,
-    DetectorBridge,
 )
 
 
