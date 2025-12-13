@@ -8,7 +8,6 @@ Tests all Phase 5 components:
 - Detector Formal Verification
 """
 
-import asyncio
 import pytest
 from datetime import datetime, timezone, timedelta
 
