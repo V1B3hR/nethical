@@ -15,12 +15,32 @@ Author: Nethical Core Team
 Version: 1.0.0
 """
 
-from .auto_registration import AutoRegistration
-from .auto_deprecation import AutoDeprecation
-from .registry_manager import RegistryManager
+from .auto_registration import (
+    AutoRegistration,
+    RegistrationStage,
+    ValidationResult,
+    AttackPattern,
+)
+from .auto_deprecation import (
+    AutoDeprecation,
+    DeprecationReason,
+    ArchiveStatus,
+    DeprecationCandidate,
+)
+from .registry_manager import (
+    RegistryManager,
+    RegistryHealth,
+)
 
 __all__ = [
     "AutoRegistration",
+    "RegistrationStage",
+    "ValidationResult",
+    "AttackPattern",
     "AutoDeprecation",
+    "DeprecationReason",
+    "ArchiveStatus",
+    "DeprecationCandidate",
     "RegistryManager",
+    "RegistryHealth",
 ]

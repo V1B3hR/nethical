@@ -16,12 +16,30 @@ Author: Nethical Core Team
 Version: 1.0.0
 """
 
-from .honeypot_detector import HoneypotDetector
-from .tripwire_detector import TripwireDetector
-from .watermark_detector import WatermarkDetector
+from .honeypot_detector import (
+    HoneypotDetector,
+    HoneypotType,
+    Honeypot,
+)
+from .tripwire_detector import (
+    TripwireDetector,
+    EndpointType,
+    TripwireEndpoint,
+)
+from .watermark_detector import (
+    WatermarkDetector,
+    WatermarkType,
+    Watermark,
+)
 
 __all__ = [
     "HoneypotDetector",
+    "HoneypotType",
+    "Honeypot",
     "TripwireDetector",
+    "EndpointType",
+    "TripwireEndpoint",
     "WatermarkDetector",
+    "WatermarkType",
+    "Watermark",
 ]

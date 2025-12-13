@@ -596,7 +596,7 @@ class TestPhase4Integration:
             pattern_id = await manager.register_new_pattern(
                 category=variant.category.value,
                 signature=variant.payload,
-                description=variant.metadata.get("description", "Generated attack"),
+                description=f"Generated attack variant {variant.id}",
                 severity="MEDIUM"
             )
             

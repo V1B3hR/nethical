@@ -15,12 +15,36 @@ Author: Nethical Core Team
 Version: 1.0.0
 """
 
-from .attack_generator import AttackGenerator
-from .coverage_optimizer import CoverageOptimizer
-from .detector_challenger import DetectorChallenger
+from .attack_generator import (
+    AttackGenerator,
+    AttackCategory,
+    GenerationMethod,
+    AttackVariant,
+)
+from .coverage_optimizer import (
+    CoverageOptimizer,
+    CoverageGap,
+    CoverageReport,
+)
+from .detector_challenger import (
+    DetectorChallenger,
+    ChallengeType,
+    DetectorWeakness,
+    ChallengeResult,
+    DetectorProfile,
+)
 
 __all__ = [
     "AttackGenerator",
-    "CoverageOptimizer", 
+    "AttackCategory",
+    "GenerationMethod",
+    "AttackVariant",
+    "CoverageOptimizer",
+    "CoverageGap",
+    "CoverageReport",
     "DetectorChallenger",
+    "ChallengeType",
+    "DetectorWeakness",
+    "ChallengeResult",
+    "DetectorProfile",
 ]
