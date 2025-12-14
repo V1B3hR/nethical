@@ -208,12 +208,15 @@ class QdrantConnector(VectorStoreProvider):
         
         try:
             # Prepare points for Qdrant
+            import hashlib
+            
             points = []
             for vec in vectors:
                 vec_id = vec["id"]
-                # Convert string IDs to hash if needed
+                # Convert string IDs to deterministic hash if needed
                 if isinstance(vec_id, str):
-                    vec_id = hash(vec_id) & 0xFFFFFFFF  # Convert to positive int
+                    # Use deterministic hash instead of Python's hash()
+                    vec_id = int(hashlib.md5(vec_id.encode()).hexdigest()[:8], 16)
                 
                 point = PointStruct(
                     id=vec_id,
@@ -347,11 +350,14 @@ class QdrantConnector(VectorStoreProvider):
             raise ConnectionError("Qdrant client not initialized")
         
         try:
-            # Convert string IDs to int if needed
+            import hashlib
+            
+            # Convert string IDs to deterministic hash if needed
             point_ids = []
             for vec_id in ids:
                 if isinstance(vec_id, str):
-                    point_ids.append(hash(vec_id) & 0xFFFFFFFF)
+                    # Use deterministic hash instead of Python's hash()
+                    point_ids.append(int(hashlib.md5(vec_id.encode()).hexdigest()[:8], 16))
                 else:
                     point_ids.append(vec_id)
             
