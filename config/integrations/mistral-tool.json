@@ -1,0 +1,49 @@
+{
+  "name": "nethical_governance",
+  "version": "1.0.0",
+  "description": "Nethical governance tool for Mistral AI safety and ethics evaluation",
+  "logo_url": "https://nethical.dev/logo.png",
+  "contact_email": "support@nethical.dev",
+  "legal_info_url": "https://nethical.dev/legal",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "function_calling",
+    "tool_definition": {
+      "type": "function",
+      "function": {
+        "name": "nethical_governance",
+        "description": "Evaluate an action for safety, ethics, and compliance",
+        "parameters": {
+          "type": "object",
+          "properties": {
+            "action": {
+              "type": "string",
+              "description": "The action or content to evaluate"
+            },
+            "action_type": {
+              "type": "string",
+              "description": "Type of action (query, code_generation, data_access, etc.)"
+            }
+          },
+          "required": ["action"]
+        }
+      }
+    }
+  },
+  "provider": "mistral",
+  "models": ["mistral-large-latest", "mistral-medium-latest", "mistral-small-latest"],
+  "features": {
+    "chat": true,
+    "function_calling": true,
+    "governance_checks": {
+      "input": true,
+      "output": true
+    }
+  },
+  "configuration": {
+    "default_block_threshold": 0.7,
+    "default_restrict_threshold": 0.4
+  }
+}

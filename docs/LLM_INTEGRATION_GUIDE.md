@@ -537,8 +537,111 @@ governance = IntegratedGovernance(
 governance.config.risk_threshold = 0.8  # Higher = less strict
 ```
 
+## Additional LLM Providers
+
+Nethical now supports additional LLM providers with governed wrappers:
+
+### Cohere
+
+```python
+from nethical.integrations.llm_providers import CohereProvider
+
+provider = CohereProvider(
+    api_key="your-key",
+    model="command-r-plus",
+    check_input=True,
+    check_output=True
+)
+
+response = provider.safe_generate("Tell me about AI safety")
+print(f"Response: {response.content}")
+print(f"Risk Score: {response.risk_score}")
+```
+
+### Mistral AI
+
+```python
+from nethical.integrations.llm_providers import MistralProvider
+
+provider = MistralProvider(
+    api_key="your-key",
+    model="mistral-large-latest"
+)
+
+response = provider.safe_generate("Explain machine learning")
+```
+
+### Together AI, Fireworks, Groq, Replicate
+
+All providers follow the same pattern:
+
+```python
+from nethical.integrations.llm_providers import (
+    TogetherProvider,
+    FireworksProvider,
+    GroqProvider,
+    ReplicateProvider
+)
+
+# Each provider has the same interface
+provider = GroqProvider(api_key="...", model="llama-3.1-70b-versatile")
+response = provider.safe_generate("Hello!")
+```
+
+For detailed documentation, see [LLM Providers Guide](./LLM_PROVIDERS_GUIDE.md).
+
+## Agent Frameworks
+
+Nethical integrates with popular agent frameworks:
+
+### LlamaIndex
+
+```python
+from nethical.integrations.agent_frameworks import (
+    NethicalLlamaIndexTool,
+    NethicalQueryEngine
+)
+
+# Tool for agents
+tool = NethicalLlamaIndexTool(block_threshold=0.7)
+
+# Query engine wrapper
+safe_engine = NethicalQueryEngine(query_engine, check_query=True)
+```
+
+### CrewAI
+
+```python
+from nethical.integrations.agent_frameworks import NethicalCrewAITool
+
+tool = NethicalCrewAITool(block_threshold=0.7)
+crewai_tool = tool.as_crewai_tool()
+```
+
+### DSPy
+
+```python
+from nethical.integrations.agent_frameworks import GovernedChainOfThought
+
+cot = GovernedChainOfThought("question -> answer")
+result = cot(question="What is AI?")
+```
+
+### AutoGen
+
+```python
+from nethical.integrations.agent_frameworks import NethicalAutoGenTool
+
+tool = NethicalAutoGenTool(block_threshold=0.7)
+func_config = tool.get_function_config()
+```
+
+For detailed documentation, see [Agent Frameworks Guide](./AGENT_FRAMEWORKS_GUIDE.md).
+
 ## Additional Resources
 
+- [LLM Providers Guide](./LLM_PROVIDERS_GUIDE.md)
+- [Agent Frameworks Guide](./AGENT_FRAMEWORKS_GUIDE.md)
 - [API Reference](./EXTERNAL_INTEGRATIONS_GUIDE.md)
 - [OpenAPI Specification](../openapi.yaml)
 - [Examples Directory](../examples/integrations/)

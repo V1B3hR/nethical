@@ -9,6 +9,8 @@ This package provides integration wrappers for various LLM platforms and externa
 - Logging connectors, webhooks, ML platforms, and LangChain (legacy)
 - Vector Stores: Pinecone, Weaviate, Chroma, Qdrant with governance
 - ML Platforms: MLflow, W&B, SageMaker, Azure ML, Ray Serve
+- LLM Providers: Cohere, Mistral, Together, Fireworks, Groq, Replicate
+- Agent Frameworks: LlamaIndex, CrewAI, DSPy, AutoGen
 
 Usage Examples:
 
@@ -59,12 +61,62 @@ Usage Examples:
     if decision != "ALLOW":
         # Block the action
         pass
+
+8. LLM Providers (Cohere, Mistral, etc.):
+    from nethical.integrations.llm_providers import CohereProvider
+    
+    provider = CohereProvider(api_key="your-key")
+    response = provider.safe_generate("Tell me about AI safety")
+    print(f"Response: {response.content}")
+    print(f"Risk Score: {response.risk_score}")
+
+9. Agent Frameworks (LlamaIndex, CrewAI, etc.):
+    from nethical.integrations.agent_frameworks import NethicalLlamaIndexTool
+    
+    tool = NethicalLlamaIndexTool(block_threshold=0.7)
+    result = tool("Check if this action is safe")
 """
 
 from typing import Dict, Any
 
 # Legacy integrations
-__all__ = ["logging_connectors", "webhook", "ml_platforms", "langchain_tools", "mlflow_connector", "ray_serve_connector"]
+__all__ = ["logging_connectors", "webhook", "ml_platforms", "langchain_tools", "mlflow_connector", "ray_serve_connector", "llm_providers", "agent_frameworks"]
+
+# LLM Providers
+try:
+    from .llm_providers import (
+        LLMProviderBase,
+        LLMResponse,
+        get_provider_info,
+    )
+    LLM_PROVIDERS_AVAILABLE = True
+    __all__.extend([
+        "LLMProviderBase",
+        "LLMResponse",
+        "get_provider_info",
+    ])
+except ImportError:
+    LLM_PROVIDERS_AVAILABLE = False
+
+# Agent Frameworks
+try:
+    from .agent_frameworks import (
+        AgentFrameworkBase,
+        AgentWrapper,
+        GovernanceDecision,
+        GovernanceResult,
+        get_framework_info,
+    )
+    AGENT_FRAMEWORKS_AVAILABLE = True
+    __all__.extend([
+        "AgentFrameworkBase",
+        "AgentWrapper",
+        "GovernanceDecision",
+        "GovernanceResult",
+        "get_framework_info",
+    ])
+except ImportError:
+    AGENT_FRAMEWORKS_AVAILABLE = False
 
 # Vector stores
 try:
@@ -143,7 +195,7 @@ try:
 except ImportError:
     GEMINI_AVAILABLE = False
 
-__all__.extend(["CLAUDE_AVAILABLE", "REST_API_AVAILABLE", "GROK_AVAILABLE", "GEMINI_AVAILABLE", "VECTOR_STORES_AVAILABLE", "get_integration_info"])
+__all__.extend(["CLAUDE_AVAILABLE", "REST_API_AVAILABLE", "GROK_AVAILABLE", "GEMINI_AVAILABLE", "VECTOR_STORES_AVAILABLE", "LLM_PROVIDERS_AVAILABLE", "AGENT_FRAMEWORKS_AVAILABLE", "get_integration_info"])
 
 
 def get_integration_info() -> Dict[str, Any]:
@@ -152,7 +204,7 @@ def get_integration_info() -> Dict[str, Any]:
     Returns:
         Dict with integration availability and setup instructions
     """
-    return {
+    info = {
         "claude": {
             "available": CLAUDE_AVAILABLE,
             "setup": "pip install anthropic",
@@ -205,8 +257,22 @@ def get_integration_info() -> Dict[str, Any]:
             "setup": "pip install mlflow wandb boto3 sagemaker azureml-core ray[serve]",
             "docs": "See nethical.integrations.ml_platforms, mlflow_connector",
             "manifest": "config/integrations/mlflow-integration.yaml"
+        },
+        "llm_providers": {
+            "available": LLM_PROVIDERS_AVAILABLE,
+            "setup": "pip install cohere mistralai together fireworks-ai groq replicate",
+            "docs": "See docs/LLM_PROVIDERS_GUIDE.md",
+            "manifest": "config/integrations/llm-providers-mcp.yaml",
+            "providers": ["cohere", "mistral", "together", "fireworks", "groq", "replicate"]
+        },
+        "agent_frameworks": {
+            "available": AGENT_FRAMEWORKS_AVAILABLE,
+            "setup": "pip install llama-index crewai dspy-ai pyautogen",
+            "docs": "See docs/AGENT_FRAMEWORKS_GUIDE.md",
+            "frameworks": ["llamaindex", "crewai", "dspy", "autogen"]
         }
     }
+    return info
 
 
 if __name__ == "__main__":
