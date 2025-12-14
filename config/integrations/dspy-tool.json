@@ -1,0 +1,38 @@
+{
+  "name": "nethical_governance",
+  "version": "1.0.0",
+  "description": "Nethical governance module for DSPy language model programs",
+  "logo_url": "https://nethical.dev/logo.png",
+  "contact_email": "support@nethical.dev",
+  "legal_info_url": "https://nethical.dev/legal",
+  "framework": "dspy",
+  "integration_type": "module",
+  "module_definition": {
+    "name": "NethicalModule",
+    "description": "DSPy module for governance-aware language model programs",
+    "methods": {
+      "check": "Check content against governance rules",
+      "forward": "Forward method for DSPy compatibility"
+    }
+  },
+  "features": {
+    "governance_module": true,
+    "governed_cot": true,
+    "governed_predict": true,
+    "governance_checks": {
+      "input": true,
+      "output": true
+    }
+  },
+  "classes": {
+    "module": "NethicalModule",
+    "cot": "GovernedChainOfThought",
+    "predict": "GovernedPredict",
+    "framework": "DSPyFramework"
+  },
+  "configuration": {
+    "default_block_threshold": 0.7,
+    "default_restrict_threshold": 0.4,
+    "storage_dir": "./nethical_data"
+  }
+}

@@ -1,0 +1,143 @@
+# Nethical LLM Providers MCP Configuration
+# Model Context Protocol integration for multiple LLM providers
+
+name: nethical-llm-providers
+version: 1.0.0
+description: Nethical governance integration for LLM providers
+
+# Available providers
+providers:
+  cohere:
+    name: Cohere
+    description: Cohere AI integration with governance
+    package: nethical.integrations.llm_providers.cohere_tools
+    class: CohereProvider
+    install: pip install cohere
+    models:
+      - command-r-plus
+      - command-r
+      - command
+      - command-light
+    features:
+      - chat
+      - rerank
+      - function_calling
+    tool_definition:
+      name: nethical_governance
+      description: Evaluate an action for safety, ethics, and compliance
+      parameter_definitions:
+        action:
+          type: str
+          description: The action or content to evaluate
+          required: true
+        action_type:
+          type: str
+          description: Type of action
+          required: false
+
+  mistral:
+    name: Mistral AI
+    description: Mistral AI integration with governance
+    package: nethical.integrations.llm_providers.mistral_tools
+    class: MistralProvider
+    install: pip install mistralai
+    models:
+      - mistral-large-latest
+      - mistral-medium-latest
+      - mistral-small-latest
+      - open-mistral-7b
+      - open-mixtral-8x7b
+    features:
+      - chat
+      - function_calling
+
+  together:
+    name: Together AI
+    description: Together AI integration with governance
+    package: nethical.integrations.llm_providers.together_tools
+    class: TogetherProvider
+    install: pip install together
+    models:
+      - meta-llama/Llama-3-70b-chat-hf
+      - meta-llama/Llama-3-8b-chat-hf
+      - mistralai/Mixtral-8x7B-Instruct-v0.1
+    features:
+      - chat
+      - function_calling
+
+  fireworks:
+    name: Fireworks AI
+    description: Fireworks AI integration with governance
+    package: nethical.integrations.llm_providers.fireworks_tools
+    class: FireworksProvider
+    install: pip install fireworks-ai
+    models:
+      - accounts/fireworks/models/llama-v3-70b-instruct
+      - accounts/fireworks/models/mixtral-8x7b-instruct
+    features:
+      - chat
+      - function_calling
+
+  groq:
+    name: Groq
+    description: Groq LPU integration with governance (ultra-fast inference)
+    package: nethical.integrations.llm_providers.groq_tools
+    class: GroqProvider
+    install: pip install groq
+    models:
+      - llama-3.1-70b-versatile
+      - llama-3.1-8b-instant
+      - mixtral-8x7b-32768
+      - gemma-7b-it
+    features:
+      - chat
+      - function_calling
+      - ultra_fast_inference
+
+  replicate:
+    name: Replicate
+    description: Replicate integration with governance
+    package: nethical.integrations.llm_providers.replicate_tools
+    class: ReplicateProvider
+    install: pip install replicate
+    models:
+      - meta/llama-2-70b-chat
+      - meta/llama-2-13b-chat
+      - stability-ai/sdxl
+    features:
+      - chat
+      - various_models
+
+# Default configuration
+defaults:
+  check_input: true
+  check_output: true
+  block_threshold: 0.7
+  restrict_threshold: 0.4
+  storage_dir: ./nethical_data
+
+# MCP Server configuration
+mcp:
+  server_name: nethical-llm-providers
+  version: "1.0"
+  capabilities:
+    tools: true
+    prompts: false
+    resources: false
+  tools:
+    - name: nethical_governance
+      description: Evaluate an action for safety, ethics, and compliance
+      inputSchema:
+        type: object
+        properties:
+          action:
+            type: string
+            description: The action or content to evaluate
+          action_type:
+            type: string
+            description: Type of action
+          provider:
+            type: string
+            description: LLM provider name
+        required:
+          - action

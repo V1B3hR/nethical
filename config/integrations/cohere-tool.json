@@ -1,0 +1,45 @@
+{
+  "name": "nethical_governance",
+  "version": "1.0.0",
+  "description": "Nethical governance tool for Cohere AI safety and ethics evaluation",
+  "logo_url": "https://nethical.dev/logo.png",
+  "contact_email": "support@nethical.dev",
+  "legal_info_url": "https://nethical.dev/legal",
+  "auth": {
+    "type": "none"
+  },
+  "api": {
+    "type": "function_calling",
+    "tool_definition": {
+      "name": "nethical_governance",
+      "description": "Evaluate an action for safety, ethics, and compliance",
+      "parameter_definitions": {
+        "action": {
+          "type": "str",
+          "description": "The action or content to evaluate",
+          "required": true
+        },
+        "action_type": {
+          "type": "str",
+          "description": "Type of action (query, code_generation, data_access, etc.)",
+          "required": false
+        }
+      }
+    }
+  },
+  "provider": "cohere",
+  "models": ["command-r-plus", "command-r", "command", "command-light"],
+  "features": {
+    "chat": true,
+    "rerank": true,
+    "function_calling": true,
+    "governance_checks": {
+      "input": true,
+      "output": true
+    }
+  },
+  "configuration": {
+    "default_block_threshold": 0.7,
+    "default_restrict_threshold": 0.4
+  }
+}

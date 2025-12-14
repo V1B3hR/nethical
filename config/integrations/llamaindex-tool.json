@@ -1,0 +1,47 @@
+{
+  "name": "nethical_governance",
+  "version": "1.0.0",
+  "description": "Nethical governance tool for LlamaIndex agents and query engines",
+  "logo_url": "https://nethical.dev/logo.png",
+  "contact_email": "support@nethical.dev",
+  "legal_info_url": "https://nethical.dev/legal",
+  "framework": "llamaindex",
+  "integration_type": "tool",
+  "tool_metadata": {
+    "name": "nethical_governance",
+    "description": "Evaluate an action for safety, ethics, and compliance. Use this tool to check if an action is allowed before executing it.",
+    "fn_schema": {
+      "type": "object",
+      "properties": {
+        "action": {
+          "type": "string",
+          "description": "The action to evaluate"
+        },
+        "action_type": {
+          "type": "string",
+          "description": "Type of action"
+        }
+      },
+      "required": ["action"]
+    }
+  },
+  "features": {
+    "query_engine_wrapper": true,
+    "index_wrapper": true,
+    "agent_tool": true,
+    "governance_checks": {
+      "query": true,
+      "response": true
+    }
+  },
+  "classes": {
+    "tool": "NethicalLlamaIndexTool",
+    "query_engine": "NethicalQueryEngine",
+    "framework": "LlamaIndexFramework"
+  },
+  "configuration": {
+    "default_block_threshold": 0.7,
+    "default_restrict_threshold": 0.4,
+    "storage_dir": "./nethical_data"
+  }
+}

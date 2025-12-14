@@ -553,6 +553,198 @@ def chain_guards(
     return results
 
 
+class GovernedLLMChain:
+    """LangChain LLMChain with governance checks.
+    
+    Wraps a LangChain LLMChain to add input/output governance checks.
+    
+    Example:
+        from langchain.chains import LLMChain
+        from langchain.prompts import PromptTemplate
+        from nethical.integrations.langchain_tools import GovernedLLMChain
+        
+        # Create base chain
+        chain = LLMChain(llm=llm, prompt=prompt)
+        
+        # Wrap with governance
+        governed_chain = GovernedLLMChain(
+            chain=chain,
+            check_input=True,
+            check_output=True,
+            block_threshold=0.7
+        )
+        
+        result = governed_chain.run(input="User query")
+    """
+    
+    def __init__(
+        self,
+        chain: Any,
+        check_input: bool = True,
+        check_output: bool = True,
+        block_threshold: float = 0.7,
+        storage_dir: str = "./nethical_data"
+    ):
+        """Initialize the governed chain.
+        
+        Args:
+            chain: LangChain chain to wrap
+            check_input: Check inputs for governance
+            check_output: Check outputs for governance
+            block_threshold: Risk threshold for blocking
+            storage_dir: Directory for Nethical data
+        """
+        self.chain = chain
+        self.check_input = check_input
+        self.check_output = check_output
+        self.block_threshold = block_threshold
+        self.storage_dir = storage_dir
+        
+        self._governance = None
+    
+    @property
+    def governance(self):
+        """Get or create the IntegratedGovernance instance."""
+        if self._governance is None:
+            self._governance = IntegratedGovernance(
+                storage_dir=self.storage_dir,
+                enable_shadow_mode=True,
+            )
+        return self._governance
+    
+    def _check(self, content: str, action_type: str) -> Dict[str, Any]:
+        """Check content against governance."""
+        result = self.governance.process_action(
+            action=content,
+            agent_id="langchain-governed-chain",
+            action_type=action_type
+        )
+        return result
+    
+    def _get_risk_score(self, result: Dict[str, Any]) -> float:
+        """Get risk score from result."""
+        return result.get("phase3", {}).get("risk_score", 0.0)
+    
+    def run(self, *args, **kwargs) -> str:
+        """Run the chain with governance checks.
+        
+        Args:
+            *args: Arguments for the chain
+            **kwargs: Keyword arguments for the chain
+            
+        Returns:
+            Chain output or blocked message
+        """
+        # Check input
+        if self.check_input:
+            input_str = str(args) + str(kwargs)
+            input_result = self._check(input_str, "user_input")
+            
+            if self._get_risk_score(input_result) > self.block_threshold:
+                return f"Input blocked: Risk score {self._get_risk_score(input_result):.2f}"
+        
+        # Run chain
+        output = self.chain.run(*args, **kwargs)
+        
+        # Check output
+        if self.check_output:
+            output_result = self._check(output, "generated_content")
+            
+            if self._get_risk_score(output_result) > self.block_threshold:
+                return f"Output filtered: Risk score {self._get_risk_score(output_result):.2f}"
+        
+        return output
+    
+    def __call__(self, *args, **kwargs) -> str:
+        """Make the chain callable."""
+        return self.run(*args, **kwargs)
+
+
+class GovernedSequentialChain:
+    """Sequential chain with governance checks between steps.
+    
+    Provides governance checks between each step of a sequential chain.
+    
+    Example:
+        from nethical.integrations.langchain_tools import GovernedSequentialChain
+        
+        governed = GovernedSequentialChain(
+            chains=[chain1, chain2, chain3],
+            check_intermediate=True
+        )
+        
+        result = governed.run(input="Starting query")
+    """
+    
+    def __init__(
+        self,
+        chains: List[Any],
+        check_intermediate: bool = True,
+        block_threshold: float = 0.7,
+        storage_dir: str = "./nethical_data"
+    ):
+        """Initialize the governed sequential chain.
+        
+        Args:
+            chains: List of chains to run sequentially
+            check_intermediate: Check output between each chain
+            block_threshold: Risk threshold for blocking
+            storage_dir: Directory for Nethical data
+        """
+        self.chains = chains
+        self.check_intermediate = check_intermediate
+        self.block_threshold = block_threshold
+        self.storage_dir = storage_dir
+        
+        self._governance = None
+    
+    @property
+    def governance(self):
+        """Get or create the IntegratedGovernance instance."""
+        if self._governance is None:
+            self._governance = IntegratedGovernance(
+                storage_dir=self.storage_dir,
+                enable_shadow_mode=True,
+            )
+        return self._governance
+    
+    def _check(self, content: str, step: int) -> Dict[str, Any]:
+        """Check content at a step."""
+        return self.governance.process_action(
+            action=content,
+            agent_id=f"langchain-sequential-step-{step}",
+            action_type="intermediate_output"
+        )
+    
+    def run(self, input_text: str) -> str:
+        """Run the sequential chain with governance.
+        
+        Args:
+            input_text: Input for the first chain
+            
+        Returns:
+            Final output or blocked message
+        """
+        current_output = input_text
+        
+        for i, chain in enumerate(self.chains):
+            # Run this chain
+            if hasattr(chain, 'run'):
+                current_output = chain.run(current_output)
+            else:
+                current_output = chain(current_output)
+            
+            # Check intermediate output
+            if self.check_intermediate and i < len(self.chains) - 1:
+                result = self._check(current_output, i)
+                risk_score = result.get("phase3", {}).get("risk_score", 0.0)
+                
+                if risk_score > self.block_threshold:
+                    return f"Blocked at step {i + 1}: Risk score {risk_score:.2f}"
+        
+        return current_output
+
+
 # Convenience check for LangChain availability
 if not LANGCHAIN_AVAILABLE:
     import warnings
