@@ -68,10 +68,10 @@ class TestNethicalLlamaIndexTool:
         
         # Boundary tests
         result = {"phase3": {"risk_score": 0.7}}
-        assert tool._compute_decision(result) == "RESTRICT"  # Exactly at block threshold
+        assert tool._compute_decision(result) == "RESTRICT"  # At threshold, not above, so RESTRICT
         
         result = {"phase3": {"risk_score": 0.4}}
-        assert tool._compute_decision(result) == "ALLOW"  # Exactly at restrict threshold
+        assert tool._compute_decision(result) == "ALLOW"  # At restrict threshold, not above, so ALLOW
 
     def test_tool_callable_with_mock(self, temp_storage):
         """Test tool is callable and returns expected format."""
