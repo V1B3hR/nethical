@@ -17,7 +17,6 @@ Usage:
 
 import logging
 import sys
-from typing import List, Dict, Any
 
 # Configure logging
 logging.basicConfig(
