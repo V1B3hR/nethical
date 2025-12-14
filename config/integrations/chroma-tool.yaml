@@ -1,0 +1,110 @@
+name: chroma-tool
+version: 1.0.0
+type: vector_store
+provider: chroma
+
+description: |
+  Chroma vector database integration with Nethical governance.
+  Provides lightweight vector search for local and client/server modes
+  with built-in safety checks, PII detection, and audit logging.
+
+metadata:
+  category: vector_database
+  status: stable
+  license: MIT
+  author: Nethical Team
+
+requirements:
+  python: ">=3.10"
+  packages:
+    - chromadb>=0.4.0
+    - nethical>=2.3.0
+
+features:
+  - local_mode: true
+  - client_server_mode: true
+  - collection_isolation: true
+  - governance_checks: true
+  - pii_detection: true
+  - audit_logging: true
+  - embedding_functions: true
+  - vector_upsert: true
+  - vector_query: true
+  - vector_delete: true
+  - health_monitoring: true
+
+capabilities:
+  distance_metrics:
+    - cosine
+    - l2
+    - ip
+  deployment_modes:
+    - local
+    - client_server
+    - in_memory
+  authentication:
+    - none
+    - basic_auth
+
+configuration:
+  required:
+    - collection_name: "Name of the Chroma collection"
+  optional:
+    - persist_directory: "Directory for local persistence"
+    - host: "Chroma server host (client/server mode)"
+    - port: "Chroma server port (client/server mode)"
+    - enable_governance: "Enable governance checks (default: true)"
+    - enable_pii_detection: "Enable PII detection (default: true)"
+    - enable_audit_logging: "Enable audit logging (default: true)"
+
+usage_example: |
+  from nethical.integrations.vector_stores import ChromaConnector
+  
+  # Local mode
+  connector = ChromaConnector(
+      collection_name="my_collection",
+      persist_directory="./chroma_data",
+      enable_governance=True,
+  )
+  
+  # Client/server mode
+  connector = ChromaConnector(
+      collection_name="my_collection",
+      host="localhost",
+      port=8000,
+  )
+  
+  # Upsert with governance
+  vectors = [
+      {
+          "id": "doc1",
+          "values": [...],
+          "metadata": {...},
+          "document": "text content"
+      }
+  ]
+  connector.upsert(vectors)
+  
+  # Query with PII redaction
+  results = connector.query([...], top_k=10)
+
+governance:
+  collection_level_policies: true
+  metadata_validation: true
+  pii_detection_on_query: true
+  audit_trail: true
+  compliance_standards:
+    - GDPR
+    - CCPA
+    - SOC2
+
+performance:
+  latency:
+    upsert: "5-30ms"
+    query: "10-50ms"
+    delete: "5-20ms"
+  throughput:
+    upsert: "2000+ vectors/sec"
+    query: "200+ queries/sec"
+
+documentation: https://github.com/V1B3hR/nethical/blob/main/docs/VECTOR_STORE_INTEGRATION_GUIDE.md

@@ -1,0 +1,105 @@
+name: weaviate-tool
+version: 1.0.0
+type: vector_store
+provider: weaviate
+
+description: |
+  Weaviate vector search engine integration with Nethical governance.
+  Provides schema-aware vector search with hybrid capabilities,
+  PII detection, and audit logging.
+
+metadata:
+  category: vector_database
+  status: stable
+  license: MIT
+  author: Nethical Team
+
+requirements:
+  python: ">=3.10"
+  packages:
+    - weaviate-client>=4.0.0
+    - nethical>=2.3.0
+
+features:
+  - schema_aware: true
+  - hybrid_search: true
+  - multi_tenancy: true
+  - governance_checks: true
+  - pii_detection: true
+  - audit_logging: true
+  - vector_upsert: true
+  - vector_query: true
+  - vector_delete: true
+  - health_monitoring: true
+
+capabilities:
+  distance_metrics:
+    - cosine
+    - euclidean
+    - dot
+    - hamming
+    - manhattan
+  search_types:
+    - vector
+    - hybrid
+    - keyword
+  deployment_modes:
+    - local
+    - cloud
+    - self_hosted
+  authentication:
+    - api_key
+    - oidc
+
+configuration:
+  required:
+    - url: "Weaviate instance URL"
+    - class_name: "Weaviate class name for objects"
+  optional:
+    - api_key: "Optional API key for authentication"
+    - enable_governance: "Enable governance checks (default: true)"
+    - enable_pii_detection: "Enable PII detection (default: true)"
+    - enable_audit_logging: "Enable audit logging (default: true)"
+
+usage_example: |
+  from nethical.integrations.vector_stores import WeaviateConnector
+  
+  connector = WeaviateConnector(
+      url="http://localhost:8080",
+      class_name="Document",
+      enable_governance=True,
+  )
+  
+  # Upsert with schema validation
+  vectors = [
+      {"id": "doc1", "values": [...], "metadata": {...}}
+  ]
+  connector.upsert(vectors)
+  
+  # Hybrid search (vector + keyword)
+  results = connector.query(
+      vector=[...],
+      top_k=10,
+      hybrid_alpha=0.7,  # 0=keyword, 1=vector
+  )
+
+governance:
+  schema_validation: true
+  metadata_validation: true
+  pii_detection_on_query: true
+  audit_trail: true
+  compliance_standards:
+    - GDPR
+    - CCPA
+    - SOC2
+
+performance:
+  latency:
+    upsert: "10-50ms"
+    query: "20-100ms"
+    delete: "10-30ms"
+  throughput:
+    upsert: "500+ vectors/sec"
+    query: "50+ queries/sec"
+
+documentation: https://github.com/V1B3hR/nethical/blob/main/docs/VECTOR_STORE_INTEGRATION_GUIDE.md

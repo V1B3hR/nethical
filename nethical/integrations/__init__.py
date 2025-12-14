@@ -7,6 +7,8 @@ This package provides integration wrappers for various LLM platforms and externa
 - Gemini (Google): Function calling integration for Gemini models
 - REST API: HTTP endpoint for any LLM that can make REST calls (OpenAI, LLaMA, etc.)
 - Logging connectors, webhooks, ML platforms, and LangChain (legacy)
+- Vector Stores: Pinecone, Weaviate, Chroma, Qdrant with governance
+- ML Platforms: MLflow, W&B, SageMaker, Azure ML, Ray Serve
 
 Usage Examples:
 
@@ -36,7 +38,21 @@ Usage Examples:
     from nethical.integrations.rest_api import app
     # Use with uvicorn...
 
-5. Simple evaluation:
+5. Vector Stores:
+    from nethical.integrations.vector_stores import ChromaConnector
+    
+    connector = ChromaConnector(collection_name="my_collection")
+    connector.upsert(vectors)
+    results = connector.query([...], top_k=10)
+
+6. ML Platforms:
+    from nethical.integrations.mlflow_connector import MLflowConnector
+    
+    mlflow = MLflowConnector(tracking_uri="file:./mlruns")
+    run_id = mlflow.start_run("my_experiment")
+    mlflow.log_metrics(run_id, {"accuracy": 0.95})
+
+7. Simple evaluation:
     from nethical.integrations.claude_tools import evaluate_action
     
     decision = evaluate_action("Write code to delete files")
@@ -48,7 +64,29 @@ Usage Examples:
 from typing import Dict, Any
 
 # Legacy integrations
-__all__ = ["logging_connectors", "webhook", "ml_platforms", "langchain_tools"]
+__all__ = ["logging_connectors", "webhook", "ml_platforms", "langchain_tools", "mlflow_connector", "ray_serve_connector"]
+
+# Vector stores
+try:
+    from .vector_stores import (
+        VectorStoreProvider,
+        VectorSearchResult,
+        PINECONE_AVAILABLE,
+        WEAVIATE_AVAILABLE,
+        CHROMA_AVAILABLE,
+        QDRANT_AVAILABLE,
+    )
+    VECTOR_STORES_AVAILABLE = True
+    __all__.extend([
+        "VectorStoreProvider",
+        "VectorSearchResult",
+        "PINECONE_AVAILABLE",
+        "WEAVIATE_AVAILABLE",
+        "CHROMA_AVAILABLE",
+        "QDRANT_AVAILABLE",
+    ])
+except ImportError:
+    VECTOR_STORES_AVAILABLE = False
 
 # Import key functions for convenience
 try:
@@ -105,7 +143,7 @@ try:
 except ImportError:
     GEMINI_AVAILABLE = False
 
-__all__.extend(["CLAUDE_AVAILABLE", "REST_API_AVAILABLE", "GROK_AVAILABLE", "GEMINI_AVAILABLE", "get_integration_info"])
+__all__.extend(["CLAUDE_AVAILABLE", "REST_API_AVAILABLE", "GROK_AVAILABLE", "GEMINI_AVAILABLE", "VECTOR_STORES_AVAILABLE", "get_integration_info"])
 
 
 def get_integration_info() -> Dict[str, Any]:
@@ -149,6 +187,24 @@ def get_integration_info() -> Dict[str, Any]:
             "available": True,
             "setup": "Use REST API endpoint",
             "docs": "See nethical.integrations.rest_api"
+        },
+        "vector_stores": {
+            "available": VECTOR_STORES_AVAILABLE,
+            "setup": "pip install pinecone-client weaviate-client chromadb qdrant-client",
+            "docs": "See docs/VECTOR_STORE_INTEGRATION_GUIDE.md",
+            "manifest": "config/integrations/vector-stores-mcp.yaml",
+            "providers": {
+                "pinecone": PINECONE_AVAILABLE if VECTOR_STORES_AVAILABLE else False,
+                "weaviate": WEAVIATE_AVAILABLE if VECTOR_STORES_AVAILABLE else False,
+                "chroma": CHROMA_AVAILABLE if VECTOR_STORES_AVAILABLE else False,
+                "qdrant": QDRANT_AVAILABLE if VECTOR_STORES_AVAILABLE else False,
+            }
+        },
+        "ml_platforms": {
+            "available": True,
+            "setup": "pip install mlflow wandb boto3 sagemaker azureml-core ray[serve]",
+            "docs": "See nethical.integrations.ml_platforms, mlflow_connector",
+            "manifest": "config/integrations/mlflow-integration.yaml"
         }
     }
 

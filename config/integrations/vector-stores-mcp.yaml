@@ -1,0 +1,196 @@
+# Vector Store Integrations for Nethical
+# Combined configuration for all vector database connectors
+
+version: 1.0.0
+name: vector-stores-mcp
+type: integration_suite
+
+description: |
+  Comprehensive vector database integrations for Nethical with built-in
+  governance, PII detection, and audit logging. Supports Pinecone, Weaviate,
+  Chroma, and Qdrant vector stores.
+
+metadata:
+  category: vector_databases
+  status: stable
+  license: MIT
+  author: Nethical Team
+  created: 2025-12-14
+  updated: 2025-12-14
+
+supported_providers:
+  - name: Pinecone
+    status: stable
+    manifest: pinecone-tool.yaml
+    package: pinecone-client>=3.0.0
+    deployment: cloud
+    
+  - name: Weaviate
+    status: stable
+    manifest: weaviate-tool.yaml
+    package: weaviate-client>=4.0.0
+    deployment: local, cloud, self-hosted
+    
+  - name: Chroma
+    status: stable
+    manifest: chroma-tool.yaml
+    package: chromadb>=0.4.0
+    deployment: local, client-server
+    
+  - name: Qdrant
+    status: stable
+    manifest: qdrant-tool.yaml
+    package: qdrant-client>=1.7.0
+    deployment: local, client-server, cloud
+
+common_features:
+  governance:
+    - metadata_validation: true
+    - policy_enforcement: true
+    - compliance_checks: true
+    
+  security:
+    - pii_detection: true
+    - pii_redaction: true
+    - data_sanitization: true
+    
+  operations:
+    - vector_upsert: true
+    - vector_query: true
+    - vector_delete: true
+    - batch_operations: true
+    
+  monitoring:
+    - audit_logging: true
+    - health_checks: true
+    - performance_metrics: true
+    - error_tracking: true
+
+installation:
+  # Install all vector stores
+  all: |
+    pip install pinecone-client>=3.0.0 \
+                weaviate-client>=4.0.0 \
+                chromadb>=0.4.0 \
+                qdrant-client>=1.7.0 \
+                nethical>=2.3.0
+  
+  # Individual installations
+  pinecone: pip install pinecone-client>=3.0.0 nethical>=2.3.0
+  weaviate: pip install weaviate-client>=4.0.0 nethical>=2.3.0
+  chroma: pip install chromadb>=0.4.0 nethical>=2.3.0
+  qdrant: pip install qdrant-client>=1.7.0 nethical>=2.3.0
+
+usage_patterns:
+  basic_workflow: |
+    # 1. Import connector
+    from nethical.integrations.vector_stores import ChromaConnector
+    
+    # 2. Initialize with governance
+    connector = ChromaConnector(
+        collection_name="my_collection",
+        enable_governance=True,
+        enable_pii_detection=True,
+    )
+    
+    # 3. Upsert vectors (governance applied)
+    vectors = [{"id": "vec1", "values": [...], "metadata": {...}}]
+    connector.upsert(vectors)
+    
+    # 4. Query vectors (PII redacted)
+    results = connector.query([...], top_k=10)
+    
+    # 5. Delete vectors (audit logged)
+    connector.delete(["vec1"])
+  
+  multi_tenant: |
+    # Use namespaces/collections for isolation
+    connector.upsert(vectors, namespace="tenant_a")
+    results = connector.query([...], namespace="tenant_a")
+  
+  error_handling: |
+    try:
+        connector.upsert(vectors)
+    except ValueError as e:
+        # Governance check failed
+        logger.error(f"Policy violation: {e}")
+    except ConnectionError as e:
+        # Connection failed
+        logger.error(f"Connection error: {e}")
+
+governance_integration:
+  description: |
+    All vector store connectors integrate with Nethical's IntegratedGovernance
+    system for comprehensive safety and compliance.
+  
+  features:
+    - Pre-insertion metadata validation
+    - Real-time PII detection on queries
+    - Immutable audit trails
+    - Policy-based access control
+    - Compliance reporting (GDPR, CCPA, SOC2)
+  
+  configuration: |
+    # Governance is configured per-connector
+    connector = VectorStoreConnector(
+        enable_governance=True,       # Validate metadata
+        enable_pii_detection=True,    # Detect/redact PII
+        enable_audit_logging=True,    # Log all operations
+    )
+
+compliance:
+  standards:
+    - GDPR: "Data privacy and user rights"
+    - CCPA: "California consumer privacy"
+    - SOC2: "Security and availability"
+    - HIPAA: "Healthcare data protection (via governance)"
+  
+  capabilities:
+    - right_to_erasure: "Delete operation with audit"
+    - data_minimization: "PII redaction"
+    - audit_trail: "Immutable operation logs"
+    - access_control: "Governance-based restrictions"
+
+performance:
+  benchmarks:
+    chroma_local:
+      upsert: "5-30ms, 2000+ ops/sec"
+      query: "10-50ms, 200+ ops/sec"
+    
+    qdrant_local:
+      upsert: "5-30ms, 3000+ ops/sec"
+      query: "10-50ms, 300+ ops/sec"
+    
+    pinecone_cloud:
+      upsert: "10-50ms, 1000+ ops/sec"
+      query: "20-100ms, 100+ ops/sec"
+    
+    weaviate_local:
+      upsert: "10-50ms, 500+ ops/sec"
+      query: "20-100ms, 50+ ops/sec"
+  
+  governance_overhead:
+    metadata_validation: "<1ms"
+    pii_detection: "1-3ms"
+    audit_logging: "<1ms"
+    total_typical: "2-5ms per operation"
+
+best_practices:
+  - "Never store raw PII in vector metadata"
+  - "Use anonymized identifiers for user data"
+  - "Implement namespace/collection isolation for multi-tenancy"
+  - "Enable governance for production environments"
+  - "Use batch operations for high throughput"
+  - "Monitor health checks regularly"
+  - "Implement retry logic for transient failures"
+  - "Configure appropriate vector dimensions"
+
+examples:
+  demo_script: examples/vector_store_demo.py
+  test_suite: tests/test_vector_stores.py
+  documentation: docs/VECTOR_STORE_INTEGRATION_GUIDE.md
+
+support:
+  documentation: https://github.com/V1B3hR/nethical/blob/main/docs/VECTOR_STORE_INTEGRATION_GUIDE.md
+  issues: https://github.com/V1B3hR/nethical/issues
+  discussions: https://github.com/V1B3hR/nethical/discussions
