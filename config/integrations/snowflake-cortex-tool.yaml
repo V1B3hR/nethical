@@ -1,0 +1,121 @@
+name: Snowflake Cortex Governance Integration
+version: "1.0"
+description: Snowflake Cortex AI integration with Nethical governance
+provider: Snowflake
+category: cloud_ml
+
+authentication:
+  type: credentials
+  required_fields:
+    - account
+    - user
+  optional_fields:
+    - password
+    - warehouse
+    - database
+
+capabilities:
+  - llm_completion
+  - text_classification
+  - sentiment_analysis
+  - experiment_tracking
+  - governance_checks
+
+parameters:
+  account:
+    type: string
+    description: Snowflake account identifier
+    required: true
+    env_var: SNOWFLAKE_ACCOUNT
+  
+  user:
+    type: string
+    description: Snowflake username
+    required: true
+    env_var: SNOWFLAKE_USER
+  
+  password:
+    type: string
+    description: Snowflake password
+    required: false
+    sensitive: true
+    env_var: SNOWFLAKE_PASSWORD
+  
+  warehouse:
+    type: string
+    description: Warehouse name
+    required: false
+    default: "COMPUTE_WH"
+    env_var: SNOWFLAKE_WAREHOUSE
+  
+  database:
+    type: string
+    description: Database name
+    required: false
+    default: "GOVERNANCE_DB"
+    env_var: SNOWFLAKE_DATABASE
+  
+  schema:
+    type: string
+    description: Schema name
+    required: false
+    default: "PUBLIC"
+    env_var: SNOWFLAKE_SCHEMA
+  
+  enable_governance:
+    type: boolean
+    description: Enable Nethical governance checks
+    required: false
+    default: true
+
+endpoints:
+  console: "https://app.snowflake.com"
+  docs: "https://docs.snowflake.com/en/user-guide/snowflake-cortex"
+
+installation:
+  command: "pip install snowflake-connector-python"
+  requirements:
+    - snowflake-connector-python>=3.0.0
+
+usage_example: |
+  from nethical.integrations.cloud import SnowflakeCortexConnector
+  
+  connector = SnowflakeCortexConnector(
+      account="myaccount",
+      user="myuser",
+      password="mypassword",
+      enable_governance=True
+  )
+  
+  # LLM completion with governance
+  result = connector.complete_with_governance(
+      model_name="snowflake-arctic",
+      prompt="Explain AI safety"
+  )
+  
+  # Text classification with governance
+  result = connector.classify_with_governance(
+      text="Sample text",
+      categories=["positive", "negative", "neutral"]
+  )
+
+features:
+  - Cortex LLM functions with governance
+  - Text classification
+  - Sentiment analysis
+  - Experiment tracking in Snowflake
+  - SQL-based ML workflows
+
+supported_models:
+  - snowflake-arctic
+  - mistral-large
+  - mistral-7b
+  - llama2-70b-chat
+  - mixtral-8x7b
+
+metadata:
+  manifest_version: "1.0"
+  created: "2024-12-14"
+  updated: "2024-12-14"
+  authors:
+    - "Nethical Team"

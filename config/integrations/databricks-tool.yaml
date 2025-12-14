@@ -1,0 +1,77 @@
+name: Databricks Governance Integration
+version: "1.0"
+description: Complete Databricks integration with Nethical governance
+provider: Databricks
+category: cloud_ml
+
+authentication:
+  type: token
+  required_fields:
+    - workspace_url
+  optional_fields:
+    - token
+
+capabilities:
+  - mlflow_tracking
+  - model_serving
+  - model_registry
+  - governance_checks
+
+parameters:
+  workspace_url:
+    type: string
+    description: Databricks workspace URL
+    required: true
+    env_var: DATABRICKS_HOST
+  
+  token:
+    type: string
+    description: Databricks access token
+    required: false
+    sensitive: true
+    env_var: DATABRICKS_TOKEN
+  
+  enable_governance:
+    type: boolean
+    description: Enable Nethical governance checks
+    required: false
+    default: true
+
+endpoints:
+  workspace: "${workspace_url}"
+  api: "${workspace_url}/api/2.0"
+  docs: "https://docs.databricks.com"
+
+installation:
+  command: "pip install databricks-sdk mlflow"
+  requirements:
+    - databricks-sdk>=0.18.0
+    - mlflow>=2.0.0
+
+usage_example: |
+  from nethical.integrations.cloud import DatabricksConnector
+  
+  connector = DatabricksConnector(
+      workspace_url="https://...databricks.com",
+      token="dapi...",
+      enable_governance=True
+  )
+  
+  run_id = connector.start_run("experiment1")
+  connector.log_parameters(run_id, {"lr": 0.001})
+  connector.log_metrics(run_id, {"accuracy": 0.95})
+  connector.end_run(run_id)
+
+features:
+  - MLflow experiment tracking
+  - Model serving with governance
+  - Model registry management
+  - Unity Catalog integration
+  - Delta Lake support
+
+metadata:
+  manifest_version: "1.0"
+  created: "2024-12-14"
+  updated: "2024-12-14"
+  authors:
+    - "Nethical Team"

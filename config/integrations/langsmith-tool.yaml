@@ -1,0 +1,80 @@
+name: LangSmith Governance Observability
+version: "1.0"
+description: LangSmith integration for Nethical LangChain governance monitoring
+provider: LangChain
+category: observability
+
+authentication:
+  type: api_key
+  required_fields:
+    - api_key
+  optional_fields:
+    - project_name
+    - endpoint
+
+capabilities:
+  - trace_logging
+  - run_tracking
+  - metrics_logging
+  - dataset_management
+
+parameters:
+  api_key:
+    type: string
+    description: LangSmith API key
+    required: true
+    sensitive: true
+    env_var: LANGSMITH_API_KEY
+  
+  project_name:
+    type: string
+    description: LangSmith project name
+    required: false
+    default: "nethical-governance"
+    env_var: LANGSMITH_PROJECT
+  
+  endpoint:
+    type: string
+    description: LangSmith API endpoint
+    required: false
+    default: "https://api.smith.langchain.com"
+    env_var: LANGSMITH_ENDPOINT
+
+endpoints:
+  dashboard: "https://smith.langchain.com"
+  api: "https://api.smith.langchain.com"
+  docs: "https://docs.smith.langchain.com"
+
+installation:
+  command: "pip install langsmith"
+  requirements:
+    - langsmith>=0.1.0
+
+usage_example: |
+  from nethical.integrations.observability import LangSmithConnector
+  
+  connector = LangSmithConnector(
+      api_key="ls-...",
+      project_name="my-project"
+  )
+  
+  connector.log_governance_event(
+      action="evaluate prompt",
+      decision="ALLOW",
+      risk_score=0.2,
+      metadata={}
+  )
+
+features:
+  - LangChain run tracing
+  - Governance event tracking
+  - Dataset versioning
+  - Evaluation feedback
+  - Project organization
+
+metadata:
+  manifest_version: "1.0"
+  created: "2024-12-14"
+  updated: "2024-12-14"
+  authors:
+    - "Nethical Team"
