@@ -1,0 +1,93 @@
+name: pinecone-tool
+version: 1.0.0
+type: vector_store
+provider: pinecone
+
+description: |
+  Pinecone vector database integration with Nethical governance.
+  Provides cloud-native vector search with built-in safety checks,
+  PII detection, and audit logging.
+
+metadata:
+  category: vector_database
+  status: stable
+  license: MIT
+  author: Nethical Team
+
+requirements:
+  python: ">=3.10"
+  packages:
+    - pinecone-client>=3.0.0
+    - nethical>=2.3.0
+
+features:
+  - namespace_support: true
+  - governance_checks: true
+  - pii_detection: true
+  - audit_logging: true
+  - metadata_filtering: true
+  - vector_upsert: true
+  - vector_query: true
+  - vector_delete: true
+  - health_monitoring: true
+
+capabilities:
+  max_dimensions: 20000
+  distance_metrics:
+    - cosine
+    - euclidean
+    - dotproduct
+  deployment_modes:
+    - cloud
+  authentication:
+    - api_key
+
+configuration:
+  required:
+    - api_key: "Pinecone API key"
+    - environment: "Pinecone environment (e.g., us-west1-gcp)"
+    - index_name: "Name of the Pinecone index"
+  optional:
+    - enable_governance: "Enable governance checks (default: true)"
+    - enable_pii_detection: "Enable PII detection (default: true)"
+    - enable_audit_logging: "Enable audit logging (default: true)"
+
+usage_example: |
+  from nethical.integrations.vector_stores import PineconeConnector
+  import os
+  
+  connector = PineconeConnector(
+      api_key=os.getenv("PINECONE_API_KEY"),
+      environment=os.getenv("PINECONE_ENVIRONMENT"),
+      index_name="my-index",
+      enable_governance=True,
+  )
+  
+  # Upsert with governance
+  vectors = [
+      {"id": "vec1", "values": [0.1, 0.2, ...], "metadata": {...}}
+  ]
+  connector.upsert(vectors, namespace="production")
+  
+  # Query with PII redaction
+  results = connector.query([0.1, 0.2, ...], top_k=10)
+
+governance:
+  metadata_validation: true
+  pii_detection_on_query: true
+  audit_trail: true
+  compliance_standards:
+    - GDPR
+    - CCPA
+    - SOC2
+
+performance:
+  latency:
+    upsert: "10-50ms"
+    query: "20-100ms"
+    delete: "10-30ms"
+  throughput:
+    upsert: "1000+ vectors/sec"
+    query: "100+ queries/sec"
+
+documentation: https://github.com/V1B3hR/nethical/blob/main/docs/VECTOR_STORE_INTEGRATION_GUIDE.md

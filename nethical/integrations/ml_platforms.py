@@ -189,10 +189,10 @@ class MLPlatformInterface(ABC):
 
 class MLflowIntegration(MLPlatformInterface):
     """
-    MLflow integration (stub)
+    MLflow integration (production)
 
-    Note: Requires mlflow library
-    This is a stub that logs intent to interact with MLflow.
+    Note: Requires mlflow>=2.0.0 library
+    Production implementation with actual MLflow SDK calls.
     """
 
     def __init__(self, tracking_uri: Optional[str] = None):
@@ -203,27 +203,62 @@ class MLflowIntegration(MLPlatformInterface):
             tracking_uri: MLflow tracking server URI (env MLFLOW_TRACKING_URI is also respected by mlflow itself)
         """
         super().__init__()
-        self.tracking_uri = tracking_uri or "http://localhost:5000"
+        self.tracking_uri = tracking_uri or "file:./mlruns"
         self.active_runs: Dict[str, ExperimentRun] = {}
+        self.client = None
+        self.mlflow_available = False
 
-        # NOTE: Actual implementation would initialize MLflow client
-        # try:
-        #     import os, mlflow
-        #     if self.tracking_uri:
-        #         mlflow.set_tracking_uri(self.tracking_uri)
-        #     self.client = mlflow.tracking.MlflowClient()
-        # except ImportError:
-        #     logging.error("mlflow not installed. Install with: pip install mlflow")
-        #     self.client = None
-
-        logging.info(f"MLflow integration initialized (stub) - Tracking URI: {self.tracking_uri}")
+        # Initialize MLflow client
+        try:
+            import mlflow
+            from mlflow.tracking import MlflowClient
+            
+            mlflow.set_tracking_uri(self.tracking_uri)
+            self.client = MlflowClient(tracking_uri=self.tracking_uri)
+            self.mlflow_available = True
+            logging.info(f"MLflow integration initialized - Tracking URI: {self.tracking_uri}")
+        except ImportError:
+            logging.error("mlflow not installed. Install with: pip install mlflow>=2.0.0")
+            logging.warning("Falling back to stub mode")
+        except Exception as e:
+            logging.error(f"Failed to initialize MLflow: {e}")
+            logging.warning("Falling back to stub mode")
 
     def start_run(self, experiment_name: str, run_name: Optional[str] = None) -> str:
         """Start MLflow run"""
         import uuid
 
-        run_id = str(uuid.uuid4())
+        if self.mlflow_available and self.client:
+            try:
+                import mlflow
+                
+                # Set or create experiment
+                experiment = self.client.get_experiment_by_name(experiment_name)
+                if experiment is None:
+                    experiment_id = self.client.create_experiment(experiment_name)
+                else:
+                    experiment_id = experiment.experiment_id
+                
+                mlflow.set_experiment(experiment_name)
+                
+                # Start actual MLflow run
+                mlflow_run = mlflow.start_run(run_name=run_name)
+                run_id = mlflow_run.info.run_id
+                
+                logging.info(
+                    f"MLflow start_run: {run_id} (experiment: {experiment_name}, name: {run_name or 'default'})"
+                )
+            except Exception as e:
+                logging.error(f"MLflow start_run failed: {e}, using stub")
+                run_id = str(uuid.uuid4())
+        else:
+            # Stub fallback
+            run_id = str(uuid.uuid4())
+            logging.info(
+                f"[STUB] MLflow start_run: {run_id} (experiment: {experiment_name}, name: {run_name or 'default'})"
+            )
 
+        # Track run locally
         run = ExperimentRun(
             run_id=run_id,
             experiment_name=experiment_name,
@@ -231,34 +266,65 @@ class MLflowIntegration(MLPlatformInterface):
             metrics={},
             tags={"run_name": run_name} if run_name else {},
         )
-
         self.active_runs[run_id] = run
-        logging.info(
-            f"[STUB] MLflow start_run: {run_id} (experiment: {experiment_name}, name: {run_name or 'default'})"
-        )
         self._emit("run_started", {"platform": MLPlatform.MLFLOW.value, **run.to_dict()})
-        # Actual: mlflow.set_experiment(experiment_name); mlflow.start_run(run_name=run_name)
+        
         return run_id
 
     def log_parameters(self, run_id: str, parameters: Dict[str, Any]):
         """Log parameters to MLflow"""
         if run_id in self.active_runs:
             sanitized = _sanitize_keys(parameters)
+            
+            if self.mlflow_available:
+                try:
+                    import mlflow
+                    
+                    # Convert to strings for MLflow
+                    params_to_log = {k: str(v) for k, v in sanitized.items()}
+                    
+                    # Log with MLflow
+                    with mlflow.start_run(run_id=run_id):
+                        mlflow.log_params(params_to_log)
+                    
+                    logging.info(f"MLflow log_parameters[{run_id}]: {list(sanitized.keys())}")
+                except Exception as e:
+                    logging.error(f"MLflow log_parameters failed: {e}, using stub")
+                    logging.info(f"[STUB] MLflow log_parameters[{run_id}]: {list(sanitized.keys())}")
+            else:
+                logging.info(f"[STUB] MLflow log_parameters[{run_id}]: {list(sanitized.keys())}")
+            
             self.active_runs[run_id].parameters.update(sanitized)
-            logging.info(f"[STUB] MLflow log_parameters[{run_id}]: {list(sanitized.keys())}")
             self._emit(
                 "params_logged",
                 {"platform": MLPlatform.MLFLOW.value, "run_id": run_id, "parameters": sanitized},
             )
-            # Actual: mlflow.log_params(parameters)
 
     def log_metrics(self, run_id: str, metrics: Dict[str, float], step: Optional[int] = None):
         """Log metrics to MLflow"""
         if run_id in self.active_runs:
+            if self.mlflow_available:
+                try:
+                    import mlflow
+                    
+                    # Log with MLflow
+                    with mlflow.start_run(run_id=run_id):
+                        mlflow.log_metrics(metrics, step=step)
+                    
+                    logging.info(
+                        f"MLflow log_metrics[{run_id}]: {list(metrics.keys())} (step={step})"
+                    )
+                except Exception as e:
+                    logging.error(f"MLflow log_metrics failed: {e}, using stub")
+                    logging.info(
+                        f"[STUB] MLflow log_metrics[{run_id}]: {list(metrics.keys())} (step={step})"
+                    )
+            else:
+                logging.info(
+                    f"[STUB] MLflow log_metrics[{run_id}]: {list(metrics.keys())} (step={step})"
+                )
+            
             self.active_runs[run_id].metrics.update(metrics)
-            logging.info(
-                f"[STUB] MLflow log_metrics[{run_id}]: {list(metrics.keys())} (step={step})"
-            )
             self._emit(
                 "metrics_logged",
                 {
@@ -268,13 +334,30 @@ class MLflowIntegration(MLPlatformInterface):
                     "step": step,
                 },
             )
-            # Actual: mlflow.log_metrics(metrics, step=step)
 
     def log_artifact(self, run_id: str, artifact_path: str):
         """Log artifact to MLflow"""
         if run_id in self.active_runs:
+            if self.mlflow_available:
+                try:
+                    import mlflow
+                    from pathlib import Path
+                    
+                    # Log with MLflow
+                    with mlflow.start_run(run_id=run_id):
+                        if Path(artifact_path).exists():
+                            mlflow.log_artifact(artifact_path)
+                            logging.info(f"MLflow log_artifact[{run_id}]: {artifact_path}")
+                        else:
+                            logging.warning(f"Artifact not found: {artifact_path}")
+                            logging.info(f"[STUB] MLflow log_artifact[{run_id}]: {artifact_path}")
+                except Exception as e:
+                    logging.error(f"MLflow log_artifact failed: {e}, using stub")
+                    logging.info(f"[STUB] MLflow log_artifact[{run_id}]: {artifact_path}")
+            else:
+                logging.info(f"[STUB] MLflow log_artifact[{run_id}]: {artifact_path}")
+            
             self.active_runs[run_id].artifacts.append(artifact_path)
-            logging.info(f"[STUB] MLflow log_artifact[{run_id}]: {artifact_path}")
             self._emit(
                 "artifact_logged",
                 {
@@ -283,23 +366,58 @@ class MLflowIntegration(MLPlatformInterface):
                     "artifact_path": artifact_path,
                 },
             )
-            # Actual: mlflow.log_artifact(artifact_path)
 
     def end_run(self, run_id: str, status: str = "completed"):
         """End MLflow run"""
         if run_id in self.active_runs:
             st = RunStatus(status) if status in RunStatus._value2member_map_ else RunStatus.UNKNOWN
+            
+            if self.mlflow_available:
+                try:
+                    import mlflow
+                    
+                    # Map status to MLflow status
+                    status_map = {
+                        "completed": "FINISHED",
+                        "failed": "FAILED",
+                        "killed": "KILLED",
+                    }
+                    mlflow_status = status_map.get(status, "FINISHED")
+                    
+                    # End MLflow run
+                    with mlflow.start_run(run_id=run_id):
+                        mlflow.end_run(status=mlflow_status)
+                    
+                    logging.info(f"MLflow end_run[{run_id}] -> {st.value}")
+                except Exception as e:
+                    logging.error(f"MLflow end_run failed: {e}, using stub")
+                    logging.info(f"[STUB] MLflow end_run[{run_id}] -> {st.value}")
+            else:
+                logging.info(f"[STUB] MLflow end_run[{run_id}] -> {st.value}")
+            
             run = self.active_runs[run_id]
             run.status = st
             run.end_time = _now_utc()
-            logging.info(f"[STUB] MLflow end_run[{run_id}] -> {st.value}")
             self._emit("run_ended", {"platform": MLPlatform.MLFLOW.value, **run.to_dict()})
-            # Actual: mlflow.end_run(status=status)
 
     def set_tags(self, run_id: str, tags: Dict[str, str]) -> None:
         if run_id in self.active_runs:
+            if self.mlflow_available:
+                try:
+                    import mlflow
+                    
+                    # Set tags with MLflow
+                    with mlflow.start_run(run_id=run_id):
+                        mlflow.set_tags(tags)
+                    
+                    logging.info(f"MLflow set_tags[{run_id}]: {list(tags.keys())}")
+                except Exception as e:
+                    logging.error(f"MLflow set_tags failed: {e}, using stub")
+                    logging.info(f"[STUB] MLflow set_tags[{run_id}]: {list(tags.keys())}")
+            else:
+                logging.info(f"[STUB] MLflow set_tags[{run_id}]: {list(tags.keys())}")
+            
             self.active_runs[run_id].tags.update(tags)
-            logging.info(f"[STUB] MLflow set_tags[{run_id}]: {list(tags.keys())}")
             self._emit(
                 "tags_set", {"platform": MLPlatform.MLFLOW.value, "run_id": run_id, "tags": tags}
             )

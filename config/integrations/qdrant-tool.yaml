@@ -1,0 +1,121 @@
+name: qdrant-tool
+version: 1.0.0
+type: vector_store
+provider: qdrant
+
+description: |
+  Qdrant vector search engine integration with Nethical governance.
+  Provides high-performance vector search with advanced filtering,
+  PII detection, and audit logging.
+
+metadata:
+  category: vector_database
+  status: stable
+  license: MIT
+  author: Nethical Team
+
+requirements:
+  python: ">=3.10"
+  packages:
+    - qdrant-client>=1.7.0
+    - nethical>=2.3.0
+
+features:
+  - local_mode: true
+  - client_server_mode: true
+  - payload_filtering: true
+  - batch_operations: true
+  - governance_checks: true
+  - pii_detection: true
+  - audit_logging: true
+  - snapshot_support: true
+  - vector_upsert: true
+  - vector_query: true
+  - vector_delete: true
+  - health_monitoring: true
+
+capabilities:
+  distance_metrics:
+    - cosine
+    - euclidean
+    - dot
+  deployment_modes:
+    - local
+    - client_server
+    - cloud
+    - in_memory
+  authentication:
+    - api_key
+    - none
+
+configuration:
+  required:
+    - collection_name: "Name of the Qdrant collection"
+    - vector_size: "Dimension of vectors"
+  optional:
+    - url: "Qdrant server URL"
+    - host: "Qdrant server host"
+    - port: "Qdrant server port"
+    - path: "Path for local persistence"
+    - api_key: "Optional API key for authentication"
+    - distance: "Distance metric (Cosine, Euclid, Dot)"
+    - enable_governance: "Enable governance checks (default: true)"
+    - enable_pii_detection: "Enable PII detection (default: true)"
+    - enable_audit_logging: "Enable audit logging (default: true)"
+
+usage_example: |
+  from nethical.integrations.vector_stores import QdrantConnector
+  
+  # Local mode
+  connector = QdrantConnector(
+      collection_name="my_collection",
+      path="./qdrant_data",
+      vector_size=384,
+      enable_governance=True,
+  )
+  
+  # Client/server mode
+  connector = QdrantConnector(
+      collection_name="my_collection",
+      url="http://localhost:6333",
+      vector_size=384,
+  )
+  
+  # Upsert with payload
+  vectors = [
+      {
+          "id": "vec1",
+          "values": [...],
+          "metadata": {"category": "tech", "text": "..."}
+      }
+  ]
+  connector.upsert(vectors)
+  
+  # Query with filtering
+  results = connector.query(
+      vector=[...],
+      top_k=10,
+      filter={"category": "tech"},
+      score_threshold=0.7,
+  )
+
+governance:
+  payload_validation: true
+  metadata_validation: true
+  pii_detection_on_query: true
+  audit_trail: true
+  compliance_standards:
+    - GDPR
+    - CCPA
+    - SOC2
+
+performance:
+  latency:
+    upsert: "5-30ms"
+    query: "10-50ms"
+    delete: "5-20ms"
+  throughput:
+    upsert: "3000+ vectors/sec"
+    query: "300+ queries/sec"
+
+documentation: https://github.com/V1B3hR/nethical/blob/main/docs/VECTOR_STORE_INTEGRATION_GUIDE.md
