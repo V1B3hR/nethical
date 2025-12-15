@@ -1,0 +1,118 @@
+# Shadow Traffic Replay Configuration
+# 
+# This file contains recommended settings for safely replaying
+# production traffic into an isolated staging environment.
+
+# Target staging environment base URL
+# IMPORTANT: Ensure this points to an isolated staging environment
+# with its own database and external service connections
+staging_url: "https://staging.nethical.example.com"
+
+# Operation mode
+# - dry_run: true (default) - Process requests but don't send them
+# - dry_run: false (with --send flag) - Actually send requests
+dry_run: true
+
+# Safety: Methods to skip by default
+# These state-changing methods are blocked unless --allow-modifying is used
+skip_methods:
+  - POST
+  - PUT
+  - PATCH
+  - DELETE
+
+# Rate limiting (requests per second)
+# Set to match or lower than production traffic patterns
+# null means no rate limiting
+rps: 10
+
+# Retry configuration
+# Number of times to retry failed requests
+retries: 3
+
+# Authentication
+# Use a dedicated staging API key, NOT production credentials
+# Can be provided via command line or environment variable
+# auth: "staging-api-key-here"
+
+# Output
+# Where to save the replay report
+report_path: "replay_report.json"
+
+# Logging
+# Enable debug logging for detailed output
+debug: false
+
+# Safety Checklist
+# Before running with --send flag, verify:
+# 
+# ✓ Staging environment uses isolated database
+# ✓ Staging environment uses test/sandbox external services
+# ✓ No production data will be affected
+# ✓ No external users will see replayed traffic
+# ✓ Staging environment has appropriate feature flags set
+# ✓ Authentication uses staging credentials only
+# ✓ Team has been notified of replay test
+# ✓ Monitoring is in place to observe staging environment
+# ✓ Rollback plan exists if issues are discovered
+# ✓ Test starts with dry-run mode first
+
+# Example Usage Commands
+# 
+# 1. Safe dry-run to test parsing and setup:
+#    python scripts/shadow_replay.py \
+#      --input examples/shadow/sample_traffic.har \
+#      --staging-url https://staging.nethical.example.com \
+#      --dry-run
+#
+# 2. Replay with rate limiting (READ-ONLY traffic):
+#    python scripts/shadow_replay.py \
+#      --input examples/shadow/sample_traffic.json \
+#      --staging-url https://staging.nethical.example.com \
+#      --send --rps 10 --auth "staging-token"
+#
+# 3. Full replay including state-changing methods (CAUTION):
+#    python scripts/shadow_replay.py \
+#      --input examples/shadow/sample_traffic.har \
+#      --staging-url https://staging.nethical.example.com \
+#      --send --allow-modifying --rps 5 --auth "staging-token"
+#
+# 4. Debug mode for troubleshooting:
+#    python scripts/shadow_replay.py \
+#      --input examples/shadow/sample_traffic.json \
+#      --staging-url https://staging.nethical.example.com \
+#      --dry-run --debug
+
+# Advanced Options
+# 
+# --force: Override production safety checks (NOT RECOMMENDED)
+#   Use only if you're absolutely certain the target is not production
+#
+# --skip-methods: Customize which methods to skip
+#   Example: --skip-methods DELETE PATCH
+#
+# --retries: Customize retry attempts
+#   Example: --retries 5
+
+# Integration with CI/CD
+#
+# You can integrate shadow replay into your deployment pipeline:
+# 1. Deploy new version to staging
+# 2. Run shadow replay with recent production traffic
+# 3. Monitor staging metrics and logs
+# 4. Validate no errors or performance degradation
+# 5. Promote to production if tests pass
+#
+# Example GitHub Actions workflow:
+#   - name: Shadow Replay Test
+#     run: |
+#       python scripts/shadow_replay.py \
+#         --input traffic_export.har \
+#         --staging-url ${{ secrets.STAGING_URL }} \
+#         --send --rps 5 \
+#         --auth ${{ secrets.STAGING_API_KEY }} \
+#         --report staging_replay_report.json
+#   
+#   - name: Check Replay Results
+#     run: |
+#       python scripts/check_replay_report.py staging_replay_report.json
