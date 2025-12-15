@@ -17,7 +17,7 @@ jobs:
     permissions: 
       contents: read
     env:
-      JWT_SECRET_KEY: ${{ secrets.JWT_SECRET_KEY }}
+      jwt.decode(encoded, self.secret_key, algorithms=["HS256"])
       TRIVY_CACHE_DIR: ~/.cache/trivy
 
     steps: 
