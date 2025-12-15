@@ -18,6 +18,7 @@ import pytest
 import tempfile
 from pathlib import Path
 from unittest.mock import patch
+import warnings
 
 # Import the module to test
 import sys
@@ -826,7 +827,7 @@ def test_end_to_end_har_replay(temp_har_file, staging_url):
             try:
                 os.unlink(temp_report_path)
             except OSError:
-                pass
+                warnings.warn(f"Failed to delete temporary file: {temp_report_path}", RuntimeWarning)
 
 
 def test_end_to_end_json_replay_dry_run(temp_json_file, staging_url):
