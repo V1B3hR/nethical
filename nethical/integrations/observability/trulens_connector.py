@@ -149,12 +149,6 @@ class TruLensConnector(ObservabilityProvider):
         if not self.available:
             return "TruLens not available"
             
-        try:
-            # TruLens has a built-in dashboard
-            # Start it programmatically (in practice, run separately)
-            return "Run: streamlit run $(python -c 'import trulens_eval; print(trulens_eval.__file__.replace(\"__init__.py\", \"pages/Dashboard.py\"))')"
-        except:
-            return "TruLens dashboard available via: tru.run_dashboard()"
     
     def close(self) -> None:
         """Close TruLens session."""
