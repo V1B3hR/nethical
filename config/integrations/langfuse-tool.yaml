@@ -1,0 +1,80 @@
+name: Langfuse Governance Observability
+version: "1.0"
+description: Langfuse integration for Nethical governance tracing and monitoring
+provider: Langfuse
+category: observability
+
+authentication:
+  type: api_key
+  required_fields:
+    - public_key
+    - secret_key
+  optional_fields:
+    - host
+
+capabilities:
+  - trace_logging
+  - event_logging
+  - metrics_logging
+  - dashboard_access
+
+parameters:
+  public_key:
+    type: string
+    description: Langfuse public API key
+    required: true
+    env_var: LANGFUSE_PUBLIC_KEY
+  
+  secret_key:
+    type: string
+    description: Langfuse secret API key
+    required: true
+    sensitive: true
+    env_var: LANGFUSE_SECRET_KEY
+  
+  host:
+    type: string
+    description: Langfuse host URL
+    required: false
+    default: "https://cloud.langfuse.com"
+    env_var: LANGFUSE_HOST
+
+endpoints:
+  dashboard: "https://cloud.langfuse.com"
+  api: "https://cloud.langfuse.com/api"
+  docs: "https://langfuse.com/docs"
+
+installation:
+  command: "pip install langfuse"
+  requirements:
+    - langfuse>=2.0.0
+
+usage_example: |
+  from nethical.integrations.observability import LangfuseConnector
+  
+  connector = LangfuseConnector(
+      public_key="pk-...",
+      secret_key="sk-...",
+      host="https://cloud.langfuse.com"
+  )
+  
+  connector.log_governance_event(
+      action="test action",
+      decision="ALLOW",
+      risk_score=0.1,
+      metadata={"agent_id": "test"}
+  )
+
+features:
+  - LLM tracing with governance context
+  - Event-based governance logging
+  - Metrics aggregation
+  - Multi-environment support
+  - Team collaboration
+
+metadata:
+  manifest_version: "1.0"
+  created: "2024-12-14"
+  updated: "2024-12-14"
+  authors:
+    - "Nethical Team"

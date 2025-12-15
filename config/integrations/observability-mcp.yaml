@@ -1,0 +1,198 @@
+name: Nethical Observability & Cloud ML Integrations
+version: "1.0"
+description: Complete observability and cloud ML platform integrations for Nethical governance
+category: enterprise
+
+integrations:
+  observability:
+    - name: Langfuse
+      type: llm_tracing
+      manifest: langfuse-tool.yaml
+      priority: high
+      status: production
+      
+    - name: LangSmith
+      type: langchain_monitoring
+      manifest: langsmith-tool.yaml
+      priority: high
+      status: production
+      
+    - name: Arize AI
+      type: ml_monitoring
+      manifest: arize-tool.yaml
+      priority: medium
+      status: production
+      
+    - name: WhyLabs
+      type: data_monitoring
+      priority: medium
+      status: production
+      setup: pip install whylogs
+      
+    - name: Helicone
+      type: llm_observability
+      priority: low
+      status: production
+      setup: API-only (no SDK required)
+      
+    - name: TruLens
+      type: llm_evaluation
+      priority: medium
+      status: production
+      setup: pip install trulens-eval
+  
+  cloud_ml:
+    - name: Vertex AI
+      type: gcp_ml_platform
+      manifest: vertex-ai-tool.yaml
+      priority: high
+      status: production
+      
+    - name: Databricks
+      type: unified_analytics
+      manifest: databricks-tool.yaml
+      priority: high
+      status: production
+      
+    - name: Snowflake Cortex
+      type: data_warehouse_ml
+      manifest: snowflake-cortex-tool.yaml
+      priority: high
+      status: production
+
+features:
+  observability:
+    - Distributed tracing with governance context
+    - Real-time event logging
+    - Metrics aggregation and dashboards
+    - Multi-provider support
+    - Automatic failover
+    
+  cloud_ml:
+    - MLOps experiment tracking
+    - Model serving with governance
+    - Model registry management
+    - Prediction with safety checks
+    - SQL-based ML workflows
+
+architecture:
+  manager: ObservabilityManager
+  providers:
+    - LangfuseConnector
+    - LangSmithConnector
+    - ArizeConnector
+    - WhyLabsConnector
+    - HeliconeConnector
+    - TruLensConnector
+  cloud_providers:
+    - VertexAIConnector
+    - DatabricksConnector
+    - SnowflakeCortexConnector
+
+usage_patterns:
+  multi_provider_observability: |
+    from nethical.integrations.observability import create_observability_stack
+    
+    manager = create_observability_stack(
+        langfuse_config={"public_key": "...", "secret_key": "..."},
+        langsmith_config={"api_key": "..."},
+        arize_config={"api_key": "...", "space_key": "..."}
+    )
+    
+    # Log to all providers
+    manager.log_governance_event_all(
+        action="test",
+        decision="ALLOW",
+        risk_score=0.1,
+        metadata={}
+    )
+  
+  cloud_ml_with_governance: |
+    from nethical.integrations.cloud import VertexAIConnector
+    
+    connector = VertexAIConnector(
+        project="my-project",
+        enable_governance=True
+    )
+    
+    # Prediction with automatic governance checks
+    result = connector.predict_with_governance(
+        endpoint_id="...",
+        instances=[{"input": "..."}]
+    )
+
+deployment:
+  requirements:
+    python: ">=3.8"
+    packages:
+      core:
+        - nethical>=1.0.0
+      observability:
+        - langfuse>=2.0.0
+        - langsmith>=0.1.0
+        - arize>=7.0.0
+        - whylogs>=1.3.0
+        - trulens-eval>=0.20.0
+      cloud:
+        - google-cloud-aiplatform>=1.38.0
+        - databricks-sdk>=0.18.0
+        - mlflow>=2.0.0
+        - snowflake-connector-python>=3.0.0
+  
+  environment_variables:
+    observability:
+      - LANGFUSE_PUBLIC_KEY
+      - LANGFUSE_SECRET_KEY
+      - LANGSMITH_API_KEY
+      - ARIZE_API_KEY
+      - ARIZE_SPACE_KEY
+    cloud:
+      - GCP_PROJECT
+      - GOOGLE_APPLICATION_CREDENTIALS
+      - DATABRICKS_HOST
+      - DATABRICKS_TOKEN
+      - SNOWFLAKE_ACCOUNT
+      - SNOWFLAKE_USER
+      - SNOWFLAKE_PASSWORD
+
+monitoring:
+  metrics:
+    - governance_events_logged
+    - predictions_with_governance
+    - blocked_actions_count
+    - average_risk_score
+    - provider_availability
+  
+  health_checks:
+    - observability_providers_status
+    - cloud_ml_connections_status
+    - governance_engine_health
+
+security:
+  authentication:
+    - API keys stored securely
+    - Environment variable support
+    - Credential rotation support
+  
+  data_privacy:
+    - PII redaction before logging
+    - Configurable data retention
+    - GDPR compliance
+  
+  governance:
+    - Pre-check inputs for safety
+    - Post-check outputs for compliance
+    - Automatic blocking of high-risk actions
+    - Audit trail for all decisions
+
+metadata:
+  manifest_version: "1.0"
+  created: "2024-12-14"
+  updated: "2024-12-14"
+  authors:
+    - "Nethical Team"
+  ecosystem_coverage:
+    total_integrations: 9
+    observability_platforms: 6
+    cloud_ml_platforms: 3
+    production_ready: 9

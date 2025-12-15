@@ -1,0 +1,83 @@
+name: Google Vertex AI Governance Integration
+version: "1.0"
+description: Complete Vertex AI integration with Nethical governance
+provider: Google Cloud
+category: cloud_ml
+
+authentication:
+  type: service_account
+  required_fields:
+    - project
+    - location
+  optional_fields:
+    - credentials_path
+
+capabilities:
+  - experiment_tracking
+  - model_training
+  - endpoint_serving
+  - governance_checks
+
+parameters:
+  project:
+    type: string
+    description: GCP project ID
+    required: true
+    env_var: GCP_PROJECT
+  
+  location:
+    type: string
+    description: GCP region
+    required: false
+    default: "us-central1"
+    env_var: GCP_LOCATION
+  
+  credentials_path:
+    type: string
+    description: Path to service account key file
+    required: false
+    env_var: GOOGLE_APPLICATION_CREDENTIALS
+  
+  enable_governance:
+    type: boolean
+    description: Enable Nethical governance checks
+    required: false
+    default: true
+
+endpoints:
+  console: "https://console.cloud.google.com/vertex-ai"
+  api: "https://cloud.google.com/vertex-ai/docs/reference/rest"
+  docs: "https://cloud.google.com/vertex-ai/docs"
+
+installation:
+  command: "pip install google-cloud-aiplatform"
+  requirements:
+    - google-cloud-aiplatform>=1.38.0
+
+usage_example: |
+  from nethical.integrations.cloud import VertexAIConnector
+  
+  connector = VertexAIConnector(
+      project="my-project",
+      location="us-central1",
+      enable_governance=True
+  )
+  
+  run_id = connector.start_run("experiment1")
+  connector.log_parameters(run_id, {"lr": 0.001})
+  connector.log_metrics(run_id, {"accuracy": 0.95})
+  connector.end_run(run_id)
+
+features:
+  - MLOps experiment tracking
+  - Model deployment to endpoints
+  - Prediction with governance
+  - AutoML integration
+  - Pipeline orchestration
+
+metadata:
+  manifest_version: "1.0"
+  created: "2024-12-14"
+  updated: "2024-12-14"
+  authors:
+    - "Nethical Team"

@@ -80,7 +80,7 @@ Usage Examples:
 from typing import Dict, Any
 
 # Legacy integrations
-__all__ = ["logging_connectors", "webhook", "ml_platforms", "langchain_tools", "mlflow_connector", "ray_serve_connector", "llm_providers", "agent_frameworks"]
+__all__ = ["logging_connectors", "webhook", "ml_platforms", "langchain_tools", "mlflow_connector", "ray_serve_connector", "llm_providers", "agent_frameworks", "observability", "cloud"]
 
 # LLM Providers
 try:
@@ -117,6 +117,46 @@ try:
     ])
 except ImportError:
     AGENT_FRAMEWORKS_AVAILABLE = False
+
+# Observability platforms
+try:
+    from .observability import (
+        ObservabilityProvider,
+        ObservabilityManager,
+        TraceSpan,
+        GovernanceMetrics,
+        create_observability_stack,
+        get_observability_info,
+    )
+    OBSERVABILITY_AVAILABLE = True
+    __all__.extend([
+        "ObservabilityProvider",
+        "ObservabilityManager",
+        "TraceSpan",
+        "GovernanceMetrics",
+        "create_observability_stack",
+        "get_observability_info",
+    ])
+except ImportError:
+    OBSERVABILITY_AVAILABLE = False
+
+# Cloud ML platforms
+try:
+    from .cloud import (
+        CloudMLProvider,
+        ExperimentRun,
+        RunStatus,
+        get_cloud_integration_info,
+    )
+    CLOUD_ML_AVAILABLE = True
+    __all__.extend([
+        "CloudMLProvider",
+        "ExperimentRun",
+        "RunStatus",
+        "get_cloud_integration_info",
+    ])
+except ImportError:
+    CLOUD_ML_AVAILABLE = False
 
 # Vector stores
 try:
@@ -195,7 +235,7 @@ try:
 except ImportError:
     GEMINI_AVAILABLE = False
 
-__all__.extend(["CLAUDE_AVAILABLE", "REST_API_AVAILABLE", "GROK_AVAILABLE", "GEMINI_AVAILABLE", "VECTOR_STORES_AVAILABLE", "LLM_PROVIDERS_AVAILABLE", "AGENT_FRAMEWORKS_AVAILABLE", "get_integration_info"])
+__all__.extend(["CLAUDE_AVAILABLE", "REST_API_AVAILABLE", "GROK_AVAILABLE", "GEMINI_AVAILABLE", "VECTOR_STORES_AVAILABLE", "LLM_PROVIDERS_AVAILABLE", "AGENT_FRAMEWORKS_AVAILABLE", "OBSERVABILITY_AVAILABLE", "CLOUD_ML_AVAILABLE", "get_integration_info"])
 
 
 def get_integration_info() -> Dict[str, Any]:
@@ -270,6 +310,20 @@ def get_integration_info() -> Dict[str, Any]:
             "setup": "pip install llama-index crewai dspy-ai pyautogen",
             "docs": "See docs/AGENT_FRAMEWORKS_GUIDE.md",
             "frameworks": ["llamaindex", "crewai", "dspy", "autogen"]
+        },
+        "observability": {
+            "available": OBSERVABILITY_AVAILABLE,
+            "setup": "pip install langfuse langsmith arize whylogs trulens-eval",
+            "docs": "See docs/OBSERVABILITY_GUIDE.md",
+            "manifest": "config/integrations/observability-mcp.yaml",
+            "platforms": ["langfuse", "langsmith", "arize", "whylabs", "helicone", "trulens"]
+        },
+        "cloud_ml": {
+            "available": CLOUD_ML_AVAILABLE,
+            "setup": "pip install google-cloud-aiplatform databricks-sdk snowflake-connector-python",
+            "docs": "See docs/CLOUD_INTEGRATIONS_GUIDE.md",
+            "manifest": "config/integrations/observability-mcp.yaml",
+            "platforms": ["vertex_ai", "databricks", "snowflake_cortex"]
         }
     }
     return info
