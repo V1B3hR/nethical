@@ -18,7 +18,6 @@ jobs:
       contents: read
     env:
       JWT_SECRET:  ${{ secrets.JWT_SECRET }}
-      TRIVY_CACHE_DIR: ~/.cache/trivy
 
     steps: 
       - name: Checkout repository
