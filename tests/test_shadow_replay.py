@@ -117,8 +117,8 @@ def temp_har_file(sample_har_data):
     try:
         os.unlink(temp_path)
     except OSError:
+        # Ignore if file is already deleted or cannot be deleted during cleanup
         pass
-
 
 @pytest.fixture
 def temp_json_file(sample_json_data):
@@ -131,10 +131,10 @@ def temp_json_file(sample_json_data):
 
     # Cleanup
     try:
+        # Ignore if file is already deleted or cannot be deleted during cleanup
         os.unlink(temp_path)
     except OSError:
         pass
-
 
 @pytest.fixture
 def staging_url():
