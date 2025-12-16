@@ -62,6 +62,7 @@ jobs:
           format: 'table'
           exit-code: '1'
           cache-dir: ${{ env.TRIVY_CACHE_DIR }}
+          path: '.'   # <-- Add this line
 
       - name: Show disk usage (after scan)
         if: always()
