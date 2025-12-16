@@ -16,10 +16,9 @@ jobs:
     runs-on: ubuntu-latest
     permissions: 
       contents: read
-    env:
-      jwt_secret = os.getenv("JWT_SECRET")
-      jwt.decode(encoded, jwt_secret, algorithms=["HS256"])
-      
+    # Set env vars as needed. Example for JWT_SECRET:
+    # env:
+    #   JWT_SECRET: ${{ secrets.JWT_SECRET }}
     steps: 
       - name: Prepare Trivy cache directory
         run: mkdir -p .trivycache
