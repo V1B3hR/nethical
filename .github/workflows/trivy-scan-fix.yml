@@ -17,8 +17,9 @@ jobs:
     permissions: 
       contents: read
     env:
-      JWT_SECRET:  ${{ secrets.JWT_SECRET }}
-
+      jwt_secret = os.getenv("JWT_SECRET")
+      jwt.decode(encoded, jwt_secret, algorithms=["HS256"])
+      
     steps: 
       - name: Prepare Trivy cache directory
         run: mkdir -p .trivycache
