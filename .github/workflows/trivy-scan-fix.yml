@@ -57,12 +57,12 @@ jobs:
 
       - name: Run Trivy vulnerability scanner
         uses: aquasecurity/trivy-action@0.28.0
+        env:
+          TRIVY_CACHE_DIR: .trivycache
         with:
           image-ref: ${{ github.event.inputs.image || 'v1b3hr/nethical:latest' }}
           format: 'table'
           exit-code: '1'
-          cache-dir: ${{ env.TRIVY_CACHE_DIR }}
-          path: '.'   # <-- Add this line
 
       - name: Show disk usage (after scan)
         if: always()
