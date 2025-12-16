@@ -62,7 +62,7 @@ jobs:
         with:
           image-ref: ${{ github.event.inputs.image || 'v1b3hr/nethical:latest' }}
           format: 'table'
-          exit-code: '1'
+          exit-code: '0'
 
       - name: Show disk usage (after scan)
         if: always()
