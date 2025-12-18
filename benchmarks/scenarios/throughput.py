@@ -61,8 +61,8 @@ class ThroughputScenario:
                 "violations": [],
             }
 
-        # Actual evaluation
-        result = self.governance.process_action(
+        # Actual evaluation - use async method for better performance
+        result = await self.governance.process_action_async(
             action=action["content"],
             agent_id=action["agent_id"],
             action_type=action["action_type"],
@@ -70,7 +70,7 @@ class ThroughputScenario:
         )
 
         return {
-            "decision": getattr(result, "decision", "ALLOW"),
-            "confidence": getattr(result, "confidence", 0.95),
-            "violations": getattr(result, "violations", []),
+            "decision": result.get("decision", "ALLOW"),
+            "confidence": result.get("confidence", 0.95),
+            "violations": result.get("violations", []),
         }
