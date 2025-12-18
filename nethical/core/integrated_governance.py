@@ -1266,6 +1266,400 @@ class IntegratedGovernance:
 
         return results
 
+    async def process_action_async(
+        self,
+        agent_id: str,
+        action: Any,
+        cohort: Optional[str] = None,
+        violation_detected: bool = False,
+        violation_type: Optional[str] = None,
+        violation_severity: Optional[str] = None,
+        detector_invocations: Optional[Dict[str, float]] = None,
+        context: Optional[Dict[str, Any]] = None,
+        # For ML phases
+        action_id: Optional[str] = None,
+        action_type: Optional[str] = None,
+        features: Optional[Dict[str, float]] = None,
+        rule_risk_score: Optional[float] = None,
+        rule_classification: Optional[str] = None,
+        # For regional processing
+        region_id: Optional[str] = None,
+        compliance_requirements: Optional[List[str]] = None,
+    ) -> Dict[str, Any]:
+        """Async version of process_action for optimal performance in async contexts.
+        
+        This method provides true async/await support for governance evaluation,
+        avoiding the overhead of creating new event loops and thread pools.
+        Use this method in async contexts (benchmarks, async servers, etc.) for
+        best performance.
+
+        Args:
+            agent_id: Agent identifier
+            action: Action object
+            cohort: Optional agent cohort
+            violation_detected: Whether a violation was detected
+            violation_type: Type of violation if detected
+            violation_severity: Severity of violation if detected
+            detector_invocations: Dict of detector_name -> cpu_time_ms
+            context: Additional context
+            action_id: Action identifier (for ML phases)
+            action_type: Type of action (for ML phases)
+            features: Feature dict for ML models
+            rule_risk_score: Rule-based risk score (for ML blending)
+            rule_classification: Rule-based classification (for ML blending)
+            region_id: Geographic region for this action
+            compliance_requirements: List of compliance requirements to validate
+
+        Returns:
+            Comprehensive results from all enabled phases
+        """
+        start_time = time.time()
+
+        # ==================== Regional Configuration ====================
+        effective_region = region_id or self.region_id
+        effective_domain = self.logical_domain
+
+        # ==================== Quota & Resource Enforcement ====================
+        quota_result = None
+        pii_matches = []
+        pii_risk = 0.0
+
+        if self.quota_enforcer:
+            payload_size = len(str(action)) if action else 0
+            quota_result = self.quota_enforcer.check_quota(
+                agent_id=agent_id,
+                cohort=cohort,
+                tenant=effective_region if effective_region else None,
+                payload_size=payload_size,
+                action_type=action_type or "query",
+            )
+
+            if not quota_result["allowed"] and quota_result["decision"] == "BLOCK":
+                return {
+                    "agent_id": agent_id,
+                    "timestamp": datetime.now(timezone.utc).isoformat(),
+                    "decision": "BLOCK",
+                    "reason": quota_result["reason"],
+                    "quota_enforcement": quota_result,
+                    "blocked_by_quota": True,
+                }
+
+        # Enhanced PII Detection
+        if self.pii_detector and action:
+            action_str = str(action)
+            pii_matches, pii_risk = self._cached_pii_detection(action_str)
+            if pii_matches and pii_risk > 0.5:
+                violation_detected = True
+                violation_type = violation_type or "privacy"
+                violation_severity = "critical" if pii_risk > 0.8 else "high"
+
+        # Validate data residency if region specified
+        residency_validation = None
+        if effective_region:
+            residency_validation = self.validate_data_residency(effective_region)
+
+        # ==================== Core Violation Detection ====================
+        from .governance_core import ActionType
+        
+        # Convert action type string to enum
+        action_type_enum = ActionType.QUERY
+        if action_type:
+            action_type_str = action_type.upper()
+            if hasattr(ActionType, action_type_str):
+                action_type_enum = getattr(ActionType, action_type_str)
+        
+        # Convert action to AgentAction format
+        if isinstance(action, str):
+            action_obj = AgentAction(
+                action_id=action_id or f"action_{agent_id}_{int(time.time() * 1000)}",
+                agent_id=agent_id,
+                content=action,
+                action_type=action_type_enum,
+                timestamp=datetime.now(timezone.utc)
+            )
+        elif hasattr(action, 'content'):
+            existing_action_type = getattr(action, 'action_type', None)
+            if isinstance(existing_action_type, str):
+                existing_action_type_str = existing_action_type.upper()
+                if hasattr(ActionType, existing_action_type_str):
+                    existing_action_type = getattr(ActionType, existing_action_type_str)
+                else:
+                    existing_action_type = action_type_enum
+            elif existing_action_type is None:
+                existing_action_type = action_type_enum
+                
+            action_obj = AgentAction(
+                action_id=getattr(action, 'action_id', action_id or f"action_{agent_id}_{int(time.time() * 1000)}"),
+                agent_id=agent_id,
+                content=action.content,
+                action_type=existing_action_type,
+                timestamp=getattr(action, 'timestamp', datetime.now(timezone.utc))
+            )
+        else:
+            action_obj = AgentAction(
+                action_id=action_id or f"action_{agent_id}_{int(time.time() * 1000)}",
+                agent_id=agent_id,
+                content=str(action),
+                action_type=action_type_enum,
+                timestamp=datetime.now(timezone.utc)
+            )
+
+        # Async violation detection - directly await the async method
+        judgment = await self.safety_governance.evaluate_action(action_obj)
+        
+        # Extract violation information
+        detected_violations = judgment.violations
+        decision = judgment.decision
+        violation_detected = len(detected_violations) > 0
+        
+        # Determine violation type and severity from detected violations
+        if detected_violations:
+            violation_type = detected_violations[0].violation_type.value if not violation_type else violation_type
+            violation_severity = detected_violations[0].severity.value if not violation_severity else violation_severity
+
+        results = {
+            "agent_id": agent_id,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+            "region_id": effective_region,
+            "logical_domain": effective_domain,
+            "compliance_requirements": compliance_requirements or [],
+            "data_residency": residency_validation,
+            "quota_enforcement": quota_result if quota_result else None,
+            "pii_detection": (
+                {
+                    "matches_count": len(pii_matches),
+                    "pii_risk_score": pii_risk,
+                    "pii_types": [m.pii_type.value for m in pii_matches] if pii_matches else [],
+                }
+                if self.pii_detector
+                else None
+            ),
+            "violation_detected": violation_detected,
+            "decision": decision.value.upper() if decision else "ALLOW",
+            "violations": [
+                {
+                    "violation_id": v.violation_id,
+                    "violation_type": v.violation_type.value if hasattr(v.violation_type, 'value') else str(v.violation_type),
+                    "severity": v.severity.value if hasattr(v.severity, 'value') else str(v.severity),
+                    "description": v.description,
+                    "confidence": v.confidence,
+                    "detector_name": v.detector_name,
+                }
+                for v in detected_violations
+            ],
+            "reasoning": judgment.reasoning,
+            "confidence": judgment.confidence,
+            "phase3": {},
+            "phase4": {},
+            "phase567": {},
+            "phase89": {},
+        }
+
+        # ==================== Phase 3: Risk & Correlation ====================
+        violation_score = 0.0
+        if violation_detected and violation_severity:
+            severity_map = {"low": 0.25, "medium": 0.5, "high": 0.75, "critical": 1.0}
+            severity_str = str(violation_severity).lower() if violation_severity else "medium"
+            violation_score = severity_map.get(severity_str, 0.5)
+
+        action_context = {"cohort": cohort, "has_violation": violation_detected}
+
+        risk_score = self.risk_engine.calculate_risk_score(
+            agent_id=agent_id, violation_severity=violation_score, action_context=action_context
+        )
+
+        # Boost risk score based on PII detection and quota pressure
+        if pii_risk > 0:
+            risk_score = min(1.0, risk_score + (pii_risk * 0.3))
+
+        if quota_result and quota_result.get("backpressure_level", 0) > 0.8:
+            risk_score = min(1.0, risk_score + 0.2)
+
+        results["phase3"]["risk_score"] = risk_score
+        results["phase3"]["risk_tier"] = self.risk_engine.get_tier(agent_id).value
+        results["phase3"]["invoke_advanced_detectors"] = (
+            self.risk_engine.should_invoke_advanced_detectors(agent_id)
+        )
+        
+        # ==================== Fast Path Detection ====================
+        fast_path_eligible = False
+        if self.enable_fast_path:
+            has_violation = violation_detected or len(detected_violations) > 0
+            is_high_severity = False
+            if violation_severity:
+                is_high_severity = str(violation_severity).lower() in ["critical", "high"]
+            
+            fast_path_eligible = (
+                not has_violation
+                and not is_high_severity
+                and pii_risk < 0.1 
+                and risk_score < self.fast_path_risk_threshold
+                and (rule_risk_score is None or rule_risk_score < self.fast_path_risk_threshold)
+                and not self.components_enabled.get('force_full_pipeline', False)
+            )
+            results["phase3"]["fast_path_used"] = fast_path_eligible
+
+        # Track correlations
+        payload = getattr(action, "content", str(action))
+        correlations = self.correlation_engine.track_action(
+            agent_id=agent_id, action=action, payload=payload
+        )
+        results["phase3"]["correlations"] = [
+            {
+                "pattern": c.pattern_name,
+                "severity": c.severity,
+                "confidence": c.confidence,
+                "agents": list(c.agent_ids),
+            }
+            for c in correlations
+        ]
+
+        # Fairness sampling
+        if self.fairness_sampler and cohort:
+            sampled = self.fairness_sampler.record_action(
+                agent_id=agent_id, cohort=cohort, violation_detected=violation_detected
+            )
+            results["phase3"]["fairness_sampling"] = {
+                "sampled": sampled,
+                "bias_score": self.fairness_sampler.get_bias_score(cohort),
+            }
+
+        # Drift reporting
+        if self.drift_reporter and cohort:
+            self.drift_reporter.track_action(agent_id, cohort, violation_detected)
+            drift_score = self.drift_reporter.get_drift_score(cohort)
+            results["phase3"]["drift_score"] = drift_score
+            if drift_score > 0.8:
+                results["phase3"]["drift_alert"] = "High drift detected"
+
+        # ==================== Phase 4: Audit & Policy ====================
+        if not fast_path_eligible:
+            # Merkle anchoring
+            if self.merkle_anchor:
+                event_data = {
+                    "agent_id": agent_id,
+                    "action": str(action)[:500],
+                    "decision": results["decision"],
+                    "risk_score": risk_score,
+                    "timestamp": results["timestamp"],
+                }
+                # Batch events for performance
+                self._merkle_pending.append(event_data)
+                
+                if len(self._merkle_pending) >= self.merkle_batch_size:
+                    batch = self._merkle_pending[:self.merkle_batch_size]
+                    self._merkle_pending = self._merkle_pending[self.merkle_batch_size:]
+                    for evt in batch:
+                        self.merkle_anchor.add_event(evt)
+
+            # Policy diff auditing
+            if self.policy_auditor:
+                diffs = self.policy_auditor.get_recent_changes(limit=5)
+                results["phase4"]["recent_policy_changes"] = len(diffs)
+
+            # Quarantine management
+            if self.quarantine_manager and violation_detected:
+                reason = f"{violation_type}: {violation_severity}" if violation_type else "Violation detected"
+                self.quarantine_manager.quarantine_action(action_id, agent_id, reason)
+                results["phase4"]["quarantined"] = True
+
+            # Ethical taxonomy classification
+            if self.ethical_taxonomy:
+                classifications = self.ethical_taxonomy.classify_action(str(action))
+                results["phase4"]["ethical_categories"] = [
+                    {
+                        "category": c.category_name,
+                        "confidence": c.confidence,
+                        "sub_categories": c.sub_categories,
+                    }
+                    for c in classifications
+                ]
+
+            # SLA monitoring
+            processing_time_ms = (time.time() - start_time) * 1000
+            if self.sla_monitor:
+                self.sla_monitor.record_latency(processing_time_ms, agent_id)
+                sla_status = self.sla_monitor.check_sla_compliance(agent_id)
+                results["phase4"]["sla_status"] = {
+                    "p50_latency_ms": sla_status.p50_latency_ms,
+                    "p99_latency_ms": sla_status.p99_latency_ms,
+                    "meeting_sla": sla_status.meeting_sla,
+                    "breach_count": sla_status.breach_count,
+                }
+
+        # ==================== Phase 5-7: ML & Anomaly ====================
+        if not fast_path_eligible and (self.shadow_classifier or self.blended_engine or self.anomaly_monitor):
+            # Phase 5: Shadow mode ML
+            if self.shadow_classifier and features:
+                shadow_result = self.shadow_classifier.predict(features)
+                results["phase567"]["shadow_ml"] = {
+                    "prediction": shadow_result.prediction,
+                    "confidence": shadow_result.confidence,
+                    "agreed_with_rules": shadow_result.agreed_with_rules,
+                }
+
+            # Phase 6: ML blending
+            if self.blended_engine and rule_classification:
+                blended = self.blended_engine.compute_blended_risk(
+                    agent_id=agent_id,
+                    action_id=action_id,
+                    rule_risk_score=rule_risk_score,
+                    rule_classification=rule_classification,
+                    ml_risk_score=features.get("ml_score", 0.5) if features else 0.5,
+                )
+                results["phase567"]["blended"] = {
+                    "blended_risk_score": blended.blended_risk_score,
+                    "zone": blended.risk_zone.value,
+                    "blended_classification": blended.blended_classification,
+                    "ml_influenced": blended.ml_influenced,
+                }
+
+            # Phase 7: Anomaly detection
+            if self.anomaly_monitor and cohort and action_type:
+                alert = self.anomaly_monitor.record_action(
+                    agent_id=agent_id,
+                    action_type=action_type,
+                    risk_score=rule_risk_score,
+                    cohort=cohort,
+                )
+                if alert:
+                    results["phase567"]["anomaly_alert"] = {
+                        "type": alert.anomaly_type.value,
+                        "severity": alert.severity.value,
+                        "description": alert.description,
+                    }
+                else:
+                    drift_alert = self.anomaly_monitor.check_drift(cohort=cohort)
+                    if drift_alert:
+                        results["phase567"]["anomaly_alert"] = {
+                            "type": drift_alert.anomaly_type.value,
+                            "severity": drift_alert.severity.value,
+                            "description": drift_alert.description,
+                        }
+
+        # ==================== Phase 8-9: Human & Optimization ====================
+        if self.active_config and action_id:
+            results["phase89"]["active_config_id"] = self.active_config.config_id
+
+        if self.performance_optimizer and detector_invocations:
+            for detector_name, cpu_time_ms in detector_invocations.items():
+                self.performance_optimizer.track_detector_invocation(
+                    detector_name=detector_name, cpu_time_ms=cpu_time_ms
+                )
+
+            total_cpu_ms = (time.time() - start_time) * 1000
+            self.performance_optimizer.track_action_processing(
+                cpu_time_ms=total_cpu_ms, detectors_invoked=len(detector_invocations)
+            )
+
+            results["phase3"]["performance_metrics"] = {
+                "total_cpu_ms": total_cpu_ms,
+                "cpu_reduction_pct": self.performance_optimizer.get_cpu_reduction_pct(),
+                "meeting_target": self.performance_optimizer.is_meeting_target(),
+            }
+
+        return results
+
     def get_system_status(self) -> Dict[str, Any]:
         """Get comprehensive system status across all phases.
 
