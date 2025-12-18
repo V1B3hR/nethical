@@ -80,3 +80,6 @@ sealed-secret.yaml
 # Test data directories
 test_unified_data*/
 test_governance*/
+
+# Benchmark results
+benchmark_results/
