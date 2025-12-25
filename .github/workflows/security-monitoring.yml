@@ -1,0 +1,379 @@
+name: Security Monitoring
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main, develop ]
+  schedule:
+    # Run daily at 2 AM UTC
+    - cron: '0 2 * * *'
+
+permissions:
+  contents: read
+  issues: write
+  pull-requests: write
+
+jobs:
+  monitor-critical-changes:
+    name: Monitor Critical File Changes
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Analyze changes
+        id: analyze
+        run: |
+          echo "Analyzing repository changes for security concerns..."
+          
+          # Initialize flags
+          SUSPICIOUS=false
+          CRITICAL=false
+          WARNINGS=""
+          
+          # Get changed files
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            CHANGED_FILES=$(git diff --name-only origin/${{ github.base_ref }}...${{ github.sha }})
+          else
+            CHANGED_FILES=$(git diff --name-only HEAD~1..HEAD)
+          fi
+          
+          echo "Changed files:"
+          echo "$CHANGED_FILES"
+          
+          # Check for critical file changes
+          CRITICAL_PATTERNS=(
+            "^\.github/workflows/"
+            "^config/.*\.yaml$"
+            "^config/.*\.yml$"
+            "^nethical/security/"
+            "^requirements.*\.txt$"
+            "^pyproject\.toml$"
+            "^setup\.py$"
+            "^Dockerfile"
+            "^\.env"
+            "^deploy/"
+          )
+          
+          for pattern in "${CRITICAL_PATTERNS[@]}"; do
+            if echo "$CHANGED_FILES" | grep -qE "$pattern"; then
+              echo "⚠️  Critical file pattern matched: $pattern"
+              SUSPICIOUS=true
+              WARNINGS="${WARNINGS}- Critical files modified matching pattern: \`${pattern}\`\n"
+            fi
+          done
+          
+          # Check for large file additions
+          LARGE_FILES=$(git diff --name-only --diff-filter=A HEAD~1..HEAD | while read file; do
+            if [ -f "$file" ]; then
+              size=$(stat -f%z "$file" 2>/dev/null || stat -c%s "$file" 2>/dev/null || echo 0)
+              if [ "$size" -gt 1048576 ]; then  # >1MB
+                echo "$file ($size bytes)"
+              fi
+            fi
+          done)
+          
+          if [ -n "$LARGE_FILES" ]; then
+            echo "⚠️  Large files detected:"
+            echo "$LARGE_FILES"
+            SUSPICIOUS=true
+            WARNINGS="${WARNINGS}- Large files added (>1MB):\n${LARGE_FILES}\n"
+          fi
+          
+          # Check for binary file changes
+          BINARY_FILES=$(git diff --name-only HEAD~1..HEAD | while read file; do
+            if [ -f "$file" ] && file "$file" | grep -q "executable"; then
+              echo "$file"
+            fi
+          done)
+          
+          if [ -n "$BINARY_FILES" ]; then
+            echo "⚠️  Binary/executable files detected:"
+            echo "$BINARY_FILES"
+            CRITICAL=true
+            WARNINGS="${WARNINGS}- Binary/executable files modified:\n${BINARY_FILES}\n"
+          fi
+          
+          # Check for suspicious patterns in diffs
+          SUSPICIOUS_PATTERNS=(
+            "password.*=.*['\"]"
+            "api[_-]?key.*=.*['\"]"
+            "secret.*=.*['\"]"
+            "token.*=.*['\"]"
+            "private[_-]?key"
+            "-----BEGIN.*PRIVATE KEY-----"
+            "AWS.*KEY"
+            "AKIA[0-9A-Z]{16}"
+          )
+          
+          for pattern in "${SUSPICIOUS_PATTERNS[@]}"; do
+            if git diff HEAD~1..HEAD | grep -iE "$pattern" > /dev/null 2>&1; then
+              echo "🚨 CRITICAL: Potential secret detected matching pattern: $pattern"
+              CRITICAL=true
+              WARNINGS="${WARNINGS}- **CRITICAL**: Potential secret pattern detected: \`${pattern}\`\n"
+            fi
+          done
+          
+          # Check for mass file changes
+          FILE_COUNT=$(echo "$CHANGED_FILES" | wc -l)
+          if [ "$FILE_COUNT" -gt 50 ]; then
+            echo "⚠️  Large number of files changed: $FILE_COUNT"
+            SUSPICIOUS=true
+            WARNINGS="${WARNINGS}- Large number of files changed: ${FILE_COUNT} files\n"
+          fi
+          
+          # Output results
+          echo "suspicious=$SUSPICIOUS" >> $GITHUB_OUTPUT
+          echo "critical=$CRITICAL" >> $GITHUB_OUTPUT
+          echo "warnings<<EOF" >> $GITHUB_OUTPUT
+          echo -e "$WARNINGS" >> $GITHUB_OUTPUT
+          echo "EOF" >> $GITHUB_OUTPUT
+          echo "file_count=$FILE_COUNT" >> $GITHUB_OUTPUT
+      
+      - name: Create security alert comment
+        if: steps.analyze.outputs.suspicious == 'true' && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const warnings = `${{ steps.analyze.outputs.warnings }}`;
+            const critical = ${{ steps.analyze.outputs.critical }};
+            const fileCount = ${{ steps.analyze.outputs.file_count }};
+            
+            const severity = critical ? '🚨 CRITICAL' : '⚠️ WARNING';
+            const body = `## ${severity} Security Alert
+            
+            **Automated security monitoring detected potentially suspicious changes.**
+            
+            ### Detected Issues:
+            ${warnings}
+            
+            ### Summary:
+            - Files changed: ${fileCount}
+            - Severity: ${critical ? 'CRITICAL - Immediate review required' : 'WARNING - Review recommended'}
+            
+            ### Required Actions:
+            ${critical ? `
+            - [ ] **IMMEDIATE**: Review for exposed secrets or credentials
+            - [ ] Verify all binary/executable file changes
+            - [ ] Confirm changes are intentional and authorized
+            - [ ] Run security scans: \`pip-audit\`, \`bandit\`, \`safety check\`
+            ` : `
+            - [ ] Review critical file changes
+            - [ ] Verify changes follow security best practices
+            - [ ] Ensure proper testing is in place
+            `}
+            
+            ### Next Steps:
+            1. Review the changes carefully
+            2. Run security tools locally: \`./scripts/update_environment.sh --security-only\`
+            3. Verify no secrets are exposed: \`git log -p | grep -i "password\\|secret\\|key"\`
+            4. Update this PR with security review comments
+            
+            *This is an automated security check. For false positives, add \`security-review-approved\` label.*
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+      
+      - name: Create security issue for critical findings
+        if: steps.analyze.outputs.critical == 'true' && github.event_name == 'push'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const warnings = `${{ steps.analyze.outputs.warnings }}`;
+            
+            github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 SECURITY: Critical changes detected in ' + context.sha.substring(0, 7),
+              body: `## Critical Security Alert
+              
+              **Commit:** ${context.sha}
+              **Branch:** ${context.ref}
+              **Author:** ${context.actor}
+              
+              ### Detected Issues:
+              ${warnings}
+              
+              ### Immediate Actions Required:
+              1. Review the commit for exposed secrets
+              2. Rotate any potentially exposed credentials
+              3. Run full security audit
+              4. Investigate unauthorized changes
+              
+              ### Investigation Checklist:
+              - [ ] Commit reviewed by security team
+              - [ ] No secrets exposed (verified)
+              - [ ] Changes are authorized
+              - [ ] Security scans completed
+              - [ ] Incident report filed (if applicable)
+              
+              *This is an automated security alert. Treat as high priority.*
+              `,
+              labels: ['security', 'critical', 'needs-triage']
+            });
+
+  anomaly-detection:
+    name: Anomaly Detection
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 100  # Get more history for better analysis
+      
+      - name: Detect unusual commit patterns
+        id: commit-analysis
+        run: |
+          echo "Analyzing commit patterns..."
+          
+          # Get commit statistics
+          COMMIT_COUNT=$(git rev-list --count HEAD~10..HEAD 2>/dev/null || echo 0)
+          COMMIT_AUTHORS=$(git log --format='%ae' HEAD~10..HEAD | sort -u | wc -l)
+          COMMIT_TIMES=$(git log --format='%at' HEAD~10..HEAD)
+          
+          echo "Recent commits: $COMMIT_COUNT"
+          echo "Unique authors: $COMMIT_AUTHORS"
+          
+          # Check for unusual commit times (outside business hours)
+          UNUSUAL_TIMES=0
+          for timestamp in $COMMIT_TIMES; do
+            hour=$(date -d "@$timestamp" +%H 2>/dev/null || date -r "$timestamp" +%H 2>/dev/null || echo 12)
+            # Flag commits outside 8 AM - 8 PM
+            if [ "$hour" -lt 8 ] || [ "$hour" -gt 20 ]; then
+              UNUSUAL_TIMES=$((UNUSUAL_TIMES + 1))
+            fi
+          done
+          
+          echo "Commits outside business hours: $UNUSUAL_TIMES"
+          
+          # Flag anomalies
+          ANOMALY=false
+          if [ "$COMMIT_COUNT" -gt 20 ]; then
+            echo "⚠️  High commit frequency detected"
+            ANOMALY=true
+          fi
+          
+          if [ "$UNUSUAL_TIMES" -gt 5 ]; then
+            echo "⚠️  Multiple commits outside business hours"
+            ANOMALY=true
+          fi
+          
+          echo "anomaly=$ANOMALY" >> $GITHUB_OUTPUT
+          echo "commit_count=$COMMIT_COUNT" >> $GITHUB_OUTPUT
+          echo "unusual_times=$UNUSUAL_TIMES" >> $GITHUB_OUTPUT
+      
+      - name: Analyze file patterns
+        run: |
+          echo "Analyzing file access patterns..."
+          
+          # Find recently modified files
+          RECENT_FILES=$(find . -name "*.py" -o -name "*.yaml" -o -name "*.yml" -mtime -1 2>/dev/null | head -20)
+          
+          echo "Recently modified files:"
+          echo "$RECENT_FILES"
+          
+          # Check for suspicious file modifications
+          if echo "$RECENT_FILES" | grep -q "test"; then
+            echo "⚠️  Test files modified recently"
+          fi
+      
+      - name: Report anomalies
+        if: steps.commit-analysis.outputs.anomaly == 'true'
+        run: |
+          echo "::warning::Anomalous activity detected!"
+          echo "::warning::Commit count: ${{ steps.commit-analysis.outputs.commit_count }}"
+          echo "::warning::Unusual times: ${{ steps.commit-analysis.outputs.unusual_times }}"
+
+  dependency-integrity:
+    name: Verify Dependency Integrity
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Check for requirements changes
+        id: check-deps
+        run: |
+          if [ "${{ github.event_name }}" = "pull_request" ]; then
+            git fetch origin ${{ github.base_ref }}
+            CHANGED=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -E "requirements.*\.txt|pyproject\.toml|setup\.py" || echo "")
+            
+            if [ -n "$CHANGED" ]; then
+              echo "changed=true" >> $GITHUB_OUTPUT
+              echo "Dependency files changed: $CHANGED"
+            else
+              echo "changed=false" >> $GITHUB_OUTPUT
+            fi
+          else
+            echo "changed=false" >> $GITHUB_OUTPUT
+          fi
+      
+      - name: Verify dependency sources
+        if: steps.check-deps.outputs.changed == 'true'
+        run: |
+          echo "Verifying dependency sources..."
+          
+          # Check for non-PyPI sources
+          if grep -E "^(http|https|git\+)" requirements.txt 2>/dev/null; then
+            echo "⚠️  Non-PyPI sources detected in requirements.txt"
+            echo "::warning::Non-standard package sources found. Verify these are from trusted sources."
+          fi
+          
+          # Check for version pinning
+          UNPINNED=$(grep -vE "^#|^$|==|~=|>=" requirements.txt 2>/dev/null || echo "")
+          if [ -n "$UNPINNED" ]; then
+            echo "⚠️  Unpinned dependencies detected:"
+            echo "$UNPINNED"
+            echo "::warning::Some dependencies are not version-pinned. This may cause unexpected behavior."
+          fi
+      
+      - name: Verify hashed requirements
+        if: steps.check-deps.outputs.changed == 'true'
+        run: |
+          if [ -f "requirements-hashed.txt" ]; then
+            echo "✓ Hashed requirements file exists"
+            
+            # Verify all dependencies have hashes
+            NO_HASH=$(grep -v "^#" requirements-hashed.txt | grep -v "^$" | grep -v " \\\\" | grep -v "    --hash=" || echo "")
+            if [ -n "$NO_HASH" ]; then
+              echo "⚠️  Some dependencies in requirements-hashed.txt lack hash verification:"
+              echo "$NO_HASH"
+              echo "::error::Not all dependencies have hash verification. Regenerate requirements-hashed.txt"
+              exit 1
+            else
+              echo "✓ All dependencies have hash verification"
+            fi
+          else
+            echo "::warning::requirements-hashed.txt not found. Consider using hash verification for production deployments."
+          fi

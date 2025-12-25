@@ -1,0 +1,202 @@
+# SELinux Policy Module for Nethical
+# 
+# This module provides mandatory access control for Nethical application
+# on Red Hat Enterprise Linux, CentOS, Fedora, and similar distributions.
+#
+# Installation:
+#   1. Save this file as nethical.te
+#   2. Compile: checkmodule -M -m -o nethical.mod nethical.te
+#   3. Package: semodule_package -o nethical.pp -m nethical.mod
+#   4. Install: semodule -i nethical.pp
+#   5. Verify: semodule -l | grep nethical
+#
+# File Contexts:
+#   semanage fcontext -a -t nethical_exec_t "/app/nethical.py"
+#   semanage fcontext -a -t nethical_exec_t "/usr/local/bin/nethical"
+#   semanage fcontext -a -t nethical_data_t "/data(/.*)?"
+#   semanage fcontext -a -t nethical_log_t "/var/log/nethical(/.*)?"
+#   restorecon -R /app /data /var/log/nethical
+#
+
+policy_module(nethical, 1.0.0)
+
+########################################
+# Declarations
+########################################
+
+# Type for Nethical executable
+type nethical_exec_t;
+# Type for Nethical domain
+type nethical_t;
+# Type for Nethical data files
+type nethical_data_t;
+# Type for Nethical configuration files
+type nethical_config_t;
+# Type for Nethical log files
+type nethical_log_t;
+# Type for Nethical temporary files
+type nethical_tmp_t;
+# Type for Nethical runtime files (PID, sockets)
+type nethical_var_run_t;
+
+########################################
+# Domain initialization
+########################################
+
+# Initialize Nethical as an application domain
+application_domain(nethical_t, nethical_exec_t)
+
+# File type declarations
+files_type(nethical_data_t)
+files_type(nethical_config_t)
+logging_log_file(nethical_log_t)
+files_tmp_file(nethical_tmp_t)
+files_pid_file(nethical_var_run_t)
+
+########################################
+# Local policy
+########################################
+
+# Self permissions
+allow nethical_t self:process { fork signal sigchld getsched setsched setrlimit };
+allow nethical_t self:fifo_file rw_fifo_file_perms;
+allow nethical_t self:unix_stream_socket create_stream_socket_perms;
+allow nethical_t self:unix_dgram_socket create_socket_perms;
+allow nethical_t self:tcp_socket create_stream_socket_perms;
+allow nethical_t self:udp_socket create_socket_perms;
+
+# Network permissions
+corenet_tcp_bind_generic_node(nethical_t)
+corenet_udp_bind_generic_node(nethical_t)
+corenet_tcp_bind_all_unreserved_ports(nethical_t)
+corenet_udp_bind_all_unreserved_ports(nethical_t)
+corenet_tcp_connect_http_port(nethical_t)
+corenet_tcp_connect_http_cache_port(nethical_t)
+corenet_sendrecv_http_client_packets(nethical_t)
+
+# Allow binding to port 8000 (default Nethical port)
+corenet_tcp_bind_unreserved_ports(nethical_t)
+
+# Data file permissions
+manage_dirs_pattern(nethical_t, nethical_data_t, nethical_data_t)
+manage_files_pattern(nethical_t, nethical_data_t, nethical_data_t)
+manage_lnk_files_pattern(nethical_t, nethical_data_t, nethical_data_t)
+
+# Configuration file permissions (read-only)
+read_files_pattern(nethical_t, nethical_config_t, nethical_config_t)
+read_lnk_files_pattern(nethical_t, nethical_config_t, nethical_config_t)
+
+# Log file permissions
+manage_dirs_pattern(nethical_t, nethical_log_t, nethical_log_t)
+manage_files_pattern(nethical_t, nethical_log_t, nethical_log_t)
+append_files_pattern(nethical_t, nethical_log_t, nethical_log_t)
+logging_log_filetrans(nethical_t, nethical_log_t, { dir file })
+
+# Temporary file permissions
+manage_dirs_pattern(nethical_t, nethical_tmp_t, nethical_tmp_t)
+manage_files_pattern(nethical_t, nethical_tmp_t, nethical_tmp_t)
+files_tmp_filetrans(nethical_t, nethical_tmp_t, { dir file })
+
+# Runtime file permissions (PID files, sockets)
+manage_dirs_pattern(nethical_t, nethical_var_run_t, nethical_var_run_t)
+manage_files_pattern(nethical_t, nethical_var_run_t, nethical_var_run_t)
+manage_sock_files_pattern(nethical_t, nethical_var_run_t, nethical_var_run_t)
+files_pid_filetrans(nethical_t, nethical_var_run_t, { file dir sock_file })
+
+# Python interpreter and libraries
+# Allow execution of Python interpreter
+corecmd_exec_bin(nethical_t)
+corecmd_exec_shell(nethical_t)
+
+# Python library access
+libs_use_ld_so(nethical_t)
+libs_use_shared_libs(nethical_t)
+miscfiles_read_localization(nethical_t)
+
+# Allow reading Python libraries
+allow nethical_t usr_t:file { execute execute_no_trans read open getattr };
+allow nethical_t lib_t:file { execute execute_no_trans read open getattr };
+allow nethical_t lib_t:dir { search getattr read };
+
+# System file access (read-only)
+files_read_etc_files(nethical_t)
+files_read_etc_runtime_files(nethical_t)
+files_read_usr_files(nethical_t)
+
+# DNS resolution
+sysnet_dns_name_resolve(nethical_t)
+sysnet_read_config(nethical_t)
+
+# Allow reading /proc and /sys for system information
+kernel_read_system_state(nethical_t)
+kernel_read_network_state(nethical_t)
+kernel_read_kernel_sysctls(nethical_t)
+
+# SSL/TLS certificates
+miscfiles_read_generic_certs(nethical_t)
+
+# Logging to syslog
+logging_send_syslog_msg(nethical_t)
+
+# Allow signal handling
+allow nethical_t init_t:process sigchld;
+allow init_t nethical_t:process { signal signull };
+
+########################################
+# Denials for security hardening
+########################################
+
+# Deny loading kernel modules
+kernel_dontaudit_request_load_module(nethical_t)
+
+# Deny mounting filesystems
+files_dontaudit_mounton_all_mountpoints(nethical_t)
+
+# Deny access to other domains' files
+domain_dontaudit_read_all_domains_state(nethical_t)
+
+# Deny ptrace
+deny nethical_t domain:process ptrace;
+
+# Deny raw IP packets (not needed for typical web service)
+corenet_dontaudit_raw_send_generic_if(nethical_t)
+corenet_dontaudit_raw_recv_generic_if(nethical_t)
+
+# Deny access to hardware
+dev_dontaudit_read_raw_memory(nethical_t)
+dev_dontaudit_write_raw_memory(nethical_t)
+
+########################################
+# Optional policy components
+########################################
+
+# If using systemd
+optional_policy(`
+    systemd_exec_systemctl(nethical_t)
+')
+
+# If using cron
+optional_policy(`
+    cron_system_entry(nethical_t, nethical_exec_t)
+')
+
+# If sending email notifications
+optional_policy(`
+    mta_send_mail(nethical_t)
+')
+
+# If using Redis
+optional_policy(`
+    redis_stream_connect(nethical_t)
+')
+
+# If using PostgreSQL
+optional_policy(`
+    postgresql_stream_connect(nethical_t)
+    postgresql_tcp_connect(nethical_t)
+')
+
+# If using container runtime
+optional_policy(`
+    container_runtime_exec(nethical_t)
+')

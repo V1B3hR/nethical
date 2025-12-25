@@ -147,6 +147,7 @@ elif result.decision == "BLOCK":
 
 - [25 Fundamental Laws](./FUNDAMENTAL_LAWS.md)
 - [Security Policy](./SECURITY.md)
+- [Security Hardening Guide](./docs/SECURITY_HARDENING.md) ⭐ **NEW**
 - [Full Documentation](./docs/)
 - [Architecture & Data Flow](./ARCHITECTURE.md)
 - [Roadmap & Maturity](./Roadmap_Maturity.md)
@@ -161,6 +162,76 @@ elif result.decision == "BLOCK":
 - Open to third-party audits and continuous improvement.
 - Respect for user privacy at all levels.
 - Built by a transparent, global community — not a black box.
+
+---
+
+## 🔒 Security & Hardening
+
+Nethical is built with security as a first-class concern. For production deployments, we provide comprehensive security hardening guidance:
+
+### 🛡️ Runtime Hardening
+
+- **Docker Rootless Mode**: Run containers without root privileges
+- **Non-Privileged User**: Default UID 1000, read-only filesystem
+- **AppArmor/SELinux Profiles**: Mandatory access control policies
+- **Minimal Capabilities**: Drop ALL, add only NET_BIND_SERVICE
+
+```bash
+# Quick Start - Secure Docker Deployment
+docker run -d \
+  --name nethical \
+  --user 1000:1000 \
+  --read-only \
+  --cap-drop=ALL \
+  --cap-add=NET_BIND_SERVICE \
+  --security-opt=no-new-privileges:true \
+  -p 8000:8000 \
+  nethical:latest
+```
+
+### 🔐 Access Control Best Practices
+
+- **2FA Required**: Enable two-factor authentication for all access
+- **Least Privilege**: Minimal permissions at every level
+- **Secrets Management**: GitHub Secrets, HashiCorp Vault integration
+- **RBAC**: Role-based access control for multi-tenant deployments
+
+### 📊 Monitoring & Alerting
+
+- **Automated Scans**: GitHub Actions workflows for security monitoring
+- **Critical File Monitoring**: Alerts on suspicious changes
+- **Anomaly Detection**: Unusual activity detection in CI/CD
+- **Runtime Monitoring**: Prometheus metrics, structured logging
+
+### 📦 Dependency Security
+
+- **Automated Scanning**: pip-audit, safety, bandit integration
+- **Hash Verification**: Cryptographic hash checking for all dependencies
+- **Dependency Confusion Protection**: Protection against supply chain attacks
+- **Weekly Scans**: Automated vulnerability scanning via GitHub Actions
+
+### 📖 Documentation
+
+For complete security hardening instructions, see:
+- **[Security Hardening Guide](./docs/SECURITY_HARDENING.md)** - Complete hardening manual
+- **[Security Policy](./SECURITY.md)** - Vulnerability reporting
+- **[AppArmor Profile](./deploy/kubernetes/apparmor-profile.yaml)** - MAC policy for Kubernetes
+- **[SELinux Profile](./deploy/selinux/nethical.te)** - MAC policy for RHEL/CentOS
+
+### 🔄 Environment Updates
+
+Keep your environment secure with regular updates:
+
+```bash
+# Automated update script
+./scripts/update_environment.sh
+
+# Security-only updates
+./scripts/update_environment.sh --security-only
+
+# Check for vulnerabilities
+pip-audit -r requirements.txt
+```
 
 ---
 

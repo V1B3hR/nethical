@@ -1,0 +1,392 @@
+name: Dependency Security Scan
+
+on:
+  push:
+    branches: [ main, develop ]
+    paths:
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - 'setup.py'
+  pull_request:
+    branches: [ main, develop ]
+    paths:
+      - 'requirements*.txt'
+      - 'pyproject.toml'
+      - 'setup.py'
+  schedule:
+    # Run weekly on Monday at 9 AM UTC
+    - cron: '0 9 * * 1'
+  workflow_dispatch:  # Allow manual trigger
+
+permissions:
+  contents: read
+  issues: write
+  security-events: write
+
+jobs:
+  pip-audit:
+    name: pip-audit Vulnerability Scan
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install pip-audit
+        run: |
+          python -m pip install --upgrade pip
+          pip install pip-audit
+      
+      - name: Run pip-audit
+        id: pip-audit
+        continue-on-error: true
+        run: |
+          echo "Running pip-audit on requirements.txt..."
+          pip-audit -r requirements.txt --format json --output pip-audit-results.json || true
+          pip-audit -r requirements.txt --desc || true
+          
+          # Check if vulnerabilities were found
+          if [ -f pip-audit-results.json ]; then
+            VULN_COUNT=$(python -c "import json; data=json.load(open('pip-audit-results.json')); print(len(data.get('dependencies', [])))" 2>/dev/null || echo "0")
+            echo "vulnerabilities=$VULN_COUNT" >> $GITHUB_OUTPUT
+            
+            if [ "$VULN_COUNT" -gt 0 ]; then
+              echo "::warning::Found $VULN_COUNT vulnerable dependencies"
+              exit 1
+            fi
+          fi
+      
+      - name: Upload pip-audit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: pip-audit-results
+          path: pip-audit-results.json
+          retention-days: 30
+      
+      - name: Comment on PR with vulnerabilities
+        if: failure() && github.event_name == 'pull_request'
+        uses: actions/github-script@v7
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          script: |
+            const fs = require('fs');
+            const vulnCount = '${{ steps.pip-audit.outputs.vulnerabilities }}';
+            
+            let details = 'See workflow logs for details.';
+            try {
+              const results = JSON.parse(fs.readFileSync('pip-audit-results.json', 'utf8'));
+              if (results.dependencies && results.dependencies.length > 0) {
+                details = '### Vulnerable Dependencies:\n\n';
+                results.dependencies.forEach(dep => {
+                  details += `- **${dep.name}** ${dep.version}\n`;
+                  if (dep.vulns) {
+                    dep.vulns.forEach(vuln => {
+                      details += `  - ${vuln.id}: ${vuln.description}\n`;
+                      details += `  - Fix: Upgrade to ${vuln.fix_versions || 'latest version'}\n`;
+                    });
+                  }
+                });
+              }
+            } catch (e) {
+              console.log('Could not parse results:', e);
+            }
+            
+            const body = `## 🔒 pip-audit Vulnerability Scan Results
+            
+            **Status:** ❌ Vulnerabilities detected
+            **Count:** ${vulnCount} vulnerable dependencies
+            
+            ${details}
+            
+            ### Remediation Steps:
+            1. Review the vulnerabilities listed above
+            2. Update affected packages: \`pip install --upgrade <package>\`
+            3. Regenerate requirements: \`pip freeze > requirements.txt\`
+            4. Test thoroughly after updates
+            5. Re-run this check
+            
+            ### Commands:
+            \`\`\`bash
+            # Install pip-audit locally
+            pip install pip-audit
+            
+            # Scan for vulnerabilities
+            pip-audit -r requirements.txt
+            
+            # Attempt automatic fix
+            pip-audit --fix -r requirements.txt
+            \`\`\`
+            
+            *This is an automated security check.*
+            `;
+            
+            github.rest.issues.createComment({
+              issue_number: context.issue.number,
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              body: body
+            });
+
+  safety-scan:
+    name: Safety Vulnerability Database Check
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Safety
+        run: |
+          python -m pip install --upgrade pip
+          pip install safety
+      
+      - name: Run Safety check
+        id: safety
+        continue-on-error: true
+        run: |
+          echo "Running Safety check..."
+          safety check --json --output safety-results.json || true
+          safety check || true
+          
+          # Parse results
+          if [ -f safety-results.json ]; then
+            VULN_COUNT=$(python -c "import json; data=json.load(open('safety-results.json')); print(len(data.get('vulnerabilities', [])))" 2>/dev/null || echo "0")
+            echo "vulnerabilities=$VULN_COUNT" >> $GITHUB_OUTPUT
+            
+            if [ "$VULN_COUNT" -gt 0 ]; then
+              echo "::warning::Safety found $VULN_COUNT vulnerabilities"
+            fi
+          fi
+      
+      - name: Upload Safety results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: safety-results
+          path: safety-results.json
+          retention-days: 30
+
+  bandit-scan:
+    name: Bandit Security Linting
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      
+      - name: Install Bandit
+        run: |
+          python -m pip install --upgrade pip
+          pip install bandit[toml]
+      
+      - name: Run Bandit scan
+        id: bandit
+        continue-on-error: true
+        run: |
+          echo "Running Bandit security scan..."
+          bandit -r nethical/ -f json -o bandit-results.json || true
+          bandit -r nethical/ -ll || true  # Show only high severity
+          
+          # Count high severity issues
+          if [ -f bandit-results.json ]; then
+            HIGH_SEVERITY=$(python -c "import json; data=json.load(open('bandit-results.json')); print(len([r for r in data.get('results', []) if r.get('issue_severity') in ['HIGH', 'MEDIUM']]))" 2>/dev/null || echo "0")
+            echo "high_severity=$HIGH_SEVERITY" >> $GITHUB_OUTPUT
+            
+            if [ "$HIGH_SEVERITY" -gt 0 ]; then
+              echo "::warning::Bandit found $HIGH_SEVERITY high/medium severity issues"
+            fi
+          fi
+      
+      - name: Upload Bandit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: bandit-results
+          path: bandit-results.json
+          retention-days: 30
+
+  dependency-confusion-check:
+    name: Check for Dependency Confusion
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Check for suspicious package sources
+        run: |
+          echo "Checking for dependency confusion risks..."
+          
+          # Check for packages from non-standard sources
+          if [ -f requirements.txt ]; then
+            echo "Analyzing requirements.txt..."
+            
+            # Look for git+, http://, https://, or other non-PyPI sources
+            EXTERNAL_SOURCES=$(grep -E "^(git\+|http://|https://|--index-url|--extra-index-url)" requirements.txt || echo "")
+            
+            if [ -n "$EXTERNAL_SOURCES" ]; then
+              echo "⚠️  External package sources detected:"
+              echo "$EXTERNAL_SOURCES"
+              echo "::warning::External package sources found. Verify these are from trusted sources to prevent dependency confusion attacks."
+            else
+              echo "✓ All dependencies appear to be from PyPI"
+            fi
+            
+            # Check for packages that might conflict with private packages
+            # (This is a placeholder - customize for your organization)
+            PRIVATE_PREFIXES=("company-" "internal-" "private-")
+            for prefix in "${PRIVATE_PREFIXES[@]}"; do
+              if grep -qE "^${prefix}" requirements.txt 2>/dev/null; then
+                echo "⚠️  Packages with private prefix '${prefix}' detected"
+                echo "::notice::Ensure private package index is configured to prevent dependency confusion"
+              fi
+            done
+          fi
+      
+      - name: Verify hash-based verification
+        run: |
+          if [ -f requirements-hashed.txt ]; then
+            echo "✓ Hash-based requirements file exists"
+            
+            # Verify format
+            if grep -q "^[^#].*==.*--hash=sha256:" requirements-hashed.txt; then
+              echo "✓ Hash verification format is correct"
+            else
+              echo "::warning::requirements-hashed.txt exists but may not have proper hash verification"
+            fi
+          else
+            echo "::warning::No requirements-hashed.txt found. Consider using hash verification for production."
+            echo ""
+            echo "To generate hashed requirements:"
+            echo "  pip install pip-tools"
+            echo "  pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt"
+          fi
+      
+      - name: Check for typosquatting risks
+        run: |
+          echo "Checking for potential typosquatting..."
+          
+          # Common typosquatting targets
+          KNOWN_PACKAGES=("requests" "urllib3" "certifi" "numpy" "pandas" "django" "flask" "pytest")
+          
+          for pkg in "${KNOWN_PACKAGES[@]}"; do
+            # Look for similar names in requirements
+            SIMILAR=$(grep -iE "${pkg:0:5}" requirements.txt | grep -v "^$pkg==" | grep -v "^#" || echo "")
+            
+            if [ -n "$SIMILAR" ]; then
+              echo "⚠️  Package name similar to '$pkg' detected:"
+              echo "$SIMILAR"
+              echo "::warning::Verify package name '$SIMILAR' is not a typosquatting attempt on '$pkg'"
+            fi
+          done
+
+  dependency-review:
+    name: GitHub Dependency Review
+    runs-on: ubuntu-latest
+    if: github.event_name == 'pull_request'
+    permissions:
+      contents: read
+      pull-requests: write
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+      
+      - name: Dependency Review
+        uses: actions/dependency-review-action@v4
+        with:
+          fail-on-severity: moderate
+          allow-licenses: MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC
+          deny-licenses: GPL-3.0, AGPL-3.0
+          comment-summary-in-pr: always
+
+  create-security-report:
+    name: Create Security Summary Report
+    runs-on: ubuntu-latest
+    needs: [pip-audit, safety-scan, bandit-scan, dependency-confusion-check]
+    if: always()
+    permissions:
+      contents: read
+      issues: write
+    
+    steps:
+      - name: Download all artifacts
+        uses: actions/download-artifact@v4
+        with:
+          path: security-artifacts
+        continue-on-error: true
+      
+      - name: Generate summary report
+        run: |
+          echo "# Security Scan Summary Report" > security-report.md
+          echo "" >> security-report.md
+          echo "**Date:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> security-report.md
+          echo "**Commit:** ${{ github.sha }}" >> security-report.md
+          echo "**Branch:** ${{ github.ref_name }}" >> security-report.md
+          echo "" >> security-report.md
+          
+          echo "## Scan Results" >> security-report.md
+          echo "" >> security-report.md
+          
+          # Check for artifacts
+          if [ -d "security-artifacts/pip-audit-results" ]; then
+            echo "✓ pip-audit scan completed" >> security-report.md
+          else
+            echo "⚠️  pip-audit scan failed or no results" >> security-report.md
+          fi
+          
+          if [ -d "security-artifacts/safety-results" ]; then
+            echo "✓ Safety scan completed" >> security-report.md
+          else
+            echo "⚠️  Safety scan failed or no results" >> security-report.md
+          fi
+          
+          if [ -d "security-artifacts/bandit-results" ]; then
+            echo "✓ Bandit scan completed" >> security-report.md
+          else
+            echo "⚠️  Bandit scan failed or no results" >> security-report.md
+          fi
+          
+          echo "" >> security-report.md
+          echo "## Recommendations" >> security-report.md
+          echo "" >> security-report.md
+          echo "1. Review all scan results in workflow artifacts" >> security-report.md
+          echo "2. Address high and critical severity issues immediately" >> security-report.md
+          echo "3. Update vulnerable dependencies to patched versions" >> security-report.md
+          echo "4. Run security scans locally before pushing code" >> security-report.md
+          echo "" >> security-report.md
+          
+          cat security-report.md
+      
+      - name: Upload summary report
+        uses: actions/upload-artifact@v4
+        with:
+          name: security-summary-report
+          path: security-report.md
+          retention-days: 90
