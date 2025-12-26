@@ -107,11 +107,41 @@ from .embedding_engine import (
     HuggingFaceEmbeddingProvider,
     cosine_similarity,
 )
+from .embedding_config import (
+    EmbeddingConfig,
+    ProviderConfig,
+    EmbeddingProviderType,
+    EnsembleStrategy,
+    load_embedding_config,
+)
 from .semantic_mapper import (
     SemanticMapper,
     SemanticPrimitive,
     PolicyVector,
     ActionEmbedding,
+)
+from .semantic_primitives import (
+    EnhancedPrimitiveDetector,
+    PRIMITIVE_KEYWORDS,
+)
+from .multimodal_embeddings import (
+    MultiModalEmbeddingEngine,
+    MultiModalInput,
+    MultiModalEmbeddingResult,
+    Modality,
+    ModalityDetector,
+)
+from .feedback_finetuning import (
+    FeedbackLogger,
+    FeedbackEntry,
+    ActionLawPair,
+    FeedbackType,
+    FeedbackSource,
+)
+from .semantic_benchmark import (
+    SemanticAccuracyBenchmark,
+    BenchmarkTestCase,
+    BenchmarkResult,
 )
 
 # F2: Detector & Policy Extensibility
@@ -262,10 +292,30 @@ __all__ = [
     "OpenAIEmbeddingProvider",
     "HuggingFaceEmbeddingProvider",
     "cosine_similarity",
+    "EmbeddingConfig",
+    "ProviderConfig",
+    "EmbeddingProviderType",
+    "EnsembleStrategy",
+    "load_embedding_config",
     "SemanticMapper",
     "SemanticPrimitive",
     "PolicyVector",
     "ActionEmbedding",
+    "EnhancedPrimitiveDetector",
+    "PRIMITIVE_KEYWORDS",
+    "MultiModalEmbeddingEngine",
+    "MultiModalInput",
+    "MultiModalEmbeddingResult",
+    "Modality",
+    "ModalityDetector",
+    "FeedbackLogger",
+    "FeedbackEntry",
+    "ActionLawPair",
+    "FeedbackType",
+    "FeedbackSource",
+    "SemanticAccuracyBenchmark",
+    "BenchmarkTestCase",
+    "BenchmarkResult",
     # F2: Detector & Policy Extensibility
     "DetectorPlugin",
     "PluginManager",

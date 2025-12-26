@@ -1,0 +1,80 @@
+# Universal Vector Language (UVL) Embedding Configuration
+# This file configures the embedding providers, ensemble strategies, 
+# and accuracy enhancements for Nethical's semantic evaluation system.
+
+embedding:
+  # Primary embedding provider configuration
+  primary_provider:
+    type: "openai_large"  # Options: simple, openai, openai_large, huggingface
+    model_name: "text-embedding-3-large"  # 3072 dimensions for maximum accuracy
+    # api_key: "${OPENAI_API_KEY}"  # Set via environment variable
+    dimensions: 3072
+    weight: 1.0
+    enabled: true
+  
+  # Fallback providers (tried in order if primary fails)
+  fallback_providers:
+    - type: "openai"
+      model_name: "text-embedding-3-small"
+      dimensions: 1536
+      fallback_order: 0
+      enabled: true
+    
+    - type: "simple"
+      dimensions: 384
+      fallback_order: 1
+      enabled: true
+  
+  # Ensemble configuration (for maximum accuracy)
+  enable_ensemble: false  # Set to true for +15% accuracy boost
+  ensemble_strategy: "weighted"  # Options: average, weighted, max_pooling, concatenate
+  ensemble_providers:
+    - type: "openai_large"
+      model_name: "text-embedding-3-large"
+      weight: 0.6  # Primary model gets highest weight
+      enabled: true
+    
+    - type: "huggingface"
+      model_name: "sentence-transformers/all-mpnet-base-v2"
+      dimensions: 768
+      weight: 0.4
+      enabled: true
+  
+  # Caching and performance
+  enable_cache: true
+  cache_size: 10000
+  cache_ttl_seconds: null  # No expiration
+  
+  # Similarity and thresholds
+  similarity_threshold: 0.7
+  use_normalized_similarity: true
+  
+  # Multi-modal support
+  enable_multimodal: false  # Set to true for text+code fusion
+  text_weight: 0.7
+  code_weight: 0.3
+  
+  # Fine-tuning and feedback
+  enable_feedback_logging: false  # Set to true for training data collection
+  feedback_log_path: "./feedback_logs"
+  
+  # Advanced features
+  enable_gpu_acceleration: false
+  enable_federated: false
+
+# Example configurations for different use cases:
+
+# High Accuracy Configuration (for production):
+# primary_provider.type: openai_large
+# enable_ensemble: true
+# ensemble_strategy: weighted
+
+# Fast Configuration (for development):
+# primary_provider.type: simple
+# enable_ensemble: false
+# enable_cache: true
+
+# Balanced Configuration (recommended):
+# primary_provider.type: openai
+# fallback_providers: [openai, simple]
+# enable_cache: true
