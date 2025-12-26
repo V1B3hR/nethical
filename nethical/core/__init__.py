@@ -120,6 +120,30 @@ from .semantic_mapper import (
     PolicyVector,
     ActionEmbedding,
 )
+from .semantic_primitives import (
+    EnhancedPrimitiveDetector,
+    PRIMITIVE_KEYWORDS,
+    ModalityDetector as PrimitiveModalityDetector,
+)
+from .multimodal_embeddings import (
+    MultiModalEmbeddingEngine,
+    MultiModalInput,
+    MultiModalEmbeddingResult,
+    Modality,
+    ModalityDetector,
+)
+from .feedback_finetuning import (
+    FeedbackLogger,
+    FeedbackEntry,
+    ActionLawPair,
+    FeedbackType,
+    FeedbackSource,
+)
+from .semantic_benchmark import (
+    SemanticAccuracyBenchmark,
+    BenchmarkTestCase,
+    BenchmarkResult,
+)
 
 # F2: Detector & Policy Extensibility
 from .plugin_interface import (
@@ -278,6 +302,22 @@ __all__ = [
     "SemanticPrimitive",
     "PolicyVector",
     "ActionEmbedding",
+    "EnhancedPrimitiveDetector",
+    "PRIMITIVE_KEYWORDS",
+    "PrimitiveModalityDetector",
+    "MultiModalEmbeddingEngine",
+    "MultiModalInput",
+    "MultiModalEmbeddingResult",
+    "Modality",
+    "ModalityDetector",
+    "FeedbackLogger",
+    "FeedbackEntry",
+    "ActionLawPair",
+    "FeedbackType",
+    "FeedbackSource",
+    "SemanticAccuracyBenchmark",
+    "BenchmarkTestCase",
+    "BenchmarkResult",
     # F2: Detector & Policy Extensibility
     "DetectorPlugin",
     "PluginManager",
