@@ -144,13 +144,8 @@ class SemanticMapper:
         self.embedding_engine = embedding_engine or EmbeddingEngine()
         self.fundamental_laws = get_fundamental_laws()
         
-        # Initialize enhanced primitive detector
-        from .semantic_primitives import EnhancedPrimitiveDetector
-        self.primitive_detector = EnhancedPrimitiveDetector(
-            embedding_engine=self.embedding_engine,
-            use_embedding_similarity=True,
-            similarity_threshold=0.75
-        )
+        # Initialize enhanced primitive detector (import deferred to avoid cycles)
+        self.primitive_detector = self._create_primitive_detector()
         
         # Pre-compute policy vectors for all laws
         self.policy_vectors: Dict[int, PolicyVector] = {}
@@ -159,6 +154,20 @@ class SemanticMapper:
         logger.info(
             f"SemanticMapper initialized with {len(self.policy_vectors)} policy vectors, "
             f"enhanced primitive detection enabled"
+        )
+    
+    def _create_primitive_detector(self):
+        """Create the enhanced primitive detector with deferred import.
+        
+        The import is done here rather than at module load time to reduce
+        the risk of cyclic import issues between semantic_mapper and
+        semantic_primitives.
+        """
+        from .semantic_primitives import EnhancedPrimitiveDetector
+        return EnhancedPrimitiveDetector(
+            embedding_engine=self.embedding_engine,
+            use_embedding_similarity=True,
+            similarity_threshold=0.75
         )
     
     def _initialize_policy_vectors(self):
