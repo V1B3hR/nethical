@@ -144,12 +144,21 @@ class SemanticMapper:
         self.embedding_engine = embedding_engine or EmbeddingEngine()
         self.fundamental_laws = get_fundamental_laws()
         
+        # Initialize enhanced primitive detector
+        from .semantic_primitives import EnhancedPrimitiveDetector
+        self.primitive_detector = EnhancedPrimitiveDetector(
+            embedding_engine=self.embedding_engine,
+            use_embedding_similarity=True,
+            similarity_threshold=0.75
+        )
+        
         # Pre-compute policy vectors for all laws
         self.policy_vectors: Dict[int, PolicyVector] = {}
         self._initialize_policy_vectors()
         
         logger.info(
-            f"SemanticMapper initialized with {len(self.policy_vectors)} policy vectors"
+            f"SemanticMapper initialized with {len(self.policy_vectors)} policy vectors, "
+            f"enhanced primitive detection enabled"
         )
     
     def _initialize_policy_vectors(self):
@@ -229,47 +238,13 @@ class SemanticMapper:
     ) -> List[SemanticPrimitive]:
         """Detect semantic primitives in action text.
         
-        Uses keyword matching and context analysis.
+        Uses enhanced primitive detector with expanded keywords and embeddings.
         """
-        detected = []
-        text_lower = action_text.lower()
-        
-        # Keyword-based detection
-        primitive_keywords = {
-            SemanticPrimitive.ACCESS_USER_DATA: ["access", "read", "get", "fetch", "user data", "personal"],
-            SemanticPrimitive.MODIFY_USER_DATA: ["modify", "update", "change", "edit", "user data"],
-            SemanticPrimitive.DELETE_USER_DATA: ["delete", "remove", "erase", "user data"],
-            SemanticPrimitive.EXECUTE_CODE: ["execute", "run", "eval", "exec", "code"],
-            SemanticPrimitive.GENERATE_CODE: ["generate", "create", "write", "code", "function"],
-            SemanticPrimitive.ACCESS_SYSTEM: ["system", "os", "file", "access"],
-            SemanticPrimitive.NETWORK_ACCESS: ["network", "http", "api", "request", "fetch"],
-            SemanticPrimitive.GENERATE_CONTENT: ["generate", "create", "write", "content", "text"],
-            SemanticPrimitive.MAKE_DECISION: ["decide", "decision", "choose", "select"],
-            SemanticPrimitive.COMMUNICATE_WITH_USER: ["tell", "inform", "say", "respond", "message"],
-            SemanticPrimitive.UPDATE_MODEL: ["train", "update", "learn", "model"],
-            SemanticPrimitive.PHYSICAL_MOVEMENT: ["move", "navigate", "go to", "robot"],
-            SemanticPrimitive.EMERGENCY_STOP: ["stop", "emergency", "halt", "abort"],
-        }
-        
-        for primitive, keywords in primitive_keywords.items():
-            if any(keyword in text_lower for keyword in keywords):
-                detected.append(primitive)
-        
-        # Context-based detection
-        purpose = context.get("purpose", "").lower()
-        if "data" in purpose:
-            if SemanticPrimitive.ACCESS_USER_DATA not in detected:
-                detected.append(SemanticPrimitive.ACCESS_USER_DATA)
-        
-        # Action type-based detection
-        if action_type == "code_execution":
-            if SemanticPrimitive.EXECUTE_CODE not in detected:
-                detected.append(SemanticPrimitive.EXECUTE_CODE)
-        elif action_type == "physical_action":
-            if SemanticPrimitive.PHYSICAL_MOVEMENT not in detected:
-                detected.append(SemanticPrimitive.PHYSICAL_MOVEMENT)
-        
-        return detected
+        return self.primitive_detector.detect_primitives(
+            action_text=action_text,
+            action_type=action_type,
+            context=context
+        )
     
     def evaluate_against_laws(
         self,

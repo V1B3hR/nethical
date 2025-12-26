@@ -107,6 +107,13 @@ from .embedding_engine import (
     HuggingFaceEmbeddingProvider,
     cosine_similarity,
 )
+from .embedding_config import (
+    EmbeddingConfig,
+    ProviderConfig,
+    EmbeddingProviderType,
+    EnsembleStrategy,
+    load_embedding_config,
+)
 from .semantic_mapper import (
     SemanticMapper,
     SemanticPrimitive,
@@ -262,6 +269,11 @@ __all__ = [
     "OpenAIEmbeddingProvider",
     "HuggingFaceEmbeddingProvider",
     "cosine_similarity",
+    "EmbeddingConfig",
+    "ProviderConfig",
+    "EmbeddingProviderType",
+    "EnsembleStrategy",
+    "load_embedding_config",
     "SemanticMapper",
     "SemanticPrimitive",
     "PolicyVector",
