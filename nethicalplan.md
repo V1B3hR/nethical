@@ -623,20 +623,20 @@ Success Criteria:
 | BL-9 | Penetration testing program | 5B | High | ✅ Complete |
 | BL-10 | AI/ML security (adversarial, poisoning, privacy) | 6A | High | ✅ Complete |
 | BL-11 | Quantum-resistant cryptography (Kyber, Dilithium) | 6B | High | ✅ Complete |
-| BL-12 | Runtime probes for invariants | 7A | High | ⏳ Pending |
-| BL-13 | Governance metrics dashboard | 7B | High | ⏳ Pending |
-| BL-14 | SLO definitions and monitoring | 7 | Medium | ⏳ Pending |
-| BL-15 | Negative properties specification | 8A | High | ⏳ Pending |
-| BL-16 | Red-team playbook and execution | 8B | High | ⏳ Pending |
-| BL-17 | Misuse testing suite | 8 | Medium | ⏳ Pending |
-| BL-18 | Reproducible build infrastructure | 9A | High | ⏳ Pending |
-| BL-19 | SBOM generation and signing | 9A | High | ⏳ Pending |
-| BL-20 | Audit portal MVP | 9B | High | ⏳ Pending |
-| BL-21 | Public transparency API | 9B | Medium | ⏳ Pending |
-| BL-22 | Maintenance policy and automation | 10A | High | ⏳ Pending |
-| BL-23 | External audit preparation | 10B | High | ⏳ Pending |
-| BL-24 | Fairness recalibration framework | 10 | Medium | ⏳ Pending |
-| BL-25 | Coverage dashboard automation | 10A | High | ⏳ Pending |
+| BL-12 | Runtime probes for invariants | 7A | High | ✅ Complete |
+| BL-13 | Governance metrics dashboard | 7B | High | ✅ Complete |
+| BL-14 | SLO definitions and monitoring | 7 | Medium | ✅ Complete |
+| BL-15 | Negative properties specification | 8A | High | ✅ Complete |
+| BL-16 | Red-team playbook and execution | 8B | High | ✅ Complete |
+| BL-17 | Misuse testing suite | 8 | Medium | ✅ Complete |
+| BL-18 | Reproducible build infrastructure | 9A | High | ✅ Complete |
+| BL-19 | SBOM generation and signing | 9A | High | ✅ Complete |
+| BL-20 | Audit portal MVP | 9B | High | ✅ Complete |
+| BL-21 | Public transparency API | 9B | Medium | ✅ Complete |
+| BL-22 | Maintenance policy and automation | 10A | High | ✅ Complete |
+| BL-23 | External audit preparation | 10B | High | ✅ Complete |
+| BL-24 | Fairness recalibration framework | 10 | Medium | ✅ Complete |
+| BL-25 | Coverage dashboard automation | 10A | High | ✅ Complete |
 
 ---
 
