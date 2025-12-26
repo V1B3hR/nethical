@@ -123,7 +123,6 @@ from .semantic_mapper import (
 from .semantic_primitives import (
     EnhancedPrimitiveDetector,
     PRIMITIVE_KEYWORDS,
-    ModalityDetector as PrimitiveModalityDetector,
 )
 from .multimodal_embeddings import (
     MultiModalEmbeddingEngine,
@@ -304,7 +303,6 @@ __all__ = [
     "ActionEmbedding",
     "EnhancedPrimitiveDetector",
     "PRIMITIVE_KEYWORDS",
-    "PrimitiveModalityDetector",
     "MultiModalEmbeddingEngine",
     "MultiModalInput",
     "MultiModalEmbeddingResult",
