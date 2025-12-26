@@ -12,8 +12,6 @@ This example demonstrates the new embedding provider features including:
 from nethical import Nethical, Agent
 from nethical.core import (
     EmbeddingConfig,
-    EmbeddingProviderType,
-    EnsembleStrategy,
     load_embedding_config,
 )
 
