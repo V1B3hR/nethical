@@ -9,7 +9,7 @@ from __future__ import annotations
 
 import logging
 import re
-from typing import Dict, List, Set, Tuple, Optional, Any
+from typing import Dict, List, Set, Optional, Any
 from enum import Enum
 
 from .semantic_mapper import SemanticPrimitive
