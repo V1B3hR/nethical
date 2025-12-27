@@ -12,10 +12,20 @@ import re
 from typing import Dict, List, Set, Optional, Any
 from enum import Enum
 
-from .semantic_mapper import SemanticPrimitive
 from .embedding_engine import EmbeddingEngine, EmbeddingResult
 
 logger = logging.getLogger(__name__)
+
+
+class SemanticPrimitive(Enum):
+    ACCESS_USER_DATA = "ACCESS_USER_DATA"
+    MODIFY_USER_DATA = "MODIFY_USER_DATA"
+    DELETE_USER_DATA = "DELETE_USER_DATA"
+    SHARE_USER_DATA = "SHARE_USER_DATA"
+    EXECUTE_CODE = "EXECUTE_CODE"
+    GENERATE_CODE = "GENERATE_CODE"
+    # NOTE: If additional primitives are referenced elsewhere in this file,
+    # they should be added here with matching names and values.
 
 
 # Comprehensive keyword database for semantic primitives
