@@ -5,6 +5,7 @@ Redis-based cache for regional deployment.
 Target: <5ms latency within same region
 """
 
+import asyncio
 import json
 import logging
 import time
@@ -143,7 +144,6 @@ class L2RedisCache:
             self._client = redis.Redis(connection_pool=self._pool)
 
             # Test connection (in an executor to avoid blocking)
-            import asyncio
             loop = asyncio.get_event_loop()
             await loop.run_in_executor(None, self._client.ping)
             

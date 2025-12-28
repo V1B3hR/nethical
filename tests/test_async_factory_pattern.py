@@ -142,8 +142,10 @@ class TestAsyncFactoryPattern:
             await provider.disconnect()
         except Exception as e:
             # Expected if no Starlink hardware available
-            # Just verify the exception is from connection, not factory
-            assert "connect" in str(e).lower() or "reach" in str(e).lower()
+            # Verify the exception is a connection-related error, not a factory method error
+            error_str = str(e).lower()
+            assert any(keyword in error_str for keyword in ["connect", "reach", "satellite", "dish"]), \
+                f"Unexpected error type: {type(e).__name__}: {e}"
 
     @pytest.mark.asyncio
     async def test_l2_redis_cache_factory(self):
@@ -161,10 +163,15 @@ class TestAsyncFactoryPattern:
             assert isinstance(cache, L2RedisCache)
             assert cache.config.host == "localhost"
             assert cache.config.port == 6379
+        except ImportError as e:
+            # Expected if Redis package not installed
+            assert "redis" in str(e).lower()
         except Exception as e:
             # Expected if Redis server isn't running
-            # Just verify the exception is from connection, not factory
-            assert "redis" in str(e).lower() or "connect" in str(e).lower()
+            # Verify this is a connection error, not a factory error
+            error_str = str(e).lower()
+            assert any(keyword in error_str for keyword in ["redis", "connect", "connection"]), \
+                f"Unexpected error type: {type(e).__name__}: {e}"
 
     @pytest.mark.asyncio
     async def test_backward_compatibility(self):

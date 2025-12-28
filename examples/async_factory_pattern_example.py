@@ -208,9 +208,11 @@ async def example_error_handling():
         client = await NethicalGRPCClient.create()
         
         # Evaluate with potential errors
+        # This action is intentionally dangerous to demonstrate how the governance
+        # system evaluates and blocks high-risk actions that could cause harm.
         result = await client.evaluate(
             agent_id="error-test",
-            action="delete all tables",  # Potentially dangerous
+            action="delete all tables",  # High-risk database operation
             action_type="database_operation"
         )
         
