@@ -42,7 +42,7 @@ class L2Config:
 
 class L2RedisCache:
     """
-    Regional Redis cache client.
+    Regional Redis cache client with async factory pattern.
 
     Features:
     - Connection pooling
@@ -51,11 +51,22 @@ class L2RedisCache:
     - Pub/sub for invalidation
 
     Target: <5ms latency
+    
+    Note:
+        Use the async factory method `create()` to instantiate this class:
+        
+        >>> cache = await L2RedisCache.create(config)
+        
+        See docs/ASYNC_FACTORY_PATTERN.md for more details.
     """
 
     def __init__(self, config: Optional[L2Config] = None):
         """
-        Initialize L2RedisCache.
+        Initialize L2RedisCache (synchronous constructor).
+        
+        Note:
+            This only sets up basic attributes. Use the `create()` class method
+            for proper asynchronous initialization with automatic connection.
 
         Args:
             config: Redis configuration
@@ -74,9 +85,45 @@ class L2RedisCache:
             f"L2RedisCache initialized: {self.config.host}:{self.config.port}"
         )
 
-    def connect(self) -> bool:
+    async def async_setup(self) -> None:
         """
-        Establish Redis connection.
+        Perform asynchronous initialization.
+        
+        This method establishes the connection to Redis.
+        
+        Raises:
+            Exception: If connection fails
+        """
+        await self.connect()
+
+    @classmethod
+    async def create(cls, config: Optional[L2Config] = None) -> "L2RedisCache":
+        """
+        Async factory method for creating a connected Redis cache.
+        
+        This is the recommended way to instantiate L2RedisCache as it ensures
+        the connection is established before the instance is returned.
+        
+        Args:
+            config: Redis configuration
+            
+        Returns:
+            Fully initialized and connected L2RedisCache instance
+            
+        Example:
+            >>> from nethical.cache.l2_redis import L2RedisCache, L2Config
+            >>> 
+            >>> config = L2Config(host="localhost", port=6379)
+            >>> cache = await L2RedisCache.create(config)
+            >>> cache.set("key", "value")
+        """
+        obj = cls(config)
+        await obj.async_setup()
+        return obj
+
+    async def connect(self) -> bool:
+        """
+        Establish Redis connection (now async).
 
         Returns:
             True if connected successfully
@@ -95,8 +142,11 @@ class L2RedisCache:
             )
             self._client = redis.Redis(connection_pool=self._pool)
 
-            # Test connection
-            self._client.ping()
+            # Test connection (in an executor to avoid blocking)
+            import asyncio
+            loop = asyncio.get_event_loop()
+            await loop.run_in_executor(None, self._client.ping)
+            
             self._connected = True
             logger.info("L2RedisCache connected")
             return True

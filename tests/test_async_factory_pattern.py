@@ -146,6 +146,27 @@ class TestAsyncFactoryPattern:
             assert "connect" in str(e).lower() or "reach" in str(e).lower()
 
     @pytest.mark.asyncio
+    async def test_l2_redis_cache_factory(self):
+        """Test L2RedisCache async factory pattern."""
+        from nethical.cache.l2_redis import L2RedisCache, L2Config
+
+        # Test factory method
+        config = L2Config(host="localhost", port=6379)
+        
+        # Note: This will fail to connect without Redis server
+        # but we can verify the factory pattern works
+        try:
+            cache = await L2RedisCache.create(config)
+            assert cache is not None
+            assert isinstance(cache, L2RedisCache)
+            assert cache.config.host == "localhost"
+            assert cache.config.port == 6379
+        except Exception as e:
+            # Expected if Redis server isn't running
+            # Just verify the exception is from connection, not factory
+            assert "redis" in str(e).lower() or "connect" in str(e).lower()
+
+    @pytest.mark.asyncio
     async def test_backward_compatibility(self):
         """Test that synchronous classes still work."""
         from nethical.core.models import SafetyViolation

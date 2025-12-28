@@ -86,16 +86,25 @@ class ConnectionMetrics:
 
 class SatelliteProvider(ABC):
     """
-    Abstract base class for satellite connectivity providers.
+    Abstract base class for satellite connectivity providers with async factory pattern.
 
     All satellite providers (Starlink, Kuiper, OneWeb, Iridium) must
     implement this interface to ensure consistent behavior across
     different satellite systems.
+    
+    Note:
+        Subclasses should use the async factory pattern by implementing their own
+        `create()` class method or using the base implementation. See
+        docs/ASYNC_FACTORY_PATTERN.md for details.
     """
 
     def __init__(self, config: Optional[ConnectionConfig] = None):
         """
-        Initialize satellite provider.
+        Initialize satellite provider (synchronous constructor).
+        
+        Note:
+            This only sets up basic attributes. Subclasses should provide an
+            async factory method `create()` for proper initialization with connection.
 
         Args:
             config: Connection configuration
@@ -110,6 +119,45 @@ class SatelliteProvider(ABC):
             "on_state_change": [],
         }
         self._connection_start: Optional[datetime] = None
+
+    async def async_setup(self) -> None:
+        """
+        Perform asynchronous initialization.
+        
+        This method establishes the connection. Subclasses can override
+        this method to add additional setup logic.
+        
+        Raises:
+            SatelliteConnectionError: If connection fails
+        """
+        await self.connect()
+
+    @classmethod
+    async def create(cls, config: Optional[ConnectionConfig] = None) -> "SatelliteProvider":
+        """
+        Async factory method for creating a connected satellite provider.
+        
+        This is the recommended way to instantiate satellite providers as it ensures
+        the connection is established before the instance is returned.
+        
+        Subclasses can override this method to customize the creation process.
+        
+        Args:
+            config: Connection configuration
+            
+        Returns:
+            Fully initialized and connected provider instance
+            
+        Raises:
+            SatelliteConnectionError: If connection fails
+            
+        Example:
+            >>> from nethical.connectivity.satellite.starlink import StarlinkProvider
+            >>> provider = await StarlinkProvider.create(config)
+        """
+        obj = cls(config)
+        await obj.async_setup()
+        return obj
 
     @property
     @abstractmethod
