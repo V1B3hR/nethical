@@ -63,7 +63,7 @@ class StarlinkDishStatus:
 
 class StarlinkProvider(SatelliteProvider):
     """
-    SpaceX Starlink LEO satellite integration.
+    SpaceX Starlink LEO satellite integration with async factory pattern.
 
     Starlink provides low-latency broadband internet via a constellation
     of LEO satellites. Typical latency is 20-40ms with occasional spikes
@@ -74,6 +74,13 @@ class StarlinkProvider(SatelliteProvider):
     - Local dish API integration
     - Obstruction detection and awareness
     - Adaptive latency handling for variable conditions
+    
+    Note:
+        Use the async factory method `create()` to instantiate this class:
+        
+        >>> provider = await StarlinkProvider.create(config)
+        
+        See docs/ASYNC_FACTORY_PATTERN.md for more details.
     """
 
     # Starlink typical performance ranges
@@ -84,7 +91,11 @@ class StarlinkProvider(SatelliteProvider):
 
     def __init__(self, config: Optional[ConnectionConfig] = None):
         """
-        Initialize Starlink provider.
+        Initialize Starlink provider (synchronous constructor).
+        
+        Note:
+            This only sets up basic attributes. Use the `create()` class method
+            for proper asynchronous initialization with automatic connection.
 
         Args:
             config: Connection configuration with Starlink-specific options
@@ -105,6 +116,52 @@ class StarlinkProvider(SatelliteProvider):
         # Connection tracking
         self._send_queue: asyncio.Queue = asyncio.Queue()
         self._receive_queue: asyncio.Queue = asyncio.Queue()
+
+    async def async_setup(self) -> None:
+        """
+        Perform asynchronous initialization.
+        
+        This method establishes the connection to the Starlink network
+        and initializes the dish status.
+        
+        Raises:
+            SatelliteConnectionError: If connection fails
+        """
+        await self.connect()
+
+    @classmethod
+    async def create(cls, config: Optional[ConnectionConfig] = None) -> "StarlinkProvider":
+        """
+        Async factory method for creating a connected Starlink provider.
+        
+        This is the recommended way to instantiate StarlinkProvider as it ensures
+        the connection is established before the instance is returned.
+        
+        Args:
+            config: Connection configuration with Starlink-specific options
+            
+        Returns:
+            Fully initialized and connected StarlinkProvider instance
+            
+        Raises:
+            SatelliteConnectionError: If connection fails
+            
+        Example:
+            >>> from nethical.connectivity.satellite.starlink import StarlinkProvider, ConnectionConfig
+            >>> 
+            >>> config = ConnectionConfig(
+            ...     provider_options={
+            ...         "dish_address": "192.168.100.1",
+            ...         "enable_ipv6": True
+            ...     }
+            ... )
+            >>> provider = await StarlinkProvider.create(config)
+            >>> await provider.send("Hello from space!")
+            >>> await provider.disconnect()
+        """
+        obj = cls(config)
+        await obj.async_setup()
+        return obj
 
     @property
     def provider_name(self) -> str:

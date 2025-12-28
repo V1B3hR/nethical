@@ -146,6 +146,7 @@ elif result.decision == "BLOCK":
 ## 📚 Learn More
 
 - [25 Fundamental Laws](./FUNDAMENTAL_LAWS.md)
+- [Async Factory Pattern Guide](./docs/ASYNC_FACTORY_PATTERN.md) - Best practices for async initialization
 - [Security Policy](./SECURITY.md)
 - [Full Documentation](./docs/)
 - [Architecture & Data Flow](./ARCHITECTURE.md)

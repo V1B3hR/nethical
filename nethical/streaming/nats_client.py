@@ -39,7 +39,7 @@ class NATSConfig:
 
 class NATSClient:
     """
-    NATS JetStream client.
+    NATS JetStream client with async factory pattern.
 
     Features:
     - Connection management
@@ -48,11 +48,22 @@ class NATSClient:
     - Consumer subscription
 
     Fallback: In-memory event queue when NATS unavailable
+    
+    Note:
+        Use the async factory method `create()` to instantiate this class:
+        
+        >>> client = await NATSClient.create(config)
+        
+        See docs/ASYNC_FACTORY_PATTERN.md for more details.
     """
 
     def __init__(self, config: Optional[NATSConfig] = None):
         """
-        Initialize NATSClient.
+        Initialize NATSClient (synchronous constructor).
+        
+        Note:
+            This only sets up basic attributes. Use the `create()` class method
+            for proper asynchronous initialization with automatic connection.
 
         Args:
             config: NATS configuration
@@ -74,6 +85,44 @@ class NATSClient:
         self._messages_received = 0
 
         logger.info("NATSClient initialized")
+
+    async def async_setup(self) -> None:
+        """
+        Perform asynchronous initialization.
+        
+        This method establishes the connection to the NATS server
+        and initializes the JetStream context.
+        
+        Raises:
+            Exception: If connection fails and fallback is not acceptable
+        """
+        await self.connect()
+
+    @classmethod
+    async def create(cls, config: Optional[NATSConfig] = None) -> "NATSClient":
+        """
+        Async factory method for creating a connected NATSClient.
+        
+        This is the recommended way to instantiate NATSClient as it ensures
+        the connection is established before the instance is returned.
+        
+        Args:
+            config: NATS configuration
+            
+        Returns:
+            Fully initialized and connected NATSClient instance
+            
+        Example:
+            >>> from nethical.streaming.nats_client import NATSClient, NATSConfig
+            >>> 
+            >>> config = NATSConfig(servers=["nats://localhost:4222"])
+            >>> client = await NATSClient.create(config)
+            >>> await client.publish("events", {"type": "test"})
+            >>> await client.close()
+        """
+        obj = cls(config)
+        await obj.async_setup()
+        return obj
 
     async def connect(self) -> bool:
         """

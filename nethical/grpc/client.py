@@ -3,10 +3,20 @@
 Provides a client for connecting to the Nethical gRPC service
 with retry logic, timeouts, and connection pooling.
 
-Usage:
+Usage (recommended - async factory pattern):
     from nethical.grpc import NethicalGRPCClient
     
-    async with NethicalGRPCClient("localhost:50051") as client:
+    # Using the create() factory method
+    client = await NethicalGRPCClient.create("localhost:50051")
+    result = await client.evaluate(
+        agent_id="my-agent",
+        action="Generate code to access database",
+        action_type="code_generation"
+    )
+    await client.close()
+
+Usage (with context manager):
+    async with await NethicalGRPCClient.create("localhost:50051") as client:
         result = await client.evaluate(
             agent_id="my-agent",
             action="Generate code to access database",
@@ -15,6 +25,7 @@ Usage:
         print(result.decision)
 
 All operations adhere to the 25 Fundamental Laws.
+See docs/ASYNC_FACTORY_PATTERN.md for more details.
 """
 
 from __future__ import annotations
@@ -63,7 +74,7 @@ class ClientConfig:
 
 
 class NethicalGRPCClient:
-    """Client for the Nethical gRPC service.
+    """Client for the Nethical gRPC service with async factory pattern.
     
     Provides async methods for governance operations with
     built-in retry logic and error handling.
@@ -74,6 +85,13 @@ class NethicalGRPCClient:
     - Timeout handling
     - Connection health monitoring
     - Fail-safe design (Law 23)
+    
+    Note:
+        Use the async factory method `create()` to instantiate this class:
+        
+        >>> client = await NethicalGRPCClient.create("localhost:50051")
+        
+        See docs/ASYNC_FACTORY_PATTERN.md for more details.
     """
     
     def __init__(
@@ -82,7 +100,11 @@ class NethicalGRPCClient:
         timeout_ms: int = 10000,
         retry_config: Optional[RetryConfig] = None,
     ):
-        """Initialize the gRPC client.
+        """Initialize the gRPC client (synchronous constructor).
+        
+        Note:
+            This only sets up basic attributes. Use the `create()` class method
+            for proper asynchronous initialization with automatic connection.
         
         Args:
             address: Server address in host:port format
@@ -97,9 +119,52 @@ class NethicalGRPCClient:
         self._connected = False
         self._channel = None
     
+    async def async_setup(self) -> None:
+        """
+        Perform asynchronous initialization.
+        
+        This method establishes the connection to the gRPC server.
+        """
+        await self.connect()
+    
+    @classmethod
+    async def create(
+        cls,
+        address: str = "localhost:50051",
+        timeout_ms: int = 10000,
+        retry_config: Optional[RetryConfig] = None,
+    ) -> "NethicalGRPCClient":
+        """
+        Async factory method for creating a connected gRPC client.
+        
+        This is the recommended way to instantiate NethicalGRPCClient as it ensures
+        the connection is established before the instance is returned.
+        
+        Args:
+            address: Server address in host:port format
+            timeout_ms: Request timeout in milliseconds
+            retry_config: Retry configuration
+            
+        Returns:
+            Fully initialized and connected NethicalGRPCClient instance
+            
+        Example:
+            >>> from nethical.grpc.client import NethicalGRPCClient
+            >>> 
+            >>> client = await NethicalGRPCClient.create("localhost:50051")
+            >>> result = await client.evaluate(
+            ...     agent_id="my-agent",
+            ...     action="process data",
+            ...     action_type="data_processing"
+            ... )
+            >>> await client.close()
+        """
+        obj = cls(address, timeout_ms, retry_config)
+        await obj.async_setup()
+        return obj
+    
     async def __aenter__(self) -> "NethicalGRPCClient":
         """Async context manager entry."""
-        await self.connect()
         return self
     
     async def __aexit__(self, exc_type, exc_val, exc_tb) -> None:
