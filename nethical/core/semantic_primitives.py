@@ -24,6 +24,7 @@ class SemanticPrimitive(Enum):
     SHARE_USER_DATA = "SHARE_USER_DATA"
     EXECUTE_CODE = "EXECUTE_CODE"
     GENERATE_CODE = "GENERATE_CODE"
+    MODIFY_CODE = "modify_code"
     # NOTE: If additional primitives are referenced elsewhere in this file,
     # they should be added here with matching names and values.
 
