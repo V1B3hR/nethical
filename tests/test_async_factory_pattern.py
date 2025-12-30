@@ -7,7 +7,7 @@ docs/ASYNC_FACTORY_PATTERN.md
 
 import asyncio
 import pytest
-from typing import Optional
+
 
 
 class TestAsyncFactoryPattern:
