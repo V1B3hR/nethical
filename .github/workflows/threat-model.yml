@@ -315,6 +315,7 @@ jobs:
           print(f'Roles: {[r.value for r in Role]}')
           print(f'Sample Permissions: {[Permission.READ_POLICIES.value, Permission.MANAGE_USERS.value]}')
           EOF
+      
       - name: Verify Authentication implementation
         run: |
           python -c "from nethical.security.auth import AuthManager; print('✅ Authentication module available')"
