@@ -305,7 +305,7 @@ jobs:
           pip install -r requirements.txt
           pip install pytest pytest-asyncio
       
-            - name: Verify RBAC implementation
+      - name: Verify RBAC implementation
         run: |
           python << 'EOF'
           from nethical.core.rbac import RBACManager, Role, Permission
