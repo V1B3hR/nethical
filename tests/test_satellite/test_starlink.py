@@ -57,8 +57,18 @@ class TestStarlinkProvider:
 
     @pytest.fixture
     def provider(self, config):
-        """Create Starlink provider."""
+        """Create Starlink provider (using direct constructor for testing)."""
         return StarlinkProvider(config)
+
+    @pytest.mark.asyncio
+    async def test_factory_pattern(self, config):
+        """Test async factory pattern."""
+        # Test the recommended factory method
+        provider = await StarlinkProvider.create(config)
+        assert provider is not None
+        assert isinstance(provider, StarlinkProvider)
+        assert provider.state == ConnectionState.CONNECTED
+        await provider.disconnect()
 
     def test_provider_properties(self, provider):
         """Test provider properties."""

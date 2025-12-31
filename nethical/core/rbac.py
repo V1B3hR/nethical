@@ -63,6 +63,9 @@ class Permission(str, Enum):
     ADMIN_OVERRIDE = "admin_override"
     SYSTEM_CONFIG = "system_config"
 
+    # Custom permissions
+    MODIFY_CODE = "modify_code"  # <-- Added the new permission
+
 
 @dataclass
 class AccessDecision:
@@ -138,6 +141,7 @@ class RBACManager:
             Permission.MANAGE_SYSTEM,
             Permission.ADMIN_OVERRIDE,
             Permission.SYSTEM_CONFIG,
+            Permission.MODIFY_CODE,  # <-- Make sure admins have MODIFY_CODE by default
         },
     }
 
