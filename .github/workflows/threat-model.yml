@@ -307,7 +307,8 @@ jobs:
       
       - name: Verify RBAC implementation
         run: |
-          python -c "from nethical.core.rbac import RBACManager, Role, Permission; print('✅ RBAC module available')"
+         python -c "from nethical.core.rbac import RBACManager, Role, Permission; manager = RBACManager(); print('✅ RBAC module available');
+         print(f'Roles: {[r.value for r in Role]}'); print(f'Sample Permissions: {[Permission.READ_POLICIES. value, Permission.MANAGE_USERS.value]}')"
       
       - name: Verify Authentication implementation
         run: |
