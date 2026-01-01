@@ -1,6 +1,5 @@
 """Tests for semantic primitives import and enum members."""
 
-import pytest
 from nethical.core.semantic_primitives import SemanticPrimitive, EnhancedPrimitiveDetector
 
 
