@@ -45,12 +45,52 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       
+      - name: Clear Python cache and bytecode
+        run: |
+          echo "🧹 Removing .pyc files and __pycache__ directories"
+          find . -type f -name '*.pyc' -delete
+          find . -type d -name '__pycache__' -exec rm -rf {} + 2>/dev/null || true
+          echo "✅ Cache cleared"
+      
+      - name: Verify source file content
+        run: |
+          echo "📄 Verifying semantic_primitives.py content"
+          echo "File location: nethical/core/semantic_primitives.py"
+          cat nethical/core/semantic_primitives.py | grep -A 25 "class SemanticPrimitive" || true
+          echo ""
+          echo "Checking for MODIFY_CODE definition:"
+          grep -n "MODIFY_CODE" nethical/core/semantic_primitives.py || echo "⚠️  MODIFY_CODE not found in source"
+      
       - name: Install dependencies
         run: |
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install pytest pytest-asyncio pytest-cov pytest-json-report scipy pyyaml pandas matplotlib seaborn
           pip install -e .
+      
+      - name: Force-reinstall package
+        run: |
+          echo "🔄 Force-reinstalling nethical package"
+          pip install . --force-reinstall --no-deps
+          echo "✅ Package reinstalled"
+      
+      - name: Verify Python environment
+        run: |
+          echo "🔍 Python environment verification"
+          echo "Python version: $(python --version)"
+          echo "Python executable: $(which python)"
+          echo ""
+          echo "📦 Installed nethical location:"
+          python -c "import nethical; print(nethical.__file__)" || echo "⚠️  Failed to import nethical"
+          echo ""
+          echo "📝 sys.path:"
+          python -c "import sys; import pprint; pprint.pprint(sys.path)"
+          echo ""
+          echo "🔎 Verifying SemanticPrimitive members:"
+          python -c "from nethical.core.semantic_primitives import SemanticPrimitive; print('Members:', list(SemanticPrimitive.__members__.keys())); print('Has MODIFY_CODE:', 'MODIFY_CODE' in SemanticPrimitive.__members__)" || echo "⚠️  Failed to import SemanticPrimitive"
+          echo ""
+          echo "📍 semantic_primitives.py module location:"
+          python -c "import nethical.core.semantic_primitives as sp; print(sp.__file__)" || echo "⚠️  Failed to locate module"
           
       - name: Create artifacts directory
         run: mkdir -p artifacts/validation
