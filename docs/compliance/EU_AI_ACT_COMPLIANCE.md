@@ -76,7 +76,7 @@ AI systems falling under Annex III require full compliance with Articles 9-15:
 | Document | Path | Description |
 |----------|------|-------------|
 | Architecture | `ARCHITECTURE.md` | System design and components |
-| API Usage | `docs/API_USAGE.md` | Interface documentation |
+| API Usage | `docs/api/API_USAGE.md` | Interface documentation |
 | Explainability | `docs/EXPLAINABILITY_GUIDE.md` | Decision explanation methods |
 
 ### Article 12: Record-keeping (Logging)

@@ -221,9 +221,9 @@ Analysis:
 
 | File | Purpose | Status |
 |------|---------|--------|
-| docs/TRAINING_GUIDE.md | Training guide | **ACTIVE** |
+| docs/guides/TRAINING_GUIDE.md | Training guide | **ACTIVE** |
 | docs/CORRELATION_MODEL.md | Correlation model docs | **ACTIVE** |
-| docs/AUDIT_LOGGING_GUIDE.md | Audit logging guide | **ACTIVE** |
+| docs/guides/AUDIT_LOGGING_GUIDE.md | Audit logging guide | **ACTIVE** |
 | scripts/README.md | Scripts documentation | **ACTIVE** |
 | training/README.md | Training documentation | **ACTIVE** |
 | tests/tests.md | Testing documentation | **ACTIVE** |
@@ -232,7 +232,7 @@ Analysis:
 **Issues Identified:**
 1. Too many implementation summary files in root
 2. Documentation scattered across multiple locations
-3. Overlap between docs/TRAINING_GUIDE.md and training/README.md
+3. Overlap between docs/guides/TRAINING_GUIDE.md and training/README.md
 
 ## 4. Identified Issues Summary
 

@@ -153,7 +153,7 @@ Per Article 6 and Annex III, Nethical is classified as:
 | Validation Results | Test reports | Accuracy, performance |
 | Risk Analysis | `docs/certification/` | FMEA, FTA, risk assessment |
 | Change Log | `CHANGELOG.md` | Version history |
-| API Documentation | `docs/API_USAGE.md` | Interface specification |
+| API Documentation | `docs/api/API_USAGE.md` | Interface specification |
 
 ### 4.4 Article 12: Record-keeping
 

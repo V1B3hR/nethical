@@ -24,7 +24,7 @@ Actions: ✅ COMPLETED
 ✅ SLSA compliance assessment and tracking
 ✅ Full hash verification implemented (scripts/generate_hashed_requirements.py)
 ✅ SLSA Level 3 attestation workflow (.github/workflows/hash-verification.yml)
-✅ Comprehensive documentation (docs/SUPPLY_CHAIN_SECURITY_GUIDE.md)
+✅ Comprehensive documentation (docs/guides/SUPPLY_CHAIN_SECURITY_GUIDE.md)
 
 1.3 Complete Authentication System (NEW) ✅ COMPLETED
 
@@ -149,7 +149,7 @@ Actions:
   ✅ Digital signature verification system
   ✅ Version compatibility checking
   ✅ Trust scoring and community reviews
-✅ Comprehensive documentation (docs/PDK_GUIDE.md)
+✅ Comprehensive documentation (docs/guides/PDK_GUIDE.md)
 [ ] Create web interface for plugin browsing (deferred per requirements)
 
 3.3 Performance Optimization ✅ COMPLETED
@@ -166,9 +166,9 @@ Actions:
 ✅ Performance profiling module (nethical/performanceprofiling.py)
 ✅ Documentation:
   ✅ docs/ops/PERFORMANCE_SIZING.md - Capacity planning guide
-  ✅ docs/PERFORMANCE_PROFILING_GUIDE.md - Profiling instructions
-  ✅ docs/PERFORMANCE_OPTIMIZATION_GUIDE.md - Optimization strategies
-  ✅ docs/PERFORMANCE_REGRESSION_GUIDE.md - CI/CD regression detection
+  ✅ docs/guides/PERFORMANCE_PROFILING_GUIDE.md - Profiling instructions
+  ✅ docs/guides/PERFORMANCE_OPTIMIZATION_GUIDE.md - Optimization strategies
+  ✅ docs/guides/PERFORMANCE_REGRESSION_GUIDE.md - CI/CD regression detection
 ✅ Observability stack (docker-compose):
   ✅ OpenTelemetry integration
   ✅ Prometheus metrics

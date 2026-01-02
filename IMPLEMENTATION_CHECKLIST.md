@@ -150,7 +150,7 @@ Verified:
 
 ### Documentation
 ```bash
-✅ Pattern documented in docs/ASYNC_FACTORY_PATTERN.md
+✅ Pattern documented in docs/overview/ASYNC_FACTORY_PATTERN.md
 ✅ Usage examples provided
 ✅ Best practices documented
 ✅ Migration guide included

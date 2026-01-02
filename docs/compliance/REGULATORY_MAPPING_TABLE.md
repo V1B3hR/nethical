@@ -35,7 +35,7 @@
 | EU-AI-11.1 | Article 11 | Technical Documentation | 🔄 | - | - | docs/overview/ARCHITECTURE.md, docs/api/API_USAGE.md... |
 | EU-AI-12.1 | Article 12 | Automatic Logging | 🔄 | nethical/security/audit_logging.py, nethical/core/audit_merkle.py | tests/test_train_audit_logging.py | docs/AUDIT_LOGGING_GUIDE.md |
 | EU-AI-13.1 | Article 13 | Transparency and Information | 🔄 | nethical/explainability/transparency_report.py, nethical/explainability/quarterly_transparency.py | tests/test_explainability/ | docs/transparency/ |
-| EU-AI-13.2 | Article 13 | Instructions for Use | 🔄 | - | - | README.md, docs/API_USAGE.md |
+| EU-AI-13.2 | Article 13 | Instructions for Use | 🔄 | - | - | README.md, docs/api/API_USAGE.md |
 | EU-AI-14.1 | Article 14 | Human Oversight Design | 🔄 | nethical/core/human_feedback.py, nethical/governance/human_review.py | tests/test_governance_features.py | docs/governance/governance_drivers.md |
 | EU-AI-14.2 | Article 14 | Human Oversight Capabilities | 🔄 | nethical/explainability/decision_explainer.py | tests/test_advanced_explainability.py | docs/ADVANCED_EXPLAINABILITY_GUIDE.md |
 | EU-AI-15.1 | Article 15 | Accuracy | 🔄 | nethical/governance/ethics_benchmark.py | tests/test_performance_benchmarks.py | docs/BENCHMARK_PLAN.md |
