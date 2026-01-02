@@ -1964,11 +1964,11 @@ Phase 0 ────────────────────────
 
 ### Appendix C: Reference Documents
 
-- [ARCHITECTURE.md](ARCHITECTURE.md) - Current architecture
-- [FUNDAMENTAL_LAWS.md](FUNDAMENTAL_LAWS.md) - 25 AI Fundamental Laws
-- [SECURITY. md](SECURITY. md) - Security documentation
-- [docs/PERFORMANCE_OPTIMIZATION_GUIDE.md](docs/PERFORMANCE_OPTIMIZATION_GUIDE.md) - Performance guide
-- [docs/transparency/SYSTEM_ARCHITECTURE.md](docs/transparency/SYSTEM_ARCHITECTURE.md) - System transparency
+- [ARCHITECTURE.md](../docs/overview/ARCHITECTURE.md) - Current architecture
+- [FUNDAMENTAL_LAWS.md](../FUNDAMENTAL_LAWS.md) - 25 AI Fundamental Laws
+- [SECURITY.md](../SECURITY.md) - Security documentation
+- [docs/PERFORMANCE_OPTIMIZATION_GUIDE.md](../docs/guides/PERFORMANCE_OPTIMIZATION_GUIDE.md) - Performance guide
+- [docs/transparency/SYSTEM_ARCHITECTURE.md](../docs/transparency/SYSTEM_ARCHITECTURE.md) - System transparency
 
 ### Appendix D: Glossary
 

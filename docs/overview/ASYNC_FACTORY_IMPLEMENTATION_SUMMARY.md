@@ -7,7 +7,7 @@ This document summarizes the implementation of the async factory pattern across 
 ## What Was Implemented
 
 ### 1. Comprehensive Documentation
-- **File**: `docs/ASYNC_FACTORY_PATTERN.md`
+- **File**: `docs/overview/ASYNC_FACTORY_PATTERN.md`
 - **Content**: 
   - Pattern explanation and rationale
   - Basic structure with code examples
@@ -156,7 +156,7 @@ class AsyncResource:
 
 ## Files Changed
 
-1. `docs/ASYNC_FACTORY_PATTERN.md` - New comprehensive guide
+1. `docs/overview/ASYNC_FACTORY_PATTERN.md` - New comprehensive guide
 2. `nethical/streaming/nats_client.py` - Added factory pattern
 3. `nethical/grpc/client.py` - Added factory pattern
 4. `nethical/connectivity/satellite/starlink.py` - Added factory pattern

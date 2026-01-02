@@ -192,7 +192,7 @@ Excluded:
 |----|----------|----------|--------|
 | E10 | Architecture Specification | `ARCHITECTURE.md` | ✅ Complete |
 | E11 | Software Design | `software_architecture.md` | 🔄 In Progress |
-| E12 | Interface Specification | `docs/API_USAGE.md` | ✅ Complete |
+| E12 | Interface Specification | `docs/api/API_USAGE.md` | ✅ Complete |
 | E13 | Safe Default Specification | `safe_defaults.md` | 🔄 In Progress |
 
 ### 5.3 Verification Evidence

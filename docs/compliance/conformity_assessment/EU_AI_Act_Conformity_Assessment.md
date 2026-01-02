@@ -147,13 +147,13 @@ Per Article 6 and Annex III, Nethical is classified as:
 | Document | Location | Content |
 |----------|----------|---------|
 | System Description | `README.md` | Purpose, capabilities |
-| Architecture | `ARCHITECTURE.md` | Components, data flows |
+| Architecture | `docs/overview/ARCHITECTURE.md` | Components, data flows |
 | Algorithm Description | `docs/` | Decision logic |
-| Training Process | `docs/TRAINING_GUIDE.md` | Methodology |
+| Training Process | `docs/guides/TRAINING_GUIDE.md` | Methodology |
 | Validation Results | Test reports | Accuracy, performance |
 | Risk Analysis | `docs/certification/` | FMEA, FTA, risk assessment |
 | Change Log | `CHANGELOG.md` | Version history |
-| API Documentation | `docs/API_USAGE.md` | Interface specification |
+| API Documentation | `docs/api/API_USAGE.md` | Interface specification |
 
 ### 4.4 Article 12: Record-keeping
 
@@ -192,7 +192,7 @@ Per Article 6 and Annex III, Nethical is classified as:
 | Sub-requirement | Implementation | Documentation |
 |-----------------|---------------|---------------|
 | 13.3(a) Provider identity | API responses | Headers |
-| 13.3(b)(i) Characteristics | Technical docs | `ARCHITECTURE.md` |
+| 13.3(b)(i) Characteristics | Technical docs | `docs/overview/ARCHITECTURE.md` |
 | 13.3(b)(ii) Capabilities/Limitations | Disclosure | `docs/transparency/` |
 | 13.3(b)(iii) Changes over time | Versioning | `CHANGELOG.md` |
 | 13.3(c) Human oversight | Documentation | User guides |

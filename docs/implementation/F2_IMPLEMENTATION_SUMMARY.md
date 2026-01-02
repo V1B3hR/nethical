@@ -191,7 +191,7 @@ python examples/advanced/f2_extensibility_demo.py
 
 Comprehensive documentation is available:
 
-- **[Plugin Developer Guide](docs/PLUGIN_DEVELOPER_GUIDE.md)** - Complete guide for creating custom detectors and policies
+- **[Plugin Developer Guide](docs/guides/PLUGIN_DEVELOPER_GUIDE.md)** - Complete guide for creating custom detectors and policies
 - **API Reference** - Detailed API documentation in the guide
 - **Examples** - Working examples in `examples/` directory
 - **Best Practices** - Security, performance, and testing guidelines
@@ -322,7 +322,7 @@ For existing Nethical users, the plugin system is fully backward compatible. No 
 
 ## Support
 
-- **Documentation**: [PLUGIN_DEVELOPER_GUIDE.md](docs/PLUGIN_DEVELOPER_GUIDE.md)
+- **Documentation**: [PLUGIN_DEVELOPER_GUIDE.md](docs/guides/PLUGIN_DEVELOPER_GUIDE.md)
 - **Examples**: `examples/` directory
 - **Tests**: `tests/test_plugin_extensibility.py`
 - **Demo**: `examples/advanced/f2_extensibility_demo.py`

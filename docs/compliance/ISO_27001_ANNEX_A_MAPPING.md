@@ -136,7 +136,7 @@ This document provides a comprehensive mapping of Nethical's security controls, 
 
 | Control ID | Control Name | Status | Implementation | Evidence |
 |------------|--------------|--------|----------------|----------|
-| A.5.14 | Information transfer | ✅ Implemented | Encryption in transit, secure API design | `nethical/security/encryption.py`, `docs/API_USAGE.md` |
+| A.5.14 | Information transfer | ✅ Implemented | Encryption in transit, secure API design | `nethical/security/encryption.py`, `docs/api/API_USAGE.md` |
 
 **Code Modules:** `nethical/security/encryption.py`
 

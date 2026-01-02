@@ -164,8 +164,8 @@ We welcome example contributions! If you have a use case or feature demonstratio
 ## Related Documentation
 
 - [README.md](../README.md) - Project overview
-- [TRAINING_GUIDE.md](../docs/TRAINING_GUIDE.md) - ML training documentation
-- [AUDIT_LOGGING_GUIDE.md](../docs/AUDIT_LOGGING_GUIDE.md) - Audit trail guide
+- [TRAINING_GUIDE.md](../docs/guides/TRAINING_GUIDE.md) - ML training documentation
+- [AUDIT_LOGGING_GUIDE.md](../docs/guides/AUDIT_LOGGING_GUIDE.md) - Audit trail guide
 - [roadmap.md](../roadmap.md) - Development roadmap
 
 ## License

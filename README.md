@@ -145,13 +145,26 @@ elif result.decision == "BLOCK":
 
 ## 📚 Learn More
 
+### Core Documentation
 - [25 Fundamental Laws](./FUNDAMENTAL_LAWS.md)
-- [Async Factory Pattern Guide](./docs/ASYNC_FACTORY_PATTERN.md) - Best practices for async initialization
 - [Security Policy](./SECURITY.md)
-- [Full Documentation](./docs/)
-- [Architecture & Data Flow](./ARCHITECTURE.md)
-- [Roadmap & Maturity](./Roadmap_Maturity.md)
 - [Contribution Guide](./CONTRIBUTING.md)
+
+### Technical Documentation
+- [Architecture & Data Flow](./docs/overview/ARCHITECTURE.md)
+- [Implementation Summary](./docs/overview/IMPLEMENTATION_SUMMARY.md)
+- [Async Factory Pattern Guide](./docs/overview/ASYNC_FACTORY_PATTERN.md) - Best practices for async initialization
+
+### Roadmaps & Plans
+- [Roadmap & Maturity](./roadmaps/Roadmap_Maturity.md)
+- [ROADMAP 9+](./roadmaps/ROADMAP_9+.md)
+- [Nethical Plan](./roadmaps/nethicalplan.md)
+
+### Guides & References
+- [User & Developer Guides](./docs/guides/)
+- [API Documentation](./docs/api/)
+- [Phase Implementation Documentation](./docs/phases/)
+- [Reference Materials](./docs/references/)
 
 ---
 

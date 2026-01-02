@@ -16,7 +16,7 @@
 
 ### Files Modified
 - `README.md` - Added banner at top and logo under title
-- `docs/MARKETPLACE_REGISTRATION_GUIDE.md` - Added branding section
+- `docs/guides/MARKETPLACE_REGISTRATION_GUIDE.md` - Added branding section
 
 ## Placeholder Images
 
