@@ -992,11 +992,11 @@ vector:
 
 ## 📚 Additional Resources
 
-- [ROADMAP_9+. md](ROADMAP_9+.md) - Main development roadmap
-- [FUNDAMENTAL_LAWS.md](FUNDAMENTAL_LAWS.md) - 25 Fundamental Laws
-- [ARCHITECTURE. md](ARCHITECTURE.md) - System architecture
-- [SECURITY. md](SECURITY.md) - Security policy
-- [docs/ops/SLOs.md](docs/ops/SLOs.md) - Service level objectives
+- [ROADMAP_9+.md](ROADMAP_9+.md) - Main development roadmap
+- [FUNDAMENTAL_LAWS.md](../FUNDAMENTAL_LAWS.md) - 25 Fundamental Laws
+- [ARCHITECTURE.md](../docs/overview/ARCHITECTURE.md) - System architecture
+- [SECURITY.md](../SECURITY.md) - Security policy
+- [docs/ops/SLOs.md](../docs/ops/SLOs.md) - Service level objectives
 
 ---
 

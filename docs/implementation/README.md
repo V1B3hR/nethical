@@ -4,7 +4,7 @@ This directory contains detailed implementation summaries, guides, and technical
 
 ## Core Implementation Summaries
 
-- [IMPLEMENTATION_SUMMARY.md](./IMPLEMENTATION_SUMMARY.md) - Overall project implementation summary
+- [IMPLEMENTATION_SUMMARY.md](../overview/IMPLEMENTATION_SUMMARY.md) - Overall project implementation summary
 - [REFACTORING_COMPLETE.md](./REFACTORING_COMPLETE.md) - Refactoring completion documentation
 - [REFACTORING_SUMMARY.md](./REFACTORING_SUMMARY.md) - Summary of refactoring changes
 - [SUMMARY_OF_CHANGES.txt](./SUMMARY_OF_CHANGES.txt) - Detailed change log

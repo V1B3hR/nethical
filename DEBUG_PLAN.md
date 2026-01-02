@@ -1065,7 +1065,7 @@ Set via NETHICAL_LOG_LEVEL: DEBUG, INFO, WARNING, ERROR
 ### 15.3 Related Docs
 
 - README.md - Project overview
-- ARCHITECTURE.md - System architecture
+- docs/overview/ARCHITECTURE.md - System architecture
 - SECURITY.md - Security policy
 - PRIVACY.md - Privacy policy
 - FUNDAMENTAL_LAWS.md - 25 Laws

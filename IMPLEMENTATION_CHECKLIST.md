@@ -45,8 +45,8 @@ All classes have:
 **Status**: COMPLETE
 
 Documentation provided:
-- [x] Comprehensive guide: `docs/ASYNC_FACTORY_PATTERN.md` (395 lines)
-- [x] Implementation summary: `ASYNC_FACTORY_IMPLEMENTATION_SUMMARY.md` (227 lines)
+- [x] Comprehensive guide: `docs/overview/ASYNC_FACTORY_PATTERN.md` (395 lines)
+- [x] Implementation summary: `docs/overview/ASYNC_FACTORY_IMPLEMENTATION_SUMMARY.md` (227 lines)
 - [x] README.md updated with link to guide
 - [x] Docstrings in all refactored classes with usage examples
 - [x] Working example file: `examples/async_factory_pattern_example.py` (260 lines)
@@ -110,8 +110,8 @@ Verified:
 ## Files Changed
 
 1. **Documentation** (3 files)
-   - docs/ASYNC_FACTORY_PATTERN.md (new)
-   - ASYNC_FACTORY_IMPLEMENTATION_SUMMARY.md (new)
+   - docs/overview/ASYNC_FACTORY_PATTERN.md (new)
+   - docs/overview/ASYNC_FACTORY_IMPLEMENTATION_SUMMARY.md (new)
    - README.md (updated)
 
 2. **Implementation** (5 files)

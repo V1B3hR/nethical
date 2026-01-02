@@ -207,9 +207,9 @@ Analysis:
 | File | Purpose | Status |
 |------|---------|--------|
 | README.md | Main project readme | **ACTIVE** - Good |
-| roadmap.md | Development roadmap | **ACTIVE** |
+| roadmaps/roadmap.md | Development roadmap | **ACTIVE** |
 | GOVERNANCE_QUICK_REFERENCE.md | Quick reference guide | **ACTIVE** |
-| IMPLEMENTATION_SUMMARY.md | Implementation overview | **ACTIVE** |
+| docs/overview/IMPLEMENTATION_SUMMARY.md | Implementation overview | **ACTIVE** |
 | PHASE89_GUIDE.md | Phase 8-9 guide | **ACTIVE** |
 | AUDIT_LOGGING_IMPLEMENTATION.md | Audit logging docs | **ACTIVE** |
 | DRIFT_TRACKING_IMPLEMENTATION.md | Drift tracking docs | **ACTIVE** |
