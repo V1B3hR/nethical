@@ -636,6 +636,96 @@ def save_model_and_metrics(model: Any, metrics: Dict[str, float], model_type: st
     return str(model_path), str(metrics_path)
 
 
+def export_model_metadata(
+    model_path: str,
+    model_type: str,
+    metrics: Dict[str, Any],
+    training_config: Dict[str, Any],
+    dataset_info: Dict[str, Any],
+    governance_summary: Optional[Dict[str, Any]] = None,
+    audit_merkle_root: Optional[str] = None,
+    drift_report_id: Optional[str] = None,
+    base_dir: str = "models"
+) -> str:
+    """Generate comprehensive model card with all training details"""
+    
+    # Generate semantic version based on timestamp (MAJOR.MINOR.PATCH format)
+    # MAJOR: Year since 2026
+    # MINOR: Month
+    # PATCH: Day + hour (to ensure uniqueness)
+    now = datetime.now(timezone.utc)
+    major = now.year - 2026
+    minor = now.month
+    patch = now.day * 100 + now.hour  # e.g., day 15 hour 14 = 1514
+    model_version = f"{major}.{minor}.{patch}"
+    
+    metadata = {
+        "model_version": model_version,
+        "model_type": model_type,
+        "training_timestamp": now.isoformat(),
+        "metrics": metrics,
+        "training_config": training_config,
+        "dataset_info": dataset_info,
+        "governance_summary": governance_summary or {"enabled": False},
+        "audit_merkle_root": audit_merkle_root,
+        "drift_report_id": drift_report_id,
+        "model_path": model_path
+    }
+    
+    # Save metadata card
+    metadata_dir = Path(base_dir) / "metadata"
+    metadata_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Extract timestamp from model_path for consistent naming
+    model_filename = Path(model_path).stem
+    metadata_path = metadata_dir / f"{model_filename}_card.json"
+    
+    with open(metadata_path, 'w') as f:
+        json.dump(metadata, f, indent=2)
+    
+    logging.info("Model card saved to %s", metadata_path)
+    return str(metadata_path)
+
+
+def check_model_regression(
+    new_metrics: Dict[str, Any],
+    baseline_metrics: Dict[str, Any],
+    threshold: float = 0.02
+) -> bool:
+    """Detect if new model is worse than baseline"""
+    
+    # Critical metrics to check
+    critical_metrics = ['accuracy', 'f1', 'ece']
+    
+    has_regression = False
+    
+    for metric_name in critical_metrics:
+        if metric_name not in new_metrics or metric_name not in baseline_metrics:
+            continue
+        
+        new_value = new_metrics[metric_name]
+        baseline_value = baseline_metrics[metric_name]
+        
+        # For ECE, lower is better
+        if metric_name == 'ece':
+            if new_value > baseline_value + threshold:
+                logging.warning(
+                    f"Regression in {metric_name}: {new_value:.4f} > {baseline_value:.4f} "
+                    f"(+{new_value - baseline_value:.4f})"
+                )
+                has_regression = True
+        else:
+            # For accuracy, f1, etc., higher is better
+            if new_value < baseline_value - threshold:
+                logging.warning(
+                    f"Regression in {metric_name}: {new_value:.4f} < {baseline_value:.4f} "
+                    f"(-{baseline_value - new_value:.4f})"
+                )
+                has_regression = True
+    
+    return has_regression
+
+
 # ---------------------------- Training Loop ----------------------------
 
 def _extract_label_and_prob(pred: Any) -> Tuple[int, Optional[float]]:
@@ -925,6 +1015,59 @@ def train_single_model(
         result['model_path'] = model_path
         result['metrics_path'] = metrics_path
 
+        # Export comprehensive model metadata
+        try:
+            training_config = {
+                'epochs': args.epochs,
+                'batch_size': args.batch_size,
+                'num_samples': args.num_samples,
+                'seed': args.seed,
+                'train_ratio': args.train_ratio,
+                'split_strategy': args.split_strategy,
+                'include_adversarial': args.include_adversarial,
+                'promotion_min_accuracy': args.promotion_min_accuracy,
+                'promotion_max_ece': args.promotion_max_ece
+            }
+            
+            dataset_info = {
+                'source': 'synthetic' if args.no_download else 'kaggle',
+                'samples': len(raw_data),
+                'train_samples': len(train_data),
+                'val_samples': len(val_data)
+            }
+            
+            governance_summary = None
+            if governance:
+                governance_summary = {
+                    'enabled': True,
+                    'data_violations': len(governance_violations),
+                    'prediction_violations': len(prediction_violations)
+                }
+            
+            audit_merkle_root = None
+            if merkle_anchor and hasattr(merkle_anchor, 'current_chunk'):
+                if merkle_anchor.current_chunk and hasattr(merkle_anchor.current_chunk, 'merkle_root'):
+                    audit_merkle_root = merkle_anchor.current_chunk.merkle_root
+            
+            drift_report_id = None
+            if drift_reporter:
+                drift_report_id = cohort_id
+            
+            metadata_path = export_model_metadata(
+                model_path=model_path,
+                model_type=model_type,
+                metrics=metrics,
+                training_config=training_config,
+                dataset_info=dataset_info,
+                governance_summary=governance_summary,
+                audit_merkle_root=audit_merkle_root,
+                drift_report_id=drift_report_id,
+                base_dir=args.models_dir
+            )
+            logging.info("[%s] Model metadata exported to %s", model_type, metadata_path)
+        except Exception as e:
+            logging.warning("[%s] Failed to export model metadata: %s", model_type, e)
+
         if merkle_anchor:
             merkle_anchor.add_event({
                 'event_type': 'model_saved',
@@ -1004,6 +1147,11 @@ def build_arg_parser() -> argparse.ArgumentParser:
 
     # Output
     parser.add_argument("--models-dir", type=str, default="models", help="Base directory to save models and metrics")
+
+    # Model comparison and versioning
+    parser.add_argument("--compare-with-baseline", type=str, default=None, help="Path to baseline model for comparison")
+    parser.add_argument("--min-improvement-threshold", type=float, default=0.02, help="Minimum improvement to replace baseline")
+    parser.add_argument("--force-retrain", action="store_true", help="Force retrain even if recent models exist")
 
     return parser
 

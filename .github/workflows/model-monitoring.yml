@@ -1,0 +1,196 @@
+name: Model Monitoring
+
+on:
+  schedule:
+    - cron: '0 */6 * * *'  # Every 6 hours
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  monitor-production-models:
+    name: Monitor Production Models
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install numpy pandas
+
+      - name: Download production models
+        uses: actions/download-artifact@v4
+        with:
+          name: baseline-models
+          path: models/current/
+        continue-on-error: true
+
+      - name: Check if models exist
+        id: check-models
+        run: |
+          if [ -d "models/current" ] && [ "$(ls -A models/current)" ]; then
+            echo "models-exist=true" >> $GITHUB_OUTPUT
+          else
+            echo "models-exist=false" >> $GITHUB_OUTPUT
+            echo "No production models found to monitor"
+          fi
+
+      - name: Load production models
+        if: steps.check-models.outputs.models-exist == 'true'
+        run: |
+          echo "Loading production models for monitoring..."
+          python scripts/monitor_models.py --list-models
+
+      - name: Run inference on recent data
+        if: steps.check-models.outputs.models-exist == 'true'
+        run: |
+          echo "Running inference on recent synthetic data..."
+          python scripts/monitor_models.py \
+            --model-path models/current/ \
+            --inference-mode \
+            --num-samples 1000
+
+      - name: Calculate drift metrics
+        if: steps.check-models.outputs.models-exist == 'true'
+        id: drift-metrics
+        run: |
+          echo "Calculating drift metrics..."
+          python scripts/monitor_models.py \
+            --model-path models/current/ \
+            --calculate-drift \
+            --output drift_metrics.json
+
+      - name: Compare with baseline performance
+        if: steps.check-models.outputs.models-exist == 'true'
+        id: compare-baseline
+        run: |
+          echo "Comparing with baseline performance..."
+          python scripts/monitor_models.py \
+            --model-path models/current/ \
+            --compare-baseline \
+            --output performance_comparison.json
+
+      - name: Check drift threshold
+        if: steps.check-models.outputs.models-exist == 'true'
+        id: drift-check
+        run: |
+          if [ -f "drift_metrics.json" ]; then
+            DRIFT_DETECTED=$(jq -r '.drift_detected // false' drift_metrics.json)
+            DRIFT_SCORE=$(jq -r '.drift_score // 0' drift_metrics.json)
+            echo "drift-detected=${DRIFT_DETECTED}" >> $GITHUB_OUTPUT
+            echo "drift-score=${DRIFT_SCORE}" >> $GITHUB_OUTPUT
+            
+            if [ "$DRIFT_DETECTED" = "true" ]; then
+              echo "⚠️ Model drift detected! Score: ${DRIFT_SCORE}"
+            fi
+          fi
+
+      - name: Create alerts if drift detected
+        if: steps.check-models.outputs.models-exist == 'true' && steps.drift-check.outputs.drift-detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let driftData = {};
+            try {
+              driftData = JSON.parse(fs.readFileSync('drift_metrics.json', 'utf8'));
+            } catch (e) {
+              console.error('Failed to read drift data:', e);
+            }
+            
+            const driftScore = '${{ steps.drift-check.outputs.drift-score }}';
+            
+            const body = `## 🚨 Model Drift Alert
+            
+            **Detection Time:** ${new Date().toISOString()}
+            **Drift Score:** ${driftScore}
+            
+            ### Drift Analysis
+            
+            ${JSON.stringify(driftData, null, 2)}
+            
+            ### Recommended Actions
+            
+            1. Review recent data patterns for anomalies
+            2. Check for changes in input feature distributions
+            3. Consider triggering model retraining
+            4. Verify data pipeline integrity
+            
+            ### Automatic Actions
+            
+            - [ ] Retraining workflow will be triggered automatically
+            - [ ] Model performance will be monitored more frequently
+            - [ ] Alert notifications sent to team
+            
+            ### Links
+            
+            - [Monitoring Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            
+            cc: @${{ github.actor }}
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '🚨 Model Drift Alert - ' + new Date().toISOString().split('T')[0],
+              body: body,
+              labels: ['ml-ops', 'drift-alert', 'needs-attention']
+            });
+
+      - name: Auto-trigger retraining if needed
+        if: steps.check-models.outputs.models-exist == 'true' && steps.drift-check.outputs.drift-detected == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const driftScore = parseFloat('${{ steps.drift-check.outputs.drift-score }}');
+            
+            // Load threshold from configuration
+            const fs = require('fs');
+            let threshold = 0.15; // Default
+            try {
+              const config = JSON.parse(fs.readFileSync('.github/workflows/config/training-schedule.json', 'utf8'));
+              threshold = config.performance_thresholds.drift_alert_threshold || 0.15;
+            } catch (e) {
+              console.log('Using default drift threshold:', threshold);
+            }
+            
+            console.log(`Drift score: ${driftScore}, Threshold: ${threshold}`);
+            
+            if (driftScore > threshold) {
+              console.log(`Drift score ${driftScore} exceeds threshold ${threshold}`);
+              console.log('Triggering retraining workflow...');
+              
+              await github.rest.actions.createWorkflowDispatch({
+                owner: context.repo.owner,
+                repo: context.repo.repo,
+                workflow_id: 'ml-training.yml',
+                ref: 'main',
+                inputs: {
+                  model_types: 'all',
+                  force_retrain: 'true'
+                }
+              });
+            }
+
+      - name: Upload monitoring results
+        if: steps.check-models.outputs.models-exist == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: monitoring-results-${{ github.run_number }}
+          path: |
+            drift_metrics.json
+            performance_comparison.json
+          retention-days: 90
+        if: always()

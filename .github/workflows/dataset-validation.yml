@@ -1,0 +1,187 @@
+name: Dataset Validation
+
+on:
+  schedule:
+    - cron: '0 8 * * 1'  # Every Monday at 8 AM UTC
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  issues: write
+
+jobs:
+  check-dataset-freshness:
+    name: Check Dataset Freshness
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python 3.9
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.9'
+
+      - name: Install dependencies
+        run: |
+          pip install --upgrade pip
+          pip install numpy pandas requests
+
+      - name: Load dataset configuration
+        id: load-config
+        run: |
+          if [ -f ".github/workflows/config/training-schedule.json" ]; then
+            REFRESH_INTERVAL=$(jq -r '.datasets.refresh_interval_days // 30' .github/workflows/config/training-schedule.json)
+            MIN_SAMPLES=$(jq -r '.datasets.minimum_samples // 10000' .github/workflows/config/training-schedule.json)
+            echo "refresh-interval=${REFRESH_INTERVAL}" >> $GITHUB_OUTPUT
+            echo "min-samples=${MIN_SAMPLES}" >> $GITHUB_OUTPUT
+          else
+            echo "refresh-interval=30" >> $GITHUB_OUTPUT
+            echo "min-samples=10000" >> $GITHUB_OUTPUT
+          fi
+
+      - name: Check Kaggle dataset update dates
+        id: check-kaggle
+        run: |
+          echo "Checking Kaggle dataset freshness..."
+          python scripts/validate_datasets.py \
+            --check-kaggle-freshness \
+            --max-age-days ${{ steps.load-config.outputs.refresh-interval }} \
+            --output kaggle_check.json
+        continue-on-error: true
+
+      - name: Validate data quality metrics
+        id: quality-check
+        run: |
+          echo "Validating data quality metrics..."
+          python scripts/validate_datasets.py \
+            --check-quality \
+            --min-samples ${{ steps.load-config.outputs.min-samples }} \
+            --output quality_check.json
+        continue-on-error: true
+
+      - name: Check for data distribution shifts
+        id: distribution-check
+        run: |
+          echo "Checking for data distribution shifts..."
+          python scripts/validate_datasets.py \
+            --check-distribution \
+            --output distribution_check.json
+        continue-on-error: true
+
+      - name: Analyze validation results
+        id: analyze
+        run: |
+          STALE=false
+          QUALITY_ISSUES=false
+          DISTRIBUTION_SHIFT=false
+          
+          if [ -f "kaggle_check.json" ]; then
+            STALE=$(jq -r '.datasets_stale // false' kaggle_check.json)
+          fi
+          
+          if [ -f "quality_check.json" ]; then
+            QUALITY_ISSUES=$(jq -r '.quality_issues // false' quality_check.json)
+          fi
+          
+          if [ -f "distribution_check.json" ]; then
+            DISTRIBUTION_SHIFT=$(jq -r '.distribution_shift // false' distribution_check.json)
+          fi
+          
+          echo "datasets-stale=${STALE}" >> $GITHUB_OUTPUT
+          echo "quality-issues=${QUALITY_ISSUES}" >> $GITHUB_OUTPUT
+          echo "distribution-shift=${DISTRIBUTION_SHIFT}" >> $GITHUB_OUTPUT
+
+      - name: Create issue if datasets are stale
+        if: steps.analyze.outputs.datasets-stale == 'true'
+        uses: actions/github-script@v7
+        with:
+          script: |
+            const fs = require('fs');
+            let kaggleData = {};
+            let qualityData = {};
+            let distributionData = {};
+            
+            try {
+              if (fs.existsSync('kaggle_check.json')) {
+                kaggleData = JSON.parse(fs.readFileSync('kaggle_check.json', 'utf8'));
+              }
+              if (fs.existsSync('quality_check.json')) {
+                qualityData = JSON.parse(fs.readFileSync('quality_check.json', 'utf8'));
+              }
+              if (fs.existsSync('distribution_check.json')) {
+                distributionData = JSON.parse(fs.readFileSync('distribution_check.json', 'utf8'));
+              }
+            } catch (e) {
+              console.error('Failed to read validation data:', e);
+            }
+            
+            const hasQualityIssues = '${{ steps.analyze.outputs.quality-issues }}' === 'true';
+            const hasDistributionShift = '${{ steps.analyze.outputs.distribution-shift }}' === 'true';
+            
+            let body = `## 📊 Dataset Validation Alert
+            
+            **Validation Time:** ${new Date().toISOString()}
+            **Refresh Interval:** ${{ steps.load-config.outputs.refresh-interval }} days
+            
+            ### Issues Detected
+            
+            `;
+            
+            if (kaggleData.datasets_stale) {
+              body += `#### ⚠️ Stale Datasets\n\n`;
+              body += `${JSON.stringify(kaggleData.stale_datasets || [], null, 2)}\n\n`;
+            }
+            
+            if (hasQualityIssues) {
+              body += `#### ⚠️ Data Quality Issues\n\n`;
+              body += `${JSON.stringify(qualityData, null, 2)}\n\n`;
+            }
+            
+            if (hasDistributionShift) {
+              body += `#### ⚠️ Distribution Shifts Detected\n\n`;
+              body += `${JSON.stringify(distributionData, null, 2)}\n\n`;
+            }
+            
+            body += `### Recommended Actions
+            
+            1. Update Kaggle datasets if available
+            2. Review data collection pipelines
+            3. Consider expanding data sources
+            4. Update training data and retrain models
+            5. Document any expected distribution changes
+            
+            ### Configuration
+            
+            - Maximum dataset age: ${{ steps.load-config.outputs.refresh-interval }} days
+            - Minimum samples required: ${{ steps.load-config.outputs.min-samples }}
+            
+            ### Links
+            
+            - [Validation Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
+            - [Dataset Configuration](.github/workflows/config/training-schedule.json)
+            
+            cc: @${{ github.actor }}
+            `;
+            
+            await github.rest.issues.create({
+              owner: context.repo.owner,
+              repo: context.repo.repo,
+              title: '📊 Dataset Validation Issues - ' + new Date().toISOString().split('T')[0],
+              body: body,
+              labels: ['ml-ops', 'data-quality', 'needs-attention']
+            });
+
+      - name: Upload validation results
+        uses: actions/upload-artifact@v4
+        with:
+          name: dataset-validation-${{ github.run_number }}
+          path: |
+            kaggle_check.json
+            quality_check.json
+            distribution_check.json
+          retention-days: 90
+        if: always()

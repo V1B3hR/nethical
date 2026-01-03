@@ -1,0 +1,16 @@
+{
+  "default_schedule": "0 2 * * 0",
+  "model_retention": {
+    "candidates": "30d",
+    "production": "365d"
+  },
+  "performance_thresholds": {
+    "accuracy_min": 0.85,
+    "ece_max": 0.08,
+    "drift_alert_threshold": 0.15
+  },
+  "datasets": {
+    "refresh_interval_days": 30,
+    "minimum_samples": 10000
+  }
+}

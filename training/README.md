@@ -16,6 +16,47 @@ A plug-and-play training pipeline that supports multiple model types with option
 - **Audit Logging**: Optional Merkle tree-based audit trail for training events
 - **Ethical Drift Tracking**: Track and analyze model performance across training cohorts
 - **Governance Validation**: Real-time safety and ethical validation of training data and predictions
+- **Baseline Comparison**: Compare new models with baseline models to detect performance regression
+- **Model Metadata Export**: Comprehensive model cards with training details, metrics, and governance summary
+- **Automated Scheduling**: Integration with GitHub Actions for scheduled training runs
+
+### Automated Training
+
+The training pipeline integrates with GitHub Actions for automated model training and deployment:
+
+#### Scheduled Training
+
+Models are automatically retrained on a weekly schedule (Sunday at 2 AM UTC) via the `.github/workflows/ml-training.yml` workflow. The schedule can be customized in `.github/workflows/config/training-schedule.json`.
+
+#### Trigger Conditions
+
+Automated training is triggered by:
+
+1. **Manual Dispatch**: Trigger training manually via GitHub Actions UI
+2. **Weekly Schedule**: Sunday at 2 AM UTC (configurable)
+3. **Code Changes**: Pushes to `training/`, `nethical/mlops/`, or `datasets/datasets` on main branch
+
+#### Workflow Features
+
+- **Model Performance Tracking**: Automatically compares new models with baselines
+- **Regression Detection**: Creates GitHub issues if model performance degrades
+- **Automated Deployment**: Promotes models that meet quality gates
+- **Drift Monitoring**: Monitors production models every 6 hours
+- **Dataset Validation**: Validates dataset freshness weekly
+
+#### Manual Trigger Options
+
+When triggering manually, you can specify:
+
+- `model_types`: Comma-separated list of model types or "all" (default: "all")
+- `force_retrain`: Force retraining even if recent models exist (default: false)
+
+Example workflow dispatch:
+```bash
+gh workflow run ml-training.yml -f model_types=logistic,heuristic -f force_retrain=true
+```
+
+See [MLOps Architecture](../docs/mlops-architecture.md) for complete details on the automated pipeline.
 
 ### Usage
 
@@ -108,6 +149,12 @@ python training/train_any_model.py \
 - `--enable-drift-tracking`: Enable ethical drift tracking
 - `--drift-report-dir`: Directory for drift reports (default: `training_drift_reports`)
 - `--cohort-id`: Cohort identifier for drift tracking (default: `{model-type}_{timestamp}`)
+
+#### Model Comparison Options (New)
+
+- `--compare-with-baseline`: Path to baseline model for comparison
+- `--min-improvement-threshold`: Minimum improvement required to replace baseline (default: 0.02)
+- `--force-retrain`: Force retrain even if recent models exist
 
 ### Ethical Drift Tracking
 
@@ -261,3 +308,49 @@ python tests/test_train_audit_logging.py
 # Test drift tracking
 python tests/test_train_drift_tracking.py
 ```
+
+### Troubleshooting Automated Workflows
+
+#### Training Workflow Issues
+
+**Problem**: Workflow fails with "No models found"
+- **Solution**: Ensure `--no-download` flag is used for synthetic data or Kaggle credentials are configured
+
+**Problem**: Models not promoted despite good metrics
+- **Solution**: Check promotion gate thresholds in `.github/workflows/config/training-schedule.json`
+
+**Problem**: GitHub issue not created for regression
+- **Solution**: Verify workflow has `issues: write` permissions
+
+#### Monitoring Workflow Issues
+
+**Problem**: Monitoring workflow shows "No production models found"
+- **Solution**: Run training workflow first to create baseline models artifact
+
+**Problem**: Drift alerts triggering too frequently
+- **Solution**: Adjust `drift_alert_threshold` in training-schedule.json (increase from 0.15)
+
+#### Deployment Issues
+
+**Problem**: Deployment validation fails
+- **Solution**: Check model file integrity and metadata files exist
+- **Solution**: Verify performance thresholds in configuration file
+
+**Problem**: Shadow deployment not working
+- **Solution**: Ensure deployment mode is set correctly and staging environment exists
+
+### Best Practices
+
+1. **Use Consistent Seeds**: Always use the same `--seed` value for reproducible results
+2. **Enable All Monitoring**: Use `--enable-audit`, `--enable-governance`, and `--enable-drift-tracking` together
+3. **Regular Retraining**: Let automated weekly schedule handle routine retraining
+4. **Manual Review**: Always review regression alerts and model performance reports
+5. **Gradual Rollout**: Use shadow mode first, then canary, then full deployment
+6. **Version Control**: Keep training configurations in version control
+7. **Monitor Drift**: Review drift monitoring reports every 24 hours
+
+### See Also
+
+- [MLOps Architecture](../docs/mlops-architecture.md) - Complete pipeline documentation
+- [Model Deployment Guide](../docs/model-deployment-guide.md) - Deployment procedures
+- [Model Directory Structure](../models/README.md) - Model organization and metadata
