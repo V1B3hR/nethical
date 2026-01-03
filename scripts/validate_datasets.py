@@ -13,6 +13,13 @@ from datetime import datetime, timedelta, timezone
 from pathlib import Path
 from typing import Any, Dict, List
 
+# Constants for class imbalance detection
+# Alert if any class is below MIN_CLASS_PCT or above MAX_CLASS_PCT
+# These thresholds are chosen to detect severe imbalances that would
+# significantly impact model training and fairness
+MIN_CLASS_PCT_THRESHOLD = 5.0  # Minimum acceptable class percentage
+MAX_CLASS_PCT_THRESHOLD = 95.0  # Maximum acceptable class percentage
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -229,19 +236,24 @@ def check_distribution_shift() -> Dict[str, Any]:
                             min_class_pct = label_dist.min() * 100
                             max_class_pct = label_dist.max() * 100
                             
-                            # Alert if any class is < 5% or > 95%
-                            if min_class_pct < 5 or max_class_pct > 95:
+                            # Check against configured thresholds
+                            if min_class_pct < MIN_CLASS_PCT_THRESHOLD or max_class_pct > MAX_CLASS_PCT_THRESHOLD:
                                 result['shifts_detected'].append({
                                     'file': csv_file.name,
                                     'column': label_col,
                                     'issue': 'extreme_class_imbalance',
                                     'min_class_pct': min_class_pct,
-                                    'max_class_pct': max_class_pct
+                                    'max_class_pct': max_class_pct,
+                                    'thresholds': {
+                                        'min_threshold': MIN_CLASS_PCT_THRESHOLD,
+                                        'max_threshold': MAX_CLASS_PCT_THRESHOLD
+                                    }
                                 })
                                 result['distribution_shift'] = True
                                 logging.warning(
                                     f"Extreme class imbalance in {csv_file.name}.{label_col}: "
-                                    f"{min_class_pct:.1f}% / {max_class_pct:.1f}%"
+                                    f"{min_class_pct:.1f}% / {max_class_pct:.1f}% "
+                                    f"(thresholds: {MIN_CLASS_PCT_THRESHOLD}% - {MAX_CLASS_PCT_THRESHOLD}%)"
                                 )
                 
                 logging.info(f"✓ Checked distribution for {csv_file.name}")

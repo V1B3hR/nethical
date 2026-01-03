@@ -155,7 +155,18 @@ jobs:
         with:
           script: |
             const driftScore = parseFloat('${{ steps.drift-check.outputs.drift-score }}');
-            const threshold = 0.15;
+            
+            // Load threshold from configuration
+            const fs = require('fs');
+            let threshold = 0.15; // Default
+            try {
+              const config = JSON.parse(fs.readFileSync('.github/workflows/config/training-schedule.json', 'utf8'));
+              threshold = config.performance_thresholds.drift_alert_threshold || 0.15;
+            } catch (e) {
+              console.log('Using default drift threshold:', threshold);
+            }
+            
+            console.log(`Drift score: ${driftScore}, Threshold: ${threshold}`);
             
             if (driftScore > threshold) {
               console.log(`Drift score ${driftScore} exceeds threshold ${threshold}`);

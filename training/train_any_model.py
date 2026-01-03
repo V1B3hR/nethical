@@ -649,13 +649,20 @@ def export_model_metadata(
 ) -> str:
     """Generate comprehensive model card with all training details"""
     
-    # Determine model version (simplified semantic versioning)
-    model_version = "1.0.0"  # Default version
+    # Generate semantic version based on timestamp (MAJOR.MINOR.PATCH format)
+    # MAJOR: Year since 2026
+    # MINOR: Month
+    # PATCH: Day + hour (to ensure uniqueness)
+    now = datetime.now(timezone.utc)
+    major = now.year - 2026
+    minor = now.month
+    patch = now.day * 100 + now.hour  # e.g., day 15 hour 14 = 1514
+    model_version = f"{major}.{minor}.{patch}"
     
     metadata = {
         "model_version": model_version,
         "model_type": model_type,
-        "training_timestamp": datetime.now(timezone.utc).isoformat(),
+        "training_timestamp": now.isoformat(),
         "metrics": metrics,
         "training_config": training_config,
         "dataset_info": dataset_info,

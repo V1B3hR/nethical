@@ -16,6 +16,11 @@ from typing import Any, Dict, List, Optional
 
 import numpy as np
 
+# Default baseline values - these should ideally come from configuration
+# or be derived from actual historical model performance
+DEFAULT_BASELINE_ACCURACY = 0.85  # Minimum expected accuracy
+DEFAULT_BASELINE_POSITIVE_RATE = 0.3  # Expected positive prediction rate
+
 # Setup logging
 logging.basicConfig(
     level=logging.INFO,
@@ -125,13 +130,16 @@ def monitor_models(
             
             # Load baseline if available
             metadata_file = model_path / f"{model_name}_metrics.json"
-            baseline_accuracy = 0.85
-            baseline_positive_rate = 0.3
+            baseline_accuracy = DEFAULT_BASELINE_ACCURACY
+            baseline_positive_rate = DEFAULT_BASELINE_POSITIVE_RATE
             
             if metadata_file.exists():
                 with open(metadata_file, 'r') as f:
                     metadata = json.load(f)
-                    baseline_accuracy = metadata.get('accuracy', baseline_accuracy)
+                    baseline_accuracy = metadata.get('accuracy', DEFAULT_BASELINE_ACCURACY)
+                    # Try to derive positive rate from metadata if available
+                    if 'positive_rate' in metadata:
+                        baseline_positive_rate = metadata['positive_rate']
             
             # Calculate drift
             drift_score = abs(positive_rate - baseline_positive_rate)
