@@ -145,26 +145,29 @@ elif result.decision == "BLOCK":
 
 ## 📚 Learn More
 
-### Core Documentation
-- [25 Fundamental Laws](./FUNDAMENTAL_LAWS.md)
+### 🏛️ Core Documentation
+- [**📜 The 25 Fundamental Laws**](./docs/laws_and_policies/FUNDAMENTAL_LAWS.md) ⭐ **START HERE** ⭐
+- [📖 Complete Documentation Index](./docs/index.md) - Central hub for all documentation
 - [Security Policy](./SECURITY.md)
+- [Privacy Policy](./PRIVACY.md)
 - [Contribution Guide](./CONTRIBUTING.md)
 
-### Technical Documentation
-- [Architecture & Data Flow](./docs/overview/ARCHITECTURE.md)
-- [Implementation Summary](./docs/overview/IMPLEMENTATION_SUMMARY.md)
-- [Async Factory Pattern Guide](./docs/overview/ASYNC_FACTORY_PATTERN.md) - Best practices for async initialization
+### 📚 Documentation Categories
+- [**Laws & Policies**](./docs/laws_and_policies/) - The 25 Fundamental Laws and governance policies
+- [**Usage Guides**](./docs/usage/) - User guides, examples, integrations, and deployment
+- [**Design & Architecture**](./docs/design/) - System architecture and implementation details
+- [**Roadmaps**](./docs/roadmaps/) - Project roadmaps and phase documentation
+- [**Audit & Compliance**](./docs/audit/) - Security audits and regulatory compliance
+- [**Privacy**](./docs/privacy/) - Privacy policies and data protection
+- [**Tests**](./docs/tests/) - Test reports and validation methodology
+- [**Training**](./docs/training/) - ML model training documentation
+- [**Benchmarks**](./docs/benchmarks/) - Performance test results
+- [**Integrations**](./docs/integrations/) - Platform integrations and ecosystem
 
-### Roadmaps & Plans
-- [Roadmap & Maturity](./roadmaps/Roadmap_Maturity.md)
-- [ROADMAP 9+](./roadmaps/ROADMAP_9+.md)
-- [Nethical Plan](./roadmaps/nethicalplan.md)
-
-### Guides & References
-- [User & Developer Guides](./docs/guides/)
-- [API Documentation](./docs/api/)
-- [Phase Implementation Documentation](./docs/phases/)
-- [Reference Materials](./docs/references/)
+### 🚀 Quick Links
+For quick access to common documentation:
+- Original location: [FUNDAMENTAL_LAWS.md](./FUNDAMENTAL_LAWS.md) → **Moved to** [docs/laws_and_policies/](./docs/laws_and_policies/FUNDAMENTAL_LAWS.md)
+- Original location: [roadmaps/](./roadmaps/) → **Moved to** [docs/roadmaps/](./docs/roadmaps/)
 
 ---
 
