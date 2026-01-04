@@ -1,3 +1,19 @@
+# 📍 Documentation Relocated
+
+> **⚠️ NOTICE: This file has been moved to the unified documentation structure.**
+
+## New Location
+This file has been moved to: **[`docs/laws_and_policies/FUNDAMENTAL_LAWS.md`](docs/laws_and_policies/FUNDAMENTAL_LAWS.md)**
+
+Please update your bookmarks and links.
+
+## Quick Navigation
+- [📖 Complete Documentation Index](docs/index.md)
+- [📜 The 25 Fundamental Laws](docs/laws_and_policies/FUNDAMENTAL_LAWS.md) ⭐
+- [⚖️ Laws & Policies Directory](docs/laws_and_policies/)
+
+---
+
 # The 25 AI Fundamental Laws
 
 > **System:** Nethical Governance Framework

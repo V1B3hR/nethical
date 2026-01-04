@@ -1,3 +1,18 @@
+# 📍 Documentation Relocated
+
+> **⚠️ NOTICE: This file has been moved to the unified documentation structure.**
+
+**New Location:** [`docs/audit/AUDIT.md`](docs/audit/AUDIT.md)
+
+Please update your bookmarks and links.
+
+**Quick Navigation:**
+- [📖 Complete Documentation Index](docs/index.md)
+- [🔍 Audit Documentation](docs/audit/)
+- [📜 The 25 Fundamental Laws](docs/laws_and_policies/FUNDAMENTAL_LAWS.md)
+
+---
+
 # Repository Audit and Refactoring Plan
 
 ## Executive Summary
