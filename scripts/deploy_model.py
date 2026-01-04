@@ -114,7 +114,7 @@ class ModelDeployer:
         try:
             for model_file in model_files[:1]:  # Test first model only
                 with open(model_file, 'rb') as f:
-                    model = pickle.load(f)
+                    _ = pickle.load(f)
                 validation_results['checks']['model_loadable'] = {
                     'status': 'passed',
                     'tested_file': model_file.name
