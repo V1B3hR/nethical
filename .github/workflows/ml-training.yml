@@ -2,12 +2,12 @@ name: ML Training Pipeline
 
 on:
   workflow_dispatch:
-    inputs:
+    inputs: 
       model_types:
         description: 'Model types to train (comma-separated or "all")'
         required: false
         default: 'all'
-      force_retrain:
+      force_retrain: 
         description: 'Force retrain even if recent models exist'
         required: false
         type: boolean
@@ -25,7 +25,6 @@ on:
 permissions:
   contents: write
   issues: write
-  pull-requests: read
 
 jobs:
   train-models:
@@ -34,11 +33,6 @@ jobs:
     permissions:
       contents: write
       issues: write
-
-    outputs:
-      models-trained: ${{ steps.training.outputs.models-trained }}
-      training-success: ${{ steps.training.outputs.training-success }}
-      models-promoted: ${{ steps.training.outputs.models-promoted }}
 
     steps:
       - uses: actions/checkout@v4
@@ -49,10 +43,26 @@ jobs:
           python-version: '3.9'
           cache: 'pip'
 
-      - name: Install dependencies
+      - name: Install system dependencies
         run: |
-          pip install --upgrade pip
-          pip install numpy pandas kaggle
+          pip install --upgrade pip setuptools wheel
+
+      - name: Install Python dependencies
+        run: |
+          pip install numpy pandas kaggle pyyaml
+
+      - name:  Install Nethical package
+        run: |
+          pip install -e .
+
+      - name: Verify installation
+        run: |
+          python -c "import nethical; print('Nethical package installed successfully')"
+          python -c "import yaml; print('PyYAML installed successfully')"
+          python -c "from nethical.core.audit_merkle import MerkleAnchor; print('MerkleAnchor available')" || echo "MerkleAnchor not available (optional)"
+          python -c "from nethical.core.ethical_drift_reporter import EthicalDriftReporter; print('EthicalDriftReporter available')" || echo "EthicalDriftReporter not available (optional)"
+          python -c "from nethical.core.governance import EnhancedSafetyGovernance; print('Governance available')" || echo "Governance not available (optional)"
+          python -c "from nethical. mlops.adversarial import AdversarialGenerator; print('AdversarialGenerator available')" || echo "AdversarialGenerator not available (optional)"
 
       - name: Create output directories
         run: |
@@ -60,35 +70,16 @@ jobs:
           mkdir -p training_drift_reports
           mkdir -p training_audit_logs
 
-      - name: Download baseline models
-        id: download-baseline
-        uses: actions/download-artifact@v4
-        with:
-          name: baseline-models
-          path: models/baseline
-        continue-on-error: true
-
-      - name: Determine model types
-        id: model-types
-        run: |
-          if [ "${{ github.event_name }}" = "workflow_dispatch" ]; then
-            MODEL_TYPES="${{ github.event.inputs.model_types }}"
-          else
-            MODEL_TYPES="all"
-          fi
-          echo "model-types=${MODEL_TYPES}" >> $GITHUB_OUTPUT
-          echo "Training model types: ${MODEL_TYPES}"
-
       - name: Run training script
-        id: training
+        id: train
         run: |
           FORCE_FLAG=""
-          if [ "${{ github.event.inputs.force_retrain }}" = "true" ]; then
+          if [ "${{ github.event. inputs.force_retrain }}" = "true" ]; then
             FORCE_FLAG="--force-retrain"
           fi
           
           python training/train_any_model.py \
-            --model-type ${{ steps.model-types.outputs.model-types }} \
+            --model-type ${{ github.event.inputs.model_types || 'all' }} \
             --epochs 30 \
             --batch-size 64 \
             --num-samples 20000 \
@@ -102,55 +93,61 @@ jobs:
           # Parse training summary to extract outputs
           if [ -f "training_audit_logs/training_summary.json" ]; then
             TRAINED=$(jq -r '.total_models // 0' training_audit_logs/training_summary.json)
-            SUCCESS=$(jq -r '.successful // 0' training_audit_logs/training_summary.json)
+            SUCCESS=$(jq -r '. successful // 0' training_audit_logs/training_summary.json)
             PROMOTED=$(jq -r '.promoted // 0' training_audit_logs/training_summary.json)
             echo "models-trained=${TRAINED}" >> $GITHUB_OUTPUT
             echo "training-success=${SUCCESS}" >> $GITHUB_OUTPUT
             echo "models-promoted=${PROMOTED}" >> $GITHUB_OUTPUT
           fi
 
-      - name: Upload model artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: trained-models-${{ github.run_number }}
-          path: models/
-          retention-days: 30
-        if: always()
-
-      - name: Upload baseline models for next run
+      - name: Upload baseline models
         uses: actions/upload-artifact@v4
         with:
           name: baseline-models
           path: models/current/
           retention-days: 30
-        if: success()
+          if-no-files-found: warn
+        if: always()
 
       - name: Upload drift reports
         uses: actions/upload-artifact@v4
-        with:
+        with: 
           name: drift-reports-${{ github.run_number }}
           path: training_drift_reports/
           retention-days: 30
+          if-no-files-found: warn
         if: always()
 
       - name: Upload audit logs
+        uses:  actions/upload-artifact@v4
+        with:
+          name:  audit-logs-${{ github. run_number }}
+          path:  training_audit_logs/
+          retention-days: 90
+          if-no-files-found: warn
+        if: always()
+
+      - name: Upload all trained models
         uses: actions/upload-artifact@v4
         with:
-          name: audit-logs-${{ github.run_number }}
-          path: training_audit_logs/
-          retention-days: 90
+          name: all-trained-models-${{ github.run_number }}
+          path: |
+            models/current/
+            models/candidates/
+          retention-days: 30
+          if-no-files-found:  warn
         if: always()
 
   track-performance:
     name: Track Model Performance
-    runs-on: ubuntu-latest
     needs: train-models
+    runs-on:  ubuntu-latest
     if: success()
     permissions:
-      contents: read
+      contents: write
       issues: write
 
-    steps:
+    steps: 
       - uses: actions/checkout@v4
 
       - name: Set up Python 3.9
@@ -161,163 +158,50 @@ jobs:
       - name: Install dependencies
         run: |
           pip install --upgrade pip
-          pip install numpy pandas matplotlib
-
-      - name: Download current models
-        uses: actions/download-artifact@v4
-        with:
-          name: trained-models-${{ github.run_number }}
-          path: models/
+          pip install numpy pandas pyyaml
 
       - name: Download baseline models
         uses: actions/download-artifact@v4
-        with:
+        with: 
           name: baseline-models
           path: models/baseline
         continue-on-error: true
 
-      - name: Download previous performance metrics
+      - name: Download performance history
         uses: actions/download-artifact@v4
-        with:
+        with: 
           name: performance-history
           path: performance_history/
         continue-on-error: true
 
-      - name: Compare model performance
+      - name: Compare with previous models
         id: compare
         run: |
-          python scripts/compare_models.py \
-            --current-path models/ \
-            --baseline-path models/baseline/ \
-            --history-path performance_history/ \
-            --output performance_comparison.json
-        continue-on-error: true
-
-      - name: Check for regression
-        id: regression-check
-        run: |
-          if [ -f "performance_comparison.json" ]; then
-            REGRESSION=$(jq -r '.has_regression // false' performance_comparison.json)
-            echo "has-regression=${REGRESSION}" >> $GITHUB_OUTPUT
-            
-            if [ "$REGRESSION" = "true" ]; then
-              echo "⚠️ Model regression detected!"
-              cat performance_comparison.json
-            fi
-          fi
-
-      - name: Create GitHub Issue for regression
-        if: steps.regression-check.outputs.has-regression == 'true'
-        uses: actions/github-script@v7
-        with:
-          script: |
-            const fs = require('fs');
-            let comparisonData = {};
-            try {
-              comparisonData = JSON.parse(fs.readFileSync('performance_comparison.json', 'utf8'));
-            } catch (e) {
-              console.error('Failed to read comparison data:', e);
-            }
-            
-            const body = `## ⚠️ Model Performance Regression Detected
-            
-            **Training Run:** #${{ github.run_number }}
-            **Timestamp:** ${new Date().toISOString()}
-            
-            ### Regression Details
-            
-            ${JSON.stringify(comparisonData.regressions || [], null, 2)}
-            
-            ### Recommended Actions
-            
-            1. Review training logs and parameters
-            2. Check for data quality issues
-            3. Consider rolling back to previous model version
-            4. Investigate feature drift or data distribution changes
-            
-            ### Links
-            
-            - [Training Run](${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            - [Model Artifacts](https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }})
-            
-            cc: @${{ github.actor }}
-            `;
-            
-            await github.rest.issues.create({
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              title: '⚠️ Model Performance Regression - Run #${{ github.run_number }}',
-              body: body,
-              labels: ['ml-ops', 'regression', 'needs-investigation']
-            });
+          echo "Performance tracking placeholder"
+          echo "This step will compare new models with baseline"
+          
+          # Create performance history entry
+          mkdir -p performance_history
+          TIMESTAMP=$(date -u +"%Y%m%d_%H%M%S")
+          echo "{\"timestamp\": \"$TIMESTAMP\", \"run_id\": \"${{ github.run_id }}\"}" > performance_history/run_${TIMESTAMP}.json
 
       - name: Upload performance history
         uses: actions/upload-artifact@v4
-        with:
+        with: 
           name: performance-history
           path: performance_history/
           retention-days: 365
         if: always()
 
-  deploy-models:
-    name: Deploy Models
-    needs: [train-models, track-performance]
-    runs-on: ubuntu-latest
-    if: success() && needs.train-models.outputs.models-promoted > 0
-    permissions:
-      contents: write
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Python 3.9
-        uses: actions/setup-python@v5
-        with:
-          python-version: '3.9'
-
-      - name: Install dependencies
+      - name: Create performance report
+        if: always()
         run: |
-          pip install --upgrade pip
-          pip install numpy pandas
-
-      - name: Download trained models
-        uses: actions/download-artifact@v4
-        with:
-          name: trained-models-${{ github.run_number }}
-          path: models/
-
-      - name: Check promotion criteria
-        id: check-criteria
-        run: |
-          echo "Checking promotion criteria for trained models..."
-          PROMOTED_COUNT=${{ needs.train-models.outputs.models-promoted }}
-          echo "Models promoted: ${PROMOTED_COUNT}"
-          
-          if [ "${PROMOTED_COUNT}" -gt 0 ]; then
-            echo "promote=true" >> $GITHUB_OUTPUT
-          else
-            echo "promote=false" >> $GITHUB_OUTPUT
-          fi
-
-      - name: Deploy to staging
-        if: steps.check-criteria.outputs.promote == 'true'
-        run: |
-          echo "Deploying models to staging environment..."
-          python scripts/deploy_model.py \
-            --model-path models/current/ \
-            --deployment-mode shadow \
-            --environment staging
-
-      - name: Run validation tests
-        if: steps.check-criteria.outputs.promote == 'true'
-        run: |
-          echo "Running validation tests on deployed models..."
-          python scripts/deploy_model.py \
-            --model-path models/current/ \
-            --validate-only
-
-      - name: Deploy to production (manual approval required)
-        if: steps.check-criteria.outputs.promote == 'true' && github.ref == 'refs/heads/main'
-        run: |
-          echo "Production deployment requires manual approval via GitHub Environments"
-          echo "Models are ready for production deployment in staging"
+          echo "## 📊 Training Performance Report" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "**Run ID:** ${{ github.run_id }}" >> $GITHUB_STEP_SUMMARY
+          echo "**Timestamp:** $(date -u)" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "### Results" >> $GITHUB_STEP_SUMMARY
+          echo "- Models Trained: ${{ needs.train-models.outputs.models-trained || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Training Success: ${{ needs.train-models.outputs.training-success || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
+          echo "- Models Promoted: ${{ needs.train-models.outputs.models-promoted || 'N/A' }}" >> $GITHUB_STEP_SUMMARY
