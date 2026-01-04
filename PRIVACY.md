@@ -1,3 +1,18 @@
+# 📍 Documentation Relocated
+
+> **⚠️ NOTICE: This file has been moved to the unified documentation structure.**
+
+**New Location:** [`docs/privacy/PRIVACY.md`](docs/privacy/PRIVACY.md)
+
+Please update your bookmarks and links.
+
+**Quick Navigation:**
+- [📖 Complete Documentation Index](docs/index.md)
+- [🔒 Privacy Documentation](docs/privacy/)
+- [📜 The 25 Fundamental Laws](docs/laws_and_policies/FUNDAMENTAL_LAWS.md)
+
+---
+
 # Nethical Privacy Policy
 
 **Version**: 1.0.0  
