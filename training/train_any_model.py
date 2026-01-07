@@ -75,7 +75,18 @@ except Exception:
 # Constants
 DATA_EXTERNAL_DIR = Path("data/external")
 DATASETS_FILE_PATH = Path(__file__).parent.parent / "datasets" / "datasets"
-ALL_MODEL_TYPES = ["heuristic", "logistic", "simple_transformer", "anomaly", "correlation"]
+ALL_MODEL_TYPES = [
+    "heuristic",
+    "logistic",
+    "simple_transformer",
+    "anomaly",
+    "correlation",
+    "shadow_ai",         # NEW: Shadow AI model detection
+    "deepfake",          # NEW: Deepfake detection
+    "polymorphic",       # NEW: Polymorphic malware detection
+    "prompt_injection",  # NEW: Prompt injection detection
+    "adversarial",       # NEW: Adversarial attack detection (AI vs AI)
+]
 TRAIN_ALL_KEYWORD = "all"
 
 
