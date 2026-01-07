@@ -29,7 +29,17 @@ jobs:
           pip install --upgrade pip
           pip install -r requirements.txt
           pip install -r requirements-dev.txt
-          pip install black flake8 mypy
+          pip install black flake8 mypy ruff
+      
+      - name: Run Ruff linter
+        run: |
+          ruff check . --output-format=github
+        continue-on-error: true
+      
+      - name: Run Ruff format check
+        run: |
+          ruff format --check .
+        continue-on-error: true
       
       - name: Run Black
         run: black --check nethical/ tests/ examples/ || true
