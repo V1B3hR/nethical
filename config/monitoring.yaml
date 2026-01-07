@@ -1,0 +1,68 @@
+# Monitoring and Alerting Configuration for Nethical
+
+prometheus:
+  enabled: true
+  port: 9090
+  scrape_interval: 15s
+  evaluation_interval: 15s
+
+grafana:
+  enabled: true
+  port: 3000
+  admin_user: admin
+  admin_password: ${GRAFANA_PASSWORD:-changeme}
+
+metrics_server:
+  enabled: true
+  port: 9091  # Separate from Prometheus to avoid conflicts
+  host: "0.0.0.0"
+
+alerting:
+  enabled: true
+  max_alerts_per_minute: 10
+  
+  # Slack configuration
+  slack_webhook_url: ${SLACK_WEBHOOK_URL}
+  
+  # Discord configuration
+  discord_webhook_url: ${DISCORD_WEBHOOK_URL}
+  
+  # PagerDuty configuration
+  pagerduty_api_key: ${PAGERDUTY_API_KEY}
+  
+  # Custom webhook configuration
+  webhook_url: ${WEBHOOK_URL}
+  
+  # SMTP configuration for email alerts
+  smtp:
+    host: smtp.gmail.com
+    port: 587
+    use_tls: true
+    username: ${SMTP_USERNAME}
+    password: ${SMTP_PASSWORD}
+    from: alerts@nethical.ai
+    to: security-team@company.com
+  
+  # Alert rules configuration
+  rules:
+    high_latency_threshold_ms: 200
+    high_threat_rate_threshold: 0.5
+    high_error_rate_threshold: 0.05
+    min_cache_hit_rate: 0.5
+
+profiling:
+  enabled: true
+  output_dir: profiling_results
+  sampling_rate_hz: 100
+  default_duration_seconds: 60
+
+# Integration settings
+integration:
+  # Enable metrics tracking in detectors
+  track_detector_metrics: true
+  
+  # Track cache metrics
+  track_cache_metrics: true
+  
+  # Track model inference metrics
+  track_model_metrics: true

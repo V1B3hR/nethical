@@ -163,6 +163,7 @@ elif result.decision == "BLOCK":
 - [**Training**](./docs/training/) - ML model training documentation
 - [**Benchmarks**](./docs/benchmarks/) - Performance test results
 - [**Integrations**](./docs/integrations/) - Platform integrations and ecosystem
+- [**Monitoring & Alerting**](./docs/monitoring-and-alerting.md) - Production-grade observability and alerting
 
 ### 🚀 Quick Links
 For quick access to common documentation:
