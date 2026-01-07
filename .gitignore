@@ -83,3 +83,9 @@ test_governance*/
 
 # Benchmark results
 benchmark_results/
+
+# Profiling results
+profiling_results/
+*.stats
+*.svg
+
