@@ -7,7 +7,7 @@ Techniques:
 - ONNX Runtime conversion
 """
 
-from typing import Any, Dict, Optional, Union
+from typing import Any
 
 import numpy as np
 
@@ -49,7 +49,7 @@ class ModelOptimizer:
         if use_onnx:
             model = ModelOptimizer._convert_to_onnx(model)
 
-        print(f"[ModelOptimizer] Optimization complete")
+        print("[ModelOptimizer] Optimization complete")
         return model
 
     @staticmethod
@@ -158,7 +158,7 @@ class ModelOptimizer:
         return student_model
 
     @staticmethod
-    def optimize_inference_config(model_type: str) -> Dict[str, Any]:
+    def optimize_inference_config(model_type: str) -> dict[str, Any]:
         """Get optimized inference configuration for model type.
 
         Args:
@@ -201,7 +201,7 @@ class ModelOptimizer:
     @staticmethod
     def benchmark_model(
         model: Any, input_shape: tuple, num_iterations: int = 100
-    ) -> Dict[str, float]:
+    ) -> dict[str, float]:
         """Benchmark model latency.
 
         Args:

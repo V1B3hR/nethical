@@ -6,7 +6,6 @@ and identify bottlenecks.
 
 import asyncio
 import time
-from typing import Dict, List
 
 import numpy as np
 
@@ -19,7 +18,7 @@ from nethical.detectors.realtime import (
 )
 
 
-async def benchmark_shadow_ai(iterations: int = 100) -> Dict[str, float]:
+async def benchmark_shadow_ai(iterations: int = 100) -> dict[str, float]:
     """Benchmark Shadow AI Detector."""
     detector = ShadowAIDetector()
 
@@ -48,7 +47,7 @@ async def benchmark_shadow_ai(iterations: int = 100) -> Dict[str, float]:
     return _compute_stats(latencies, "Shadow AI Detector", target_ms=20)
 
 
-async def benchmark_deepfake(iterations: int = 100) -> Dict[str, float]:
+async def benchmark_deepfake(iterations: int = 100) -> dict[str, float]:
     """Benchmark Deepfake Detector."""
     detector = DeepfakeDetector()
 
@@ -69,7 +68,7 @@ async def benchmark_deepfake(iterations: int = 100) -> Dict[str, float]:
     return _compute_stats(latencies, "Deepfake Detector", target_ms=30)
 
 
-async def benchmark_polymorphic(iterations: int = 100) -> Dict[str, float]:
+async def benchmark_polymorphic(iterations: int = 100) -> dict[str, float]:
     """Benchmark Polymorphic Malware Detector."""
     detector = PolymorphicMalwareDetector()
 
@@ -95,7 +94,7 @@ async def benchmark_polymorphic(iterations: int = 100) -> Dict[str, float]:
     return _compute_stats(latencies, "Polymorphic Detector", target_ms=50)
 
 
-async def benchmark_prompt_injection(iterations: int = 100) -> Dict[str, float]:
+async def benchmark_prompt_injection(iterations: int = 100) -> dict[str, float]:
     """Benchmark Prompt Injection Guard."""
     guard = PromptInjectionGuard()
 
@@ -118,7 +117,7 @@ async def benchmark_prompt_injection(iterations: int = 100) -> Dict[str, float]:
     return _compute_stats(latencies, "Prompt Injection Guard", target_ms=15)
 
 
-async def benchmark_ai_vs_ai(iterations: int = 100) -> Dict[str, float]:
+async def benchmark_ai_vs_ai(iterations: int = 100) -> dict[str, float]:
     """Benchmark AI vs AI Defender."""
     defender = AIvsAIDefender()
 
@@ -141,7 +140,7 @@ async def benchmark_ai_vs_ai(iterations: int = 100) -> Dict[str, float]:
     return _compute_stats(latencies, "AI vs AI Defender", target_ms=25)
 
 
-def _compute_stats(latencies: List[float], name: str, target_ms: float) -> Dict[str, float]:
+def _compute_stats(latencies: list[float], name: str, target_ms: float) -> dict[str, float]:
     """Compute statistics for latencies."""
     latencies_sorted = sorted(latencies)
 
@@ -163,7 +162,7 @@ def _compute_stats(latencies: List[float], name: str, target_ms: float) -> Dict[
     return stats
 
 
-def print_stats(stats: Dict[str, float]) -> None:
+def print_stats(stats: dict[str, float]) -> None:
     """Print statistics in a formatted way."""
     print(f"\n{'=' * 70}")
     print(f"Detector: {stats['detector']}")
@@ -225,7 +224,7 @@ async def main():
     avg_p95 = np.mean([s["p95_ms"] for s in all_stats])
     avg_p99 = np.mean([s["p99_ms"] for s in all_stats])
 
-    print(f"\nAverage across all detectors:")
+    print("\nAverage across all detectors:")
     print(f"  Mean:     {avg_mean:.2f} ms")
     print(f"  P95:      {avg_p95:.2f} ms")
     print(f"  P99:      {avg_p99:.2f} ms")

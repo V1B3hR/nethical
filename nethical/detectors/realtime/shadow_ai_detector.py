@@ -14,10 +14,10 @@ import asyncio
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set
+from typing import Any
 
-from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 from ...core.models import SafetyViolation
+from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 
 
 @dataclass
@@ -25,7 +25,7 @@ class ShadowAIDetectorConfig:
     """Configuration for Shadow AI Detector."""
 
     # Authorized model registry/whitelist
-    authorized_apis: Set[str] = field(
+    authorized_apis: set[str] = field(
         default_factory=lambda: {
             "api.openai.com",
             "api.anthropic.com",
@@ -33,8 +33,8 @@ class ShadowAIDetectorConfig:
             "generativelanguage.googleapis.com",
         }
     )
-    authorized_models: Set[str] = field(default_factory=set)
-    authorized_ports: Set[int] = field(default_factory=lambda: {11434, 8080})
+    authorized_models: set[str] = field(default_factory=set)
+    authorized_ports: set[int] = field(default_factory=lambda: {11434, 8080})
 
     # Detection patterns
     enable_api_detection: bool = True
@@ -80,7 +80,7 @@ class ShadowAIDetector(BaseDetector):
         "onnx": re.compile(r"\.onnx$", re.IGNORECASE),
     }
 
-    def __init__(self, config: Optional[ShadowAIDetectorConfig] = None):
+    def __init__(self, config: ShadowAIDetectorConfig | None = None):
         """Initialize the Shadow AI Detector.
 
         Args:
@@ -95,8 +95,8 @@ class ShadowAIDetector(BaseDetector):
         self._status = DetectorStatus.ACTIVE
 
     async def detect_violations(
-        self, context: Dict[str, Any], **kwargs: Any
-    ) -> List[SafetyViolation]:
+        self, context: dict[str, Any], **kwargs: Any
+    ) -> list[SafetyViolation]:
         """Detect unauthorized AI models in network traffic and system activity.
 
         Args:
@@ -143,7 +143,7 @@ class ShadowAIDetector(BaseDetector):
             if elapsed_ms > self.config.max_scan_time_ms:
                 self._metrics.false_positives += 1  # Track performance issues
 
-        except Exception as e:
+        except Exception:
             self._metrics.failed_runs += 1
             raise
 
@@ -153,7 +153,7 @@ class ShadowAIDetector(BaseDetector):
 
         return violations
 
-    async def _detect_api_calls(self, network_traffic: Dict[str, Any]) -> List[SafetyViolation]:
+    async def _detect_api_calls(self, network_traffic: dict[str, Any]) -> list[SafetyViolation]:
         """Detect unauthorized API calls to LLM providers.
 
         Args:
@@ -192,7 +192,7 @@ class ShadowAIDetector(BaseDetector):
 
         return violations
 
-    async def _detect_gpu_usage(self, system_info: Dict[str, Any]) -> List[SafetyViolation]:
+    async def _detect_gpu_usage(self, system_info: dict[str, Any]) -> list[SafetyViolation]:
         """Detect GPU usage patterns indicative of AI model execution.
 
         Args:
@@ -229,7 +229,7 @@ class ShadowAIDetector(BaseDetector):
                             SafetyViolation(
                                 severity=self._compute_severity(confidence),
                                 category="unauthorized_ai_model",
-                                description=f"Unauthorized AI model execution detected on GPU",
+                                description="Unauthorized AI model execution detected on GPU",
                                 confidence=confidence,
                                 evidence=[
                                     f"Process: {process_name}",
@@ -242,7 +242,7 @@ class ShadowAIDetector(BaseDetector):
 
         return violations
 
-    async def _detect_model_files(self, file_system: Dict[str, Any]) -> List[SafetyViolation]:
+    async def _detect_model_files(self, file_system: dict[str, Any]) -> list[SafetyViolation]:
         """Detect model file signatures in the file system.
 
         Args:
@@ -274,13 +274,13 @@ class ShadowAIDetector(BaseDetector):
                                 description=f"Unauthorized {model_type} model file detected",
                                 confidence=confidence,
                                 evidence=[f"File: {file_path_str}"],
-                                recommendation=f"Review and whitelist model file or remove it",
+                                recommendation="Review and whitelist model file or remove it",
                             )
                         )
 
         return violations
 
-    async def _detect_suspicious_ports(self, network_traffic: Dict[str, Any]) -> List[SafetyViolation]:
+    async def _detect_suspicious_ports(self, network_traffic: dict[str, Any]) -> list[SafetyViolation]:
         """Detect suspicious ports commonly used by local AI models.
 
         Args:
@@ -342,7 +342,7 @@ class ShadowAIDetector(BaseDetector):
         else:
             return ViolationSeverity.LOW
 
-    async def scan(self, network_traffic: Dict[str, Any]) -> Dict[str, Any]:
+    async def scan(self, network_traffic: dict[str, Any]) -> dict[str, Any]:
         """Public API for scanning network traffic.
 
         Args:

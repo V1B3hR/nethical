@@ -2,7 +2,7 @@
 
 import pytest
 
-from nethical.detectors.realtime import PolymorphicMalwareDetector, PolymorphicDetectorConfig
+from nethical.detectors.realtime import PolymorphicMalwareDetector
 
 
 class TestPolymorphicMalwareDetector:

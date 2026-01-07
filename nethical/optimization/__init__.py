@@ -7,10 +7,10 @@ This module provides tools for:
 
 from .model_optimizer import ModelOptimizer
 from .request_optimizer import (
-    RequestOptimizer,
     DynamicBatcher,
     DynamicBatcherConfig,
     RequestCoalescer,
+    RequestOptimizer,
 )
 
 __all__ = [

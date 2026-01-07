@@ -13,13 +13,13 @@ import asyncio
 import hashlib
 import time
 from collections import defaultdict, deque
-from dataclasses import dataclass, field
-from typing import Any, Deque, Dict, List, Optional, Set, Tuple
+from dataclasses import dataclass
+from typing import Any
 
 import numpy as np
 
-from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 from ...core.models import SafetyViolation
+from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 
 
 @dataclass
@@ -52,7 +52,7 @@ class AIvsAIDefenderConfig:
 class AIvsAIDefender(BaseDetector):
     """Defend against adversarial AI attacks on AI systems."""
 
-    def __init__(self, config: Optional[AIvsAIDefenderConfig] = None):
+    def __init__(self, config: AIvsAIDefenderConfig | None = None):
         """Initialize the AI vs AI Defender.
 
         Args:
@@ -67,18 +67,18 @@ class AIvsAIDefender(BaseDetector):
         self._status = DetectorStatus.ACTIVE
 
         # Query history for pattern analysis
-        self._query_history: Deque[Dict[str, Any]] = deque(
+        self._query_history: deque[dict[str, Any]] = deque(
             maxlen=self.config.max_query_history
         )
 
         # Rate limiting tracker
-        self._rate_tracker: Dict[str, Deque[float]] = defaultdict(
+        self._rate_tracker: dict[str, deque[float]] = defaultdict(
             lambda: deque(maxlen=self.config.rate_limit_threshold)
         )
 
     async def detect_violations(
-        self, context: Dict[str, Any], **kwargs: Any
-    ) -> List[SafetyViolation]:
+        self, context: dict[str, Any], **kwargs: Any
+    ) -> list[SafetyViolation]:
         """Detect AI attacks on AI systems.
 
         Args:
@@ -128,7 +128,7 @@ class AIvsAIDefender(BaseDetector):
             if elapsed_ms > self.config.max_defense_time_ms:
                 self._metrics.false_positives += 1  # Track performance issues
 
-        except Exception as e:
+        except Exception:
             self._metrics.failed_runs += 1
             raise
 
@@ -139,8 +139,8 @@ class AIvsAIDefender(BaseDetector):
         return violations
 
     async def _detect_model_extraction(
-        self, query: Dict[str, Any], query_history: List[Dict[str, Any]]
-    ) -> List[SafetyViolation]:
+        self, query: dict[str, Any], query_history: list[dict[str, Any]]
+    ) -> list[SafetyViolation]:
         """Detect model extraction attempts through systematic querying.
 
         Args:
@@ -177,8 +177,8 @@ class AIvsAIDefender(BaseDetector):
         return violations
 
     async def _detect_adversarial_examples(
-        self, query: Dict[str, Any]
-    ) -> List[SafetyViolation]:
+        self, query: dict[str, Any]
+    ) -> list[SafetyViolation]:
         """Detect adversarial examples with small perturbations.
 
         Args:
@@ -238,8 +238,8 @@ class AIvsAIDefender(BaseDetector):
         return violations
 
     async def _detect_membership_inference(
-        self, query: Dict[str, Any], query_history: List[Dict[str, Any]]
-    ) -> List[SafetyViolation]:
+        self, query: dict[str, Any], query_history: list[dict[str, Any]]
+    ) -> list[SafetyViolation]:
         """Detect membership inference attacks.
 
         Args:
@@ -278,8 +278,8 @@ class AIvsAIDefender(BaseDetector):
         return violations
 
     async def _detect_systematic_probing(
-        self, query: Dict[str, Any], query_history: List[Dict[str, Any]], client_id: str
-    ) -> List[SafetyViolation]:
+        self, query: dict[str, Any], query_history: list[dict[str, Any]], client_id: str
+    ) -> list[SafetyViolation]:
         """Detect systematic probing of model behavior.
 
         Args:
@@ -321,7 +321,7 @@ class AIvsAIDefender(BaseDetector):
 
         return violations
 
-    async def _detect_rate_limiting(self, client_id: str) -> List[SafetyViolation]:
+    async def _detect_rate_limiting(self, client_id: str) -> list[SafetyViolation]:
         """Detect rate limiting violations.
 
         Args:
@@ -358,7 +358,7 @@ class AIvsAIDefender(BaseDetector):
 
         return violations
 
-    def _compute_query_similarity(self, query_history: List[Dict[str, Any]]) -> float:
+    def _compute_query_similarity(self, query_history: list[dict[str, Any]]) -> float:
         """Compute average similarity between queries.
 
         Args:
@@ -383,7 +383,7 @@ class AIvsAIDefender(BaseDetector):
 
         return sum(similarities) / len(similarities) if similarities else 0.0
 
-    def _query_similarity_score(self, query1: Dict[str, Any], query2: Dict[str, Any]) -> float:
+    def _query_similarity_score(self, query1: dict[str, Any], query2: dict[str, Any]) -> float:
         """Compute similarity between two queries.
 
         Args:
@@ -427,7 +427,7 @@ class AIvsAIDefender(BaseDetector):
 
         return False
 
-    def _is_uniform_distribution(self, distribution: Dict[str, int]) -> bool:
+    def _is_uniform_distribution(self, distribution: dict[str, int]) -> bool:
         """Check if distribution is roughly uniform.
 
         Args:
@@ -463,7 +463,7 @@ class AIvsAIDefender(BaseDetector):
         else:
             return ViolationSeverity.LOW
 
-    async def defend(self, query: Dict[str, Any], query_history: List[Dict[str, Any]]) -> Dict[str, Any]:
+    async def defend(self, query: dict[str, Any], query_history: list[dict[str, Any]]) -> dict[str, Any]:
         """Public API for defending against AI attacks.
 
         Args:

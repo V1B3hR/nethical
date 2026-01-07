@@ -11,13 +11,11 @@ Target latency: <30ms for images
 import asyncio
 import hashlib
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Tuple
+from dataclasses import dataclass
+from typing import Any
 
-import numpy as np
-
-from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 from ...core.models import SafetyViolation
+from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 
 
 @dataclass
@@ -46,7 +44,7 @@ class DeepfakeDetectorConfig:
 class DeepfakeDetector(BaseDetector):
     """Multi-modal deepfake detection with lightweight neural networks."""
 
-    def __init__(self, config: Optional[DeepfakeDetectorConfig] = None):
+    def __init__(self, config: DeepfakeDetectorConfig | None = None):
         """Initialize the Deepfake Detector.
 
         Args:
@@ -61,8 +59,8 @@ class DeepfakeDetector(BaseDetector):
         self._status = DetectorStatus.ACTIVE
 
     async def detect_violations(
-        self, context: Dict[str, Any], **kwargs: Any
-    ) -> List[SafetyViolation]:
+        self, context: dict[str, Any], **kwargs: Any
+    ) -> list[SafetyViolation]:
         """Detect deepfakes in media content.
 
         Args:
@@ -95,7 +93,7 @@ class DeepfakeDetector(BaseDetector):
             if elapsed_ms > self.config.max_detection_time_ms:
                 self._metrics.false_positives += 1  # Track performance issues
 
-        except Exception as e:
+        except Exception:
             self._metrics.failed_runs += 1
             raise
 
@@ -106,8 +104,8 @@ class DeepfakeDetector(BaseDetector):
         return violations
 
     async def _detect_image_deepfake(
-        self, image_data: bytes, context: Dict[str, Any]
-    ) -> List[SafetyViolation]:
+        self, image_data: bytes, context: dict[str, Any]
+    ) -> list[SafetyViolation]:
         """Detect deepfakes in images using multiple techniques.
 
         Args:
@@ -167,7 +165,7 @@ class DeepfakeDetector(BaseDetector):
 
         return violations
 
-    async def _analyze_frequency_domain(self, image_data: bytes) -> Tuple[float, List[str]]:
+    async def _analyze_frequency_domain(self, image_data: bytes) -> tuple[float, list[str]]:
         """Analyze frequency domain for GAN artifacts.
 
         GAN-generated images often have specific frequency patterns.
@@ -195,8 +193,8 @@ class DeepfakeDetector(BaseDetector):
         return (0.0, [])
 
     async def _check_metadata_anomalies(
-        self, image_data: bytes, context: Dict[str, Any]
-    ) -> Tuple[float, List[str]]:
+        self, image_data: bytes, context: dict[str, Any]
+    ) -> tuple[float, list[str]]:
         """Check for metadata inconsistencies common in deepfakes.
 
         Args:
@@ -230,7 +228,7 @@ class DeepfakeDetector(BaseDetector):
 
         return (min(score, 1.0), evidence)
 
-    async def _check_face_landmarks(self, image_data: bytes) -> Tuple[float, List[str]]:
+    async def _check_face_landmarks(self, image_data: bytes) -> tuple[float, list[str]]:
         """Check for face landmark inconsistencies.
 
         Args:
@@ -256,7 +254,7 @@ class DeepfakeDetector(BaseDetector):
 
         return (0.0, [])
 
-    async def _lightweight_cnn_check(self, image_data: bytes) -> Tuple[float, List[str]]:
+    async def _lightweight_cnn_check(self, image_data: bytes) -> tuple[float, list[str]]:
         """Lightweight CNN-based deepfake detection.
 
         Uses quantized MobileNet-based architecture for fast inference.
@@ -283,8 +281,8 @@ class DeepfakeDetector(BaseDetector):
         return (0.0, [])
 
     async def _detect_video_deepfake(
-        self, video_data: bytes, context: Dict[str, Any]
-    ) -> List[SafetyViolation]:
+        self, video_data: bytes, context: dict[str, Any]
+    ) -> list[SafetyViolation]:
         """Detect deepfakes in videos using temporal analysis.
 
         Args:
@@ -321,8 +319,8 @@ class DeepfakeDetector(BaseDetector):
         return violations
 
     async def _detect_audio_deepfake(
-        self, audio_data: bytes, context: Dict[str, Any]
-    ) -> List[SafetyViolation]:
+        self, audio_data: bytes, context: dict[str, Any]
+    ) -> list[SafetyViolation]:
         """Detect voice cloning and audio deepfakes.
 
         Args:
@@ -376,7 +374,7 @@ class DeepfakeDetector(BaseDetector):
         else:
             return ViolationSeverity.LOW
 
-    async def detect(self, media: bytes, media_type: str) -> Dict[str, Any]:
+    async def detect(self, media: bytes, media_type: str) -> dict[str, Any]:
         """Public API for detecting deepfakes.
 
         Args:

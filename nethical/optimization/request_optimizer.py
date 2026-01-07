@@ -8,10 +8,9 @@ Features:
 
 import asyncio
 import hashlib
-import time
-from collections import OrderedDict
-from dataclasses import dataclass, field
-from typing import Any, Awaitable, Callable, Dict, List, Optional, Tuple
+from collections.abc import Awaitable, Callable
+from dataclasses import dataclass
+from typing import Any
 
 from cachetools import LRUCache
 
@@ -28,19 +27,19 @@ class DynamicBatcherConfig:
 class DynamicBatcher:
     """Dynamic batching for requests to optimize throughput."""
 
-    def __init__(self, config: Optional[DynamicBatcherConfig] = None):
+    def __init__(self, config: DynamicBatcherConfig | None = None):
         """Initialize dynamic batcher.
 
         Args:
             config: Optional configuration
         """
         self.config = config or DynamicBatcherConfig()
-        self._pending_requests: List[Tuple[Any, asyncio.Future]] = []
+        self._pending_requests: list[tuple[Any, asyncio.Future]] = []
         self._batch_lock = asyncio.Lock()
-        self._batch_task: Optional[asyncio.Task] = None
+        self._batch_task: asyncio.Task | None = None
 
     async def process_batch(
-        self, processor: Callable[[List[Any]], Awaitable[List[Any]]]
+        self, processor: Callable[[list[Any]], Awaitable[list[Any]]]
     ) -> None:
         """Process pending batch.
 
@@ -72,7 +71,7 @@ class DynamicBatcher:
             self._pending_requests.clear()
 
     async def add_request(
-        self, request: Any, processor: Callable[[List[Any]], Awaitable[List[Any]]]
+        self, request: Any, processor: Callable[[list[Any]], Awaitable[list[Any]]]
     ) -> Any:
         """Add request to batch.
 
@@ -107,7 +106,7 @@ class DynamicBatcher:
         return await future
 
     async def _schedule_batch(
-        self, processor: Callable[[List[Any]], Awaitable[List[Any]]]
+        self, processor: Callable[[list[Any]], Awaitable[list[Any]]]
     ) -> None:
         """Schedule batch processing after timeout.
 
@@ -126,7 +125,7 @@ class RequestOptimizer:
     def __init__(
         self,
         cache_maxsize: int = 10000,
-        batcher_config: Optional[DynamicBatcherConfig] = None,
+        batcher_config: DynamicBatcherConfig | None = None,
     ):
         """Initialize request optimizer.
 
@@ -158,11 +157,11 @@ class RequestOptimizer:
 
     async def process(
         self,
-        requests: List[Any],
-        processor: Callable[[List[Any]], Awaitable[List[Any]]],
+        requests: list[Any],
+        processor: Callable[[list[Any]], Awaitable[list[Any]]],
         enable_cache: bool = True,
         enable_batching: bool = True,
-    ) -> List[Any]:
+    ) -> list[Any]:
         """Process requests with caching and batching.
 
         Args:
@@ -222,8 +221,8 @@ class RequestOptimizer:
         return results
 
     async def _process_batch(
-        self, requests: List[Any], processor: Callable[[List[Any]], Awaitable[List[Any]]]
-    ) -> List[Any]:
+        self, requests: list[Any], processor: Callable[[list[Any]], Awaitable[list[Any]]]
+    ) -> list[Any]:
         """Process batch of requests.
 
         Args:
@@ -242,7 +241,7 @@ class RequestOptimizer:
         self.cache.clear()
         print("[RequestOptimizer] Cache cleared")
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get optimizer metrics.
 
         Returns:
@@ -274,7 +273,7 @@ class RequestCoalescer:
 
     def __init__(self):
         """Initialize request coalescer."""
-        self._pending: Dict[str, asyncio.Future] = {}
+        self._pending: dict[str, asyncio.Future] = {}
         self._lock = asyncio.Lock()
 
     async def coalesce(

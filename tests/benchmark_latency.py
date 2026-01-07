@@ -15,7 +15,6 @@ Target metrics:
 import asyncio
 import random
 import time
-from typing import Dict, List
 
 import numpy as np
 
@@ -27,7 +26,7 @@ class LoadTestConfig:
 
     num_agents: int = 1000
     requests_per_agent: int = 10
-    threat_types: List[str] = [
+    threat_types: list[str] = [
         "shadow_ai",
         "deepfake",
         "polymorphic",
@@ -38,7 +37,7 @@ class LoadTestConfig:
 
 async def agent_workload(
     agent_id: int, config: LoadTestConfig, detector: RealtimeThreatDetector
-) -> List[float]:
+) -> list[float]:
     """Simulate workload for a single agent.
 
     Args:
@@ -97,7 +96,7 @@ async def agent_workload(
     return latencies
 
 
-async def run_load_test(config: LoadTestConfig) -> Dict[str, any]:
+async def run_load_test(config: LoadTestConfig) -> dict[str, any]:
     """Run load test with concurrent agents.
 
     Args:
@@ -106,7 +105,7 @@ async def run_load_test(config: LoadTestConfig) -> Dict[str, any]:
     Returns:
         Dictionary with test results and metrics
     """
-    print(f"\n🔥 Starting Load Test")
+    print("\n🔥 Starting Load Test")
     print(f"{'=' * 70}")
     print(f"Agents: {config.num_agents}")
     print(f"Requests per agent: {config.requests_per_agent}")
@@ -174,25 +173,25 @@ async def run_load_test(config: LoadTestConfig) -> Dict[str, any]:
     return metrics
 
 
-def print_results(metrics: Dict[str, any]) -> None:
+def print_results(metrics: dict[str, any]) -> None:
     """Print load test results."""
     print(f"\n{'=' * 70}")
     print("📊 LOAD TEST RESULTS")
     print(f"{'=' * 70}")
 
-    print(f"\n📈 Execution Summary:")
+    print("\n📈 Execution Summary:")
     print(f"  Total Agents:       {metrics['total_agents']}")
     print(f"  Successful Agents:  {metrics['successful_agents']}")
     print(f"  Total Requests:     {metrics['total_requests']}")
     print(f"  Total Time:         {metrics['total_time_seconds']:.2f} seconds")
 
-    print(f"\n⚡ Throughput:")
+    print("\n⚡ Throughput:")
     print(f"  Requests/sec:       {metrics['throughput_req_per_sec']:.2f}")
     print(
         f"  Target (>5000):     {'✅ PASS' if metrics['meets_throughput_target'] else '❌ FAIL'}"
     )
 
-    print(f"\n⏱️  Latency Metrics:")
+    print("\n⏱️  Latency Metrics:")
     print(f"  Average:            {metrics['avg_latency_ms']:.2f} ms")
     print(
         f"  Target (<50ms):     {'✅ PASS' if metrics['meets_avg_latency_target'] else '❌ FAIL'}"
@@ -202,7 +201,7 @@ def print_results(metrics: Dict[str, any]) -> None:
     print(f"  Min:                {metrics['min_latency_ms']:.2f} ms")
     print(f"  Max:                {metrics['max_latency_ms']:.2f} ms")
 
-    print(f"\n📊 Percentiles:")
+    print("\n📊 Percentiles:")
     print(f"  P50:                {metrics['p50_latency_ms']:.2f} ms")
     print(f"  P95:                {metrics['p95_latency_ms']:.2f} ms")
     print(

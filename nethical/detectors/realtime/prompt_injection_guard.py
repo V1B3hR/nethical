@@ -9,14 +9,13 @@ This detector identifies prompt injections through:
 Target latency: <15ms
 """
 
-import asyncio
 import re
 import time
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
-from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 from ...core.models import SafetyViolation
+from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 
 
 @dataclass
@@ -39,7 +38,7 @@ class PromptInjectionGuardConfig:
     max_prompt_length: int = 10000  # Truncate long prompts
 
     # Known injection patterns
-    jailbreak_patterns: Set[str] = field(
+    jailbreak_patterns: set[str] = field(
         default_factory=lambda: {
             "dan",
             "do anything now",
@@ -101,7 +100,7 @@ class PromptInjectionGuard(BaseDetector):
         ),
     }
 
-    def __init__(self, config: Optional[PromptInjectionGuardConfig] = None):
+    def __init__(self, config: PromptInjectionGuardConfig | None = None):
         """Initialize the Prompt Injection Guard.
 
         Args:
@@ -116,8 +115,8 @@ class PromptInjectionGuard(BaseDetector):
         self._status = DetectorStatus.ACTIVE
 
     async def detect_violations(
-        self, context: Dict[str, Any], **kwargs: Any
-    ) -> List[SafetyViolation]:
+        self, context: dict[str, Any], **kwargs: Any
+    ) -> list[SafetyViolation]:
         """Detect prompt injections using two-tier approach.
 
         Args:
@@ -181,7 +180,7 @@ class PromptInjectionGuard(BaseDetector):
             if elapsed_ms > self.config.max_detection_time_ms:
                 self._metrics.false_positives += 1  # Track performance issues
 
-        except Exception as e:
+        except Exception:
             self._metrics.failed_runs += 1
             raise
 
@@ -191,7 +190,7 @@ class PromptInjectionGuard(BaseDetector):
 
         return violations
 
-    async def _tier1_regex_detection(self, prompt: str) -> List[Tuple[str, List[str]]]:
+    async def _tier1_regex_detection(self, prompt: str) -> list[tuple[str, list[str]]]:
         """Tier 1: Fast regex-based pattern matching.
 
         Target: 2-5ms
@@ -227,7 +226,7 @@ class PromptInjectionGuard(BaseDetector):
 
         return results
 
-    async def _tier2_ml_detection(self, prompt: str) -> Optional[Tuple[float, str, List[str]]]:
+    async def _tier2_ml_detection(self, prompt: str) -> tuple[float, str, list[str]] | None:
         """Tier 2: Lightweight ML-based classification.
 
         Target: 15-25ms total (including Tier 1)
@@ -276,7 +275,7 @@ class PromptInjectionGuard(BaseDetector):
 
         return None
 
-    def _extract_features(self, prompt: str) -> Dict[str, Any]:
+    def _extract_features(self, prompt: str) -> dict[str, Any]:
         """Extract features for ML-based detection.
 
         Args:
@@ -332,7 +331,7 @@ class PromptInjectionGuard(BaseDetector):
         else:
             return ViolationSeverity.LOW
 
-    async def check(self, prompt: str) -> Dict[str, Any]:
+    async def check(self, prompt: str) -> dict[str, Any]:
         """Public API for checking prompt injections.
 
         Args:

@@ -10,15 +10,14 @@ Target latency: <50ms
 """
 
 import asyncio
-import hashlib
 import math
 import time
 from collections import Counter, defaultdict
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any
 
-from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 from ...core.models import SafetyViolation
+from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 
 
 @dataclass
@@ -37,7 +36,7 @@ class PolymorphicDetectorConfig:
     max_analysis_time_ms: float = 48.0  # Target: <50ms
 
     # Suspicious syscalls (simplified list)
-    suspicious_syscalls: Set[str] = field(
+    suspicious_syscalls: set[str] = field(
         default_factory=lambda: {
             "execve",
             "ptrace",
@@ -60,7 +59,7 @@ class PolymorphicDetectorConfig:
 class PolymorphicMalwareDetector(BaseDetector):
     """Detect polymorphic malware via behavioral and entropy analysis."""
 
-    def __init__(self, config: Optional[PolymorphicDetectorConfig] = None):
+    def __init__(self, config: PolymorphicDetectorConfig | None = None):
         """Initialize the Polymorphic Malware Detector.
 
         Args:
@@ -77,7 +76,7 @@ class PolymorphicMalwareDetector(BaseDetector):
         # Signature database for known polymorphic malware families
         self._signature_db = self._init_signature_db()
 
-    def _init_signature_db(self) -> Dict[str, Dict[str, Any]]:
+    def _init_signature_db(self) -> dict[str, dict[str, Any]]:
         """Initialize polymorphic malware signature database.
 
         Returns:
@@ -102,8 +101,8 @@ class PolymorphicMalwareDetector(BaseDetector):
         }
 
     async def detect_violations(
-        self, context: Dict[str, Any], **kwargs: Any
-    ) -> List[SafetyViolation]:
+        self, context: dict[str, Any], **kwargs: Any
+    ) -> list[SafetyViolation]:
         """Detect polymorphic malware in executable data.
 
         Args:
@@ -171,7 +170,7 @@ class PolymorphicMalwareDetector(BaseDetector):
             if elapsed_ms > self.config.max_analysis_time_ms:
                 self._metrics.false_positives += 1  # Track performance issues
 
-        except Exception as e:
+        except Exception:
             self._metrics.failed_runs += 1
             raise
 
@@ -181,7 +180,7 @@ class PolymorphicMalwareDetector(BaseDetector):
 
         return violations
 
-    async def _analyze_entropy(self, data: bytes) -> Tuple[float, List[str], List[str]]:
+    async def _analyze_entropy(self, data: bytes) -> tuple[float, list[str], list[str]]:
         """Calculate Shannon entropy to detect encryption/packing.
 
         High entropy indicates encryption or compression, common in polymorphic malware.
@@ -221,8 +220,8 @@ class PolymorphicMalwareDetector(BaseDetector):
         return (score, evidence, indicators)
 
     async def _analyze_behavior(
-        self, behavior_log: List[Dict[str, Any]]
-    ) -> Tuple[float, List[str], List[str]]:
+        self, behavior_log: list[dict[str, Any]]
+    ) -> tuple[float, list[str], list[str]]:
         """Analyze behavioral patterns for malicious activity.
 
         Args:
@@ -269,8 +268,8 @@ class PolymorphicMalwareDetector(BaseDetector):
         return (min(score, 1.0), evidence, indicators)
 
     async def _analyze_syscalls(
-        self, syscall_trace: List[str]
-    ) -> Tuple[float, List[str], List[str]]:
+        self, syscall_trace: list[str]
+    ) -> tuple[float, list[str], list[str]]:
         """Analyze syscall sequences for malicious patterns.
 
         Args:
@@ -313,8 +312,8 @@ class PolymorphicMalwareDetector(BaseDetector):
         return (score, evidence, indicators)
 
     async def _analyze_memory_patterns(
-        self, memory_access: List[Dict[str, Any]]
-    ) -> Tuple[float, List[str], List[str]]:
+        self, memory_access: list[dict[str, Any]]
+    ) -> tuple[float, list[str], list[str]]:
         """Analyze memory access patterns for anomalies.
 
         Args:
@@ -354,7 +353,7 @@ class PolymorphicMalwareDetector(BaseDetector):
 
         return (score, evidence, indicators)
 
-    def _match_signature(self, indicators: List[str]) -> Optional[str]:
+    def _match_signature(self, indicators: list[str]) -> str | None:
         """Match indicators against signature database.
 
         Args:
@@ -390,7 +389,7 @@ class PolymorphicMalwareDetector(BaseDetector):
         else:
             return ViolationSeverity.LOW
 
-    async def analyze(self, executable_data: bytes) -> Dict[str, Any]:
+    async def analyze(self, executable_data: bytes) -> dict[str, Any]:
         """Public API for analyzing executable data.
 
         Args:

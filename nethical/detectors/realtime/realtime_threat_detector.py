@@ -8,14 +8,14 @@ Target: <50ms average latency under load
 
 import asyncio
 import time
-from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional
+from dataclasses import dataclass
+from typing import Any
 
-from .shadow_ai_detector import ShadowAIDetector, ShadowAIDetectorConfig
-from .deepfake_detector import DeepfakeDetector, DeepfakeDetectorConfig
-from .polymorphic_detector import PolymorphicMalwareDetector, PolymorphicDetectorConfig
-from .prompt_injection_guard import PromptInjectionGuard, PromptInjectionGuardConfig
 from .ai_vs_ai_defender import AIvsAIDefender, AIvsAIDefenderConfig
+from .deepfake_detector import DeepfakeDetector, DeepfakeDetectorConfig
+from .polymorphic_detector import PolymorphicDetectorConfig, PolymorphicMalwareDetector
+from .prompt_injection_guard import PromptInjectionGuard, PromptInjectionGuardConfig
+from .shadow_ai_detector import ShadowAIDetector, ShadowAIDetectorConfig
 
 
 @dataclass
@@ -36,17 +36,17 @@ class RealtimeThreatDetectorConfig:
     parallel_detection: bool = True
 
     # Individual detector configs
-    shadow_ai_config: Optional[ShadowAIDetectorConfig] = None
-    deepfake_config: Optional[DeepfakeDetectorConfig] = None
-    polymorphic_config: Optional[PolymorphicDetectorConfig] = None
-    prompt_injection_config: Optional[PromptInjectionGuardConfig] = None
-    ai_vs_ai_config: Optional[AIvsAIDefenderConfig] = None
+    shadow_ai_config: ShadowAIDetectorConfig | None = None
+    deepfake_config: DeepfakeDetectorConfig | None = None
+    polymorphic_config: PolymorphicDetectorConfig | None = None
+    prompt_injection_config: PromptInjectionGuardConfig | None = None
+    ai_vs_ai_config: AIvsAIDefenderConfig | None = None
 
 
 class RealtimeThreatDetector:
     """Unified interface for all threat detectors with performance optimization."""
 
-    def __init__(self, config: Optional[RealtimeThreatDetectorConfig] = None):
+    def __init__(self, config: RealtimeThreatDetectorConfig | None = None):
         """Initialize the Realtime Threat Detector.
 
         Args:
@@ -80,14 +80,14 @@ class RealtimeThreatDetector:
         # Performance metrics
         self._total_detections = 0
         self._total_latency = 0.0
-        self._latency_samples: List[float] = []
+        self._latency_samples: list[float] = []
 
     async def evaluate_threat(
         self,
-        input_data: Dict[str, Any],
+        input_data: dict[str, Any],
         threat_type: str,
         parallel: bool = True,
-    ) -> Dict[str, Any]:
+    ) -> dict[str, Any]:
         """Evaluate threat with optional parallel detection.
 
         Args:
@@ -147,34 +147,34 @@ class RealtimeThreatDetector:
                 "latency_ms": (time.perf_counter() - start_time) * 1000,
             }
 
-    async def _detect_shadow_ai(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _detect_shadow_ai(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Detect shadow AI using dedicated detector."""
         violations = await self.shadow_ai.detect_violations(input_data)
         return self._format_result("shadow_ai", violations)
 
-    async def _detect_deepfake(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _detect_deepfake(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Detect deepfakes using dedicated detector."""
         violations = await self.deepfake.detect_violations(input_data)
         return self._format_result("deepfake", violations)
 
-    async def _detect_polymorphic(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _detect_polymorphic(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Detect polymorphic malware using dedicated detector."""
         violations = await self.polymorphic.detect_violations(input_data)
         return self._format_result("polymorphic", violations)
 
-    async def _detect_prompt_injection(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _detect_prompt_injection(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Detect prompt injections using dedicated detector."""
         violations = await self.prompt_guard.detect_violations(input_data)
         return self._format_result("prompt_injection", violations)
 
-    async def _detect_ai_vs_ai(self, input_data: Dict[str, Any]) -> Dict[str, Any]:
+    async def _detect_ai_vs_ai(self, input_data: dict[str, Any]) -> dict[str, Any]:
         """Detect AI attacks using dedicated detector."""
         violations = await self.ai_defense.detect_violations(input_data)
         return self._format_result("ai_vs_ai", violations)
 
     async def _detect_all(
-        self, input_data: Dict[str, Any], parallel: bool
-    ) -> Dict[str, Any]:
+        self, input_data: dict[str, Any], parallel: bool
+    ) -> dict[str, Any]:
         """Run all enabled detectors."""
         detection_tasks = []
 
@@ -246,7 +246,7 @@ class RealtimeThreatDetector:
 
             return combined_result
 
-    def _format_result(self, detector_name: str, violations: List[Any]) -> Dict[str, Any]:
+    def _format_result(self, detector_name: str, violations: list[Any]) -> dict[str, Any]:
         """Format detector result."""
         threat_score = max([v.confidence for v in violations], default=0.0)
 
@@ -276,7 +276,7 @@ class RealtimeThreatDetector:
         index = int(len(sorted_samples) * percentile / 100)
         return sorted_samples[min(index, len(sorted_samples) - 1)]
 
-    def get_metrics(self) -> Dict[str, Any]:
+    def get_metrics(self) -> dict[str, Any]:
         """Get performance metrics."""
         return {
             "total_detections": self._total_detections,

@@ -10,12 +10,12 @@ This module provides 5 specialized threat detectors with target latencies:
 Unified interface: RealtimeThreatDetector with <50ms average latency.
 """
 
-from .shadow_ai_detector import ShadowAIDetector, ShadowAIDetectorConfig
-from .deepfake_detector import DeepfakeDetector, DeepfakeDetectorConfig
-from .polymorphic_detector import PolymorphicMalwareDetector, PolymorphicDetectorConfig
-from .prompt_injection_guard import PromptInjectionGuard, PromptInjectionGuardConfig
 from .ai_vs_ai_defender import AIvsAIDefender, AIvsAIDefenderConfig
+from .deepfake_detector import DeepfakeDetector, DeepfakeDetectorConfig
+from .polymorphic_detector import PolymorphicDetectorConfig, PolymorphicMalwareDetector
+from .prompt_injection_guard import PromptInjectionGuard, PromptInjectionGuardConfig
 from .realtime_threat_detector import RealtimeThreatDetector, RealtimeThreatDetectorConfig
+from .shadow_ai_detector import ShadowAIDetector, ShadowAIDetectorConfig
 
 __all__ = [
     "ShadowAIDetector",

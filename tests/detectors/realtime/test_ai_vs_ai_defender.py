@@ -65,7 +65,6 @@ class TestAIvsAIDefender:
     @pytest.mark.asyncio
     async def test_detect_rate_limiting(self, defender):
         """Test rate limiting detection."""
-        import time
 
         client_id = "rate_test_client"
 
