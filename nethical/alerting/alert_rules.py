@@ -175,7 +175,6 @@ class AlertRules:
         """
         try:
             counters = metrics.get('counters', {})
-            cache_data = {}
             
             # Calculate hit rate for each cache type
             # This would require tracking cache hits/misses in metrics
