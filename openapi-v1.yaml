@@ -1,0 +1,804 @@
+# Nethical API v1 OpenAPI Extension
+# This extends the main openapi.yaml with v1 backend management endpoints
+
+openapi: 3.1.0
+info:
+  title: Nethical Governance API v1
+  description: |
+    Enhanced REST API for AI safety and ethics governance with full backend management.
+    
+    ## New Features in v1
+    - **RBAC**: Role-based access control with JWT authentication
+      - `admin`: Full access to all operations
+      - `auditor`: Read-only access to logs and audit data
+      - `operator`: Can evaluate risk, but cannot modify configuration
+    - **Agent Management**: CRUD operations for AI agent configuration
+    - **Policy Management**: CRUD operations for governance policies
+    - **Audit Logs**: Read-only access with Merkle tree verification
+    - **Real-time Threats**: WebSocket and SSE for live threat notifications
+    
+    ## Authentication
+    All v1 endpoints (except /auth/login) require authentication via Bearer token.
+    
+    ### Login Example:
+    ```bash
+    curl -X POST http://localhost:8000/api/v1/auth/login \
+      -H "Content-Type: application/json" \
+      -d '{"username": "admin", "password": "admin123"}'
+    ```
+    
+    ### Using Token:
+    ```bash
+    curl http://localhost:8000/api/v1/agents \
+      -H "Authorization: Bearer YOUR_TOKEN_HERE"
+    ```
+    
+  version: 1.0.0
+  contact:
+    name: Nethical Team
+    url: https://github.com/V1B3hR/nethical
+    email: support@nethical.dev
+  license:
+    name: MIT
+    url: https://github.com/V1B3hR/nethical/blob/main/LICENSE
+
+servers:
+  - url: http://localhost:8000/api/v1
+    description: Local development server
+  - url: https://api.nethical.dev/api/v1
+    description: Production server (example)
+
+tags:
+  - name: Authentication
+    description: Login and token management
+  - name: Agent Management
+    description: CRUD operations for AI agents
+  - name: Policy Management
+    description: CRUD operations for governance policies
+  - name: Audit Logs
+    description: Read-only access to audit logs with Merkle tree verification
+  - name: Real-time Threats
+    description: WebSocket and SSE for real-time threat notifications
+
+paths:
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Login and get access token
+      description: |
+        Authenticate with username and password to receive a JWT access token.
+        Use this token in the Authorization header for subsequent requests.
+      operationId: login
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+            examples:
+              admin_login:
+                summary: Admin login
+                value:
+                  username: admin
+                  password: admin123
+      responses:
+        '200':
+          description: Successfully authenticated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/TokenResponse'
+              example:
+                access_token: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+                token_type: bearer
+                expires_in: 1800
+                user:
+                  id: 1
+                  username: admin
+                  email: admin@example.com
+                  role: admin
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /agents:
+    get:
+      tags:
+        - Agent Management
+      summary: List all agents
+      description: |
+        List all registered AI agents with pagination and filtering.
+        
+        **Required role:** Any authenticated user
+      operationId: listAgents
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          description: Page number (1-indexed)
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          description: Items per page (max 100)
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: status
+          in: query
+          description: Filter by status
+          schema:
+            type: string
+            enum: [active, suspended, terminated, quarantine]
+        - name: agent_type
+          in: query
+          description: Filter by agent type
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved agents
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+    
+    post:
+      tags:
+        - Agent Management
+      summary: Create new agent
+      description: |
+        Create a new AI agent configuration.
+        
+        **Required role:** admin
+      operationId: createAgent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentCreate'
+            examples:
+              gpt4_agent:
+                summary: GPT-4 Agent
+                value:
+                  agent_id: agent-gpt4-001
+                  name: GPT-4 Assistant
+                  agent_type: llm
+                  description: GPT-4 powered AI assistant
+                  trust_level: 0.9
+                  status: active
+                  configuration:
+                    model: gpt-4
+                    temperature: 0.7
+                    max_tokens: 2000
+                  metadata:
+                    department: engineering
+                    environment: production
+      responses:
+        '201':
+          description: Agent created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Agent with this ID already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ErrorResponse'
+
+  /agents/{agent_id}:
+    get:
+      tags:
+        - Agent Management
+      summary: Get agent details
+      description: |
+        Retrieve details for a specific agent.
+        
+        **Required role:** Any authenticated user
+      operationId: getAgent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          description: Agent identifier
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved agent
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '404':
+          description: Agent not found
+    
+    patch:
+      tags:
+        - Agent Management
+      summary: Update agent configuration
+      description: |
+        Update an existing agent's configuration.
+        
+        **Required role:** admin
+      operationId: updateAgent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          description: Agent identifier
+          schema:
+            type: string
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/AgentUpdate'
+      responses:
+        '200':
+          description: Agent updated successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AgentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Agent not found
+    
+    delete:
+      tags:
+        - Agent Management
+      summary: Delete agent
+      description: |
+        Delete an AI agent configuration.
+        
+        **Required role:** admin
+      operationId: deleteAgent
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: agent_id
+          in: path
+          required: true
+          description: Agent identifier
+          schema:
+            type: string
+      responses:
+        '204':
+          description: Agent deleted successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '404':
+          description: Agent not found
+
+  /policies:
+    get:
+      tags:
+        - Policy Management
+      summary: List all policies
+      description: |
+        List all governance policies with pagination and filtering.
+        
+        **Required role:** Any authenticated user
+      operationId: listPolicies
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, deprecated, quarantine]
+        - name: policy_type
+          in: query
+          schema:
+            type: string
+        - name: scope
+          in: query
+          schema:
+            type: string
+      responses:
+        '200':
+          description: Successfully retrieved policies
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyListResponse'
+    
+    post:
+      tags:
+        - Policy Management
+      summary: Create new policy
+      description: |
+        Create a new governance policy.
+        
+        **Required role:** admin
+      operationId: createPolicy
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/PolicyCreate'
+      responses:
+        '201':
+          description: Policy created successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/PolicyResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+        '409':
+          description: Policy with this ID already exists
+        '422':
+          description: Validation error
+
+  /audit/logs:
+    get:
+      tags:
+        - Audit Logs
+      summary: Get audit logs
+      description: |
+        Retrieve audit logs with pagination and filtering.
+        
+        **Required role:** auditor or admin
+      operationId: getAuditLogs
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 100
+            default: 50
+        - name: agent_id
+          in: query
+          description: Filter by agent ID
+          schema:
+            type: string
+        - name: event_type
+          in: query
+          description: Filter by event type
+          schema:
+            type: string
+        - name: threat_level
+          in: query
+          description: Filter by threat level
+          schema:
+            type: string
+            enum: [low, medium, high, critical]
+        - name: from_date
+          in: query
+          description: Start date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+        - name: to_date
+          in: query
+          description: End date (ISO 8601)
+          schema:
+            type: string
+            format: date-time
+      responses:
+        '200':
+          description: Successfully retrieved audit logs
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/AuditLogListResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          $ref: '#/components/responses/ForbiddenError'
+
+  /audit/merkle-tree:
+    get:
+      tags:
+        - Audit Logs
+      summary: Get Merkle tree structure
+      description: |
+        Get the Merkle tree structure for audit logs verification.
+        
+        **Required role:** auditor or admin
+      operationId: getMerkleTree
+      security:
+        - BearerAuth: []
+      parameters:
+        - name: limit
+          in: query
+          description: Number of recent logs to include
+          schema:
+            type: integer
+            minimum: 1
+            maximum: 1000
+            default: 100
+      responses:
+        '200':
+          description: Successfully retrieved Merkle tree
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/MerkleTreeResponse'
+
+  /audit/verify:
+    post:
+      tags:
+        - Audit Logs
+      summary: Verify Merkle proof
+      description: |
+        Verify a Merkle proof for a specific audit log entry.
+        
+        **Required role:** auditor or admin
+      operationId: verifyMerkleProof
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/VerifyMerkleProofRequest'
+      responses:
+        '200':
+          description: Verification result
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/VerifyMerkleProofResponse'
+
+  /ws/threats:
+    get:
+      tags:
+        - Real-time Threats
+      summary: WebSocket for real-time threats
+      description: |
+        WebSocket endpoint for receiving real-time threat notifications.
+        
+        ### Connection:
+        ```javascript
+        const ws = new WebSocket('ws://localhost:8000/api/v1/ws/threats?token=YOUR_TOKEN');
+        ws.onmessage = (event) => {
+          const threat = JSON.parse(event.data);
+          console.log('Threat detected:', threat);
+        };
+        ```
+        
+        ### Message Format:
+        ```json
+        {
+          "event_type": "threat_detected",
+          "timestamp": "2026-01-09T12:34:56Z",
+          "agent_id": "agent-123",
+          "threat_type": "prompt_injection",
+          "severity": "high",
+          "action_taken": "blocked",
+          "details": {}
+        }
+        ```
+      parameters:
+        - name: token
+          in: query
+          description: JWT authentication token
+          required: true
+          schema:
+            type: string
+        - name: agent_id
+          in: query
+          description: Filter by agent ID
+          schema:
+            type: string
+        - name: threat_type
+          in: query
+          description: Filter by threat type
+          schema:
+            type: string
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token obtained from /auth/login
+
+  schemas:
+    LoginRequest:
+      type: object
+      required:
+        - username
+        - password
+      properties:
+        username:
+          type: string
+        password:
+          type: string
+          format: password
+
+    TokenResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+        token_type:
+          type: string
+          example: bearer
+        expires_in:
+          type: integer
+          description: Token expiration time in seconds
+        user:
+          type: object
+
+    AgentCreate:
+      type: object
+      required:
+        - agent_id
+        - name
+      properties:
+        agent_id:
+          type: string
+        name:
+          type: string
+        agent_type:
+          type: string
+          default: general
+        description:
+          type: string
+        trust_level:
+          type: number
+          format: float
+          minimum: 0
+          maximum: 1
+          default: 0.5
+        status:
+          type: string
+          enum: [active, suspended, terminated, quarantine]
+          default: active
+        configuration:
+          type: object
+        metadata:
+          type: object
+
+    AgentUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+        trust_level:
+          type: number
+        status:
+          type: string
+        configuration:
+          type: object
+        metadata:
+          type: object
+
+    AgentResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        agent_id:
+          type: string
+        name:
+          type: string
+        agent_type:
+          type: string
+        description:
+          type: string
+        trust_level:
+          type: number
+        status:
+          type: string
+        configuration:
+          type: object
+        metadata:
+          type: object
+        created_at:
+          type: string
+          format: date-time
+        updated_at:
+          type: string
+          format: date-time
+
+    AgentListResponse:
+      type: object
+      properties:
+        agents:
+          type: array
+          items:
+            $ref: '#/components/schemas/AgentResponse'
+        total:
+          type: integer
+        page:
+          type: integer
+        per_page:
+          type: integer
+        pages:
+          type: integer
+
+    PolicyCreate:
+      type: object
+      required:
+        - policy_id
+        - name
+      properties:
+        policy_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+          default: "1.0.0"
+        rules:
+          type: array
+          items:
+            type: object
+
+    PolicyResponse:
+      type: object
+      properties:
+        id:
+          type: integer
+        policy_id:
+          type: string
+        name:
+          type: string
+        description:
+          type: string
+        version:
+          type: string
+        rules:
+          type: array
+        status:
+          type: string
+
+    PolicyListResponse:
+      type: object
+      properties:
+        policies:
+          type: array
+          items:
+            $ref: '#/components/schemas/PolicyResponse'
+        total:
+          type: integer
+
+    AuditLogResponse:
+      type: object
+      properties:
+        log_id:
+          type: string
+        event_type:
+          type: string
+        agent_id:
+          type: string
+        threat_type:
+          type: string
+        threat_level:
+          type: string
+        timestamp:
+          type: string
+          format: date-time
+
+    AuditLogListResponse:
+      type: object
+      properties:
+        logs:
+          type: array
+          items:
+            $ref: '#/components/schemas/AuditLogResponse'
+        total:
+          type: integer
+
+    MerkleTreeResponse:
+      type: object
+      properties:
+        root_hash:
+          type: string
+        total_logs:
+          type: integer
+
+    VerifyMerkleProofRequest:
+      type: object
+      required:
+        - log_id
+        - merkle_path
+      properties:
+        log_id:
+          type: string
+        merkle_path:
+          type: array
+          items:
+            type: array
+
+    VerifyMerkleProofResponse:
+      type: object
+      properties:
+        log_id:
+          type: string
+        verified:
+          type: boolean
+        message:
+          type: string
+
+    ErrorResponse:
+      type: object
+      properties:
+        detail:
+          type: string
+
+  responses:
+    UnauthorizedError:
+      description: Authentication required
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
+    
+    ForbiddenError:
+      description: Insufficient permissions
+      content:
+        application/json:
+          schema:
+            $ref: '#/components/schemas/ErrorResponse'
