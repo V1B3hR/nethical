@@ -54,7 +54,7 @@ class Agent(Base):
     trust_level = Column(Float, default=0.5)
     status = Column(String(50), default="active", index=True)  # active, suspended, terminated, quarantine
     configuration = Column(JSON, default=dict)
-    metadata = Column(JSON, default=dict)
+    meta_data = Column(JSON, default=dict)  # Renamed from 'metadata' (reserved in SQLAlchemy)
     region_id = Column(String(50))
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -71,7 +71,7 @@ class Agent(Base):
             "trust_level": self.trust_level,
             "status": self.status,
             "configuration": self.configuration,
-            "metadata": self.metadata,
+            "metadata": self.meta_data,  # Expose as 'metadata' in API
             "region_id": self.region_id,
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
@@ -95,7 +95,7 @@ class Policy(Base):
     rules = Column(JSON, default=list)
     scope = Column(String(100), default="global")
     fundamental_laws = Column(JSON, default=list)
-    metadata = Column(JSON, default=dict)
+    meta_data = Column(JSON, default=dict)  # Renamed from 'metadata' (reserved in SQLAlchemy)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     activated_at = Column(DateTime)
@@ -116,7 +116,7 @@ class Policy(Base):
             "rules": self.rules,
             "scope": self.scope,
             "fundamental_laws": self.fundamental_laws,
-            "metadata": self.metadata,
+            "metadata": self.meta_data,  # Expose as 'metadata' in API
             "created_at": self.created_at.isoformat() if self.created_at else None,
             "updated_at": self.updated_at.isoformat() if self.updated_at else None,
             "activated_at": self.activated_at.isoformat() if self.activated_at else None,

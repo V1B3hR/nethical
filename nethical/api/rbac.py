@@ -16,10 +16,10 @@ from enum import Enum
 from functools import wraps
 from typing import Annotated, Any, Callable, Optional
 
+import bcrypt
 import jwt
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from passlib.context import CryptContext
 from pydantic import BaseModel
 
 __all__ = [
@@ -32,16 +32,13 @@ __all__ = [
     "get_password_hash",
 ]
 
-# Password hashing
-pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
+# HTTP Bearer security scheme
+security = HTTPBearer()
 
 # JWT configuration
 SECRET_KEY = os.getenv("NETHICAL_SECRET_KEY", "development-secret-key-change-in-production")
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
-
-# HTTP Bearer security scheme
-security = HTTPBearer()
 
 
 class Role(str, Enum):
@@ -76,16 +73,22 @@ def verify_password(plain_password: str, hashed_password: str) -> bool:
     
     Args:
         plain_password: Plain text password
-        hashed_password: Hashed password
+        hashed_password: Hashed password (bcrypt)
         
     Returns:
         True if password matches
     """
-    return pwd_context.verify(plain_password, hashed_password)
+    try:
+        return bcrypt.checkpw(
+            plain_password.encode('utf-8'),
+            hashed_password.encode('utf-8') if isinstance(hashed_password, str) else hashed_password
+        )
+    except Exception:
+        return False
 
 
 def get_password_hash(password: str) -> str:
-    """Hash password.
+    """Hash password using bcrypt.
     
     Args:
         password: Plain text password
@@ -93,7 +96,9 @@ def get_password_hash(password: str) -> str:
     Returns:
         Hashed password
     """
-    return pwd_context.hash(password)
+    salt = bcrypt.gensalt()
+    hashed = bcrypt.hashpw(password.encode('utf-8'), salt)
+    return hashed.decode('utf-8')
 
 
 def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta] = None) -> str:
