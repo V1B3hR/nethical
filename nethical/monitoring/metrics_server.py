@@ -82,7 +82,7 @@ class MetricsServer:
         except Exception as e:
             logger.error(f"Error exporting metrics: {e}")
             return web.Response(
-                text=f"Error exporting metrics: {e}",
+                text="Internal server error while exporting metrics",
                 status=500
             )
     
