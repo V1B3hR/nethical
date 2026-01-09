@@ -95,9 +95,11 @@ class MetricsServer:
         Returns:
             JSON response with health status
         """
+        # Safely handle the possibility that 'enabled' is missing
+        metrics_enabled = getattr(self.metrics, 'enabled', None)
         health_data = {
             'status': 'healthy',
-            'metrics_enabled': self.metrics.enabled,
+            'metrics_enabled': metrics_enabled if metrics_enabled is not None else False,
             'server': 'nethical-metrics'
         }
         return web.json_response(health_data)
@@ -157,14 +159,15 @@ class MetricsServer:
         """Run the metrics server forever.
         
         This is a non-blocking version that can be used with asyncio.
+        Raises CancelledError when cancelled so upstream can catch.
         """
         await self.start_async()
         try:
-            # Keep running until cancelled
             while True:
                 await asyncio.sleep(3600)  # Sleep for an hour
         except asyncio.CancelledError:
             logger.info("Metrics server cancelled")
+            raise  # re-raise to propagate cancellation
         finally:
             await self.stop_async()
 
@@ -197,7 +200,12 @@ def start_metrics_server(
     
     # Start in a background thread/task
     import threading
-    thread = threading.Thread(target=server.start, daemon=True)
+    def server_start():
+        try:
+            server.start()
+        except Exception as exc:
+            logger.exception(f"Metrics server encountered error: {exc}")
+    thread = threading.Thread(target=server_start, daemon=True)
     thread.start()
     
     logger.info(f"Metrics server starting in background on {host}:{port}")
