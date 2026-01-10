@@ -35,7 +35,12 @@ jsonschema>=4.19.0,<5.0.0
 # Security
 cryptography==44.0.3
 defusedxml==0.7.1
-PyJWT>=2.0.0    
+PyJWT>=2.0.0
+passlib[bcrypt]>=1.7.4
+
+# Database
+sqlalchemy>=2.0.0
+alembic>=1.13.0    
 
 # Transitive/supporting (explicitly pinned to keep lock stable)
 annotated-types==0.7.0
