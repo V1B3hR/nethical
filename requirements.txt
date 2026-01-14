@@ -54,7 +54,7 @@ tzdata==2025.3
 # Pin starlette to the range fastapi 0.121.0 supports for reproducibility and security.
 # This explicit pin ensures builds remain consistent even if fastapi's range allows
 # multiple versions. Update this when updating fastapi.
-starlette>=0.40.0,<0.51.0
+starlette>=0.40.0,<0.52.0
 
 # LLM Integration SDKs (optional - for specific integrations)
 anthropic>=0.40.0  # For Claude/Anthropic integration
