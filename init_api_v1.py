@@ -213,7 +213,7 @@ def main():
         print("     uvicorn nethical.api.v1.app:create_v1_app --factory --reload")
         print("\n  2. Login credentials:")
         print(f"     Username: {args.username}")
-        print(f"     Password: {args.password}")
+        print("     Password: (hidden for security)")
         print("\n  3. Access documentation:")
         print("     http://localhost:8000/docs")
         print("\n  4. Run demo:")
