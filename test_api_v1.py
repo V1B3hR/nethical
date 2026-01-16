@@ -8,7 +8,6 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import individual modules directly (avoid main __init__.py)
-from nethical.database.models import Base, User, Agent, Policy, AuditLog
 from nethical.api.rbac import Role, create_access_token, get_password_hash, verify_password
 
 def test_database_models():
