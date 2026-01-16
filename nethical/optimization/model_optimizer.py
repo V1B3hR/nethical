@@ -221,7 +221,7 @@ class ModelOptimizer:
         # Simulate inference
         for _ in range(num_iterations):
             # Generate dummy input
-            dummy_input = np.random.randn(*input_shape).astype(np.float32)
+            unused_dummy_input = np.random.randn(*input_shape).astype(np.float32)
 
             start = time.perf_counter()
             # In production: model(dummy_input)
