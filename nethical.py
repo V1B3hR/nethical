@@ -15,6 +15,7 @@ Usage:
 import os
 import sys
 import json
+import logging
 import datetime
 from pathlib import Path
 from typing import Optional
@@ -24,8 +25,7 @@ from colorama import Fore, Style, init
 try:
     from openai import OpenAI
 except ImportError:
-    print("Missing dependency 'openai'. Install via 'pip install openai'")
-    sys.exit(1)
+    logging.error("Missing dependency 'openai'. Install via 'pip install openai'")
 
 # Initialize colorama
 init(autoreset=True)
