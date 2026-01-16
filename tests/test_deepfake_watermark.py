@@ -17,7 +17,6 @@ from nethical.content_authenticity import (
     WatermarkDetectionResult,
     ContentProvenance,
     DisclosureLabel,
-    WatermarkStrength,
     ExtractionQuality,
     C2PAIntegration,
     C2PAManifest,
