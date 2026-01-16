@@ -1,13 +1,12 @@
 """Tests for RBAC functionality."""
 
-import pytest
 from datetime import timedelta
 from nethical.api.rbac import (
     Role,
     create_access_token,
     get_password_hash,
     verify_password,
-)
+    )
 
 
 class TestPasswordHashing:
