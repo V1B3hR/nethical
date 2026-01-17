@@ -1,7 +1,6 @@
 """Integration tests for monitoring and alerting system."""
 
 import pytest
-import asyncio
 from nethical.monitoring import PrometheusMetrics, MetricsServer, get_prometheus_metrics
 from nethical.alerting import AlertManager, AlertSeverity, AlertChannel, RateLimiter
 from nethical.profiling import FlamegraphProfiler
