@@ -18,7 +18,6 @@ Version: 1.0.0
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import uuid
 from dataclasses import dataclass, field
