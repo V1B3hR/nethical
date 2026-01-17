@@ -18,7 +18,6 @@ from fastapi import APIRouter, Depends, Query, WebSocket, WebSocketDisconnect, s
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from nethical.api.rbac import User, get_current_user
 
 router = APIRouter(tags=["Real-time Threats"])
 
