@@ -14,11 +14,11 @@ import logging
 from pathlib import Path
 from datetime import datetime
 from typing import Callable, Any, Tuple, Optional
+import importlib.util
 
 logger = logging.getLogger(__name__)
 
-try:
-    import py_spy
+PY_SPY_AVAILABLE = importlib.util.find_spec("py_spy") is not None
     PY_SPY_AVAILABLE = True
 except ImportError:
     PY_SPY_AVAILABLE = False
