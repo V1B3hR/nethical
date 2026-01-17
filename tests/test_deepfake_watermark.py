@@ -152,7 +152,7 @@ class TestDeepfakeWatermarkingSystem:
         video_path = "/path/to/video.mp4"
         
         # Watermark video
-        watermarked = watermark_system.watermark_video(video_path, sample_metadata)
+        watermark_system.watermark_video(video_path, sample_metadata)
         
         # Detect watermark
         detection = watermark_system.detect_watermark(video_path)
