@@ -465,7 +465,7 @@ class DeepfakeWatermarkingSystem:
     ) -> np.ndarray:
         """Generate watermark pattern for embedding."""
         # Use watermark ID as seed for reproducible pattern
-        seed = int(hashlib.md5(watermark_id.encode()).hexdigest()[:8], 16)
+        seed = int(hashlib.sha256(watermark_id.encode()).hexdigest()[:8], 16)
         np.random.seed(seed % (2**32))
         
         # Generate pseudo-random pattern
@@ -483,7 +483,7 @@ class DeepfakeWatermarkingSystem:
         length: int
     ) -> np.ndarray:
         """Generate audio watermark signal."""
-        seed = int(hashlib.md5(watermark_id.encode()).hexdigest()[:8], 16)
+        seed = int(hashlib.sha256(watermark_id.encode()).hexdigest()[:8], 16)
         np.random.seed(seed % (2**32))
         
         # Generate watermark signal
