@@ -6,7 +6,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from nethical.api.v1.app import create_v1_app
-from nethical.database import Base, get_db, Agent
+from nethical.database import Base, get_db
 from nethical.api.rbac import create_access_token, get_password_hash
 from nethical.database.models import User
 
