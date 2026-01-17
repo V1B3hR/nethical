@@ -399,7 +399,6 @@ class TestIntegration:
     def test_full_content_authenticity_workflow(self):
         """Test complete content authenticity workflow."""
         watermark_sys = DeepfakeWatermarkingSystem(watermark_strength=0.3)
-        c2pa = C2PAIntegration()
         
         # Generate synthetic content
         content = np.random.randint(0, 255, (200, 200, 3), dtype=np.uint8)
