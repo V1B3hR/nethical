@@ -281,10 +281,10 @@ class TestDSACompliance:
     def test_get_active_crises(self, dsa_compliance_platform):
         """Test retrieving active crises."""
         # Activate multiple crises
-        response1 = dsa_compliance_platform.activate_crisis_protocol(
+        dsa_compliance_platform.activate_crisis_protocol(
             CrisisType.PUBLIC_HEALTH
         )
-        response2 = dsa_compliance_platform.activate_crisis_protocol(
+        dsa_compliance_platform.activate_crisis_protocol(
             CrisisType.PUBLIC_SECURITY
         )
         
