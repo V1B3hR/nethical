@@ -18,7 +18,6 @@ from sqlalchemy.orm import Session
 
 from nethical.api.rbac import (
     ACCESS_TOKEN_EXPIRE_MINUTES,
-    User as RBACUser,
     create_access_token,
     get_password_hash,
     verify_password,
