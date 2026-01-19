@@ -19,7 +19,7 @@ from fastapi import APIRouter, Depends, HTTPException, Query, status
 from pydantic import BaseModel, Field
 from sqlalchemy.orm import Session
 
-from nethical.api.rbac import User, get_current_user, require_auditor_or_admin
+from nethical.api.rbac import User, require_auditor_or_admin
 from nethical.database import AuditLog, get_db
 
 router = APIRouter(prefix="/audit", tags=["Audit Logs"])
