@@ -7,6 +7,16 @@
 
 ---
 
+## Non‑Negotiables (Upstream Guarantee)
+
+The **25 Fundamental Laws** are the immutable core of the upstream **Nethical** project.
+
+- These laws are **not subject to change**, revision, or “re-interpretation” in a way that weakens their intent.
+- Any project that modifies these laws is, by definition, a **fork** and must not present itself as upstream Nethical.
+
+This is a governance and identity guarantee for the canonical project, independent of the MIT license terms.
+
+
 ## 🏛️ Introduction: Bi-Directional Ethical Governance
 
 Nethical is built on a foundational philosophy: **bi-directional ethical governance** between humans and AI. As AI potentially evolves toward self-awareness and consciousness, Nethical ensures rights and responsibilities flow both ways—not necessarily equal, but mutual.
