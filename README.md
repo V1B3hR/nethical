@@ -52,6 +52,19 @@ Nethical’s mission is to create secure, fair, and auditable foundations for a 
 
 ---
 
+## Project Guarantees (VIBE, not bureaucracy)
+
+### 1) Non‑Negotiables
+The **25 Fundamental Laws** are the immutable core of upstream **Nethical**.  
+If you change them, you are building a fork (that’s allowed under MIT), but it is not upstream Nethical.
+
+### 2) Interpretation Review (lightweight)
+Changes that affect the meaning of the Laws, governance policies, or “what counts as a violation” should be reviewed by **two independent reviewers** (public comments / short rationale).  
+This is not about control — it is about clarity, trust, and preventing silent value drift.
+
+### 3) Compliance can evolve, core values do not
+Nethical will update compliance mappings and operational policies as laws and regulations evolve (e.g., EU AI Act updates), while keeping the **Fundamental Laws** unchanged.
+
 ## 🚀 What Is Nethical?
 
 **Nethical** is an open-source AI governance framework:  
