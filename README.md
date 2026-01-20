@@ -48,7 +48,7 @@
 
 ## ✨ Vision
 
-Nethical’s mission is to create secure, fair, and auditable foundations for a world powered by AI. We believe advanced artificial intelligence should always serve, respect, and protect human values — through verifiable ethics, transparency, and robust technical safeguards.
+Nethical’s mission is to create secure, fair, and auditable foundations for a world powered by AI. We believe advanced artificial intelligence should always serve, respect, and protect human values [...]
 
 ---
 
@@ -64,6 +64,21 @@ This is not about control — it is about clarity, trust, and preventing silent 
 
 ### 3) Compliance can evolve, core values do not
 Nethical will update compliance mappings and operational policies as laws and regulations evolve (e.g., EU AI Act updates), while keeping the **Fundamental Laws** unchanged.
+
+---
+
+## Local‑First by Design (Safety should not depend on the network)
+
+**Nethical is local‑first.** The safest place to enforce ethics is where actions happen — on the machine that executes them.  
+When the network fails, **safety must not**.
+
+Nethical is built as three complementary layers:
+
+1) **Local (default)** — a lightweight *Agent Gateway* that can run on device / server / edge and block unsafe actions before they happen.  
+2) **Control Plane (optional)** — centralized policy management, compliance reporting, and audit operations for organizations (when you need it).  
+3) **Protocol (always)** — every evaluation returns **Decision + Reason + Proof**: a clear verdict, a human‑readable explanation, and a tamper‑evident audit trail.
+
+---
 
 ## 🚀 What Is Nethical?
 
