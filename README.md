@@ -38,6 +38,9 @@
 
 ---
 
+🔥🔥🔥🚀🚀🚀If you cloned it and it helped — star it ⭐⭐⭐. It’s the signal that keeps the project alive.🔥🔥🔥🚀🚀🚀
+
+
 
 <a name="purpose"></a>
 # Nethical
