@@ -9,7 +9,6 @@ This module exports comprehensive metrics for all threat detectors including:
 - Model inference times
 """
 
-from datetime import datetime, timezone
 from typing import Optional
 
 try:
