@@ -174,7 +174,6 @@ class AlertRules:
             min_hit_rate: Minimum acceptable cache hit rate
         """
         try:
-            counters = metrics.get('counters', {})
             
             # Calculate hit rate for each cache type
             # This would require tracking cache hits/misses in metrics
