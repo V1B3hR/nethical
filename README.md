@@ -101,7 +101,7 @@ A control layer you put between your AI agents (bots, assistants, models, platfo
 - **Safety First:** Every action is screened for risk and safety before execution.
 - **Auditability:** Immutable, cryptographically verifiable log of all agent actions and decisions.
 - **Human Control:** Human-in-the-loop and override mechanisms are built in.
-- **Privacy Respect:** Designed for regulatory compliance (GDPR, EU AI Act, HIPAA, etc).
+- **Privacy Respect:** Data minimization, local-first, user rights readiness. See [Ethical AI Protocol](./ETHICAL_AI_PROTOCOL.md).
 - **Modular & Transparent:** Composable, documented, open by nature.
 
 ---
@@ -244,6 +244,7 @@ See [docs/detectors.md](./docs/detectors.md) for comprehensive documentation.
 
 ### 🏛️ Core Documentation
 - [**📜 The 25 Fundamental Laws**](./docs/laws_and_policies/FUNDAMENTAL_LAWS.md) ⭐ **START HERE** ⭐
+- [**🔒 The Ethical AI Protocol**](./ETHICAL_AI_PROTOCOL.md) — Privacy principles and technical standards
 - [📖 Complete Documentation Index](./docs/index.md) - Central hub for all documentation
 - [Security Policy](./SECURITY.md)
 - [Privacy Policy](./PRIVACY.md)
