@@ -35,8 +35,6 @@ jobs:
 
       - name: Install pip-tools with compatible versions
         run: |
-          # Pin to known-working versions for stability
-          # pip 24.2 + pip-tools 7.4.1 are tested and compatible
           python -m pip install "pip==24.2"
           python -m pip install "pip-tools==7.4.1"
 
@@ -53,12 +51,12 @@ jobs:
       - name: Re-generate requirements-hashed.txt (to temp)
         run: |
           if [ -f requirements.txt ]; then
-            pip-compile --generate-hashes --output-file new_requirements-hashed.txt requirements.txt
+            python -m piptools compile --generate-hashes --output-file new_requirements-hashed.txt requirements.txt
           else
             echo "::error ::requirements.txt not found."
             exit 1
           fi
-
+     
       - name: Determine drift
         id: check_diff
         shell: bash
