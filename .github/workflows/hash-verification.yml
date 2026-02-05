@@ -33,10 +33,12 @@ jobs:
         with:
           python-version: '3.11'
 
-      - name: Install pip-tools
+      - name: Install pip-tools with compatible versions
         run: |
-            python -m pip install --upgrade pip
-            python -m pip install --upgrade pip-tools>=7.4.1
+          # Pin to known-working versions for stability
+          # pip 24.2 + pip-tools 7.4.1 are tested and compatible
+          python -m pip install "pip==24.2"
+          python -m pip install "pip-tools==7.4.1"
 
       - name: Save committed requirements-hashed.txt (if present)
         id: save_committed
