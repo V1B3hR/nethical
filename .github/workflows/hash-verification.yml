@@ -34,7 +34,9 @@ jobs:
           python-version: '3.11'
 
       - name: Install pip-tools
-        run: python -m pip install --upgrade 'pip-tools'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install --upgrade pip-tools
 
       - name: Save committed requirements-hashed.txt (if present)
         id: save_committed
