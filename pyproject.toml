@@ -38,7 +38,7 @@ cuda = [
 
 tpu = [
     "torch>=2.0.0",
-    "torch_xla>=2.0.0",
+    "torch_xla>=2.9.0",
 ]
 
 trainium = [
