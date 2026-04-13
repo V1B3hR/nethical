@@ -33,22 +33,22 @@ test = [
 
 # Hardware accelerator support
 cuda = [
-    "torch>=2.0.0",
+    "torch>=2.11.0",
 ]
 
 tpu = [
-    "torch>=2.0.0",
+    "torch>=2.11.0",
     "torch_xla>=2.0.0",
 ]
 
 trainium = [
-    "torch>=2.0.0",
+    "torch>=2.11.0",
     "torch-neuronx>=2.0.0",
 ]
 
 # All accelerators
 accelerators = [
-    "torch>=2.0.0",
+    "torch>=2.11.0",
 ]
 
 # Post-quantum cryptography (when libraries mature)
