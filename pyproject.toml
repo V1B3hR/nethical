@@ -53,7 +53,7 @@ accelerators = [
 
 # Post-quantum cryptography (when libraries mature)
 pqc = [
-    "cryptography>=44.0.0",
+    "cryptography>=46.0.7",
 ]
 
 [project.scripts]
