@@ -290,8 +290,19 @@ class LoadGenerator:
 
         per_agent_actions = self._distribute_actions(total_actions)
         # Effective interval per action across the whole system
-        interval_s = 1.0 / self.target_rps if self.target_rps > 0 else 0.0
+        interval = 1.0 / args.rps
+start = time.perf_counter()
+sent = 0
 
+while time.perf_counter() - start < args.duration:
+    target_time = start + sent * interval
+
+    now = time.perf_counter()
+    if now < target_time:
+        time.sleep(target_time - now)
+
+    send_request()  # or schedule one worker/task
+    sent += 1
         # Shared start (perf_counter), allowing precise pacing
         global_start = time.perf_counter()
 
