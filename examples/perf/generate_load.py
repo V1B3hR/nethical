@@ -81,6 +81,34 @@ def validate_positive(name: str, val: float) -> None:
         raise ValueError(f"{name} must be > 0, got {val}")
 
 
+class GlobalPacer:
+    """Thread-safe global request pacer for aggregate RPS control."""
+
+    def __init__(self, start_time: float, interval_s: float, stop_event: threading.Event):
+        self._next_slot = start_time
+        self._interval_s = float(interval_s)
+        if self._interval_s < 0:
+            raise ValueError(f"interval_s must be >= 0, got {interval_s}")
+        self._stop_event = stop_event
+        self._lock = threading.Lock()
+
+    def wait_for_slot(self) -> bool:
+        """Block until the next globally scheduled slot, unless stopping."""
+        if self._stop_event.is_set():
+            return False
+        if self._interval_s <= 0:
+            return True
+
+        with self._lock:
+            slot_time = self._next_slot
+            self._next_slot += self._interval_s
+
+        delay = slot_time - time.perf_counter()
+        if delay > 0:
+            return not self._stop_event.wait(timeout=delay)
+        return not self._stop_event.is_set()
+
+
 class LoadGenerator:
     """Generate load against Nethical governance system."""
 
@@ -229,35 +257,28 @@ class LoadGenerator:
         self,
         agent_id: str,
         actions_for_agent: int,
-        start_time: float,
-        interval_s: float,
         agent_stagger_s: float,
+        global_pacer: "GlobalPacer",
     ) -> List[Dict[str, Any]]:
         """Run workload for a single agent with rate pacing.
 
         Pacing model:
-        - All agents target 'interval_s' between actions to hit the overall RPS.
+        - All agents share one global pacer so aggregate throughput stays near target RPS.
         - Each agent's first action is delayed by 'agent_stagger_s' * agent_index to avoid a thundering herd.
-        - Uses perf_counter for robust sleep scheduling.
         """
         if actions_for_agent <= 0:
             return []
 
         results: List[Dict[str, Any]] = []
-        # Initial agent-specific stagger
-        first_fire = start_time + agent_stagger_s
+        if agent_stagger_s > 0 and self.stop_event.wait(timeout=agent_stagger_s):
+            return results
 
         for i in range(actions_for_agent):
             if self.stop_event.is_set():
                 break
 
-            # Schedule next fire time
-            next_fire = first_fire + (i * interval_s)
-
-            # Sleep until next_fire
-            now = time.perf_counter()
-            if next_fire > now:
-                time.sleep(next_fire - now)
+            if not global_pacer.wait_for_slot():
+                break
 
             # Execute action
             try:
@@ -291,7 +312,6 @@ class LoadGenerator:
         per_agent_actions = self._distribute_actions(total_actions)
         # Effective interval per action across the whole system
         interval_s = 1.0 / self.target_rps if self.target_rps > 0 else 0.0
-
         # Shared start (perf_counter), allowing precise pacing
         global_start = time.perf_counter()
 
@@ -299,6 +319,7 @@ class LoadGenerator:
         agent_stagger_s_base = self.stagger_ms / 1000.0
 
         all_results: List[Dict[str, Any]] = []
+        global_pacer = GlobalPacer(global_start, interval_s, self.stop_event)
 
         max_workers = min(self.max_workers, self.agents)
         log.info("Thread pool: max_workers=%d (cpu=%s)", max_workers, os.cpu_count())
@@ -313,9 +334,8 @@ class LoadGenerator:
                     self.run_agent_workload,
                     agent_id,
                     per_agent_actions[i],
-                    global_start,
-                    interval_s,
                     stagger,
+                    global_pacer,
                 )
                 futures.append(fut)
 

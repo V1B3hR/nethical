@@ -12,15 +12,15 @@ argon2-cffi==25.1.0
 #   pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
 
 # Web server framework (optional - for API server)
-fastapi==0.131.0
-uvicorn==0.41.0
+fastapi==0.136.1
+uvicorn==0.46.0
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
-pydantic==2.12.5
-pydantic-core==2.41.5
+pydantic==2.13.4
+pydantic-core==2.46.4
 typing-extensions==4.15.0
 dataclasses-json==0.6.7
 
@@ -33,7 +33,7 @@ PyYAML==6.0.3
 jsonschema>=4.19.0,<5.0.0
 
 # Security
-cryptography==46.0.5
+cryptography==46.0.7
 defusedxml==0.7.1
 PyJWT>=2.0.0
 passlib[bcrypt]>=1.7.4
