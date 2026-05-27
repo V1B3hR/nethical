@@ -86,7 +86,9 @@ class GlobalPacer:
 
     def __init__(self, start_time: float, interval_s: float, stop_event: threading.Event):
         self._next_slot = start_time
-        self._interval_s = max(0.0, float(interval_s))
+        self._interval_s = float(interval_s)
+        if self._interval_s < 0:
+            raise ValueError(f"interval_s must be >= 0, got {interval_s}")
         self._stop_event = stop_event
         self._lock = threading.Lock()
 
