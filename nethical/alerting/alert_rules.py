@@ -174,11 +174,10 @@ class AlertRules:
             min_hit_rate: Minimum acceptable cache hit rate
         """
         try:
-            
             # Calculate hit rate for each cache type
             # This would require tracking cache hits/misses in metrics
             # For now, this is a placeholder for when cache metrics are available
-            
+
             # Example: If we had cache_hits and cache_misses counters
             # hits = counters.get('cache_hits', {})
             # misses = counters.get('cache_misses', {})
@@ -188,7 +187,7 @@ class AlertRules:
             #         hit_rate = hits.get(cache_type, 0) / total
             #         if hit_rate < min_hit_rate:
             #             await alert_manager.send_alert(...)
-            
+            pass  # Placeholder until cache metrics are available
         except Exception as e:
             logger.error(f"Error checking cache performance rule: {e}")
 
