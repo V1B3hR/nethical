@@ -70,7 +70,7 @@ class GlobalPacer:
     """Thread-safe global request pacer for aggregate RPS control."""
 
     def __init__(self, start_time: float, interval_s: float, stop_event: threading.Event):
-        self._next_slot = start_time
+        self._next_slot = start_time + float(interval_s)
         self._interval_s = float(interval_s)
         if self._interval_s < 0:
             raise ValueError(f"interval_s must be >= 0, got {interval_s}")
@@ -484,11 +484,11 @@ def main() -> int:
     print("SLO Compliance:")
     p95_ok = stats["latency_p95_ms"] < 200
     p99_ok = stats["latency_p99_ms"] < 500
-rps_ok = (
-    abs(stats["achieved_rps"] - stats["target_rps"]) / stats["target_rps"] < 0.1
-    if stats["target_rps"] > 0
-    else False
-)
+    rps_ok = (
+        abs(stats["achieved_rps"] - stats["target_rps"]) / stats["target_rps"] < 0.1
+        if stats["target_rps"] > 0
+        else False
+    )
     error_ok = stats["error_rate"] < 0.01
 
     print(f"  p95 < 200ms:  {'✓ PASS' if p95_ok else '✗ FAIL'} ({stats['latency_p95_ms']:.2f}ms)")
