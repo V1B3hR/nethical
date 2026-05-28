@@ -56,7 +56,7 @@ jobs:
           restore-keys: trivy-db-
 
       - name: Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@0.28.0
+        uses: aquasecurity/trivy-action@0.31.0
         env:
           TRIVY_CACHE_DIR: .trivycache
         with:
