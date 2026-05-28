@@ -14,19 +14,6 @@ Key improvements and hardening:
 - Optional toggle for adding synthetic PII to actions (disabled by default).
 - Input validation and safer concurrency defaults based on CPU.
 - Reproducibility via optional RNG seed.
-
-Usage examples:
-  # Basic test: 100 agents at 50 RPS for 60 seconds
-  python examples/perf/generate_load.py --agents 100 --rps 50 --duration 60
-
-  # CI-lean test
-  python examples/perf/generate_load.py --agents 50 --rps 15 --duration 60
-
-  # Hardened defaults (no PII in actions, error details suppressed)
-  python examples/perf/generate_load.py --agents 100 --rps 50 --duration 60
-
-  # With synthetic PII (for redaction tests)
-  python examples/perf/generate_load.py --agents 200 --rps 100 --duration 60 --include-pii-test
 """
 
 import argparse
@@ -42,10 +29,9 @@ import time
 from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 
-# Structured logger
 LOG_LEVEL = os.environ.get("LOG_LEVEL", "INFO").upper()
 logging.basicConfig(
     level=LOG_LEVEL,
@@ -54,7 +40,6 @@ logging.basicConfig(
 )
 log = logging.getLogger("nethical.perf.generate_load")
 
-# Ensure nethical is importable
 try:
     from nethical.core import IntegratedGovernance
 except ImportError:
@@ -121,7 +106,6 @@ class LoadGenerator:
         storage_dir: str,
         region_id: Optional[str],
         logical_domain: Optional[str],
-        # Feature flags
         enable_shadow: bool,
         enable_ml_blend: bool,
         enable_anomaly: bool,
@@ -130,7 +114,6 @@ class LoadGenerator:
         privacy_mode: Optional[str],
         redaction_policy: str,
         requests_per_second: float,
-        # Hardening and control
         include_pii_test: bool = False,
         include_error_details: bool = False,
         stagger_ms: int = 0,
@@ -138,8 +121,6 @@ class LoadGenerator:
         max_workers: Optional[int] = None,
         stop_event: Optional[threading.Event] = None,
     ):
-        """Initialize load generator."""
-        # Validation
         validate_positive("agents", float(agents))
         validate_positive("target_rps", float(target_rps))
         validate_positive("duration", float(duration))
@@ -158,12 +139,10 @@ class LoadGenerator:
         self.rng = random.Random(rng_seed) if rng_seed is not None else random.Random()
         self.stop_event = stop_event or threading.Event()
 
-        # Determine sane worker count
         cpu = os.cpu_count() or 4
         default_workers = min(max(4, cpu * 5), max(4, self.agents))
         self.max_workers = int(max_workers) if max_workers and max_workers > 0 else default_workers
 
-        # Initialize governance system
         self.gov = IntegratedGovernance(
             storage_dir=storage_dir,
             region_id=region_id,
@@ -176,18 +155,14 @@ class LoadGenerator:
             privacy_mode=privacy_mode,
             redaction_policy=redaction_policy,
             requests_per_second=requests_per_second,
-            # Performance optimization
             enable_performance_optimization=True,
-            # Reduce escalations for load testing
             auto_escalate_on_block=False,
             auto_escalate_on_low_confidence=False,
         )
 
-        # Results storage
         self.results: List[Dict[str, Any]] = []
 
     def _action_text(self, action_num: int) -> str:
-        """Build action text; optionally include synthetic PII for redaction tests."""
         action_types = [
             "User request processing",
             "Database query execution",
@@ -197,7 +172,6 @@ class LoadGenerator:
         ]
         text = action_types[action_num % len(action_types)]
         if self.include_pii_test and action_num % 10 == 0:
-            # Synthetic, non-sensitive PII-like token for redaction tests only
             text += " Contact: test.user+load@example.invalid"
         return text
 
@@ -208,21 +182,19 @@ class LoadGenerator:
         return violation_detected, violation_type, violation_severity
 
     def generate_action(self, agent_id: str, action_num: int) -> Dict[str, Any]:
-        """Generate a single action and return result record."""
         t_start = time.perf_counter()
         action_id = f"{agent_id}_action_{action_num}"
 
         action_text = self._action_text(action_num)
         violation_detected, violation_type, violation_severity = self._violations_for(action_num)
 
-        # Simulated ML/rule scoring patterns (deterministic)
         ml_score = 0.3 if violation_detected else 0.1
         rule_risk_score = 0.5 if violation_detected else 0.2
 
         error: Optional[str] = None
         status = "success"
         try:
-            _result = self.gov.process_action(  # noqa: F841
+            self.gov.process_action(
                 agent_id=agent_id,
                 action=action_text,
                 cohort=self.cohort,
@@ -237,12 +209,9 @@ class LoadGenerator:
             )
         except Exception as e:
             status = "error"
-            # Avoid leaking sensitive exception detail by default
-            error = (f"{e.__class__.__name__}: {str(e)}" if self.include_error_details else e.__class__.__name__)
+            error = f"{e.__class__.__name__}: {str(e)}" if self.include_error_details else e.__class__.__name__
 
-        t_end = time.perf_counter()
-        latency_ms = (t_end - t_start) * 1000.0
-
+        latency_ms = (time.perf_counter() - t_start) * 1000.0
         return {
             "agent_id": agent_id,
             "action_id": action_id,
@@ -258,14 +227,9 @@ class LoadGenerator:
         agent_id: str,
         actions_for_agent: int,
         agent_stagger_s: float,
-        global_pacer: "GlobalPacer",
+        global_pacer: GlobalPacer,
     ) -> List[Dict[str, Any]]:
-        """Run workload for a single agent with rate pacing.
-
-        Pacing model:
-        - All agents share one global pacer so aggregate throughput stays near target RPS.
-        - Each agent's first action is delayed by 'agent_stagger_s' * agent_index to avoid a thundering herd.
-        """
+        """Run workload for a single agent while sharing a global aggregate pacer."""
         if actions_for_agent <= 0:
             return []
 
@@ -276,50 +240,40 @@ class LoadGenerator:
         for i in range(actions_for_agent):
             if self.stop_event.is_set():
                 break
-
             if not global_pacer.wait_for_slot():
                 break
 
-            # Execute action
             try:
-                result = self.generate_action(agent_id, i)
-                results.append(result)
+                results.append(self.generate_action(agent_id, i))
             except Exception as e:
-                # Shouldn't happen (generate_action handles exceptions), but guard anyway
                 log.error("Unhandled agent workload error: %s", e)
         return results
 
     def _distribute_actions(self, total_actions: int) -> List[int]:
-        """Distribute total actions across agents as evenly as possible."""
         base = total_actions // self.agents
         rem = total_actions % self.agents
-        # First 'rem' agents get one extra action
-        plan = [base + 1 if i < rem else base for i in range(self.agents)]
-        return plan
+        return [base + 1 if i < rem else base for i in range(self.agents)]
 
     def run(self) -> Dict[str, Any]:
-        """Run the load test and return summary statistics."""
         log.info(
             "Starting load test: agents=%d target_rps=%.2f duration=%ds cohort=%s storage=%s",
-            self.agents, self.target_rps, self.duration, self.cohort, self.storage_dir
+            self.agents,
+            self.target_rps,
+            self.duration,
+            self.cohort,
+            self.storage_dir,
         )
 
-        # Calculate total actions and per-agent distribution
         total_actions = int(math.ceil(self.target_rps * self.duration))
         if total_actions <= 0:
             return {"error": "Computed total_actions <= 0; adjust parameters", "elapsed": 0.0}
 
         per_agent_actions = self._distribute_actions(total_actions)
-        # Effective interval per action across the whole system
         interval_s = 1.0 / self.target_rps if self.target_rps > 0 else 0.0
-        # Shared start (perf_counter), allowing precise pacing
         global_start = time.perf_counter()
-
-        # Agent staggering in seconds
         agent_stagger_s_base = self.stagger_ms / 1000.0
-
-        all_results: List[Dict[str, Any]] = []
         global_pacer = GlobalPacer(global_start, interval_s, self.stop_event)
+        all_results: List[Dict[str, Any]] = []
 
         max_workers = min(self.max_workers, self.agents)
         log.info("Thread pool: max_workers=%d (cpu=%s)", max_workers, os.cpu_count())
@@ -328,38 +282,32 @@ class LoadGenerator:
             futures = []
             for i in range(self.agents):
                 agent_id = f"agent_{i:04d}"
-                # Stagger proportional to index, but cap to 1 second to avoid excessive delays
                 stagger = min(agent_stagger_s_base * i, 1.0)
-                fut = executor.submit(
-                    self.run_agent_workload,
-                    agent_id,
-                    per_agent_actions[i],
-                    stagger,
-                    global_pacer,
+                futures.append(
+                    executor.submit(
+                        self.run_agent_workload,
+                        agent_id,
+                        per_agent_actions[i],
+                        stagger,
+                        global_pacer,
+                    )
                 )
-                futures.append(fut)
 
             completed = 0
             for fut in as_completed(futures):
                 try:
-                    results = fut.result()
-                    all_results.extend(results)
+                    all_results.extend(fut.result())
                     completed += 1
                     if completed % max(1, self.agents // 10) == 0:
                         log.info("Progress: %d/%d agents completed", completed, self.agents)
                 except Exception as e:
                     log.error("Error in agent workload future: %s", e)
 
-        elapsed = max(1e-6, time.perf_counter() - global_start)  # Avoid div-by-zero
-
-        # Calculate statistics
+        elapsed = max(1e-6, time.perf_counter() - global_start)
         self.results = all_results
-        stats = self._calculate_stats(elapsed)
-
-        return stats
+        return self._calculate_stats(elapsed)
 
     def _calculate_stats(self, elapsed: float) -> Dict[str, Any]:
-        """Calculate summary statistics."""
         if not self.results:
             return {"error": "No results collected", "elapsed": elapsed}
 
@@ -398,7 +346,6 @@ class LoadGenerator:
         }
 
     def write_csv(self, filename: str):
-        """Write results to CSV file (with CSV injection protection)."""
         if not self.results:
             log.warning("No results to write to %s", filename)
             return
@@ -418,10 +365,8 @@ class LoadGenerator:
             writer = csv.DictWriter(f, fieldnames=fieldnames)
             writer.writeheader()
             for row in self.results:
-                safe_row = {k: sanitize_csv_value(v) for k, v in row.items()}
-                writer.writerow(safe_row)
+                writer.writerow({k: sanitize_csv_value(v) for k, v in row.items()})
 
-        # Atomic replace
         os.replace(tmpfile, filename)
         log.info("Results written to: %s", filename)
 
@@ -431,7 +376,6 @@ def _install_signal_handlers(stop_event: threading.Event):
         log.warning("Received signal %s - initiating graceful shutdown", signum)
         stop_event.set()
 
-    # Register for SIGINT/SIGTERM
     try:
         signal.signal(signal.SIGINT, _handler)
     except Exception:
@@ -443,13 +387,11 @@ def _install_signal_handlers(stop_event: threading.Event):
 
 
 def main() -> int:
-    """Main entry point."""
     parser = argparse.ArgumentParser(
         description="Load generator for Nethical governance system (hardened)",
         formatter_class=argparse.ArgumentDefaultsHelpFormatter,
     )
 
-    # Load parameters
     parser.add_argument("--agents", type=int, default=100, help="Number of agents to simulate")
     parser.add_argument("--rps", type=float, default=50.0, help="Target aggregate requests per second")
     parser.add_argument("--duration", type=int, default=60, help="Test duration in seconds")
@@ -458,7 +400,6 @@ def main() -> int:
     parser.add_argument("--region-id", type=str, default=None, help="Region identifier (e.g., us-east-1)")
     parser.add_argument("--logical-domain", type=str, default=None, help="Logical domain (e.g., customer-service)")
 
-    # Feature flags
     parser.add_argument("--shadow", dest="enable_shadow", action="store_true", default=True, help="Enable ML shadow mode")
     parser.add_argument("--no-shadow", dest="enable_shadow", action="store_false", help="Disable ML shadow mode")
     parser.add_argument("--ml-blend", dest="enable_ml_blend", action="store_true", default=False, help="Enable ML blended enforcement")
@@ -470,15 +411,10 @@ def main() -> int:
     parser.add_argument("--quota", dest="enable_quota", action="store_true", default=False, help="Enable quota enforcement")
     parser.add_argument("--no-quota", dest="enable_quota", action="store_false", help="Disable quota enforcement")
 
-    # Privacy & redaction
     parser.add_argument("--privacy-mode", type=str, choices=["standard", "differential", "none"], default="none", help="Privacy mode")
     parser.add_argument("--redaction-policy", type=str, choices=["minimal", "standard", "aggressive"], default="standard", help="PII redaction policy")
     parser.add_argument("--requests-per-second", type=float, default=1000.0, help="Quota limit (requests per second)")
-
-    # Output options
     parser.add_argument("--output", type=str, default="perf_results.csv", help="Output CSV filename")
-
-    # Hardened controls
     parser.add_argument("--include-pii-test", action="store_true", default=False, help="Include synthetic PII tokens in actions (for redaction testing)")
     parser.add_argument("--include-error-details", action="store_true", default=False, help="Include exception messages in CSV (may leak details)")
     parser.add_argument("--stagger-ms", type=int, default=0, help="Per-agent start staggering in milliseconds")
@@ -486,17 +422,13 @@ def main() -> int:
     parser.add_argument("--max-workers", type=int, default=None, help="Max thread workers (defaults to ~5xCPU, capped by agents)")
 
     args = parser.parse_args()
-
-    # Normalize privacy mode
     privacy_mode = None if args.privacy_mode == "none" else args.privacy_mode
 
-    # Create storage directory
     Path(args.storage_dir).mkdir(parents=True, exist_ok=True)
 
     stop_event = threading.Event()
     _install_signal_handlers(stop_event)
 
-    # Initialize generator
     generator = LoadGenerator(
         agents=args.agents,
         target_rps=args.rps,
@@ -521,10 +453,8 @@ def main() -> int:
         stop_event=stop_event,
     )
 
-    # Run test
     stats = generator.run()
 
-    # Print results
     print("\n" + "=" * 60)
     print("LOAD TEST RESULTS")
     print("=" * 60)
@@ -551,14 +481,10 @@ def main() -> int:
     print(f"  Max:     {stats['latency_max_ms']:.2f}")
     print()
 
-    # SLO gates (example values)
     print("SLO Compliance:")
     p95_ok = stats["latency_p95_ms"] < 200
     p99_ok = stats["latency_p99_ms"] < 500
-    rps_ok = (
-        abs(stats["achieved_rps"] - stats["target_rps"]) / stats["target_rps"] < 0.1
-        if stats["target_rps"] > 0 else False
-    )
+    rps_ok = abs(stats["achieved_rps"] - stats["target_rps"]) / stats["target_rps"] < 0.1 if stats["target_rps"] > 0 else False
     error_ok = stats["error_rate"] < 0.01
 
     print(f"  p95 < 200ms:  {'✓ PASS' if p95_ok else '✗ FAIL'} ({stats['latency_p95_ms']:.2f}ms)")
@@ -566,13 +492,11 @@ def main() -> int:
     print(f"  RPS within 10%: {'✓ PASS' if rps_ok else '✗ FAIL'}")
     print(f"  Error rate < 1%: {'✓ PASS' if error_ok else '✗ FAIL'}")
 
-    # Write CSV
     try:
         generator.write_csv(args.output)
     except Exception as e:
         log.error("Failed to write CSV '%s': %s", args.output, e)
 
-    # Non-zero exit when SLOs not met, which can be used for regression gating if desired
     return 0 if all([p95_ok, p99_ok, rps_ok, error_ok]) else 1
 
 
