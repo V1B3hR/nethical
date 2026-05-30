@@ -376,14 +376,12 @@ def _install_signal_handlers(stop_event: threading.Event):
         log.warning("Received signal %s - initiating graceful shutdown", signum)
         stop_event.set()
 
-    try:
-        signal.signal(signal.SIGINT, _handler)
-    except Exception:
-        pass
-    try:
-        signal.signal(signal.SIGTERM, _handler)
-    except Exception:
-        pass
+   
+    try:	   
+        signal.signal(signal.SIGTERM, _handler)	      
+	except Exception as exc:
+        log.warning("Unable to install SIGTERM handler: %s", 
+exc)
 
 
 def main() -> int:
