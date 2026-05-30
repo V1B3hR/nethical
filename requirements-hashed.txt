@@ -148,6 +148,12 @@ annotated-types==0.7.0 \
     # via
     #   -r requirements.txt
     #   pydantic
+anthropic==0.102.0 \
+    --hash=sha256:96f747cad11886c4ae12d4080131b94eebd68b202bd2190fe27959031bb1fa9c \
+    --hash=sha256:ab96540bbd4b0f36564252d955a86f8abbe4f00944a24bc9931acc9b139bab6f
+anthropic==0.103.1 \
+    --hash=sha256:21c12f4fc0fdd87a2e80d58479cd0af640062b3cfb82bbfa01c7977acd4defeb \
+    --hash=sha256:b9a523fac34e64caf6ee55fdbda213950e6a744b906fce100d34909aad2cd8f4
 anthropic==0.104.1 \
     --hash=sha256:17362b6c45f527afcc9b0fdf62011ffd359726ab2ebcb1978ea0cc41bd8d8d40 \
     --hash=sha256:35c8cb456f5a4405aafe1f10f03f6fcc54fa51fa8ec01d655cc4b437d120e9b7
