@@ -19,7 +19,7 @@ uvicorn==0.48.0
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
-pydantic==2.13.4
+pydantic==2.14.0a1
 pydantic-core==2.47.0
 typing-extensions==4.15.0
 dataclasses-json==0.6.7
