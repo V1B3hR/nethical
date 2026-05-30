@@ -173,25 +173,21 @@ class AlertRules:
             alert_manager: AlertManager instance
             min_hit_rate: Minimum acceptable cache hit rate
         """
-        try:
-            
-            # Calculate hit rate for each cache type
-            # This would require tracking cache hits/misses in metrics
-            # For now, this is a placeholder for when cache metrics are available
-            
-            # Example: If we had cache_hits and cache_misses counters
-            # hits = counters.get('cache_hits', {})
-            # misses = counters.get('cache_misses', {})
-            # for cache_type in set(hits.keys()) | set(misses.keys()):
-            #     total = hits.get(cache_type, 0) + misses.get(cache_type, 0)
-            #     if total > 0:
-            #         hit_rate = hits.get(cache_type, 0) / total
-            #         if hit_rate < min_hit_rate:
-            #             await alert_manager.send_alert(...)
-            
-        except Exception as e:
-            logger.error(f"Error checking cache performance rule: {e}")
+        # Calculate hit rate for each cache type
+        # This would require tracking cache hits/misses in metrics
+        # For now, this is a placeholder for when cache metrics are available
 
+        # Example: If we had cache_hits and cache_misses counters
+        # hits = counters.get('cache_hits', {})
+        # misses = counters.get('cache_misses', {})
+        # for cache_type in set(hits.keys()) | set(misses.keys()):
+        #     total = hits.get(cache_type, 0) + misses.get(cache_type, 0)
+        #     if total > 0:
+        #         hit_rate = hits.get(cache_type, 0) / total
+        #         if hit_rate < min_hit_rate:
+        #             await alert_manager.send_alert(...)
+        pass  # Placeholder until cache metrics are available
+available
     @staticmethod
     async def evaluate_all_rules(
         metrics: Dict[str, Any],
