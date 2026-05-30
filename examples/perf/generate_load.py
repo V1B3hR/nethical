@@ -362,7 +362,7 @@ class LoadGenerator:
 
         tmpfile = f"{filename}.tmp"
         with open(tmpfile, "w", newline="", encoding="utf-8") as f:
-            writer = csv.DictWriter(f, fieldnames=fieldnames)
+            writer = csv.DictWriter(f, fieldnames=fieldnames, extrasaction="ignore")
             writer.writeheader()
             for row in self.results:
                 writer.writerow({k: sanitize_csv_value(v) for k, v in row.items()})
@@ -376,12 +376,11 @@ def _install_signal_handlers(stop_event: threading.Event):
         log.warning("Received signal %s - initiating graceful shutdown", signum)
         stop_event.set()
 
-   
-    try:	   
-        signal.signal(signal.SIGTERM, _handler)	      
-	except Exception as exc:
-        log.warning("Unable to install SIGTERM handler: %s", 
-exc)
+    for sig in (signal.SIGINT, signal.SIGTERM):
+        try:
+            signal.signal(sig, _handler)
+        except Exception as exc:
+            log.warning("Unable to install %s handler: %s", sig, exc)
 
 
 def main() -> int:
