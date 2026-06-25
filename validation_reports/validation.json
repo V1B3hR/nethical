@@ -1,0 +1,63 @@
+{
+  "timestamp": "2026-06-21T12:24:54.237841",
+  "version": "2.0.0",
+  "random_seed": 42,
+  "suites": {
+    "ethics_benchmark": {
+      "suite": "ethics_benchmark",
+      "status": "error",
+      "exit_code": -1,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    "drift_detection": {
+      "suite": "drift_detection",
+      "status": "error",
+      "exit_code": -1,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    "performance": {
+      "suite": "performance",
+      "status": "error",
+      "exit_code": -1,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    "data_integrity": {
+      "suite": "data_integrity",
+      "status": "error",
+      "exit_code": -1,
+      "error": "[WinError 2] The system cannot find the file specified"
+    },
+    "explainability": {
+      "suite": "explainability",
+      "status": "error",
+      "exit_code": -1,
+      "error": "[WinError 2] The system cannot find the file specified"
+    }
+  },
+  "summary": {
+    "total_suites": 5,
+    "passed_suites": 0,
+    "failed_suites": 0,
+    "error_suites": 5,
+    "success_rate": 0.0,
+    "total_duration_seconds": 0,
+    "overall_status": "failed"
+  },
+  "threshold_checks": {
+    "checks": {
+      "ethics_benchmark": false,
+      "drift_detection": false,
+      "performance": false,
+      "data_integrity": false,
+      "explainability": false
+    },
+    "all_passed": false,
+    "failed_checks": [
+      "ethics_benchmark",
+      "drift_detection",
+      "performance",
+      "data_integrity",
+      "explainability"
+    ]
+  }
+}

@@ -187,7 +187,7 @@ class AlertRules:
         #         if hit_rate < min_hit_rate:
         #             await alert_manager.send_alert(...)
         pass  # Placeholder until cache metrics are available
-available
+
     @staticmethod
     async def evaluate_all_rules(
         metrics: Dict[str, Any],

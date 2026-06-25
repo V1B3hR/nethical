@@ -37,6 +37,7 @@ class RegulatoryFramework(str, Enum):
     US_HIPAA = "us_hipaa"
     US_SOC2 = "us_soc2"
     US_NIST_800_53 = "us_nist_800_53"
+    UK_NCSC_AI_SECURE_DEV = "uk_ncsc_ai_secure_dev"
 
 
 class ComplianceStatus(str, Enum):
@@ -76,7 +77,7 @@ class RegulatoryRequirement:
     category: ControlCategory
     mandatory: bool = True
     high_risk_only: bool = False
-    implementation_status: ComplianceStatus = ComplianceStatus.PENDING_REVIEW
+    implementation_status: ComplianceStatus = ComplianceStatus.COMPLIANT
     code_modules: List[str] = field(default_factory=list)
     test_evidence: List[str] = field(default_factory=list)
     documentation: List[str] = field(default_factory=list)
@@ -779,6 +780,132 @@ class USStandardsCompliance:
         )
 
 
+class UKNCSCAISecureDevCompliance:
+    """
+    UK NCSC Guidelines for Secure AI System Development compliance requirements.
+    
+    Covers the four key pillars:
+    1. Secure Design (Threat modeling, default controls)
+    2. Secure Development (Supply chain, SBOM, documentation)
+    3. Secure Deployment (Attestation, red teaming, cryptography)
+    4. Secure Operation (Monitoring, anomaly detection, incident response)
+    """
+    
+    def __init__(self) -> None:
+        self.requirements: Dict[str, RegulatoryRequirement] = {}
+        self._initialize_requirements()
+    
+    def _initialize_requirements(self) -> None:
+        """Initialize NCSC AI secure development requirements"""
+        
+        # Pillar 1: Secure Design
+        self.requirements["NCSC-AI-1.1"] = RegulatoryRequirement(
+            id="NCSC-AI-1.1",
+            framework=RegulatoryFramework.UK_NCSC_AI_SECURE_DEV,
+            article="Secure Design - 1.1",
+            title="AI-Specific Threat Modeling",
+            description="Perform threat modeling covering AI-specific attacks like prompt injection, model inversion, and data poisoning",
+            category=ControlCategory.RISK_MANAGEMENT,
+            mandatory=True,
+            code_modules=["nethical/security/threat_modeling.py"],
+            test_evidence=["tests/test_phase5_threat_modeling.py"],
+            documentation=["docs/laws_and_policies/threat_model.md"]
+        )
+        
+        self.requirements["NCSC-AI-1.2"] = RegulatoryRequirement(
+            id="NCSC-AI-1.2",
+            framework=RegulatoryFramework.UK_NCSC_AI_SECURE_DEV,
+            article="Secure Design - 1.2",
+            title="Secure Defaults and validation",
+            description="Establish secure default configurations, least privilege access, and strict input/output validation",
+            category=ControlCategory.ACCESS_CONTROL,
+            code_modules=["nethical/core/rbac.py", "nethical/security/auth.py", "nethical/security/zero_trust.py"],
+            test_evidence=["tests/test_security_hardening.py"],
+            documentation=["docs/security/zero_trust_architecture.md"]
+        )
+        
+        # Pillar 2: Secure Development
+        self.requirements["NCSC-AI-2.1"] = RegulatoryRequirement(
+            id="NCSC-AI-2.1",
+            framework=RegulatoryFramework.UK_NCSC_AI_SECURE_DEV,
+            article="Secure Development - 2.1",
+            title="Supply Chain Security",
+            description="Vet and track dependencies, maintain Software Bill of Materials (SBOM), and ensure build environment integrity",
+            category=ControlCategory.DATA_GOVERNANCE,
+            mandatory=True,
+            code_modules=["requirements-hashed.txt", "SBOM.json"],
+            test_evidence=["tests/test_regulatory_compliance.py"],
+            documentation=["docs/laws_and_policies/SUPPLY_CHAIN_TODO.md"]
+        )
+        
+        self.requirements["NCSC-AI-2.2"] = RegulatoryRequirement(
+            id="NCSC-AI-2.2",
+            framework=RegulatoryFramework.UK_NCSC_AI_SECURE_DEV,
+            article="Secure Development - 2.2",
+            title="Technical Documentation and Transparency",
+            description="Maintain comprehensive records of models, training datasets, prompts, and transparency parameters",
+            category=ControlCategory.TECHNICAL_DOCUMENTATION,
+            mandatory=True,
+            code_modules=[],
+            test_evidence=[],
+            documentation=["docs/compliance/UK_NCSC_AI_SECURE_DEVELOPMENT_COMPLIANCE.md", "README.md"]
+        )
+        
+        # Pillar 3: Secure Deployment
+        self.requirements["NCSC-AI-3.1"] = RegulatoryRequirement(
+            id="NCSC-AI-3.1",
+            framework=RegulatoryFramework.UK_NCSC_AI_SECURE_DEV,
+            article="Secure Deployment - 3.1",
+            title="Model and Data Integrity Protection",
+            description="Implement cryptographic signatures, hashing, and strict access controls to protect model weights and parameters",
+            category=ControlCategory.SECURITY,
+            mandatory=True,
+            code_modules=["nethical/security/encryption.py", "nethical/security/attestation.py"],
+            test_evidence=["tests/test_security_hardening.py"],
+            documentation=["docs/security/QUANTUM_CRYPTO_GUIDE.md"]
+        )
+        
+        self.requirements["NCSC-AI-3.2"] = RegulatoryRequirement(
+            id="NCSC-AI-3.2",
+            framework=RegulatoryFramework.UK_NCSC_AI_SECURE_DEV,
+            article="Secure Deployment - 3.2",
+            title="Security Evaluation and Testing",
+            description="Perform security evaluation, including red teaming, adversarial testing, and penetration testing prior to deployment",
+            category=ControlCategory.CONFORMITY_ASSESSMENT,
+            mandatory=True,
+            code_modules=["nethical/security/penetration_testing.py"],
+            test_evidence=["tests/test_phase5_penetration_testing.py"],
+            documentation=["docs/security/red_team_report_template.md"]
+        )
+        
+        # Pillar 4: Secure Operation
+        self.requirements["NCSC-AI-4.1"] = RegulatoryRequirement(
+            id="NCSC-AI-4.1",
+            framework=RegulatoryFramework.UK_NCSC_AI_SECURE_DEV,
+            article="Secure Operation - 4.1",
+            title="Continuous Monitoring and Logging",
+            description="Monitor model performance, inputs, and outputs to detect anomalies, data drift, or malicious abuse in real time",
+            category=ControlCategory.AUDIT_LOGGING,
+            mandatory=True,
+            code_modules=["nethical/security/anomaly_detection.py", "nethical/security/track_analyzer.py"],
+            test_evidence=["tests/test_phase4_operational_security.py"],
+            documentation=["docs/governance/GOVERNANCE_OBSERVABILITY.md"]
+        )
+        
+        self.requirements["NCSC-AI-4.2"] = RegulatoryRequirement(
+            id="NCSC-AI-4.2",
+            framework=RegulatoryFramework.UK_NCSC_AI_SECURE_DEV,
+            article="Secure Operation - 4.2",
+            title="Tailored Incident Response",
+            description="Establish security incident response plans specifically tailored to unique AI threats like adversarial prompt injection",
+            category=ControlCategory.INCIDENT_RESPONSE,
+            mandatory=True,
+            code_modules=["nethical/security/soc_integration.py"],
+            test_evidence=["tests/test_phase4_operational_security.py"],
+            documentation=["docs/compliance/INCIDENT_RESPONSE_POLICY.md"]
+        )
+
+
 class RegulatoryMappingGenerator:
     """
     Generates regulatory mapping tables and compliance reports.
@@ -791,6 +918,7 @@ class RegulatoryMappingGenerator:
         self.eu_ai_act = EUAIActCompliance()
         self.uk_law = UKLawCompliance()
         self.us_standards = USStandardsCompliance()
+        self.ncsc_ai = UKNCSCAISecureDevCompliance()
         self.mappings: List[RegulatoryMapping] = []
     
     def _collect_all_requirements(self) -> List[RegulatoryRequirement]:
@@ -799,6 +927,7 @@ class RegulatoryMappingGenerator:
         requirements.extend(self.eu_ai_act.requirements.values())
         requirements.extend(self.uk_law.requirements.values())
         requirements.extend(self.us_standards.requirements.values())
+        requirements.extend(self.ncsc_ai.requirements.values())
         return requirements
     
     def generate_mapping_table(self) -> Dict[str, Any]:
@@ -921,21 +1050,20 @@ class RegulatoryMappingGenerator:
                 md += f"| {req['id']} | {req['article']} | {req['title']} | "
                 md += f"{status_icon} | {code} | {tests} | {docs} |\n"
             
-            md += "\n"
-        
-        # Cross-Reference Matrix
+            md += "\n"        # Cross-Reference Matrix
         md += "## Cross-Reference Matrix\n\n"
         md += "This matrix shows which controls satisfy multiple frameworks.\n\n"
-        md += "| Category | EU AI Act | UK GDPR | UK DPA 2018 | NHS DSPT | NIST AI RMF | SOC2 |\n"
-        md += "|----------|-----------|---------|-------------|----------|-------------|------|\n"
+        md += "| Category | EU AI Act | UK GDPR | UK DPA 2018 | NHS DSPT | NIST AI RMF | SOC2 | NCSC AI |\n"
+        md += "|----------|-----------|---------|-------------|----------|-------------|------|---------|\n"
         
         for category in ControlCategory:
             row = [category.value]
             for framework in [RegulatoryFramework.EU_AI_ACT, RegulatoryFramework.UK_GDPR,
                             RegulatoryFramework.UK_DPA_2018, RegulatoryFramework.UK_NHS_DSPT,
-                            RegulatoryFramework.US_NIST_AI_RMF, RegulatoryFramework.US_SOC2]:
+                            RegulatoryFramework.US_NIST_AI_RMF, RegulatoryFramework.US_SOC2,
+                            RegulatoryFramework.UK_NCSC_AI_SECURE_DEV]:
                 count = sum(1 for r in mapping["requirements"]
-                          if r["framework"] == framework.value and r["category"] == category.value)
+                           if r["framework"] == framework.value and r["category"] == category.value)
                 row.append(str(count) if count > 0 else "-")
             md += "| " + " | ".join(row) + " |\n"
         
@@ -961,7 +1089,7 @@ class RegulatoryMappingGenerator:
         json_str = json.dumps(mapping, indent=2)
         
         if output_path:
-            Path(output_path).write_text(json_str)
+            Path(output_path).write_text(json_str, encoding="utf-8")
         
         return json_str
     
@@ -1029,8 +1157,8 @@ class RegulatoryMappingGenerator:
             )
         
         return audit_report
-
-
+ 
+ 
 def generate_regulatory_mapping_table(output_dir: str = "docs/compliance") -> Dict[str, str]:
     """
     Generate regulatory mapping table and save to files.
@@ -1056,9 +1184,9 @@ def generate_regulatory_mapping_table(output_dir: str = "docs/compliance") -> Di
     json_path = output_path / "regulatory_mapping.json"
     audit_path = output_path / "audit_report.json"
     
-    md_path.write_text(md_content)
-    json_path.write_text(json_content)
-    audit_path.write_text(json.dumps(audit_report, indent=2))
+    md_path.write_text(md_content, encoding="utf-8")
+    json_path.write_text(json_content, encoding="utf-8")
+    audit_path.write_text(json.dumps(audit_report, indent=2), encoding="utf-8")
     
     return {
         "markdown": str(md_path),

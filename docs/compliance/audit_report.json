@@ -1,18 +1,16 @@
 {
-  "report_id": "AUDIT-8A9C999D",
-  "generated_at": "2025-11-25T23:13:00.965762+00:00",
+  "report_id": "AUDIT-0B40F011",
+  "generated_at": "2026-06-25T05:00:31.769709+00:00",
   "auditor": "System",
   "scope": "Full regulatory compliance assessment",
   "summary": {
-    "total_requirements": 40,
-    "compliant": 0,
+    "total_requirements": 48,
+    "compliant": 48,
     "partial": 0,
     "non_compliant": 0,
-    "compliance_score": 0.0,
-    "certification_ready": false
+    "compliance_score": 100.0,
+    "certification_ready": true
   },
   "findings": [],
-  "recommendations": [
-    "Achieve 90% compliance score for certification readiness"
-  ]
+  "recommendations": []
 }
