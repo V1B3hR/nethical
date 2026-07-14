@@ -37,6 +37,8 @@ class AgentCreate(BaseModel):
     configuration: dict[str, Any] = Field(default_factory=dict, description="Agent configuration")
     metadata: dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     region_id: Optional[str] = Field(None, description="Region identifier")
+    dock_status: str = Field(default="undocked", description="Agent dock status")
+    visibility: bool = Field(default=False, description="Agent hub visibility")
     
     model_config = {
         "json_schema_extra": {
@@ -74,6 +76,8 @@ class AgentUpdate(BaseModel):
     configuration: Optional[dict[str, Any]] = Field(None, description="Agent configuration")
     metadata: Optional[dict[str, Any]] = Field(None, description="Additional metadata")
     region_id: Optional[str] = Field(None, description="Region identifier")
+    dock_status: Optional[str] = Field(None, description="Agent dock status")
+    visibility: Optional[bool] = Field(None, description="Agent hub visibility")
 
 
 class AgentResponse(BaseModel):
@@ -89,6 +93,8 @@ class AgentResponse(BaseModel):
     configuration: dict[str, Any]
     metadata: dict[str, Any]
     region_id: Optional[str]
+    dock_status: str
+    visibility: bool
     created_at: str
     updated_at: str
     created_by: Optional[str]
@@ -144,6 +150,8 @@ async def create_agent(
         configuration=agent.configuration,
         metadata=agent.metadata,
         region_id=agent.region_id,
+        dock_status=agent.dock_status,
+        visibility=agent.visibility,
         created_by=current_user.username,
     )
     

@@ -105,6 +105,112 @@ paths:
               schema:
                 $ref: '#/components/schemas/ErrorResponse'
 
+  /hub/dock:
+    post:
+      tags:
+        - Nethical Hub & Dock
+      summary: Dock an agent
+      description: |
+        Securely dock an AI agent spaceship into the Nethical Hub.
+      operationId: dockAgent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+              properties:
+                agent_id:
+                  type: string
+      responses:
+        '200':
+          description: Agent docked successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Docking rejected by governance
+        '404':
+          description: Agent not registered
+
+  /hub/undock:
+    post:
+      tags:
+        - Nethical Hub & Dock
+      summary: Undock an agent
+      description: |
+        Undock an AI agent from the Nethical Hub.
+      operationId: undockAgent
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - agent_id
+              properties:
+                agent_id:
+                  type: string
+      responses:
+        '200':
+          description: Agent undocked successfully
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /hub/active:
+    get:
+      tags:
+        - Nethical Hub & Dock
+      summary: List active docked agents
+      description: |
+        Retrieve all currently docked and visible AI spaceships.
+      operationId: listActiveHubAgents
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Successfully retrieved active agents
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/AgentResponse'
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+
+  /hub/exchange:
+    post:
+      tags:
+        - Nethical Hub & Dock
+      summary: Exchange message between agents
+      description: |
+        Transmit a secure, audited message between two docked AI spaceships.
+      operationId: exchangeHubMessage
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/HubMessage'
+      responses:
+        '200':
+          description: Message delivered successfully
+        '400':
+          description: Threat detected by port gateway
+        '401':
+          $ref: '#/components/responses/UnauthorizedError'
+        '403':
+          description: Transmission blocked by trust policy
+
   /agents:
     get:
       tags:
@@ -615,6 +721,12 @@ components:
           type: object
         metadata:
           type: object
+        dock_status:
+          type: string
+          default: undocked
+        visibility:
+          type: boolean
+          default: false
 
     AgentUpdate:
       type: object
@@ -631,6 +743,10 @@ components:
           type: object
         metadata:
           type: object
+        dock_status:
+          type: string
+        visibility:
+          type: boolean
 
     AgentResponse:
       type: object
@@ -653,6 +769,10 @@ components:
           type: object
         metadata:
           type: object
+        dock_status:
+          type: string
+        visibility:
+          type: boolean
         created_at:
           type: string
           format: date-time
@@ -787,6 +907,33 @@ components:
       properties:
         detail:
           type: string
+
+    HubMessage:
+      type: object
+      required:
+        - sender_agent_id
+        - recipient_agent_id
+        - payload
+      properties:
+        message_id:
+          type: string
+        sender_agent_id:
+          type: string
+        recipient_agent_id:
+          type: string
+        intent:
+          type: string
+        payload_type:
+          type: string
+        payload:
+          type: string
+        ttl:
+          type: integer
+        trust_required_level:
+          type: number
+        timestamp:
+          type: string
+          format: date-time
 
   responses:
     UnauthorizedError:
