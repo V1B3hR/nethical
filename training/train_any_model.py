@@ -222,15 +222,21 @@ def _discover_feature_columns(df) -> List[str]:
         return cols
     try:
         import pandas as pd  # type: ignore
-        cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c])]
+        cols = [c for c in df.columns if pd.api.types.is_numeric_dtype(df[c]) or c.lower() == "text"]
     except Exception:
         cols = []
     return cols
 
 def load_data(num_samples: int = 10000, model_type: str = 'logistic') -> List[Dict[str, Any]]:
     csv_files = list(DATA_EXTERNAL_DIR.glob("*.csv"))
+    # Filter files based on model type to ensure correct schema loading
+    if model_type in ['prompt_injection', 'deepfake', 'simple_transformer']:
+        csv_files = [f for f in csv_files if any(k in f.name.lower() for k in ['prompt', 'text', 'fake', 'inject'])]
+    elif model_type in ['logistic', 'heuristic', 'shadow_ai', 'polymorphic', 'adversarial']:
+        csv_files = [f for f in csv_files if any(k in f.name.lower() for k in ['gov', 'risk', 'metric', 'anomaly', 'malware'])]
+        
     if csv_files:
-        logging.info("Found %d CSV(s) in %s. Loading up to %d samples.", len(csv_files), DATA_EXTERNAL_DIR, num_samples)
+        logging.info("Found %d CSV(s) matching type '%s' in %s. Loading up to %d samples.", len(csv_files), model_type, DATA_EXTERNAL_DIR, num_samples)
         try:
             import pandas as pd  # type: ignore
         except Exception:
@@ -432,6 +438,11 @@ def get_model_class(model_type: str):
         "simple_transformer": (BaselineMLClassifier, preprocess_for_transformer),
         "anomaly": (AnomalyMLClassifier, preprocess_for_anomaly),
         "correlation": (CorrelationMLClassifier, preprocess_for_correlation),
+        "shadow_ai": (BaselineMLClassifier, preprocess_for_logistic),
+        "polymorphic": (BaselineMLClassifier, preprocess_for_logistic),
+        "adversarial": (BaselineMLClassifier, preprocess_for_logistic),
+        "deepfake": (BaselineMLClassifier, preprocess_for_transformer),
+        "prompt_injection": (BaselineMLClassifier, preprocess_for_transformer),
     }
     if model_type not in registry:
         raise ValueError(f"Unknown model_type: {model_type}. Supported: {list(registry.keys())}")

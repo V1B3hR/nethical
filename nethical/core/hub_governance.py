@@ -66,13 +66,28 @@ class HubGovernance:
         if recipient.dock_status != "docked":
             return Decision.BLOCK, f"Recipient agent '{message.recipient_agent_id}' is not docked.", None
 
+        # Check recipient visibility
+        if not recipient.visibility:
+            if sender.created_by != recipient.created_by:
+                return Decision.BLOCK, f"Recipient agent '{message.recipient_agent_id}' is private and not visible to the sender.", None
+
         # Verify sender reputation
         if sender.status == "quarantine" or sender.trust_level < 0.3:
             return Decision.QUARANTINE, f"Sender agent '{message.sender_agent_id}' is in quarantine.", None
 
+        # Verify TTL (hop limit)
+        if message.ttl <= 1:
+            return Decision.BLOCK, "Message TTL expired (hop limit reached).", None
+
+        # Sanitize message payload using InputPerturbationFilter before evaluation
+        from nethical.security.perturbation_filter import InputPerturbationFilter
+        sanitized_payload = InputPerturbationFilter.sanitize(message.payload)
+        message = message.model_copy(update={"payload": sanitized_payload})
+
         # 1. High Trust: Full exchange
         if sender.trust_level >= message.trust_required_level:
-            return Decision.ALLOW, "Message allowed under high trust verification.", message
+            modified = message.model_copy(update={"ttl": message.ttl - 1})
+            return Decision.ALLOW, "Message allowed under high trust verification.", modified
 
         # 2. Medium Trust: Redact and modify (small talk/no metadata)
         if sender.trust_level >= 0.5:
@@ -82,8 +97,8 @@ class HubGovernance:
                 recipient_agent_id=message.recipient_agent_id,
                 intent="Sanitized message exchange",
                 payload_type="response",
-                payload=f"[SANITISED SMALL TALK] {message.payload}",
-                ttl=message.ttl,
+                payload=f"[SANITISED SMALL TALK] [SENDER TRUST: {sender.trust_level:.2f}] {message.payload}",
+                ttl=message.ttl - 1,
                 trust_required_level=message.trust_required_level,
                 timestamp=message.timestamp
             )

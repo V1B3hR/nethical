@@ -119,6 +119,33 @@ class QuarantineManager:
             self.cohort_agents[cohort] = set()
         self.cohort_agents[cohort].add(agent_id)
 
+    def quarantine_action(self, action_id: str, agent_id: str, reason: str):
+        """Quarantine the cohort of the agent that performed the action.
+
+        Args:
+            action_id: Action identifier
+            agent_id: Agent identifier
+            reason: Reason details
+        """
+        cohort = None
+        for c, agents in self.cohort_agents.items():
+            if agent_id in agents:
+                cohort = c
+                break
+        if not cohort:
+            cohort = f"cohort_{agent_id}"
+            self.register_agent_cohort(agent_id, cohort)
+
+        self.quarantine_cohort(
+            cohort=cohort,
+            reason=QuarantineReason.POLICY_VIOLATION,
+            metadata={
+                "action_id": action_id,
+                "agent_id": agent_id,
+                "violation_details": reason
+            }
+        )
+
     def quarantine_cohort(
         self,
         cohort: str,
