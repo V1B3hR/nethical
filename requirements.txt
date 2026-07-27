@@ -12,16 +12,16 @@ argon2-cffi==25.1.0
 #   pip-compile --generate-hashes --output-file requirements-hashed.txt requirements.txt
 
 # Web server framework (optional - for API server)
-fastapi==0.136.1
-uvicorn==0.46.0
+fastapi==0.140.0
+uvicorn==0.51.0
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
 pydantic==2.13.4
-pydantic-core==2.46.4
-typing-extensions==4.15.0
+pydantic-core==2.47.0
+typing-extensions==4.16.0
 dataclasses-json==0.6.7
 
 # Scientific computing and data processing
@@ -39,11 +39,11 @@ PyJWT>=2.0.0
 passlib[bcrypt]>=1.7.4
 
 # Database
-sqlalchemy>=2.0.0
-alembic>=1.13.0    
+sqlalchemy>=2.0.51
+alembic>=1.18.5    
 
 # Transitive/supporting (explicitly pinned to keep lock stable)
-annotated-types==0.7.0
+annotated-types==0.8.0
 marshmallow==3.26.2
 typing-inspect==0.9.0
 typing-inspection==0.4.2
@@ -57,14 +57,14 @@ tzdata==2025.3
 starlette>=1.3.1,<1.4.0
 
 # LLM Integration SDKs (optional - for specific integrations)
-anthropic>=0.40.0  # For Claude/Anthropic integration
+anthropic>=0.120.0  # For Claude/Anthropic integration
 
 # Optional LangChain integration (uncomment if needed; then re-run pip-compile)
 # langchain>=0.1.0
 # langchain-core>=0.1.0
 
 # Monitoring and observability
-prometheus-client>=0.19.0  # Prometheus metrics export
+prometheus-client>=0.26.0  # Prometheus metrics export
 aiohttp>=3.14.1  # Async HTTP for metrics server and webhooks
 
 # Optional performance dependencies (uncomment if needed; then re-run pip-compile)
