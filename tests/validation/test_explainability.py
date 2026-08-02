@@ -150,9 +150,14 @@ class ExplainabilityValidator:
 
 
 @pytest.fixture
-def governance():
-    """Initialize governance"""
-    return IntegratedGovernance()
+def governance(tmp_path):
+    """Initialize governance with isolated temporary storage.
+
+    Using tmp_path ensures each test run starts with a clean database,
+    preventing state accumulation across runs (which can cause latency
+    degradation and non-deterministic anomaly-detection behaviour).
+    """
+    return IntegratedGovernance(storage_dir=str(tmp_path))
 
 
 @pytest.fixture
