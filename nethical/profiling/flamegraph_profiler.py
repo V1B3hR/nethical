@@ -18,9 +18,9 @@ import importlib.util
 
 logger = logging.getLogger(__name__)
 
-PY_SPY_AVAILABLE = importlib.util.find_spec("py_spy") is not None
-    PY_SPY_AVAILABLE = True
-except ImportError:
+try:
+    PY_SPY_AVAILABLE = importlib.util.find_spec("py_spy") is not None
+except Exception:
     PY_SPY_AVAILABLE = False
 
 

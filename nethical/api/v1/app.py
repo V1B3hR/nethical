@@ -26,7 +26,7 @@ from fastapi import APIRouter, FastAPI, Request, Response
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.base import BaseHTTPMiddleware
 
-from .routes import agents, audit, auth, policies, realtime
+from .routes import agents, audit, auth, policies, realtime, hub
 
 # API Version
 API_VERSION = "1.0.0"
@@ -118,6 +118,7 @@ def create_v1_app() -> FastAPI:
     app.include_router(policies.router)
     app.include_router(audit.router)
     app.include_router(realtime.router)
+    app.include_router(hub.router)
     
     @app.get("/", tags=["Root"])
     async def root() -> dict[str, Any]:
@@ -204,3 +205,4 @@ router.include_router(agents.router)
 router.include_router(policies.router)
 router.include_router(audit.router)
 router.include_router(realtime.router)
+router.include_router(hub.router)

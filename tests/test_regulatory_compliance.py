@@ -19,6 +19,7 @@ from nethical.security.regulatory_compliance import (
     EUAIActCompliance,
     UKLawCompliance,
     USStandardsCompliance,
+    UKNCSCAISecureDevCompliance,
     RegulatoryMappingGenerator,
     generate_regulatory_mapping_table,
 )
@@ -48,6 +49,7 @@ class TestRegulatoryFramework:
         assert "us_nist_ai_rmf" in frameworks
         assert "us_hipaa" in frameworks
         assert "us_soc2" in frameworks
+        assert "uk_ncsc_ai_secure_dev" in frameworks
 
 
 class TestEUAIActCompliance:
@@ -248,6 +250,37 @@ class TestUSStandardsCompliance:
         assert req.category == ControlCategory.ACCESS_CONTROL
 
 
+class TestUKNCSCAISecureDevCompliance:
+    """Tests for UK NCSC Guidelines for Secure AI System Development compliance module."""
+
+    @pytest.fixture
+    def ncsc_compliance(self):
+        """Create NCSC compliance instance."""
+        return UKNCSCAISecureDevCompliance()
+
+    def test_requirements_initialized(self, ncsc_compliance):
+        """Test requirements are initialized."""
+        assert len(ncsc_compliance.requirements) == 8
+        assert "NCSC-AI-1.1" in ncsc_compliance.requirements
+        assert "NCSC-AI-2.1" in ncsc_compliance.requirements
+        assert "NCSC-AI-3.1" in ncsc_compliance.requirements
+        assert "NCSC-AI-4.1" in ncsc_compliance.requirements
+
+    def test_threat_modeling_requirement(self, ncsc_compliance):
+        """Test NCSC threat modeling requirement values."""
+        req = ncsc_compliance.requirements["NCSC-AI-1.1"]
+        assert req.framework == RegulatoryFramework.UK_NCSC_AI_SECURE_DEV
+        assert req.category == ControlCategory.RISK_MANAGEMENT
+        assert "threat_modeling.py" in str(req.code_modules)
+
+    def test_supply_chain_requirement(self, ncsc_compliance):
+        """Test NCSC supply chain requirement values."""
+        req = ncsc_compliance.requirements["NCSC-AI-2.1"]
+        assert req.framework == RegulatoryFramework.UK_NCSC_AI_SECURE_DEV
+        assert req.category == ControlCategory.DATA_GOVERNANCE
+        assert "requirements-hashed.txt" in str(req.code_modules)
+
+
 class TestRegulatoryMappingGenerator:
     """Tests for regulatory mapping table generation."""
 
@@ -261,6 +294,7 @@ class TestRegulatoryMappingGenerator:
         assert generator.eu_ai_act is not None
         assert generator.uk_law is not None
         assert generator.us_standards is not None
+        assert generator.ncsc_ai is not None
 
     def test_generate_mapping_table(self, generator):
         """Test mapping table generation."""

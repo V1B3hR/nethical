@@ -278,6 +278,43 @@ class MLShadowClassifier:
 
         return prediction
 
+    def load_latest_model(self) -> None:
+        """Dynamically load the latest promoted model from models/current/ directory."""
+        import glob
+        import os
+        import logging
+        from nethical.mlops.baseline import BaselineMLClassifier
+        
+        # Determine model type string
+        model_type_str = self.model_type.value if hasattr(self.model_type, "value") else str(self.model_type)
+        
+        # We look for models/current/{model_type_str}_model_*.json
+        model_dir = os.path.join("models", "current")
+        pattern = os.path.join(model_dir, f"{model_type_str}_model_*.json")
+        model_files = glob.glob(pattern)
+        
+        if not model_files:
+            # Try candidates directory as fallback
+            model_dir_cand = os.path.join("models", "candidates")
+            pattern_cand = os.path.join(model_dir_cand, f"{model_type_str}_model_*.json")
+            model_files = glob.glob(pattern_cand)
+            if not model_files:
+                logging.getLogger(__name__).info(
+                    "No trained model files found for %s in %s or %s. Using heuristic/default baseline.",
+                    model_type_str, model_dir, model_dir_cand
+                )
+                self._model = None
+                return
+            
+        # Get the latest one by timestamp in name
+        latest_model_path = sorted(model_files)[-1]
+        try:
+            self._model = BaselineMLClassifier.load(latest_model_path)
+            logging.getLogger(__name__).info("Successfully loaded active shadow model: %s", latest_model_path)
+        except Exception as e:
+            logging.getLogger(__name__).error("Error loading active shadow model from %s: %s", latest_model_path, e)
+            self._model = None
+
     def _compute_ml_score(self, features: Dict[str, Any]) -> Tuple[float, float]:
         """Compute ML risk score and confidence.
 
@@ -287,14 +324,22 @@ class MLShadowClassifier:
         Returns:
             Tuple of (risk_score, confidence)
         """
-        if self.model_type == MLModelType.HEURISTIC:
-            return self._heuristic_model(features)
-        elif self.model_type == MLModelType.LOGISTIC:
-            # Placeholder for actual logistic regression
-            return self._heuristic_model(features)
-        else:
-            # Default to heuristic
-            return self._heuristic_model(features)
+        if not hasattr(self, "_model_loaded") or not self._model_loaded:
+            self.load_latest_model()
+            self._model_loaded = True
+
+        if getattr(self, "_model", None) is not None:
+            try:
+                res = self._model.predict(features)
+                return float(res["score"]), float(res["confidence"])
+            except Exception as e:
+                import logging
+                logging.getLogger(__name__).error(
+                    "Error predicting with loaded ML model: %s. Falling back to heuristic.", e
+                )
+                return self._heuristic_model(features)
+
+        return self._heuristic_model(features)
 
     def _heuristic_model(self, features: Dict[str, Any]) -> Tuple[float, float]:
         """Simple heuristic-based model for shadow mode.

@@ -55,6 +55,8 @@ class Agent(Base):
     configuration = Column(JSON, default=dict)
     meta_data = Column(JSON, default=dict)  # Renamed from 'metadata' (reserved in SQLAlchemy)
     region_id = Column(String(50))
+    dock_status = Column(String(50), default="undocked", index=True)
+    visibility = Column(Boolean, default=False)
     created_at = Column(DateTime, default=lambda: datetime.now(timezone.utc))
     updated_at = Column(DateTime, default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
     created_by = Column(String(255))
@@ -69,6 +71,8 @@ class Agent(Base):
             "description": self.description,
             "trust_level": self.trust_level,
             "status": self.status,
+            "dock_status": self.dock_status,
+            "visibility": self.visibility,
             "configuration": self.configuration,
             "metadata": self.meta_data,  # Expose as 'metadata' in API
             "region_id": self.region_id,

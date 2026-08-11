@@ -6,6 +6,7 @@ Validates that all security controls are properly configured
 import pytest
 import yaml
 import json
+import sys
 from pathlib import Path
 
 
@@ -20,7 +21,7 @@ class TestNetworkPolicies:
     def test_default_deny_policy_exists(self):
         """Verify default deny-all policy is configured"""
         netpol_file = Path("deploy/kubernetes/network-policies.yaml")
-        with open(netpol_file) as f:
+        with open(netpol_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         default_deny = next(
@@ -35,7 +36,7 @@ class TestNetworkPolicies:
     def test_explicit_allow_policies(self):
         """Verify explicit allow policies for required services"""
         netpol_file = Path("deploy/kubernetes/network-policies.yaml")
-        with open(netpol_file) as f:
+        with open(netpol_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         required_policies = [
@@ -62,7 +63,7 @@ class TestServiceMeshConfig:
     def test_mtls_strict_mode(self):
         """Verify mTLS is configured in STRICT mode"""
         config_file = Path("deploy/kubernetes/service-mesh-config.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         peer_auth = next(
@@ -79,7 +80,7 @@ class TestServiceMeshConfig:
     def test_authorization_policies(self):
         """Verify authorization policies are configured"""
         config_file = Path("deploy/kubernetes/service-mesh-config.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         auth_policies = [
@@ -102,7 +103,7 @@ class TestExternalSecrets:
     def test_secret_stores_defined(self):
         """Verify secret stores are configured"""
         config_file = Path("deploy/kubernetes/external-secrets.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         secret_stores = [
@@ -115,7 +116,7 @@ class TestExternalSecrets:
     def test_jwt_keys_external_secret(self):
         """Verify JWT keys are managed externally"""
         config_file = Path("deploy/kubernetes/external-secrets.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         jwt_secret = next(
@@ -141,7 +142,7 @@ class TestSecretRotation:
     def test_rotation_schedule(self):
         """Verify rotation runs every 30 days or less"""
         config_file = Path("deploy/kubernetes/secret-rotation-cronjob.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         cronjob = next(
@@ -161,7 +162,7 @@ class TestSecretRotation:
     def test_rotation_monitoring(self):
         """Verify rotation monitoring is configured"""
         config_file = Path("deploy/kubernetes/secret-rotation-cronjob.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         check_job = next(
@@ -180,7 +181,7 @@ class TestRuntimeSecurity:
     def test_statefulset_security_context(self):
         """Verify StatefulSet has proper security context"""
         config_file = Path("deploy/kubernetes/statefulset.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             statefulset = yaml.safe_load(f)
         
         pod_security = statefulset['spec']['template']['spec']['securityContext']
@@ -192,7 +193,7 @@ class TestRuntimeSecurity:
     def test_container_security_context(self):
         """Verify container has proper security context"""
         config_file = Path("deploy/kubernetes/statefulset.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             statefulset = yaml.safe_load(f)
         
         container = statefulset['spec']['template']['spec']['containers'][0]
@@ -210,7 +211,7 @@ class TestRuntimeSecurity:
         config_file = Path("deploy/kubernetes/seccomp-profile.json")
         assert config_file.exists(), "Seccomp profile not found"
         
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             profile = json.load(f)
         
         assert profile['defaultAction'] == 'SCMP_ACT_ERRNO', \
@@ -234,7 +235,7 @@ class TestWAFConfiguration:
     def test_modsecurity_rules(self):
         """Verify ModSecurity rules for prompt injection"""
         config_file = Path("deploy/kubernetes/waf-config.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         waf_rules = next(
@@ -261,7 +262,7 @@ class TestWAFConfiguration:
     def test_ingress_waf_annotations(self):
         """Verify ingress has WAF annotations"""
         config_file = Path("deploy/kubernetes/waf-config.yaml")
-        with open(config_file) as f:
+        with open(config_file, encoding="utf-8") as f:
             docs = list(yaml.safe_load_all(f))
         
         ingress = next(
@@ -289,7 +290,7 @@ class TestSecurityDocumentation:
     def test_security_hardening_guide_completeness(self):
         """Verify security hardening guide covers all layers"""
         guide = Path("docs/Security_hardening_guide.md")
-        with open(guide) as f:
+        with open(guide, encoding="utf-8") as f:
             content = f.read()
         
         required_sections = [
@@ -326,19 +327,19 @@ class TestVerificationScripts:
         """Verify security controls verification script exists"""
         script = Path("scripts/verify-security-controls.sh")
         assert script.exists(), "Security verification script not found"
-        assert script.stat().st_mode & 0o111, "Script not executable"
+        assert sys.platform == "win32" or (script.stat().st_mode & 0o111), "Script not executable"
     
     def test_network_isolation_test_exists(self):
         """Verify network isolation test script exists"""
         script = Path("scripts/test-network-isolation.sh")
         assert script.exists(), "Network isolation test script not found"
-        assert script.stat().st_mode & 0o111, "Script not executable"
+        assert sys.platform == "win32" or (script.stat().st_mode & 0o111), "Script not executable"
     
     def test_vulnerability_sla_script_exists(self):
         """Verify vulnerability SLA check script exists"""
         script = Path("scripts/check-vuln-sla.py")
         assert script.exists(), "Vulnerability SLA script not found"
-        assert script.stat().st_mode & 0o111, "Script not executable"
+        assert sys.platform == "win32" or (script.stat().st_mode & 0o111), "Script not executable"
 
 
 class TestCIWorkflows:
@@ -352,7 +353,7 @@ class TestCIWorkflows:
     def test_vuln_sla_workflow_schedule(self):
         """Verify vulnerability scan runs frequently"""
         workflow = Path(".github/workflows/vuln-sla.yml")
-        with open(workflow) as f:
+        with open(workflow, encoding="utf-8") as f:
             workflow_data = yaml.safe_load(f)
         
         # Handle both 'on' and True as YAML boolean

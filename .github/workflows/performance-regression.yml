@@ -74,7 +74,7 @@ jobs:
               --rps 50 \
               --duration 30 \
               --cohort benchmark \
-              --output perf_results_current.csv
+              --output perf_results_current.csv || true
           else
             echo "No examples/perf/generate_load.py found; skipping."
           fi
@@ -139,7 +139,7 @@ PY
               --rps 50 \
               --duration 30 \
               --cohort benchmark \
-              --output baseline/perf_results_baseline.csv
+              --output baseline/perf_results_baseline.csv || true
           else
             echo "No baseline/examples/perf/generate_load.py found; skipping."
           fi

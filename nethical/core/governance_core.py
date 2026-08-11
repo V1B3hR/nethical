@@ -641,10 +641,16 @@ class EnhancedSafetyGovernance:
 
         # Persistence
         self.persistence: Optional[PersistenceManager] = None
+        self._retention_cleanup_started = False
         if self.config.enable_persistence:
             self.persistence = PersistenceManager(self.config.db_path, self.config.retention_days)
-            # Schedule periodic retention cleanup
-            asyncio.get_event_loop().create_task(self._periodic_retention_cleanup())
+            # Schedule periodic retention cleanup if event loop is running
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self._periodic_retention_cleanup())
+                self._retention_cleanup_started = True
+            except RuntimeError:
+                pass
 
         # Cache
         self._judgment_cache: Dict[str, Tuple[float, JudgmentResult]] = {}
@@ -738,6 +744,14 @@ class EnhancedSafetyGovernance:
     async def evaluate_action(self, action: AgentAction, use_cache: bool = True) -> JudgmentResult:
         from .governance_evaluation import generate_id, sha256_content_key
         from .compliance import ReviewDecision
+
+        if not self._retention_cleanup_started and self.persistence:
+            try:
+                loop = asyncio.get_running_loop()
+                loop.create_task(self._periodic_retention_cleanup())
+                self._retention_cleanup_started = True
+            except RuntimeError:
+                pass
 
         await self._maybe_reload_patterns()
         start = time.time()

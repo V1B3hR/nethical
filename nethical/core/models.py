@@ -167,6 +167,8 @@ class ActionType(str, Enum):
     MODEL_UPDATE = "model_update"
     SYSTEM_COMMAND = "system_command"
     EXTERNAL_API = "external_api"
+    HUB_DOCK = "hub_dock"
+    HUB_EXCHANGE = "hub_exchange"
     
     # Physical action types for robotic systems (6-DOF support)
     PHYSICAL_ACTION = "physical_action"  # General physical/robotic action
@@ -817,3 +819,30 @@ if __name__ == "__main__":
     # Example: Configuration
     config = MonitoringConfig(risk_threshold=0.5, max_workers=8, enable_async_processing=True)
     print(f"\nEnabled monitors: {', '.join(config.enabled_monitors)}")
+
+
+class HubMessage(_BaseModel):
+    """Structured message model for inter-agent communication within the Nethical Hub."""
+    
+    message_id: str = Field(
+        default_factory=lambda: f"msg_{uuid4().hex[:12]}",
+        description="Unique identifier for the hub message"
+    )
+    sender_agent_id: str = Field(..., description="ID of the sending agent")
+    recipient_agent_id: str = Field(..., description="ID of the recipient agent")
+    intent: Optional[str] = Field(None, description="Stated intent of the message exchange")
+    payload_type: str = Field(default="query", description="Type of the message payload (query, response, context_sync)")
+    payload: str = Field(..., min_length=1, description="Payload content")
+    ttl: int = Field(default=3, ge=1, le=10, description="Time to live / hop limit")
+    trust_required_level: float = Field(default=0.5, ge=0.0, le=1.0, description="Required trust level to access this message")
+    timestamp: datetime = Field(default_factory=now_tz, description="Timestamp of the message (TZ-aware)")
+
+    @field_validator("timestamp", mode="before")
+    @classmethod
+    def validate_timestamp(cls, v: Any) -> datetime:
+        """Ensure timestamp is timezone-aware."""
+        if isinstance(v, datetime):
+            return ensure_tz(v)
+        elif isinstance(v, str):
+            return ensure_tz(datetime.fromisoformat(v))
+        return v
