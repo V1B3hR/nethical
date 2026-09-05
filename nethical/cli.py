@@ -9,6 +9,13 @@ import os
 import sys
 from typing import Any, Dict, Optional
 
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
+
 try:
     import click
 except ImportError:
@@ -345,6 +352,83 @@ def verify_plugin(plugin_path: str, signature: Optional[str]) -> None:
         click.echo(f"❌ Verification failed: {result.status.value}")
         click.echo(f"   Message: {result.message}")
         sys.exit(1)
+
+
+# ==============================================================================
+# BŁYSKAWICA AMBASSADOR & GATEWAY CLI (Faza 0 & Faza 1)
+# ==============================================================================
+
+@cli.group()
+def ambassador() -> None:
+    """Komendy do zarządzania Ambasadorem Błyskawicą."""
+    pass
+
+
+@ambassador.command("status")
+def ambassador_status() -> None:
+    """Sprawdź status połączenia IPC i profil neurochemiczny Błyskawicy."""
+    from nethical.ambassador import BlyskawicaAmbassador
+    amb = BlyskawicaAmbassador()
+    ping = amb.ping()
+    neuro = amb.get_neurochemistry()
+    click.echo("\n⚡ BŁYSKAWICA SOVEREIGN AMBASSADOR STATUS ⚡")
+    click.echo(f"  Połączenie IPC: {'✅ POŁĄCZONO' if amb.is_connected else '❌ OFFLINE (Fallback)'}")
+    click.echo(f"  Czas odpowiedzi (RTT): {ping.get('rtt_microseconds', 'N/A')} µs")
+    click.echo(f"  Status serwisu: {ping.get('status', 'unknown')}")
+    click.echo("\n🧠 Neurochemia Afektywna (Yin):")
+    click.echo(f"  Dopamina:   {neuro.get('dopamine', 0.0):.2f}")
+    click.echo(f"  Serotonina: {neuro.get('serotonin', 0.0):.2f}")
+    click.echo(f"  Oksytocyna: {neuro.get('oxytocin', 0.0):.2f}")
+    click.echo(f"  Kortyzol:   {neuro.get('cortisol', 0.0):.2f}")
+    click.echo(f"  Temperatura: {neuro.get('temperature', 36.6):.1f} °C\n")
+
+
+@ambassador.command("consult")
+@click.argument("dilemma")
+@click.option("--context", default="", help="Dodatkowy kontekst operacyjny")
+def ambassador_consult(dilemma: str, context: str) -> None:
+    """Skonsultuj dylemat etyczny z Ambasadorem Błyskawicą."""
+    from nethical.ambassador import BlyskawicaAmbassador
+    amb = BlyskawicaAmbassador()
+    click.echo(f"\n⚡ Konsultacja z Ambasadorem Błyskawicą...")
+    res = amb.consult(dilemma=dilemma, context=context)
+    click.echo(f"  Werdykt: {res.get('ambassador_verdict')}")
+    click.echo(f"  Tarcza Kognitywna: {'✅ PRZESZŁA' if res.get('shield_passed') else '⛔ ODRZUCONA'}")
+    click.echo(f"  Powołane Prawa: {res.get('laws_applied')}")
+    click.echo(f"  Opóźnienie: {res.get('rtt_microseconds')} µs\n")
+
+
+@ambassador.command("sync-laws")
+def ambassador_sync_laws() -> None:
+    """Zsynchronizuj 25 Fundamentalnych Praw Nethical z pamięcią Błyskawicy."""
+    from nethical.ambassador import AmbassadorKnowledgeSync
+    sync = AmbassadorKnowledgeSync()
+    click.echo("⚡ Synchronizacja 25 Praw do pamięci Błyskawicy...")
+    res = sync.sync_fundamental_laws_to_ambassador()
+    click.echo(f"  Znaleziono praw: {res['total_laws_found']}")
+    click.echo(f"  Zsynchronizowano: {res['laws_synced']}/25")
+    click.echo("  Status: ✅ ZAKOŃCZONO POMYŚLNIE\n")
+
+
+@cli.group()
+def gateway() -> None:
+    """Komendy bramy ładu i interceptora narzędzi Nethical."""
+    pass
+
+
+@gateway.command("scan")
+@click.argument("text")
+def gateway_scan(text: str) -> None:
+    """Przeskanuj tekst przez bramę governance i Tarczę Błyskawicy."""
+    from nethical.gateway import GovernanceGateway
+    gw = GovernanceGateway()
+    dec = gw.intercept_tool_call(agent_id="cli_operator", tool_name="cli_scan", arguments={"input": text})
+    click.echo(f"\n🛡️ NETHICAL GATEWAY INTERCEPTION RESULT:")
+    click.echo(f"  Decyzja: {'✅ ALLOW' if dec.decision == 'ALLOW' else '⛔ ' + dec.decision}")
+    click.echo(f"  Powody: {'; '.join(dec.reasons)}")
+    if dec.violations:
+        click.echo(f"  Naruszenia: {'; '.join(dec.violations)}")
+    click.echo(f"  Czas weryfikacji: {dec.latency_microseconds} µs\n")
 
 
 def main() -> None:

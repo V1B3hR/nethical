@@ -1,0 +1,21 @@
+{
+  "base_model_name_or_path": "meta-llama/Meta-Llama-3-8B-Instruct",
+  "peft_type": "LORA",
+  "r": 16,
+  "lora_alpha": 32,
+  "lora_dropout": 0.05,
+  "target_modules": [
+    "q_proj",
+    "v_proj",
+    "k_proj",
+    "o_proj"
+  ],
+  "bias": "none",
+  "task_type": "CAUSAL_LM",
+  "dpo_beta": 0.1,
+  "training_samples": 1064,
+  "final_loss": 0.62096,
+  "final_reward_margin": 0.15,
+  "merkle_anchor_root": "9493f2d66d3e2e1ddc2e83ee1f8c5592cce766ddf8cf584a2cdef95150e1ed5d",
+  "created_at": "2026-09-05T06:13:38.150397+00:00"
+}

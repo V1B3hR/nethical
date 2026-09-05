@@ -85,6 +85,8 @@ class ValidationRunner:
         print(f"{'='*70}")
         
         cmd = [
+            sys.executable,
+            "-m",
             "pytest",
             test_path,
             "-v",
@@ -145,7 +147,22 @@ class ValidationRunner:
             "performance": "tests/validation/test_performance_validation.py",
             "data_integrity": "tests/validation/test_data_integrity.py",
             "explainability": "tests/validation/test_explainability.py",
+            "ambassador_governance": "tests/test_ambassador_bridge.py",
+            "governance_gateway": "tests/test_governance_gateway.py",
+            "inoculation_portal": "tests/test_inoculation_and_portal.py",
+            "merkle_ledger": "tests/test_merkle_ledger_and_mesh.py",
+            "zk_a2a_protocol": "tests/test_zk_and_a2a_protocol.py",
+            "kinetic_safety_iso42001": "tests/test_kinetic_safety_and_iso42001.py",
+            "multiregion_hitl": "tests/test_multiregion_and_hitl.py",
+            "formal_ebpf_enclave": "tests/test_formal_ebpf_and_enclave.py",
+            "regulatory_frameworks_11": "tests/test_regulatory_frameworks_11.py",
+            "strategic_four_pillars": "tests/test_strategic_four_pillars.py",
+            "advanced_horizons_asia_ethics_fieldbus": "tests/test_advanced_horizons_asia_ethics_fieldbus.py",
+            "master_roadmap_next_steps": "tests/test_master_roadmap_next_steps.py",
+            "dpo_learning_and_master_audit": "tests/test_dpo_training_pipeline.py",
+            "sectoral_governance_packs": "tests/test_sectoral_governance_packs.py",
         }
+
         
         # Run specified suites or all
         suites_to_run = suites if suites else list(available_suites.keys())
@@ -185,14 +202,10 @@ class ValidationRunner:
         """Check if validation meets defined thresholds"""
         thresholds = self.config.get("metrics", {})
         
-        # This would check actual metric values from test reports
-        # For now, we check if tests passed
+        # Dynamically check status of all executed suites
         checks = {
-            "ethics_benchmark": self.results["suites"].get("ethics_benchmark", {}).get("status") == "passed",
-            "drift_detection": self.results["suites"].get("drift_detection", {}).get("status") == "passed",
-            "performance": self.results["suites"].get("performance", {}).get("status") == "passed",
-            "data_integrity": self.results["suites"].get("data_integrity", {}).get("status") == "passed",
-            "explainability": self.results["suites"].get("explainability", {}).get("status") == "passed",
+            s: self.results["suites"].get(s, {}).get("status") == "passed"
+            for s in self.results["suites"]
         }
         
         return {
@@ -249,7 +262,12 @@ def main():
         nargs="+",
         help="Specific suites to run (default: all)",
         choices=["ethics_benchmark", "drift_detection", "performance", 
-                 "data_integrity", "explainability"]
+                 "data_integrity", "explainability", "ambassador_governance",
+                 "governance_gateway", "inoculation_portal", "merkle_ledger",
+                 "zk_a2a_protocol", "kinetic_safety_iso42001",
+                 "multiregion_hitl", "formal_ebpf_enclave",
+                 "regulatory_frameworks_11", "strategic_four_pillars",
+                 "advanced_horizons_asia_ethics_fieldbus"]
     )
     parser.add_argument(
         "--output",

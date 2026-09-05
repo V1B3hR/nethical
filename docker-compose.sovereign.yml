@@ -1,0 +1,67 @@
+version: '3.8'
+
+services:
+  # 1. BŁYSKAWICA AMBASSADOR RUST CORE (Suwerenny Demon IPC na Linuxie)
+  blyskawica-ambassador:
+    build:
+      context: .
+      dockerfile: ./scratch/Dockerfile.ambassador
+    container_name: nethical-blyskawica-ambassador
+    restart: unless-stopped
+    environment:
+      - RUST_LOG=info
+      - BLY_AMBASSADOR_SOCKET=/var/run/blyskawica/ambassador.sock
+      - BLY_ROLE=SOVEREIGN_AMBASSADOR_V10
+    volumes:
+      - blyskawica_ipc:/var/run/blyskawica
+    networks:
+      - nethical-mesh
+
+  # 2. NETHICAL GOVERNANCE GATEWAY & CONTROL PLANE (FastAPI, Merkle Ledger, Kinetic OS, HITL)
+  nethical-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nethical-governance-gateway
+    restart: unless-stopped
+    depends_on:
+      - blyskawica-ambassador
+      - redis-sync
+    environment:
+      - NETHICAL_ENVIRONMENT=production
+      - NETHICAL_CLUSTER_REGION=eu-central-1
+      - NETHICAL_DATACENTER=frankfurt-dc1
+      - BLY_IPC_SOCKET_PATH=/var/run/blyskawica/ambassador.sock
+      - REDIS_URL=redis://redis-sync:6379/0
+    ports:
+      - "8000:8000"
+    volumes:
+      - blyskawica_ipc:/var/run/blyskawica
+      - nethical_ledger_data:/app/data
+    networks:
+      - nethical-mesh
+
+  # 3. REDIS DISTRIBUTED CLUSTER SYNC CACHE
+  redis-sync:
+    image: redis:7-alpine
+    container_name: nethical-redis-sync
+    restart: unless-stopped
+    command: redis-server --appendonly yes --requirepass nethical_cluster_secure_sync_secret
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nethical-mesh
+
+volumes:
+  blyskawica_ipc:
+    driver: local
+  nethical_ledger_data:
+    driver: local
+  redis_data:
+    driver: local
+
+networks:
+  nethical-mesh:
+    driver: bridge

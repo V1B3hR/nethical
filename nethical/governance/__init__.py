@@ -32,4 +32,19 @@ __all__ = [
     'ThresholdType',
     'ThresholdConfig',
     'DEFAULT_THRESHOLDS',
+    # UK Gov Teal Book GovS 002 DoAM
+    'DelegationOfAuthorityMatrix',
+    'AuthorityLevel',
+    'ReservedPowerCategory',
+    'DOAMStatus',
+    'DOAMEvaluationResult',
 ]
+
+from .doam_matrix import (
+    DelegationOfAuthorityMatrix,
+    AuthorityLevel,
+    ReservedPowerCategory,
+    DOAMStatus,
+    DOAMEvaluationResult,
+)
+

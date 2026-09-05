@@ -104,4 +104,29 @@ __all__ = [
     "SecureBootVerifier",
     "EdgeSecurityManager",
     "create_tpm_interface",
+    # Industrial Fieldbus, ISO 26262 & HIL
+    "IndustrialFieldbusInterlock",
+    "ISO26262SafetyEvaluator",
+    "ASILRating",
+    "Severity",
+    "Exposure",
+    "Controllability",
+    "HILFieldbusBridge",
+    "TargetMCU",
+    "FaultType",
 ]
+
+from .industrial_fieldbus import IndustrialFieldbusInterlock
+from .iso26262_asil import (
+    ISO26262SafetyEvaluator,
+    ASILRating,
+    Severity,
+    Exposure,
+    Controllability,
+)
+from .hil_simulator import (
+    HILFieldbusBridge,
+    TargetMCU,
+    FaultType,
+)
+

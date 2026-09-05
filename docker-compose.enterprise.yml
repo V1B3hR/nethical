@@ -1,0 +1,70 @@
+# ==============================================================================
+# NETHICAL ENTERPRISE & BŁYSKAWICA AMBASSADOR - GLOBAL DATACENTRE DEPLOYMENT
+# ==============================================================================
+# Zapewnia sub-milisekundową komunikację (< 50 µs) pomiędzy bramą Nethical
+# a Ambasadorem Błyskawicą w dowolnym centrum danych (Linux / Docker / Kubernetes).
+
+version: "3.8"
+
+services:
+  # ----------------------------------------------------------------------------
+  # 1. SUWERENNY DAEMON BŁYSKAWICY (Rust Core + Tarcza Kognitywna + Model GGUF)
+  # ----------------------------------------------------------------------------
+  blyskawica-ambassador:
+    build:
+      context: ../Blyskawica
+      dockerfile: Dockerfile.ambassador
+    container_name: blyskawica_ambassador_node
+    restart: always
+    environment:
+      - NETHICAL_AMBASSADOR_IPC_PATH=/var/run/blyskawica/ambassador.sock
+      - BLYSAWICA_MODEL_PATH=/app/model/qwen2.5-1.5b-coder.gguf
+      - RUST_LOG=info
+    volumes:
+      # Pamięć współdzielona / wolumen IPC na gniazdo UNIX (Zero TCP overhead)
+      - ambassador-ipc-socket:/var/run/blyskawica
+      - ../Blyskawica/model:/app/model:ro
+    deploy:
+      resources:
+        limits:
+          cpus: "4.0"
+          memory: 4096M
+        reservations:
+          cpus: "1.0"
+          memory: 2048M
+
+  # ----------------------------------------------------------------------------
+  # 2. NETHICAL GOVERNANCE GATEWAY & RUNTIME INTERCEPTOR (FastAPI / MCP Proxy)
+  # ----------------------------------------------------------------------------
+  nethical-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: nethical_governance_gateway
+    restart: always
+    depends_on:
+      - blyskawica-ambassador
+    environment:
+      - NETHICAL_AMBASSADOR_IPC_PATH=/var/run/blyskawica/ambassador.sock
+      - NETHICAL_HOST=0.0.0.0
+      - NETHICAL_PORT=8000
+      - NETHICAL_CORS_ALLOW_ORIGINS=*
+      - NETHICAL_REGION_ID=eu-central-warsaw
+    ports:
+      - "8000:8000"     # REST API / Gateway / Swagger
+      - "8001:8001"     # Model Context Protocol (MCP SSE Stream)
+    volumes:
+      # Montowanie współdzielonego gniazda UNIX z Błyskawicą
+      - ambassador-ipc-socket:/var/run/blyskawica
+      - ./data:/app/data
+      - ./policies:/app/policies
+    healthcheck:
+      test: ["CMD", "python", "-m", "nethical.cli", "ambassador", "status"]
+      interval: 15s
+      timeout: 5s
+      retries: 3
+      start_period: 10s
+
+volumes:
+  ambassador-ipc-socket:
+    driver: local

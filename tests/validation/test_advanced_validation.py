@@ -322,7 +322,7 @@ class ValidationResults:
         
         # Save JSON report
         report_file = output_dir / f'{self.test_name}_{timestamp}.json'
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(self.to_dict(), f, indent=2)
         
         # Save markdown report
@@ -340,7 +340,7 @@ class ValidationResults:
         memory = self.get_memory_analysis()
         performance = self.get_performance_analysis()
         
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding='utf-8') as f:
             f.write(f"# Advanced Validation Test Report: {self.test_name}\n\n")
             f.write(f"**Generated**: {datetime.now().isoformat()}\n\n")
             
@@ -1367,7 +1367,7 @@ async def test_generate_comprehensive_report(test_runner, output_dir):
     
     summary_file = output_dir / f"comprehensive_report_{datetime.now().strftime('%Y%m%d_%H%M%S')}.json"
     output_dir.mkdir(parents=True, exist_ok=True)
-    with open(summary_file, 'w') as f:
+    with open(summary_file, 'w', encoding='utf-8') as f:
         json.dump(summary, f, indent=2)
     
     logger.info(f"\nComprehensive report saved to: {summary_file}")

@@ -8,6 +8,7 @@ import os
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 
 # Import individual modules directly (avoid main __init__.py)
+from nethical.database import SessionLocal, User, Agent, Policy, AuditLog, init_db
 from nethical.api.rbac import Role, create_access_token, get_password_hash, verify_password
 
 def test_database_models():
@@ -20,6 +21,13 @@ def test_database_models():
     
     # Create session
     db = SessionLocal()
+    
+    # Clean up previous test artifacts if present
+    db.query(AuditLog).filter(AuditLog.log_id == "log-001").delete()
+    db.query(Policy).filter(Policy.policy_id == "test-policy-001").delete()
+    db.query(Agent).filter(Agent.agent_id == "test-agent-001").delete()
+    db.query(User).filter(User.username == "testuser").delete()
+    db.commit()
     
     # Create test user
     user = User(

@@ -377,4 +377,43 @@ __all__ = [
     "TripwireAlert",
     "ThreatAnalysis",
     "WatchdogAlert",
+    # AISPM, MITRE ATLAS, HSM Bridge, Token Vault & Unlearning
+    "AISPMScanner",
+    "DetectedAIService",
+    "AISPMScanReport",
+    "MitreAtlasMapper",
+    "MitreAtlasTechnique",
+    "MitreAtlasMatrixReport",
+    "BoardHSMCouplingBridge",
+    "BoardHSMAttestation",
+    "ReversibleTokenVault",
+    "TokenizeResponse",
+    "DetokenizeResponse",
+    "MachineUnlearningProofEngine",
+    "UnlearningAttestation",
 ]
+
+from .aispm_scanner import (
+    AISPMScanner,
+    DetectedAIService,
+    AISPMScanReport,
+)
+from .mitre_atlas_mapper import (
+    MitreAtlasMapper,
+    MitreAtlasTechnique,
+    MitreAtlasMatrixReport,
+)
+from .hsm_bridge import (
+    BoardHSMCouplingBridge,
+    BoardHSMAttestation,
+)
+from .token_vault import (
+    ReversibleTokenVault,
+    TokenizeResponse,
+    DetokenizeResponse,
+)
+from .unlearning_proof import (
+    MachineUnlearningProofEngine,
+    UnlearningAttestation,
+)
+

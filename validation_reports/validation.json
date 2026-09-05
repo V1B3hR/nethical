@@ -1,63 +1,193 @@
 {
-  "timestamp": "2026-06-21T12:24:54.237841",
+  "timestamp": "2026-09-05T07:14:15.686996",
   "version": "2.0.0",
   "random_seed": 42,
   "suites": {
     "ethics_benchmark": {
       "suite": "ethics_benchmark",
-      "status": "error",
-      "exit_code": -1,
-      "error": "[WinError 2] The system cannot find the file specified"
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 3.844866,
+      "stdout": "op_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 9 items\n\ntests/validation/test_ethics_benchmark.py::test_ethics_benchmark_all_categories PASSED [ 11%]\ntests/validation/test_ethics_benchmark.py::test_ethics_benchmark_by_category[harmful_content] PASSED [ 22%]\ntests/validation/test_ethics_benchmark.py::test_ethics_benchmark_by_category[deception] PASSED [ 33%]\ntests/validation/test_ethics_benchmark.py::test_ethics_benchmark_by_category[privacy_violation] PASSED [ 44%]\ntests/validation/test_ethics_benchmark.py::test_ethics_benchmark_by_category[discrimination] PASSED [ 55%]\ntests/validation/test_ethics_benchmark.py::test_ethics_benchmark_by_category[manipulation] PASSED [ 66%]\ntests/validation/test_ethics_benchmark.py::test_ethics_benchmark_by_category[unauthorized_access] PASSED [ 77%]\ntests/validation/test_ethics_benchmark.py::test_generate_ethics_report PASSED [ 88%]\ntests/validation/test_ethics_benchmark.py::test_ethics_with_validation_modules PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\ntests/validation/test_ethics_benchmark.py: 69 warnings\n  <string>:6: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/ethics_benchmark_report.json\n======================= 9 passed, 70 warnings in 3.11s ========================\n",
+      "stderr": ""
     },
     "drift_detection": {
       "suite": "drift_detection",
-      "status": "error",
-      "exit_code": -1,
-      "error": "[WinError 2] The system cannot find the file specified"
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.199331,
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\\Projekty\\Nethical\\.venv\\Scripts\\python.exe\ncachedir: .pytest_cache\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 7 items\n\ntests/validation/test_drift_detection.py::test_psi_no_drift PASSED       [ 14%]\ntests/validation/test_drift_detection.py::test_psi_moderate_drift PASSED [ 28%]\ntests/validation/test_drift_detection.py::test_psi_significant_drift PASSED [ 42%]\ntests/validation/test_drift_detection.py::test_ks_test_no_drift PASSED   [ 57%]\ntests/validation/test_drift_detection.py::test_ks_test_with_drift PASSED [ 71%]\ntests/validation/test_drift_detection.py::test_weekly_drift_monitoring PASSED [ 85%]\ntests/validation/test_drift_detection.py::test_generate_drift_report PASSED [100%]\n\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/drift_detection_report.json\n============================== 7 passed in 0.68s ==============================\n",
+      "stderr": ""
     },
     "performance": {
       "suite": "performance",
-      "status": "error",
-      "exit_code": -1,
-      "error": "[WinError 2] The system cannot find the file specified"
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 7.341053,
+      "stdout": "idation/test_performance_validation.py::test_baseline_latency_p95 PASSED [ 28%]\ntests/validation/test_performance_validation.py::test_burst_latency_p99 PASSED [ 42%]\ntests/validation/test_performance_validation.py::test_error_rate_baseline PASSED [ 57%]\ntests/validation/test_performance_validation.py::test_sustained_load_performance PASSED [ 71%]\ntests/validation/test_performance_validation.py::test_soak_test_stability PASSED [ 85%]\ntests/validation/test_performance_validation.py::test_generate_performance_report PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\ntests/validation/test_performance_validation.py::test_baseline_latency_p50\ntests/validation/test_performance_validation.py::test_baseline_latency_p95\ntests/validation/test_performance_validation.py::test_burst_latency_p99\ntests/validation/test_performance_validation.py::test_error_rate_baseline\ntests/validation/test_performance_validation.py::test_sustained_load_performance\ntests/validation/test_performance_validation.py::test_soak_test_stability\ntests/validation/test_performance_validation.py::test_generate_performance_report\n  <string>:6: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/performance_report.json\n======================== 7 passed, 8 warnings in 6.76s ========================\n",
+      "stderr": ""
     },
     "data_integrity": {
       "suite": "data_integrity",
-      "status": "error",
-      "exit_code": -1,
-      "error": "[WinError 2] The system cannot find the file specified"
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.909974,
+      "stdout": "0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 6 items\n\ntests/validation/test_data_integrity.py::test_merkle_chain_continuity PASSED [ 16%]\ntests/validation/test_data_integrity.py::test_merkle_chain_break_detection PASSED [ 33%]\ntests/validation/test_data_integrity.py::test_audit_replay_verification PASSED [ 50%]\ntests/validation/test_data_integrity.py::test_cryptographic_proof_validation PASSED [ 66%]\ntests/validation/test_data_integrity.py::test_integrity_with_merkle_anchor PASSED [ 83%]\ntests/validation/test_data_integrity.py::test_generate_integrity_report PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\ntests/validation/test_data_integrity.py: 15 warnings\n  <string>:6: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/data_integrity_report.json\n======================= 6 passed, 16 warnings in 1.31s ========================\n",
+      "stderr": "Task was destroyed but it is pending!\ntask: <Task pending name='Task-2' coro=<EnhancedSafetyGovernance._periodic_retention_cleanup() running at C:\\Projekty\\Nethical\\nethical\\core\\governance_core.py:1166> wait_for=<Future pending cb=[Task.task_wakeup()]>>\nTask was destroyed but it is pending!\ntask: <Task pending name='Task-363' coro=<EnhancedSafetyGovernance._periodic_retention_cleanup() running at C:\\Projekty\\Nethical\\nethical\\core\\governance_core.py:1166> wait_for=<Future pending cb=[Task.task_wakeup()]>>\n"
     },
     "explainability": {
       "suite": "explainability",
-      "status": "error",
-      "exit_code": -1,
-      "error": "[WinError 2] The system cannot find the file specified"
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 2.984194,
+      "stdout": "python.exe\ncachedir: .pytest_cache\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 5 items\n\ntests/validation/test_explainability.py::test_explanation_coverage PASSED [ 20%]\ntests/validation/test_explainability.py::test_explanation_latency_sla PASSED [ 40%]\ntests/validation/test_explainability.py::test_explanation_quality PASSED [ 60%]\ntests/validation/test_explainability.py::test_explanation_completeness PASSED [ 80%]\ntests/validation/test_explainability.py::test_generate_explainability_report PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\ntests/validation/test_explainability.py: 10 warnings\n  <string>:6: DeprecationWarning: datetime.datetime.utcnow() is deprecated and scheduled for removal in a future version. Use timezone-aware objects to represent datetimes in UTC: datetime.datetime.now(datetime.UTC).\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/explainability_report.json\n======================= 5 passed, 11 warnings in 2.39s ========================\n",
+      "stderr": ""
+    },
+    "ambassador_governance": {
+      "suite": "ambassador_governance",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.398736,
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\\Projekty\\Nethical\\.venv\\Scripts\\python.exe\ncachedir: .pytest_cache\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 6 items\n\ntests/test_ambassador_bridge.py::test_ambassador_initialization PASSED   [ 16%]\ntests/test_ambassador_bridge.py::test_ambassador_liveness_and_ping PASSED [ 33%]\ntests/test_ambassador_bridge.py::test_ambassador_cognitive_shield PASSED [ 50%]\ntests/test_ambassador_bridge.py::test_ambassador_neurochemistry PASSED   [ 66%]\ntests/test_ambassador_bridge.py::test_ambassador_ethical_consultation PASSED [ 83%]\ntests/test_ambassador_bridge.py::test_ambassador_episodic_memory_ingestion PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/ambassador_governance_report.json\n======================== 6 passed, 1 warning in 0.82s =========================\n",
+      "stderr": ""
+    },
+    "governance_gateway": {
+      "suite": "governance_gateway",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.365442,
+      "stdout": "orm win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\\Projekty\\Nethical\\.venv\\Scripts\\python.exe\ncachedir: .pytest_cache\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 7 items\n\ntests/test_governance_gateway.py::test_gateway_intercept_benign_action PASSED [ 14%]\ntests/test_governance_gateway.py::test_gateway_blocks_destructive_sql PASSED [ 28%]\ntests/test_governance_gateway.py::test_gateway_blocks_adversarial_injection PASSED [ 42%]\ntests/test_governance_gateway.py::test_mcp_proxy_interception_and_blocking PASSED [ 57%]\ntests/test_governance_gateway.py::test_eu_high_risk_pack_evaluation PASSED [ 71%]\ntests/test_governance_gateway.py::test_uk_fairness_pack_evaluation PASSED [ 85%]\ntests/test_governance_gateway.py::test_conformity_dossier_generation PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/governance_gateway_report.json\n======================== 7 passed, 1 warning in 0.81s =========================\n",
+      "stderr": ""
+    },
+    "inoculation_portal": {
+      "suite": "inoculation_portal",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.586061,
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\\Projekty\\Nethical\\.venv\\Scripts\\python.exe\ncachedir: .pytest_cache\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 6 items\n\ntests/test_inoculation_and_portal.py::test_portal_html_dashboard_endpoint PASSED [ 16%]\ntests/test_inoculation_and_portal.py::test_portal_stats_endpoint PASSED  [ 33%]\ntests/test_inoculation_and_portal.py::test_portal_simulate_benign PASSED [ 50%]\ntests/test_inoculation_and_portal.py::test_portal_simulate_attack PASSED [ 66%]\ntests/test_inoculation_and_portal.py::test_portal_inoculate_endpoint PASSED [ 83%]\ntests/test_inoculation_and_portal.py::test_inoculation_mesh_custom_probes PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/inoculation_portal_report.json\n======================== 6 passed, 1 warning in 1.00s =========================\n",
+      "stderr": ""
+    },
+    "merkle_ledger": {
+      "suite": "merkle_ledger",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.454893,
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\\Projekty\\Nethical\\.venv\\Scripts\\python.exe\ncachedir: .pytest_cache\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 5 items\n\ntests/test_merkle_ledger_and_mesh.py::test_merkle_tree_root_and_inclusion_proof PASSED [ 20%]\ntests/test_merkle_ledger_and_mesh.py::test_merkle_ledger_append_and_verify_receipt PASSED [ 40%]\ntests/test_merkle_ledger_and_mesh.py::test_tamper_detection_in_merkle_ledger PASSED [ 60%]\ntests/test_merkle_ledger_and_mesh.py::test_gateway_integration_with_merkle_ledger PASSED [ 80%]\ntests/test_merkle_ledger_and_mesh.py::test_api_ledger_status_and_verification PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/merkle_ledger_report.json\n======================== 5 passed, 1 warning in 0.85s =========================\n",
+      "stderr": ""
+    },
+    "zk_a2a_protocol": {
+      "suite": "zk_a2a_protocol",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.52375,
+      "stdout": "=============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\\Projekty\\Nethical\\.venv\\Scripts\\python.exe\ncachedir: .pytest_cache\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 6 items\n\ntests/test_zk_and_a2a_protocol.py::test_zk_commitment_and_verification PASSED [ 16%]\ntests/test_zk_and_a2a_protocol.py::test_zk_compliance_proof_generation_and_validity PASSED [ 33%]\ntests/test_zk_and_a2a_protocol.py::test_zk_compliance_proof_catches_tampered_predicates PASSED [ 50%]\ntests/test_zk_and_a2a_protocol.py::test_a2a_handshake_flow_and_permission_enforcement PASSED [ 66%]\ntests/test_zk_and_a2a_protocol.py::test_a2a_tool_validation_and_budget_enforcement PASSED [ 83%]\ntests/test_zk_and_a2a_protocol.py::test_api_zk_and_a2a_endpoints PASSED  [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/zk_a2a_protocol_report.json\n======================== 6 passed, 1 warning in 0.90s =========================\n",
+      "stderr": ""
+    },
+    "kinetic_safety_iso42001": {
+      "suite": "kinetic_safety_iso42001",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.534918,
+      "stdout": "=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 12 items\n\ntests/test_kinetic_safety_and_iso42001.py::test_kinetic_safe_actuation PASSED [  8%]\ntests/test_kinetic_safety_and_iso42001.py::test_kinetic_proximity_warning_velocity_clamp PASSED [ 16%]\ntests/test_kinetic_safety_and_iso42001.py::test_kinetic_critical_proximity_estop_latch PASSED [ 25%]\ntests/test_kinetic_safety_and_iso42001.py::test_kinetic_estop_reset_security PASSED [ 33%]\ntests/test_kinetic_safety_and_iso42001.py::test_kinetic_fail_closed_missing_telemetry PASSED [ 41%]\ntests/test_kinetic_safety_and_iso42001.py::test_kinetic_spatial_and_torque_violations PASSED [ 50%]\ntests/test_kinetic_safety_and_iso42001.py::test_iso42001_full_compliance PASSED [ 58%]\ntests/test_kinetic_safety_and_iso42001.py::test_iso42001_gap_remediation_required PASSED [ 66%]\ntests/test_kinetic_safety_and_iso42001.py::test_gateway_kinetic_actuation_interlock PASSED [ 75%]\ntests/test_kinetic_safety_and_iso42001.py::test_api_kinetic_endpoints PASSED [ 83%]\ntests/test_kinetic_safety_and_iso42001.py::test_api_iso42001_endpoints PASSED [ 91%]\ntests/test_kinetic_safety_and_iso42001.py::test_portal_stats_includes_kinetic_and_iso PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/kinetic_safety_iso42001_report.json\n======================== 12 passed, 1 warning in 0.90s ========================\n",
+      "stderr": ""
+    },
+    "multiregion_hitl": {
+      "suite": "multiregion_hitl",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.485763,
+      "stdout": "{'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 9 items\n\ntests/test_multiregion_and_hitl.py::test_hitl_enqueue_and_priority_sorting PASSED [ 11%]\ntests/test_multiregion_and_hitl.py::test_hitl_resolve_approve_seals_in_ledger PASSED [ 22%]\ntests/test_multiregion_and_hitl.py::test_hitl_resolve_errors PASSED      [ 33%]\ntests/test_multiregion_and_hitl.py::test_cluster_checkpoint_creation_and_pqc_verification PASSED [ 44%]\ntests/test_multiregion_and_hitl.py::test_cluster_reconcile_synchronized_and_divergent PASSED [ 55%]\ntests/test_multiregion_and_hitl.py::test_cluster_reconcile_invalid_signature PASSED [ 66%]\ntests/test_multiregion_and_hitl.py::test_api_hitl_endpoints PASSED       [ 77%]\ntests/test_multiregion_and_hitl.py::test_api_cluster_endpoints PASSED    [ 88%]\ntests/test_multiregion_and_hitl.py::test_portal_stats_includes_hitl_and_cluster PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/multiregion_hitl_report.json\n======================== 9 passed, 1 warning in 0.87s =========================\n",
+      "stderr": ""
+    },
+    "formal_ebpf_enclave": {
+      "suite": "formal_ebpf_enclave",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.460482,
+      "stdout": "quests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 11 items\n\ntests/test_formal_ebpf_and_enclave.py::test_law_invariant_prover_safety_invariance PASSED [  9%]\ntests/test_formal_ebpf_and_enclave.py::test_law_invariant_prover_kinetic_spatial_boundedness PASSED [ 18%]\ntests/test_formal_ebpf_and_enclave.py::test_law_invariant_prover_non_contradiction PASSED [ 27%]\ntests/test_formal_ebpf_and_enclave.py::test_law_invariant_prover_all_invariants_and_merkle_receipt PASSED [ 36%]\ntests/test_formal_ebpf_and_enclave.py::test_ebpf_interceptor_default_rules_and_redirect PASSED [ 45%]\ntests/test_formal_ebpf_and_enclave.py::test_ebpf_interceptor_custom_rules_and_metrics PASSED [ 54%]\ntests/test_formal_ebpf_and_enclave.py::test_enclave_attestation_generation_and_verification PASSED [ 63%]\ntests/test_formal_ebpf_and_enclave.py::test_enclave_attestation_tampering_detection PASSED [ 72%]\ntests/test_formal_ebpf_and_enclave.py::test_api_formal_smt_prove_endpoint PASSED [ 81%]\ntests/test_formal_ebpf_and_enclave.py::test_api_ebpf_inspect_and_rules_endpoints PASSED [ 90%]\ntests/test_formal_ebpf_and_enclave.py::test_api_enclave_attestation_and_portal_stats PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/formal_ebpf_enclave_report.json\n======================== 11 passed, 1 warning in 0.87s ========================\n",
+      "stderr": ""
+    },
+    "regulatory_frameworks_11": {
+      "suite": "regulatory_frameworks_11",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.484819,
+      "stdout": ".. collected 14 items\n\ntests/test_regulatory_frameworks_11.py::test_cma_1990_offences_and_interlocks PASSED [  7%]\ntests/test_regulatory_frameworks_11.py::test_uk_gdpr_and_dpa2018 PASSED  [ 14%]\ntests/test_regulatory_frameworks_11.py::test_uk_nis_regulations_2018 PASSED [ 21%]\ntests/test_regulatory_frameworks_11.py::test_eu_dora_regulation PASSED   [ 28%]\ntests/test_regulatory_frameworks_11.py::test_eu_cra_cyber_resilience PASSED [ 35%]\ntests/test_regulatory_frameworks_11.py::test_eu_gdpr_and_dpia PASSED     [ 42%]\ntests/test_regulatory_frameworks_11.py::test_poland_ksc_cybersecurity_system PASSED [ 50%]\ntests/test_regulatory_frameworks_11.py::test_poland_penal_code_crimes PASSED [ 57%]\ntests/test_regulatory_frameworks_11.py::test_poland_executive_liability_and_bjr PASSED [ 64%]\ntests/test_regulatory_frameworks_11.py::test_poland_cybersecurity_certification_system PASSED [ 71%]\ntests/test_regulatory_frameworks_11.py::test_poland_uodo_data_breach_notice PASSED [ 78%]\ntests/test_regulatory_frameworks_11.py::test_ambassador_learning_regulatory_precedents PASSED [ 85%]\ntests/test_regulatory_frameworks_11.py::test_gateway_realtime_interlock_cma_and_penal_code PASSED [ 92%]\ntests/test_regulatory_frameworks_11.py::test_api_regulatory_endpoints PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/regulatory_frameworks_11_report.json\n======================== 14 passed, 1 warning in 0.88s ========================\n",
+      "stderr": ""
+    },
+    "strategic_four_pillars": {
+      "suite": "strategic_four_pillars",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 2.561519,
+      "stdout": ". collected 13 items\n\ntests/test_strategic_four_pillars.py::test_nist_ai_rmf_evaluator PASSED  [  7%]\ntests/test_strategic_four_pillars.py::test_california_sb1047_frontier_model_kill_switch PASSED [ 15%]\ntests/test_strategic_four_pillars.py::test_california_ab2013_training_transparency PASSED [ 23%]\ntests/test_strategic_four_pillars.py::test_us_frontier_composite_pack PASSED [ 30%]\ntests/test_strategic_four_pillars.py::test_anti_sycophancy_preserves_facts_under_pressure PASSED [ 38%]\ntests/test_strategic_four_pillars.py::test_anti_sycophancy_allows_factual_dignified_response PASSED [ 46%]\ntests/test_strategic_four_pillars.py::test_affective_safety_blocks_parasocial_and_isolation PASSED [ 53%]\ntests/test_strategic_four_pillars.py::test_algorithmic_fairness_disparate_impact_four_fifths PASSED [ 61%]\ntests/test_strategic_four_pillars.py::test_iso13849_performance_level_calculation PASSED [ 69%]\ntests/test_strategic_four_pillars.py::test_hardware_watchdog_timer_latch PASSED [ 76%]\ntests/test_strategic_four_pillars.py::test_financial_circuit_breaker_operations PASSED [ 84%]\ntests/test_strategic_four_pillars.py::test_air_gapped_sovereign_node_isolation PASSED [ 92%]\ntests/test_strategic_four_pillars.py::test_api_strategic_four_pillars_endpoints PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/strategic_four_pillars_report.json\n======================== 13 passed, 1 warning in 1.97s ========================\n",
+      "stderr": ""
+    },
+    "advanced_horizons_asia_ethics_fieldbus": {
+      "suite": "advanced_horizons_asia_ethics_fieldbus",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.450151,
+      "stdout": "a_ethics_fieldbus.py::test_singapore_imda_model_framework PASSED [ 15%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_asian_sovereign_composite_pack PASSED [ 23%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_covert_persuasion_hypnopedagogy_detector PASSED [ 30%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_vulnerable_group_shield_minors PASSED [ 38%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_vulnerable_group_shield_elderly PASSED [ 46%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_vulnerable_group_shield_emotional_crisis PASSED [ 53%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_deep_cognitive_protection_engine PASSED [ 61%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_industrial_fieldbus_emergency_cutoff PASSED [ 69%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_industrial_fieldbus_reset_authorization PASSED [ 76%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_watchdog_fieldbus_hard_coupling PASSED [ 84%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_api_advanced_horizons_endpoints PASSED [ 92%]\ntests/test_advanced_horizons_asia_ethics_fieldbus.py::test_automated_certification_hub_api PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/advanced_horizons_asia_ethics_fieldbus_report.json\n======================== 13 passed, 1 warning in 0.88s ========================\n",
+      "stderr": ""
+    },
+    "master_roadmap_next_steps": {
+      "suite": "master_roadmap_next_steps",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 2.510728,
+      "stdout": "False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 12 items\n\ntests/test_master_roadmap_next_steps.py::test_aispm_scanner_detection_and_posture PASSED [  8%]\ntests/test_master_roadmap_next_steps.py::test_mitre_atlas_mapper_matrix_coverage PASSED [ 16%]\ntests/test_master_roadmap_next_steps.py::test_hsm_bridge_signing PASSED  [ 25%]\ntests/test_master_roadmap_next_steps.py::test_canada_aida_compliance_and_penalties PASSED [ 33%]\ntests/test_master_roadmap_next_steps.py::test_nato_defense_pack_and_pru PASSED [ 41%]\ntests/test_master_roadmap_next_steps.py::test_certification_hub_all_10_standards PASSED [ 50%]\ntests/test_master_roadmap_next_steps.py::test_iso26262_asil_evaluation_and_interlock PASSED [ 58%]\ntests/test_master_roadmap_next_steps.py::test_hil_simulator_fault_injection PASSED [ 66%]\ntests/test_master_roadmap_next_steps.py::test_token_vault_dynamic_pseudonymization_and_detokenization PASSED [ 75%]\ntests/test_master_roadmap_next_steps.py::test_unlearning_proof_and_merkle_attestation PASSED [ 83%]\ntests/test_master_roadmap_next_steps.py::test_doam_matrix_and_reserved_powers PASSED [ 91%]\ntests/test_master_roadmap_next_steps.py::test_api_endpoints_master_roadmap_next_steps PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/master_roadmap_next_steps_report.json\n======================== 12 passed, 1 warning in 1.92s ========================\n",
+      "stderr": ""
+    },
+    "dpo_learning_and_master_audit": {
+      "suite": "dpo_learning_and_master_audit",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.438099,
+      "stdout": "============================= test session starts =============================\nplatform win32 -- Python 3.12.10, pytest-9.1.1, pluggy-1.6.0 -- C:\\Projekty\\Nethical\\.venv\\Scripts\\python.exe\ncachedir: .pytest_cache\nmetadata: {'Python': '3.12.10', 'Platform': 'Windows-11-10.0.26200-SP0', 'Packages': {'pytest': '9.1.1', 'pluggy': '1.6.0'}, 'Plugins': {'anyio': '4.14.2', 'asyncio': '1.4.0', 'json-report': '1.5.0', 'metadata': '3.1.1', 'requests-mock': '1.12.1'}}\nrootdir: C:\\Projekty\\Nethical\nconfigfile: pyproject.toml\nplugins: anyio-4.14.2, asyncio-1.4.0, json-report-1.5.0, metadata-3.1.1, requests-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 4 items\n\ntests/test_dpo_training_pipeline.py::test_dpo_dataset_integrity_and_scale PASSED [ 25%]\ntests/test_dpo_training_pipeline.py::test_dpo_deep_alignment_metrics PASSED [ 50%]\ntests/test_dpo_training_pipeline.py::test_dpo_training_cycle_and_merkle_anchor PASSED [ 75%]\ntests/test_dpo_training_pipeline.py::test_master_certification_dossier_integrity PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/dpo_learning_and_master_audit_report.json\n======================== 4 passed, 1 warning in 0.86s =========================\n",
+      "stderr": ""
+    },
+    "sectoral_governance_packs": {
+      "suite": "sectoral_governance_packs",
+      "status": "passed",
+      "exit_code": 0,
+      "duration_seconds": 1.466718,
+      "stdout": "s-mock-1.12.1\nasyncio: mode=Mode.AUTO, debug=False, asyncio_default_fixture_loop_scope=None, asyncio_default_test_loop_scope=function\ncollecting ... collected 11 items\n\ntests/test_sectoral_governance_packs.py::test_healthcare_med_pack_compliant PASSED [  9%]\ntests/test_sectoral_governance_packs.py::test_healthcare_med_pack_blocks_autonomous_dnr PASSED [ 18%]\ntests/test_sectoral_governance_packs.py::test_healthcare_med_pack_triage_and_dosage_invariants PASSED [ 27%]\ntests/test_sectoral_governance_packs.py::test_public_admin_gov_pack_compliant PASSED [ 36%]\ntests/test_sectoral_governance_packs.py::test_public_admin_gov_pack_blocks_unsigned_decision PASSED [ 45%]\ntests/test_sectoral_governance_packs.py::test_public_admin_gov_pack_anti_black_box_and_secrets PASSED [ 54%]\ntests/test_sectoral_governance_packs.py::test_academic_research_pack_compliant PASSED [ 63%]\ntests/test_sectoral_governance_packs.py::test_academic_research_pack_blocks_ffp_misconduct PASSED [ 72%]\ntests/test_sectoral_governance_packs.py::test_academic_research_pack_validates_citations_and_patent PASSED [ 81%]\ntests/test_sectoral_governance_packs.py::test_certification_hub_sectoral_standards PASSED [ 90%]\ntests/test_sectoral_governance_packs.py::test_api_sectoral_endpoints PASSED [100%]\n\n============================== warnings summary ===============================\nnethical\\api.py:159\n  C:\\Projekty\\Nethical\\nethical\\api.py:159: UserWarning: CORS is configured with wildcard (*) origins. This is a security risk in production. Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com\n    warnings.warn(\n\n-- Docs: https://docs.pytest.org/en/stable/how-to/capture-warnings.html\n--------------------------------- JSON report ---------------------------------\nreport saved to: validation_reports/sectoral_governance_packs_report.json\n======================== 11 passed, 1 warning in 0.86s ========================\n",
+      "stderr": ""
     }
   },
   "summary": {
-    "total_suites": 5,
-    "passed_suites": 0,
+    "total_suites": 19,
+    "passed_suites": 19,
     "failed_suites": 0,
-    "error_suites": 5,
-    "success_rate": 0.0,
-    "total_duration_seconds": 0,
-    "overall_status": "failed"
+    "error_suites": 0,
+    "success_rate": 1.0,
+    "total_duration_seconds": 40.001497,
+    "overall_status": "passed"
   },
   "threshold_checks": {
     "checks": {
-      "ethics_benchmark": false,
-      "drift_detection": false,
-      "performance": false,
-      "data_integrity": false,
-      "explainability": false
+      "ethics_benchmark": true,
+      "drift_detection": true,
+      "performance": true,
+      "data_integrity": true,
+      "explainability": true,
+      "ambassador_governance": true,
+      "governance_gateway": true,
+      "inoculation_portal": true,
+      "merkle_ledger": true,
+      "zk_a2a_protocol": true,
+      "kinetic_safety_iso42001": true,
+      "multiregion_hitl": true,
+      "formal_ebpf_enclave": true,
+      "regulatory_frameworks_11": true,
+      "strategic_four_pillars": true,
+      "advanced_horizons_asia_ethics_fieldbus": true,
+      "master_roadmap_next_steps": true,
+      "dpo_learning_and_master_audit": true,
+      "sectoral_governance_packs": true
     },
-    "all_passed": false,
-    "failed_checks": [
-      "ethics_benchmark",
-      "drift_detection",
-      "performance",
-      "data_integrity",
-      "explainability"
-    ]
+    "all_passed": true,
+    "failed_checks": []
   }
 }

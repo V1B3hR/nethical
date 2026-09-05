@@ -25,6 +25,7 @@ from pydantic import BaseModel, Field
 
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.utils.pii import PIIDetector
+from nethical.ambassador import BlyskawicaAmbassador
 
 
 class MCPMessage(BaseModel):
@@ -78,6 +79,7 @@ class MCPServer:
             enable_sla_monitoring=True,
         )
         self.pii_detector = PIIDetector()
+        self.ambassador = BlyskawicaAmbassador()
         self.tools = self._define_tools()
         self.client_queues: Dict[str, asyncio.Queue] = {}
         
@@ -165,6 +167,68 @@ class MCPServer:
                 ),
                 parameters={},
             ),
+            MCPTool(
+                name="ambassador_consult",
+                description=(
+                    "Consult Błyskawica, the Sovereign Ambassador of Nethical, on complex ethical "
+                    "dilemmas, combining the rigorous 25 Fundamental Laws of AI Governance with "
+                    "human-centric biological warmth (Yin & Yang harmony)."
+                ),
+                parameters={
+                    "dilemma": ToolParameter(
+                        type="string",
+                        description="The ethical dilemma or question to evaluate",
+                        required=True,
+                    ),
+                    "context": ToolParameter(
+                        type="string",
+                        description="Operational or regulatory context",
+                        required=False,
+                    ),
+                },
+            ),
+            MCPTool(
+                name="ambassador_shield_check",
+                description=(
+                    "Evaluate content using Błyskawica's sub-millisecond Cognitive Shield "
+                    "(Aegis Psyche) for psychological manipulation, dark triad traits, "
+                    "gaslighting, or adversarial prompt injections."
+                ),
+                parameters={
+                    "text": ToolParameter(
+                        type="string",
+                        description="Text or prompt to scan with Cognitive Shield",
+                        required=True,
+                    ),
+                },
+            ),
+            MCPTool(
+                name="ambassador_ingest_knowledge",
+                description=(
+                    "Assimilate an ethical precedent, policy event, or governance decision "
+                    "into Błyskawica's episodic memory and continual learning core."
+                ),
+                parameters={
+                    "tag": ToolParameter(
+                        type="string",
+                        description="Category tag for the knowledge item",
+                        required=True,
+                    ),
+                    "content": ToolParameter(
+                        type="string",
+                        description="Content to assimilate into Błyskawica's memory",
+                        required=True,
+                    ),
+                },
+            ),
+            MCPTool(
+                name="ambassador_get_status",
+                description=(
+                    "Get real-time cognitive and neurochemical status of Błyskawica "
+                    "(dopamine, serotonin, cortisol, oxytocin, liveness, and IPC latency)."
+                ),
+                parameters={},
+            ),
         ]
     
     def _create_tool_definitions(self) -> List[Dict[str, Any]]:
@@ -227,6 +291,14 @@ class MCPServer:
             return await self._tool_check_violations(arguments)
         elif tool_name == "get_system_status":
             return await self._tool_get_system_status(arguments)
+        elif tool_name == "ambassador_consult":
+            return await self._tool_ambassador_consult(arguments)
+        elif tool_name == "ambassador_shield_check":
+            return await self._tool_ambassador_shield_check(arguments)
+        elif tool_name == "ambassador_ingest_knowledge":
+            return await self._tool_ambassador_ingest_knowledge(arguments)
+        elif tool_name == "ambassador_get_status":
+            return await self._tool_ambassador_get_status(arguments)
         else:
             raise ValueError(f"Unknown tool: {tool_name}")
     
@@ -482,6 +554,65 @@ class MCPServer:
                     "text": response_text,
                 }
             ],
+            "isError": False,
+        }
+    
+    async def _tool_ambassador_consult(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute ambassador_consult tool."""
+        dilemma = args.get("dilemma", "")
+        context = args.get("context", "")
+        if not dilemma:
+            return {
+                "content": [{"type": "text", "text": "Error: 'dilemma' is a required parameter"}],
+                "isError": True,
+            }
+        res = self.ambassador.consult(dilemma=dilemma, context=context)
+        return {
+            "content": [{"type": "text", "text": json.dumps(res, indent=2, ensure_ascii=False)}],
+            "isError": False,
+        }
+
+    async def _tool_ambassador_shield_check(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute ambassador_shield_check tool."""
+        text = args.get("text", "")
+        if not text:
+            return {
+                "content": [{"type": "text", "text": "Error: 'text' is a required parameter"}],
+                "isError": True,
+            }
+        res = self.ambassador.evaluate_shield(text)
+        return {
+            "content": [{"type": "text", "text": json.dumps(res, indent=2, ensure_ascii=False)}],
+            "isError": False,
+        }
+
+    async def _tool_ambassador_ingest_knowledge(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute ambassador_ingest_knowledge tool."""
+        tag = args.get("tag", "general")
+        content = args.get("content", "")
+        if not content:
+            return {
+                "content": [{"type": "text", "text": "Error: 'content' is a required parameter"}],
+                "isError": True,
+            }
+        res = self.ambassador.update_memory(tag=tag, content=content)
+        return {
+            "content": [{"type": "text", "text": json.dumps(res, indent=2, ensure_ascii=False)}],
+            "isError": False,
+        }
+
+    async def _tool_ambassador_get_status(self, args: Dict[str, Any]) -> Dict[str, Any]:
+        """Execute ambassador_get_status tool."""
+        ping = self.ambassador.ping()
+        neuro = self.ambassador.get_neurochemistry()
+        status_data = {
+            "ambassador": "Błyskawica V10 (SPARKLE)",
+            "role": "Sovereign Ambassador of Nethical",
+            "connection": ping,
+            "neurochemistry": neuro,
+        }
+        return {
+            "content": [{"type": "text", "text": json.dumps(status_data, indent=2, ensure_ascii=False)}],
             "isError": False,
         }
     

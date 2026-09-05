@@ -1,0 +1,131 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nethical-sovereign-node
+  namespace: nethical-governance
+  labels:
+    app.kubernetes.io/name: nethical-sovereign-node
+    app.kubernetes.io/part-of: nethical-enterprise-os
+    nethical.io/region: eu-central-1
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: nethical-sovereign-node
+  template:
+    metadata:
+      labels:
+        app: nethical-sovereign-node
+        tier: governance-gateway
+    spec:
+      volumes:
+        # Współdzielona pamięć podręczna dla ultraszybkiego gniazda IPC (UNIX Domain Socket)
+        - name: blyskawica-ipc-socket
+          emptyDir:
+            medium: Memory
+            sizeLimit: 64Mi
+        - name: nethical-audit-storage
+          persistentVolumeClaim:
+            claimName: nethical-merkle-pvc
+
+      containers:
+        # GŁÓWNY KONTENER: NETHICAL RUNTIME GOVERNANCE GATEWAY & CONTROL PLANE
+        - name: nethical-gateway
+          image: ghcr.io/nethical/nethical-enterprise:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NETHICAL_ENVIRONMENT
+              value: "production"
+            - name: NETHICAL_CLUSTER_REGION
+              value: "eu-central-1"
+            - name: NETHICAL_DATACENTER
+              value: "frankfurt-dc1"
+            - name: BLY_IPC_SOCKET_PATH
+              value: "/var/run/blyskawica/ambassador.sock"
+            - name: NETHICAL_LEDGER_STORAGE_PATH
+              value: "/var/log/nethical/merkle_dag.json"
+          ports:
+            - containerPort: 8000
+              name: http-api
+            - containerPort: 9090
+              name: metrics
+          resources:
+            requests:
+              cpu: "500m"
+              memory: "512Mi"
+            limits:
+              cpu: "2000m"
+              memory: "2Gi"
+          volumeMounts:
+            - name: blyskawica-ipc-socket
+              mountPath: /var/run/blyskawica
+            - name: nethical-audit-storage
+              mountPath: /var/log/nethical
+          livenessProbe:
+            httpGet:
+              path: /api/v1/health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /api/v1/portal/stats
+              port: 8000
+            initialDelaySeconds: 3
+            periodSeconds: 5
+
+        # SIDECAR KONTENER: SUWERENNY RDZEŃ AMBASADORA BŁYSKAWICY (RUST TOKIO CORE)
+        - name: blyskawica-ambassador
+          image: ghcr.io/nethical/blyskawica-ambassador-core:latest
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: RUST_LOG
+              value: "info"
+            - name: BLY_AMBASSADOR_SOCKET
+              value: "/var/run/blyskawica/ambassador.sock"
+            - name: BLY_ROLE
+              value: "SOVEREIGN_AMBASSADOR_V10"
+            - name: BLY_ALLOW_SUBORDINATION
+              value: "false"
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "128Mi"
+            limits:
+              cpu: "1000m"
+              memory: "512Mi"
+          volumeMounts:
+            - name: blyskawica-ipc-socket
+              mountPath: /var/run/blyskawica
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            runAsNonRoot: true
+            runAsUser: 10001
+            capabilities:
+              drop:
+                - ALL
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nethical-gateway-svc
+  namespace: nethical-governance
+  labels:
+    app: nethical-sovereign-node
+spec:
+  type: ClusterIP
+  ports:
+    - port: 8000
+      targetPort: 8000
+      name: http-api
+    - port: 9090
+      targetPort: 9090
+      name: metrics
+  selector:
+    app: nethical-sovereign-node

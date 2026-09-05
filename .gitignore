@@ -34,7 +34,8 @@ MANIFEST
 venv/
 ENV/
 env/
-. venv
+.venv/
+.venv*/
 
 # IDE
 .vscode/
@@ -44,27 +45,32 @@ env/
 *~
 .DS_Store
 
-# Testing
+# Testing & Reports
 .pytest_cache/
-. coverage
+.coverage
 htmlcov/
 .tox/
+tests/validation/results/
 
-# Logs
+# Logs & Runtime Chunks
 *.log
 logs/
+audit_logs/
+feedback_logs/
+nethical_test_mcp_data/
 
 # Secrets and keys
-*. pem
+*.pem
 *.key
 *.crt
 *.p12
 *.pfx
 secrets/
-. secrets/
+.secrets/
 
 # Database
 *.db
+*.sqlite
 *.sqlite3
 
 # Terraform
