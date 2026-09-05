@@ -90,6 +90,7 @@ The laws cover seven critical categories:
 **Technical architecture, implementation details, and design specifications.**
 
 - **Core Architecture**
+  - [System Highway & Traffic Map](architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md) - System traffic map, highways, decision roundabouts, and module catalog
   - [Architecture Overview](design/ARCHITECTURE.md) - System architecture and data flows
   - [MLOps Architecture](design/mlops-architecture.md) - ML operations architecture
   - [Async Factory Pattern](design/ASYNC_FACTORY_PATTERN.md) - Async initialization patterns

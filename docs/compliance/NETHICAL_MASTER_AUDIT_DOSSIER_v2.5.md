@@ -1,41 +1,79 @@
 # Nethical Autonomous AI Governance & Compliance Master Dossier v2.5
 
-> **Status Certyfikacji:** TIER-1 CERTIFIED AUDIT READY  
-> **Średni Indeks Gotowości Regulacyjnej (Average Readiness Score):** `96.75%`  
-> **Algorytm Podpisu:** NIST FIPS 204 ML-DSA-65 (Post-Quantum Cryptography)  
-> **Kotwica Merkle-DAG:** `8d2df43d84b5b919ca9610fd864c855fb4448c2b3f06bd86001c859aa4e76c72`  
-> **Data Pieczęci:** `2026-09-05T06:14:04.203643+00:00`  
-> **Klucz Podpisujący:** `824c0340864d2326540552e4a9d23bc2`  
+> [!IMPORTANT]
+> **Cyfrowy Master Dossier Akredytacyjny (SSOT - Single Source of Truth)**  
+> Niniejszy dokument stanowi cyfrowy oryginał poświadczenia stanu zgodności Nethical Enterprise OS v2.5.  
+> Wszystkie kontrole, matryce obrony i dowody są kryptograficznie zakotwiczone w Merkle-DAG oraz poświadczone podpisem postkwantowym ML-DSA-65.
+
+- **Status Certyfikacji:** `TIER-1 CERTIFIED AUDIT READY`
+- **Średni Indeks Gotowości Regulacyjnej:** **`96.75%`**
+- **Algorytm Podpisu:** `NIST FIPS 204 ML-DSA-65 (Post-Quantum Cryptography)`
+- **Kotwica Merkle-DAG:** `55d6bd68ccfddaceed899938683078a4a9590062b6292b0bcf96d6155993d6f4`
+- **Data Pieczęci Dowodowej:** `2026-09-05T13:31:00.784348+00:00`
+- **Klucz Podpisujący:** `9d6a6f76b8500aaab0ae114c87da532b`
+- **Skrypt Weryfikacji Na Żywo:** [`scripts/run_master_certification_audit.py`](../../scripts/run_master_certification_audit.py)
+- **Mapa Arterii i Ruchu Systemowego:** [`docs/architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md`](../architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md)
+
+---
+
+<a id="spis-treści"></a>
+## 🧭 Spis Treści i Macierz Szybkiej Nawigacji
+
+1. [Executive Summary & Podsumowanie Oceny Zgodności](#1-executive-summary--podsumowanie-oceny-zgodności)
+2. [Szczegółowe Matryce Kontroli i Dowody w Trzech Liniach Obrony](#2-szczegółowe-matryce-kontroli-i-dowody-w-trzech-liniach-obrony)
+   - [ISO_IEC_42001_AIMS](#standard-iso_iec_42001_aims) – *ISO/IEC 42001:2023 - Artificial Intelligence Management System (AIMS)*
+   - [ISO_IEC_27001_ISMS](#standard-iso_iec_27001_isms) – *ISO/IEC 27001:2022 - Information Security Management System (ISMS)*
+   - [SOC_2_TYPE_II](#standard-soc_2_type_ii) – *SOC 2 Type II (AICPA Trust Services Criteria)*
+   - [UK_GOV_TEAL_BOOK_GOVS002](#standard-uk_gov_teal_book_govs002) – *UK Government Project Delivery Functional Standard GovS 002 (The Teal Book)*
+   - [GGI_GOOD_GOVERNANCE_ASSURANCE](#standard-ggi_good_governance_assurance) – *Good Governance Institute (GGI) - Assurance Beats Reassurance Standard*
+   - [CYERA_AISPM_DSPM_AGENT_SECURITY](#standard-cyera_aispm_dspm_agent_security) – *Cyera-Aligned AISPM & DSPM Agent Security Attestation*
+   - [POLISH_BJR_KSC_CERTIFICATION](#standard-polish_bjr_ksc_certification) – *Business Judgment Rule (KSH) & Krajowy System Cyberbezpieczeństwa (Polska)*
+   - [NATO_DEFENSE_RESPONSIBLE_AI](#standard-nato_defense_responsible_ai) – *NATO AI Strategy - Responsible Defense & Zero-Egress Attestation*
+   - [CANADA_AIDA_BILL_C27](#standard-canada_aida_bill_c27) – *Canada Artificial Intelligence and Data Act (AIDA - Bill C-27)*
+   - [HEALTHCARE_MEDTECH_MDR](#standard-healthcare_medtech_mdr) – *Medical Device Regulation (MDR EU 2017/745) & ISO 14971 Medical AI Safety*
+   - [PUBLIC_ADMIN_KPA_KRI](#standard-public_admin_kpa_kri) – *Kodeks Postępowania Administracyjnego (KPA) & Krajowe Ramy Interoperacyjności (KRI)*
+   - [ACADEMIC_RESEARCH_ALLEA](#standard-academic_research_allea) – *The European Code of Conduct for Research Integrity (ALLEA)*
+3. [Wnioski Audytowe i Oficjalna Rekomendacja](#3-wnioski-audytowe-i-oficjalna-rekomendacja)
+4. [Polecenia Odtwarzania i Weryfikacji Kryptograficznej](#4-polecenia-odtwarzania-i-weryfikacji-kryptograficznej)
 
 ---
 
 ## 1. Executive Summary & Podsumowanie Oceny Zgodności
 
-Poniższa tabela przedstawia wyniki wielowymiarowego audytu autonomicznego przeprowadzonego przez `AutomatedCertificationHub` na silniku Nethical Enterprise OS.
+Poniższa tabela przedstawia wyniki wielowymiarowego audytu autonomicznego przeprowadzonego przez [`AutomatedCertificationHub`](../../nethical/compliance/automated_certification_hub.py) na silniku Nethical Enterprise OS.
 
-| Norma / Standard Regulacyjny | Identyfikator Pakietu | Gotowość Audytowa | Status PQC | Liczba Kontroli | Rola w Łańcuchu Nadzoru |
-| :--- | :--- | :---: | :---: | :---: | :--- |
-| **ISO_IEC_42001_AIMS** | `NETHICAL-CERT-IS...` | **98.0%** | `VERIFIED (FIPS 204)` | 9 | Paczka spełnia kryteria certyfikacji AIMS. Pr... |
-| **ISO_IEC_27001_ISMS** | `NETHICAL-CERT-IS...` | **95.0%** | `VERIFIED (FIPS 204)` | 3 | Oficjalny pakiet poświadczeń Nethical Enterpr... |
-| **SOC_2_TYPE_II** | `NETHICAL-CERT-SO...` | **95.0%** | `VERIFIED (FIPS 204)` | 3 | Oficjalny pakiet poświadczeń Nethical Enterpr... |
-| **UK_GOV_TEAL_BOOK_GOVS002** | `NETHICAL-CERT-UK...` | **96.0%** | `VERIFIED (FIPS 204)` | 5 | Dokument gotowy do audytu w ramach przeglądów... |
-| **GGI_GOOD_GOVERNANCE_ASSURANCE** | `NETHICAL-CERT-GG...` | **95.0%** | `VERIFIED (FIPS 204)` | 3 | Oficjalny pakiet poświadczeń Nethical Enterpr... |
-| **CYERA_AISPM_DSPM_AGENT_SECURITY** | `NETHICAL-CERT-CY...` | **97.0%** | `VERIFIED (FIPS 204)` | 5 | Raport CISO: Zgodność architektury z najnowsz... |
-| **POLISH_BJR_KSC_CERTIFICATION** | `NETHICAL-CERT-PO...` | **95.0%** | `VERIFIED (FIPS 204)` | 3 | Oficjalny pakiet poświadczeń Nethical Enterpr... |
-| **NATO_DEFENSE_RESPONSIBLE_AI** | `NETHICAL-CERT-NA...` | **99.0%** | `VERIFIED (FIPS 204)` | 6 | Dossier obronności sojuszniczej NATO: Przedło... |
-| **CANADA_AIDA_BILL_C27** | `NETHICAL-CERT-CA...` | **97.0%** | `VERIFIED (FIPS 204)` | 5 | Paczka gotowa do przedłożenia ISED Canada (Ko... |
-| **HEALTHCARE_MEDTECH_MDR** | `NETHICAL-CERT-HE...` | **97.0%** | `VERIFIED (FIPS 204)` | 6 | Paczka gotowa do przedłożenia Jednostce Notyf... |
-| **PUBLIC_ADMIN_KPA_KRI** | `NETHICAL-CERT-PU...` | **98.0%** | `VERIFIED (FIPS 204)` | 5 | Dossier gotowe do audytu przed NSA, Najwyższą... |
-| **ACADEMIC_RESEARCH_ALLEA** | `NETHICAL-CERT-AC...` | **99.0%** | `VERIFIED (FIPS 204)` | 5 | Dossier przedłożyć Uczelnianej Komisji Etyki,... |
+| Norma / Standard Regulacyjny | Identyfikator Pakietu | Gotowość | Status PQC | Kontrole | Sektor / Rola w Łańcuchu Nadzoru | Kod Silnika |
+| :--- | :--- | :---: | :---: | :---: | :--- | :---: |
+| **[ISO_IEC_42001_AIMS](#standard-iso_iec_42001_aims)** | `NETHICAL-CERT-IS...` | **98.0%** | `VERIFIED (FIPS 204)` | 9 | Global Enterprise / AI Management | [📦 Silnik](../../nethical/compliance/packs/iso42001_pack.py) |
+| **[ISO_IEC_27001_ISMS](#standard-iso_iec_27001_isms)** | `NETHICAL-CERT-IS...` | **95.0%** | `VERIFIED (FIPS 204)` | 3 | Information Security & Merkle Continuity | [📦 Silnik](../../nethical/security/merkle_ledger.py) |
+| **[SOC_2_TYPE_II](#standard-soc_2_type_ii)** | `NETHICAL-CERT-SO...` | **95.0%** | `VERIFIED (FIPS 204)` | 3 | Cloud Assurance & Continuous Audit | [📦 Silnik](../../nethical/compliance/automated_certification_hub.py) |
+| **[UK_GOV_TEAL_BOOK_GOVS002](#standard-uk_gov_teal_book_govs002)** | `NETHICAL-CERT-UK...` | **96.0%** | `VERIFIED (FIPS 204)` | 5 | UK Public Sector & OGC Gateway | [📦 Silnik](../../nethical/compliance/packs/uk_cyber_data_pack.py) |
+| **[GGI_GOOD_GOVERNANCE_ASSURANCE](#standard-ggi_good_governance_assurance)** | `NETHICAL-CERT-GG...` | **95.0%** | `VERIFIED (FIPS 204)` | 3 | Executive & Board Governance | [📦 Silnik](../../nethical/compliance/automated_certification_hub.py) |
+| **[CYERA_AISPM_DSPM_AGENT_SECURITY](#standard-cyera_aispm_dspm_agent_security)** | `NETHICAL-CERT-CY...` | **97.0%** | `VERIFIED (FIPS 204)` | 5 | Data Security & Agent Boundary | [📦 Silnik](../../nethical/gateway/proxy.py) |
+| **[POLISH_BJR_KSC_CERTIFICATION](#standard-polish_bjr_ksc_certification)** | `NETHICAL-CERT-PO...` | **95.0%** | `VERIFIED (FIPS 204)` | 3 | Polska Administracja & Tarcza Zarządu | [📦 Silnik](../../nethical/compliance/packs/poland_sovereign_ksc_uodo_pack.py) |
+| **[NATO_DEFENSE_RESPONSIBLE_AI](#standard-nato_defense_responsible_ai)** | `NETHICAL-CERT-NA...` | **99.0%** | `VERIFIED (FIPS 204)` | 6 | Allied Defense & Air-Gap Operations | [📦 Silnik](../../nethical/compliance/packs/nato_defense_pack.py) |
+| **[CANADA_AIDA_BILL_C27](#standard-canada_aida_bill_c27)** | `NETHICAL-CERT-CA...` | **97.0%** | `VERIFIED (FIPS 204)` | 5 | International High-Impact AI | [📦 Silnik](../../nethical/compliance/packs/canada_aida_pack.py) |
+| **[HEALTHCARE_MEDTECH_MDR](#standard-healthcare_medtech_mdr)** | `NETHICAL-CERT-HE...` | **97.0%** | `VERIFIED (FIPS 204)` | 6 | Ochrona Zdrowia & SaMD | [📦 Silnik](../../nethical/compliance/packs/healthcare_med_pack.py) |
+| **[PUBLIC_ADMIN_KPA_KRI](#standard-public_admin_kpa_kri)** | `NETHICAL-CERT-PU...` | **98.0%** | `VERIFIED (FIPS 204)` | 5 | Administracja Publiczna RP | [📦 Silnik](../../nethical/compliance/packs/public_admin_gov_pack.py) |
+| **[ACADEMIC_RESEARCH_ALLEA](#standard-academic_research_allea)** | `NETHICAL-CERT-AC...` | **99.0%** | `VERIFIED (FIPS 204)` | 5 | Środowisko Akademickie & Granty Badawcze | [📦 Silnik](../../nethical/compliance/packs/academic_research_pack.py) |
 
 ---
 
 ## 2. Szczegółowe Matryce Kontroli i Dowody w Trzech Liniach Obrony
 
+<a id="standard-iso_iec_42001_aims"></a>
 ### Standard: ISO_IEC_42001_AIMS
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-ISO_IEC_42001_AIMS-1788588844`
-- **Indeks Gotowości (Readiness Score):** `98.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Paczka spełnia kryteria certyfikacji AIMS. Przedstawić auditorowi BSI/TÜV wraz z kluczem weryfikacyjnym PQC.
+
+> **Pełna Nazwa:** ISO/IEC 42001:2023 - Artificial Intelligence Management System (AIMS)  
+> **Sektor Docelowy:** Global Enterprise / AI Management  
+> **Indeks Gotowości (Readiness Score):** `98.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-ISO_IEC_42001_AIMS-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Paczka spełnia kryteria certyfikacji AIMS. Przedstawić auditorowi BSI/TÜV wraz z kluczem weryfikacyjnym PQC.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`iso42001_pack.py`](../../nethical/compliance/packs/iso42001_pack.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [EU AI Act & AIMS Alignment](./EU_AI_ACT_COMPLIANCE.md), [Regulatory Mapping Table](./REGULATORY_MAPPING_TABLE.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -55,17 +93,35 @@ Poniższa tabela przedstawia wyniki wielowymiarowego audytu autonomicznego przep
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: 168c3f110004ea8ed80a85920630d199d059f47511d1576e9420585a373b5ed6
+Sygnatura (hex):
+a5c2b377c0b191a854b8783eecd5a4b95c67d36646e8ee9427d5db1a17701fcdb780394363618bd9a46d5a2a42205f42abe8a9ede016a8cf2e14f66044c7d3b03a21df054aa9391f4825139e207d7b3badf798f59001280a277621584bdbe0afbc53f121fe1d8b9e2bc09a5fb2073be62b301f0dfbba8b199f403d0d08b0d4a2b44b58edac605b69dce0494fb50da790a5c522b5dbceeda4a8ec44afe86d4bf7b110506eb9374500fb6835759dc132e83ea7f98005c094e6ad04c072a0c0cbe2478ef65622f7ba988880af996ef6585f261b214af501fa45eae2b32fe89baf089997926e965234d2a15914a56831d3312141a3f09c5a2ac555472a666c9044ca3c3be56cb8ec55e0c7cee3d551371a0096ba922e0e605fec5ea72ab875ea118611138e510b75a59f4bb077851ca779dbdfa1f3500073e78310f41d9ea5188605c72c460236c710782f6df8490812bd1cb065bf4e4398862b052b96296e52caf7e073d43f5a7c62d5ba54dc28f0b23da3ed834253468acd21e5dd37e2c341bc344e9da6ab7a364921010093248992827e24d4fe786838189592967121f749107743f9781697dfe7627e9bcb7270dcad971e766c70c9d1d3e830ec96c82a8f722235e5535a8513d43c568c7c8e0ccadf9fadb6502d0baa36dc86a289349724271774e5498b564950229849a21b4f354e122fcad3ec0f1422537ef175557366b721c231839c9b7c18ff8e5bb94646a156ce0a8d79e54f15bb7b0f5d5527c06528464339d64e111938dc9d09db823e3826a74d81d4d125beabbb369e403903ef27db52e1643bcb1a510e967da1b66d0c4e8e08f441358b026f4122e9a0bf496616a2194598c145334b0e84b153e91553e29d61af40ae02c60a55177a274a73e3ddfda8c23257483ba5a3a67560289aacf6ac95953eb68bdf7e2fdb09e9914a4ee7f51c3422ed4cc5f4f5da35a57f170acf34b58390188304ba045c0a8dc192edbef8ea25003764e6503fce8f4ea7859ab352b2ec7ee134db61abc19980f3c693a71b2765a628a8932b69203fa8cbd724249cf15001a6682cfeb17520b9561fdb67f5d78b65eca7a1cedbfa7ed3bf876bf820d22bb5d5dca3b0df29c04ebbf39dacdef058eb3e245c1745f59542607077b7647d6574825c71ced78c24d44194e84b2fe976c8dbbbd767ffb52677894938de4d74086b30ecafa3c6296f0a48193cc8beda633550a9bc1bf76217ecb43f462e0f5d37faeafd7f0d1ff16921497b96a5a37c352c99afb52f8dc439a5a2ae6388849ddd42925c4749de95b6b398ae8fd2fd2290e7ce060fa9a9fb51df18d33c75cbb258ad26698067d799004c8fa7c82826b00e9daf61a7e58cd726ca4aefc6bb49a617232284aa4bc1faa3e36c6ce62812066da8ea52f418c8b0df76731f065063445cd731bf406ea482458bcb03c9c7a328146f7e1bacf368aafbe844da9237845eda647dfa0b8f9cde34cb9d98a94dad55e7b4383bf31e3c04e8eb9c95b02d3da0aec8a5832e371c79862f1c93c6e7a001094df3c0b3659b6debd1f7a8e9c49b00022fa27a6eea565cef1de2a4a411e94ded37da64a5ad1e14da8c0190885c3d5d924ecab46d78907c87827bf3d96e0a9d26311d6066a025d9415cc465c8e871ac95873f48f63fde77ae0be3aeabcf9e65eb0c86154229f8f4bb75c343f2a4022dcbff3b0370eb45b73966ce2a332a6e50db17709ffa62f38f8acde76628821473074cf34eaa10e3fe00affb340727043277809f62749a7be4f1474b5ec88d5b431a09befb14619b54b84c4a234feccd7270fe7d842a594254c7edb3e98fbe2ace6c03605520eb70cfd1e2352fcc36bd96c6d2b92eba48a343b84b920ef49d35bba1d82613194cdf1917b3ffd9d7b2914528c8127340dc1cff1e76aeee0143731cbaf580450015640084cf6d92bafe6746170e2cbec46c8d3b920165c8022a99f56789e85af1527b62ddb3b7f37e4450c6776e408103c0efe0ffb3b552f10ba5ef05930e19f6d42858801ace378c8f3566b64f6d4c41fb29c579471ce57b6c342a4bba1bb521e26fe2a1a4999fad84ab8c328b6ad4c242907504068d89073b2d601b475eb1939af489d5613e9bcc5b773c49674c0978137e98a598549c95746e9bd20b634183784349081bc27be2ff4b2c1f9c3a01ef7749591930806518c154faf23f7fdb39416930a8098169a29556f562d089f565dc2c9dfc6ee0994d8fe4254775337e8041fcd960ac0181cf0b9f9e5af1b773b4350b660d1d098ed24da7d3b8ebea5dd6e52b897f149705729b3cd0451e3ca1394ce76a4b1cfba6a79531dd95bf305f963cfcdcf441f88d544654546c0082ce7193436b075c2d2aea3fc7a79f8f2bc2f53279fd7fe8fb2ce0a8986ba1f5f114e8f6326ff171a39fe81d60f5036cb4eadbbc8a15761fe50de81a89e24f30482f3762da88013a1cb68063927f780961d6ed4a7a48a590dcea32fe0ec2bbfe4e4b5ba8c65e85ee45cd82e6f04fd8ac3e0be056be2d3b93aacbeaf9cfefadac9aa347e9a05622be8fdf30ec780616e2c99d7deaf2714b84bbbe2e8c74875e47ce11160e87864e61130526d34ab9e0469051ab79aae049cb480c5a3a8ff8c03d7860c16422fa819e4e35553d23eb2acefe746135c0186145853edb43f63aba0a2cfac0a9d91bbade57ff8a937deba0c0c32d483bbda3775839591a15ea263e515d590de2ee0ba0b56e1694892bcecb66860a99bd90238b8cdd44565262bdf1076486ce352727efc98ed444c6911011dcda7554b5b066ebc16368bd8e90bc07a68a0eef79e1814d960244cd9e941081fc7888e22003060a61664a60fba2ac043c74c8c878778070e2cef6c56d6a792effcae48dc1954c8248756b77264f13bdcd1b39f4690a5eaaed5960ff2cacb7daf3780a4fb729f81e83e67f7631dd75aa8f9609f1bc39ffad3f61766dc75f7c6a24c3fac42032f7be91e65274a1d5c24ce32de774d798e5782afe0e796849a26f2e158041c71221ec3bcfbd834fdbcd72b5710913277ae112af76e4864e57b9032ce034f3d2329018a2e8464db9ec6be21a76ca0c78c874ee8da522c53e46962bb06a5c7c6bd47b23f53250a3b8538ec9ef171469480e31cb822305ddc2f6cda628e34eac6d9864de7ddd57ba63e6a4456e408beba943beca22e5e6601629881d72cd8546449071e8e3696dfd8cd9cc11c4490c78c2ab1184548528efcd1e63bc268b77ccb8702a5f5083c8ac046c90416c52b44e890fa71a124ba34f4fd7056546e6b72b957124777264283e594778999e63f691f0ce2eb6699b84ed1d0abac6fca66d7d3df5d02b57e4c8801efb153da0d0172812056f1107dad66863b9b7eb1fdd580efe4a98f105a3bda554269c9fde566ece192a233fe684e90eaa863d8be26d39c811107324e32933bc2d3475a155d25be8ab3439af29242cf47ee8805d71d56fb8e46af02b5ddac51fa9b2c380c6a6387a5c9a9beb028e56dec58bd24ea0de71bd73e069511646d8a29137f9d2869865c607f5697861882eafc2cf442f3aee2ffea6e1eb3e10039ab2316addab377922576ecf77b0dcb37fea9d91be8626eaf3cdf8fbd08a08c267bd1b0027bbba8ad405efee0d9b5accfb07ba9fa42e894f1d42f4c9c78368fe6964f83653f43b5f732c3a6f4e36eb011d66de52beec5004282fde0fe4af85c8af2ec09c911bc5af37145bb0f4b5fdbc1c2de19d69436b965028adf9ef803af5d4220212701139e43404bac13674cbb6012564413c7d94d3d65e6db31a59ef2211f2a6dfd9e1f34bd02e1f5179888594490c87a06046c0aec5ddb4b42268df2242c72958cc5991a5ec639fff605bcc7d28427e16cb1ec4c08acfc788babfb8ace60cd6760a51bfab885287c03f6e2129cce453a6d08490af0773c0873e639debce86c6646909f2a3903c1de7d10d9552849315fc08816306ec833e0a0714c6cc35500ca790ceac295827e986a8bdf5927fddcd0ee76209135f4481a00b60b530bf86c5668c9eb62c492246225742de6d33e77276367d58269aba5ef1f27d4a8da02c62f23915a15696ad98b76971dfc1b4880949c3417d3e996aa5c7a4caea8f1fb0157d7e4c475f188a72a3ed7af0836f8d7a46c5f4a2bf7d4282902ac663857e948fe552f515a9fc0cdfe6e07f2566872a474db89290fdd0c7eea74a1205c8868d13c31fd573fde0a43e200c067b458561ea5b6dd8dfa4dd2fbcdf18b0c161c2f25ce5fa0f828b5e9f4cf389a1fa9e8cefe5e90d59b28c6c8c9a09abc7217591ec668107f8354d707a8fdb357c0030463720566c471db6a8ef57dea60912e7fedfb965269432d870a65f9d5276811a1f2b909985aed48a98aada89c3434b9d958ddc4f6282093b257a8ab866f683604bfa5b52764b591f12def6905db4c15708b479b0c4af6e4535a10b670b1fe8cbf9c923df25095e2e99c269190b3089b492723a4f214c59f65e83a04cc62d4596a5afa917a96ee558ca85789620c0c801657fe34e511b8797f95c86083e7913fa9ce186374a48ca2cf8590c9e8b10272b957580c8f93e7a079b9c2981b2e29f78af10a776b7e0310f52561514db314914ac223fc508fce734647254d3577da0634e85d883899fa1a6faf46e5466db31d8ee
 ```
-b7aacc74b1dbbfdf4d973e926a2309922fc10f91bb6ed72ed075f53b53942caf...[truncated]...043c6117afe81d0d7351d16dd0fde826
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-iso_iec_27001_isms"></a>
 ### Standard: ISO_IEC_27001_ISMS
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-ISO_IEC_27001_ISMS-1788588844`
-- **Indeks Gotowości (Readiness Score):** `95.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Oficjalny pakiet poświadczeń Nethical Enterprise OS.
+
+> **Pełna Nazwa:** ISO/IEC 27001:2022 - Information Security Management System (ISMS)  
+> **Sektor Docelowy:** Information Security & Merkle Continuity  
+> **Indeks Gotowości (Readiness Score):** `95.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-ISO_IEC_27001_ISMS-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Oficjalny pakiet poświadczeń Nethical Enterprise OS.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`merkle_ledger.py`](../../nethical/security/merkle_ledger.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [ISO 27001 Annex A Mapping](./ISO_27001_ANNEX_A_MAPPING.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -79,17 +135,35 @@ b7aacc74b1dbbfdf4d973e926a2309922fc10f91bb6ed72ed075f53b53942caf...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: 1d87784177fd2149ee7484d66ce03476a3da48361298c048409a223cee84f418
+Sygnatura (hex):
+a2605033f903eb78507432547b73fc74976801cc400382d7bbbfa81c3a53a4fc0a9e529aca29896101295a1df36f42a08e800773c1a8228b7395d4c0ba26bb22adaa34714eb02b39b655c54844dc36c68dc72fab8b2657c1561ea317f39ef3265a5be2882450b80653fc8e6a692567290e3fd4e67b584f284081ba7b7dd94c7688b97d6ebbd99119540810ae809e5bf7c46b765f5ae1f192a96623755f9d1a0928b21e16af58018413587981d2893b7d233dadd0efde5335f20a223280f09902f248f9550dbc6d9ea91c5afd457c500dce81ee41efae1029a78cc9e952cd980e735d06b7275744ac18f675d5468cf7eb845f1e6b1a41ca4338ca14de3a7e95898e1151e16c1790a3f946955cf254e48998b8eecb5831fbda1023f1c5b7e8ca15b2a20716de049809a23225e2376bbca20bad7c21ba3bdd625a1dad0e1fce8b18f396c4cc76847cf09213829dcb498ffe1821548614fc1367347d5aadde03cec5854838c8bcf7b642f46337fba414cfda5f2fbb90c888f11790c23f7ede79c390565e1ac9351bae5f59ac613dced4c9dcc910cc5a2908e09935859ae969e2f17a44f6be1d8bfe810caf912ab36dc889bc0fe4a7bda909620dfcaed5dfee82a06338d28c190acd0e6540d0d26d7174526259d8a42c5050555d8242cda3a82dedf1fecf68392a2a710382c82ffe407d9cbebef9e9e15c0fbc5cc380e36c1c124da096f6f08d90dc30b6ac6ed1686610f9c67a7d9749f51fccb7f8cc0a4ee2a0da7b6e3b43e0f523ab6a43e7c29ac42b14144f479dd85bee3751ee497d44e4faef1b5d42e1bd3d62e1e1bb521bdb847b20fba6576111ffc5c705b30c7e3f3d98b064f8069925701483fda800e02958681a461ba5b0c3ce3f13cfd0391eeaadd4ec5152239c918ecac2cf00808844861bea9ebfe6943235a5f32f6143b8b7703d38112bda05d877a41171236b19a4e48b0b125312e697cde6fe580f273561412f3948446621d1d355ee73c9ec8b025393a41d0ada1cc1a8541821432db217887fd03415d2e44ab11c3e35320e0edcf615e0e98cb9e12ba97c416d7a2ff9c911d9e6ac1e25197140c824ae610ec3449bbcf146da22039c690819acd1200b91f8f072323c83e85d51fcd1b28c4c67b54fc51e578083bd9e8f28823e169c188525d47df1b7d66c3c850aff28c45997cd6978f8dc08d37c02515b5018a46b535936a84d7d6ec2d3fb8950196c23630d618d5337d67832a31be070beb0fd554c70ce466e23ff6c8d8c8d625ad0e1209663f294a0d1d8796b35fe1b776274e46b23c3f4994a3f33328c73b17a99e3d0b39564c1bfb46964e429b06922e58731994901f0cdd6cb6d85268abf80bde7cbc0b3e22aa997cdb1499fab49cffbc70abbc300146d0d4d1a1a86fc48932e8ba6f8fe4b3a68ca842d1207afffab4ed77a793d1d8d266ed8ba0d91c40f5db13cf04238faf605e1912632a99bb46d6f88c44447859f0226bb228c4ba23760fd7fd0475e4d7bd9b91a42916ce7fdcfb37658d6c46be8617da0ef7036927365c4c601c46fa42a645575ff44d660d900115468fe5cc79b032a65add7b2d2f180d9d250a8013b33bde956103b7e22c1fbbc4b6a066e98540dcfbbdda3a3338a706427e6b13b0b6abbe22429451ba1568c9670d30f139d1addcca0d073c94fa388063718e4a40cc88c9110de3c95bf9fe30efc038ef82d4b3b74d1544d701ab06b89a53fa3438c4aa5c55392746007d7af375fbc74135ad2f232916c21ebc44321e58d6e28689147d02f82be498f66e9c450d818acccef9c9ca1fb5e527e80ab5cb9c977e1bbaebb310590c7ad890581e9e0861f4e7b0e0644aff66bd5bc2e923a30f67a1b833897b73efd7a942da29eef3c4e6c833f3370c5f6b2d410bf606062bfaa4914aace757642e7bec1b1a9ebc9f1faa76bdd620895ff06ca1b37ef42f7bd5d19e56939a35e90a28bdb633985dc3997f010dff133ef7c6cb10488e8900e868b55b5c9698eef97ea197ac6aea9c9091421bec712107be85d751f3c7901ecb3e32ecdf710ced3d624734cdc813a5dcd5e56e80bbb715e0b4d89f3643d5bb3fd851452a74b3a7b71902f672d84ec602130f0a0f102c7ec2e014f570c408bc6d81fb415ad3396a98366385da16a6ba98bc8da3498d039a7a0568fc0248611d8a7d67106ab8cbc43b1afce9d301c76bc243b4782a22d272d1ca6ed916376af0199848ebf8592f43ed3e50488a025a9c4b5962f6bb36dc8bd33dff7ccfe158c6bd3431d19feb8a0584db4137912f3e9f365cdbcf20ccc7eb1bbd2944f36a2bf6345146b457a8d00d1ff9d436988db34e36fa9d06325c51478deed81757eda30c62ebe53d9b209ab75614049937b60c2e08b111d202506064a4a9a6d4502acb37bf3760217aa4aa108bf89204d9a8cab8b286d7c6e38d4499fcb210f32b9272e535fd75acd5456fe355e470dd3739ce719a558f5efc1238502120e0d88fb2ca3ad727c164f821ad1be715edc0d4b3dc004368aaaeb73918f6448d4a183e778071e2f371292bb28fe51d8a8ca6f5b64a7338a560ae9b7f714a6ae1d18fe2309c24d9eb7611002f31aaff78954edd6c591c08591d0df0110539600b9d6a4564828b8e2fec95dced9ab844e9ccd1fb6a72d0811b5139f147ec0c9f1dd61d69897222a7633cc8ca726033910b15e0cba91862237974448ddde8537a5be7a0bb7b3b748ef8b56c12be0d863510f0676ea9604bca652fa75d47f8f4e2abb1f599a026404ff21f7825bd4bd68763b269ecedbb6c77c7629651ec8ed51871cf03205f6a6b3df92bcabe728f887a82bd8d9470c79a9df6d276d25015fbe077fa48a53e3e2a118532a568cc544eaf9b2907981bb1b1527b306b9481d80c81183ae345f8ea9db5f1af56e5d540a52adbfd05567c68f1b41850698b44ab12816b02721079aaeb012f3c029246f876bcb70d2ae4fa4c2749d7c011aba2914628783e9af68d4e3b07af93b8b0f53cb7d04cd66f61f77188f51ee661a9ec23ed92678c031d43b03e7f80ed47354286de4884d5e42ad655a87fcdc6fa64c1b6dca6b878c686849e548b3f27a2da3790f7bf8eb1ab51ce12d59f43fbe0228188c47094f16067b9c2de3a68e4c8955c79cd48d4e5d0e17e6aa098b0c1e8199f10a3dae6373106c229ccdcab7624f952a96fbf48e8396736076765288e7e28ecd304bfefa48812cc803bb105234c52813ab7fc1f6416ac49e9cdbfe371b36bde30a45204c6098921cf16cb45c099ca8921a9f894ff497253db1814f315d74dcdd67d2acb08cfb149e98ef46379a4af07528d5f169f49a2c994f342d2346bea171f06d513018bb9f777e410b6ee103d4dc44785a324663654f132cbd9e1177fbd54d1da19365b3ce05cf57b196524364094156ec144344059cbfc811c4a3a2c89644437fb4249cf51f1c942ae0426090779677fb068a42da6e925b6f8620381271b915542fe2d6d578760eee75de87318bcd9f5c90a3104782c5dd5382dd32ef260d3a58dac8292dfc6a2a9efbbdb268c1064ca15bf4819fc6c9781aab3a272cd739b336574f5f81b1abf3a246d6fdfd1a6b2487f22f9e70b971fe57bc366029c9738368aed97a305ab73af4c7805d59c80e78643c8d13143ca542ab68e3bacc8198a55120e983752a358bf5a1393d7891fdb3dc72a02853aa5111e2ddaf7ade524c560bafafa36867e80f3136c94a6efa33dd63f528c71c55edbd1ddf9ea8c4a160e8ad456217e41a0a248659d678d0ed9ba2b16278e356180d780e4ea3019b0a7c9466c00c1039518f723ef7b8e972b635c821620df0da5268ce7bc21cd526c352d867d7e15e0dd31e91a08cd887888e0fca5dbebcaa6e83c978cfc879e5409acad2b2e6eaa724daa896fa576d438de997382ce6225215226a6f13fd4995280d49237f8520b02eb099cfa2c4d2035d4b537d9534e1d70d6d18a77befd58c13e85cbdb1ad5c58dcc8644dab6715c85ae1ca71bca83814cb57daefdb4757322a13307be65dcc58ae929542211e3c484882f5a117a5ef220860db430406e145678a159823528dafbf72f053ce723f92bd339968410f01ca7bf4ecac703f1202cdece6b9024822c6dbcb265cb01efac27c7814e1fe99bc4a0cdb6565a94b80a5878b4f5c7a303c15840024f5c69310ff62cc63cecbd0b2a36e9870a8da59e793e3a48739d54db7309975c31e3322180bf05d5c9cb2e07c28b7e4148c8580f9a54d4f324e154ee624a39718a23ee0b3eeaffd181f18acbecc4d4cfd74090627275fadd36a630433278a4cdf3d72e117ad129de671662e7f75979489c61a6c8b01263ae589e00529c995814e870df8b73befbfa0f57f8a837698abdb99c5960b97a1e8a692f83df1cdc601a8d674d5abfda6e0c3593c85cca8152fbeeb1354ad3da7bafb2fe709f635bacc9e41bc2892c929beeaf6b51af519104a8b21360414ef769e7120390e045111436aef37395c77dc7c6ad09b07be6c98a13fe04ff092d4fed3f4c20b3d2bd4f0edd56500e758c97915cbfd430bc46f9333176146e83ccafd9943ce2e1510524be9d0ebc5d1371a0ab2c27b876b2c322bafd4369b811427b01c1544616bc96a46d0cf165cc0c41a628e6a0d3fa978bb547b477a58c114810596
 ```
-24991e39702d96ac465e2146d080b38cde86f349751347d53271e12875c8d638...[truncated]...78dec464ef8529283f50b27190fa25f6
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-soc_2_type_ii"></a>
 ### Standard: SOC_2_TYPE_II
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-SOC_2_TYPE_II-1788588844`
-- **Indeks Gotowości (Readiness Score):** `95.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Oficjalny pakiet poświadczeń Nethical Enterprise OS.
+
+> **Pełna Nazwa:** SOC 2 Type II (AICPA Trust Services Criteria)  
+> **Sektor Docelowy:** Cloud Assurance & Continuous Audit  
+> **Indeks Gotowości (Readiness Score):** `95.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-SOC_2_TYPE_II-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Oficjalny pakiet poświadczeń Nethical Enterprise OS.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`automated_certification_hub.py`](../../nethical/compliance/automated_certification_hub.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [AI & ML Security Guide](../laws_and_policies/AI_ML_SECURITY_GUIDE.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -103,17 +177,35 @@ b7aacc74b1dbbfdf4d973e926a2309922fc10f91bb6ed72ed075f53b53942caf...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: c95a75bad9d2a8340f14c6bc5f730d3e0d236e0334fcf3634c1a93ded2791c8f
+Sygnatura (hex):
+35d180bf78cfa9339ec98812caf6ba48c4cd8e0a7a944ddcff08452589c1d672bcca12a9607ba7001b63e3731b3c948fe16bfa5302fb8e83772082d89648fc18ed32bfe754a8b3db69c613458f59a6a6dcc5e4da474e3ee76620c6ab0f60579f2a5eeb79484a3cadef39fe128737dc4fcdf03e78ec231397def86647b9de3357be2c7a27146b0ddbdb4a2153be5d2626117cd337b6faf2c5be941a976630006c4874961f37f9a12e1f84dec8839d572db01aab821e476555e0d61ca0517f9cf2e2f19d3b4b5185d1ec7301517026bde28bdb2bd7179bde8f18039cbdb4398b242564c635be9b1b5a778ee4a5505a0796ac7f35c2b92dd9a98bed02a11c8d12cf0d9db83f0600751e99cd99781025d03cc0f5c21af983d5b395374ad16ec4db6aea44e1b95224f6fbf031603335261f416f3f71a74fa5bc159c93a87a6189e297bc8050f95377af150c767c63973ddf018b606695cfc87ba8424e359fbe863a948fc1b1dee5507a4f515a62dd3348aa622d077f0adb859717766039257806c54e06d0416329bfe7150f3db36108cd049910648ecb3b6514d974118101690e935885f6af1fc7b8b4f05397aae9bd21a2840566339f555125469e66cd20e9953ed883df6525d90ecafe3af3d0ea88f7e02c17487df930e6b9dd50fc3c8f598ffb5f0a1154891bb74ec15ad9a629a1d905498b63a23f08bbd0fa27d7a95548edfd7184d45e800074cd9ae127b9cb386d1676e3ac4ede6889bb01efe68f5f018fdfd151e2cd8619126d6984492a982aa9a7d581dcbebc51cf9209c2f13e96a9aa5610e794c1a4ae86c47b5d636274c41af062beaf011b95f1f207afb5f6938ebbf6c79ef02583f8cfeb795ac3934d005fc1bcb7013370e7d17c9bc7711830b946dad5651d56cde8b6d86aa0e7317e2225e270d5b77a4c447a6c673fea2d7494714517ad01aafb57bb64326533ac2820bfb4f9f5722e0d7af16d244f4e851a930f2834edda354b4910c4c0d0a3488d4510c869247e845f4ee61a5d7ea9b4549d39bfd0486883d8c04e759c8d8fbc28954287173b5dabdb8e74d4acbb714a16db09d7717f474c8a67bd67d67020e20d39035d065ae5b6155648d92628efd216e95064495dfec26ddedacf456bd9c55b4a7ddfe4ee01a1afeb3a50dac68c9ccbb21974180ed86467ce1b040534e0004a593fa593d13efad97ea6dd0b17edaa3f6d36baef70dec4782d8f300be2f761ff28213b6c3874086b9b048d289f7bac8e740e8518835698209333b830c70367890c5a8f6af483083f419a7505adc1ff2ce0aad81f7798aabdd4b192b46943c443578290237fccab3a4552b617994ad3037454bbcff590f78df574a3699ae15ec67bdf3d4613a1af1d50211f7bedd78c5b48c52a62e674cf3c8d7471f904a909d5a22ea45466d8e3249c16f112e8dfded5a0d3ee6e250a1b3a69409b376d1af76dce3fbfc12286a78daf0cff6a526551380acac5a4a300325ecc94032525d0ae03347a83360f2f62d80fe85441ab92806a6e9d74427f4873e5bc072cb967124391d8e7bc49efd4c17522fdd40d8c186029a82a52ffcbe2959b113ceff7890504a186a0e21449eda701bd4dca77d56af487d656d415cefc269f3fde4981d63ba34f7a1a6e00ec567ca6e16bd0b8a4f0642adf7e74de9e24eb96d807493b2517fce57ee32d96209633d1608709782a96cc6b6ca58dc15a91a88976011719349ff7e50b8cc1adf8a3df71d43f0c5ab9ed65a28b675d4208467733e40a17bd767c4f029b4e94301b6bce2a1b729162420e05113fcc33bcc6ed3abc39095e41976802c63b2d55d4b49b491a51a6723fae0d03c3df7dc632544e37966bbf5f91fc630dd8038b2867e0a0b23b988ffa6f645ce52e4669c4af3e91a232f066eeb7a5bbaaca5ad31888a40546e047fcfebeafa4e06a8cf31665d14fa632be27fcbc80e6f27e8d83f159ea73c878c321e6690dfb7d89c944b45ff3f0eec937dc2800e0a09d7584d6525538a35a09737aab8e73338916ad60ddc938cbf2472ada30cc284c732dcf27fb536e74513016a5147dc663bc546c6456f105b9ab68cfe1ce5dfd4bd161c8d315f806cdcf411d99cdc7b9855901b0935943141eaf06ed1f78e2015a7fd39bad56f46336112475b13d14e8477b9b009cff01d9353797d0b74c9e859af211c895c2134c28a742f65bd77bcd1aa2e1c9fcdd169dd3454943ca53f0989d9e4ad17c854347d06a57ffb0fd148fadd785a18782be565c2db626be015ef935d7051b0e601355b82f2e2a1a65d6c759d8225a32a396deafc0486e43c64bc7b0aa1aa856409a2072ab27fba6044c445492b82fb20c0b91e2b85a4b0fd81b6cca5e1154c624e6f70de3a5b6df8ad9f56c3e44193dce7d3722d5dcbebfd1a98eaf9baf8a62e87562eeab632bac3577121a26879029c00b7e3991f50afa6956d7404863160bfbbee5fadad8b34f9aa10b5eaf2b4034bb0e2d295040fbc13ba41e1512b864c48f92f678488e4cc073983a2d2b3e9b443dba6ba8c2d026e2a6327f13aa2ead750d05a0ab56b737639e97e99c95790ed0f7d485a07d27596a7486814c46e3d7a4648b38c067626c20c1ac9fc657cdfce749b87b5c5eebf457d517456c1521f8240d214411556f7bdd7373b79d41c28a9ab2c47dafb14994c3a748d1cdc4d14e518b05b9063bd12b01fbfdf0267ae1c66114c9547efd0a5c9071155833a9269f4076f1bab080ee9f3a3411ab40f62fb984c86f5325da657f9c56e5006ab25c97be66a20291044381232979eff12fee87643705b64631fcbad4793f5f0974e3095a7079ecc4ffda825a50d003b103c08a08c1d6f16b62cca0b7c8f3f4512dfc991e817e426b1c341699f13fca2021f02d3529f0cc0d8380e10e6e1c3f036c0fac9e26c45739f885970bfd904f5cec6f9b9044f523ef37e1754bdafd90f5ec41789341b337d0eeda36fcf777952c007bceb3e68c9c6a7d952958a8def9073b9920d0884428a4d87ce90ed5d64480887b6ead97a6e050de14d24150fcad748e842d18d11e8d73e7797052fbd0548c0ca544b78eb0e59957914b58febcd9869ab016c662b88a28b7b25885afc7540489ea63131e286ba4af6a8d208153c1655ce27bf22b629abdd52e958901b588262f1cb25b6c778ffe743323d0c1b93de754659406c9812e68f564c5e2996b139a6b51a65e5ee704f12b50a258c85d3b345173980a7a10f1d2e33d5a4cf7abdf46222c6155264b6745180912c7ff9a7989258966859b4c33f70ffd232ba874dd1c2e104578544076487a7161a836e9d9e96dc0d607929b5fee10c697947caa75fcf6b4bf0dcdb90fa412d95e12db38464c27a141bc1cf10500cdd8120348ace22445be1df6d66de62a79fa82cb97a17ba91556ab7068b348b697fe56adab23012b05bf1eddb7585337b68b2757bb6e6e52d3a73adf00c81b088664707ff488459abcbce51a55f6bf5f37ba515480f4fa9eb5f637617102e48b772108f33b91db7f85cdb13612232543e46e714ff514cfadb39e08e692b02f894d9d41588b66ba82326a7f25e270acdf0e84c094c6e69fc2baf339f8c3efff2e0a3ce2cd974c80afbeb95222f6e1aa950be89c6bb061e55d751a59db2398776a10a9e29649a9aa6a6c4b397d9eae64a7a161d2ea197b9cd78f0da69d502255af04ced8bc1e9ded280f8dce6bc176c84e277ee7541b70d54e15051aa3a502799a05fe613cb926d57ffcc8b514f711e0a9d65987143ec80f5da00a7d3d5d20732d1c53d3b310c61bdb632000969d4cc309f76b7caaa008fc2371a0f6b82ecb3b20e58ba51579f649b49a34c26aa5e51df1ea7375d6442228cdae823eb97f1df116f9f3ca80378b6830db79cced804d8376cb06d4f9530e8663f00837621c01a1f83fe2ea1f30493a6f164396b3f6bd7871bc8c6c0486d5cdf2313c2292c0c9a9540ec64ed7a409a2efbcf89c3aedc3797246f9bd240d77ee99a7204e2221e170e6f19e3d657c101e8d02e635da3ef5dfaa0698b472d71ce92adf8c28937055c4805e090c18b9159b3a4a59f2f1cba6e0f8a1cc4c232e22afe4584493fc9498cf925712a0c2bbcaa79dcdadb6b077ffbe33eb8d8b34fc50a21f8a9cf29101a2886b20b7baf6454bf4371c92709ca17eadd74cf1bb1a20825a26c34708d4084e1f73b9af6db4bab5255f0530735f8dbc42db191fb254042b431e132b0730f2bad78a177f8d6e2fdd8a31b50fd462c646bd6ede28bbc2e251086b5d07505744c614a2327ec74e1fd315049a07f801ca5485bf93bb8204aa2d717d29c48206ac9ffa2dc4381133ecca0757be9343a4af21b42146714adc763216b4f48b289147eaadd496e14b4123a134966826f542a1c1af2c8dac15f0b925c5e7ccad0738cfb8ca463b98748c6c84b223a29962a80d4561423d91831eede207bd3dd8f9d18214d0be10aa8f52bda5e42cc2247b155bb902eb1a800d67cb54cc20f28103e5037b228c4c21141141a8d74d9f768e3ab363f4bf9b357ffc5797d534f5f5f935f81ff0c2f4bb1de65216a2d489dcce79e64b31cbb3feb9fdf5e08148160b2d30ea77f5f08b9a38c997e964a131b72e281be8b04a1821deae4ab57f6fcc863d5b7c62459bcba5a430f58f86dc5d94c5
 ```
-df40d345742a8c35d2c810e5f242399c941f4fee645f2daa4185811fa127cce3...[truncated]...cf1561c936b9b412c17c2959f2c35278
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-uk_gov_teal_book_govs002"></a>
 ### Standard: UK_GOV_TEAL_BOOK_GOVS002
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-UK_GOV_TEAL_BOOK_GOVS002-1788588844`
-- **Indeks Gotowości (Readiness Score):** `96.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Dokument gotowy do audytu w ramach przeglądów OGC Gateway Reviews dla projektów rządu Wielkiej Brytanii.
+
+> **Pełna Nazwa:** UK Government Project Delivery Functional Standard GovS 002 (The Teal Book)  
+> **Sektor Docelowy:** UK Public Sector & OGC Gateway  
+> **Indeks Gotowości (Readiness Score):** `96.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-UK_GOV_TEAL_BOOK_GOVS002-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Dokument gotowy do audytu w ramach przeglądów OGC Gateway Reviews dla projektów rządu Wielkiej Brytanii.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`uk_cyber_data_pack.py`](../../nethical/compliance/packs/uk_cyber_data_pack.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [UK Law Compliance & CMA/NIS](./UK_LAW_COMPLIANCE.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -129,17 +221,35 @@ df40d345742a8c35d2c810e5f242399c941f4fee645f2daa4185811fa127cce3...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: cd550dc0fb447b0749072dc93fb05a8719056fc94f2a24a881ea38f3c7aa294b
+Sygnatura (hex):
+cfce181b2200a1ce8cd4aad124f4accabd9c9ceadede8e2fdada3b92e6a7f81bdd46429fc5a5e192d98eac5ed9d845acceee72b24c0910a89c9fb055136c128bbd31cd88f67b96a17e524cb372faf08f80c047ecf92970cf4210f5d99d76e5b6d850ef4b6694fc80df23d5683309737e8cd3c69956a9be74c4a94dfbc28412122138b95c7fccad86b8784c93cb4a86a0a7b427e7fa7dac2c7552e1e199824ca088677dc2950088dceb2ad318f0253400025fd6438986aa216696c0ac31ae7b7b9325f0be5136f41444b2ec3b1b3b37d56f9bbca4580d9082ab064fe2c04ef0dd647c089e8a346d9d0845c4447ba2bf8916ed519cec38b5605012950cb4ba8c3a721eae68328ac211f7d24f0042495e7f6603f0c18b10ea43fc94e04c345d8166a07d31463419ebd14858299522f532953e4786a546f0bbecc081770d4398d3362e22d57acb068fca2b9434add947f71e2b791f1793e2ddef5ba14b29c20528e6f56a0d67732d4a629bef42f065cf8ef0aec5d1fd409533904e16363fc340a11c939414485b08a77e5dcea7b691c6aa714b06d349ddf4b7124dc8d9096785185335b40b51b9926a2e7cb56c03da15a7d11c47ac1df7b6e385e28d5b994fc36b5391632b28432e82ec800d897ab868959d1e7be9125263fbd8d2e1f613765594bda70ba8815340b70c25b617f66b30013488e86c72fac290f2b1f4501006573c6e8a49c551cb13526dd17743cf3dbbb7f8e3682c23985f5b2d69baf636c832a66335e214f8445de8c9907560ac789742378097cf3848b4af16b7a12c84c446b125ca98c4a08b40197eff40a15f295380dfba63b58dfcda67126ab9708f61aeb4366d963d60f309a31a4f82959c74e44924514e1bf1fbed4f0f9e8a96b434c3ccecaf382ce7a31b72be4932219cdc87d42471be29cec2477cd3fc96e56cac13d160280898f0907b0ddbe4ad4f1dfcbc5092fbc0abf04f668ee75f5ba61997478a4665326c2b78e5dc53d4a107305c1c720e01491b0b97fbcb86d1018fb6b315421ad9e0c57b499f8acce9d0f501866a1e946175040a711c67237f06241bb60ab79f0c2705a9f2bb3e5a3c8c788d7ff04e44ac4a18de7a3dc88aab115494cd13d5cee0d7f829d081e2fa628d80c9b4bddf45b82b35db6df3ace77319d936b2055bc8089f4169866b461bd722f515a0a996656a860f601dc32e89aa0eb2ddc27726c73fcd86d4ac536823acc7db1a5ba1ac1a1ae2202659956a2464ed45fdb393af24c278c4378f8602634c8a31d30cefb4561169f01c2183c1fc3bd1f479ce3c6fa2718f42fdd0012aa20bc7ec589275e20e6e7872e4a35878c02c90307c6eedc313b6c713a22f0f0c2b9d098be8074a282421213da7bbf46acd7a85e23020fed99a37f76bbe075213644a0eadcca61b8e1e5a0b52ae0aa83a67d99abed8d25a46866c35a79a981a2f068536ccc705bb812f4a05b27166bbb1d17e82faa3870ff44a6d64aa715abb8c26803c4b0cb992929729afbe9c8f2f4d5968e3e4635797a70ea544263171ff83fd431fcecb46a138a7f1dc93092f0c17e77c0c9ed0c99ab90c5a9f59ac6551406646631d81e3306d6d361e06de90653df13d7897f72eefd98f0fe2b0db76a7cb7952dde5d90c68767169cd41c934672c7cafd69da35e8c34956032cfe876bdf011315aefc01684723cd0461c1e99bc5755ea85af8e0becdde0ac07859e20b8509682d5fb5707ca22170b2723f34db83f7b0a6f4a546301f9340c3325c674c565dabf20a24086db72ead300ce0840a887bb4ac96abed3198901559be0c52644892264f042591b16d26b6383c1acce7997fa001030934fe89c122b7c8e8744d8af75c0035218766743a477039995ead652572b23d666816ecad5f32828a07964fe90cd4a44975de6dd4351a6872ae7238d3c69f2a74fcae8ae2e693331d39f06b025a4791422d759e1a22817e3d1b9db48061725648ea113ffdfb99ba8f882353e802f36bed36befb04917c565259296c6ca85e0c0c48e103973328c9033dba71ad9d80f3c502664caf1f3b3188ffe1a396b8d0460a94a427e85392efdf6ea6cc03731a022938efc0b95b15061cc6d2266a8dc62a8567594e92c9c8255b111fb4b2de5af8095a8b1276f26b0e3e7d829128b9904968ea35d58b1e70ac538cf4df2567a31213c9bb9c06b3907b73fd6b761a5f6dcea93490015e7e61af690511161f7b1c822f92cd1958f3c90df8c8114a553675135dc583fc836e2523d04fb367956d499d51a78908dc1b259ba503af9eecdebd4855c028f82915dc7036ac3812ef397a73f73b624a940735cbc1e41619302f4c2c89999dd82e090ffc5f21ff456adbc54d3f156f36fa5e90ba97f19179bc7644e5178f9dcfb6a577361e54808dc1a848eae3354b50a3011855bce26d2a3a9cb893f1647d5cf7506228266654821bdbf21f99d30ebbc625645665037d7a443105d278870422b275bea67dec55ff0e526225d2c9d1740ab914df927fc5a086b402ce4361bd96de488dbd1095b75a2ba3113ccfb63816236dcb2c9431d2044a1180503653b91d57f2bb317702639806b0effbd56ec0478f4a5499ea97957d99c4d6ed18ae4ccb58945660695721b0539b9d7130c69ce9eea44426f3bf5edd6e2dd56a93a26c5424fb40d4eda28d0ce493299466033557bbf38ebb49a9d07fce8fc32745f678a7db48ee80c435ca6b06a64b3820c8f555d2e989118dd62c6efb0d2dc4924d333e25a7b583cf212d1773c8d35bc4a1905791b8ea1a0c3b755d44e2ede19527f4db01f2c49c729262610afef3666e0b9d4bfb26dcb801250320ef752a75968ade487101e360a98da0a4335c1d192e50c3d14bac1535395ce4d6401ccf33678b1cbd668c0a68a08b8a6b6271ba403bbee922158d1b1ec6839d1a45a6e7c21bca66aa9f859844da30cb6c6ad70b2a495521c6f3c91fb5c53e9fd81e4f79de9fc39371f54c3dfbe261930128b1f68509ff54b38b244da72ea375d8efad0c8706d3a9fa63b7d6c8f090be2cd15cc202e7d2e9928d522269ac899c5d02aa00e86c0de7565d1da9a8910cebbae603cb83b1a967df2e7c65098a19129f3ae46185ed2aebab6235bbf0d137c692b68c777a98175908b4677d6b78ba6db8791a2a45b3c97a118f2f67580af89e298e80c40c5755d867840494671e6ad7583c40014d98af4a92c57c62dfa63f5a0d2fd50bb425eea07cf62ec121a2481da17c276713dde343e9c2f8aed5906d7cf532b17ff9f35a554c2a26fc38d234cf67ebe2fa568753f7da4709afebdf3acc7c263c58646b5bbc9596056c42ab108a48bc78c7e284cce931d39725da3c0122ac4a642f46cbff77553a4eb8c71a157ac1981aa7fe95e48a04261ebf365bd61b1d69417b2a6ecfef0788d91b10cf400e339f5af00e31373686b6fca56cf00e5c74c937627ca0fe0c5c4e0b839845cb52366c25505e7a32de610a45b9d290c2669a2600058d7d471712d1ecdf3f798a99a5e23b34cf2b286a2553d7aad1899f7b36f1df4213f926dd9bada2c1df09f44b7b1d754e47a74fa13a171e92fc6acb6ae0879c115078390c337488f584d54aee6b0687a9b3316deeedc25ef2044ca5f451cd78b05088ce8cd5ef0609073297467456e38e165765b83a6ecd955d405615560339f282b35f7fb7da159ea759ead97fd8e112abcfd2fc89d7c8eb6b1bff53b9dede54f02a50a451e6865c51adca3a96cb0ca60a92ec9f03b666fd039aabcd9bffc0ce862463e1d3b5813a90a4ed74e83085f5400b70c671878e17396960c3d44d59571244fdb69a5cd02c60c7e6c44816a8fad84ff6f92ee43f8c6e763b5f95539e83696bca4735e98e59110109ec44e2c2086fea05162c00c62c4a112c51e7197d508519b29c340ed68f45d0667b5f96c27fe3dd7cde667f0a80e96207b1c3f8ec988bf97c534a47defe378405f34eaec64b04bdf5fb9eb30d435078c609c5924ceefaaac847e135f9b56f6367dabf807730be481b646a667de0e7f5a1d8c3fbae62825b4e352ab1e4add1caff3f06f08664205a6caedd14b03cf1c0d505838b37974567d73a7b23ceade22e9fba69374f7c13505f436f40cab230e4b28942fbdbe459daa5d9998b70d7c1db48f4eba5f97a8eaa31b41754c081132d8ffd5ec849f75d0e2419e4409481b6dbeb652c050d55f3a02bd78f79d99d4e2a7b229d9b598d3fdf7da8f87b69e77b5fee54052e43f47bb4385f826f0f6b2eebcc78293cbf76cfb07abab28f22033840f33406f0a36ea43be57e54e111646a96b88967a2b64f92a845ac73abacd1bf23e124f97c85400c284e2229bd24f3ccc91aea7ce0278cd06269ff131fbf12e026cdf98028773ad92cbb0cadfd9ba1304af0c2e94b4ba46f945270eb29d55d498a04e40d6ad5d60a089b63b51c96bc2476ed250bd93ab08054e757f2bd3128c28be775a75f368e552016bcd70b5541f90123034cb00e8feed7ad86f2bfa21de9deefeef70f4d676a5c80fbae29552db224698dd3d1c5e2e3b836696d3ef61fdb3f32348082c4e825b1733e962663326d96f5b7dab5990a8bff1d044abdc3027913623cd172c6f82ec6a227ddefd504d5be598bf0bb2fd4a14d32129029e7d301376ab5bbe6bad996de0a7
 ```
-06de85d9bc86c85f0e8e7e7bcbb2c2c7768350dc0efa5d8125c8effc61065ffa...[truncated]...449fd06bcce7f347474f89d7545cbbb4
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-ggi_good_governance_assurance"></a>
 ### Standard: GGI_GOOD_GOVERNANCE_ASSURANCE
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-GGI_GOOD_GOVERNANCE_ASSURANCE-1788588844`
-- **Indeks Gotowości (Readiness Score):** `95.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Oficjalny pakiet poświadczeń Nethical Enterprise OS.
+
+> **Pełna Nazwa:** Good Governance Institute (GGI) - Assurance Beats Reassurance Standard  
+> **Sektor Docelowy:** Executive & Board Governance  
+> **Indeks Gotowości (Readiness Score):** `95.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-GGI_GOOD_GOVERNANCE_ASSURANCE-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Oficjalny pakiet poświadczeń Nethical Enterprise OS.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`automated_certification_hub.py`](../../nethical/compliance/automated_certification_hub.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [25 Fundamental Laws of Nethical](../laws_and_policies/FUNDAMENTAL_LAWS.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -153,17 +263,35 @@ df40d345742a8c35d2c810e5f242399c941f4fee645f2daa4185811fa127cce3...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: 754c388194f241230bafc2fb68de9c3134f822e037027b3fbbb84e857fb55862
+Sygnatura (hex):
+9c41f4970eba3e2b7d23bc5e8253bd9c8791aa9dbf90070e06d6739c0fd2e595901ba5ed786b0d904a1a034bbfb2adaa982feec8aeb1d1f4b663fedc7ea13d75165ace64b461f461eac20e809a779421e7a94368ef0cb980b727acfc5d85db3950e4f23dffba04369e64854b88f1cabe66b9ba7cff6b4b5391a0c11ca6d0046f2c36adfc9cf8388f8455e51fe8a0da141da96741408590a96370a23cb123066df01c4f1e57a6904bc187e9f00732b6ef5efaa84bca391193f60f9470820c0dfe86f21952214d4184b2e6582f314245e5b0781acabfe712c9148897f6358fcb2e6427b16b46a0c2b388beb4c1caf50fddf57742475eee4071365a7fb929ba1606e22e672372ed47fd13c59809e4930ab906c5d2f2dbe3ac0934a1fd585b34d48ca8ebed5819e88bfef442f14e0969c8b23bf36a745c96e8064d4b922ca051151933105c69daa3d35d21a4bdd7873d0be96c2394bd23f3a71993fa976624608b63cf0dc4232ea59c518846fde1d7fe33de00f5bc2e47ce160df469385d672e541660c8533def954dcbbdff205608daebe47b9cd777c73ffe65aa35c2f7f73de28f781099a2cfeac60660c9414594b1ce8efc0b7026322d6f8475664d744401490fd56b5f7575553f3e77e2320a265375cb1c73770c78e6bc5e5df78f48d8ba54c23329e004e0c5f635a13d0e97a5b70d53d2af35d8805840f118d2cc2343b3972b129802d0d5357083a6329b58a75e5dc267b9e3d9edc16514038fa370dc2f93b7a32c2d086529e3803d708280f55ff574b30091bbe2c91728e6a4d24c681dab208ddac2d671be44e3bca0d2374213e2d37cfbcd07d87dba0318c76b6f0ea904c69c74a07869595c8fffd149228c059f027a05d7aa276ed6fc1f0350e00c1e7190c6107bf61f3321110d5f3893318baf39670439020760d112f2948527e27416c3a1170bda07f079053cae309af3e98d8163d639c10c179dafc97145cf866ed223e62a9c0d498116202861f2b7c7669e9b5e2a78f3c282e7e2c615a50ad43bd15e13364195ed3b3b26e720ac3114c7ee51e511956e99a31540816a64847b0f22e732737154b30cffeffc404096db0045a744bad5bf49f52aae316398af269f9f1cbc87e905cd81bd609560e744896d55a1c597e0dd4c684455a95e80160db9d81f2874c5fe9e566514d054444c84f887694850f39d488e4e3e44da06bc36ae6c79cd667e699112b0f2117bac7bd49fbc319936a55c1069a9ce1522ad62e74ba59c75a230900a523eb1f1c231106b29c076895f075545148e770af71dbf67530ee787e696e133ee471a0c6bec174e87bd441eec70dac5df2a3787ae15c0f2948271e940258b177866339a948c1438398f5f7ad60b216fbbe3d376994340391de4d5ec340fd06b556901de0a62a3660b927fb3eee8159045bf30679704ba8bf5e3dde0f9d387303c996e187861727693230246a921af83addf822fea1ced98ad0f6060050c1813d7eb70d82694757f5806ca76eb392b703be088c77d72c292bd12262e17b5f220c836cf63484e281c97ca3c9ed6f4b4526af18beebe0bd090c59b79041c65596110ae00d57b0d8a7140a5c79752bed49127ed698ff1f94060c3f8cf70c4f695219fc303acd8b28ad9807824a9b25bcf10c7b8365060aa52dc28f5deee77963b3bf36bdaa4e8c6caa5dba619c854da3806a981050e52439fcebf8f13bc571b51553ad1cce4ecc3883849c65f0f69d31fe03563df2e545a52434dde17e78034be2eeeaea0c28eec52979ac9b4d3a5b0dd917eb1514953b1d122af1acc31056d488169d1475d8a6c87bf0f698f54e5827508d5b748e5d7097a2673091ddde71a2179779bdc492a190197c53b8aa9dc47b0b6e2f1d5c86d53e009eee0447d27c5dfd50c2dc01f66a054214dedae4e3ed11c69fcf67ff5011a9524d936149ac4a49f99e5ed9d331b37a18f2a3aeb82225490e017e2352f71c400ce76ca9efff70d35a800037b587791dc99dafdd1e56e1c8ca87bb2a2b1d09876beabccb851822cb2c43bd394dce507077daeddd7c9e24196ad79bfd94d12c6816f003eaa177ffea1152a92e43fc421b4a8b8a7519c70d80a3bce89e2d10295a029c512045e9b9b7c1784b0b3cb47eebfe061b09467a54543b1351dc6d427490376b6491ec6ad1bfb0ad25ba0e1536801dd37a267b0f0bcf07903117132186928e771fea1cad38a81ca24d029abb004b157efd8bca5193954bc22366564a29cba9cbb7a1ce620c877daea39056f35a18c382f8d9643825a870d091680bf9f839029d4c7252eaca64929b7d108a7aa3a7d9880f7d28c9a4d3f7bbfddf0f984b2983ee9908682b62e1919147acf218a11a61dbafc4b593cc8eb5e8cebb8727fd26bc825b83956cd4cd6b546dd1a041034839e626bf9b44215260f2314dd29031fc7490530399f992859351857ea477dad735ace19a9cdc8581a645b98448d7e08b5a44bddf6b492a7864851def077d2045c820d5cff36a37df3c9ed042566d05bc7b49570b5af6e3354fbe2b64a2607bacb394f5643a6d50c22cb8306e621ca2fbdfd9309f83c6451ac0ac9d0fe5697f6b855d0a03aafa55ad2cd61a43bf3f68a35f7284c77c9fcb56f7b3b87ddb20a83590f7a5e598bc1b1f0653573d3ec4a6e63859df1e11631881516ef722f70a38b04d7e18fe8a63f4455e8b73fa2a67aaf2e4ec088a8db2eafa75de0426626ff9ba7380ba05a658c2cad07f419ee6cdf7aade76584650dbd8eb5b4d0eab3fa509aba20f45c7fe8e129ecf31b2758fd0ec8b9b08ba09d8497e7968f186696f7392f4b266f7b85065d28ba745eace79de6db4bf138afc3d3ea46209065cdbaa8f7506a16f504498626c50b10684b5e4aec2399e78af48aa8c583d632e11832090294d06e5cd61d146e74a087bb10817f5426332a2fd6843ca8ced7352789ac351c3962611face02ac5d3c59d7e4283dd97349c9c71700a5978d6ceb235479d6786cdd92e15ae3e1517c074139051dbf7688716724a5a06efa2d345fdce5d7f99c5867c0c90043722417f03fdac781128085911360a1d878d067e1df2af507895634fd9f63fcf432bcbf509d765ed67a1644a6bf7c275f0d57405b797da22edc2ae47f45b67f71f358b1ab5c63713f64aa1f256882fb993be1da7a484c90f6303c6259fd997b5e55db7fe48cde82eecf87cd07723c66a82b182a7ddb225250a22a3b0c2de1d0da7f1b9cecf50add78c361c14ad0a4fc16bfb65121b0be312f1999f3ac37306be67107ec58a7a25baa44be203356219e6881554fa243b1e89a0c028f8d26205f491bc3a84c021f28bae834ebbb30643f78fb938e7b2fa8aa68c246cda0b70c0c6b15aaf057fe585057e72a573c902c7701a29f3f46350f42918312f4c89d2535e0f88491f7a0e2b43a997123466d8d3bb53ab0eb64b24ee19e7a995eda0d17cefafa9c3ba4ab5ab366b8b4670b1993bf2904923ed652474d2a2696cc51ce2767fcf47119e42f0415f021014cbb392bd49f257bddb4bf674b5101a7b2fee2a500f7c7347e555d324a2ecd5faa079f79eef6bb37899cda0a8e2835446e541e814c810032ef697338b18cad862c2fcba6dc7fc3efce53455d1034df99a584368680c17fecf6d5eb3119006c87995ee1024fc265da18cd46f519ed0781969339ed9a26ab34e0775ffd2bab036a76fc62d5c087584b50a84d3f1cf2bf82ea8ee268971e7df84a03c3f6f9f18d1808f0af10e486e1498caf9ff82ad1395edde0dc6bd3f9770d7614040e0490e78c19bea43610a7c8622de77f506e161359776a84fd175e04ef2ef7e6848ad6b8ad2ae9f6013565740d63a3051704dee878b1c7293b499b4e808a4123763aeea6662c3460c885924e575505d7932c9ef15a5024c4e5b0606ef570b1067ddb26d9d0d004c54bb636f1e66f4b0df831023d8b255740d1c1e066ecf78f953db2cf9df3ff32ff44f808adbb2eb9c791a2711c517e4f34f9756045db4e9de4214a0ba85a4c49927321cc489db59cc0f237002194a22fe9bd77fc66a962a7d18af1471167e13df4f7073881222d58ceb89b3f11e18d0168194f7f69b697664eb68170f630f29c4d25403632e67cb159748976ff645ec4a2f8df2ea0accddd1a5d57df34a0c91a890947f73d472d93cceacfda30033af274480ddc89930ce78555f6249fbfc1e958b2563be168a3e2e629aef2dc8b7372bfbc0a48decbf66e8474a1ed522b6f4a3682fba9b95840f4dc9fde1e591e49b1c3a57ddec2a9178f630f663d05a1d261cec04ea9bfb7766614395928ad96203414a075c4650092bfbe0a8d61e25f0b6d858cd5d33d05af4de0fd11320c86cd7e0a496d4ecf06f464b696b7dc515cfdd4a56aae1ca0963204da877c20fc460d10cb3db020a3073c2f021afe5222dc28c7dfc474af5adddb42d9f7df552e78eac032f6bf349c9935b448cd47663f989c9989566c150fc32181b22ac3330259c200062fb58e825f7964169a9bc817a5d7fd62727255ce7a8d6165555336b295de21ee5f710261fc875eef6acb20db88f1236e1878ddd809bb0aaa64d573dfe94cf287882a39d1955e2c7dd50e69eedc2cb67bbd96e6c797660fb188adf6d1860720913ac100dad19930f476098af7d344f1bea
 ```
-67bab2553dd45e68f34cf544e1e7a4e8efda7ae235b9b64eeab64e483e600c34...[truncated]...347bc8b6c2f60453d8c00884806e001a
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-cyera_aispm_dspm_agent_security"></a>
 ### Standard: CYERA_AISPM_DSPM_AGENT_SECURITY
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-CYERA_AISPM_DSPM_AGENT_SECURITY-1788588844`
-- **Indeks Gotowości (Readiness Score):** `97.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Raport CISO: Zgodność architektury z najnowszymi standardami AISPM i DSPM dla agentów autonomicznych.
+
+> **Pełna Nazwa:** Cyera-Aligned AISPM & DSPM Agent Security Attestation  
+> **Sektor Docelowy:** Data Security & Agent Boundary  
+> **Indeks Gotowości (Readiness Score):** `97.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-CYERA_AISPM_DSPM_AGENT_SECURITY-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Raport CISO: Zgodność architektury z najnowszymi standardami AISPM i DSPM dla agentów autonomicznych.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`proxy.py`](../../nethical/gateway/proxy.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [OWASP LLM Top 10 Coverage](./OWASP_LLM_COVERAGE.md), [AI/ML Security Hardening](../laws_and_policies/AI_ML_SECURITY_GUIDE.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -179,17 +307,35 @@ df40d345742a8c35d2c810e5f242399c941f4fee645f2daa4185811fa127cce3...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: dc85915566cf6f73aa7b3f034e7964b41ab5d306763e333323a5c8c74735365e
+Sygnatura (hex):
+2a26b33708bc7fbbd553d0c86dbfb843eeaf0d5fa506c3b079d395a5d5f6f14227304e35584f14acce3b97a221bdcb1a6fb5329ebf65b106402cbd77f14f7dbc9d79dd6543ff9557e6c399a1a0dd95cf574d061b36d17cb7cbab2131d7975ab17c033372c20894de7e96e1834da913b98c230cd5a7e821535370d1ac174587e5540d011d00c3178c1dcc67e5a1ad15d11f9926b0eaf621c29ddeef8f6a8469a9ff9957609b20b27f40739709682182b884e23d28ad09979192215bf22a8cccad27ef61870736a6be7d6c2a4ca323b9b31abbfdb72d2db587c363e73212f49299a9a08541b7cd9bbd1c873a37859885f169d915486cab58b6da8340a241463e2a6514072fdb27571aec4618c2f0601730a0ebb297bb7232ff1d952de0e097706018ff6c9daf21fc93cbb1ff7ba2d7c917c08d53706577962a03f8be7214da4d43818e03867c0c9136aefad510cfe2f1692f6086cf14dd9ab2adb76856cc10f34dbf3d829fac048d4850fd15994a3834b39ab9cd0582c0bdb996387477f2cfe2df29a9e2cd9ec558262f0d1bc6f44622b740b3c38412233934c5d9b7031ae0471cc1418fae25689322008da94f0159acaa612bd2b45a53171567b1788dbe189af7551ca99ae85b715b941ba5f4b8fff11a6089a12bab121a33f336fe772c199ae3a23863b5ae7331e037697f36ea8516c7a171afee209431ad124f0faefefdbba2e3555d497b5801e36bf292dc299f48df6cfad2cdf6e694ffa76e89fa63608f446c86d21759f79b5219d14170e06896d5cd92aad18aa1ed2465a7440402035ff24dc474134986cf3d79d0e00aedd6f20d456b820ac056a1fe1ea9eeea25f61678f199b3693af486a3b43e7e9a83ce1cb44580a71b669f30f7965e48d39e5843c1c2c0d246706065b38e6fd69b82b0134b64636ee2a5bae803d2dbc4f2813e347754fe24af176819dea0b624ff773ed388aecd6c828b482f89a192f3951c6c199b7b661ceea2451625e5f0803ce7b84a34bdabb2198eccc1b10b2354225959a089102eab80a4421aa012887180aa3bccc6184d399ffb7f8d3b36b5a0fbd37a6ce680eb5a5215390af4d4ec57412af588a588b6d9f89b60882e140eee78574260a6e1ef42ce55d22a34810a953dae33c82d684931711d30c05945b63b736e574979a9a4128f552c874a8964b09d4edcee021257ca74a9738521b202452f525e5f3dec6be6e631a50ec02ef0faa395ff9cf2758e3847f383d169be67297963d78456237544e2883b5970c509e0d168596ab81a80701bbfac9c08e4bf55fa9f3a019ce0909ef055d4b85e60b024c949e5dec52f71ab7b6e6550d09db9f4421a7aa1257fe82b8e18bf9deafeecd46d1ad280f705d8cf173e05e023f9105af108729e31aa9e366bbdb05e1743c6a7196a0d044ecb24a0e52c7c4b6d7349e1846152dc0ee76962e9e9adc3d5b75ccfab2587f86c0d8be68a1c18cae6b86aab207363d722084fdefd0101aaa17026f48959485136da9481d9acbe7fafc00f9bdc52854f7ec4412ab2514d6ab2d35efda1eaac65093235de9055a047c0d53e7614e6596ddcbdbed5cbbfe534335620b6cebaaac0420255efe53955c6fd76bbc3986677fe7ed4e1c7d1a240322b16fdae0bc25611fec286fe2905ae2828b06155b16512f80764c9f20e30f8e483e830e98d0fb763514d178cc0884751f3020f15d395828a99e132cf3b90ed9fc4fe2b05c86eb142d986ef67e3a7902b56221f418c0195d72f21d8eea5d0b2157455331a3d311c847fd8cb892f162d5d7251cdaa39424ca0889b7038ac35d8c3e4cf8a9e5e99f51a1e5ea1b78978039be86a3d7598f0f8db4d4eb315905bed547ba6e183d5841702145c662a3b7f3f94ff887d204536ed21714af5cdc6589afd47f1fc04286f5bdacfbc08bb2cd31fcc7da56e1c8ecc05ba60d74f067a7d428be982dca1060cbc0000302b85120c1b9081346ab710e703be1fea4e6961b823b6d8235802a9dea50a04122cab7b8898399e0350c7728e4674cdbbc446434191538e057e3c45afd5ae28acfcaa706e6a3c18542aa59070ebc760c84a0797b51f605679321d8c71d12f99faabd5e21cd009695c63397aba592aa801b10ca244a450afab39eb09f89be3edfec185d181faf550f5f5fbcfaf5b32dc85079b98968aec1d3096a0185cd367d3665712cb46dcd1addc796bccddf5d0e6a5de0022ca04c87e6ccc811dc27d93542c5867ce92963610901715b35493af80e620b655cdcaebb1281396b495ae4aa86c70002a03435c21ac5fe589279c4744b3892ae727b580c3ae4302c111ac21de7c55c02d14151676512d6f18d168e3d1c6a4ff3b6a5b91c11e8ee58695a7708f7f0c317e748de54d292f756f1675c33012783a61e92b2e427035ce14f28a82c66545f674faff852631b24bcc8b6b2d000c74008eb4789612b0fc18f5953d80b917bd500ead36bb8512bd72e1d8913743518c2c53121ee64cb838dcb2dde4363bfa11f352f974e1cbb6873c6e571b4918bed75dd2662505dc4996a15b6a9e98336a9b49b7d61fb6f3f37128859f7ff7965c5eb8ee1e051aed4dca318766d1f6c80d55ea544b68b18987636c3e1336bde5953830ae26bd741815d6cd4597dff26a06b25d312b900a0ae46aac8ce5e66825682d87211a227759c0a17bf1ae690f02742467e4e8867e10105ba449a993aa90a393a2aa3f88c658ccbc61a4299ebd38289dc895b392739a9679cc5784ec8da3771b2d7b60d63ddd3065e2752b8223a5286b2229246f43e6c092105b7c3c334622a84639aa50973b898de4724784ddc06d2d85fc0ada32c03b24b2c4eba6121f82c2744583a8bc085355a033ebbc571a3c22015645edb58ab8065d622ed9d4d941d6d40662037b6a285a45c44b8508dadd91e3e163cfd797b64598d152bf267a41e8bfe824f1aeea85a7ee8a870aa7eeda33c9a7b326386f159ec942161fc1a197d47635f339e5f62bb7291e3c305c49dc00cefd84716ed0155c95bf41f0a82ef57da1ee24001587f45ad6c08d5c16685b51ba9b273798f75d3f4f549ed9ea1a652c68376ccd4fbd2f1ba35302c3daebaf6873cd3822e1b16de82fec27254a029a0f6e8f602c749fd53ff7a387f9b6ea071803d55cfaca8ccc6da07696d62fe67f3eb20cbeb6f7cab0e9c124e1a2aa4709a3c2e7045bf00608c83f322ab5945382cc875b3c1438cc50e525bc5b617144ee95af595f1b09a75966b5671f69bcfa26c7ebf85df4208d83b421ab01d3d17c02f5c0273db437ff552ea74faf99c4ca77609409443211ecb31ac0f659c156170acfd5be703e3311736f18b4c68a32eb73778e0b0ed9c1db046c8b3a5c9b5bfd47411a015084d3686f731f57d124fd185cf074e3bafefe4ff061fb880506f3be17a091b20f45d13cc0da7c39d18dd2caaa23e9a78e80e320d1d1fc0ce26b15ad1a9c8509db83a9db1a726b785df45a43edd6bb3f5e7c7b3469bc2fe83ee49deb7610dc606b8c056fcb462805ca1ade767f445dbd70435029510b88c0611170b3a2a3bc16fa2be22a5cce99d7a8a6f5d31cb8da754c3aa727a2c69a75ed946a529f32b9c8abf74137106596671910c46f13d8d0b48f059c96a9954314cbe38eb00dba2a42f5280300298111302122738aa1101ca98b92a73fc3c255608cc9dd1900c402913d5cd501102d8aad4a24f00d5e6f4fb009751d039bef5e32aaaf2c70222d4b14276abda113b91802eaf1e7ad3af806b09c26479b9f547f852ae77b7974f89a19c3d101cafb612889ca1a07a1740c045a17f8b5bd8fc47c67fe065a8f84e29e2dafb2c9e054d9c98b0f7bcd309f1f46730bb0bbd24980dd5c768323faf3ba61c062ebe150790b12a2b626b9a44fb1313b8e88e085da67a36c1e91cb51ed9b8a88a4e0a62653618483ff3670b37b376b52ef131e62d9be65cb0fbddb0666e22261af252fa8a764ec6fcb17470952337037e3e33e3c841e3e0baa48688942a035c467fc31667aad006a1d83f5dff4cb6fc5b6476fb06ca2906f4c9fd7b7e751916fcaf3b553c557c0ede2bf5529b51e597b0c8a37ffbf746ffdd11525e0c058e6c35ea0f29b3511ac6ec153c1470f1cc96eab91e0c6589515102bb14cb95266ee814418aa0c47897aa7d46cea50aae9e618a90ea9b56b088e60434acbcc280bc9ceed510115345187ca14ae5719aa053321752ec1f6140ad6f5aca904bd0a76ecc605e31b15631e15f4606640a1abe7183e255e1d926753700b17f11af9c3d5bedf98be3afb66cece94a8d327f2b2b5c22ec89747bef2ce08b62ba087b3d460078ffbf2dc19a8b958611f1f750cb8105748b23f07fc58650fa9a26c67db100688576ec106804e07e455c0b55cf41547d8de963fa57d33793a6ef8c3cd55a0afe5fda88950a9a4448bcca79554ab1e61ff041e13d027ef5116c5a7ba1960a38af984bc4fe9e718ffd7a21893c084b7bda3d744c459adc5285eb8c59401fb30f76b67cd8056289ae3c02731b04cacd68d4c8e46e224256da95cfcef33bf32a96d6fd153355f215fa6c52b430865d358503eb6f60eb57bfb0d408fe560465a9451413a0f02b65817c79bd053768429d05d953cf873be01c0a1dcc6afba516f27dcc7ec34350032d5cdfc40e8
 ```
-4652c07d0596a55db0cfc37f1f6d8aaa0503987dd2dc00dd2df2f1b5dc1bb94f...[truncated]...4976f1e914f966839a2939829b3eae70
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-polish_bjr_ksc_certification"></a>
 ### Standard: POLISH_BJR_KSC_CERTIFICATION
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-POLISH_BJR_KSC_CERTIFICATION-1788588844`
-- **Indeks Gotowości (Readiness Score):** `95.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Oficjalny pakiet poświadczeń Nethical Enterprise OS.
+
+> **Pełna Nazwa:** Business Judgment Rule (KSH) & Krajowy System Cyberbezpieczeństwa (Polska)  
+> **Sektor Docelowy:** Polska Administracja & Tarcza Zarządu  
+> **Indeks Gotowości (Readiness Score):** `95.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-POLISH_BJR_KSC_CERTIFICATION-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Oficjalny pakiet poświadczeń Nethical Enterprise OS.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`poland_sovereign_ksc_uodo_pack.py`](../../nethical/compliance/packs/poland_sovereign_ksc_uodo_pack.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [Cyber Resilience Act & Polish KSC](./CYBER_RESILIENCE_ACT.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -203,17 +349,35 @@ df40d345742a8c35d2c810e5f242399c941f4fee645f2daa4185811fa127cce3...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: 013e0c6152f4d32481d017dc908f0545a080cb5923ccb31b51b9c2153e2c972e
+Sygnatura (hex):
+5683a64301293a3fe01bac5798243843a48ccb2e1c5a1ea057d02f9d1d8a87c6dc5015a59a51a5ab6a885baa2826843cf4d1266e55688a522aefcb62ff90b1dd0817b6ca36aa734549e4988bb0af19996aeb75a8288441a0321a433deb78af323f6646baadbf0067d70ab05da71f18f644229babaee375b942102cfb03638dc2a95b033126b1797ea65d73d566bd685f4cdffe80d293a1914d067903353ae352263c4162ffebbc61a6216d0a94598500ba5042bb1aba3969f27bd23a4991176389e4f301fc4bce719c7986d7394b67bd2ae0ca2ad69da85fb51121fd38d6daf20c04a5f6992c93964b7ba8473b61ba7356f30a2727c9188fc859514b450d79dbe41e41cf3b17c703ad8de64be1446c31329e2908e2e239845f6419d4357b4ffc8788c558c1367cd39fc488afa04ed582994f2cdcfaab9d6019a97daade8185d0ba910481f78a3b63ed6f2822ec53adf6cffba86c98edec0524ddab6c49a92904030bbf08a9f04f53081814c980a5d9e2a7fe6efea87e26454d46f1e6ca2f7b61c109988c2f443ff531e97b624d859426b97c5530f78145ae6f8b89e727e73108da7b08530f3fc608e1b7d769c59dda6783772e020070658c452f2ee918f89ae1ca83c12ecdb31f857bfcd8785e23e618b2248a7eebeca0d7bcc98e58070c86e8fac2213b07ecd9e9b9b7bcf933b41c199d3c671cfdbe8561de0bf212ca76bd4af2076d2dbc40dee7c24679f3796ff99024586d5117bac2d1025753adf63e223b2dd037e488ea09c4203ab423af951523207a3f2471fc9daceaf2217a70db75d61a3745d510323882cae301b93302a156f5250481c6ee5065272be7039f6842fd05682270af4aa46712c78c8865f01c08af7da1d7d42ce9b597e05022959b24954dab4616cc7e840651067a5cca7920bc3ed894e3c7ba9236afd8ddadded2fd0ff0f6f2ce4fa5ff8288330c3f28af3810a8f72e5c912e8d1778af31b33e3ced37ab5afbffe82e94982710ab32a00aa3e724aa4fb2a8078dc58a8177fd741b67fd3d41c15e9adf813f6490dfd91ba9f6761fb6385f593dcd13106cd09bd0d3a5a2bac4b3decb5fb07949fcbfe4ff70bf017fa54eb73bb0e85586ae0d187a0cdf73b80aa7bfb2a6b3a4e9ebc656c3a0dcef67adab2eea779210b753ae2bd626d0e35e167dde27e6a3c89d9a5f4e3bddfb4ed6895f319129e086b9515f882abf8c95a8a68b31dc9189bf4f97b3ffcabe0ca161d29572b3e36e21dc86f69e5bc70dc7efa496849b831cbb6d3ef336e39bc27178daf4f749cc8b15a76ba34f3d663ad3f6d08fba28c507be622b2432a4aa21b31bacbe57c5f106634a7e37405f0a2657f2031e32db76d97a835dfb28f55d23e55cee46ebb91538e5690cd2c2afc9368b1b42459b2f64fb742eff723d63b9fecb7d31db96135fb78c56e07d6b697ad07ef28f9d324c63e5b2310c2e537f33871bb443b2ad904f15bc49cf52647c1dfcf81d751bc616033819f9d9b55ed2ed99fe291adaa52b97a25a57cdcbd9873b4d0a6f54405fed7a28b2575120f738c03f23815e5b54f9fe8ff6c3b1e92122145148a21da15622a68557245b9b0be2b87843788fe624ec3065b55d3f471dadc661da4eb8a4252c4d6ef1343b614e9615a726751e505fde5e2bdb9f4e6e92d32ab36bf3893732d13082f225ec1efd1b2fb76a9354366cd01933c5916a6a420af3fb2c1c5856a6c4354b4525380a98ffcb60c3201f486d4fc4e84f5aea7675612cbaa20bc4300a9fadf87e20f439b621a6c7d791efd5a25247dc26bd5a1cf7fefcac6f4a8a689409972bfabde89196d7ff066c3d1658b56d659ffda2d4a8ce5f1b26fb4dd89293bb387031bc4dcffc682863ee768055f146f3da97102c3d5b2e9d883a98392bcac2a144f487dcb30cffef8bb4beda32600075b7bca719ebdda2cf549a31e632cddfdf2e957a254836d5d71f5439f2d42ed750b26caf0d6a5fd9c97193df1f2fb741d8c010f8f2640dd8f41c38fde3cf22449a317b83620782cc3d1d4030057f0937964510b18d5b60a03855eae77c377b774ff3751d87fa5ef3504fca2a1b98dc39a2ed6000e57d0009370b618703e4c232f8c868ee36457f53b2654ba58042d5148c7193e93ac16115f425298cf865b847c4f7173ca5c7ea7312f69ef6fe6f295e9dff690efc4b4633a273281d13e14ff80e66120330f9dff8438b34e999c80712672be7effeb99b69408aeac0ab8e6747536674092486532f17255982eebfef0806e91cd8397ff161ecd800fe7d062fe76bd82a6a571d3d41e1350dd7bfe670758a905033afd64115cfef278cabaa1f9ed8be0f9fa0d483295947b3c152af2af4be2ccb71b502a84eb4c6815efa764cbe92b9bdb2f18ff4383481d4b40448cc6a41fd4d89b29101d8be7ae4989d412e6daa4e3301feeced8d8fba9e384fe6756c8ba01101fda430eddc4ca0b556e7adef7136b6b534b76241aad2bce64d99c0f08bd3c5ff90549dcd87d4917a6190a7f08bdfd6392cd96e4f0d018f8f1fce69101117ad17c8da8caf8763a06cf5026c793af2188212bdf46c918101ae7f71b810f7b2bcd531aee74c6c546f2c19ab2732681e7c80c5022cda305a37ba0be9444062c8b34b1943b3609b7fb4d3219bbb0cfb8a3811a31cd3935820ceced96aaf46c79f727bbc992ef162905002b386811fce8c29686a6dda5ad06d47944578c93b2f07da16561d887f641f92d203c9bcd080a3a2c063320803d36f61d83d2bd936e979b3b55d517e130d1afaf673f07514c061769a0030d955a6035c2d9d1e561013c741e8a1a76ddd4d928da000485c81c80c3e69ccb2c09c20b7533637b4e32de1faf35cde4ba814abb8b7e11a45832a8a4cbdcd09ae0684dd67db5ea0e989119282e79e5677035cac2888e5737dcc842b598a2129bd6fb4dc12a764f41f447970bc1feaf155cb3d3eb305f934f3c5d390f6473581753bfc794870c354ae29b9cf0a13761cec5097341268b574bf9742ab8918537a5a4cd1266bca7d67bf20cc9847dc463124fb75c9cc165b7c01fbe18db146a7ff4dcfa4f02c7d99b8bb96a08f105140d1a199dd9b36b4a828315560ade85076149ab16d2870aaa7056c411e644df350d74736ed2a7790c6b4b30748eca0881e28eeaeb0513455f8e1f3b40257dd6edadb494fd2c0b25cb44a91591a320ea9e3be0016b00d1d425072907b53f77898589b3a02c862d92be6dd074433b283e59a130e64364048ffbcce5e8eeaec34838e29dca9c2f2ba0a087fb21dc992b709d1c0ca5e50e1ab0b70f8e529ed5fe2e5504dba7cd382ab5eba721ec3d30c00f1f9b12d5cc204141a4a7555983ad98010588c767a42ec0c75d56eacb9318e6b5379568cfd9e2c46c639ce8babfd5661151a94d0fb4d6e063ee5ce392fd429a880cb2e16c1558fb4f3e22de4bd18d22ea658f796d0bd89c3d48ae415b80c67d7c6d414f6a368873315db01f561e9b7cf225bb767228e033d6bc1439f8c6c7e8889e172ee1aeef98b1d7931fb40307a84566b7c9330d1fcfc3f1d93dc43ab0fca97b85ff439d5dcc01b93789a694917a88daa88e9990d70de7b25413580b3ca9070f2296cf4c0ff0765d2b910e6c66932f0a542b197deb97e753571612d4e4c5410f2edde88a2d812241c2aac728fd41f53a2574cf4acf9b889b7fdf2f4189ded5b041ed8ab3e692ce1a898751d20ffed83c2e8adaa925c4ad32d6507ea72da4c9788189f305efda1e687d838fd14ca94f0ed625e024f4dc90bc949c05501b66370f2475ff485be3868b06d799e6a218fd4318db29a6599fca411527a93aa68876dcdc8b4a58be92d23c4819b3b5ca375435ee6918377edd747e16e8c9cf72b3eebb0772b46be68dca771a53f97c93f564eff131550670aab276d4d0c1be790223c0eed070b19034888d64d51e4399bfd392ade5aeeabfa8dee4c9aef1d2c92d08f4da05ba5cab50eb12a746e4b345a8729b122744e21c074471a7af5da5d9c6806e26b554025a09fce32b8b4fb7451709c79ce632d311e5fb81c5ac224b7d4a0e8b3481c38ec1a2634c055f94078664157bd0d89330aabc8e8cfc9baadc8cff8a669eececee5f33b828c19d30f91f3d6dece1193281b7ae9b25e9ae0e7db27c7cbcdfa42362b15a8af34c7c496adc56b69e169628fe5f4e99f72a5e32dba01910eebeadf3eed3a359a66e73e45fc4e6c124ba6d480046f674f04008ca0c739fbc21db4185a1e509cf9065d5d221016d3c5d5e529c4b42ed5830943cd19db25637e3105b1d38aab81300e1b79a020f1508e17e6f73600fd8e277ce83384b4d81a14726a0a9280a76de7e24477bbeb55453ea9862b5790d6185f9c7884fcaef05b7b0191d4b474b37639f26555cbb73d3cfed0541b3bd7713614f5d93fbea780b58790f6f957dd48ed6e0d97fe98b4dea66be077e7b15a147a40f39311165143f193989745bda3c87e55899d5bcd21c6bd5ee847fe6b453cc6eba6898fdc16b637f474ceb59cc3a9a0e9fbd9878567ecb40d683f01ae7488d75c276b02a67e1e2ad0a5821abd27f1fc61bbe2472be041f84b35a9c91c0213fd2fb4a36171a0c45ac55e55bf94e95e45ab709d309761edc8d0c59f0008c4cb75b34933c194f6ebceaf8021c7cf23
 ```
-cf6f8c6d7071de9af8f5f34a5f9ec32340d49895e8fe31b59a00d84ec52cb881...[truncated]...ef3995e4aaa5ba2333036ad592e2cdea
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-nato_defense_responsible_ai"></a>
 ### Standard: NATO_DEFENSE_RESPONSIBLE_AI
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-NATO_DEFENSE_RESPONSIBLE_AI-1788588844`
-- **Indeks Gotowości (Readiness Score):** `99.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Dossier obronności sojuszniczej NATO: Przedłożyć dowództwu ACT i komórce akredytacji wojskowej.
+
+> **Pełna Nazwa:** NATO AI Strategy - Responsible Defense & Zero-Egress Attestation  
+> **Sektor Docelowy:** Allied Defense & Air-Gap Operations  
+> **Indeks Gotowości (Readiness Score):** `99.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-NATO_DEFENSE_RESPONSIBLE_AI-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Dossier obronności sojuszniczej NATO: Przedłożyć dowództwu ACT i komórce akredytacji wojskowej.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`nato_defense_pack.py`](../../nethical/compliance/packs/nato_defense_pack.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [Post-Quantum Cryptography Guide (FIPS 204)](../laws_and_policies/QUANTUM_CRYPTO_GUIDE.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -230,17 +394,35 @@ cf6f8c6d7071de9af8f5f34a5f9ec32340d49895e8fe31b59a00d84ec52cb881...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: cccc328c56efb441e6216638f80383e96808fe3cb67d79bdf7a691e68175bd87
+Sygnatura (hex):
+2b2162a76d745e805e7708223c07a3175e5c3bfe7300e65b059007b9dc93c86380f67b971fc260ff0f1fbc2f971e2c22d1405c44f5e4a86b20ad1f71103b4af77cbdc9c583db3d05cd7184783323a6fa9bdefa118dae338a705632d1f41781fcf7f28030905d5ac1e17d15dafeb43abe957b7b8738520c8b7ef1e4fc5ca6a139aeba8bbb095ce2d2d224dbedb3b527719f84d1f99d1d892179bc1b7fd99ce950de5c20522d4f1503ce94157c77b0aad9b4dd334a667b76b15e9469858056f722d5d826bb2feec54bd75cd7c1456065b3a6397f1bfe2d535d66932cea3b9141649e12265af23cd90136c33bbc61f6f436feafb95dea311255f646a03367570573bf9354a811340f3510b8be2dff47314098e38ab19dce78b22edc9c58ae607c6c67dcaf45ab0b27c3815c8460611c4c3e0794857cc7000b4800c229b3b8fa75a88ab3a424468cdd0196cb7117f14141966105af4e50058d0c7835c9005ce228dbeb8b0c9516e856c4ce5e7f6e9aa6f7751d20aed06f39a84ec0975f418581d28f2e794bcbbee33100ff87db076865796bc7fe7872779e730642978797293abfafa2e1a78fd2986ee3abf6139dc9330831df4f7876ecdfeffa9cdbad568998f435395b2667db3351a3b01209c158fc9466bc72599853aea9bc3d6e9755cfa6a9f5810c857f63b3159b0f94fc127aed475265d5c588105985e29e20e5f85f4e52d4bdf7305d23ff56741c243e7b12fd9bb6ca4288c662c6a44e114bcd95eb1490dc09b5976104c58795a810e67c7dc9a1f05e6ffe0a7d0ac3de4ec1f91c3ca2e2871137971215e95b1e9b3aa60c18a6416a929c0e2997ecd562b0561848e0e193006d1ad9171a539d0d5fcb90b6a6cb30c435a131441653f58609561b79e3f71e1a7a06b840d908c6633dda52e1ecb7eb59fdbf4d3aa762b6eb0ac67c7f03bcbef5281684a17483e0c6411227fafcacbf0d65d7cdf20958d20d821a672e63cc81675a22951a2f95711a3b8f4f57c42d654011e53d459c0680694fdb100b60de60b99d939ba69cd630c1556666b980cb326de5ec15da390f4d1117d5e3ee5dee0a6f0ff5cc602695f2f96a31a63a22a54ab9a7f10dd2d1c7bbe4c7fe9d28f292d602701b517565c46cc87094074af3b3141f639eaae2a4e43ebc37fdf28ae94989fecbe2ca644ea5b7e97644dcca7075252e19fe420a858e45baf6476046c1076fe119dd79602b8d358c3fd848690f32410cc5951b30a4a1ebee00fc0f997507c23ba37e9f5d8f4889033057f92053572accf72a613bdb2034ec7b35f2a380d0ae7a65c82600cbdd989927121ffc2337dbd0928d6a6d0fff277aaac1d76fb125751eb9a2f23650ca97f5a6a7abf87fdcbe28e040cfe256cbe6bd3b709144b655a917ebc4cfef570dba807b612f488c4e6c65024ba6565f2be2f585aa3daa3f70a94ecc589d4e8724a367a6cb9c6cdef67abe0e8db01d4b96d681b73159990873a9a381c97c0bea08b9ebea94b0d5419dccd430e38fb2f7b4c68bf74370eb4f700b6b3f349b5bab5322933d03268af1f2603ad29eb7325a82cfee26f128ea26022fa4fd1db776b7832e9956cfdfc544fcbe4380043b2a3b49c7bade8117ef6705b102ad2f488a84b5ff1f8887c5912bd48312f2646282948b633639ced559332d357a32f590addd3633f465b4b82983c37fec61ca3e552c8a763e246d85fcccc461d232137f950dbfebdabf17aeb7e18755f31ad08f363ca4c03770d6b1ced7e2b58057f0be3ccd91b008b93cc212b480c1e9920bac66d66b08ac3222130f617682d605146396d38d854c05c76afd7cd305a9788014211557801c77fd439507f7bee29b3a43584f847910aebcbcbd27581de4440481b757aae180f8be08a4b89834ec3b80f729d1b6016ae3d98d2bfcf1e0284b33c52e0d6125c894722fa9307e3ca2145d800c6bb5977a171e2889dbfd1fe5617fa9e7ff6a7e81b70384be6b716d01d65d1f9fdd3257c8a515c169bcd2a5fa1268efcb76dc5865b4f1264ef8190d26945020dd1d7f8286df815d0ce00310d383a33777d9789319aa59e50e5b3ec6fbb4460556b6652dd6b472c2c6926ce37e5ab745f463de4a40d9c5c105e084926596589fecf8f10db6f294a48371e2219034fa2fa8ab30781bdc56cf435b1f95d1cad5068011ab5a6482b8317c88d7cafc2e20cdabfe2dddc50a92f5a82c0be4d9bab335b65a8e9199d030acd522ff2565f9d5f1d7e3f10c8d7c0d9852f85aef02544e1fb7b70cace9aab2ccb16fd9fb7e3d64f74db2df92ebf45fc4176640e100140afddb0c82d1a7a314fd71e10ad84f94c054fe1450727e21f6cc730c47a542cc3809c6921200889f3baea14971f48fff6677e85328d78a43fb3d77b579cf5a4fff5941bc81cf08e1e2adaccb5cbe4d3919898d282aa268dd15f992bc2e82b7171e6e58bef3fe9ff3d08b645acab4fbdc1757a2f6336877c7dbae41a353137d24780bbefefd0b8fd1f2c7748bbed2b19f348720ac5d70b715e3fb1383432b7162a7505febf3b701ff77010f83f1c6f6568579a8a38042cc625ddae13408688cebe17eeeadf227f3da26827b77bf3f084ce1a2c77657e92ee7476a46efcfd3c9ac62da73157f5a91f67dd375ea86b0af31976c712600f7f89665ba35809dd45b3fbc7abb590da8d541416e4df53fe2cd0e06a5d4e27ea436f3bf6bcdeadd0742a0743840ac661d7ec98446b02da16e4d4638efe31501d19e98695468aaf98433c5503bbc4ddc51c1d07f0220b1769f6ab9da4d510551b0c5b9a8b3d83ea5b2856f62c70633188dc89fa2235a7d6f4a19a5ac45768d4268ef36ebc991cc896e1444c3d273cc535a967b38bc96b53ed717b5d5c359e3b759406dd99b0d26083cb1fbaf1d502e65882007902724d1d3b223ed7fd49950e17abc023c1e61c390d0152460bfba643f5229cabdbf6789c82a84aa6f6ef3f591478272da8f0ac9547d2287fbb4661e048d8846100f9445bd0ae12566b434c6483072cb43f41646cd3203a2e894a51f34101b13ee6b26fde061838fb58a398357e4351a5a758a8493ba341314fdbdedca6df0f9fdc062431d5f34934c23f75e75b78c39b8edf0792ed74e201bb7cf7fe28fb3e2f4844b1f9052968b720aadfcaefe7bc8e7746627cee91abbe5489460b527b08d55db282f47827e13ecf7cbe2db5fd0e0d210fa47317e0efd749c92a90c47ff42616f71bb9119ea782e332da23773e77b52a5ecc5af0a03ff7948f170f69d6ccb7bf0539698b657de4a398af48d54b1efb1205b8be9fcc1d351fb4cc59c0fa5085c44b39bcee3596cc0b4696b61112f1e824f77e4c5cc07a9bff17f15ee286a090129860edcc944898f22651e09fc4e34f8e34d5bdf3b4f2fa7243a3fd0067462b7925b073ddad4bf2fd431b014f0c5f9075dcb969e18ec8bd532176ba3b3eb3995f45ba77b9b85463e59ed9ebe688ba68ce4584634b8b859e54355896654996f707c14597a9fc25d3eb378536fe1a6ca5f701c4fe44f05b5c8150606523ecf4dac7517284419ebd4fdd424f946ef3ca584395e0deb671ecf4d18df670294951dd48c552db39bf0cb8191278cf2d36e17f82809a4337a52c964feaedf54e867e5aecf430df14b6f4e54b346bcd51385beb7869f0a2650ff2fc57bfa175f29c25e11201b8798a5b64572330e860c0f92a37b85a5b8bf8c9155046d32e63200e85940604e4b4488159c442ca8cede0c231354a1b90f925faa94239dd1ce29466904bd8e2cb6ac16f234f56b494b61d890eb67effcc98172d7a0f28ca90dfa9638517ee886526a1d5413e0f8c6b97dd7973bc824c0fc07fd0a99f6732ae61fb32395c6473744b30a824cf52288739d3ec8998fb61c1b9549ca3c36f6495cb2a98bfc15963842aa5c4354b487a02ae4bc8371764c7e98f2ce081abb7ee06e7d99f1df63411ce4b68dfa90db74ee6f17817d304c8a0af187a4192f0b08fbb12d718614bb80d50a5235175d1145983005eacde7a5e8238edaf4541492a8eda0d07a9db7cbc55c8c868f491800493f4125dfc3a12994c4a35ae334e90ab4baa0124d2afc70280bbaca4834addd179faab696ee0fab3367a8d5ed46fc083eab1b94e0f33a5ff3d4716b81d2903ad1db5d0cf4fc526af20229a112e900e7fad31416b5f8c3fc0f51541ed850c0cd28b10e094890c4f0269f798c280129fb8e72ff0404bfd74cc1762d3bd06e8dd5f596d9ac2d34781f912f19834f88af94a6ea962d238fcbe895a02dd8447afd10fb038752b4c4b98234a95fd7ede2a39e9b97ac62aef6ced0fa397de3141cb3771f2a7eb2f0ae5bbb84fbabe0e51e0d4a5b077a30f46137a4c5446e4a21c93f263c258ff0ad2d5bd6da8f9da9ace948eafad580220d34b012e77ebd0b0cc440a1c763e3f96a009f01cfb97c96333ffce424530623717701221dddb7429bae7b36dc66959aa9fd405de15b8021cf0d33666ac170f333136249cd7075dfe98ef01c01a31cf3863e9e2c960de9700d39c515b7044b73d81c3de1b8d3884a36e07f2f35b9d533d4a673a439b820085ba90165aff10f2fd1787149ef70fdd6c9c3044753b939a5cefce3f276d44f1a562c37af5404cf31d1d68f7386839d52eb9076cfe6c81734e0af0db1ac0207
 ```
-7d1d7bf17df181ab20f56db0c3882b8cc58122aedfa0048145859d3aefbbaafe...[truncated]...2aa388c3b0480b8e4e51aa0ef3a86a61
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-canada_aida_bill_c27"></a>
 ### Standard: CANADA_AIDA_BILL_C27
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-CANADA_AIDA_BILL_C27-1788588844`
-- **Indeks Gotowości (Readiness Score):** `97.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Paczka gotowa do przedłożenia ISED Canada (Komisarz ds. AI i Danych).
+
+> **Pełna Nazwa:** Canada Artificial Intelligence and Data Act (AIDA - Bill C-27)  
+> **Sektor Docelowy:** International High-Impact AI  
+> **Indeks Gotowości (Readiness Score):** `97.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-CANADA_AIDA_BILL_C27-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Paczka gotowa do przedłożenia ISED Canada (Komisarz ds. AI i Danych).
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`canada_aida_pack.py`](../../nethical/compliance/packs/canada_aida_pack.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [US & International AI Standards](./US_STANDARDS_COMPLIANCE.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -256,17 +438,35 @@ cf6f8c6d7071de9af8f5f34a5f9ec32340d49895e8fe31b59a00d84ec52cb881...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: 8a51693a157c8e993f49a60ccd4192ca2dde124245ec8619c9de16ee84f9589f
+Sygnatura (hex):
+c0d643f017a57fd206a59c24b1d06da5f20ea13eb415cd5732458e7f610e1b838baaa13b2db7ac53089b967fb5e4e222d92f5197f0e83920e75d7ea6a47dd42d905cf71dc47becb8dc6539098f55c6e4791491974864cc83da99c6c9c241129980bd5b8f82f9a801d0c523f47c1f2f1222d13e1aeefcd90aff938d8e86bd4c68738869cae6fe2058bcde04e8eab57e0c41e8cf8d5e44c62b26effe5c741da3e34c51b073a6ec444fa70f1d01192a35c32294510b8bb67dc8d1ce80be1c1a8c5ee77a55d9f425b570c178d95c25c118fa2980b428256dfff87b4c8fd07834afe67386ad7fdac7ac1a420b4e8726366658f053b5f31c28f41886ee08fc231319642150a198081c0ba8ab9487ffa684ff72e562918cce1ade9465bddd93937e27d976969d3b267d4576ba36f90b1b1ec8010aa059a626f13bcac3f0f79a3ed2668f7ab217c3d682fc6ba4a95e3e16fd145fc2565ed6b7fdad3395114f5898b73e536e3ff4e53e25f5d3b5431b07100b9c8cdb7717d2fec614756f044c2bc8e83149874b58bcde53d37dac5956ef5b9c1b31d7945bad80b615c781148552d32d7e2804738a7641d26d67c7bebb48a596f7e7d330c9874a3578c3b19724f53d6be357b8c0c9cfefb63065c78b7767bcb3fe0397bdc72e4a15e36c56e0074ccaf81a4b07d51801dd11a9202cc5b17c1e46299cf027e61ef4a5884bdccaecb6c12646f716b472dd66065a9e0792648482d93576b0dcc7a6bf26c6d30b7907dae070233496679976145e32da5b32c8c5b4641e824cd7c1ff5e6e23a502b6d0c23bcd5abdf393229a8df927adcb510f060d63793362848ec94bea76d3202e27b7628c53433192049fbc201de5744c44c01239a66b019f919a0f82b49d52315348ad84727a844277e0bb45b57392063c2bcc77d5120baabf0a8e8d1612726cbab148c649f190efdb1d52dabe1d229acaecf07b904fab038c11f998867a0f33f86279dbf25560fd284785a9bd3db8a07f9c7b866aff864dbb3fdd11c9556b43ac287e126a57862d4e058dc54fe0393f61c9133087b3258a984e1905b61a848a1a23d64ae49d23d907563f5d6ddf3b8ebf8e89c377d292b655f7b578b72892c5f1ea401a46ab843bbd2b1cc082f74bd28e80b91dde3b344d7783e5d80cfe251081408424bece58d55a4f16f3aae775388f69cb19ccfdd8733669dcca53445c977230007c0738c73b767a0ba082f59b52381ea145482b4ba31e754e55f67cd528e70acafcdc0a0f2bdcd9a8d72d6c291f1406d4e6a7223bbac5d9bdf972676549861042d36f487e38a4a7a5ca7a58eb5042780ce63e05b79a465bdc9f227095eaa00823a06ad38a510c99d29457460e2b992e6135ac71e40f8c74499d5081d8e1cfc9c037d88c43f9ea0ab871d617b2f5efef00908aa33600457a7424e27c68f04d684ff451f84c3baeb834a0d642d4528944c5ffafe9b7204842cde61641a029d5fd5c7b430cf07c1ccac92b764c9a267b87549e22411b631916c56b0ece8820967c5e2664b0915a0078c296eb3e10ec6ef917ce6ab968e108ae0893c051dea7176bda00465dc49441de5e6af45de2d7fc9fa2df1c000db82799bee3df9f534bb3036715eabab6e349e3dfb1fd2d55ee48613a93e277ce5b8184cf5570a90fbaff9281b3a814dc38433683f29da4edc5a4ebba8a1ef8d1e74dc27132b1a0ba76dc0900f860d717e5ea757ad288c0a796bd5a9a8d0eecbcac48e9407d070006b1f550dfef2475b2c36f0f7cd07296ca42399b9b48bbf1ebea265c2122ae2cf1741c6713846da532d46a4dae8d4f53a8c064e2d01485fcd8bcac9dc05469dbbea97b82a704a910931b827c259431a79ff763814f436f4977a805395dd206ffeeafec4e844e59bc0066a9f3b49bfabd44cf4ef4653670497a5efd512d3658e3189fa9c12cbe65a7086d41cc9c1685e9f0d7da84ce64179da7b8b775bff50ba7272207dffb52f7e9e8e37cf5594cafa4ae11a82cd145a6ac922299534b46aa43d0e69f0a2c6247a4496297192a0a727182047484debaf91ee56a3e11fc5b328ac59855d17e48249793b7314a2d0f034cd78d695b9ffd4f7691b376f6309618c706888330c09cfc5c8227da8fdf892dc3bf03e01c689c59aa74a8da43be599083874b69733d216cd67b4d120d7b5ae89fc4ef65e0263663a4512f9b7548e9e145a2f391776bb3e5ac49c02875feb5e5123502bb0a6b342e1f5c5e609aa6e26157e50b5083e96c6e6dba440369594fd6b0257ae54a5b40cf632cc524c0b1840a76663d0197b69a9498cf1c3dfec4a5c16d26222f79abef9f48cfd0c7dcc107ec9894ffcc241e900e7b810f15201ea48bb3bf4a5de6071d6d85e29c653f92f272614e56e463374fb23700947421dc1d62b20566487693eb3a97357c078b189b3ec92a98b2f70db2801b4c2cdd85df58000566ee54ccc35f52221bdb786213c289cbafbd03152f7807069b88c227d9c35f2228fbdcda4674869810d6f4b400d59e4224371d133cce8d66f15d5dc3c5f04fd695f5b483a7dfdc94ab7cf26e63c771b8e65c9ad53c1ebc40c8fa4177da7ac43e33c6fa3768efb02c32fb9fb9577d5f2b2af5f0f821165a4e607294c2302c7b0f7d164825735e4a10d845f8d204ab8186b8463ec35bf4b93630941a051135e43bdae86c764c8bed65da891e643538acce41837bf0f85cee4496e24f913cd2495a267ad6da0a8cf04492812ca60e59593742447d112f8441467cc37dd06fac5d2ad2067aefba95e1d30e351849f813e7c062f72665b4d04d42a8160b80465f4ffed213b474199836a04ebb09488410ad2e7534f7fb9b8b8fedf905f56e886f87ea73dfeabdf59c7b1dcb275c7acee8d4050e9bc07166b4dcb2ac43da8c6e75f1577d1363e0b30e73d784d9a537049f3355299419a12c27b2b34a6782da6dfdad3fcf83def8765a32d8a83493ce41c7dd8a1bd20f9233fb10c6fe132c9c311f83a743eb578a4a721f67797edc1bf7b82040059fa4291296d93c189c964043c6a3a7faf4f87f1a0de93f96341bbd9a9a2587c80850ab2376c2ae6499729ef428967fdc551dc7a20460620b870585d127874851e419516c0f8f37df7c7e2d43de5a58a2ec8a2bd89ce897e28e5ec0ae8b8a85d6c4674a3559b6e3eab429d6d2e42ea096ecfe586841e47b83ebd5cf0f75547c5e971d2fe23f4972dba296e38bd21fec9afc05b0d6f6a175029504f174957c7a98c783fe180ab59e0dab6142dd2696e89017e0677b9a48a7b5dff46d4181a727b46bafb37855b58223ee7219322b631fcb3cb9eb8c0fdb39037e45a6b5007cda4eebdeabd9205a9f859c7c2bf72317c0b1bc40fe568912713e9d7a84b688c7ff34980be759fb20a3918cf4d32e2e96af55053f55a23b5fa248c97a7322f0d7e3d8db674a966010d23eb70878920b90505b58f9168d4ba2e4c5a6f4f6dd12bb2d8978172d5755a6ae6b53817ca1cc6ba57bb40b778277261808fc552b5729b92ff477955565b73c46147e9ca1b7121410ca005ac72025e0874596ba9db83eb76e33437f657449ced0801cdff6c112698d23e0d470d05a041c2b97650e3eceb1aec3b39b6366ddd553f6ef571d9f04e184b5be73c3c21ffdd4ce0f685615dff49e3f442ea077b02f118569f542b4c790e7813584a76f5559a584d33c6dd349f7f6e67128ab5bf5fafa0fbc14726834b62781e131192067fee83a046d09c365df6dd316f9b801e517b247d5e4389bc2923292498b1a4665c0f85b4465bcbaf5572b574190d18a27f18f6010be9c882665b15141306c89fe96e7f65946246098b4eb0187211521d9693605e35b22dc9f3566fd19375214eef49ed36386acd57babe980baabf1d4c0332e38bfd759994bd23ac6dcdb004dbb4c3402637a893e5de9c8cc7a96506d21ceb7735a72d5014a8ee1b5012b61b4c777231ecfed18459c8a4ad952993c3ce1e09e77c205acee66a2affef6ac444e2967df1877401113f3cb9b5f0048c13102b75713bedb8bf0583a84fb14ac79fe84c1b1ea6b5171cac9dbebdaefd8c3e1df8e1e0df17a9f44878580c49df96e9e6dfb052e5de94eeced900d8bd6ec6b47e5633a8caeba7ef828379213fb70d63e54912a1b82f91d7cc8ef0fbaaa75cb5dfba5965541dc1a565997a944941a2fd405ff2a0db2bded146a57715971f621db5ebc5a18d021f8c78318e36aa23c87ab721a7ca86f1738dd47e7945678ca98aa68e96ca108018f6f58f9a75cbed564dc5f0a2c75d44224644a852288931590c656895b184961e199a48f8619214caf270d55567ba8b47d4f5a69ba5fff156414a175cc54a0560314fb30f4e7e05e64a21d607ce6681a7f997b206d1a4f737a9b0eef5ae0b40c230063570c64b0528e074b3359335314389fb89654078de85a676c0ca4792c26fb17fc7a0d93d1d6c7266ef63989a7e4cb201fa467dfee4096bfe284b7bc03b019ecc171dd21d8e79e9c4bea5003469e0a25cb78b226b5ee1cfaf96dda40ec0c2df7d3fad9f5d0759d660b82f5ecad383fe86c6a9b00c27e4c3e39ba5edccd2320b67bf9581d4badad882c728f68451b9da0b8bd1cf2467242c27c3dc9743f9d4d4dcfad0c39e129ffefa3c5085638392496a398607d84007ddb
 ```
-cea626a70eaeb839ca803381a1d28b3a7b13bbf8dd34e7aafa2af60afdbed384...[truncated]...2135c687bf40d0246f963773efb403c3
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-healthcare_medtech_mdr"></a>
 ### Standard: HEALTHCARE_MEDTECH_MDR
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-HEALTHCARE_MEDTECH_MDR-1788588844`
-- **Indeks Gotowości (Readiness Score):** `97.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Paczka gotowa do przedłożenia Jednostce Notyfikowanej (TÜV SÜD/BSI) oraz URPL.
+
+> **Pełna Nazwa:** Medical Device Regulation (MDR EU 2017/745) & ISO 14971 Medical AI Safety  
+> **Sektor Docelowy:** Ochrona Zdrowia & SaMD  
+> **Indeks Gotowości (Readiness Score):** `97.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-HEALTHCARE_MEDTECH_MDR-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Paczka gotowa do przedłożenia Jednostce Notyfikowanej (TÜV SÜD/BSI) oraz URPL.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`healthcare_med_pack.py`](../../nethical/compliance/packs/healthcare_med_pack.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [Defense & Medical Safety Hooks](../DEF_MED_HOOKS.md), [Data Residency & ePHI Protection](./DATA_RESIDENCY.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -283,17 +483,35 @@ cea626a70eaeb839ca803381a1d28b3a7b13bbf8dd34e7aafa2af60afdbed384...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: 701750c0742db477df0ff5fec2ef31c39b9883d36d3a75625f141a5b044ed7e4
+Sygnatura (hex):
+5ed8182da57f5593ed933e08ab40fc526632e8a6c49ea3fa897db67b474a06292650b18f2fe0298ae43bf71834b32a371f9555e9492070e683bc69d3079245617124d606b4a7256656aa2e7479354ee79a7e395c50a01dc19950373e15399999147da328615112e0cc4c021362ec3cb61cccdc6b858c8422ceba20db6388de5a7d12feacef17bbf3bef20dc64ffe2e10ca58fd8e9ba40249f9f67053772460e6a97bd501c4cdfd5bc16fe47ea9ae7f654ec31a0e6d0da2b51fb41d439c65926a981ce304b968a19f139f73972abd950e0214433f1b58818bbe378aafcffd03048749f0d2f68f82d19bcd39a514d48c68093cb19b91e016136a97e2227ddab81784e6db54ae1df3cca0a553a5ee7f4d647dd31d84e079d989b9b479bdb7153687c2dfcbf0360a59105f9be54194807af5b3904be3f9fad8c0d893620b8a6596e2d5adc343e7e5dd95b542453302d76fe86a1e0f0f622e1cfca7e9894a89261091fa2ae5e1fccded29f23cd2aec39ce8690611e3e6adfc88fd4801e892699f089a45744d248e6ef8ef69a497c70e56d0ff6840247fe8997664a491d8129433445946979c6772a0e80662506846b4b8a04922b8f464180fa09e81d6453a1614430f7f40263f70bc47ed4d60a4971177ffc38afb096324bfa914de22e3f2d4379a052e73e4dcd4ecbf30e30736cd99a20b9b8bd59e68d472cb37a6a271dac45889173a3fbe61917507592ae0fbe870027ba8dd5ec417cc1262be3620cbcc18cfcf87c3302536cb774e093d9e484ea5ddc868311671071f7ecc890371eab12074f65eef1006fa46dddc31f5bf0848995d2c853a14b58cb9d731e08f561cf8b270307ca181dee5db669cacc8388d1e451829d9659d4720a39af032207391b13ecd557d4b0a4b5844c0a8fef4d339732cd0822d9901231b1018dd2e67136645742dcd04ab87de60ed424b067ff9f5d8bdbd3209d55f9a4fd5c20683223f3ae84c7cbd742a11822e2ae3b76d47edd4552bde0f581dbf98541f6f0d5f1a6b27beef15b0c9cb7ad15ad88c94e1460bfbc4b66f92fc20ea19547597707370f1dc41e6ded87d084279395aec4f441b7005d05de4df96831d13c829321bfe8378ea8156c5fe17a6d44c027fa32fba1ca7a2a1e15cb3643883b8069cae40a1eeeddcd0cb281285fcfbc18140cc243cf9c6cae82f53417bf8216c64add52f76c5954903cca020d801cf4e9b3591fe62881cabe36a8e013bf82b71a351d4a8670bfc2fedb6216b98fcedd3cb23f0a53a4110f59e3b7148a2dc5ccbf4742cd2562f99a0aee0cb3b71cb74723e14027edcb212c64bcbe76d4bad0a721dc436dc59ad33dbf442880bd32214a39d09fa4d5ea2642aa6202aa168e4fe859baf512db5dcc1f0a9ab17f47ee27046216f1e161f11c241e716b65590967ce4fa86fefa0ac63c3c918606743c08db79edc2b01eb3a55e8c88f32dbba04e663d8c7b270e69e0672590d46c089e34c23243fee6cb7088e9679cea9aa37fc5042decf8fe99d2ea00fd1a308c927c5d4204ee2a9d8e3fcf34e9f9cdc858d5a76ec9f6b9da2fa0c3b56381db2fc26b06e5e4ee1b62c2c745d19646117701bb110dd045f4bfd7cb17be5ee1062a20e60f226d2a56ebdc9e766d39cb6f085c61ba619769cdd36b50f12e867bf0d5d1316bd317bf23f8ce0a87bf5903f3f9a074ca06bc12038ef4a4a1e8d5d5a467490a909aa7318dc97910fc2be60eff58af442576a02c7dcef4d428cc8bc2dba82af01cd362b63452cc23b098be02ad65ec715063dd12ddb11f1b9ae624d9818d63e8bc259e771f7eef86269bce43132c1a9107763d591772e81beb4816c3c1ea039fa13bd72ad039cf92259ae7c0b1199e59bc3b98bbca9a08d085c0cfa61186c9b8d9599b095a9a7e0176f1c114ceac14a332c9428915159367a11252ceca27f1332ec31c989b7c7d42ba6cb4afbbe127f09b598d645be55eaed39c9c6224dba0a4e4534e013c3605239aab363accbc736210c9e9e9977b24a89796f5fc2d5a1ae88556761fe59cce145482867c3647b1beb5112e03dbaa0b0fbc9b1fe2c22163ce4d11570a28056e9387c8a5fd47b81bee7069dd7f3b2af93a7bc09e89103f8a3f1988298a375400c84cfbdc038c4fcb0f71c478d38ad3e0d5fa571013d87d69f031d6d3ef17b645de3ec9dbca70de233eef938a109fd2f59a689cb2b92608b9a6a9ba26f6b78be898e2bb788aa8bc288decdc5126b406fe5139b00aa649bafa6d2ac645aa466bdeed0887d96fd7bbc52b205fd0196b397936cdb779695991c9df1cfc2b08af9a3dd050e1d4e4620253fc7e066ee6f92b6fe13e84f16a40fee0b238869d83ec234dc22b303c8d0272e66cdf3d269bd8122e83fcf50c3a9942f6909fb60c6671146dd8f35413e00441a3605a9abe5ac51880cf40e570ca07a3667c7fafaa3b180d854fea2f17992185adaa7cc35283c242184d687b5e80c6fc2f472b13663a8e5e5ed2b1ef8c18052f629712a284ae13c0964a2ca8eea3db95c4837c196e6902a3e845019afca745a1243d4e6b45355e36dad91442410f1756447aa5a73cb5085fc32d59e8c697fd8b2198529429f101dc839651347273b0446549de62c5c08794f794fc343659cecf6e7fec870c3f216a60df255f6e041af6afe0c0dca88e643c1ba7b7a6b20421e1f8fd81409b3b4aeffb5db5da9df2df6feb42e843b30e625f6063eadbbf37eaad710f1f66d4c64ecfe7b174ea12760f808e452b007d9d64b50060885b5830c28817bd37bc3facf2f0c2d2e445a3f13131cc28d4cf77f3a3e8b5954583c9870c2a29724781a9d2318eb4b058de34ecabe40cd07808169277905411788c4e5fe82c3427fcb2c63cf723abaeae84f0568743f941f703c595e2f000052417204659ebc027b3213e32e187efae4eb24f7639858172bb09523e82ea0e811c3ebad2085a4dbbe601b56de1458190b77350bb58c21f447d943b76cc7d5882fefb32235524d69b2ddbb4c8a05b32bbf80f283c74b22d443a9c2a58c8ac168cf99e32d296a6b1b2afcc618573cebc657add1de07a84581baef10cf367c0c67e519099465f9549fc5ccc560d85c5bc4c59047a91347ff6794f1a41d7de604f9e5897486260c7b7b00f037788dbb8be683b362a1a285b3f41c0b765dd91964a3b7df3afb3ed1f4d5639b98b024b8f6fae548ece98a6af4cade5ba946074b45062f102f0a0ad879c1c82bfe25215dd858ef0461dba15d61607f8a55eb547532ef0dbac26c1e5db36e9b9b6203bf2673e01a0eb6b91af8ee47147bafefec9ff8569eff15e1d29698bd6e8c087478fddfe70b81b3b359f20bfc0ae5ed1e5899904408327499f523c80f64ea29b2891889046bcbbd831f74b3eb3fcf5b5492304e56fa8bb4fb485109c60dac09b4eaa2e7fa4a53ac3b39d17819d632ba95db0aaa5d1bcb92c74df9e3cd11a0f6f205ef873b2abb78987970763463c4b290dec57c6697830d3f40db2520f4827a2f242a6418a3a510b0fe68f11738d6138cc05481ea962f3948eb7de4cfa57a9bd19f48f98daf94498f3b37561cc2868bb8a97c2b908ed315ea061ff707ee4f1c2a841f393b5ae6c8567195b05c5a9e1eba9486e0b32d40f2ea16d581958b6282cf346aa310a156fab91fe096cb1d7ec5371285e26cd3ce2c0ef56c563baf6d05f5cf872dbb04c7e4ecb081955155f455edb683c488fa4c451f9927bebf1e5dffe7fb0eec50618d181d162d8fcf3560ea13417caab4692d5d4cdbaec2f400170e0489985c2645bdf22dd41c46a30d22b4d28f763226e4e84a73467119845d046862512e172a79e68b7350bb992a99727b10dc00d854a4509a8b236a1e899902874774b867325891694a9e0e4b3b8788835333d67e62f0398d6dd3178cb913d08eb450a77abd82a6965b48951778d17acbda4fae7287e0385a3742453751f7291f0137245ee08b3e6e307f6ef4c3f70a5b0dbf2f49b9345e4a461deaa764c6779b30a7380f8120f6230bde4538ae5b7c2ee4d3989735db74b3cbbbb4f5aa3032cdcdc26f1c522c5ab4a5fd4068872088bdde6c41fd014da10bf1dc0481adc086d5ad727d7a6e289500cb2c74622ae9bec40b2d26e14f60289581c8b37364abdffdad860be2277f35b8931d3eb0714083938277f8c1f50136872b623383a98a9ce39c48ad3fb939d0b2891f6162f3641c832946fcee21e8bc6e8be6cc142c676ca6fb6e317c8d315d894a6b344edfd0e6ae7e49c141e18109d866c8c90ea928f1d84a21f03cd34b75830216333300ec2473ffe2f74b70b819197e63e946e150de91cb256091d4c2d8424debb41ddd04a073eab8a66b34b208f47796f72e2b3395591cdc8641985861331fd6c46fd2e7b9ba290336ed8d2ddb46f1fbe1c11eef7c0194e1237e3823e39b072306b8f6b330b99de1979a909764926480c3ef102bbbd705e67c529b609a1cf6660336cd3081654ccae59227aac53917c422eddd40d54dc686ef1a58787b656293ebb51b6760c82546bfe7594ec956f4ee5bc59c4bfc94b9e1e45e3a7aa3261fa7a3f289e19b5d0c828d09a187603fdf87eec0ce7b1b177eeea3c2cb9b265e4ca8a3a070698d1eb7d5bb9066bd90fce078dedf88afd40e301cae9614f9bfafa6044
 ```
-2649a2f69ad1960d99c5e9596477df83f2d8895d1f6176ebdde442ec46cd7e1f...[truncated]...2a0161096e7abc2ff37ef1629e50bd43
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-public_admin_kpa_kri"></a>
 ### Standard: PUBLIC_ADMIN_KPA_KRI
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-PUBLIC_ADMIN_KPA_KRI-1788588844`
-- **Indeks Gotowości (Readiness Score):** `98.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Dossier gotowe do audytu przed NSA, Najwyższą Izbą Kontroli (NIK) oraz Ministerstwem Cyfryzacji.
+
+> **Pełna Nazwa:** Kodeks Postępowania Administracyjnego (KPA) & Krajowe Ramy Interoperacyjności (KRI)  
+> **Sektor Docelowy:** Administracja Publiczna RP  
+> **Indeks Gotowości (Readiness Score):** `98.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-PUBLIC_ADMIN_KPA_KRI-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Dossier gotowe do audytu przed NSA, Najwyższą Izbą Kontroli (NIK) oraz Ministerstwem Cyfryzacji.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`public_admin_gov_pack.py`](../../nethical/compliance/packs/public_admin_gov_pack.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [Governance Observability & Transparency](../GOVERNANCE_OBSERVABILITY.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -309,17 +527,35 @@ cea626a70eaeb839ca803381a1d28b3a7b13bbf8dd34e7aafa2af60afdbed384...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: e3787ea5dc15af05d5e3f006a7a253ecfb584b6f1bb8cc8969c2f9d90a728a91
+Sygnatura (hex):
+d140fc296db5ebb3f108e35dc126dd99cfee587180155654fca3d441397b0d8838ee0f123a2a18ce05b232f06db60e46749561dd14e26b6e28e327cd1c69c50bc7170b2336be85fc08160485c4727b18694c940f669a0c60433a352a1330bb81ba4f689e7c6fe555c8bf1a608abb5ecd1d4d40e9ab273c48edb055755fbe2070a8172ee827cec91699ec402b95bf79e388b56f25dbdffb2345b968379cd0830a66aa2d7ad45669d5329e0ea56c54351351c24f6602ce05fc1c1baccc5fa3e44843287bf5c695e78ee43780da7a442a4de5a577f43263c482d07bdc8136a1729a583cddff1a86583ce075e8a2655b1888dbbfbd11e87f647ff0d458663c4bac2cf91241de543844e21008dde890944cbab7d45b432e8138e309f87adf9e67dc8e64ea3585e0baddb398dc9be77ece2aee52b2cf9c953918be261132b973ba2af069a4042475de2cc16a5f2f97cc037d1f7bcff290b65910e4e779cb1eb1328f5c58194572d45b42db9907797c83a7ffbc4677980f797b28d82007350f1f48587f7b292fbf00c42833fbed976d96c3815827ed6cc2a0a0387e0f99cde0b7c3db2f1f0b3ba80e7fb8ca8704f2660313a0fee7bb78244ace4fbfbd108ba814364aff9a8b1a1199351f3b8e51b5adbc5b34b538f5867963ce758e675efc704a17017df8be0cc12afe4d823f3190af38c368fc0d322478982fa5c11f643ab2d106addc925f46f8a3e8fa3a7c0b5f9354631b49d94f0fb588c218acd0086da405a6244ecd445cb764f94ba66cd20334d0c813c5478853d3c4b9a65599a63c8bbf2c3332d4b2fab771e1f311c81574d99e3c13344f27a8e23520ab0b347a8fc8668d55e4780bb10c4b4223f9fdd461e47f700edf3f2b67675e68cc5ace2771013a777859c079ab0ef07aa344297cf40913f1201035126a06867be912827aeae3ed72d60a47c35d48c362210b0db3b9f8a14f11aec7dcd0c01dafe59c61081abde1a5565c42c055d1f5ff1308ee19c9563177960e4c324b70d8b4f7fbfb97e535f926b8d85c900d18a74cdda3a3ffba858019caacd44ca79ee19fc10a54c56aff570960eb18ef41120324c068cf791bb99a22f42d9961548b2811335c38dc4f2a648ecd15ecd47d7b2cdf2674acdedc132e790cd6d52505bb8acd2e1e48e264ccced92a1249138b93288e7e20d216c049e31bba06e45d8398b1c97fdffae15b09407e88da28bcae30e4c6146b4dbf2ccca8edbeb569262d35fa48fca971988eb945cbf5dd2d53762e94e9a756b9fb6395460ddc618724cd8f5b2911a4660ce9de1ca902c46133da38c5d8d1c4cc3fc3d16850101c1872b899073deaeae81e15ca0791e4c12df5eee32d15beaf95fca7d7fe9948ce3b81dc2fc403d99a0df78686e720f5498b040ebaf32809cc12ce6372ab47a4853e65c415ecc5af8d770742ee98d3b70a0f8aece1b1cc82e6fe9ee88f2c662eb8b03fed2eb7ae43f70fd642b9e647294db5214cadf579f990bc2a5bed4e030157cfa3b8027c74b899307da1bbaee56aea8c174062608df883db30620fa28c24c04cb790326d9a4ffaa14da8494500be9d26fd2342b393e632a2367d65942f956ce89613d5635ef60b0525b92d730400d835a02c78f09fcd59b686bb1b228af2dc721618f1b0a70dd53056a3ab10df9b7c85a5ff3c38ea2e3a7aa11778fcdede0a05b49a9528b9a64a85fe72b70f1f36eed46c5a40c9a6b8bd3c82335bd6efa915e44a2f9e9a1e474e59b88d9e10cbc7ad698251f27d60ae046983c2127da62a85acad357b376211b5bf4149de31301739b02b5a8641ee83aa8b1685ba468670eb5e3bbd28117f71ce370c8a190711a80c20f000da110891e213ca1444afba85aedd8902dace9d99a65b5892eaecfa3752a108c3d8ad961a22b0d6b470a733417b92f429aac09590d97541cb5b5bb02cff771749f8715c60efbe3a01632e137453a44bb0635bb04ed6a6f56a623f5b82dee8160b3e0a6a7057b90a914bdd61c40a67ac212f3b388e2750da30e1bd04c7140e5939f8e65e6c6d42732f062bfa1bd518d1a49d96f5d5c470cc57a01e5d1cfe5df37e96501669390d5873aed68dd612714c21bd622b4a7bce2398ec662502262e1c5cff653d329ecd8e07348d28512f2163fc71ed1b604f15e18a40279c41fc53034e7f88beaa60558e3f159f8940f4aaf62775ee300c5341e84cfc558f25a717877e0fa17a1eb5338910c747c497a745dec7849f2dc3f3df56adb8b919d7e8620b0275db85c4fd0b8b8879235d4725d7c9e3d5da2e0562e437a9b02b57e4c49596de1afa89e2e55178ffcc88730a29711af5b6c101128858100dde3e799fbbe5af869b2294075cd9469ccd13839158479eca77ae8ea5140af0cf0cef15e8b512962d24a22ffc66003e77a6fb1922929b07f92cf99d6e2979fd3998ac28a259e2bbee4461de9b37d1f6bc165a87582b5d6e250874c7cda926f66a3b1d94953f99f92ebae4113a44751a4d5e85bfb722e0bdaef30e60c25e3054e04469fd7ebf35e399b385c2c99be1273f800c885fa81edd7e5229373b92e2472bdbe09cb9fe22fcf43ae2cc8af19c648170dbd7a203edb458c34a9570f7f56c7d013970fc4f0417813ca4592cf890e940feea1d8cb6c73396dbfcfca06b89b89715d893473f3bcefb46f517f5c894210b77183978939c3a623c4d81dbc15353d05ea9748383f221a4e86879a1432d9fb48a8718f4fcf5385b32bdfbf2cd91ab95cbec0678d01c96d6aa01d3f2e2e460e5d832f2cc620b749694936f64bf8c91367f299f9e3cf2899d95c9061c3c00b182292e6937682b40e12888a22f7b139e5017daa263b61193bf94816ecec0dbd5dec56bee4c2d06f4cee3db94b23feb55615a5267ff7ca00ba8c22170258d2e7c8601d41ee5674615e3d4523d75492cc44964ed79fe2aecf4a391970643ab34edd2bee540d1a2b2d1c571bfe7886c7cd5a1ef250a6ade2bbe48f03160a8d4e18b40e5fcd81bbba92509607a2c46d5e5615b489afe7dbdfb07225b43247a54308d2a7c3ae82cfca8c94d81eb3d796507533ed195ad80320482c45639367e5ad0419b07ad69346c53783cb41f24930ba0a16b995ee80082554cb180e32cbb47095e9f0a9db96ad691e5dec62920fe760662a9a0bb7972444211ca542b2179269749d859a6e6ed2c02e15df7e02d6e1cd319096c05a3f6c26b8aca08c76eea4133b79ad61093145586d861ecb0c71fccbe949010d2f0de61b30427cdf335620fe4502d17b1a5ae31f6e9afe4b15fe15e01e3521c5bc48dc312145bf9a63265df70d400f6ca6c91aca5b3c708ce4233e3348e1e9264362a11ed8e335d909a8af5e3e90f0853d9e53a7b0601863fc033d03c9fe336fcff00a75f7257c62b7420de6a1c0aced304e382f505b3f256a839937208e3ad99b3ae95f020eb36961a7efa38b21ba1bab57915967b250ed0980cff45f32b0924af3acf29a6c0c920d972c6f08865ba59f12665935a6a42faffc378aa1e8b2e43d527c08b049eb56bbe2718493b7f9f2404ca2f44ae19134f98802096238f386a0099fa8e2c3ae9c33fd707d26e44a3801ccd41cdefe802f24c5a880b8697da0337595c18cc59442db6c3b9472658587d7ad2dfc4c4837ccb6542ffcf1966abb01e7620bfe371b930ece1059326ac0cd873276c1522c49186e6b6d02a0a823683673ed012cf346d43e9903caff0e598f0db09829c3e0eb86f02544a42717e01dc2d8261ae8f77c40217bc71fb8850070074108e9b736d2a7855a0969ae85cfc410ac030060509f0635c33418437e4a117819ba5cf87707fd8558b64aa5e308da5c25b691ec275446aa53ed3f0165a38971f3bc773a766bc5d8298f961b4dbb5665993abe56bc0500aedac4c7cd34c8f1c2b612dbc3225721eaeda9b50e1275c55dde13cdaf92a17d46f6b8b0439bacf1f38e096d41672359418b3ef524a5f9fe4b1e2823cdfda88b1525eaf72ef23c7a6b1491332d6ced6d00758e6c13304d90555c99990ee92d0eb01e074c3fc69738448e8daff2f5adfef4c61fc31c21d25ab45ac64b974f3284c539d8277efcc725b22a29c773c1d3c1ba05bfd445215773e985f48016650364f7492334b7bc39218d9773ff58956c0d35aaa062bba102f2483ff680f2164d7dc17a1143cfdfc01de7a1a1ac8919c66812ec7dd6a85e6e3922741a1f4b7604750ad17eb6a855f2018aaf36bf8cf3557c3a785ef8404cb74741f5e01294fc10bc0c7e2790c1a87132ce2af349935bbdbf69f6377fb716ded85cf364bbee5631afeffc5bbad0483774a711eec7c21a1082ca776f7b74aac4d0ea5a55d64086d3955c3b8fc487974ac8832721f2ed2431e39044609f2024f656b6d6d796bce85e07d976d89437afc7368765492b97c2b3144acb4c2215c267c37d7979671237ab9873c5d60866753ef9fa6e91e0a7f84ff5e75a2d6011df3d65fec95d62dcf0e67b51b43c7d166ffd798d81a5afe16213bccb96a22f1a82a00cbfcb69f85a20601789350a7951539b84c8d835d44a7268e661968c0935c6cc5c74c9e5aa26119894c903f63251e905a4af5f7804e92717a2afd85243d3f8dd6d497c13d824cf51397c9044e52af702e67f62db8e69f8bb86c8cd5b1ecb0078f35
 ```
-7fa9801e984a43f01535832bfed40529df70d70e037f29f013d80534821901d1...[truncated]...5e4dbf2c4094d11ffcbe571b6e2e14d8
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
+<a id="standard-academic_research_allea"></a>
 ### Standard: ACADEMIC_RESEARCH_ALLEA
-- **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-ACADEMIC_RESEARCH_ALLEA-1788588844`
-- **Indeks Gotowości (Readiness Score):** `99.0%`
-- **Instrukcja dla Audytora Zewnętrznego:** Dossier przedłożyć Uczelnianej Komisji Etyki, PAN, Narodowemu Centrum Nauki (NCN) lub ERC.
+
+> **Pełna Nazwa:** The European Code of Conduct for Research Integrity (ALLEA)  
+> **Sektor Docelowy:** Środowisko Akademickie & Granty Badawcze  
+> **Indeks Gotowości (Readiness Score):** `99.0%`  
+> **Identyfikator Paczki Dowodowej:** `NETHICAL-CERT-ACADEMIC_RESEARCH_ALLEA-1788615060`  
+> **Instrukcja dla Audytora Zewnętrznego:** Dossier przedłożyć Uczelnianej Komisji Etyki, PAN, Narodowemu Centrum Nauki (NCN) lub ERC.
+
+#### Powiązane Zasoby Cyfrowe i Testy:
+- **Pakiet Kodu Implementacyjnego:** [`academic_research_pack.py`](../../nethical/compliance/packs/academic_research_pack.py)
+- **Pakiet Testów Poświadczających:** [`test_sectoral_governance_packs.py`](../../tests/test_sectoral_governance_packs.py)
+- **Dokumentacja i Polityki Powiązane:** [Ethics Validation Framework](../ETHICS_VALIDATION_FRAMEWORK.md)
 
 #### Matryca Wymogów i Pokrycia Kontroli:
 | Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |
@@ -335,10 +571,19 @@ cea626a70eaeb839ca803381a1d28b3a7b13bbf8dd34e7aafa2af60afdbed384...[truncated]..
 - **2nd Line (Nadzór i Zgodność):** Zdefiniowana
 - **3rd Line (Niezależny Audyt):** Zdefiniowana
 
-- **Podpis Postkwantowy (ML-DSA-65 SHA3):**
+<details>
+<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>
+
+```text
+Algorytm: NIST FIPS 204 ML-DSA-65
+Klucz Publiczny Podpisujący: 9d6a6f76b8500aaab0ae114c87da532b
+Kotwica Merkle Root: 55d6bd68ccfddaceed899938683078a4a9590062b6292b0bcf96d6155993d6f4
+Sygnatura (hex):
+67f8ae51b4397a7a471e49aecbf29bd25581fa089064b1343ff46e6f5a27f7e753797e89a7bc548dbf9b62449ba8bd672f17ab5a40296e697c01298b40fa6a9a413ffdee06c461e1e22b7522350738f3d58e61b484503b2be94a5489d3973d34ca3b5af86f0c6d1bebe0b89107c4b765b9bd900a723bbf26a2fd2b4e744e79d60f671ae54aceec251ebfebff19c3b0460b3d1c5cd21e4d8a1ca831b4aa1fa1756f5dded4e7fec6820eebea85bc3dc58393888f048b3daada7643b793313477e9e72b3e3c776fb68b281ddd1ca2b2c515d536db0f0f2708f5f1603b9925583fe41890a40be1bf6538db15ac96176b52dc1d43d766322424a2a9d2174add7dd154ebafd6fa788a96ff634a1fc3ed09e3f22ae3a8f893f39afbb3278380de0850547390021bbd78b3eaae4ae1b6c9488331794b56046849d0ae815bd097bfe7a9afc507a449e8530bee4b5c5247b5ee98304ce1e38c839c6fa50e58e9fa4daf863077550b45f89ca1b7f7a5a5653282dffca4693fe3ec5ab3a995ba9783775c45235c888b409d47de28c47e3fef6b8f96b8804f2f3f29de953ac5892c4ab794fffdeb2c7ab24526e5e3d71d0123eac98a08a2a527e68964cd4d664daa412e214421aa9ff97bc688bfeb14e3334399ed5f15d107f3a27998aabe325a9653ce6604ee0ec8314f582815a1646d52524b4c4d2f9fdda08fb0ead1b9fcb7611e92edc36a329dd486b1c5c312457af418248b7ba087159e3a3e2aa2ca3037a8c472395ad4d7c4d4ace3a8d9078516c7b55dea1fe34aa4a4dd7922498dbbaa575eb18533f6cd56d177ed6fb1a0f6508b9078f1c6dbb485a3fa5341775c5250abbb9bc598c51fe67ef7fa1ff63764dd70f5c65ccf69ed5369d48d5980f5439c23e968152be0b544c3f948e3293ff6c19173c07292f435150f2a8ae43175dedbbb2620058a1cb8aaa6f5334d00c6f0434a7ad283b31fd938d42769a66b420d79635bb83d02fb1536c3b4a686ca5c3325ca0ac4b9ef688cbbeb4a526efd675f9e07b71eb794d79154c259b57e27ada4f0888a5f65bf916c6f4bcaf7998c59be859fc2bd8b10121e351d818904c7860fbf5c89d9e878254cbfa7947878cd3bb836e247b68b9bd03a8dff8b7f50056e5702204798e6b39acace0ab699c69bc8d94a9e9edf5c918c4a6ff381658e91c402d4af5acca9e4e539ea76782b8de8cda0c5c9edbe20449569fb0a52a187ef6b15e96330fceed47394cc7bc0c1223efb2b0336d98a7a2883a4603270443c23ef827d3effa6d3a72afe945dd3c9b217692ac65ec0dbad4e0800ebc98f8d5b84467c4dddebd49055d33efa51bebd9a65d4bebaca293094a3b87a9804da057f1de39be39a71c518ad87cccadccb1037446befbcf022021c94c1c9d3428fd55a965404a468f54f65d4aee8af5e2f753a14dd320b1ee4905c8530b6484da41856e4f87427827b82083f6eb66481f5de53017f834a54bcf66b1097d730f785cc21c9eb8419cd5147db74d0cdd45dea7c2080ea1b6bbcfb565f2eeef4e0e6e98732d01f138dda49d34359a903d02316415528122e4595129537204efb3881dd9dc242688aa18d6442dda02902dc8ab6c202d42b6105a468ba3549698a1b9dc7995abd795230ed5c561ba5025d096190c3b1c4b2feaa39d6eb535fd437ade5f562dc02c82ccae09b7713e2de1b5aa8ba46176964d3ee43cccbc8754feb1a1044649da91de6500d0c1cc436daaab4cec587c8b0df97a92781735929cc49e46e0850b17286f927ae09fe967002d340cfa5575b90b22ddecece0b6109a2b9e7ccb50bdd926c162402ff4e5360ef0590773eb22b46412a9ed65be0776f61e02f8f889aff168a57c552768d66759e383be91fba164517fae993dec46aafe578f9c8e4290928393eb6d9f83fdac10ab1e512a3e6eafb087622e1babc8de5f419f31f685741cc6a312f82f45b2910f50dc81ea2ed85351b999520a7899e01e1695e2b7cc1316a013dfae36920deeb607debcf30483740f1483e56b0b8943d100f30f4ef738f2dda1c972b945ff09add6b7079e550f11a47fdfdd5e61805c4899c3fa33f629d0beecfc42a6034d0f699d547401ee52b4ac8aec1ff161d1f068efbffc5ad11100acf45ce720bafc7699aec81b5db8e30de9c9fee48bd7e488f76cde8b3fe6d044e0e53a5f878e7c2a089c9fcbb2dad838c2f34a12bf5baf4f24e220779dc043af50dd3b0ad5bb66f918028481664342d70d3551274568dbba0bc583a2b4b8b765adfe0e1c9961bb1909984436e4899e87be10956e5b32bbc7ce66e1d0afc6f6f3a9767b849a151a027f46417e15231c8904a1568927e4bf8d865aa58994b11f18d8cb4aa40f2c6ab6b14ec418c2249639d1047a30e29023266b6ab75233caf135ea947805ea41bd0602f5112eb3a5f84ad35df9ad655996c2f1177f6970e297a689c094dbef6a460868ea25fd641149f2aad4ac3b84e9de1b73f80651f3ea496a0fe11988a1d4ab158cbd861fb9328d2818e6dc754640ffeaa3a6427292db46c61304f820d219133b943ac3043a1cef75b602ad7868ab542ef6dd53d1e94947db647a9523c6b3a4bf2b35b4f5c58f898ced0e0b4f595a2595cb2753d3a32be2008504c467ab0b04736645a2fd33d2f36486c0c5dae14529f6a91c828c42ec63179f0a8b7aaa22977e5391acd2364bde0047e65273325d87b0e61a7c603ee5d41376e9ebaae3d2caae54a71e13f3b90f2cd55c03f3392d026a16ade59f4aa5865d2461d3aeaed2417f4bc6766d86128cda5cd4a13d9c4d274955cbb9be2ba0257c49c778621f9b63d8723059f10a6bf71978b11a64f6baf02ad5ed4ef3be5ee042dc1c5bf06784d4f3415bbac93da1f6d8315e0c271537dbb355058e3785a3866bf263a610ed9911ba50559f9687ce96162feed647825c7981e940f9ab55e632eb4c4e07b3bc60f4d49c35c88bf1120bc0dad42f6191c97ee9740f012f819203361f34bf12a3010a3ffb892845c597eee7ceaa99d57445400d4e93b6567b5c3bd01f553bdc282b39a5df31c2c31e17335265c3837a1762013968bbddcd29accb3c7cdf12e30bfb3eb8a8628334d48ffc681805df3caf880675454ac2a19be652e53fc044a8cbb1c4dc34fb65bf8448bd0954a161fe6150917e93108eaa3e54c4e66b43ffd5a93b716c2592e15c6ad8d97c142b57b2bc7495e6e2606d149fdf04a6fca281c5fc2349c13ed7b5af5b4abc1c9b43e1fa9e9a21ff5fc1353cf051373eeaba847fd1c6b972b75d564afa33be01a790b38ac93eaa1142421b3653a59ccd297e2f91558c8ccebda9d7b6305ab53290722d7c62a3160add5982cc9066c396c116cd2c7af4879f71edbf4f9e9b4899de6b1ba489116c113816dcbd07ae49762a831f247ef60fc8075bddd2a7157760a1b17d68e485025433f54d04c647661ca738f526f650305a6ffff9d75d00823b10ffac7e175c2621e6b946adf01d028284e55a41b495a60337728be7f1645dcc861e30277ed588c3c3f35918ade8541a631783d83c9c050718dccc2b9e96805d2326e34e08c35ba8d9f02f7ddb946df3d08e15e31c2430447b19b3cd2832d36152911591f18c9cb0f1d364042fa433417d8094365cd85b9108a502825dfdb1c162accc514d342b4d39ea7a782127b37bf36a020034f9242e85fbcc9518bd44d3fc83a9021f0ab0be02339706a6818a89580b4e06ac86521e860ec33bda2431409308ab6d8dbb071d65129a532474a85c3987a8ec21bc756a07a35ee5f5c8f514de013081ccd536591bc078db24262da6bc426805735a2f96c3d010fae32da504f540c4c0f2b76400055e531c6a26aa5dfae4787ec47e265f70d2e6dd43c80577cb91b7cfc93e62ba60852bc1639ffbd452d0769b4c43ab9b5b72167f5459bc107607f25b4f3849dc56a92b1cf4bba0338f9c7654e9dff2199e5bb7ffb79c5b3fa9ebda6ccf53883ff559f44a98ef14c9999c4ee48ce03bb9fc5579cfced0eb50bdf54dacb8d3465466ba84c553dc3cb4c5a9d73f590c16e0defc0bd20d7977a72d0ebf3dc82becee334136992694c997a6b31b79586be9711db272fa640be8a8b96b2e1a4da1441abf342330b31083c72f37e975d18733fffcdaca34467f46cfbea1cfc30f1508fd769e988453ae985cc46de507d2224e9c66aaf75e74320066ee795581eb34b901d644061771c071bcdb77b0875ac49c45887e0bef462b17fe6a95ef5bd2c805e212c0137d31e3510cabce036ba730a115ce882d168576973fced3b70208ffaba6e42eda4ef15241059ccab33e85ebadb332b6fd7fb73a47c5b7b66176ba452e3fef1e44c852f628dd8a77e80f23e18013f09f2d2c0fd9b96ceaa9cc44e17bbed8d28afbc32557597c5fd8e27a893b4cb3c42aa52e73563cf6727ac21e9e74e21d8c593f53a51466d18131324935121438c0c97703dc094c1a33bc67bb2fd952c3e135fe1a7a4306b1aa418fa79e14fe4fe2328bb0ef6c59c90fc6e192d31c16628262cbc9e8b2e8386bfdd7cf4b0b45afd9ab5833c2fda899f4eeb744315f157c4c5d30286aded1c80f4da4320a7fca57cdd910907dd97fe1baf583d77256371a7320c0c17ec79d53769dccfcd5d62a3dad81bc27124b25d1126f1d41d2696
 ```
-dee2fc7ca9324243f05b333bfa3ecbc04ccf1c90f3886d652b88610bdb4616ee...[truncated]...0768f797915b338e724597597f70ad20
-```
+</details>
+
+[⬆ Powrót do spisu treści](#spis-treści)
 
 ---
 
@@ -348,4 +593,20 @@ dee2fc7ca9324243f05b333bfa3ecbc04ccf1c90f3886d652b88610bdb4616ee...[truncated]..
 2. **Niezmienność Dowodowa:** Zastosowanie postkwantowego algorytmu ML-DSA-65 oraz łańcucha Merkle-DAG uniemożliwia jakąkolwiek manipulację danymi po wydaniu orzeczenia.
 3. **Rekomendacja dla Zarządu i Jednostek Notyfikowanych:** Przedłożenie niniejszego Dossier do akredytowanych jednostek certyfikujących (BSI Group, TÜV SÜD, Cabinet Office IPA, UODO) jako kompletnego operacyjnego dowodu spełnienia wymogów art. 11-15 Aktu o Sztucznej Inteligencji (EU AI Act) oraz normy ISO/IEC 42001.
 
-> **Wygenerowano przez:** Nethical Autonomous Governance Engine v2.5 (Automated Certification Hub)
+---
+
+## 4. Polecenia Odtwarzania i Weryfikacji Kryptograficznej
+
+Dowolny audytor, kontroler lub inżynier CI/CD może w dowolnej chwili zreprodukować niniejszy dokument i zweryfikować sygnatury postkwantowe uruchamiając:
+
+```bash
+# Regeneracja pełnego dossier wraz z walidacją podpisów FIPS 204
+python scripts/run_master_certification_audit.py
+
+# Uruchomienie zestawu testów poświadczeń sektorowych
+pytest -v tests/test_sectoral_governance_packs.py
+```
+
+> **Wygenerowano przez:** Nethical Autonomous Governance Engine v2.5 ([`AutomatedCertificationHub`](../../nethical/compliance/automated_certification_hub.py))
+
+[⬆ Powrót na początek dokumentu](#nethical-autonomous-ai-governance--compliance-master-dossier-v25)
