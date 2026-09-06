@@ -150,9 +150,9 @@ class ExplainabilityValidator:
 
 
 @pytest.fixture
-def governance():
-    """Initialize governance"""
-    return IntegratedGovernance()
+def governance(tmp_path):
+    """Initialize governance with isolated tmp_path storage"""
+    return IntegratedGovernance(storage_dir=str(tmp_path))
 
 
 @pytest.fixture
