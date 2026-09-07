@@ -13,14 +13,14 @@ argon2-cffi==25.1.0
 
 # Web server framework (optional - for API server)
 fastapi==0.141.1
-uvicorn==0.52.3
+uvicorn==0.52.4
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
-pydantic==2.13.4
-pydantic-core==2.48.0
+pydantic==2.13.5
+pydantic-core==2.46.5
 typing-extensions==4.16.0
 dataclasses-json==0.6.7
 
@@ -57,7 +57,7 @@ tzdata==2025.3
 starlette>=1.6.0,<1.7.0
 
 # LLM Integration SDKs (optional - for specific integrations)
-anthropic>=0.122.0  # For Claude/Anthropic integration
+anthropic>=0.125.0  # For Claude/Anthropic integration
 
 # Optional LangChain integration (uncomment if needed; then re-run pip-compile)
 # langchain>=0.1.0
