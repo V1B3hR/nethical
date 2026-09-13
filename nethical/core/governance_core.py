@@ -445,7 +445,7 @@ class PersistenceManager:
                 (
                     action.action_id,
                     action.agent_id,
-                    action.action_type.value,
+                    action.action_type.value if hasattr(action.action_type, "value") else str(action.action_type),
                     action.content,
                     json.dumps(action.metadata),
                     action.timestamp.isoformat(),
@@ -663,12 +663,13 @@ class EnhancedSafetyGovernance:
         # Persistence
         self.persistence: Optional[PersistenceManager] = None
         self._retention_cleanup_started = False
+        self._retention_cleanup_task: Optional[asyncio.Task] = None
         if self.config.enable_persistence:
             self.persistence = PersistenceManager(self.config.db_path, self.config.retention_days)
             # Schedule periodic retention cleanup if event loop is running
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(self._periodic_retention_cleanup())
+                self._retention_cleanup_task = loop.create_task(self._periodic_retention_cleanup())
                 self._retention_cleanup_started = True
             except RuntimeError:
                 pass
@@ -769,7 +770,7 @@ class EnhancedSafetyGovernance:
         if not self._retention_cleanup_started and self.persistence:
             try:
                 loop = asyncio.get_running_loop()
-                loop.create_task(self._periodic_retention_cleanup())
+                self._retention_cleanup_task = loop.create_task(self._periodic_retention_cleanup())
                 self._retention_cleanup_started = True
             except RuntimeError:
                 pass
@@ -1183,18 +1184,43 @@ class EnhancedSafetyGovernance:
     async def _periodic_retention_cleanup(self):
         if not self.persistence:
             return
-        while True:
-            await asyncio.sleep(3600)
+        try:
+            while True:
+                await asyncio.sleep(3600)
+                try:
+                    await asyncio.to_thread(self.persistence.retention_cleanup)
+                except Exception as e:
+                    logger.error("Retention cleanup failed: %s", e)
+        except asyncio.CancelledError:
+            pass
+
+    # -------- Lifecycle & Cleanup --------
+
+    def close(self):
+        """Synchronously clean up resources and background tasks."""
+        if self._retention_cleanup_task and not self._retention_cleanup_task.done():
+            self._retention_cleanup_task.cancel()
+            self._retention_cleanup_task = None
+        self._retention_cleanup_started = False
+
+    async def aclose(self):
+        """Asynchronously clean up resources and background tasks."""
+        if self._retention_cleanup_task and not self._retention_cleanup_task.done():
+            self._retention_cleanup_task.cancel()
             try:
-                await asyncio.to_thread(self.persistence.retention_cleanup)
-            except Exception as e:
-                logger.error("Retention cleanup failed: %s", e)
+                await self._retention_cleanup_task
+            except (asyncio.CancelledError, Exception):
+                pass
+            self._retention_cleanup_task = None
+        self._retention_cleanup_started = False
 
     # -------- Destructor --------
 
     def __del__(self):
-        # Nothing special; SQLite closes naturally.
-        pass
+        try:
+            self.close()
+        except Exception:
+            pass
 
 
 # Backwards compatibility alias

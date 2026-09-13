@@ -976,6 +976,12 @@ class IntegratedGovernance:
             try:
                 return loop.run_until_complete(self.safety_governance.evaluate_action(action_obj))
             finally:
+                # Cancel and drain pending tasks before closing the loop to avoid dangling coroutines
+                pending = [t for t in asyncio.all_tasks(loop) if not t.done()]
+                for task in pending:
+                    task.cancel()
+                if pending:
+                    loop.run_until_complete(asyncio.gather(*pending, return_exceptions=True))
                 loop.close()
         
         # Determine if we're in an async context
@@ -1933,3 +1939,19 @@ class IntegratedGovernance:
             "status": "not_found",
             "note": "May have been processed and anchored"
         }
+
+    def close(self):
+        """Synchronously clean up resources and background tasks."""
+        if hasattr(self, "safety_governance") and self.safety_governance:
+            self.safety_governance.close()
+
+    async def aclose(self):
+        """Asynchronously clean up resources and background tasks."""
+        if hasattr(self, "safety_governance") and self.safety_governance:
+            await self.safety_governance.aclose()
+
+    def __del__(self):
+        try:
+            self.close()
+        except Exception:
+            pass

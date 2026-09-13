@@ -11,10 +11,25 @@ This package provides the HTTP API for Nethical governance:
 All APIs adhere to the 25 Fundamental Laws of AI Ethics.
 """
 
-from .taxonomy_api import TaxonomyAPI
-from .explainability_api import ExplainabilityAPI
-from .hitl_api import HITLReviewAPI
-from .kill_switch_api import router as kill_switch_router
+try:
+    from .taxonomy_api import TaxonomyAPI
+except ImportError:
+    TaxonomyAPI = None
+
+try:
+    from .explainability_api import ExplainabilityAPI
+except ImportError:
+    ExplainabilityAPI = None
+
+try:
+    from .hitl_api import HITLReviewAPI
+except ImportError:
+    HITLReviewAPI = None
+
+try:
+    from .kill_switch_api import router as kill_switch_router
+except ImportError:
+    kill_switch_router = None
 
 # Import v2 API module
 try:

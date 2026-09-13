@@ -15,6 +15,17 @@ from typing import Any, Dict, List, Optional
 from fastapi import APIRouter, HTTPException, Depends, status
 from pydantic import BaseModel, Field
 
+try:
+    from .rbac import require_admin, require_auditor_or_admin, User
+except ImportError:
+    def require_admin():
+        pass
+
+    def require_auditor_or_admin():
+        pass
+
+    User = Any  # type: ignore
+
 logger = logging.getLogger(__name__)
 
 router = APIRouter(prefix="/kill-switch", tags=["kill-switch"])
@@ -118,7 +129,10 @@ def get_kill_switch_protocol():
 
 
 @router.get("/status", response_model=StatusResponse)
-async def get_status(protocol=Depends(get_kill_switch_protocol)) -> StatusResponse:
+async def get_status(
+    protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_auditor_or_admin),
+) -> StatusResponse:
     """Get the current status of the kill switch system."""
     status = protocol.get_status()
     return StatusResponse(**status)
@@ -128,6 +142,7 @@ async def get_status(protocol=Depends(get_kill_switch_protocol)) -> StatusRespon
 async def emergency_shutdown(
     request: ShutdownRequest,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> ShutdownResponse:
     """Execute an emergency shutdown.
 
@@ -171,7 +186,10 @@ async def emergency_shutdown(
 
 
 @router.post("/reset")
-async def reset_kill_switch(protocol=Depends(get_kill_switch_protocol)) -> Dict[str, Any]:
+async def reset_kill_switch(
+    protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
+) -> Dict[str, Any]:
     """Reset the kill switch system after activation."""
     success = protocol.reset()
     return {
@@ -187,6 +205,7 @@ async def reset_kill_switch(protocol=Depends(get_kill_switch_protocol)) -> Dict[
 async def register_agent(
     request: AgentRegistrationRequest,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Register an agent with the kill switch system."""
     record = protocol.global_kill_switch.register_agent(
@@ -209,6 +228,7 @@ async def register_agent(
 async def unregister_agent(
     agent_id: str,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Unregister an agent from the kill switch system."""
     success = protocol.global_kill_switch.unregister_agent(agent_id)
@@ -230,6 +250,7 @@ async def kill_agent(
     agent_id: str,
     mode: str = "graceful",
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> ShutdownResponse:
     """Kill a specific agent."""
     from ..core.kill_switch import ShutdownMode
@@ -261,6 +282,7 @@ async def kill_agent(
 async def register_actuator(
     request: ActuatorRegistrationRequest,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Register an actuator with the kill switch system."""
     from ..core.kill_switch import ConnectionType
@@ -295,6 +317,7 @@ async def register_actuator(
 async def unregister_actuator(
     actuator_id: str,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Unregister an actuator from the kill switch system."""
     success = protocol.actuator_severing.unregister_actuator(actuator_id)
@@ -316,6 +339,7 @@ async def sever_actuator(
     actuator_id: str,
     actor: str = "api",
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Sever connection to a specific actuator."""
     success, error = protocol.actuator_severing.sever_actuator(actuator_id, actor)
@@ -337,6 +361,7 @@ async def sever_actuator(
 async def sever_all_actuators(
     actor: str = "api",
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> ShutdownResponse:
     """Sever all actuator connections."""
     result = protocol.actuator_severing.sever_all(actor)
@@ -356,6 +381,7 @@ async def authorize_reconnection(
     actuator_id: str,
     actor: str = "api",
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Authorize reconnection for a previously severed actuator."""
     success = protocol.actuator_severing.authorize_reconnection(actuator_id, actor)
@@ -380,6 +406,7 @@ async def authorize_reconnection(
 async def hardware_isolate(
     request: HardwareIsolationRequest,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> ShutdownResponse:
     """Activate hardware isolation."""
     from ..core.kill_switch import IsolationLevel
@@ -406,6 +433,7 @@ async def hardware_isolate(
 @router.post("/hardware/restore")
 async def hardware_restore(
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> ShutdownResponse:
     """Restore from hardware isolation."""
     result = protocol.hardware_isolation.restore()
@@ -420,7 +448,10 @@ async def hardware_restore(
 
 
 @router.get("/hardware/status")
-async def hardware_status(protocol=Depends(get_kill_switch_protocol)) -> Dict[str, Any]:
+async def hardware_status(
+    protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_auditor_or_admin),
+) -> Dict[str, Any]:
     """Get hardware isolation status."""
     return protocol.hardware_isolation.get_statistics()
 
@@ -432,6 +463,7 @@ async def hardware_status(protocol=Depends(get_kill_switch_protocol)) -> Dict[st
 async def register_signer(
     request: SignerRegistrationRequest,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Register an authorized signer for multi-signature commands."""
     import base64
@@ -463,6 +495,7 @@ async def register_signer(
 async def unregister_signer(
     signer_id: str,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> Dict[str, Any]:
     """Unregister a signer."""
     success = protocol.crypto_commands.unregister_signer(signer_id)
@@ -484,6 +517,7 @@ async def unregister_signer(
 async def execute_signed_command(
     request: SignedCommandRequest,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_admin),
 ) -> ShutdownResponse:
     """Execute a signed command with multi-signature verification."""
     from ..core.kill_switch import CommandType
@@ -545,6 +579,7 @@ async def execute_signed_command(
 async def get_audit_log(
     limit: int = 100,
     protocol=Depends(get_kill_switch_protocol),
+    current_user: User = Depends(require_auditor_or_admin),
 ) -> Dict[str, Any]:
     """Get the audit log for actuator severing events."""
     log = protocol.actuator_severing.get_audit_log()

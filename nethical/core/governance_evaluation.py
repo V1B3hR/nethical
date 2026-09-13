@@ -44,7 +44,8 @@ def generate_id(prefix: str) -> str:
 
 def sha256_content_key(action: AgentAction) -> str:
     h = hashlib.sha256(action.content.encode("utf-8")).hexdigest()
-    return f"{action.action_type.value}_{h}"
+    act_type = action.action_type.value if hasattr(action.action_type, "value") else str(action.action_type)
+    return f"{act_type}_{h}"
 
 
 def entropy(text: str) -> float:

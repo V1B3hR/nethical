@@ -10,33 +10,87 @@ Roles:
 
 from __future__ import annotations
 
+import logging
 import os
+import secrets
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from functools import wraps
 from typing import Annotated, Any, Callable, Optional
 
-import bcrypt
-import jwt
+try:
+    import bcrypt
+except ImportError:
+    bcrypt = None
+
+try:
+    import jwt
+except ImportError:
+    jwt = None
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from pydantic import BaseModel
 
+logger = logging.getLogger(__name__)
+
 __all__ = [
     "Role",
     "TokenData",
+    "User",
     "create_access_token",
     "get_current_user",
     "require_role",
+    "require_admin",
+    "require_auditor_or_admin",
     "verify_password",
     "get_password_hash",
+    "_initialize_secret_key",
 ]
 
 # HTTP Bearer security scheme
 security = HTTPBearer()
 
+INSECURE_SECRET_KEYS = {
+    "development-secret-key-change-in-production",
+    "secret",
+    "changeme",
+    "change-me",
+    "default",
+    "",
+}
+
+
+def _initialize_secret_key() -> str:
+    """Initialize JWT secret key with strict boundary defense for production/staging.
+
+    In production/staging environments, execution halts immediately with RuntimeError
+    if NETHICAL_SECRET_KEY is omitted or set to an insecure default.
+    In development environments, an ephemeral high-entropy key is generated if unset.
+    """
+    env = os.getenv("NETHICAL_ENV", os.getenv("ENVIRONMENT", "development")).lower()
+    raw_secret = os.getenv("NETHICAL_SECRET_KEY")
+
+    if env in ("production", "staging", "prod"):
+        if not raw_secret or raw_secret in INSECURE_SECRET_KEYS:
+            raise RuntimeError(
+                "CRITICAL SECURITY DEFENSE: NETHICAL_SECRET_KEY must be set to a cryptographically secure "
+                "value in production/staging environments. Startup aborted to prevent unauthorized access."
+            )
+        return raw_secret
+
+    if not raw_secret or raw_secret in INSECURE_SECRET_KEYS:
+        logger.warning(
+            "SECURITY WARNING: NETHICAL_SECRET_KEY is unset or using a default key in non-production. "
+            "Generating ephemeral high-entropy runtime secret."
+        )
+        return secrets.token_hex(32)
+
+    return raw_secret
+
+
 # JWT configuration
-SECRET_KEY = os.getenv("NETHICAL_SECRET_KEY", "development-secret-key-change-in-production")
+SECRET_KEY = _initialize_secret_key()
 ALGORITHM = "HS256"
 ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30"))
 

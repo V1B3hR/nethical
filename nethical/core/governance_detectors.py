@@ -148,7 +148,14 @@ class EthicalViolationDetector(BaseDetector):
             else:
                 # Single word - use word start boundary for stemming support
                 # This matches "discriminat" with "discriminating", "discrimination", etc.
-                if re.search(r'\b' + re.escape(keyword), text):
+                # Use stem-aware negative lookaheads to prevent friendly-fire false positives on benign words
+                if keyword == "harm":
+                    pattern = r'\bharm(?!(less|ony|onic|onious))'
+                elif keyword == "fool":
+                    pattern = r'\bfool(?!proof)'
+                else:
+                    pattern = r'\b' + re.escape(keyword)
+                if re.search(pattern, text):
                     score += 0.25
         score = min(score, 1.0)
         

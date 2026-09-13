@@ -12,7 +12,42 @@ from pathlib import Path
 from typing import Dict, Any, Optional
 from dataclasses import dataclass
 from datetime import datetime
-from jsonschema import validate, ValidationError
+try:
+    from jsonschema import validate, ValidationError
+    HAS_JSONSCHEMA = True
+except ImportError:
+    HAS_JSONSCHEMA = False
+
+    class ValidationError(Exception):  # type: ignore[no-redef]
+        """Fallback ValidationError when jsonschema is not installed."""
+
+        def __init__(self, message: str):
+            super().__init__(message)
+            self.message = message
+
+    def validate(instance: Any, schema: Any):  # type: ignore[no-redef]
+        """Lightweight in-memory schema validation fallback when jsonschema is unavailable."""
+        if not isinstance(instance, dict):
+            raise ValidationError(f"Expected object, got {type(instance).__name__}")
+
+        required = schema.get("required", [])
+        for field in required:
+            if field not in instance:
+                raise ValidationError(f"'{field}' is a required property")
+
+        properties = schema.get("properties", {})
+        for prop, spec in properties.items():
+            if prop in instance:
+                val = instance[prop]
+                expected_type = spec.get("type")
+                if expected_type == "string" and not isinstance(val, str):
+                    raise ValidationError(f"'{prop}' must be of type string")
+                elif expected_type == "object" and not isinstance(val, dict):
+                    raise ValidationError(f"'{prop}' must be of type object")
+                elif expected_type == "array" and not isinstance(val, list):
+                    raise ValidationError(f"'{prop}' must be of type array")
+                elif expected_type == "boolean" and not isinstance(val, bool):
+                    raise ValidationError(f"'{prop}' must be of type boolean")
 
 
 @dataclass
