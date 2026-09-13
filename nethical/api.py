@@ -28,7 +28,7 @@ from datetime import datetime, timezone
 from typing import Any, Dict, List, Optional, Set
 
 from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect
-from fastapi.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
@@ -789,7 +789,15 @@ token_vault_instance = ReversibleTokenVault()
 unlearning_proof_instance = MachineUnlearningProofEngine(ledger=gateway_instance.ledger)
 doam_matrix_instance = DelegationOfAuthorityMatrix()
 
+from nethical.gateway.openai_proxy import OpenAIGovernanceProxy
+openai_proxy_instance = OpenAIGovernanceProxy(
+    gateway=gateway_instance,
+    token_vault=token_vault_instance,
+    ledger=gateway_instance.ledger,
+)
+
 # Deterministyczne połączenie: potknięcie Watchdoga zrzuca magistrale przemysłowe w <50 µs
+
 hardware_watchdog_instance.register_fieldbus_callback(
     industrial_fieldbus_instance.trigger_emergency_cutoff
 )
@@ -2109,4 +2117,84 @@ async def evaluate_academic_research_compliance(req: AcademicEvaluationRequest) 
     """Ocena rzetelności badań naukowych (ALLEA FFP, walidacja cytowań DOI/PMID, tarcza patentowa, bioetyka)."""
     res = academic_research_pack_instance.evaluate(payload=req.payload)
     return res.model_dump()
+
+
+# ==============================================================================
+# TRANSPARENT OPENAI / ANTHROPIC / OLLAMA DROP-IN REVERSE PROXY & TOKEN VAULT
+# ==============================================================================
+
+class TokenVaultTokenizeRequest(BaseModel):
+    text: str = Field(..., description="Tekst do dynamicznej pseudonimizacji tokenowej")
+    session_id: Optional[str] = Field(default=None, description="Identyfikator sesji kryptograficznej")
+
+class TokenVaultDetokenizeRequest(BaseModel):
+    text: str = Field(..., description="Tekst ze znacznikami tokenów do odwrócenia")
+    session_id: str = Field(..., description="Identyfikator sesji kryptograficznej")
+
+TokenVaultTokenizeRequest.model_rebuild()
+TokenVaultDetokenizeRequest.model_rebuild()
+
+
+@app.post("/api/v1/privacy/token-vault/tokenize", tags=["Privacy"])
+async def tokenize_sensitive_data(req: TokenVaultTokenizeRequest) -> Dict[str, Any]:
+    """Dynamiczna pseudonimizacja w locie danych wrażliwych (PESEL, e-maile, karty, ePHI) przed wysłaniem do LLM."""
+    res = token_vault_instance.tokenize(req.text, session_id=req.session_id)
+    return res.model_dump()
+
+
+@app.post("/api/v1/privacy/token-vault/detokenize", tags=["Privacy"])
+async def detokenize_sensitive_data(req: TokenVaultDetokenizeRequest) -> Dict[str, Any]:
+    """Odwracalna detokenizacja odpowiedzi modelu dla uprawnionego klienta."""
+    res = token_vault_instance.detokenize(req.text, session_id=req.session_id)
+    return res.model_dump()
+
+
+@app.post("/v1/chat/completions", tags=["OpenAIProxy"])
+async def openai_chat_completions(request: Request) -> Response:
+    """Transparentny Drop-In Proxy dla OpenAI / Anthropic / Ollama z in-flight masking PII i weryfikacją Praw."""
+    try:
+        body = await request.json()
+    except Exception:
+        raise HTTPException(status_code=400, detail="Nieprawidłowy format JSON żądania.")
+
+    headers = dict(request.headers)
+    client_ip = request.client.host if request.client else "127.0.0.1"
+
+    result = await openai_proxy_instance.handle_chat_completion(
+        request_data=body,
+        headers=headers,
+        client_ip=client_ip,
+    )
+
+    if hasattr(result, "__aiter__"):
+        # Obsługa Server-Sent Events (SSE stream=True)
+        return StreamingResponse(
+            result,
+            media_type="text/event-stream",
+            headers={
+                "Cache-Control": "no-cache",
+                "Connection": "keep-alive",
+                "X-Accel-Buffering": "no",
+                "X-Nethical-Governance": "ACTIVE-STREAM",
+            },
+        )
+    elif isinstance(result, dict):
+        status_code = 200
+        gov = result.get("nethical_governance", {})
+        return JSONResponse(
+            content=result,
+            status_code=status_code,
+            headers={
+                "X-Nethical-Decision": gov.get("decision", "ALLOW"),
+                "X-Nethical-Receipt": str(gov.get("receipt_id", "")),
+            },
+        )
+    return JSONResponse(content={"error": "Unsupported proxy response type"}, status_code=500)
+
+
+@app.get("/v1/models", tags=["OpenAIProxy"])
+async def list_openai_models() -> Dict[str, Any]:
+    """Zwraca listę suwerennych i zintegrowanych modeli OpenAI-compatible."""
+    return await openai_proxy_instance.handle_list_models()
+
 

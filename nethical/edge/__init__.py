@@ -114,6 +114,12 @@ __all__ = [
     "HILFieldbusBridge",
     "TargetMCU",
     "FaultType",
+    "KineticSafetyGovernor",
+    "KineticSafetyEnvelope",
+    "KineticDecision",
+    "RoboticSensorTelemetry",
+    "ISO13849SafetyEvaluator",
+    "HardwareWatchdogTimer",
 ]
 
 from .industrial_fieldbus import IndustrialFieldbusInterlock
@@ -129,4 +135,15 @@ from .hil_simulator import (
     TargetMCU,
     FaultType,
 )
+from .kinetic_safety import (
+    KineticSafetyGovernor,
+    KineticSafetyEnvelope,
+    KineticDecision,
+    RoboticSensorTelemetry,
+)
+from .iso13849_watchdog import (
+    ISO13849SafetyEvaluator,
+    HardwareWatchdogTimer,
+)
+
 

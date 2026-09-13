@@ -5,13 +5,27 @@ This example demonstrates how to integrate Nethical Edge
 with an autonomous vehicle control system.
 """
 
+import sys
 import time
 from dataclasses import dataclass
 from enum import Enum
+from pathlib import Path
 from typing import Dict, List, Optional
+
+# Ensure package roots are in sys.path
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
+sys.path.insert(0, str(Path(__file__).resolve().parent.parent.parent))
+
+if sys.platform == "win32":
+    try:
+        sys.stdout.reconfigure(encoding="utf-8", errors="replace")
+        sys.stderr.reconfigure(encoding="utf-8", errors="replace")
+    except Exception:
+        pass
 
 # Import Nethical Edge
 from nethical_edge import EdgeGovernor, create_governor
+
 
 
 class VehicleAction(str, Enum):

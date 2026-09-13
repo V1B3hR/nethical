@@ -431,7 +431,64 @@ def gateway_scan(text: str) -> None:
     click.echo(f"  Czas weryfikacji: {dec.latency_microseconds} µs\n")
 
 
+@gateway.command("start")
+@click.option("--host", default="0.0.0.0", help="Host do nasłuchiwania proxy")
+@click.option("--port", default=8000, type=int, help="Port do nasłuchiwania proxy")
+@click.option("--upstream", default="https://api.openai.com", help="Nadrzędny adres URL LLM (OpenAI, Ollama, vLLM, Anthropic)")
+@click.option("--mock", is_flag=True, help="Uruchom w suwerennym trybie mock/air-gapped bez odpytywania zewnętrznych API")
+@click.option("--reload", is_flag=True, help="Włącz przeładowywanie kodu dla developmentu")
+def gateway_start(host: str, port: int, upstream: str, mock: bool, reload: bool) -> None:
+    """Uruchom transparentne proxy OpenAI/Anthropic/Ollama z dynamicznym PII masking i audytem Merkle."""
+    try:
+        import uvicorn
+    except ImportError:
+        click.echo("Error: uvicorn is required. Install with: pip install uvicorn")
+        sys.exit(1)
+
+    os.environ["NETHICAL_UPSTREAM_URL"] = upstream
+    if mock:
+        os.environ["NETHICAL_MOCK_MODE"] = "true"
+
+    click.echo("\n" + "=" * 76)
+    click.echo("⚡ NETHICAL ENTERPRISE OS | SOVEREIGN GOVERNANCE GATEWAY ⚡")
+    click.echo("   Transparent Drop-In Reverse Proxy dla OpenAI, Anthropic i Ollama")
+    click.echo("=" * 76)
+    click.echo(f"  Adres bramki:        http://{host}:{port}")
+    click.echo(f"  Endpoint Drop-In:    http://{host}:{port}/v1/chat/completions")
+    click.echo(f"  Portal & Dashboard:  http://{host}:{port}/portal")
+    click.echo(f"  Nadrzędny upstream:  {upstream}")
+    click.echo(f"  Tryb pracy:          {'SOVEREIGN-MOCK (Air-Gapped)' if mock else 'LIVE-INTERCEPTION (In-Flight PII Masking)'}")
+    click.echo(f"  Rejestr audytowy:    Merkle-DAG (NIST FIPS 204 ML-DSA-65)")
+    click.echo(f"  Pakiety ochronne:    EU AI Act, HIPAA, GDPR, ISO 13849, k.k. 267-269b")
+    click.echo("-" * 76)
+    click.echo("💡 Użycie w dowolnej aplikacji (Zero zmian w kodzie klienta!):")
+    click.echo(f'   export OPENAI_BASE_URL="http://127.0.0.1:{port}/v1"')
+    click.echo("=" * 76 + "\n")
+
+    uvicorn.run(
+        "nethical.api:app",
+        host=host,
+        port=port,
+        reload=reload,
+    )
+
+
+@cli.command("benchmark")
+@click.option("--suite", default="all", help="Zestaw testów: adversarial, latency, throughput, all")
+def cli_benchmark(suite: str) -> None:
+    """Uruchom globalny benchmark obrony i wydajności Nethical (HarmBench, Jailbreak, PII, ISO 26262)."""
+    if suite in ("adversarial", "all"):
+        from benchmarks.adversarial_guardrails_benchmark import AdversarialBenchmarkRunner
+        runner = AdversarialBenchmarkRunner()
+        runner.run_benchmark()
+    if suite in ("latency", "throughput"):
+        import asyncio
+        from benchmarks.runner import run_default_benchmarks
+        asyncio.run(run_default_benchmarks())
+
+
 def main() -> None:
+
     """Entry point for the CLI."""
     cli()
 

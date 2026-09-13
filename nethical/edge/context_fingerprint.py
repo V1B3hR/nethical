@@ -65,11 +65,17 @@ def compute_fingerprint(
         "domain",
         "environment",
         "user_role",
+        "pedestrians_detected",
+        "weather",
+        "road_condition",
+        "speed_kmh",
+        "hazard_level",
     ]
 
     for key in stable_context_keys:
         if key in context:
             components[key] = str(context[key])
+
 
     # Optional timestamp for unique fingerprints
     if include_timestamp:

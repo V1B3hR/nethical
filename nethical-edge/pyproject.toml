@@ -1,0 +1,55 @@
+[build-system]
+requires = ["setuptools>=61.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "nethical-edge"
+version = "2.3.0"
+description = "Ultra-low latency sovereign AI governance for edge devices, robotics, and autonomous vehicles"
+readme = "README.md"
+authors = [
+    { name = "Nethical Core Team", email = "governance@nethical.io" }
+]
+license = { text = "Apache-2.0" }
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Developers",
+    "Intended Audience :: Science/Research",
+    "License :: OSI Approved :: Apache Software License",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Scientific/Engineering :: Artificial Intelligence",
+    "Topic :: Security",
+    "Topic :: System :: Hardware",
+]
+keywords = ["ai-safety", "edge-computing", "robotics", "autonomous-vehicles", "iso26262", "iso13849", "fieldbus", "can-bus", "tpm"]
+requires-python = ">=3.9"
+dependencies = [
+    "numpy>=1.20.0",
+    "pydantic>=2.0.0",
+    "pyyaml>=6.0",
+]
+
+[project.optional-dependencies]
+cuda = [
+    "cupy-cuda12x>=12.0.0",
+]
+tpm = [
+    "tpm2-pytss>=2.0.0",
+    "cryptography>=41.0.0",
+]
+all = [
+    "cryptography>=41.0.0",
+    "psutil>=5.9.0",
+]
+
+[project.scripts]
+nethical-edge = "nethical_edge.cli:main"
+
+[tool.setuptools]
+package-dir = {"nethical_edge" = "src"}
+packages = ["nethical_edge"]

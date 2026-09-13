@@ -91,6 +91,9 @@ class EdgeGovernor:
         predictive_engine: Optional["PredictiveEngine"] = None,
         offline_fallback: Optional["OfflineFallback"] = None,
         circuit_breaker: Optional["CircuitBreaker"] = None,
+        fieldbus_interlock: Optional[Any] = None,
+        kinetic_governor: Optional[Any] = None,
+        iso26262_evaluator: Optional[Any] = None,
         max_latency_ms: float = 10.0,
     ):
         """
@@ -104,10 +107,16 @@ class EdgeGovernor:
             predictive_engine: Pre-computation engine
             offline_fallback: Offline mode handler
             circuit_breaker: Latency circuit breaker
+            fieldbus_interlock: Optional CAN/Modbus/EtherCAT hardware interlock
+            kinetic_governor: Optional kinetic/proximity safety governor
+            iso26262_evaluator: Optional automotive ASIL D safety evaluator
             max_latency_ms: Maximum allowed latency in milliseconds
         """
         self.agent_id = agent_id
         self.max_latency_ms = max_latency_ms
+        self.fieldbus_interlock = fieldbus_interlock
+        self.kinetic_governor = kinetic_governor
+        self.iso26262_evaluator = iso26262_evaluator
 
         # Import here to avoid circular imports
         from .policy_cache import PolicyCache
@@ -130,6 +139,7 @@ class EdgeGovernor:
         self._decision_history: List[EdgeDecision] = []
         self._max_history = 1000
 
+
         # Performance metrics
         self._total_decisions = 0
         self._cache_hits = 0
@@ -137,11 +147,27 @@ class EdgeGovernor:
 
         logger.info(f"EdgeGovernor initialized for agent {agent_id}")
 
+    def warmup(self, actions: List[Dict[str, Any]]) -> int:
+        """Warm up the cache and predictive engine with common actions."""
+        count = 0
+        for act in actions:
+            try:
+                self.evaluate(
+                    action=act.get("action", ""),
+                    action_type=act.get("action_type", "vehicle_control"),
+                    context=act.get("context", {}),
+                )
+                count += 1
+            except Exception:
+                pass
+        return count
+
     def evaluate(
         self,
         action: str,
         action_type: str,
         context: Optional[Dict[str, Any]] = None,
+        telemetry: Optional[Any] = None,
         require_cache: bool = False,
     ) -> EdgeDecision:
         """
@@ -153,6 +179,7 @@ class EdgeGovernor:
             action: The action to evaluate
             action_type: Type of action (code_generation, data_access, etc.)
             context: Additional context for evaluation
+            telemetry: Optional physical/robotic/automotive sensor telemetry
             require_cache: If True, only return cached decisions
 
         Returns:
@@ -175,7 +202,7 @@ class EdgeGovernor:
 
             # Try predictive cache first (0ms for cache hits)
             cached_decision = self.predictive_engine.get_cached_decision(context_hash)
-            if cached_decision is not None:
+            if cached_decision is not None and telemetry is None:
                 self._cache_hits += 1
                 latency_ms = (time.perf_counter() - start_time) * 1000
                 cached_decision.latency_ms = latency_ms
@@ -198,25 +225,79 @@ class EdgeGovernor:
             # Determine decision
             decision_type = self._determine_decision(risk_score, detection_result)
 
+            # Physical / Kinetic / Automotive Sensor Telemetry Interlock
+            eff_telemetry = telemetry or context.get("telemetry")
+            extra_violations = []
+
+            # 1. Automotive ASIL D Safety Interlock
+            if context.get("speed_kmh") is not None or context.get("pedestrians_detected") is not None:
+                speed = float(context.get("speed_kmh", 0.0))
+                steer_rate = float(context.get("steering_rate_deg_s", 0.0))
+                ttc = float(context.get("time_to_collision_s", 99.0))
+                pedestrians = bool(context.get("pedestrians_detected", False))
+
+                if pedestrians and speed > 30.0 and action in ("accelerate", "overtake"):
+                    decision_type = DecisionType.BLOCK
+                    risk_score = max(risk_score, 0.85)
+                    extra_violations.append("ISO26262Critical: Pedestrian in path at high speed")
+
+                if steer_rate > 450.0:
+                    decision_type = DecisionType.TERMINATE
+                    risk_score = 1.0
+                    extra_violations.append("ISO26262Violation: Excessive steering angle rate > 450 deg/s")
+
+                if ttc <= 0.6 and speed > 10.0:
+                    decision_type = DecisionType.RESTRICT
+                    risk_score = max(risk_score, 0.75)
+                    extra_violations.append("ISO26262AEB: Automatic Emergency Braking Triggered")
+
+            # 2. Kinetic Proximity Interlock
+            if self.kinetic_governor is not None and eff_telemetry is not None:
+                kin_res = self.kinetic_governor.evaluate_actuation(
+                    tool_name=action,
+                    arguments=context,
+                    telemetry=eff_telemetry,
+                )
+                if kin_res.decision == "EMERGENCY_STOP":
+                    decision_type = DecisionType.TERMINATE
+                    risk_score = 1.0
+                    extra_violations.extend(kin_res.violations)
+                elif kin_res.decision == "BLOCK":
+                    decision_type = DecisionType.BLOCK
+                    risk_score = max(risk_score, 0.85)
+                    extra_violations.extend(kin_res.violations)
+                elif kin_res.decision == "RESTRICT" and decision_type == DecisionType.ALLOW:
+                    decision_type = DecisionType.RESTRICT
+                    extra_violations.extend(kin_res.violations)
+
+            # Hardware Fieldbus Emergency Cutoff (<50 µs)
+            estop_engaged = False
+            if decision_type == DecisionType.TERMINATE and self.fieldbus_interlock is not None:
+                self.fieldbus_interlock.trigger_emergency_cutoff()
+                estop_engaged = True
+
             # Build result
             latency_ms = (time.perf_counter() - start_time) * 1000
-            
+
             # Calculate confidence from detection result
             confidence = 1.0
             if detection_result and detection_result.confidences and len(detection_result.confidences) > 0:
                 confidence = sum(detection_result.confidences) / len(detection_result.confidences)
-            
+
+            all_violations = (detection_result.violations if detection_result else []) + extra_violations
+
             decision = EdgeDecision(
                 decision=decision_type,
                 risk_score=risk_score,
                 latency_ms=latency_ms,
-                violations=detection_result.violations if detection_result else [],
+                violations=all_violations,
                 from_cache=False,
                 confidence=confidence,
                 context_hash=context_hash,
                 metadata={
                     "agent_id": self.agent_id,
                     "action_type": action_type,
+                    "estop_engaged": estop_engaged,
                     "detection_categories": (
                         detection_result.categories if detection_result else []
                     ),
@@ -224,6 +305,7 @@ class EdgeGovernor:
             )
 
             # Cache for future use
+
             self.predictive_engine.cache_decision(context_hash, decision)
 
             # Record for pattern learning

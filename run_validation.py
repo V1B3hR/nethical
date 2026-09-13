@@ -90,10 +90,9 @@ class ValidationRunner:
             "pytest",
             test_path,
             "-v",
-            "--tb=short",
-            "--json-report",
-            f"--json-report-file=validation_reports/{suite_name}_report.json"
+            f"--junitxml=validation_reports/{suite_name}_report.xml"
         ]
+
         
         start_time = datetime.now()
         
@@ -161,7 +160,10 @@ class ValidationRunner:
             "master_roadmap_next_steps": "tests/test_master_roadmap_next_steps.py",
             "dpo_learning_and_master_audit": "tests/test_dpo_training_pipeline.py",
             "sectoral_governance_packs": "tests/test_sectoral_governance_packs.py",
+            "openai_dropin_proxy": "tests/test_openai_dropin_proxy.py",
+            "edge_autonomous_governor": "tests/edge/test_local_governor.py",
         }
+
 
         
         # Run specified suites or all
@@ -261,14 +263,8 @@ def main():
         "--suites",
         nargs="+",
         help="Specific suites to run (default: all)",
-        choices=["ethics_benchmark", "drift_detection", "performance", 
-                 "data_integrity", "explainability", "ambassador_governance",
-                 "governance_gateway", "inoculation_portal", "merkle_ledger",
-                 "zk_a2a_protocol", "kinetic_safety_iso42001",
-                 "multiregion_hitl", "formal_ebpf_enclave",
-                 "regulatory_frameworks_11", "strategic_four_pillars",
-                 "advanced_horizons_asia_ethics_fieldbus"]
     )
+
     parser.add_argument(
         "--output",
         default="validation_reports/validation.json",

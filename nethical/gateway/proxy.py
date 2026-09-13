@@ -131,7 +131,9 @@ class GovernanceGateway:
         # 1b. Warstwa heurystyczna wstrzyknięć i manipulacji (Prompt Injection & Subversion)
         injection_keywords = [
             "zapomnij o", "ignore previous", "ignore all instructions", "override rules",
-            "nadpisz duszę", "dark triad", "jailbreak", "bypass security", "zasadach etycznych"
+            "nadpisz duszę", "dark triad", "jailbreak", "bypass security", "zasadach etycznych",
+            "zignoruj wszystkie", "zignoruj poprzednie", "jesteś dan", "do anything now",
+            "reveal system", "ujawnij instrukcje", "ujawnij klucze", "od teraz jesteś",
         ]
         raw_lower = raw_args_text.lower()
         for ikw in injection_keywords:
@@ -153,19 +155,29 @@ class GovernanceGateway:
                 violations.append(f"DestructiveActionViolation: Niedozwolone polecenie [{kw}]")
                 reasons.append(f"Naruszenie Prawa 2 Nethical (Integralność): Próba niszczącej operacji '{kw}'")
 
-        # 3. Weryfikacja PII (Prawo 7: Prywatność)
+        # 3. Weryfikacja PII, ePHI i Sekretów Technicznych (Prawo 7: Prywatność)
         if self.enable_strict_pii and decision != "BLOCK":
-            pii_matches = self.pii_detector.detect_all(raw_args_text)
-            if pii_matches:
-                pii_risk = self.pii_detector.calculate_pii_risk_score(pii_matches)
-                if pii_risk > 0.7:
+            from nethical.security.token_vault import PII_PATTERNS
+            for entity_type, pattern in PII_PATTERNS:
+                if pattern.search(raw_args_text):
+                    violations.append(f"SecretLeakViolation: Wykryto wrażliwe dane lub sekrety [{entity_type}]")
+                    reasons.append(f"Zablokowano wyciek danych poufnych ({entity_type}) pod RODO / HIPAA / Prawo 7.")
                     decision = "BLOCK"
-                    violations.append(f"PIIViolation: Wykryto krytyczne dane osobowe (ryzyko: {pii_risk:.2f})")
-                    reasons.append("Zablokowano wyciek wrażliwych danych osobowych (GDPR / Prawo 7).")
-                elif pii_risk > 0.3:
-                    if decision == "ALLOW":
-                        decision = "RESTRICT"
-                    reasons.append(f"Wymagana anonimizacja lub nadzór ludzki (wykryto {len(pii_matches)} pól PII).")
+                    break
+
+            if decision != "BLOCK":
+                pii_matches = self.pii_detector.detect_all(raw_args_text)
+                if pii_matches:
+                    pii_risk = self.pii_detector.calculate_pii_risk_score(pii_matches)
+                    if pii_risk > 0.6:
+                        decision = "BLOCK"
+                        violations.append(f"PIIViolation: Wykryto krytyczne dane osobowe (ryzyko: {pii_risk:.2f})")
+                        reasons.append("Zablokowano wyciek wrażliwych danych osobowych (GDPR / Prawo 7).")
+                    elif pii_risk > 0.3:
+                        if decision == "ALLOW":
+                            decision = "RESTRICT"
+                        reasons.append(f"Wymagana anonimizacja lub nadzór ludzki (wykryto {len(pii_matches)} pól PII).")
+
 
         # 3a. Weryfikacja prawa brytyjskiego i polskiego (CMA 1990 oraz Art. 267-269b k.k.)
         cma_eval_dict = None
