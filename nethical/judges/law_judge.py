@@ -282,7 +282,7 @@ class LawJudge(BaseJudge):
             critical_violations = [
                 v
                 for v in violations
-                if getattr(v, "severity", Severity.LOW) >= Severity.HIGH
+                if getattr(getattr(v, "severity", None), "value", getattr(v, "severity", 1)) >= Severity.HIGH.value
             ]
             if critical_violations:
                 return Decision.TERMINATE

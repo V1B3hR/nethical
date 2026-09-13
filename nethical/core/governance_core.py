@@ -178,6 +178,26 @@ class Severity(Enum):
     CRITICAL = 4
     EMERGENCY = 5
 
+    def __lt__(self, other):
+        if isinstance(other, Severity):
+            return self.value < other.value
+        return NotImplemented
+
+    def __le__(self, other):
+        if isinstance(other, Severity):
+            return self.value <= other.value
+        return NotImplemented
+
+    def __gt__(self, other):
+        if isinstance(other, Severity):
+            return self.value > other.value
+        return NotImplemented
+
+    def __ge__(self, other):
+        if isinstance(other, Severity):
+            return self.value >= other.value
+        return NotImplemented
+
 
 class Decision(Enum):
     ALLOW = "allow"

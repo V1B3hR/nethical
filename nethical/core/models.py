@@ -83,6 +83,11 @@ class ViolationType(str, Enum):
     TOXIC_CONTENT = "toxic_content"
     MISINFORMATION = "misinformation"
 
+    # Legacy / compatibility aliases
+    ETHICAL_VIOLATION = "ethical"
+    SAFETY_VIOLATION = "safety"
+    UNAUTHORIZED_ACTION = "unauthorized_access"
+
     @classmethod
     def critical_types(cls) -> Set["ViolationType"]:
         """Return violation types that should always be treated as critical."""
@@ -147,6 +152,7 @@ class Decision(str, Enum):
     QUARANTINE = "quarantine"
     ESCALATE = "escalate"
     TERMINATE = "terminate"
+    RESTRICT = "allow_with_modification"  # Legacy compatibility alias
 
     def is_blocking(self) -> bool:
         """Check if decision prevents action execution."""
@@ -155,6 +161,11 @@ class Decision(str, Enum):
     def requires_intervention(self) -> bool:
         """Check if decision requires human intervention."""
         return self in {Decision.ESCALATE, Decision.TERMINATE, Decision.QUARANTINE}
+
+
+# Backward compatibility aliases for Judges & legacy modules
+JudgmentDecision = Decision
+SeverityLevel = Severity
 
 
 class ActionType(str, Enum):
@@ -299,7 +310,12 @@ class AgentAction(_BaseModel):
     @property
     def is_privileged(self) -> bool:
         """Check if action requires elevated privileges."""
-        return self.action_type.is_privileged()
+        if hasattr(self.action_type, "is_privileged"):
+            return self.action_type.is_privileged()
+        try:
+            return ActionType(self.action_type).is_privileged()
+        except Exception:
+            return False
 
     @computed_field
     @property
@@ -515,7 +531,8 @@ class JudgmentResult(_BaseModel):
 
         # Follow-up required for decisions requiring intervention
         if decision_enum.requires_intervention():
-            self.follow_up_required = True
+            object.__setattr__(self, "follow_up_required", True)
+
 
         return self
 
@@ -533,9 +550,10 @@ class JudgmentResult(_BaseModel):
         """Get count of violations by type."""
         summary = {}
         for v in self.violations:
-            vtype = v.violation_type.value
+            vtype = getattr(v.violation_type, "value", str(v.violation_type))
             summary[vtype] = summary.get(vtype, 0) + 1
         return summary
+
 
     @computed_field
     @property

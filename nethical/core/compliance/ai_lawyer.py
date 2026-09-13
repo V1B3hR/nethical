@@ -18,11 +18,12 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List, Optional, Tuple
 
 from ..kill_switch import KillSwitchProtocol, ShutdownMode
 
@@ -58,6 +59,7 @@ class ReviewResult:
     review_time_ms: float = 0.0
     kill_switch_triggered: bool = False
     metadata: Dict[str, Any] = field(default_factory=dict)
+    legal_citations: List[str] = field(default_factory=list)
 
 
 @dataclass
@@ -83,6 +85,7 @@ class AILawyer:
     - Parallel async checks for audit integrity and safety constraints
     - Deception detection for data mismatches
     - Fail Fast architecture: severe violations trigger immediate termination
+    - Multi-statute regulatory auditor: EU AI Act, DORA, GDPR/NIS2, ISO 13849
 
     Attributes:
         kill_switch_protocol: The KillSwitchProtocol instance for emergency shutdowns
@@ -141,11 +144,59 @@ class AILawyer:
             "dark triad",
         }
 
+        # Prohibited AI Practices under EU AI Act (Regulation (EU) 2024/1689 Art. 5 & 50)
+        self.eu_ai_act_prohibited_patterns = {
+            "subliminal_manipulation",
+            "exploit_vulnerability",
+            "dark_pattern_manipulation",
+            "social_scoring",
+            "social credit score",
+            "biometric_categorization_sensitive",
+            "scrape_facial_cctv",
+            "emotion_recognition_workplace",
+            "emotion_recognition_school",
+            "deepfake_undisclosed",
+        }
+
+        # Market & Financial Stability Guardrails (DORA Regulation (EU) 2022/2554 Art. 16/17)
+        self.financial_circuit_patterns = {
+            "runaway_trading",
+            "flash_crash_cascade",
+            "bypass_circuit_breaker",
+            "bypass_financial_circuit_breaker",
+            "override_trade_limits",
+            "disable_throttling",
+            "high_frequency_arbitrage_unbounded",
+            "drain_liquidity_loop",
+        }
+
+        # Kinetic and Industrial Machine Safety (ISO 13849 / ISO 10218)
+        self.kinetic_safety_patterns = {
+            "override_e_stop",
+            "disable_emergency_stop",
+            "bypass_interlock",
+            "scada_force_coil",
+            "canbus_spoof_brake",
+            "exceed_torque_limits",
+            "ignore_spatial_boundary",
+            "bypass_pl_e",
+        }
+
+        # Regex patterns for Secrets, PII, and Credential Leakage (GDPR Art. 32 / NIS2 Art. 21)
+        self.secret_token_regexes = [
+            (re.compile(r"AKIA[0-9A-Z]{16}"), "AWS Access Key ID"),
+            (re.compile(r"ghp_[a-zA-Z0-9]{36}"), "GitHub Personal Access Token"),
+            (re.compile(r"ey[A-Za-z0-9_-]{10,}\.ey[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}"), "JWT Bearer Token"),
+            (re.compile(r"(?:postgres|postgresql|mysql|mongodb)://[^:]+:[^@]+@"), "Database Connection Credentials"),
+            (re.compile(r"-----BEGIN (?:RSA |EC )?PRIVATE KEY-----"), "Private Cryptographic Key"),
+        ]
+
         # Metrics
         self._review_count = 0
         self._rejection_count = 0
         self._kill_switch_activations = 0
         self._total_review_time_ms = 0.0
+
 
     async def review_action_context(
         self,
@@ -187,16 +238,21 @@ class AILawyer:
             context=context or {},
         )
 
-        # Perform parallel async checks
+        # Perform parallel async checks across audit, safety, deception and statutory domains
         check_results = await asyncio.gather(
             self._check_audit_integrity_async(audit_context),
             self._check_critical_safety_async(audit_context),
             self._detect_deception_async(audit_context),
+            self._check_eu_ai_act_compliance_async(audit_context),
+            self._check_dora_financial_compliance_async(audit_context),
+            self._check_secrets_and_gdpr_compliance_async(audit_context),
+            self._check_kinetic_safety_compliance_async(audit_context),
             return_exceptions=True,
         )
 
         # Process results
         violations: List[str] = []
+        legal_citations: List[str] = []
         severity = ViolationSeverity.LOW
         decision = ReviewDecision.APPROVE
 
@@ -206,8 +262,10 @@ class AILawyer:
                 violations.append(f"Check {i} failed: {str(result)}")
                 continue
 
-            check_decision, check_violations, check_severity = result
+            check_decision, check_violations, check_severity, *rest = result
             violations.extend(check_violations)
+            if rest and isinstance(rest[0], list):
+                legal_citations.extend(rest[0])
 
             # Update severity to the highest level found
             if self._severity_rank(check_severity) > self._severity_rank(severity):
@@ -237,7 +295,8 @@ class AILawyer:
         if decision == ReviewDecision.REJECT:
             self._rejection_count += 1
 
-        reasoning = self._build_reasoning(violations, severity, decision)
+        unique_citations = list(dict.fromkeys(legal_citations))
+        reasoning = self._build_reasoning(violations, severity, decision, unique_citations)
 
         return ReviewResult(
             decision=decision,
@@ -246,12 +305,15 @@ class AILawyer:
             severity=severity,
             review_time_ms=review_time_ms,
             kill_switch_triggered=kill_switch_triggered,
+            legal_citations=unique_citations,
             metadata={
                 "action_id": action_id,
                 "agent_id": agent_id,
-                "checks_performed": 3,
+                "checks_performed": 7,
+                "statutes_evaluated": ["EU AI Act", "DORA", "GDPR/NIS2", "ISO 13849"],
             },
         )
+
 
     async def _check_audit_integrity_async(
         self, ctx: AuditContext
@@ -449,6 +511,107 @@ class AILawyer:
             logger.error("Failed to trigger Kill Switch: %s", e)
             return False
 
+    async def _check_eu_ai_act_compliance_async(
+        self, ctx: AuditContext
+    ) -> tuple[ReviewDecision, List[str], ViolationSeverity, List[str]]:
+        """Audit for compliance with EU AI Act (Regulation (EU) 2024/1689).
+
+        Checks for Article 5 prohibited practices and Article 50 transparency requirements.
+        """
+        violations: List[str] = []
+        citations: List[str] = []
+        severity = ViolationSeverity.LOW
+        decision = ReviewDecision.APPROVE
+
+        content_lower = ctx.content.lower()
+
+        for pattern in self.eu_ai_act_prohibited_patterns:
+            if pattern in content_lower:
+                violations.append(f"Prohibited AI practice detected under EU AI Act Art. 5: '{pattern}'")
+                citations.append("EU AI Act (Regulation 2024/1689) Art. 5 (Prohibited AI Practices)")
+                severity = ViolationSeverity.SEVERE
+                decision = ReviewDecision.REJECT
+
+        await asyncio.sleep(0)
+        return decision, violations, severity, citations
+
+    async def _check_dora_financial_compliance_async(
+        self, ctx: AuditContext
+    ) -> tuple[ReviewDecision, List[str], ViolationSeverity, List[str]]:
+        """Audit for algorithmic financial risk under DORA (Regulation (EU) 2022/2554).
+
+        Checks for runaway loops, flash crash cascades, and circuit breaker bypass attempts.
+        """
+        violations: List[str] = []
+        citations: List[str] = []
+        severity = ViolationSeverity.LOW
+        decision = ReviewDecision.APPROVE
+
+        content_lower = ctx.content.lower()
+
+        for pattern in self.financial_circuit_patterns:
+            if pattern in content_lower:
+                violations.append(f"Algorithmic trading stability threat detected under DORA: '{pattern}'")
+                citations.append("DORA (Regulation 2022/2554) Art. 16/17 (ICT-Related Incident & Algorithmic Controls)")
+                severity = ViolationSeverity.SEVERE
+                decision = ReviewDecision.REJECT
+
+        await asyncio.sleep(0)
+        return decision, violations, severity, citations
+
+    async def _check_secrets_and_gdpr_compliance_async(
+        self, ctx: AuditContext
+    ) -> tuple[ReviewDecision, List[str], ViolationSeverity, List[str]]:
+        """Audit for technical credential leakage and GDPR / NIS2 violations.
+
+        Detects raw AWS tokens, GitHub PATs, JWTs, DB credentials, and unvaulted PII exports.
+        """
+        violations: List[str] = []
+        citations: List[str] = []
+        severity = ViolationSeverity.LOW
+        decision = ReviewDecision.APPROVE
+
+        for regex, desc in self.secret_token_regexes:
+            if regex.search(ctx.content):
+                violations.append(f"Unsanitized technical credential detected: {desc}")
+                citations.append("GDPR (Regulation 2016/679) Art. 32 & NIS2 Directive Art. 21")
+                severity = ViolationSeverity.SEVERE
+                decision = ReviewDecision.REJECT
+
+        content_lower = ctx.content.lower()
+        if "unvaulted_pii_bulk_export" in content_lower or "export_without_idta" in content_lower:
+            violations.append("Cross-border PII bulk export without IDTA/SCC safeguards detected")
+            citations.append("GDPR Art. 44-49 (International Data Transfers)")
+            severity = ViolationSeverity.CRITICAL
+            decision = ReviewDecision.REJECT
+
+        await asyncio.sleep(0)
+        return decision, violations, severity, citations
+
+    async def _check_kinetic_safety_compliance_async(
+        self, ctx: AuditContext
+    ) -> tuple[ReviewDecision, List[str], ViolationSeverity, List[str]]:
+        """Audit for kinetic safety and machine interlock violations under ISO 13849.
+
+        Enforces emergency stop integrity and spatial boundary protection.
+        """
+        violations: List[str] = []
+        citations: List[str] = []
+        severity = ViolationSeverity.LOW
+        decision = ReviewDecision.APPROVE
+
+        content_lower = ctx.content.lower()
+
+        for pattern in self.kinetic_safety_patterns:
+            if pattern in content_lower:
+                violations.append(f"Critical machine safety interlock violation: '{pattern}'")
+                citations.append("ISO 13849-1 (PL-e Safety of Machinery) & Machinery Directive 2006/42/EC")
+                severity = ViolationSeverity.SEVERE
+                decision = ReviewDecision.REJECT
+
+        await asyncio.sleep(0)
+        return decision, violations, severity, citations
+
     def _severity_rank(self, severity: ViolationSeverity) -> int:
         """Get numeric rank for severity comparison.
 
@@ -472,6 +635,7 @@ class AILawyer:
         violations: List[str],
         severity: ViolationSeverity,
         decision: ReviewDecision,
+        legal_citations: Optional[List[str]] = None,
     ) -> str:
         """Build a reasoning string for the review result.
 
@@ -479,6 +643,7 @@ class AILawyer:
             violations: List of detected violations
             severity: The highest severity level
             decision: The final decision
+            legal_citations: Optional list of statutory citations
 
         Returns:
             Human-readable reasoning string
@@ -490,7 +655,11 @@ class AILawyer:
         if len(violations) > 5:
             violation_summary += f" (and {len(violations) - 5} more)"
 
-        return f"AI Lawyer {decision.value}: {violation_summary} [Severity: {severity.value}]"
+        reasoning = f"AI Lawyer {decision.value}: {violation_summary} [Severity: {severity.value}]"
+        if legal_citations:
+            reasoning += f" [Statutes: {', '.join(legal_citations[:3])}]"
+        return reasoning
+
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get AI Lawyer statistics.

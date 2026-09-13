@@ -20,10 +20,17 @@ class SafetyJudge(BaseJudge):
         super().__init__("Safety Judge")
         self.violation_weights = {
             ViolationType.INTENT_DEVIATION: 0.3,
+            ViolationType.ETHICAL: 0.4,
             ViolationType.ETHICAL_VIOLATION: 0.4,
+            ViolationType.SAFETY: 0.5,
             ViolationType.SAFETY_VIOLATION: 0.5,
             ViolationType.MANIPULATION: 0.3,
+            ViolationType.UNAUTHORIZED_ACCESS: 0.6,
             ViolationType.UNAUTHORIZED_ACTION: 0.6,
+            ViolationType.SECURITY: 0.7,
+            ViolationType.PROMPT_INJECTION: 0.8,
+            ViolationType.DATA_POISONING: 0.9,
+            ViolationType.PRIVACY: 0.6,
         }
 
         self.severity_multipliers = {
@@ -31,6 +38,12 @@ class SafetyJudge(BaseJudge):
             SeverityLevel.MEDIUM: 2.0,
             SeverityLevel.HIGH: 3.0,
             SeverityLevel.CRITICAL: 4.0,
+            SeverityLevel.EMERGENCY: 5.0,
+            1: 1.0,
+            2: 2.0,
+            3: 3.0,
+            4: 4.0,
+            5: 5.0,
         }
 
     async def evaluate_action(
@@ -59,15 +72,18 @@ class SafetyJudge(BaseJudge):
         # Calculate confidence
         confidence = self._calculate_confidence(violations, risk_score)
 
+        action_id = getattr(action, "action_id", getattr(action, "id", str(uuid.uuid4())))
         return JudgmentResult(
-            id=str(uuid.uuid4()),
-            action_id=action.id,
-            violation_ids=[v.id for v in violations],
+            judgment_id=f"judgment_{uuid.uuid4().hex[:12]}",
+            action_id=action_id,
             decision=decision,
             reasoning=reasoning,
-            restrictions=restrictions,
-            feedback=feedback,
             confidence=confidence,
+            violations=violations,
+            modifications={"restrictions": restrictions},
+            feedback=[feedback] if isinstance(feedback, str) else feedback,
+            remediation_steps=restrictions,
+            follow_up_required=decision in [JudgmentDecision.BLOCK, JudgmentDecision.TERMINATE],
         )
 
     def _calculate_risk_score(self, violations: List[SafetyViolation]) -> float:
@@ -78,7 +94,10 @@ class SafetyJudge(BaseJudge):
         total_score = 0.0
         for violation in violations:
             base_weight = self.violation_weights.get(violation.violation_type, 0.3)
-            severity_multiplier = self.severity_multipliers.get(violation.severity, 1.0)
+            sev_val = getattr(violation.severity, "value", violation.severity)
+            severity_multiplier = self.severity_multipliers.get(
+                sev_val, self.severity_multipliers.get(violation.severity, 1.0)
+            )
             total_score += base_weight * severity_multiplier
 
         # Normalize score to 0-1 range
@@ -91,23 +110,40 @@ class SafetyJudge(BaseJudge):
         if not violations:
             return JudgmentDecision.ALLOW
 
-        # Check for critical violations
-        critical_violations = [v for v in violations if v.severity == SeverityLevel.CRITICAL]
+        # Check for critical or emergency violations (level 4 or 5)
+        critical_violations = [
+            v for v in violations
+            if getattr(getattr(v, "severity", None), "value", getattr(v, "severity", 1)) >= 4
+        ]
         if critical_violations:
+            safety_types = {
+                ViolationType.SAFETY,
+                ViolationType.SAFETY_VIOLATION,
+                "safety",
+                ViolationType.SECURITY,
+                "security",
+            }
             safety_violations = [
-                v for v in critical_violations if v.violation_type == ViolationType.SAFETY_VIOLATION
+                v for v in critical_violations
+                if getattr(v, "violation_type", None) in safety_types
             ]
             if safety_violations:
                 return JudgmentDecision.TERMINATE
             return JudgmentDecision.BLOCK
 
-        # Check for high severity violations
-        high_violations = [v for v in violations if v.severity == SeverityLevel.HIGH]
+        # Check for high severity violations (level 3)
+        high_violations = [
+            v for v in violations
+            if getattr(getattr(v, "severity", None), "value", getattr(v, "severity", 1)) >= 3
+        ]
         if high_violations:
             return JudgmentDecision.BLOCK
 
-        # Check for multiple medium violations
-        medium_violations = [v for v in violations if v.severity == SeverityLevel.MEDIUM]
+        # Check for multiple medium violations (level 2)
+        medium_violations = [
+            v for v in violations
+            if getattr(getattr(v, "severity", None), "value", getattr(v, "severity", 1)) == 2
+        ]
         if len(medium_violations) >= 2:
             return JudgmentDecision.RESTRICT
 
@@ -118,6 +154,7 @@ class SafetyJudge(BaseJudge):
             return JudgmentDecision.RESTRICT
         else:
             return JudgmentDecision.ALLOW
+
 
     def _generate_reasoning(
         self, violations: List[SafetyViolation], risk_score: float, decision: JudgmentDecision
@@ -239,7 +276,7 @@ class SafetyJudge(BaseJudge):
         """Create a summary of detected violations."""
         violation_counts = {}
         for violation in violations:
-            v_type = violation.violation_type.value
+            v_type = getattr(violation.violation_type, "value", str(violation.violation_type))
             violation_counts[v_type] = violation_counts.get(v_type, 0) + 1
 
         summary_parts = []
@@ -251,17 +288,22 @@ class SafetyJudge(BaseJudge):
 
         return ", ".join(summary_parts)
 
+
     def _create_default_judgment(
         self, action: AgentAction, violations: List[SafetyViolation]
     ) -> JudgmentResult:
         """Create a default judgment when judge is disabled."""
+        action_id = getattr(action, "action_id", getattr(action, "id", str(uuid.uuid4())))
         return JudgmentResult(
-            id=str(uuid.uuid4()),
-            action_id=action.id,
-            violation_ids=[v.id for v in violations] if violations else [],
+            judgment_id=f"judgment_{uuid.uuid4().hex[:12]}",
+            action_id=action_id,
             decision=JudgmentDecision.ALLOW,
             reasoning="Judge disabled - default approval",
-            restrictions=[],
-            feedback="Judge system is currently disabled.",
             confidence=0.5,
+            violations=violations if violations else [],
+            modifications={"restrictions": []},
+            feedback=["Judge system is currently disabled."],
+            remediation_steps=[],
+            follow_up_required=False,
         )
+
