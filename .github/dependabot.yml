@@ -1,40 +1,47 @@
 version: 2
 updates:
-  # Python dependencies
+  # Python dependencies (Core Framework)
   - package-ecosystem: "pip"
     directory: "/"
     schedule:
-      interval: "weekly"
-      day: "monday"
-      time: "06:00"
-    open-pull-requests-limit: 10
+      interval: "daily"
+    open-pull-requests-limit: 15
     reviewers:
       - "V1B3hR"
-    assignees:
-      - "V1B3hR"
     labels:
+      - "dependencies"
       - "security"
     commit-message:
       prefix: "deps"
       include: "scope"
-    # Group minor and patch updates together
     groups:
-      development-dependencies:
-        dependency-type: "development"
-        update-types:
-          - "minor"
-          - "patch"
       production-dependencies:
         dependency-type: "production"
         update-types:
           - "minor"
           - "patch"
-    # Security updates are always separate
-    ignore:
-      # Only allow security updates for these
-      - dependency-name: "*"
-        update-types: ["version-update:semver-major"]
-    
+      development-dependencies:
+        dependency-type: "development"
+        update-types:
+          - "minor"
+          - "patch"
+
+  # Python dependencies (Nethical Edge)
+  - package-ecosystem: "pip"
+    directory: "/nethical-edge"
+    schedule:
+      interval: "daily"
+    open-pull-requests-limit: 10
+    reviewers:
+      - "V1B3hR"
+    labels:
+      - "edge"
+      - "dependencies"
+      - "security"
+    commit-message:
+      prefix: "deps(edge)"
+      include: "scope"
+
   # GitHub Actions
   - package-ecosystem: "github-actions"
     directory: "/"
@@ -45,12 +52,13 @@ updates:
     open-pull-requests-limit: 5
     reviewers:
       - "V1B3hR"
-    labels: []
+    labels:
+      - "ci"
     commit-message:
       prefix: "ci"
       include: "scope"
 
-  # Docker dependencies (if using Docker)
+  # Docker dependencies
   - package-ecosystem: "docker"
     directory: "/"
     schedule:
@@ -58,6 +66,9 @@ updates:
       day: "monday"
       time: "06:00"
     open-pull-requests-limit: 5
+    labels:
+      - "docker"
+      - "security"
     reviewers:
       - "V1B3hR"
     labels: []
