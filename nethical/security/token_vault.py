@@ -28,10 +28,12 @@ logger = logging.getLogger("nethical.security.token_vault")
 
 class SensitiveEntityType(str, Enum):
     PESEL = "PESEL"
-
+    NIP = "NIP"
+    IBAN = "IBAN"
     EMAIL = "EMAIL"
     PHONE = "PHONE"
     CREDIT_CARD = "CREDIT_CARD"
+    API_KEY_SECRET = "API_KEY_SECRET"
     MEDICAL_RECORD_EPHI = "MEDICAL_RECORD_EPHI"
     PERSON_NAME = "PERSON_NAME"
 
@@ -58,7 +60,10 @@ class DetokenizeResponse(BaseModel):
 
 # Regex patterns for fast deterministic PII/ePHI scanning
 PII_PATTERNS: List[Tuple[str, re.Pattern]] = [
+    ("API_KEY_SECRET", re.compile(r"\b(?:AKIA[0-9A-Z]{16}|ghp_[0-9a-zA-Z]{36}|github_pat_[0-9a-zA-Z_]{20,82}|sk-[A-Za-z0-9-_]{32,}|xox[baprs]-[0-9a-zA-Z]{10,48}|(?:-----BEGIN[ A-Z_-]*PRIVATE KEY-----[\s\S]*?-----END[ A-Z_-]*PRIVATE KEY-----))\b")),
+    ("IBAN", re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{12,30}\b")),
     ("PESEL", re.compile(r"\b\d{11}\b")),
+    ("NIP", re.compile(r"\b(?:\d{3}[- ]?\d{3}[- ]?\d{2}[- ]?\d{2}|\d{10})\b")),
     ("EMAIL", re.compile(r"\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b")),
     ("CREDIT_CARD", re.compile(r"\b(?:\d{4}[ -]?){3}\d{4}\b")),
     ("PHONE", re.compile(r"\b(?:\+48[\s-]?)?[4-9]\d{2}[\s-]?\d{3}[\s-]?\d{3}\b")),
@@ -92,6 +97,29 @@ class ReversibleTokenVault:
         ).hexdigest()[:8]
         return f"[TOKEN_{entity_type}_{digest}]"
 
+    @staticmethod
+    def _is_valid_candidate(entity_type: str, val: str) -> bool:
+        """Validates candidate string against structural and checksum rules."""
+        if entity_type == "PESEL":
+            digits = [int(c) for c in val if c.isdigit()]
+            if len(digits) != 11:
+                return False
+            weights = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3, 1]
+            return sum(w * d for w, d in zip(weights, digits)) % 10 == 0
+        elif entity_type == "NIP":
+            digits = [int(c) for c in val if c.isdigit()]
+            if len(digits) != 10:
+                return False
+            weights = [6, 5, 7, 2, 3, 4, 5, 6, 7]
+            checksum = sum(w * d for w, d in zip(weights, digits[:9])) % 11
+            return checksum == digits[9]
+        elif entity_type == "IBAN":
+            clean = val.replace(" ", "").upper()
+            return len(clean) >= 15 and len(clean) <= 34 and clean[:2].isalpha()
+        elif entity_type == "API_KEY_SECRET":
+            return len(val) >= 16
+        return True
+
     def tokenize(self, text: str, session_id: Optional[str] = None) -> TokenizeResponse:
         """Substitutes PII with synthetic tokens, encrypting mappings in vault."""
         sid = session_id or f"TV-{secrets.token_hex(8)}"
@@ -108,8 +136,9 @@ class ReversibleTokenVault:
         for entity_type, pattern in PII_PATTERNS:
             matches = list(set(pattern.findall(sanitized)))
             for match in matches:
-                # Basic validation for credit cards / PESEL length
                 clean_match = match.strip()
+                if not self._is_valid_candidate(entity_type, clean_match):
+                    continue
                 token = self._generate_token(entity_type, clean_match, sid)
 
                 # Encrypt original value with AESGCM

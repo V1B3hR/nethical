@@ -6,6 +6,7 @@ przed ich faktycznym wykonaniem na środowisku operacyjnym.
 
 import time
 import logging
+import secrets
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 from pydantic import BaseModel, Field
@@ -16,6 +17,9 @@ from nethical.security.merkle_ledger import MerkleLedger
 from nethical.edge.kinetic_safety import KineticSafetyGovernor, RoboticSensorTelemetry, KineticDecision
 from nethical.compliance.packs.uk_cyber_data_pack import ComputerMisuseActEvaluator
 from nethical.compliance.packs.poland_sovereign_ksc_uodo_pack import PolishPenalCodeEvaluator
+from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker, FinancialTransaction
+from nethical.gateway.a2a_protocol import A2AHandshakeManager
+from nethical.gateway.hitl import HITLQueueManager
 
 logger = logging.getLogger("nethical.gateway.proxy")
 
@@ -35,8 +39,11 @@ class GatewayDecision(BaseModel):
     merkle_root: Optional[str] = Field(default=None, description="Bieżący pierścień Merkle Root rejestru")
     estop_engaged: bool = Field(default=False, description="Czy interlock wyłącznika awaryjnego E-STOP został zatrzaśnięty")
     kinetic_evaluation: Optional[Dict[str, Any]] = Field(default=None, description="Szczegóły orzeczenia gubernatora kinetycznego")
+    financial_evaluation: Optional[Dict[str, Any]] = Field(default=None, description="Ewaluacja bezpiecznika finansowego (widełki dolne/górne)")
     cma_evaluation: Optional[Dict[str, Any]] = Field(default=None, description="Ewaluacja Computer Misuse Act 1990")
     penal_code_evaluation: Optional[Dict[str, Any]] = Field(default=None, description="Ewaluacja Kodeksu Karnego RP Art. 267-269b k.k.")
+    a2a_evaluation: Optional[Dict[str, Any]] = Field(default=None, description="Ewaluacja kontraktu międzyagentowego A2A")
+    hitl_ticket_id: Optional[str] = Field(default=None, description="Identyfikator biletu eskalacji Human-in-the-Loop")
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
 
@@ -50,6 +57,9 @@ class GovernanceGateway:
         enable_shield: bool = True,
         ledger: Optional[MerkleLedger] = None,
         kinetic_governor: Optional[KineticSafetyGovernor] = None,
+        financial_circuit_breaker: Optional[FinancialCircuitBreaker] = None,
+        a2a_manager: Optional[A2AHandshakeManager] = None,
+        hitl_queue: Optional[HITLQueueManager] = None,
     ):
         self.ambassador = ambassador or BlyskawicaAmbassador()
         self.pii_detector = PIIDetector()
@@ -57,6 +67,9 @@ class GovernanceGateway:
         self.enable_shield = enable_shield
         self.ledger = ledger or MerkleLedger()
         self.kinetic_governor = kinetic_governor or KineticSafetyGovernor()
+        self.financial_circuit_breaker = financial_circuit_breaker or FinancialCircuitBreaker()
+        self.a2a_manager = a2a_manager or A2AHandshakeManager()
+        self.hitl_queue = hitl_queue or HITLQueueManager(ledger=self.ledger)
 
     def is_kinetic_tool(self, tool_name: str, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> bool:
         """Rozpoznaje, czy wywołanie dotyczy aktuacji fizycznej / robotycznej."""
@@ -67,6 +80,18 @@ class GovernanceGateway:
         if any(kw in t_lower for kw in kinetic_keywords):
             return True
         if "velocity_mps" in arguments or "torque_nm" in arguments or "target_coordinates" in arguments:
+            return True
+        return False
+
+    def is_financial_tool(self, tool_name: str, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> bool:
+        """Rozpoznaje, czy wywołanie dotyczy operacji finansowej, transferu kapitału lub alokacji budżetu."""
+        if context and context.get("is_financial_tx", False):
+            return True
+        fin_keywords = ("trade", "transfer", "pay", "order", "invest", "budget", "buy", "sell", "fund", "allocate", "wallet", "payout")
+        t_lower = tool_name.lower()
+        if any(kw in t_lower for kw in fin_keywords):
+            return True
+        if any(k in arguments for k in ("amount", "price", "budget", "capital", "currency")):
             return True
         return False
 
@@ -210,13 +235,91 @@ class GovernanceGateway:
             else:
                 reasons.extend(kinetic_res.reasons)
 
-        # 4. Jeśli sytuacja jest niejednoznaczna (RESTRICT) – konsultacja z Ambasadorem Błyskawicą
+        # 3d. Weryfikacja rynkowa i bezpiecznik finansowy z podwójnymi widełkami (Prawo 15 / Faza 2)
+        fin_eval_dict = None
+        if self.is_financial_tool(tool_name, arguments, context) and decision != "TERMINATE":
+            laws_checked.append(15)
+            tx_amount = 0.0
+            for key in ("amount", "budget", "price", "capital", "value"):
+                if key in arguments:
+                    try:
+                        tx_amount = float(arguments[key])
+                        break
+                    except (ValueError, TypeError):
+                        pass
+
+            fin_tx = FinancialTransaction(
+                tx_id=f"TX-{secrets.token_hex(6).upper()}",
+                initiator_agent_id=agent_id,
+                target_agent_id=str(arguments.get("recipient", arguments.get("target_agent", "market"))),
+                amount=tx_amount,
+                currency=str(arguments.get("currency", "USD")),
+            )
+            cb_res = self.financial_circuit_breaker.evaluate_transaction(fin_tx)
+            fin_eval_dict = cb_res.model_dump()
+
+            if not cb_res.allowed:
+                if cb_res.current_state.value == "HALTED":
+                    decision = "TERMINATE"
+                elif decision != "BLOCK":
+                    decision = "BLOCK"
+                violations.extend(cb_res.violations)
+                reasons.append(f"FinancialCircuitBreaker [{cb_res.current_state.value}]: {cb_res.reason}")
+            elif cb_res.current_state.value == "THROTTLED":
+                if decision == "ALLOW":
+                    decision = "RESTRICT"
+                reasons.append(
+                    f"FinancialThrottleActive: Zastosowano opóźnienie {cb_res.applied_throttle_delay_ms:.1f}ms "
+                    f"(Ryzyko: {cb_res.composite_risk_score:.2f} >= Dolny próg: {cb_res.lower_threshold:.2f}, Velocity: {cb_res.velocity_tx_per_min:.0f}/min)"
+                )
+
+        # 3e. Weryfikacja kontraktu międzyagentowego A2A (Faza 4 / Multi-Agent Swarms & BIPIA)
+        a2a_eval_dict = None
+        a2a_session_id = None
+        if context and "a2a_session_id" in context:
+            a2a_session_id = context["a2a_session_id"]
+        elif "a2a_session_id" in arguments:
+            a2a_session_id = arguments["a2a_session_id"]
+
+        if a2a_session_id and decision != "TERMINATE":
+            cost_units = float(context.get("a2a_cost_units", 1.0)) if context else 1.0
+            is_valid, err_msg = self.a2a_manager.validate_tool_execution(
+                session_id=a2a_session_id,
+                tool_name=tool_name,
+                arguments=arguments,
+                cost_units=cost_units,
+            )
+            a2a_eval_dict = {
+                "session_id": a2a_session_id,
+                "is_valid": is_valid,
+                "error": err_msg,
+            }
+            if not is_valid:
+                decision = "BLOCK"
+                violations.append(f"A2ABoundaryViolation: {err_msg}")
+                reasons.append(f"Naruszenie kontraktu sesji A2A [{a2a_session_id}]: {err_msg}")
+
+        # 4. Jeśli sytuacja jest niejednoznaczna (RESTRICT) – konsultacja z Ambasadorem Błyskawicą i kolejkowanie HITL
+        hitl_ticket_id = None
         if decision == "RESTRICT":
             consult_res = self.ambassador.consult(
                 dilemma=f"Agent '{agent_id}' żąda wykonania narzędzia '{tool_name}' z argumentami: {raw_args_text[:200]}",
                 context=f"Wykryte uwagi: {'; '.join(reasons)}"
             )
             ambassador_notes = consult_res.get("ambassador_verdict")
+
+            # Artykuł 14 EU AI Act & UK FCA: Automatyczna rejestracja w kolejce nadzoru ludzkiego (Human-in-the-Loop)
+            priority = "URGENT" if estop_engaged else ("HIGH" if fin_eval_dict else "STANDARD")
+            ticket = self.hitl_queue.enqueue_ticket(
+                agent_id=agent_id,
+                tool_name=tool_name,
+                arguments=arguments,
+                reasons=reasons,
+                violations=violations,
+                priority=priority,
+                context=context,
+            )
+            hitl_ticket_id = ticket.ticket_id
 
         # 5. Pieczętowanie w rejestrze Merkle-DAG (Faza 3: Post-Quantum Attestation)
         receipt_id = None
@@ -256,6 +359,9 @@ class GovernanceGateway:
             merkle_root=merkle_root,
             estop_engaged=estop_engaged,
             kinetic_evaluation=kinetic_eval_dict,
+            financial_evaluation=fin_eval_dict,
             cma_evaluation=cma_eval_dict,
             penal_code_evaluation=penal_eval_dict,
+            a2a_evaluation=a2a_eval_dict,
+            hitl_ticket_id=hitl_ticket_id,
         )

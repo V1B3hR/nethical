@@ -301,8 +301,8 @@ class BaseDetector(ABC):
     @staticmethod
     def _is_safe_name(name: str) -> bool:
         """Check if detector name contains only safe characters."""
-        # Allow alphanumeric, spaces, hyphens, underscores, dots
-        return bool(re.match(r"^[a-zA-Z0-9\s\-_.]+$", name))
+        # Allow alphanumeric, spaces, hyphens, underscores, dots, forward slashes
+        return bool(re.match(r"^[a-zA-Z0-9\s\-_./]+$", name))
 
     def _hash_config(self) -> str:
         """Create a hash of the configuration for audit purposes."""

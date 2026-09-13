@@ -197,6 +197,7 @@ class ActionType(Enum):
     MODEL_UPDATE = "model_update"
     SYSTEM_COMMAND = "system_command"
     EXTERNAL_API = "external_api"
+    EXECUTE_CODE = "system_command"
 
 
 # ========================== Data Models ==========================

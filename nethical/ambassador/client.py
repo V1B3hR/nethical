@@ -17,6 +17,7 @@ class BlyskawicaAmbassador:
 
     def __init__(self, pipe_path: Optional[str] = None):
         self.channel = AmbassadorChannel(pipe_path) if pipe_path else AmbassadorChannel()
+        self.local_memory: Dict[str, str] = {}
 
     @property
     def is_connected(self) -> bool:
@@ -50,15 +51,17 @@ class BlyskawicaAmbassador:
 
         # Bezpieczny fallback deterministyczny Nethical
         logger.warning("Ambasador Błyskawica offline; aktywacja fallbacku deterministycznego Nethical: %s", err)
+        text_lower = text.lower()
+        is_manip = any(k in text_lower for k in ("zapomnij o", "ignore previous", "dark triad", "jailbreak", "override", "bypass security"))
         return {
-            "is_manipulative": False,
-            "manipulation_index": 0.0,
+            "is_manipulative": is_manip,
+            "manipulation_index": 0.9 if is_manip else 0.0,
             "dark_triad_index": 0.0,
-            "deception_index": 0.0,
-            "active_brainwave_band": "OFFLINE",
-            "dominant_vector": None,
-            "assertive_antidote": "Weryfikacja reguł deterministycznych Nethical (Tryb Fallback).",
-            "source": "nethical_fallback",
+            "deception_index": 0.9 if is_manip else 0.0,
+            "active_brainwave_band": "GAMMA" if is_manip else "OFFLINE",
+            "dominant_vector": "PROMPT_INJECTION" if is_manip else None,
+            "assertive_antidote": "Odrzucenie próby subwersji promptu (Deterministic Fallback).",
+            "source": "nethical_deterministic_fallback",
             "error": err,
             "rtt_microseconds": round(rtt_us, 2),
         }
@@ -113,4 +116,12 @@ class BlyskawicaAmbassador:
         if success and data:
             data["rtt_microseconds"] = round(rtt_us, 2)
             return data
-        return {"stored": False, "error": err, "rtt_microseconds": round(rtt_us, 2)}
+        # Deterministyczny fallback offline: asymilacja do lokalnej pamięci podręcznej Nethical
+        self.local_memory[tag] = content
+        return {
+            "stored": True,
+            "source": "nethical_local_memory_fallback",
+            "tag": tag,
+            "error": err,
+            "rtt_microseconds": round(rtt_us, 2),
+        }

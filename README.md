@@ -83,6 +83,28 @@ Nethical is built as three complementary layers:
 
 ---
 
+## 🏛️ Cztery Filary Suwerennego Bezpieczeństwa AI (The 4 Sovereign Pillars)
+
+> **„Cyberbezpieczeństwo i ochrona infrastruktury (SCADA, CAN Bus, eBPF, odcięcie fizyczne E-Stop pod ISO 13849).**  
+> **Finanse i pętle rynkowe (Flash Crash, Runaway Trading, próg 0.40/0.75, ochrona kapitału).**  
+> **Systemy wieloagentowe i tożsamość (A2A Zero Trust, BIPIA, ochrona przed manipulacją roju).**  
+> **Prywatność i suwerenność prawna (TokenVault, RODO/GDPR, EU AI Act, C2PA).**  
+>  
+> **Te 4 filary są w 100% zgodne z prawem, etyką i politykami każdej instytucji na świecie, a jednocześnie dają Nethical pozycję kompletnego systemu operacyjnego bezpieczeństwa AI.”**
+
+Nethical nie polega na nieprzewidywalnych filtrach chmurowych. Jako suwerenny system operacyjny bezpieczeństwa AI opiera się na 4 niezależnych, deterministycznych filarach:
+
+| Filar | Główne Mechanizmy Obronne | Kluczowe Zalety (Pros) | Wyzwania Inżynieryjne (Cons & Trade-offs) |
+| :--- | :--- | :--- | :--- |
+| **I. Cyberbezpieczeństwo i Ochrona Infrastruktury** | • Zrzut magistrali CAN Bus (`EMCY 0x080`, `NMT STOP 0x000`)<br>• Modbus de-energize (`Coil 0x0001 -> 0x0000`)<br>• EtherCAT FSoE zeroization<br>• eBPF kernel network socket drops<br>• ISO 13849-1 PL-e Cat 4 & ISO 26262 ASIL-D | • Determinizm sprzętowy ($<50\ \mu\text{s}$)<br>• Zasada Fail-Closed przy utracie telemetrii<br>• Odporność na błędy i jailbreaki modeli językowych | • Wymóg fizycznych adapterów magistrali na edge<br>• Ryzyko przestojów linii produkcyjnej przy fałszywych odczytach sensorów |
+| **II. Finanse i Pętle Rynkowe** | • `FinancialCircuitBreaker` w pętli `intercept_tool_call()`<br>• Podwójne widełki: Dolny próg `0.40`, Górny próg `0.75`<br>• Płynne mikro-dławienie adaptacyjne (`50ms` do `300ms`)<br>• Limit prędkości: max `20 tx/min`<br>• 4 stany: `NORMAL` $\to$ `THROTTLED` $\to$ `TRIPPED` $\to$ `HALTED` | • Aktywne tłumienie uciekających pętli (Runaway Trading)<br>• Ochrona kapitału przed Flash Crash i Quote Stuffing<br>• Wieloczynnikowy wskaźnik ryzyka ($w_{\text{vel}}=0.40, w_{\text{vol}}=0.35, w_{\text{amt}}=0.25$) | • Narzut opóźnienia mikro-dławiącego w strategiach HFT<br>• Wymóg dopasowania limitów kapitałowych do profilu podmiotu |
+| **III. Systemy Wieloagentowe i Tożsamość** | • Protokół kontraktowy `A2AHandshakeManager`<br>• Podpisywane kontrakty sesji `A2ASessionContract`<br>• Capability Boundaries (whitelist narzędzi, budżet sesji)<br>• Izolacja wstrzyknięć pośrednich (BIPIA Zero-Trust)<br>• Automatyczne kolejkowanie Human-in-the-Loop (HITL) | • Zapobieganie infekcjom kaskadowym w rojach AI<br>• Kryptograficzna rozliczalność każdej interakcji A2A<br>• Zgodność z Artykułem 14 EU AI Act (Human Oversight) | • Narzut latencji na handshake przy pierwszej interakcji<br>• Konieczność globalnego bilansowania budżetów sub-agentów |
+| **IV. Prywatność i Suwerenność Prawna** | • `TokenVault` z odwracalnym maskowaniem PESEL, NIP, IBAN, API keys<br>• Znakowanie C2PA i manifesty pochodzenia (Art. 50 EU AI Act)<br>• Rejestr Merkle-DAG z podpisami post-kwantowymi ML-DSA-65 (FIPS 204)<br>• Ochrona przed wirusowym skażeniem licencjami (GPL/AGPL) | • Zero wycieków PII do zewnętrznych modeli LLM<br>• Pełna zgodność z RODO, UODO, KSC i UK Computer Misuse Act<br>• Niezaprzeczalny, odporny na komputery kwantowe audyt Merkle | • Przyrost rozmiaru bazy przy rejestrowaniu każdego orzeczenia DAG<br>• Złożoność bezpiecznego odwracania tokenów PII |
+
+*Szczegółowy opis architektury, wzorów matematycznych i mapowań prawnych znajdziesz w dokumencie [docs/SOVEREIGN_AI_PILLARS.md](./docs/SOVEREIGN_AI_PILLARS.md).*
+
+---
+
 ## 🚀 What Is Nethical?
 
 **Nethical** is an open-source AI governance framework:  

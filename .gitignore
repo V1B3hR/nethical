@@ -3,12 +3,12 @@
 # Environment files with secrets
 .env
 .env.local
-.env.*. local
-*. env
+.env.*.local
+*.env
 
 # Python
 __pycache__/
-*. py[cod]
+*.py[cod]
 *$py.class
 *.so
 .Python
@@ -26,7 +26,7 @@ var/
 wheels/
 share/python-wheels/
 *.egg-info/
-. installed.cfg
+.installed.cfg
 *.egg
 MANIFEST
 
@@ -76,8 +76,8 @@ secrets/
 # Terraform
 *.tfstate
 *.tfstate.*
-. terraform/
-. terraform. lock.hcl
+.terraform/
+.terraform.lock.hcl
 
 # Kubernetes secrets (if generated locally)
 *-secret.yaml

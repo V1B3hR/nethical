@@ -7,7 +7,7 @@ This module provides production-grade monitoring and observability features:
 - Integration with existing observability system
 """
 
-from nethical.monitoring.prometheus_exporter import PrometheusMetrics
+from nethical.monitoring.prometheus_exporter import PrometheusMetrics, get_prometheus_metrics
 from nethical.monitoring.metrics_server import MetricsServer
 
-__all__ = ["PrometheusMetrics", "MetricsServer"]
+__all__ = ["PrometheusMetrics", "MetricsServer", "get_prometheus_metrics"]

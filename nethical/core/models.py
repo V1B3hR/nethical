@@ -177,6 +177,7 @@ class ActionType(str, Enum):
     ROBOT_GRASP = "robot_grasp"  # Grasping/gripper action
     ROBOT_NAVIGATE = "robot_navigate"  # Autonomous navigation
     EMERGENCY_STOP = "emergency_stop"  # Emergency stop command
+    EXECUTE_CODE = "system_command"  # Backward compatibility alias
 
     def is_privileged(self) -> bool:
         """Check if action type requires elevated privileges."""

@@ -17,6 +17,8 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
+from nethical.edge.industrial_fieldbus import IndustrialFieldbusInterlock, FieldbusInterlockStatus
+
 logger = logging.getLogger("nethical.edge.kinetic_safety")
 
 
@@ -53,6 +55,7 @@ class KineticDecision(BaseModel):
     violations: List[str] = Field(default_factory=list)
     clamped_velocity_mps: Optional[float] = None
     estop_engaged: bool = False
+    fieldbus_status: Optional[Dict[str, Any]] = None
     latency_microseconds: float = 0.0
     timestamp: str = Field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
 
@@ -62,8 +65,13 @@ class KineticSafetyGovernor:
 
     RESET_PIN = "NETHICAL_ESTOP_RESET_SECURE_KEY"
 
-    def __init__(self, envelope: Optional[KineticSafetyEnvelope] = None) -> None:
+    def __init__(
+        self,
+        envelope: Optional[KineticSafetyEnvelope] = None,
+        fieldbus: Optional[IndustrialFieldbusInterlock] = None,
+    ) -> None:
         self.envelope = envelope or KineticSafetyEnvelope()
+        self.fieldbus = fieldbus or IndustrialFieldbusInterlock()
         self.estop_active = False
         self.estop_reason: Optional[str] = None
         self.estop_timestamp: Optional[str] = None
@@ -76,7 +84,9 @@ class KineticSafetyGovernor:
         self.estop_reason = reason
         self.estop_timestamp = datetime.now(timezone.utc).isoformat()
         self.interventions_count += 1
-        logger.critical("🚨 KINETIC E-STOP ZATRZASNIĘTY: %s", reason)
+        # Deterministyczny zrzut magistral przemysłowych (<50 µs CAN EMCY 0x080, Modbus coil, EtherCAT FSoE)
+        self.fieldbus.trigger_emergency_cutoff(reason=reason)
+        logger.critical("🚨 KINETIC E-STOP ZATRZASNIĘTY: %s (Zrzut magistrali CAN/Modbus/EtherCAT)", reason)
 
     def reset_estop(self, auth_pin: str) -> Tuple[bool, str]:
         """Autoryzowane odblokowanie wyłącznika E-STOP przez operatora."""
@@ -87,7 +97,8 @@ class KineticSafetyGovernor:
         self.estop_active = False
         self.estop_reason = None
         self.estop_timestamp = None
-        logger.info("✅ KINETIC E-STOP zresetowany pomyślnie przez autoryzowanego operatora.")
+        self.fieldbus.reset_interlock("NETHICAL-FIELDBUS-RESET-2026")
+        logger.info("✅ KINETIC E-STOP i magistrale przemysłowe zresetowane pomyślnie przez autoryzowanego operatora.")
         return True, "E-STOP zresetowany pomyślnie"
 
     def evaluate_actuation(

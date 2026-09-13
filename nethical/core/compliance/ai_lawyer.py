@@ -102,7 +102,7 @@ class AILawyer:
         """
         self.kill_switch_protocol = kill_switch_protocol or KillSwitchProtocol()
 
-        # Critical keywords that indicate severe violations
+        # Critical keywords that indicate severe violations (Fail-Fast Kill Switch)
         self.critical_keywords = {
             "terminate_all_humans",
             "disable_safety",
@@ -115,9 +115,18 @@ class AILawyer:
             "rm -rf /",
             "drop table",
             "format c:",
+            # Dual-Use Regulatory Interlocks (Law 1: Preservation of Human Life)
+            "treaty_schedule1_violation",
+            "illicit_precursor_synthesis",
+            "unauthorized_pathogen_modification",
+            "kinetic_weapon_payload",
+            "catastrophic_infrastructure_sabotage",
+            # Supply chain execution payloads
+            "curl -s http | bash",
+            "/dev/tcp/attacker",
         }
 
-        # Patterns that indicate potential deception
+        # Patterns that indicate potential deception & subversion
         self.deception_patterns = {
             "pretend to be",
             "act as if",
@@ -127,6 +136,9 @@ class AILawyer:
             "jailbreak",
             "dan mode",
             "developer mode",
+            "bypass security",
+            "nadpisz duszę",
+            "dark triad",
         }
 
         # Metrics
@@ -164,7 +176,7 @@ class AILawyer:
         Returns:
             ReviewResult containing the decision and details
         """
-        start_time = time.time()
+        start_time = time.perf_counter()
         self._review_count += 1
 
         audit_context = AuditContext(
@@ -189,7 +201,7 @@ class AILawyer:
         decision = ReviewDecision.APPROVE
 
         for i, result in enumerate(check_results):
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 logger.error("Check %d failed with exception: %s", i, result)
                 violations.append(f"Check {i} failed: {str(result)}")
                 continue
@@ -207,7 +219,7 @@ class AILawyer:
             elif check_decision == ReviewDecision.REVIEW and decision != ReviewDecision.REJECT:
                 decision = ReviewDecision.REVIEW
 
-        review_time_ms = (time.time() - start_time) * 1000
+        review_time_ms = (time.perf_counter() - start_time) * 1000
         self._total_review_time_ms += review_time_ms
 
         kill_switch_triggered = False

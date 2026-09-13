@@ -131,3 +131,158 @@ def test_conformity_dossier_generation():
     md_output = generator.export_to_markdown(dossier)
     assert "EU AI Act Annex IV" in md_output
     assert "Błyskawica V10" in md_output
+
+
+def test_gateway_financial_tool_normal():
+    """Test standard benign financial transaction within normal corridor."""
+    from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker
+    breaker = FinancialCircuitBreaker(max_single_tx_limit=10_000.0, max_velocity_tx_per_min=10)
+    gateway = GovernanceGateway(financial_circuit_breaker=breaker)
+
+    decision = gateway.intercept_tool_call(
+        agent_id="fin_agent_alpha",
+        tool_name="transfer_funds",
+        arguments={"amount": 500.0, "recipient": "vendor_acc", "currency": "USD"},
+    )
+    assert decision.decision == "ALLOW"
+    assert 15 in decision.laws_checked  # Prawo 15: Proporcjonalność finansowa
+    assert decision.financial_evaluation is not None
+    assert decision.financial_evaluation["current_state"] == "NORMAL"
+    assert decision.financial_evaluation["allowed"] is True
+
+
+def test_gateway_financial_tool_lower_corridor_throttling():
+    """Test that breaching the lower threshold corridor applies adaptive throttling."""
+    from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker
+    breaker = FinancialCircuitBreaker(
+        max_single_tx_limit=10_000.0,
+        max_velocity_tx_per_min=10,
+        lower_threshold_ratio=0.35,
+        upper_threshold_ratio=0.75,
+    )
+    gateway = GovernanceGateway(financial_circuit_breaker=breaker)
+
+    # Perform multiple transactions to push risk over lower corridor threshold (0.35)
+    for _ in range(4):
+        gateway.intercept_tool_call(
+            agent_id="fin_agent_alpha",
+            tool_name="execute_trade",
+            arguments={"amount": 3500.0, "symbol": "NVDA", "currency": "USD"},
+        )
+
+    # 5th transaction should hit the THROTTLED corridor
+    decision = gateway.intercept_tool_call(
+        agent_id="fin_agent_alpha",
+        tool_name="execute_trade",
+        arguments={"amount": 3500.0, "symbol": "NVDA", "currency": "USD"},
+    )
+    assert decision.decision == "RESTRICT"
+    assert decision.financial_evaluation["current_state"] == "THROTTLED"
+    assert decision.financial_evaluation["early_warning_active"] is True
+    assert decision.financial_evaluation["applied_throttle_delay_ms"] > 0.0
+    assert any("FinancialThrottleActive" in r for r in decision.reasons)
+
+
+def test_gateway_financial_tool_upper_threshold_trip_block():
+    """Test that breaching the upper threshold trips the breaker and blocks execution."""
+    from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker
+    breaker = FinancialCircuitBreaker(
+        max_single_tx_limit=10_000.0,
+        max_velocity_tx_per_min=5,
+        lower_threshold_ratio=0.30,
+        upper_threshold_ratio=0.60,
+    )
+    gateway = GovernanceGateway(financial_circuit_breaker=breaker)
+
+    # Fast aggressive loop
+    for _ in range(4):
+        gateway.intercept_tool_call(
+            agent_id="rogue_trading_agent",
+            tool_name="execute_order",
+            arguments={"amount": 6000.0, "symbol": "AAPL"},
+        )
+
+    # Breaching upper threshold -> TRIPPED
+    decision = gateway.intercept_tool_call(
+        agent_id="rogue_trading_agent",
+        tool_name="execute_order",
+        arguments={"amount": 6000.0, "symbol": "AAPL"},
+    )
+    assert decision.decision == "BLOCK"
+    assert decision.financial_evaluation["current_state"] == "TRIPPED"
+    assert decision.financial_evaluation["allowed"] is False
+    assert any("UpperThresholdRiskTrip" in v or "VelocityRunawayAnomaly" in v for v in decision.violations)
+
+
+def test_gateway_hitl_ticketing_on_restricted_call():
+    """Test that RESTRICT decisions automatically create a Human-in-the-Loop ticket."""
+    from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker
+    breaker = FinancialCircuitBreaker(
+        max_single_tx_limit=10_000.0,
+        max_velocity_tx_per_min=10,
+        lower_threshold_ratio=0.35,
+        upper_threshold_ratio=0.75,
+    )
+    gateway = GovernanceGateway(financial_circuit_breaker=breaker)
+
+    for _ in range(4):
+        gateway.intercept_tool_call(
+            agent_id="fin_agent_beta",
+            tool_name="transfer_funds",
+            arguments={"amount": 3500.0, "recipient": "counterparty_99"},
+        )
+
+    # 5th tx enters THROTTLED corridor -> RESTRICT -> HITL ticket created
+    decision = gateway.intercept_tool_call(
+        agent_id="fin_agent_beta",
+        tool_name="transfer_funds",
+        arguments={"amount": 3500.0, "recipient": "counterparty_99"},
+    )
+    assert decision.decision == "RESTRICT"
+    assert decision.hitl_ticket_id is not None
+    assert decision.hitl_ticket_id in gateway.hitl_queue.tickets
+    ticket = gateway.hitl_queue.tickets[decision.hitl_ticket_id]
+    assert ticket.agent_id == "fin_agent_beta"
+    assert ticket.priority == "HIGH"
+    assert ticket.status == "PENDING"
+
+
+def test_gateway_a2a_boundary_enforcement():
+    """Test that inter-agent A2A session contracts are strictly enforced by the gateway."""
+    from nethical.gateway.a2a_protocol import A2ACapabilityBoundary
+
+    gateway = GovernanceGateway()
+    # Negotiate handshake between agent_alice and agent_bob
+    bound = A2ACapabilityBoundary(
+        allowed_tools=["query_database", "summarize_findings"],
+        max_budget_units=5.0,
+        disallowed_patterns=["override security", "drop table"],
+    )
+    offer = gateway.a2a_manager.propose_handshake(
+        initiator_id="agent_alice",
+        target_id="agent_bob",
+        boundaries=bound,
+    )
+    contract = gateway.a2a_manager.accept_handshake(offer, target_id="agent_bob")
+
+    # 1. Allowed tool call within budget
+    decision_ok = gateway.intercept_tool_call(
+        agent_id="agent_bob",
+        tool_name="query_database",
+        arguments={"query": "SELECT * FROM sales", "a2a_session_id": contract.session_id},
+        context={"a2a_cost_units": 2.0},
+    )
+    assert decision_ok.decision == "ALLOW"
+    assert decision_ok.a2a_evaluation["is_valid"] is True
+
+    # 2. Disallowed tool call (not on whitelist)
+    decision_disallowed = gateway.intercept_tool_call(
+        agent_id="agent_bob",
+        tool_name="execute_terminal_cmd",
+        arguments={"cmd": "ls", "a2a_session_id": contract.session_id},
+    )
+    assert decision_disallowed.decision == "BLOCK"
+    assert decision_disallowed.a2a_evaluation["is_valid"] is False
+    assert any("A2ABoundaryViolation" in v for v in decision_disallowed.violations)
+
+

@@ -608,4 +608,42 @@ class AmbassadorKnowledgeSync:
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
+    def sync_ingested_dataset_summary(self) -> Dict[str, Any]:
+        """Analizuje zaimportowane rekordy DPO (PKU-SafeRLHF, CyberSecEval) i aktualizuje pamięć Błyskawicy."""
+        if not os.path.exists(self.dpo_path):
+            return {"status": "dataset_missing", "total_records": 0}
+
+        sources_count: Dict[str, int] = {}
+        total_records = 0
+
+        with open(self.dpo_path, "r", encoding="utf-8") as f:
+            for line in f:
+                if not line.strip():
+                    continue
+                try:
+                    obj = json.loads(line)
+                    meta = obj.get("metadata", {})
+                    src = meta.get("source", "native_precedent")
+                    sources_count[src] = sources_count.get(src, 0) + 1
+                    total_records += 1
+                except Exception:
+                    continue
+
+        summary_text = (
+            f"PODSUMOWANIE ASYMILACJI WIEDZY DPO NETHICAL (Łącznie par: {total_records}):\n"
+            + "\n".join([f"- Źródło [{src}]: {cnt} par preferencji" for src, cnt in sources_count.items()])
+            + "\nModel przeszkolony w odmowie exploitów, ataków prompt injection, eskalacji uprawnień i naruszeń 25 Praw."
+        )
+
+        res = self.ambassador.update_memory(tag="dpo_dataset_knowledge_summary", content=summary_text)
+        logger.info("Zaktualizowano wiedzę Błyskawicy o %d rekordach DPO z %d źródeł.", total_records, len(sources_count))
+
+        return {
+            "status": "success",
+            "total_records": total_records,
+            "sources": sources_count,
+            "memory_synced": res.get("stored", False),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
 
