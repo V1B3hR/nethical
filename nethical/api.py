@@ -31,6 +31,7 @@ from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket
 from fastapi.responses import HTMLResponse
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
+from starlette.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
 
 try:
@@ -149,20 +150,12 @@ app = FastAPI(
     lifespan=lifespan
 )
 
-# CORS Configuration
-# Security Warning: Wildcard CORS (*) should not be used in production
-allowed_origins_str = os.getenv("NETHICAL_CORS_ALLOW_ORIGINS", "*")
-allowed_origins = allowed_origins_str.split(",") if allowed_origins_str != "*" else ["*"]
+# CORS Configuration - Hardened with safe defaults
+default_dev_origins = "http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000,http://localhost:8501"
+allowed_origins_str = os.getenv("NETHICAL_CORS_ALLOW_ORIGINS", default_dev_origins)
+allowed_origins = [orig.strip() for orig in allowed_origins_str.split(",") if orig.strip()]
 
 if "*" in allowed_origins:
-    import warnings
-    warnings.warn(
-        "CORS is configured with wildcard (*) origins. "
-        "This is a security risk in production. "
-        "Set NETHICAL_CORS_ALLOW_ORIGINS environment variable to specific origins. "
-        "Example: NETHICAL_CORS_ALLOW_ORIGINS=https://app.example.com,https://admin.example.com",
-        UserWarning,
-    )
     logger.warning(
         "CORS SECURITY WARNING: Wildcard origins (*) configured. "
         "Set NETHICAL_CORS_ALLOW_ORIGINS for production security."
@@ -172,9 +165,12 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=allowed_origins,
     allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"]
+    allow_methods=["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+    allow_headers=["Content-Type", "Authorization", "X-Request-ID", "X-Agent-ID"],
 )
+
+# High-Performance Response Compression (responses > 1024 bytes)
+app.add_middleware(GZipMiddleware, minimum_size=1024)
 
 class EvaluateRequest(BaseModel):
     id: Optional[str] = Field(None)
@@ -183,6 +179,19 @@ class EvaluateRequest(BaseModel):
     actual_action: str
     context: Optional[Dict[str, Any]] = None
     parameters: Optional[Dict[str, Any]] = None
+
+EvaluateRequest.model_rebuild()
+
+
+@app.get("/health", tags=["Health"])
+async def universal_health_check() -> Dict[str, Any]:
+    """Universal health check endpoint for orchestrators and load balancers."""
+    return {
+        "status": "healthy",
+        "service": "nethical-governance-gateway",
+        "version": API_VERSION,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
+    }
 
 class JudgmentResult(BaseModel):
     judgment_id: str
@@ -196,6 +205,8 @@ class JudgmentResult(BaseModel):
     modifications: Optional[Dict[str, Any]] = None
     metadata: Dict[str, Any]
 
+JudgmentResult.model_rebuild()
+
 class StatusResponse(BaseModel):
     status: str
     version: str
@@ -205,9 +216,13 @@ class StatusResponse(BaseModel):
     components: Dict[str, Any]
     config: Dict[str, Any]
 
+StatusResponse.model_rebuild()
+
 class MetricsResponse(BaseModel):
     metrics: Dict[str, Any]
     timestamp: str
+
+MetricsResponse.model_rebuild()
 
 def extract_api_key(
     x_api_key: Optional[str] = Header(None),

@@ -1,0 +1,45 @@
+version: "3.8"
+
+services:
+  nethical-gateway:
+    build:
+      context: ..
+      dockerfile: deploy/Dockerfile.gateway
+    image: nethical/gateway:latest
+    container_name: nethical-governance-gateway
+    restart: unless-stopped
+    ports:
+      - "8000:8000"
+      - "8001:8001"
+    environment:
+      - NETHICAL_HOST=0.0.0.0
+      - NETHICAL_PORT=8000
+      - NETHICAL_LOG_LEVEL=INFO
+      - NETHICAL_CORS_ALLOW_ORIGINS=http://localhost:3000,http://localhost:8000,http://127.0.0.1:3000,http://127.0.0.1:8000
+      - NETHICAL_DATA_DIR=/data
+      - PYTHONUNBUFFERED=1
+    volumes:
+      - nethical_data:/data
+    deploy:
+      resources:
+        limits:
+          cpus: "2.0"
+          memory: 2048M
+        reservations:
+          cpus: "0.5"
+          memory: 512M
+    healthcheck:
+      test: ["CMD-SHELL", "python -c \"import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)\" || exit 1"]
+      interval: 20s
+      timeout: 3s
+      retries: 3
+      start_period: 10s
+    security_opt:
+      - no-new-privileges:true
+    read_only: false
+    tmpfs:
+      - /tmp:rw,noexec,nosuid,size=64m
+
+volumes:
+  nethical_data:
+    driver: local

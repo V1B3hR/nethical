@@ -12,6 +12,13 @@ Technology: NATS JetStream (primary) / Kafka (alternative)
 from .nats_client import NATSClient, NATSConfig
 from .policy_subscriber import PolicySubscriber, PolicyUpdate
 from .event_publisher import EventPublisher, StreamEvent
+from .event_stream_manager import (
+    EventStreamManager,
+    StreamBackend,
+    BackpressureStrategy,
+    TelemetryEvent,
+    get_stream_manager,
+)
 
 __all__ = [
     "NATSClient",
@@ -20,4 +27,9 @@ __all__ = [
     "PolicyUpdate",
     "EventPublisher",
     "StreamEvent",
+    "EventStreamManager",
+    "StreamBackend",
+    "BackpressureStrategy",
+    "TelemetryEvent",
+    "get_stream_manager",
 ]

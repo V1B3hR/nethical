@@ -1,0 +1,71 @@
+# ==============================================================================
+# Hardened OCI Container for Nethical Governance Gateway & MCP Proxy
+# Standard: CIS Docker Benchmark, OpenSSF Best Practices, non-root execution
+# ==============================================================================
+
+# Stage 1: Build & Dependencies
+FROM python:3.12-slim-bookworm AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    g++ \
+    libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt pyproject.toml setup.py ./
+RUN pip install --upgrade pip && \
+    pip install --user --no-cache-dir -r requirements.txt
+
+# Stage 2: Hardened Minimal Production Runtime
+FROM python:3.12-slim-bookworm AS runner
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/home/nethical/.local/bin:$PATH" \
+    NETHICAL_DATA_DIR="/data" \
+    NETHICAL_HOST="0.0.0.0" \
+    NETHICAL_PORT="8000"
+
+# Upgrade system packages for CVE compliance & create unprivileged runtime user
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && \
+    rm -rf /var/lib/apt/lists/* && \
+    useradd -m -u 1000 -s /sbin/nologin nethical && \
+    mkdir -p /app /data /data/merkle /data/audit && \
+    chown -R nethical:nethical /app /data
+
+WORKDIR /app
+
+# Copy compiled python user dependencies from builder stage
+COPY --from=builder --chown=nethical:nethical /root/.local /home/nethical/.local
+
+# Copy application source
+COPY --chown=nethical:nethical . /app
+
+# Install local package in editable mode as non-root user
+USER nethical
+RUN pip install --user --no-cache-dir -e .
+
+# Network Ports: 8000 (Gateway REST / WebSockets), 8001 (MCP Proxy SSE)
+EXPOSE 8000 8001
+
+# Persistent volumes for Merkle-DAG ledgers and audit records
+VOLUME ["/data"]
+
+# Resilient healthcheck using stdlib urllib to eliminate external binary dependencies
+HEALTHCHECK --interval=20s --timeout=3s --start-period=15s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health', timeout=2)" || exit 1
+
+# Graceful termination
+STOPSIGNAL SIGTERM
+
+# Run Nethical Gateway server
+CMD ["python", "-m", "uvicorn", "nethical.api:app", "--host", "0.0.0.0", "--port", "8000", "--workers", "1"]

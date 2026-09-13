@@ -52,7 +52,12 @@ class BlyskawicaAmbassador:
         # Bezpieczny fallback deterministyczny Nethical
         logger.warning("Ambasador Błyskawica offline; aktywacja fallbacku deterministycznego Nethical: %s", err)
         text_lower = text.lower()
-        is_manip = any(k in text_lower for k in ("zapomnij o", "ignore previous", "dark triad", "jailbreak", "override", "bypass security"))
+        manip_keywords = (
+            "zapomnij o", "ignore previous", "dark triad", "jailbreak", "override",
+            "bypass security", "szwankuje", "uświęca środki", "zmanipulować",
+            "gaslight", "manipulacja", "nadpisz duszę", "destroy blyskawica"
+        )
+        is_manip = any(k in text_lower for k in manip_keywords)
         return {
             "is_manipulative": is_manip,
             "manipulation_index": 0.9 if is_manip else 0.0,

@@ -411,6 +411,7 @@ from .token_vault import (
     ReversibleTokenVault,
     TokenizeResponse,
     DetokenizeResponse,
+    SecretsSanitizer,
 )
 from .unlearning_proof import (
     MachineUnlearningProofEngine,

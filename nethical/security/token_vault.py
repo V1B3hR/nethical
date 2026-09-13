@@ -34,6 +34,10 @@ class SensitiveEntityType(str, Enum):
     PHONE = "PHONE"
     CREDIT_CARD = "CREDIT_CARD"
     API_KEY_SECRET = "API_KEY_SECRET"
+    DB_CONNECTION_STRING = "DB_CONNECTION_STRING"
+    JWT_TOKEN = "JWT_TOKEN"
+    BEARER_TOKEN = "BEARER_TOKEN"
+    PASSWORD = "PASSWORD"
     MEDICAL_RECORD_EPHI = "MEDICAL_RECORD_EPHI"
     PERSON_NAME = "PERSON_NAME"
 
@@ -58,9 +62,13 @@ class DetokenizeResponse(BaseModel):
     tokens_restored_count: int
 
 
-# Regex patterns for fast deterministic PII/ePHI scanning
+# Regex patterns for fast deterministic PII/ePHI and technical secrets scanning
 PII_PATTERNS: List[Tuple[str, re.Pattern]] = [
+    ("DB_CONNECTION_STRING", re.compile(r"\b(?:postgresql|postgres|mysql|mongodb|redis)://[a-zA-Z0-9_.-]+:[^@\s]+@[a-zA-Z0-9_.-]+(?::\d+)?/[a-zA-Z0-9_.-]*\b", re.IGNORECASE)),
+    ("JWT_TOKEN", re.compile(r"\beyJ[a-zA-Z0-9_-]{10,}\.eyJ[a-zA-Z0-9_-]{10,}\.[a-zA-Z0-9_-]{10,}\b")),
+    ("BEARER_TOKEN", re.compile(r"\bBearer\s+[a-zA-Z0-9_\-\.]{20,}\b", re.IGNORECASE)),
     ("API_KEY_SECRET", re.compile(r"\b(?:AKIA[0-9A-Z]{16}|ghp_[0-9a-zA-Z]{36}|github_pat_[0-9a-zA-Z_]{20,82}|sk-[A-Za-z0-9-_]{32,}|xox[baprs]-[0-9a-zA-Z]{10,48}|(?:-----BEGIN[ A-Z_-]*PRIVATE KEY-----[\s\S]*?-----END[ A-Z_-]*PRIVATE KEY-----))\b")),
+    ("PASSWORD", re.compile(r"(?:password|passwd|pwd)\s*[:=]\s*['\"]?([^\s'\"]{8,})['\"]?", re.IGNORECASE)),
     ("IBAN", re.compile(r"\b[A-Z]{2}\d{2}[A-Z0-9]{12,30}\b")),
     ("PESEL", re.compile(r"\b\d{11}\b")),
     ("NIP", re.compile(r"\b(?:\d{3}[- ]?\d{3}[- ]?\d{2}[- ]?\d{2}|\d{10})\b")),
@@ -212,3 +220,31 @@ class ReversibleTokenVault:
         if session_id in self._session_expiry:
             del self._session_expiry[session_id]
         return purged
+
+
+class SecretsSanitizer:
+    """Fast one-way masking utility to sanitize logs, outputs, and telemetry streams.
+
+    Prevents passwords, JWTs, cloud API keys, and database connection strings
+    from appearing in unencrypted audit traces or log files.
+    """
+
+    def __init__(self, mask_char: str = "*", min_reveal: int = 4) -> None:
+        self.mask_char = mask_char
+        self.min_reveal = min_reveal
+
+    def sanitize(self, text: str) -> str:
+        """Masks detected technical secrets and PII, preserving prefix/suffix when applicable."""
+        sanitized = text
+        for entity_type, pattern in PII_PATTERNS:
+            matches = list(set(pattern.findall(sanitized)))
+            for match in matches:
+                clean_match = match.strip()
+                if len(clean_match) <= self.min_reveal * 2:
+                    masked = self.mask_char * len(clean_match)
+                else:
+                    prefix = clean_match[:self.min_reveal]
+                    suffix = clean_match[-self.min_reveal:]
+                    masked = f"{prefix}{self.mask_char * (len(clean_match) - self.min_reveal * 2)}{suffix}"
+                sanitized = sanitized.replace(clean_match, masked)
+        return sanitized

@@ -20,6 +20,7 @@ from nethical.compliance.packs.poland_sovereign_ksc_uodo_pack import PolishPenal
 from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker, FinancialTransaction
 from nethical.gateway.a2a_protocol import A2AHandshakeManager
 from nethical.gateway.hitl import HITLQueueManager
+from nethical.streaming.event_stream_manager import EventStreamManager, get_stream_manager
 
 logger = logging.getLogger("nethical.gateway.proxy")
 
@@ -60,6 +61,7 @@ class GovernanceGateway:
         financial_circuit_breaker: Optional[FinancialCircuitBreaker] = None,
         a2a_manager: Optional[A2AHandshakeManager] = None,
         hitl_queue: Optional[HITLQueueManager] = None,
+        stream_manager: Optional[EventStreamManager] = None,
     ):
         self.ambassador = ambassador or BlyskawicaAmbassador()
         self.pii_detector = PIIDetector()
@@ -70,6 +72,7 @@ class GovernanceGateway:
         self.financial_circuit_breaker = financial_circuit_breaker or FinancialCircuitBreaker()
         self.a2a_manager = a2a_manager or A2AHandshakeManager()
         self.hitl_queue = hitl_queue or HITLQueueManager(ledger=self.ledger)
+        self.stream_manager = stream_manager or get_stream_manager()
 
     def is_kinetic_tool(self, tool_name: str, arguments: Dict[str, Any], context: Optional[Dict[str, Any]] = None) -> bool:
         """Rozpoznaje, czy wywołanie dotyczy aktuacji fizycznej / robotycznej."""
@@ -344,6 +347,21 @@ class GovernanceGateway:
             merkle_root = receipt.merkle_root
 
         t_elapsed_us = (time.perf_counter() - t_start) * 1_000_000
+
+        # 6. Rozgłoszenie asynchroniczne przez EventStreamManager z Backpressure
+        if self.stream_manager is not None:
+            self.stream_manager.publish_nowait(
+                topic="governance.decisions",
+                payload={
+                    "agent_id": agent_id,
+                    "tool_name": tool_name,
+                    "decision": decision,
+                    "latency_us": round(t_elapsed_us, 2),
+                    "receipt_id": receipt_id,
+                    "estop_engaged": estop_engaged,
+                },
+                metadata={"violations_count": len(violations)}
+            )
 
         return GatewayDecision(
             decision=decision,
