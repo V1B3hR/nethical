@@ -69,7 +69,7 @@ def AgentAction(
     return agent_action
 
 
-__version__ = "0.1.0"
+__version__ = "2.7.0"
 
 # Import vector API components
 from .api.vector_api import Nethical, Agent, EvaluationResult, create_nethical

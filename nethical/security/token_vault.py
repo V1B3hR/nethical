@@ -91,10 +91,46 @@ class ReversibleTokenVault:
         self.aesgcm = AESGCM(self.master_key)
         self.ttl = timedelta(minutes=session_ttl_minutes)
 
+        # Historical keys for smooth rotation
+        self._historical_keys: Dict[str, bytes] = {}
+
         # In-memory secure encrypted storage:
         # session_id -> { token: (nonce, ciphertext) }
         self._vault: Dict[str, Dict[str, Tuple[bytes, bytes]]] = {}
         self._session_expiry: Dict[str, datetime] = {}
+
+    @property
+    def current_key_sha256(self) -> str:
+        """SHA-256 fingerprint of the current master key."""
+        return hashlib.sha256(self.master_key).hexdigest()
+
+    def rotate_key(self, new_key: Optional[bytes] = None) -> str:
+        """Rotate master AES-256-GCM encryption key and re-encrypt active vault records."""
+        old_sha = self.current_key_sha256
+        old_key = self.master_key
+        self._historical_keys[old_sha] = old_key
+
+        new_master = new_key or secrets.token_bytes(32)
+        new_aesgcm = AESGCM(new_master)
+
+        # Re-encrypt all active records under new key
+        for session_id, tokens in list(self._vault.items()):
+            re_encrypted_tokens: Dict[str, Tuple[bytes, bytes]] = {}
+            for token, (nonce, ciphertext) in tokens.items():
+                try:
+                    decrypted = self.aesgcm.decrypt(nonce, ciphertext, session_id.encode("utf-8"))
+                    new_nonce = secrets.token_bytes(12)
+                    new_ct = new_aesgcm.encrypt(new_nonce, decrypted, session_id.encode("utf-8"))
+                    re_encrypted_tokens[token] = (new_nonce, new_ct)
+                except Exception:
+                    # Keep existing if decrypt fails
+                    re_encrypted_tokens[token] = (nonce, ciphertext)
+            self._vault[session_id] = re_encrypted_tokens
+
+        self.master_key = new_master
+        self.aesgcm = new_aesgcm
+        logger.info(f"TokenVault master key rotated from {old_sha[:8]} to {self.current_key_sha256[:8]}")
+        return self.current_key_sha256
 
     def _generate_token(self, entity_type: str, original_val: str, session_id: str) -> str:
         """Generates a stable, collision-free synthetic token for the session."""

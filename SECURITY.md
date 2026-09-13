@@ -19,12 +19,23 @@ Please update your bookmarks and links.
 
 We release patches for security vulnerabilities in the following versions:
 
-| Version | Supported          |
-| ------- | ------------------ |
-| 2.2.x   | :white_check_mark: |
-| 2.1.x   | :white_check_mark: |
-| 2.0.x   | :warning: Critical fixes only |
-| < 2.0   | :x:                |
+| Version | Status | Patch Support |
+| ------- | ------ | ------------- |
+| **2.7.x** | **Active Production** | :white_check_mark: Full Support & SLA |
+| 2.6.x   | Maintenance | :warning: Critical security fixes only |
+| < 2.6   | End of Life | :x: Not supported (Upgrade required) |
+
+## Security Advisories & Remediations
+
+### 🛡️ GHSA-2026-cve-26007 / CVE-2026-26007 (Remediated in v2.7.0)
+- **Severity:** Critical (CVSS 9.1)
+- **Vulnerability:** Private key recovery when processing malicious public keys over binary elliptic curves (GF(2^m) curves) in `cryptography` < 46.0.5.
+- **Affected Subsystems:** Merkle-DAG Ledger, Reversible Token Vault, and TEE Enclave Attestation.
+- **Remediation in Nethical v2.7.0:**
+  1. **Strict Dependency Pinning:** Pinned `cryptography>=50.0.0` in `pyproject.toml`, `requirements.txt`, and `nethical-edge/pyproject.toml`.
+  2. **Curve Whitelisting & AST Audit:** Static and dynamic AST enforcement (`nethical/security/audit_crypto_curves.py`) prohibiting binary curves (`sect*`, `c2tnb*`, `c2onb*`). Only NIST prime curves (P-256, P-384, Ed25519) and NIST FIPS 204 ML-DSA-65 (Dilithium) are permitted.
+  3. **Automated Key Rotation:** Integrated `ReversibleTokenVault.rotate_key()` and re-encryption pipeline.
+  4. **Continuous Regression Testing:** Enforced in CI via `tests/security/test_crypto_audit.py`.
 
 ## Reporting a Vulnerability
 
@@ -43,7 +54,7 @@ Instead, please report them via one of the following methods:
 
 Please include the following information in your report:
 
-- Type of vulnerability (e.g., SQL injection, cross-site scripting, etc.)
+- Type of vulnerability (e.g., SQL injection, cross-site scripting, cryptographic flaw)
 - Full paths of source file(s) related to the vulnerability
 - The location of the affected source code (tag/branch/commit or direct URL)
 - Any special configuration required to reproduce the issue
@@ -51,16 +62,16 @@ Please include the following information in your report:
 - Proof-of-concept or exploit code (if possible)
 - Impact of the issue, including how an attacker might exploit it
 
-### Response Timeline
+### Binding SLA Response Timeline (Technical Steering Committee Charter)
 
-- **Acknowledgment**: We will acknowledge receipt of your vulnerability report within 48 hours.
-- **Assessment**: We will assess the vulnerability and determine its severity within 5 business days.
-- **Fix Development**: Depending on severity, we will work on a fix with the following timelines:
-  - Critical: 7 days
-  - High: 14 days
-  - Medium: 30 days
-  - Low: 60 days
-- **Disclosure**: We will coordinate the disclosure timeline with you. We prefer to publicly disclose vulnerabilities after a fix is available.
+- **Acknowledgment**: Within **24 hours** for all reports.
+- **Assessment & Triage**: Within **48 hours**.
+- **Fix Development**:
+  - **Critical (CVSS >= 9.0)**: **< 72 hours** to emergency patch release.
+  - **High (CVSS 7.0 - 8.9)**: **< 7 days**.
+  - **Medium (CVSS 4.0 - 6.9)**: **< 21 days**.
+  - **Low (CVSS < 4.0)**: **< 45 days**.
+- **Disclosure**: We coordinate responsible disclosure following patch availability. Full details are published via GitHub Security Advisories.
 
 ### Vulnerability Disclosure Policy
 

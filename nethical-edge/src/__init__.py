@@ -41,7 +41,7 @@ from nethical.sync import (
     AntiEntropyProtocol,
 )
 
-__version__ = "2.3.0"
+__version__ = "2.7.0"
 __all__ = [
     # Core
     "EdgeGovernor",

@@ -24,7 +24,7 @@ except ImportError:
 
 
 @click.group()
-@click.version_option(version="2.3.0", prog_name="nethical")
+@click.version_option(version="2.7.0", prog_name="nethical")
 def cli() -> None:
     """Nethical CLI - AI Safety Governance Platform."""
     pass
@@ -50,7 +50,7 @@ def init(config_dir: str, force: bool) -> None:
 
     # Default configuration
     default_config = {
-        "version": "2.3.0",
+        "version": "2.7.0",
         "governance": {
             "enable_semantic_monitoring": True,
             "enable_adversarial_detection": True,
@@ -487,8 +487,83 @@ def cli_benchmark(suite: str) -> None:
         asyncio.run(run_default_benchmarks())
 
 
-def main() -> None:
+@cli.group("security")
+def cli_security() -> None:
+    """Zarządzanie bezpieczeństwem, kryptografią i audytem podatności CVE."""
+    pass
 
+
+@cli_security.command("audit-crypto")
+@click.option("--output", default=None, help="Ścieżka do zapisu raportu audytowego JSON")
+def cli_audit_crypto(output: Optional[str]) -> None:
+    """Wykonaj pełny audyt kryptograficzny, weryfikację CVE-2026-26007 i skan krzywych binarnych."""
+    from nethical.security.audit_crypto_curves import run_comprehensive_crypto_audit
+
+    click.echo("\n" + "=" * 76)
+    click.echo("🔒 NETHICAL CRYPTO AUDIT & CVE-2026-26007 VERIFICATION 🔒")
+    click.echo("=" * 76)
+    report = run_comprehensive_crypto_audit()
+    click.echo(f"  Status wersji cryptography: {report['version_status']}")
+    click.echo(f"  Wersja zainstalowana:        {report['cryptography_version']}")
+    click.echo(f"  Podatność CVE-2026-26007:   {'NAPRAWIONA / BEZPIECZNA (>= 46.0.5)' if report['cryptography_version_safe'] else 'WYKRYTO PODATNOŚĆ'}")
+    click.echo(f"  Zeskanowane pliki Python:   {report['scanned_python_files']}")
+    click.echo(f"  Krzywe binarne (sect*):     {report['prohibited_curves_in_codebase']} (wymagane: 0)")
+    click.echo(f"  Rotacja klucza TokenVault:  {report['token_vault_rotation_test']['status']} ({report['token_vault_rotation_test']['algorithm']})")
+    click.echo(f"  Standard kryptograficzny:   {report['certified_compliance']}")
+    click.echo("-" * 76)
+    if report["audit_passed"]:
+        click.echo("✅ AUDYT ZAKOŃCZONY SUKCESEM: Kod wolny od podatności CVE-2026-26007.")
+    else:
+        click.echo("❌ AUDYT ZAKOŃCZONY BŁĘDEM: Wykryto naruszenia bezpieczeństwa kryptograficznego!")
+    click.echo("=" * 76 + "\n")
+
+    if output:
+        with open(output, "w", encoding="utf-8") as f:
+            json.dump(report, f, indent=2, ensure_ascii=False)
+        click.echo(f"📁 Zapisano szczegółowy raport do: {output}")
+
+
+@cli.group("compliance")
+def cli_compliance() -> None:
+    """Zarządzanie certyfikacją i pakietami zgodności regulacyjnej."""
+    pass
+
+
+@cli_compliance.command("generate-dossier")
+@click.option("--standard", default="ISO_IEC_42001_AIMS", help="Standard certyfikacji (np. ISO_IEC_42001_AIMS, SOC_2_TYPE_II, NATO_DEFENSE_AI)")
+@click.option("--output", default=None, help="Ścieżka do zapisu wygenerowanego dossier JSON")
+def cli_generate_dossier(standard: str, output: Optional[str]) -> None:
+    """Wygeneruj poświadczone kryptograficznie dossier certyfikacyjne z podpisem ML-DSA-65."""
+    from nethical.compliance.automated_certification_hub import AutomatedCertificationHub, CertificationStandard
+
+    try:
+        std_enum = CertificationStandard(standard)
+    except ValueError:
+        click.echo(f"Nieznany standard '{standard}'. Dostępne standardy: {[s.value for s in CertificationStandard]}")
+        return
+
+    hub = AutomatedCertificationHub()
+    pkg = hub.generate_evidence_package(std_enum)
+
+    click.echo("\n" + "=" * 76)
+    click.echo(f"📜 NETHICAL COMPLIANCE EVIDENCE PACKAGE: {pkg.standard.value} 📜")
+    click.echo("=" * 76)
+    click.echo(f"  Package ID:          {pkg.package_id}")
+    click.echo(f"  Status gotowości:    {pkg.status} (Score: {pkg.readiness_score * 100:.1f}%)")
+    click.echo(f"  Merkle DAG Root:     {pkg.merkle_anchor_root[:32]}...")
+    click.echo(f"  Podpis PQC FIPS 204: {pkg.pqc_signature[:32]}... (ML-DSA-65)")
+    click.echo(f"  Signer Key ID:       {pkg.signer_key_id}")
+    click.echo("-" * 76)
+    click.echo("✅ Paczka dowodowa gotowa do przedłożenia jednostce akredytowanej / audytorowi.")
+    click.echo("=" * 76 + "\n")
+
+    if output:
+        with open(output, "w", encoding="utf-8") as f:
+            json.dump(pkg.model_dump(), f, indent=2, ensure_ascii=False)
+        click.echo(f"📁 Zapisano dossier do: {output}")
+
+
+def main() -> None:
     """Entry point for the CLI."""
     cli()
 

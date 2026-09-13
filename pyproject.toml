@@ -2,8 +2,8 @@
 
 [project]
 name = "nethical"
-version = "2.3.0"
-description = "Safety, ethics and more"
+version = "2.7.0"
+description = "Sovereign AI Safety, Ethics and Enterprise Governance Platform"
 requires-python = ">=3.10"
 
 dependencies = [
@@ -11,8 +11,9 @@ dependencies = [
     "scikit-learn>=1.3.0",
     "scipy>=1.11.0",
     "pydantic>=2.6.1",
-    "fastapi>=0.110.0",
+    "fastapi>=0.121.0",
     "uvicorn[standard]>=0.27.0",
+    "cryptography>=50.0.0",
     "cachetools>=5.0.0",
     "sentence-transformers>=2.2.0",
     "click>=8.0.0",

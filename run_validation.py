@@ -162,6 +162,7 @@ class ValidationRunner:
             "sectoral_governance_packs": "tests/test_sectoral_governance_packs.py",
             "openai_dropin_proxy": "tests/test_openai_dropin_proxy.py",
             "edge_autonomous_governor": "tests/edge/test_local_governor.py",
+            "crypto_audit_and_cve_remediation": "tests/security/test_crypto_audit.py",
         }
 
 

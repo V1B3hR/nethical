@@ -2198,3 +2198,38 @@ async def list_openai_models() -> Dict[str, Any]:
     return await openai_proxy_instance.handle_list_models()
 
 
+class GenerateDossierRequest(BaseModel):
+    standard: str = Field(default="ISO_IEC_42001_AIMS", description="Nazwa standardu certyfikacyjnego")
+    metadata: Optional[Dict[str, Any]] = Field(default_factory=dict)
+
+GenerateDossierRequest.model_rebuild()
+
+
+@app.get("/api/v1/compliance/certifications", tags=["Compliance"])
+async def get_compliance_certifications() -> Dict[str, Any]:
+    """Zwraca listę 12 obsługiwanych standardów certyfikacji z procedurami akredytacji."""
+    return {"certifications": certification_hub_instance.list_available_certifications()}
+
+
+@app.post("/api/v1/compliance/generate-dossier", tags=["Compliance"])
+async def post_generate_compliance_dossier(payload: GenerateDossierRequest) -> Dict[str, Any]:
+    """Generuje poświadczoną kryptograficznie paczkę dowodową z podpisem ML-DSA-65."""
+    try:
+        std = CertificationStandard(payload.standard)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Nieznany standard '{payload.standard}'. Dozwolone: {[s.value for s in CertificationStandard]}",
+        )
+    pkg = certification_hub_instance.generate_evidence_package(std, payload.metadata)
+    return pkg.model_dump()
+
+
+@app.get("/api/v1/security/crypto-audit", tags=["Security"])
+async def get_security_crypto_audit() -> Dict[str, Any]:
+    """Wykonuje w czasie rzeczywistym pełny audyt kryptograficzny i weryfikację CVE-2026-26007."""
+    from nethical.security.audit_crypto_curves import run_comprehensive_crypto_audit
+    return run_comprehensive_crypto_audit()
+
+
+

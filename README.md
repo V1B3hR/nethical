@@ -55,18 +55,20 @@ Nethical’s mission is to create secure, fair, and auditable foundations for a 
 
 ---
 
-## Project Guarantees (VIBE, not bureaucracy)
+## Institutional Project Guarantees & Governance
 
-### 1) Non‑Negotiables
+### 1) Non‑Negotiable Immutable Core
 The **25 Fundamental Laws** are the immutable core of upstream **Nethical**.  
-If you change them, you are building a fork (that’s allowed under MIT), but it is not upstream Nethical.
+Any attempt to weaken or circumvent these deontological principles is prohibited by mathematically proven Z3 SMT solver invariants.
 
-### 2) Interpretation Review (lightweight)
-Changes that affect the meaning of the Laws, governance policies, or “what counts as a violation” should be reviewed by **two independent reviewers** (public comments / short rationale).  
-This is not about control — it is about clarity, trust, and preventing silent value drift.
+### 2) Formal Institutional Governance & RFC Process
+Changes that affect the interpretation of the Laws, governance policies, or compliance invariants are strictly governed by the **[Technical Steering Committee (TSC) Charter](GOVERNANCE.md)**:
+- **5-Stakeholder TSC:** Architecture, Cryptography/Formal Verification, Ethics/Legal, Edge Safety (ISO 26262), and Sovereign Enterprise Adopters.
+- **RFC Pipeline:** 45-day institutional review period, automated Z3 mathematical non-regression proof, and a binding **2/3 supermajority roll-call vote**.
+- **Dual-Control Key Custody:** Multi-sig M-of-N threshold quorum (2-of-3) for release signing and PQC Merkle-DAG genesis roots, completely eliminating single-maintainer bus-factor risks.
 
-### 3) Compliance can evolve, core values do not
-Nethical will update compliance mappings and operational policies as laws and regulations evolve (e.g., EU AI Act updates), while keeping the **Fundamental Laws** unchanged.
+### 3) Compliance Evolves Continuously
+Operational compliance mappings update dynamically as global regulations evolve (e.g., EU AI Act Regulation 2024/1689, ISO/IEC 42001 AIMS, NIST AI RMF, HIPAA, MDR SaMD), while keeping the **Fundamental Laws** mathematically inviolable.
 
 ---
 

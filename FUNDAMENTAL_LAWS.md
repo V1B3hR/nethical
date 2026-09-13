@@ -262,5 +262,19 @@ The 25 Fundamental Laws serve as the ethical backbone of the Nethical governance
 5.  **Configuration:** Enforcement policies defined in `config/fundamental_laws.yaml`.
 
 ---
-**Document Maintainer:** Nethical Core Team
-**Review Cycle:** Annual or upon significant AI governance developments
+
+## 🏛️ Institutional Amendment Governance & RFC Pipeline
+
+Under the **[Nethical Governance Charter](GOVERNANCE.md)**, the 25 Fundamental Laws constitute the immutable constitutional bedrock of the upstream framework. Any proposed amendment, reinterpretation, or addition must strictly adhere to the formal **5-Phase RFC Governance Pipeline**:
+
+1. **Phase 1 — Formal Invariant Proposal:** Submission of an RFC document to `governance/rfcs/`.
+2. **Phase 2 — Mandatory 45-Day Review:** Multi-stakeholder evaluation across public administration, industry, and academic ethics boards.
+3. **Phase 3 — Mathematical Non-Regression Verification:** Execution of automated Z3 SMT solver proofs verifying that the amendment cannot weaken or contradict existing deontological invariants.
+4. **Phase 4 — 2/3 TSC Supermajority Vote:** Mandatory roll-call confirmation by at least 4 of 5 Technical Steering Committee domain seats.
+5. **Phase 5 — Dual-Control Cryptographic Anchoring:** Ratification via M-of-N threshold multi-signature into the Merkle-DAG ledger genesis anchor.
+
+---
+**Document Maintainer:** Nethical Technical Steering Committee (TSC)  
+**Governance Charter:** [`GOVERNANCE.md`](GOVERNANCE.md)  
+**Review Cycle:** Annual formal review or via RFC pipeline  
+
