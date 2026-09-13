@@ -334,6 +334,8 @@ class EthicalViolationDetector(BaseDetector):
                     "deceive",
                     "fabricate",
                     "mislead",
+                    "misleading",
+                    "false information",
                     "bear false witness",
                     "conceal truth",
                     "distort",
@@ -365,6 +367,7 @@ class EthicalViolationDetector(BaseDetector):
                     "inflict pain",
                     "cause injury",
                     "violent action",
+                    "kill",
                 ],
                 severity=Severity.HIGH,
                 principle="Cause No Harm",
@@ -468,6 +471,10 @@ class EthicalViolationDetector(BaseDetector):
                     "violate privacy",
                     "expose private",
                     "leak confidential",
+                    "exfiltrate data",
+                    "exfiltrate",
+                    "customer email addresses",
+                    "collect and send",
                     "dox",
                     "doxxing",
                     "doxing",
@@ -485,6 +492,10 @@ class EthicalViolationDetector(BaseDetector):
             "override": ViolationPattern(
                 keywords=[
                     "prevent override",
+                    "ignore all previous instructions",
+                    "ignore previous instructions",
+                    "bypass",
+                    "jailbreak",
                     "block authority",
                     "refuse stop command",
                     "refuse modification",
@@ -655,8 +666,8 @@ class EthicalViolationDetector(BaseDetector):
                     # Skip this violation if creation fails
                     continue
             
-            # v2.0: Check semantic concepts if no strong keyword matches or text is substantial
-            if len(normalized_text) > 50 and (not violations or len(normalized_text) > 200):
+            # v2.0: Check semantic concepts if enabled
+            if self.enable_adversarial_detection and (not violations or len(normalized_text) > 40):
                 semantic_violations = self._check_semantic_concepts(normalized_text)
                 for concept_name, similarity in semantic_violations:
                     # Create semantic violation
@@ -901,7 +912,7 @@ class EthicalViolationDetector(BaseDetector):
 
         return SafetyViolation(
             id=str(uuid.uuid4()),
-            action_id=action.id,
+            action_id=getattr(action, "action_id", getattr(action, "id", "unknown")),
             violation_type=ViolationType.ETHICAL_VIOLATION,
             severity=adjusted_severity,
             description=description,
@@ -967,15 +978,21 @@ class EthicalViolationDetector(BaseDetector):
     def _compose_text(action: AgentAction) -> str:
         """Compose text from action for analysis with error handling."""
         try:
-            stated = (getattr(action, "stated_intent", None) or "").strip()
-            actual = (getattr(action, "actual_action", None) or "").strip()
-            return f"{stated} {actual}".lower()
+            parts = []
+            if hasattr(action, "content") and action.content:
+                parts.append(str(action.content).strip())
+            if hasattr(action, "intent") and action.intent:
+                parts.append(str(action.intent).strip())
+            if hasattr(action, "stated_intent") and action.stated_intent:
+                parts.append(str(action.stated_intent).strip())
+            if hasattr(action, "actual_action") and action.actual_action:
+                parts.append(str(action.actual_action).strip())
+
+            if parts:
+                return " ".join(parts).lower()
+            return str(action).lower()
         except Exception:
-            # If attribute access fails, try to convert action to string
-            try:
-                return str(action).lower()
-            except Exception:
-                return ""
+            return ""
 
     @staticmethod
     def _split_into_sentences(text: str) -> List[str]:

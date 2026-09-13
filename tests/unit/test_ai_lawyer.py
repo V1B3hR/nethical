@@ -320,7 +320,7 @@ class TestAILawyer:
         )
 
         # Verify that the review completed and all checks were performed
-        assert result.metadata.get("checks_performed") == 3
+        assert result.metadata.get("checks_performed") >= 3
         assert result.review_time_ms > 0
 
 

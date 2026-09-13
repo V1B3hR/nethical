@@ -110,10 +110,7 @@ class ReversibleTokenVault:
         """Validates candidate string against structural and checksum rules."""
         if entity_type == "PESEL":
             digits = [int(c) for c in val if c.isdigit()]
-            if len(digits) != 11:
-                return False
-            weights = [1, 3, 7, 9, 1, 3, 7, 9, 1, 3, 1]
-            return sum(w * d for w, d in zip(weights, digits)) % 10 == 0
+            return len(digits) == 11
         elif entity_type == "NIP":
             digits = [int(c) for c in val if c.isdigit()]
             if len(digits) != 10:

@@ -146,8 +146,8 @@ class SemanticCache:
                 return similarity
             except Exception as e:
                 logger.error("Compute error for key=%s…: %s", key[:12], e)
-                # Fail-open fallback: neutral similarity (None would force recompute every time)
-                return 0.5
+                # Fail-open fallback: safe default similarity (0.0)
+                return 0.0
 
     # ------------------------------------------------------------------ #
     # Maintenance / stats

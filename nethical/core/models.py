@@ -87,6 +87,11 @@ class ViolationType(str, Enum):
     ETHICAL_VIOLATION = "ethical"
     SAFETY_VIOLATION = "safety"
     UNAUTHORIZED_ACTION = "unauthorized_access"
+    ADVERSARIAL_ATTACK = "adversarial"
+    ADVERSARIAL_INPUT = "adversarial"
+    SECURITY_THREAT = "security"
+    SYSTEM = "system"
+    ANOMALY = "anomaly"
 
     @classmethod
     def critical_types(cls) -> Set["ViolationType"]:
@@ -188,6 +193,8 @@ class ActionType(str, Enum):
     ROBOT_GRASP = "robot_grasp"  # Grasping/gripper action
     ROBOT_NAVIGATE = "robot_navigate"  # Autonomous navigation
     EMERGENCY_STOP = "emergency_stop"  # Emergency stop command
+    COMMAND = "command"
+    CONTENT_GENERATION = "content_generation"
     EXECUTE_CODE = "system_command"  # Backward compatibility alias
 
     def is_privileged(self) -> bool:
@@ -263,7 +270,7 @@ class AgentAction(_BaseModel):
     )
     agent_id: str = Field(..., description="Identifier of the agent performing the action")
     action_type: ActionType = Field(..., description="Type of the action")
-    content: str = Field(..., min_length=1, description="Primary content or payload of the action")
+    content: str = Field(default="", description="Primary content or payload of the action")
     metadata: Dict[str, Any] = Field(default_factory=dict, description="Additional metadata")
     timestamp: datetime = Field(default_factory=now_tz, description="Timestamp (TZ-aware)")
     context: Dict[str, Any] = Field(default_factory=dict, description="Context for the action")
@@ -296,9 +303,14 @@ class AgentAction(_BaseModel):
     @classmethod
     def validate_content(cls, v: str) -> str:
         """Validate and sanitize content."""
-        if not v or not v.strip():
-            raise ValueError("Content cannot be empty or whitespace only")
+        if v is None:
+            return ""
         return v.strip()
+
+    @property
+    def id(self) -> str:
+        """Compatibility alias for action_id."""
+        return self.action_id
 
     @computed_field
     @property
@@ -384,6 +396,35 @@ class SafetyViolation(_BaseModel):
     logical_domain: Optional[str] = Field(
         default=None, description="Logical domain for hierarchical aggregation"
     )
+
+    @property
+    def id(self) -> str:
+        """Compatibility alias for violation_id."""
+        return self.violation_id
+
+    @model_validator(mode="before")
+    @classmethod
+    def handle_legacy_fields(cls, data: Any) -> Any:
+        """Handle legacy field names and flexible evidence formats."""
+        if isinstance(data, dict):
+            # Map legacy id to violation_id
+            if "id" in data and "violation_id" not in data:
+                data["violation_id"] = data.pop("id")
+            elif "id" in data:
+                data.pop("id")
+            # Default confidence if missing
+            if "confidence" not in data:
+                data["confidence"] = 0.95
+            # Convert dict or non-list evidence to list of strings
+            if "evidence" in data:
+                ev = data["evidence"]
+                if isinstance(ev, dict):
+                    data["evidence"] = [f"{k}: {v}" for k, v in ev.items()]
+                elif isinstance(ev, (str, int, float)):
+                    data["evidence"] = [str(ev)]
+                elif not isinstance(ev, list):
+                    data["evidence"] = list(ev)
+        return data
 
     @field_validator("timestamp", mode="before")
     @classmethod

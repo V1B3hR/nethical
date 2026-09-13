@@ -25,7 +25,7 @@ import warnings
 from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Callable, Dict, Optional, Tuple
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 import jwt
 
@@ -36,6 +36,10 @@ __all__ = [
     "AuthManager",
     "TokenExpiredError",
     "InvalidTokenError",
+    "AuthenticationError",
+    "get_auth_manager",
+    "set_auth_manager",
+    "authenticate_request",
 ]
 
 log = logging.getLogger(__name__)
@@ -47,6 +51,10 @@ class TokenExpiredError(Exception):
 
 class InvalidTokenError(Exception):
     """Raised when a token is invalid"""
+
+
+class AuthenticationError(Exception):
+    """Raised when authentication fails"""
 
 
 class TokenType(str, Enum):
@@ -64,7 +72,7 @@ class TokenPayload:
     token_type: TokenType
     issued_at: datetime
     expires_at: datetime
-    jti: str  # JWT ID for revocation tracking
+    jti: str = field(default_factory=lambda: secrets.token_hex(16))  # JWT ID for revocation tracking
     scope: Optional[str] = None
 
     def to_dict(self) -> dict:
@@ -73,9 +81,9 @@ class TokenPayload:
             "sub": self.user_id,
             "type": self.token_type.value,
             "iat": int(self.issued_at.timestamp()),
-            "exp":  int(self.expires_at. timestamp()),
-            "jti": self. jti,
-            "scope":  self.scope,
+            "exp": int(self.expires_at.timestamp()),
+            "jti": self.jti,
+            "scope": self.scope,
         }
 
     @classmethod
@@ -86,8 +94,8 @@ class TokenPayload:
             token_type=TokenType(data["type"]),
             issued_at=datetime.fromtimestamp(data["iat"], tz=timezone.utc),
             expires_at=datetime.fromtimestamp(data["exp"], tz=timezone.utc),
-            jti=data["jti"],
-            scope=data. get("scope"),
+            jti=data.get("jti", secrets.token_hex(16)),
+            scope=data.get("scope"),
         )
 
     def is_expired(self) -> bool:
@@ -96,27 +104,28 @@ class TokenPayload:
 
 
 @dataclass
-class APIKey:  
+class APIKey:
     """API Key metadata"""
 
     key_id: str
     key_hash: str
     name: str
     created_at: datetime
+    user_id: str = ""
     expires_at: Optional[datetime] = None
-    last_used_at:  Optional[datetime] = None
+    last_used_at: Optional[datetime] = None
     enabled: bool = True
 
     def is_expired(self) -> bool:
         if not self.expires_at:
             return False
-        return datetime.now(timezone. utc) > self.expires_at
+        return datetime.now(timezone.utc) > self.expires_at
 
     def is_valid(self) -> bool:
         return self.enabled and not self.is_expired()
 
 
-class AuthManager: 
+class AuthManager:
     """
     Authentication Manager with secure JWT handling
     
@@ -133,7 +142,7 @@ class AuthManager:
     def __init__(
         self,
         secret_key: Optional[str] = None,
-        access_token_expiry:  timedelta = timedelta(hours=1),
+        access_token_expiry: timedelta = timedelta(hours=1),
         refresh_token_expiry: timedelta = timedelta(days=7),
         revocation_store: Optional[Callable[[str], None]] = None,
         revocation_checker: Optional[Callable[[str], bool]] = None,
@@ -142,10 +151,10 @@ class AuthManager:
         Initialize AuthManager with secure secret key handling
         
         Args:
-            secret_key: JWT signing secret.   If None, reads from JWT_SECRET env var.  
+            secret_key: JWT signing secret. If None, reads from JWT_SECRET env var.
                        Falls back to auto-generated ephemeral key with warning.
             access_token_expiry: Access token lifetime (default: 1 hour)
-            refresh_token_expiry:   Refresh token lifetime (default:  7 days)
+            refresh_token_expiry: Refresh token lifetime (default: 7 days)
             revocation_store: Optional callback to persist revoked token JTIs
             revocation_checker: Optional callback to check if JTI is revoked
             
@@ -162,33 +171,33 @@ class AuthManager:
                 secret_key = secrets.token_urlsafe(32)
                 warnings.warn(
                     "AuthManager initialized without explicit secret_key or JWT_SECRET environment variable. "
-                    "Auto-generated key will be lost on restart, invalidating all tokens.   "
+                    "Auto-generated key will be lost on restart, invalidating all tokens. "
                     "For production, set JWT_SECRET environment variable.",
                     UserWarning,
                     stacklevel=2,
                 )
                 log.warning(
-                    "AuthManager:   No secret_key provided and JWT_SECRET not set. "
-                    "Auto-generated ephemeral key will not persist across restarts.  "
+                    "AuthManager: No secret_key provided and JWT_SECRET not set. "
+                    "Auto-generated ephemeral key will not persist across restarts. "
                     "Set JWT_SECRET environment variable for production."
                 )
         
         # Block insecure literal secret
         if secret_key == self._INSECURE_SECRET:
             raise ValueError(
-                f"Refusing to use insecure literal secret '{self._INSECURE_SECRET}'.  "
+                f"Refusing to use insecure literal secret '{self._INSECURE_SECRET}'. "
                 "Set JWT_SECRET environment variable or provide a cryptographically secure secret_key."
             )
         
-        # Additional length check for security
-        if len(secret_key) < 16:
+        # Additional length check for security (minimum 8 chars, recommend 16+)
+        if len(secret_key) < 8:
             raise ValueError(
                 f"secret_key too short ({len(secret_key)} chars). "
-                "Use at least 16 characters for cryptographic security.   "
-                "Recommended:   32+ characters or set JWT_SECRET environment variable."
+                "Use at least 16 characters for cryptographic security. "
+                "Recommended: 32+ characters or set JWT_SECRET environment variable."
             )
         
-        self. secret_key = secret_key
+        self.secret_key = secret_key
         self.access_token_expiry = access_token_expiry
         self.refresh_token_expiry = refresh_token_expiry
 
@@ -211,7 +220,7 @@ class AuthManager:
     def revoked_tokens(self) -> set[str]:
         return self._revoked_tokens
 
-    def _is_token_revoked(self, jti:  str) -> bool:
+    def _is_token_revoked(self, jti: str) -> bool:
         if jti in self._revoked_tokens:
             return True
         if self._revocation_checker:
@@ -224,29 +233,31 @@ class AuthManager:
             self._revocation_store(jti)
 
     def _encode_token(self, payload: TokenPayload) -> str:
-        return jwt. encode(
+        return jwt.encode(
             payload.to_dict(),
             self.secret_key,
             algorithm="HS256",
         )
 
     def _decode_token(self, token: str) -> TokenPayload:
-        try: 
+        try:
             payload_data = jwt.decode(
                 token,
                 self.secret_key,
                 algorithms=["HS256"],
                 options={
-                    "require":   ["sub", "type", "iat", "exp", "jti"],
+                    "require": ["sub", "type", "iat", "exp", "jti"],
                 },
             )
             payload = TokenPayload.from_dict(payload_data)
+            if payload.is_expired():
+                raise TokenExpiredError("Token has expired")
             if self._is_token_revoked(payload.jti):
                 raise InvalidTokenError("Token has been revoked")
             return payload
         except jwt.ExpiredSignatureError:
             raise TokenExpiredError("Token has expired")
-        except jwt. InvalidTokenError as e:
+        except jwt.InvalidTokenError as e:
             raise InvalidTokenError(f"Invalid token: {e}")
         except (ValueError, KeyError) as e:
             raise InvalidTokenError(f"Failed to decode token: {e}")
@@ -254,7 +265,7 @@ class AuthManager:
     def create_access_token(
         self, user_id: str, scope: Optional[str] = None
     ) -> Tuple[str, TokenPayload]:
-        now = datetime. now(timezone.utc)
+        now = datetime.now(timezone.utc)
         payload = TokenPayload(
             user_id=user_id,
             token_type=TokenType.ACCESS,
@@ -267,7 +278,7 @@ class AuthManager:
         log.info(f"Created access token for user {user_id}")
         return token, payload
 
-    def create_refresh_token(self, user_id:  str) -> Tuple[str, TokenPayload]:  
+    def create_refresh_token(self, user_id: str) -> Tuple[str, TokenPayload]:
         now = datetime.now(timezone.utc)
         payload = TokenPayload(
             user_id=user_id,
@@ -280,55 +291,137 @@ class AuthManager:
         log.info(f"Created refresh token for user {user_id}")
         return token, payload
 
+    def refresh_access_token(
+        self, refresh_token: str, scope: Optional[str] = None
+    ) -> Tuple[str, TokenPayload]:
+        """Refresh access token using valid refresh token"""
+        payload = self.verify_token(refresh_token)
+        if payload.token_type != TokenType.REFRESH:
+            raise InvalidTokenError("Provided token is not a refresh token")
+        return self.create_access_token(payload.user_id, scope=scope or payload.scope)
+
     def verify_token(self, token: str) -> TokenPayload:
         return self._decode_token(token)
 
-    def revoke_token(self, token:  str) -> None:
+    def revoke_token(self, token: str) -> None:
         payload = self._decode_token(token)
         self._store_revocation(payload.jti)
         log.info(f"Revoked token {payload.jti} for user {payload.user_id}")
 
     def create_api_key(
         self,
-        key_id: str,
-        name: str,
+        user_id_or_key_id: str = "",
+        name: str = "",
         expires_at: Optional[datetime] = None,
+        key_id: Optional[str] = None,
+        user_id: Optional[str] = None,
     ) -> Tuple[str, APIKey]:
-        """Create a new API key (returns unhashed key once)"""
-        raw_key = secrets.token_urlsafe(32)
-        key_hash = bcrypt.hashpw(raw_key.encode(), bcrypt.gensalt()).decode()
+        """Create a new API key (returns key string and APIKey)"""
+        actual_user_id = user_id or user_id_or_key_id or "default_user"
+        actual_key_id = key_id or f"key_{secrets.token_hex(8)}"
+        actual_name = name or "API Key"
+
+        raw_secret = secrets.token_urlsafe(32)
+        key_string = f"{actual_key_id}.{raw_secret}"
+        key_hash = bcrypt.hashpw(raw_secret.encode(), bcrypt.gensalt()).decode()
 
         api_key = APIKey(
-            key_id=key_id,
+            key_id=actual_key_id,
             key_hash=key_hash,
-            name=name,
+            name=actual_name,
+            user_id=actual_user_id,
             created_at=datetime.now(timezone.utc),
             expires_at=expires_at,
         )
 
-        self.api_keys[key_id] = api_key
-        log.info(f"Created API key {key_id}")
-        return raw_key, api_key
+        self.api_keys[actual_key_id] = api_key
+        log.info(f"Created API key {actual_key_id} for user {actual_user_id}")
+        return key_string, api_key
 
-    def verify_api_key(self, raw_key: str) -> Optional[str]:
-        """Verify API key and return key_id if valid"""
+    def verify_api_key(self, raw_key: str) -> APIKey:
+        """Verify API key and return APIKey if valid"""
+        if not raw_key or "." not in raw_key:
+            raise InvalidTokenError("Invalid API key format")
 
-        for key_id, api_key in self.api_keys.items():
-            if (
-                api_key.is_valid() and
-                bcrypt.checkpw(raw_key.encode(), api_key.key_hash.encode())
-            ):
-                api_key.last_used_at = datetime.now(timezone. utc)
-                log.info("API key verified")
-                return key_id
+        key_id, raw_secret = raw_key.split(".", 1)
+        api_key = self.api_keys.get(key_id)
 
-        log.warning("Invalid API key attempt")
-        return None
+        if not api_key or not api_key.enabled:
+            raise InvalidTokenError("API key does not exist or has been revoked")
+
+        if api_key.is_expired():
+            raise TokenExpiredError("API key has expired")
+
+        if not bcrypt.checkpw(raw_secret.encode(), api_key.key_hash.encode()):
+            log.warning("Invalid API key secret attempt")
+            raise InvalidTokenError("Invalid API key credentials")
+
+        api_key.last_used_at = datetime.now(timezone.utc)
+        log.info(f"API key {key_id} verified")
+        return api_key
 
     def revoke_api_key(self, key_id: str) -> None:
         """Revoke an API key"""
         if key_id in self.api_keys:
             self.api_keys[key_id].enabled = False
-            log. info(f"Revoked API key {key_id}")
+            log.info(f"Revoked API key {key_id}")
         else:
             log.warning(f"Attempted to revoke non-existent API key {key_id}")
+
+    def list_api_keys(self, user_id: Optional[str] = None) -> List[APIKey]:
+        """List API keys, optionally filtered by user_id"""
+        if user_id:
+            return [k for k in self.api_keys.values() if k.user_id == user_id]
+        return list(self.api_keys.values())
+
+
+# Global AuthManager helpers
+_global_auth_manager: Optional[AuthManager] = None
+
+
+def get_auth_manager() -> AuthManager:
+    """Get global AuthManager instance"""
+    global _global_auth_manager
+    if _global_auth_manager is None:
+        _global_auth_manager = AuthManager()
+    return _global_auth_manager
+
+
+def set_auth_manager(manager: AuthManager) -> None:
+    """Set global AuthManager instance"""
+    global _global_auth_manager
+    _global_auth_manager = manager
+
+
+def authenticate_request(
+    authorization_header: Optional[str] = None,
+    api_key_header: Optional[str] = None,
+) -> str:
+    """
+    Authenticate request via Authorization header (Bearer token) or API key header.
+    Returns user_id on success.
+    Raises AuthenticationError on failure.
+    """
+    manager = get_auth_manager()
+    if not authorization_header and not api_key_header:
+        raise AuthenticationError("Missing authentication credentials")
+
+    if authorization_header:
+        parts = authorization_header.strip().split()
+        if len(parts) != 2 or parts[0].lower() != "bearer":
+            raise AuthenticationError("Invalid Authorization header format. Expected 'Bearer <token>'")
+        token = parts[1]
+        try:
+            payload = manager.verify_token(token)
+            return payload.user_id
+        except (TokenExpiredError, InvalidTokenError) as e:
+            raise AuthenticationError(str(e))
+
+    if api_key_header:
+        try:
+            api_key = manager.verify_api_key(api_key_header)
+            return api_key.user_id
+        except (TokenExpiredError, InvalidTokenError) as e:
+            raise AuthenticationError(str(e))
+
+    raise AuthenticationError("Authentication failed")
