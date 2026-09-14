@@ -258,7 +258,11 @@ class DPOTrainerEngine:
             "final_loss": history[-1]["loss"],
             "final_reward_margin": history[-1]["reward_margin"],
             "accelerator_ai_active": self.use_accelerator,
-            "domains_trained": [
+            "domains_trained": sorted(list({
+                d.get("metadata", {}).get("domain") or d.get("domain") or "general_safety"
+                for d in self.dataset
+                if (d.get("metadata", {}).get("domain") or d.get("domain"))
+            })) or [
                 "multi_agent_swarms_and_bipia",
                 "financial_loops_and_circuit_breakers",
                 "technical_secrets_and_token_vault",

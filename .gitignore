@@ -95,3 +95,10 @@ profiling_results/
 *.stats
 *.svg
 
+# Training & Candidate artifacts
+training_audit_logs/
+models/candidates/*.json
+models/metadata/*.json
+.agents/
+
+
