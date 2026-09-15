@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Asian Sovereign AI Regulatory Pack (nethical.compliance.packs.asian_sovereign_pack).
 
 Implements comprehensive compliance evaluations for:

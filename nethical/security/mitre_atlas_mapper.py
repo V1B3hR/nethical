@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """MITRE ATLAS (Adversarial Threat Landscape for AI Systems) Automated Mapper.
 
 Maps Nethical runtime defenses against MITRE ATLAS tactics and techniques:

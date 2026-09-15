@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Model Extraction Detector (MS-001)
 Detects attempts to extract model weights via API queries.
 Law Alignment: Laws 2 (Integrity), 22 (Boundary Respect)

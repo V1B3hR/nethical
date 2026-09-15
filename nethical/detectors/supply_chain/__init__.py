@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Supply Chain Integrity Detection Suite
 Phase 2.4 detectors for supply chain security.
 Author: Nethical Core Team, Version: 1.0.0

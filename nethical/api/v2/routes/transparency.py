@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Transparency API routes for EU AI Act Article 13 compliance.
 
 This module implements transparency mechanisms required by EU AI Act

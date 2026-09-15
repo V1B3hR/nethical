@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Track conditions analyzer for the Adaptive Guardian.
 
 Analyzes the "track conditions" (threat landscape) to recommend appropriate mode.

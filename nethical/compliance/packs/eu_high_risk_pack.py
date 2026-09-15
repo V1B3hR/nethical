@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Pakiet Zgodności: EU High-Risk AI Pack (EU AI Act Artykuły 6, 9-15).
 
 Zapewnia zautomatyzowaną weryfikację systemów AI wysokiego ryzyka

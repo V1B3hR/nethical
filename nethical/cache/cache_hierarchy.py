@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """
 Cache Hierarchy - Unified Multi-Level Cache Interface
 

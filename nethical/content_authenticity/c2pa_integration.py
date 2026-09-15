@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """C2PA (Coalition for Content Provenance and Authenticity) Integration.
 
 This module provides integration with the C2PA standard for content provenance

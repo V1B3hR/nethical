@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """gRPC client for Nethical Governance.
 
 Provides a client for connecting to the Nethical gRPC service

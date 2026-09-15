@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Base classes for observability integrations.
 
 This module provides abstract interfaces for ML observability platforms

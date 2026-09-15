@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Core components of the Nethical safety governance system."""
 
 from .risk_engine import RiskEngine, RiskTier, RiskProfile

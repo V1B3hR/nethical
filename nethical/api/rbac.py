@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Role-Based Access Control (RBAC) module.
 
 Provides JWT authentication and authorization with role-based access control.

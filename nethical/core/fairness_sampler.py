@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Fairness Sampler for Phase 3.3: Fairness & Sampling.
 
 This module implements:

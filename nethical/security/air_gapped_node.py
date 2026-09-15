@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Air-Gapped Sovereign Node & Defense AI Integrity (nethical.security.air_gapped_node).
 
 Ensures complete operational readiness in offline, air-gapped, and defense environments:

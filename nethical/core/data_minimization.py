@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Data Minimization and Right-to-be-Forgotten Support.
 
 This module provides automatic data retention policies, minimal data collection,

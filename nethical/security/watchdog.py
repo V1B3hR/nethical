@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Independent watchdog process for the Adaptive Guardian.
 
 "Who watches the watchmen?" - The Watchdog does.

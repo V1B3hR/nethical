@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Grok (xAI) Integration for Nethical.
 
 This module provides integration with xAI's Grok models, allowing Nethical

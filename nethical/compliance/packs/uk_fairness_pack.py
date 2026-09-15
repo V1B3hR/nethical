@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Pakiet Zgodności: UK Fairness & Consumer Duty Pack (UK AISI & FCA Guidelines).
 
 Weryfikuje bezstronność algorytmiczną, ochronę przed manipulacją behawioralną

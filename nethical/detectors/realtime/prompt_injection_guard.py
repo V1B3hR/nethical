@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Prompt Injection Guard - Ultra-fast prompt injection detection.
 
 This detector identifies prompt injections through:

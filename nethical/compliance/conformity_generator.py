@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Automated Technical Documentation & Conformity Assessment Generator (EU AI Act Annex IV & UK Framework).
 
 Generuje zautomatyzowane raporty zgodności dla Jednostek Notyfikowanych UE (CE-Marking)

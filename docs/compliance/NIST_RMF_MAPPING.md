@@ -56,4 +56,4 @@ Mapping of Nethical features to NIST AI RMF 1.0 functions and categories.
 | MANAGE | 4/4 | ✅ Complete |
 
 ---
-Last Updated: 2025-10-15
+Last Updated: 2026-09-15

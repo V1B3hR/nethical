@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Wieloplatformowy (Windows & Linux / Docker / Kubernetes) kanał IPC dla Ambasadora Błyskawicy.
 
 Zapewnia sub-milisekundowy czas odpowiedzi rzędu mikrosekund:

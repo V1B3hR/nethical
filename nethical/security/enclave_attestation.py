@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Sovereign Hardware Enclave (TEE / HSM) Attestation Engine (Faza 6 Roadmapy).
 
 Zapewnia poświadczenia poufnego przetwarzania (Confidential Computing):

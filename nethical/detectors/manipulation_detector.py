@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Detector for manipulation techniques with advanced dark psychology patterns."""
 
 import re

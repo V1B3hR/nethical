@@ -1,8 +1,8 @@
 # The 25 AI Fundamental Laws
 
 > **System:** Nethical Governance Framework
-> **Version:** 1.0
-> **Last Updated:** 2025-11-29
+> **Version:** 2.7.0
+> **Last Updated:** 2026-09-15
 > **Status:** Active
 
 ---

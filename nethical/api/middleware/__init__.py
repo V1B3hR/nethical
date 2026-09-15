@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """API middleware modules for Nethical.
 
 Provides common middleware functionality:

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Healthcare and Medical AI Governance Compliance Pack.
 
 Implements statutory compliance and medical safety evaluation for healthcare providers,

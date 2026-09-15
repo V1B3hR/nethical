@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Polymorphic Malware Detector - Detect mutating exploits.
 
 This detector identifies polymorphic malware through:

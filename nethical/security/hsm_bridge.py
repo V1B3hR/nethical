@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Hardware Security Module (HSM) Governance Bridge.
 
 Couples Nethical's Merkle Ledger and Executive Board Governance with physical HSMs:

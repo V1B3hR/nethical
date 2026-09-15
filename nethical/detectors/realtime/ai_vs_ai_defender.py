@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """AI vs AI Defender - Defense against AI attacks on AI systems.
 
 This detector protects against:

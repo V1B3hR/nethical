@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """gRPC module for Nethical.
 
 Provides gRPC server and client for low-latency

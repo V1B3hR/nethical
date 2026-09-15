@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Protocol Buffer definitions for Nethical.
 
 This package contains the gRPC protocol definitions for

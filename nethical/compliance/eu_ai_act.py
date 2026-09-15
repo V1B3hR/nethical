@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """EU AI Act Compliance Validator for Nethical.
 
 This module provides comprehensive EU AI Act (Regulation (EU) 2024/1689)

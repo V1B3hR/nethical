@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Agent-to-Agent (A2A) Contractual Governance Protocol - Faza 4 Roadmapy.
 
 Zapewnia bezpieczną, obustronnie uwierzytelnioną i kryptograficznie wiążącą współpracę

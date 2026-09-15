@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """NATO Responsible AI Strategy & Defense Readiness Pack.
 
 Implements the 6 Principles of Responsible Use (PRUs) adopted in NATO's AI Strategy:

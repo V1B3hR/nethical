@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Audit log routes for API v1.
 
 Provides read-only access to audit logs with Merkle tree verification.

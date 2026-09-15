@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """GDPR Compliance Validator for Nethical.
 
 This module provides comprehensive GDPR (General Data Protection Regulation)

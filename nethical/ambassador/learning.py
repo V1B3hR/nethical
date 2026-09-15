@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Moduł Ciągłego Uczenia i Asymilacji Wiedzy dla Ambasadora Błyskawicy (nethical.ambassador.learning).
 
 Odpowiada za transfer wiedzy, asymilację 25 Fundamentalnych Praw Nethical,

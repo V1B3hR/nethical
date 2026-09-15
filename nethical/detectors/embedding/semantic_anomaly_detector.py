@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Semantic Anomaly Detector - detects semantically anomalous inputs"""
 import uuid
 from datetime import datetime, timezone

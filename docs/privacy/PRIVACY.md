@@ -1,8 +1,8 @@
 # Nethical Privacy Policy
 
-**Version**: 1.0.0  
+**Version**: 2.7.0  
 **Effective Date**: 2025-12-03  
-**Last Updated**: 2025-12-03
+**Last Updated**: 2026-09-15
 
 ---
 

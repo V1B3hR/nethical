@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Real-time threat notification routes for API v1.
 
 Provides WebSocket and SSE endpoints for real-time threat notifications.

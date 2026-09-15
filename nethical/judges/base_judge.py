@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Base judge class for all judgment components with advanced ergonomics, rich
 instrumentation, and lifecycle hooks for extensibility within the Nethical system.
 

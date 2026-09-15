@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Observability integrations for Nethical governance.
 
 This module provides integration with multiple ML observability platforms:

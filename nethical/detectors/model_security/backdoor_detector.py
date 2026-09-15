@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Backdoor Activation Detector (MS-004)"""
 import uuid
 from datetime import datetime, timezone

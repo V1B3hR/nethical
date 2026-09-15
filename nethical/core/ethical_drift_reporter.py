@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Ethical Drift Reporter for Phase 3.4: Ethical Drift and Reporting.
 
 This module implements:

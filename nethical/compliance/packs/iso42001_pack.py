@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Pakiet Zgodności: ISO/IEC 42001:2023 & IEEE 7000 Global Trust Standard.
 
 Zapewnia audyt gotowości wdrożenia Systemu Zarządzania Sztuczną Inteligencją (AIMS - Artificial Intelligence Management System)

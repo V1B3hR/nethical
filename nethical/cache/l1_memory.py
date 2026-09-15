@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """
 L1 Memory Cache - Ultra-Fast In-Memory LRU Cache
 

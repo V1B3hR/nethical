@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Kill Switch Protocol - Enterprise-grade emergency override capabilities.
 
 This module provides emergency override capabilities to sever Agent-to-Actuator

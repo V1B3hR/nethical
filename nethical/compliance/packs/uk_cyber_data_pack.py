@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Pakiet Zgodności: UK Cyber, Data & Infrastructure Compliance Pack.
 
 Obejmuje 3 kluczowe brytyjskie ramy prawne:

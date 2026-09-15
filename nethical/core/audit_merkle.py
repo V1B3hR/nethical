@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Merkle Anchoring System for Phase 4.1: Immutable Audit & Merkle Anchoring.
 
 This module implements:

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Marketplace Client for Plugin Management.
 
 This module provides the MarketplaceClient for searching, installing,

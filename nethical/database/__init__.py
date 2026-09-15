@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Database module for Nethical.
 
 Provides database connectivity, models, and persistence layer for:

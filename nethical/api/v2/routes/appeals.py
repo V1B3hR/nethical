@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Appeals routes for API v2.
 
 Provides appeal submission and tracking for contested decisions.

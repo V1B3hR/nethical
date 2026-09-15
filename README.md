@@ -30,8 +30,9 @@
   ![Ethics](https://img.shields.io/badge/ethics-25_Fundamental_Laws-purple.svg)
 </div>
  
+> [!WARNING]
+> **SAFETY & REGULATORY NOTICE:** Nethical is an open-source AI governance framework. It is **not** certified as a standalone failsafe for life-critical, medical, or kinetic autonomous operations without human-in-the-loop oversight and formal regulatory approval. Please review [DISCLAIMER.md](./DISCLAIMER.md), [EXPORT_CONTROL.md](./EXPORT_CONTROL.md), and [CLA.md](./CLA.md) before deployment.
  
-
  Give a ⭐ and visit: ⭐⭐⭐⭐ https://github.com/sponsors/V1B3hR ⭐⭐⭐⭐to sponsorship my project.
 
 
@@ -377,6 +378,11 @@ For quick access to common documentation:
 
 ---
 
-## 📄 License
+## 📄 License & Legal Governance
 
-Released under the [MIT License](./LICENSE).
+- **Core Codebase:** Released under the [MIT License](./LICENSE) (Copyright © 2025-2026 Nethical Contributors).
+- **Safety Disclaimer:** [DISCLAIMER.md](./DISCLAIMER.md) — Operational and safety-critical liability disclaimers.
+- **Export Control:** [EXPORT_CONTROL.md](./EXPORT_CONTROL.md) — ECCN 5D002, TSU exception, Wassenaar Arrangement.
+- **Contributions:** [CLA.md](./CLA.md) — Contributor License Agreement & Developer Certificate of Origin (DCO 1.1).
+- **Terms of Service:** [legal/TERMS_OF_SERVICE.md](./legal/TERMS_OF_SERVICE.md) — Online, SaaS, and API platform terms.
+- **Data Processing:** [legal/DATA_PROCESSING_AGREEMENT.md](./legal/DATA_PROCESSING_AGREEMENT.md) — GDPR Art. 28 DPA template.

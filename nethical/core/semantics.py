@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Semantic similarity utilities using sentence-transformers.
 
 This module provides a singleton pattern for loading and using sentence embeddings

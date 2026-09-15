@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Shadow AI Detector - Detect unauthorized AI models in infrastructure.
 
 This detector identifies unauthorized AI models running in infrastructure by analyzing:

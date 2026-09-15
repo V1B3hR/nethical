@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Kinetic Safety OS & Embodied AI Spatial Interlocks (Faza 4 Roadmapy).
 
 Zapewnia ochronę życia i zdrowia ludzkiego (Prawo 1: Ochrona Ludzkiego Życia)

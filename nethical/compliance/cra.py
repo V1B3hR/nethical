@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Cyber Resilience Act (CRA) Compliance Module for Nethical.
 
 This module provides comprehensive EU Cyber Resilience Act

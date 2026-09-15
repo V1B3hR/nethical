@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Data Residency Management for Nethical.
 
 This module provides comprehensive data residency management capabilities

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Evaluation routes for API v2.
 
 Enhanced evaluation endpoints with latency metrics and batch processing.

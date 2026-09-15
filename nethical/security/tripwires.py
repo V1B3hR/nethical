@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Instant tripwire checks for the Adaptive Guardian.
 
 Layer 1: Always-active checks that catch critical threats with minimal overhead.

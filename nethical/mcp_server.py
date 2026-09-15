@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Nethical MCP (Model Context Protocol) Server.
 
 This module implements an MCP server that exposes Nethical's ethics and safety

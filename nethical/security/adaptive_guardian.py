@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Adaptive Guardian - Intelligent Throttling Security System.
 
 Main implementation of the intelligent, adaptive security monitoring system

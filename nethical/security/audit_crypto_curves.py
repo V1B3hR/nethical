@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Automated Cryptographic Curve Audit & Key Health Verifier (CVE-2026-26007 Mitigation).
 
 Performs static AST inspection and dynamic runtime verification to guarantee that:

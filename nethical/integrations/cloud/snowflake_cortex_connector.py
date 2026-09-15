@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Snowflake Cortex integration with Nethical governance."""
 
 from typing import Dict, Any, Optional, List

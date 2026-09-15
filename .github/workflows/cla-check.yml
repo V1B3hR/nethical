@@ -1,0 +1,46 @@
+name: "CLA / DCO Enforcement"
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+permissions:
+  pull-requests: write
+  contents: read
+
+jobs:
+  dco-check:
+    name: "Verify Developer Certificate of Origin (DCO)"
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+
+      - name: Verify Signed-off-by commits
+        run: |
+          echo "Verifying commits against base ref..."
+          COMMITS=$(git log origin/${{ github.base_ref }}..HEAD --no-merges --format='%H %s')
+          MISSING_DCO=0
+          
+          while IFS= read -r line; do
+            [ -z "$line" ] && continue
+            COMMIT_HASH=$(echo "$line" | cut -d' ' -f1)
+            COMMIT_SUBJECT=$(echo "$line" | cut -d' ' -f2-)
+            
+            if ! git log -n 1 --format='%B' "$COMMIT_HASH" | grep -Eq "^Signed-off-by: .+ <.+@.+>$"; then
+              echo "❌ Commit $COMMIT_HASH ('$COMMIT_SUBJECT') is missing Signed-off-by footer"
+              MISSING_DCO=$((MISSING_DCO + 1))
+            fi
+          done <<< "$COMMITS"
+          
+          if [ $MISSING_DCO -gt 0 ]; then
+            echo ""
+            echo "Error: $MISSING_DCO commit(s) missing DCO Sign-off (git commit -s)."
+            echo "Please see CLA.md and CONTRIBUTING.md for details on signing your commits."
+            exit 1
+          fi
+          
+          echo "✅ All commits pass DCO verification!"

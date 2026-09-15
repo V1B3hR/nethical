@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Right-to-be-Forgotten & Machine Unlearning Proof Engine.
 
 Implements statutory compliance for EU GDPR Art. 17, UK GDPR, and California AB 2013:

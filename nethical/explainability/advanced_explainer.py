@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Advanced Explainability Tools for AI Governance.
 
 This module provides SHAP-like and LIME-like explainability capabilities

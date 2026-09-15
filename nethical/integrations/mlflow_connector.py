@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """MLflow Production Connector with Real SDK Integration.
 
 This module provides a production-ready MLflow connector that uses the actual

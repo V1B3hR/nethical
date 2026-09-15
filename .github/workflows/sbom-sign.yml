@@ -162,6 +162,23 @@ jobs:
           }
           EOF
       
+      - name: Verify SLSA Provenance integrity
+        run: |
+          echo "Verifying SLSA provenance integrity..."
+          if ! command -v jq &> /dev/null; then
+            sudo apt-get update && sudo apt-get install -y jq
+          fi
+          PROV_SUBJECT=$(jq -r '.subject[0].name' provenance.json)
+          PROV_HASH=$(jq -r '.subject[0].digest.sha256' provenance.json)
+          echo "Subject: $PROV_SUBJECT"
+          echo "Attested Hash: $PROV_HASH"
+          ACTUAL_HASH=$(sha256sum "$PROV_SUBJECT" | cut -d' ' -f1)
+          if [ "$PROV_HASH" != "$ACTUAL_HASH" ]; then
+            echo "❌ Hash mismatch! Provenance: $PROV_HASH vs Actual: $ACTUAL_HASH"
+            exit 1
+          fi
+          echo "✅ SLSA v1.0 provenance attestation verified successfully!"
+
       - name: Upload provenance
         uses: actions/upload-artifact@v4
         with:

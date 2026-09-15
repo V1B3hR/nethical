@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Performance Optimizer for Phase 3.5: Performance & Cost Optimization.
 
 This module implements:

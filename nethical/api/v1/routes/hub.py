@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Nethical Hub & Dock Protocol API Routes.
 
 Provides endpoints for AI spaceship docking and secure inter-agent communication.

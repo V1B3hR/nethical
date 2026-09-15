@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Federated Analytics for Privacy-Preserving Cross-Region Metric Aggregation.
 
 This module enables cross-region metric aggregation without raw data sharing,

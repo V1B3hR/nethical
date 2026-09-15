@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """ISO 26262 Automotive Safety Integrity Level (ASIL) Evaluator for Autonomous AI.
 
 Implements Road Vehicles Functional Safety (ISO 26262 Parts 3, 4, 6):

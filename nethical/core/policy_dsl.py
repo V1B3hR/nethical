@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """
 Policy DSL (Domain-Specific Language) for F2: Detector & Policy Extensibility
 

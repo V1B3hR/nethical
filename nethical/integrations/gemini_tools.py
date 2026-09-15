@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Google Gemini Integration for Nethical.
 
 This module provides integration with Google's Gemini models, allowing Nethical

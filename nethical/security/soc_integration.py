@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """
 Security Operations Center (SOC) Integration for Nethical - Phase 2.2
 

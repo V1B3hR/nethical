@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """UK Online Safety Act 2023 Compliance Module for Nethical.
 
 This module provides comprehensive UK Online Safety Act (OSA) 2023

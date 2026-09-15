@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """
 Nethical: Safety governance system for AI agents.
 
@@ -70,6 +73,19 @@ def AgentAction(
 
 
 __version__ = "2.7.0"
+
+import os
+import warnings
+
+# Runtime safety acknowledgment check (see DISCLAIMER.md)
+if os.getenv("NETHICAL_SAFETY_ACKNOWLEDGED") != "1" and not os.getenv("PYTEST_CURRENT_TEST"):
+    warnings.warn(
+        "Nethical Safety Notice: Nethical is an AI governance framework under active development. "
+        "It is NOT certified as a standalone failsafe for life-critical, medical, or kinetic operations. "
+        "Set NETHICAL_SAFETY_ACKNOWLEDGED=1 to suppress. See DISCLAIMER.md.",
+        UserWarning,
+        stacklevel=2,
+    )
 
 # Import vector API components
 from .api.vector_api import Nethical, Agent, EvaluationResult, create_nethical

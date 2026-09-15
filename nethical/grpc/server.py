@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """gRPC server for Nethical Governance.
 
 Provides a gRPC interface for low-latency governance decisions.

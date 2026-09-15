@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Model Optimizer - Optimize ML models for ultra-low latency inference.
 
 Techniques:

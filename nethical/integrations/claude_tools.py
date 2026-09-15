@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Anthropic Claude Tool Integration for Nethical.
 
 This module provides a tool wrapper for Anthropic's Claude API, allowing Claude

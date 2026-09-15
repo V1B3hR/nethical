@@ -1,0 +1,24 @@
+# Global project maintainers
+* @V1B3hR
+
+# Security, Cryptography, and Post-Quantum modules
+/nethical/security/ @V1B3hR
+/nethical/crypto/ @V1B3hR
+/.github/workflows/security*.yml @V1B3hR
+/.github/workflows/sbom*.yml @V1B3hR
+
+# Regulatory Compliance Packs and Fundamental Laws
+/nethical/compliance/ @V1B3hR
+/docs/laws_and_policies/ @V1B3hR
+/legal/ @V1B3hR
+/CLA.md @V1B3hR
+/DISCLAIMER.md @V1B3hR
+/EXPORT_CONTROL.md @V1B3hR
+
+# ML Training, Weights, and Adversarial Inoculation
+/training/ @V1B3hR
+/nethical/ml/ @V1B3hR
+/models/ @V1B3hR
+
+# Core Governance Engine
+/nethical/core/ @V1B3hR

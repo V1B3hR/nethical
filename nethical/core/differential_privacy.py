@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Differential Privacy Implementation with DP-SGD and Privacy Budget Tracking.
 
 This module provides differential privacy mechanisms for model training and

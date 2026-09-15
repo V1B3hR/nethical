@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Financial Circuit Breakers & Runaway Protection for Autonomous Agents (nethical.security.financial_circuit_breaker).
 
 Protects Agent-to-Agent (A2A) economic interactions from:

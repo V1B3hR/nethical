@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Human-in-the-Loop (HITL) API endpoints for Phase 2.2.
 
 This module provides REST API endpoints for:

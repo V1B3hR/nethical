@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Quarantine Mode for Phase 4.3: Quarantine & Incident Response.
 
 This module implements:

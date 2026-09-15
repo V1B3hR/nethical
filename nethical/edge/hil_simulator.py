@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Hardware-in-the-Loop (HIL) Bridge Simulator for Nethical.
 
 Simulates physical microcontrollers (STM32F4/H7, ESP32-S3, TI TMS320) and physical bus transceivers:

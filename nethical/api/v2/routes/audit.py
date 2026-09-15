@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Audit trail routes for API v2.
 
 Provides audit log access and compliance reporting.

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Unified Integrated Governance Module.
 
 This module consolidates ALL phases (3, 4, 5-7, 8-9, F3) into a single unified interface:

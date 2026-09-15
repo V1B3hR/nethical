@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Plugin Governance for Security and Quality Assurance.
 
 This module provides security scanning, performance benchmarking,

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Pakiet Zgodności: Polish Sovereign Cyber, Jurisdiction & Data Governance Pack.
 
 Obejmuje 5 kluczowych polskich ram prawnych i regulacyjnych:

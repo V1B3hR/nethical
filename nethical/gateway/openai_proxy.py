@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """OpenAI / Anthropic / Ollama Compatible Governance Proxy & Stream Interceptor.
 
 Provides a transparent drop-in reverse proxy for any LLM client (OpenAI SDK, LangChain,

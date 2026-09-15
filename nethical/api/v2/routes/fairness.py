@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Fairness metrics routes for API v2.
 
 Provides fairness monitoring and bias detection capabilities.

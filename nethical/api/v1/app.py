@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Nethical Governance API v1 Application.
 
 Main FastAPI router for the v1 API with backend enhancements:

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Enhanced Dependency Attack & Package Hallucination Detector (SC-003).
 
 Detects software supply chain hazards in real time:

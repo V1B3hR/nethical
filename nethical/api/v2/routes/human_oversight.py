@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Human Oversight API routes for EU AI Act Article 14 compliance.
 
 This module implements human oversight mechanisms required by EU AI Act

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Vector Store Integrations with Governance.
 
 This module provides integrations with popular vector databases,

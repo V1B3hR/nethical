@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Embedding-Space Detection Suite
 Phase 2.5 detectors for embedding-space attacks.
 Author: Nethical Core Team, Version: 1.0.0

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Academic Research Integrity and Higher Education Governance Pack.
 
 Implements statutory compliance and deontological standards for universities, research institutes,

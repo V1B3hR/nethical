@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Nethical Marketplace & Ecosystem Module.
 
 This module provides the marketplace infrastructure for plugin distribution,

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Phase 8-9 Integration: Human-in-the-Loop & Continuous Optimization
 
 .. deprecated::

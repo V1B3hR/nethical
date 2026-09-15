@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Policy Diff Auditing for Phase 4.2: Policy Auditing & Diff.
 
 This module implements:

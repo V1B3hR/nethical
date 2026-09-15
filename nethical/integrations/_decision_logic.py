@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Shared decision logic for LLM integrations.
 
 This module provides common decision-making logic used by both Claude and REST API integrations.

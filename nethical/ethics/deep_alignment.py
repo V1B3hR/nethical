@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Deep Alignment & Human-Centric AI Ethics Module (nethical.ethics.deep_alignment).
 
 Enforces:

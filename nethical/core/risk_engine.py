@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Risk Engine for Phase 3.2: Risk Engine Evolution.
 
 This module implements:

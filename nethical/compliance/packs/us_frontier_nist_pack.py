@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """US Federal & State AI Regulatory Pack (nethical.compliance.packs.us_frontier_nist_pack).
 
 Implements comprehensive compliance evaluations for:

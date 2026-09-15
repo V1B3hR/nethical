@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """PII Detection Utilities
 
 Enhanced PII detection patterns and utilities for identifying

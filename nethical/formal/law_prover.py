@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Formal SMT Law & Invariant Prover (Faza 6 Roadmapy).
 
 Wykorzystuje Microsoft Z3 SMT Solver (Satisfiability Modulo Theories) do dowodzenia

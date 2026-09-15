@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """HTTP server for Prometheus metrics scraping.
 
 This module provides an aiohttp-based HTTP server that exposes

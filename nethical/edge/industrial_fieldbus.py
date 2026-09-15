@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Industrial Fieldbus Hardware Interlock (nethical.edge.industrial_fieldbus).
 
 Provides deterministic sub-50-microsecond emergency cutoffs across industrial communication buses:

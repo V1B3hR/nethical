@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Digital Services Act (DSA) Compliance Module for Nethical.
 
 This module provides comprehensive EU Digital Services Act (DSA)

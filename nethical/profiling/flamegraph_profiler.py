@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Flamegraph profiling for Nethical threat detection system.
 
 Production-safe profiling with flamegraph generation using:

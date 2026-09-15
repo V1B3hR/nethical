@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Realtime threat detection module for ultra-low latency cybersecurity.
 
 This module provides 5 specialized threat detectors with target latencies:

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Enhanced Redaction Pipeline with Context-Aware PII Detection and Redaction.
 
 This module provides advanced PII detection, automatic redaction, audit trails,

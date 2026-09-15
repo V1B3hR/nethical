@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Log Sanitization and PII Redaction
 
 Automatically redacts PII from logs to ensure privacy compliance.

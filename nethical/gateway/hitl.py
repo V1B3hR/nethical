@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Human-in-the-Loop (HITL) Case Management & Escalation Engine (Faza 5).
 
 Wdraża wymóg Artykułu 14 EU AI Act (Human Oversight) oraz standardy UK FCA:

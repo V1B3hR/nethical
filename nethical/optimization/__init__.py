@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Optimization module for ultra-low latency inference.
 
 This module provides tools for:

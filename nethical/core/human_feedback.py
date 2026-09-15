@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Phase 8: Human-in-the-Loop Operations
 
 This module implements:

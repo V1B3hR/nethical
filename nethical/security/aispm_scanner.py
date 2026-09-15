@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """AI Security Posture Management (AISPM) Scanner for Nethical.
 
 Aligned with Cyera AI Guardian & UK NCSC Guidelines:

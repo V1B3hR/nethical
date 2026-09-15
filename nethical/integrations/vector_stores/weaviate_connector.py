@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Weaviate vector database integration with governance.
 
 Provides integration with Weaviate schema-aware vector search engine

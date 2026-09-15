@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Explainability API endpoints for Phase 2.3.
 
 This module provides REST API endpoints for:

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Safety judge for evaluating actions and providing judgments."""
 
 import uuid

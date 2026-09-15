@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Database Connection Pooling for Performance Optimization.
 
 This module provides connection pooling to reduce database connection overhead

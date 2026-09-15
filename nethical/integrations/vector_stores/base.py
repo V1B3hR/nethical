@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Base interface for vector store integrations with governance.
 
 This module defines the abstract base class for all vector store connectors,

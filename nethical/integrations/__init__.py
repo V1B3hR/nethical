@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """LLM Integrations for Nethical.
 
 This package provides integration wrappers for various LLM platforms and external systems:

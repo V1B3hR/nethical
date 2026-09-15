@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Explanations API routes for GDPR Article 22 Right to Explanation.
 
 This module implements the Right to Explanation endpoint required by

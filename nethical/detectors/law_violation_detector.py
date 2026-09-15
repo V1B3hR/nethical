@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Law Violation Detector for identifying violations of the 25 Fundamental Laws.
 
 This detector specifically identifies potential violations of the 25 AI

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Pakiety zgodności regulacyjnej Nethical (Global, EU, UK & Poland Sovereign Packs)."""
 
 from nethical.compliance.packs.eu_high_risk_pack import EUHighRiskPack, EUHighRiskEvaluation

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Deepfake Watermarking System for Nethical.
 
 This module provides content authenticity and watermarking for AI-generated content.

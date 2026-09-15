@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Response headers middleware for API.
 
 Provides standard response headers for latency tracking,

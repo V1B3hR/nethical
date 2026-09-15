@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Correlation Engine for Phase 3.1: Multi-Agent Pattern Detection.
 
 This module implements:

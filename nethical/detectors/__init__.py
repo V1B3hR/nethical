@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Detection components for various safety and ethical violations."""
 
 from .ethical_detector import EthicalViolationDetector

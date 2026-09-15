@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """AI Lawyer - High-Performance Asynchronous Ethical Auditor.
 
 This module implements the AILawyer class, which acts as a high-performance,

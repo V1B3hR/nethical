@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Automated Certification & Governance Assurance Hub (nethical.compliance.automated_certification_hub).
 
 Provides automated generation of cryptographic compliance evidence packages for:

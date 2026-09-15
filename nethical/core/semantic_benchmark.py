@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """
 Semantic Accuracy Benchmark Suite for Universal Vector Language.
 

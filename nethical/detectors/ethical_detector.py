@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Enhanced Detector for ethical constraint violations with advanced AI Ethics Framework enforcement.
 
 Advanced improvements:

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Delegation of Authority Matrix (DoAM) & Reservation of Powers.
 
 Implements UK Government Project Delivery Functional Standard GovS 002 (The Teal Book Ch. 4):

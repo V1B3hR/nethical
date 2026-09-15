@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Realtime Threat Detector - Unified interface for all threat detectors.
 
 This provides a single entry point for all 5 specialized detectors with

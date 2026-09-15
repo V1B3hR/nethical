@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """RFC Formal Invariant & Non-Regression Verifier (nethical.formal.verify_rfc).
 
 Executes automated Z3 SMT solver verification on proposed governance RFCs

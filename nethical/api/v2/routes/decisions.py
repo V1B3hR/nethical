@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Decision routes for API v2.
 
 Provides decision lookup and history functionality.

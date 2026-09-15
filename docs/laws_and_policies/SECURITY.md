@@ -123,7 +123,7 @@ We conduct the following security testing:
 
 For security-related questions that are not vulnerability reports, you can:
 - Open a discussion in GitHub Discussions
-- Email [INSERT_SECURITY_CONTACT]
+- Email security@nethical.ai
 
 ## Acknowledgments
 
@@ -131,4 +131,4 @@ We appreciate the security research community's efforts in responsibly disclosin
 
 ---
 
-This security policy is subject to change. Last updated: 2025-10-15
+This security policy is subject to change. Last updated: 2026-09-15

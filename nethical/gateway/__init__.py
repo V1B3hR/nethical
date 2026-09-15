@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Pakiet Nethical Gateway - Aktywna ochrona i interceptor protokołów agentowych (Faza 1)."""
 
 from nethical.gateway.proxy import GovernanceGateway, GatewayDecision

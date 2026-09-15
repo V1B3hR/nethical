@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Ethics Benchmark System
 
 Provides baseline metrics for evaluating ethical AI governance:

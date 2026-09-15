@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Community Management for Plugin Contributions.
 
 This module provides infrastructure for community contributions,

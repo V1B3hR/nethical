@@ -5,9 +5,9 @@
 | Field | Value |
 |-------|-------|
 | Document ID | CA-EUAIA-001 |
-| Version | 1.0 |
+| Version | 2.7.0 |
 | Regulation | Regulation (EU) 2024/1689 |
-| Date | 2025-12-03 |
+| Date | 2026-09-15 |
 | Author | Nethical Compliance Team |
 | Status | Active |
 
@@ -21,8 +21,8 @@ This document constitutes the Conformity Assessment for Nethical AI Governance S
 
 | Field | Value |
 |-------|-------|
-| Provider Name | [Organization Name] |
-| Provider Address | [Address] |
+| Provider Name | Nethical Core Contributors & Open Source Project |
+| Provider Address | https://github.com/V1B3hR/nethical |
 | Registration Number | [Business Registration] |
 | Authorized Representative | [Name, Role] |
 | Contact | compliance@nethical.ai |

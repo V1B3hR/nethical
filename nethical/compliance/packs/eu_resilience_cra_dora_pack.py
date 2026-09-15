@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Pakiet Zgodności: EU Resilience, Cybersecurity & Data Protection Pack.
 
 Obejmuje 3 kluczowe unijne rozporządzenia:

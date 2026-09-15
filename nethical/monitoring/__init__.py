@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Monitoring module for Nethical threat detection system.
 
 This module provides production-grade monitoring and observability features:

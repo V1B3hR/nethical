@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Qdrant vector database integration with governance.
 
 Provides integration with Qdrant high-performance vector search engine

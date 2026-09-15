@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Reversible Token Vault for Dynamic In-Flight Pseudonymization.
 
 Protects sensitive PII and ePHI before transmission to third-party or untrusted LLMs:

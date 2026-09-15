@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """API modules for Nethical governance system.
 
 This package provides the HTTP API for Nethical governance:

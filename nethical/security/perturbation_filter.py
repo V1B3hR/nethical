@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Input Perturbation Filter.
 
 Cleanses and normalizes input queries to neutralize adversarial modifications

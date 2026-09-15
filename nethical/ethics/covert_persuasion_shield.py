@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Deep Cognitive Protection & Vulnerability Shield (nethical.ethics.covert_persuasion_shield).
 
 Implements:

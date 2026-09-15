@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Merkle-DAG Cryptographic Audit Ledger & Post-Quantum Attestation Mesh (Faza 3 Roadmapy).
 
 Zapewnia matematyczną, kryptograficzną niezmienność (Tamper-Evidence) dla każdego

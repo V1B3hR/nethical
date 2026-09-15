@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """SLA Monitoring for Phase 4.5: SLA & Performance.
 
 This module implements:

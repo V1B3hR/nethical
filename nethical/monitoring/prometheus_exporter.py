@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Prometheus metrics exporter for Nethical threat detection system.
 
 This module exports comprehensive metrics for all threat detectors including:

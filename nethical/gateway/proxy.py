@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Governance Runtime Gateway & Tool Call Interceptor (Faza 1 Roadmapy).
 
 Zapewnia ochronę wywołań narzędziowych agentów AI w czasie rzeczywistym

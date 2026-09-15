@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Policy management routes for API v2.
 
 Provides CRUD operations for governance policies.

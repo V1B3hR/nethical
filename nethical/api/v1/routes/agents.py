@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Agent management routes for API v1.
 
 Provides CRUD operations for AI agent configuration.

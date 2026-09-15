@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """REST API Integration for Nethical.
 
 This module provides a FastAPI-based HTTP endpoint for evaluating actions

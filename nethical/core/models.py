@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Core data models for the Nethical safety governance system.
 
 This module provides Pydantic models that are compatible with the

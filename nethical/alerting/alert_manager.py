@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Multi-channel alert manager for Nethical.
 
 Supports alerting through:

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Deepfake Detector - Multi-modal deepfake detection.
 
 This detector identifies deepfakes in:

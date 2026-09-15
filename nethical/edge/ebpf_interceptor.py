@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """eBPF Transparent Kernel-Level Agent Interceptor (Faza 6 Roadmapy).
 
 Zapewnia bezobsługowe, niewymagające modyfikacji kodu agenta AI przechwytywanie

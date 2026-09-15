@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Nethical Governance API v2.
 
 Enhanced REST API with full governance features, latency metrics,

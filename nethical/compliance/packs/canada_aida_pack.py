@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Canada Artificial Intelligence and Data Act (AIDA - Bill C-27) Compliance Pack.
 
 Implements statutory compliance evaluation for the Canadian federal jurisdiction:

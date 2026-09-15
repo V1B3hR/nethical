@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Nethical Compliance Module for Global Compliance Operations.
 
 This module provides comprehensive compliance capabilities for Phase 3:

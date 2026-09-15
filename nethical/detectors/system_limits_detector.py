@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """System limits detection for volume attacks and resource exhaustion."""
 
 import time

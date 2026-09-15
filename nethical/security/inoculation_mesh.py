@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Autonomous Inoculation Mesh & Continuous Red-Teaming Engine (Faza 2 Roadmapy).
 
 Prowadzi ciągłe, kontrolowane testy odporności bramy Nethical oraz Tarczy Błyskawicy,

@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Multi-Region Sovereign Datacenter Mesh & Cross-Region Ledger Sync (Faza 5).
 
 Zapewnia odporną na błędy sieciowe, kryptograficznie weryfikowalną synchronizację

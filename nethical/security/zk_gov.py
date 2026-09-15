@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Zero-Knowledge Compliance Engine (ZK-Gov) - Faza 3.5 & 4 Roadmapy.
 
 Umożliwia generowanie i niezależną weryfikację dowodów zgodności etycznej i regulacyjnej

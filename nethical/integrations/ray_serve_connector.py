@@ -1,3 +1,6 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
 """Ray Serve Integration for Nethical.
 
 This module provides integration with Ray Serve for scalable ML model serving
