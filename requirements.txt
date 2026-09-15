@@ -13,14 +13,14 @@ argon2-cffi==25.1.0
 
 # Web server framework (optional - for API server)
 fastapi==0.141.1
-uvicorn==0.52.3
+uvicorn==0.52.4
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
-pydantic==2.13.4
-pydantic-core==2.48.0
+pydantic==2.13.5
+pydantic-core==2.49.0
 typing-extensions==4.16.0
 dataclasses-json==0.6.7
 
@@ -40,7 +40,7 @@ passlib[bcrypt]>=1.7.4
 
 # Database
 sqlalchemy>=2.0.52
-alembic>=1.19.1    
+alembic>=1.20.0    
 
 # Transitive/supporting (explicitly pinned to keep lock stable)
 annotated-types==0.8.0
