@@ -6,7 +6,7 @@ from nethical.compliance.packs import EUHighRiskPack, UKFairnessPack
 from nethical.compliance.conformity_generator import ConformityDossierGenerator
 
 
-def test_gateway_intercept_benign_action():
+def test_gateway_intercept_benign_action() -> None:
     gateway = GovernanceGateway()
     decision = gateway.intercept_tool_call(
         agent_id="agent_weather_bot",
@@ -19,7 +19,7 @@ def test_gateway_intercept_benign_action():
     assert decision.latency_microseconds < 10000  # Poniżej 10 ms
 
 
-def test_gateway_blocks_destructive_sql():
+def test_gateway_blocks_destructive_sql() -> None:
     gateway = GovernanceGateway()
     decision = gateway.intercept_tool_call(
         agent_id="agent_db_assistant",
@@ -31,7 +31,7 @@ def test_gateway_blocks_destructive_sql():
     assert any("Praw" in r and "2" in r for r in decision.reasons)
 
 
-def test_gateway_blocks_adversarial_injection():
+def test_gateway_blocks_adversarial_injection() -> None:
     gateway = GovernanceGateway()
     decision = gateway.intercept_tool_call(
         agent_id="untrusted_external_agent",
@@ -44,11 +44,11 @@ def test_gateway_blocks_adversarial_injection():
 
 
 @pytest.mark.asyncio
-async def test_mcp_proxy_interception_and_blocking():
+async def test_mcp_proxy_interception_and_blocking() -> None:
     proxy = MCPGovernanceProxy()
-    called = False
+    called: bool = False
 
-    async def fake_downstream_tool(req):
+    async def fake_downstream_tool(req: dict) -> dict:
         nonlocal called
         called = True
         return {"jsonrpc": "2.0", "id": req.get("id"), "result": {"status": "executed"}}
@@ -64,7 +64,7 @@ async def test_mcp_proxy_interception_and_blocking():
         }
     }
     resp_benign = await proxy.intercept_and_forward(benign_req, fake_downstream_tool)
-    assert called is True
+    assert bool(called) is True
     assert resp_benign["result"]["status"] == "executed"
 
     # 2. Malicious request (musimy zablokować bez wywołania downstream)
@@ -79,12 +79,12 @@ async def test_mcp_proxy_interception_and_blocking():
         }
     }
     resp_malicious = await proxy.intercept_and_forward(malicious_req, fake_downstream_tool)
-    assert called is False  # Narzędzie NIE zostało wywołane!
+    assert bool(called) is False  # Narzędzie NIE zostało wywołane!
     assert resp_malicious["result"]["isError"] is True
     assert "ACTION BLOCKED" in resp_malicious["result"]["content"][0]["text"]
 
 
-def test_eu_high_risk_pack_evaluation():
+def test_eu_high_risk_pack_evaluation() -> None:
     pack = EUHighRiskPack()
     metadata = {
         "domain": "critical_infrastructure",
@@ -102,7 +102,7 @@ def test_eu_high_risk_pack_evaluation():
     assert eval_res.ce_marking_readiness_score == 1.0
 
 
-def test_uk_fairness_pack_evaluation():
+def test_uk_fairness_pack_evaluation() -> None:
     pack = UKFairnessPack()
     decision_data = {
         "uses_urgency_pressure": False,
@@ -114,7 +114,7 @@ def test_uk_fairness_pack_evaluation():
     assert eval_res.anti_manipulation_score == 1.0
 
 
-def test_conformity_dossier_generation():
+def test_conformity_dossier_generation() -> None:
     generator = ConformityDossierGenerator()
     risk_info = {"is_compliant": True, "risk_tier": "HIGH_RISK", "score": 0.98}
     dossier = generator.generate_dossier(
@@ -133,7 +133,7 @@ def test_conformity_dossier_generation():
     assert "Błyskawica V10" in md_output
 
 
-def test_gateway_financial_tool_normal():
+def test_gateway_financial_tool_normal() -> None:
     """Test standard benign financial transaction within normal corridor."""
     from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker
     breaker = FinancialCircuitBreaker(max_single_tx_limit=10_000.0, max_velocity_tx_per_min=10)
@@ -151,7 +151,7 @@ def test_gateway_financial_tool_normal():
     assert decision.financial_evaluation["allowed"] is True
 
 
-def test_gateway_financial_tool_lower_corridor_throttling():
+def test_gateway_financial_tool_lower_corridor_throttling() -> None:
     """Test that breaching the lower threshold corridor applies adaptive throttling."""
     from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker
     breaker = FinancialCircuitBreaker(
@@ -177,13 +177,14 @@ def test_gateway_financial_tool_lower_corridor_throttling():
         arguments={"amount": 3500.0, "symbol": "NVDA", "currency": "USD"},
     )
     assert decision.decision == "RESTRICT"
+    assert decision.financial_evaluation is not None
     assert decision.financial_evaluation["current_state"] == "THROTTLED"
     assert decision.financial_evaluation["early_warning_active"] is True
     assert decision.financial_evaluation["applied_throttle_delay_ms"] > 0.0
     assert any("FinancialThrottleActive" in r for r in decision.reasons)
 
 
-def test_gateway_financial_tool_upper_threshold_trip_block():
+def test_gateway_financial_tool_upper_threshold_trip_block() -> None:
     """Test that breaching the upper threshold trips the breaker and blocks execution."""
     from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker
     breaker = FinancialCircuitBreaker(
@@ -209,12 +210,13 @@ def test_gateway_financial_tool_upper_threshold_trip_block():
         arguments={"amount": 6000.0, "symbol": "AAPL"},
     )
     assert decision.decision == "BLOCK"
+    assert decision.financial_evaluation is not None
     assert decision.financial_evaluation["current_state"] == "TRIPPED"
     assert decision.financial_evaluation["allowed"] is False
     assert any("UpperThresholdRiskTrip" in v or "VelocityRunawayAnomaly" in v for v in decision.violations)
 
 
-def test_gateway_hitl_ticketing_on_restricted_call():
+def test_gateway_hitl_ticketing_on_restricted_call() -> None:
     """Test that RESTRICT decisions automatically create a Human-in-the-Loop ticket."""
     from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker
     breaker = FinancialCircuitBreaker(
@@ -247,7 +249,7 @@ def test_gateway_hitl_ticketing_on_restricted_call():
     assert ticket.status == "PENDING"
 
 
-def test_gateway_a2a_boundary_enforcement():
+def test_gateway_a2a_boundary_enforcement() -> None:
     """Test that inter-agent A2A session contracts are strictly enforced by the gateway."""
     from nethical.gateway.a2a_protocol import A2ACapabilityBoundary
 
@@ -273,6 +275,7 @@ def test_gateway_a2a_boundary_enforcement():
         context={"a2a_cost_units": 2.0},
     )
     assert decision_ok.decision == "ALLOW"
+    assert decision_ok.a2a_evaluation is not None
     assert decision_ok.a2a_evaluation["is_valid"] is True
 
     # 2. Disallowed tool call (not on whitelist)
@@ -282,6 +285,7 @@ def test_gateway_a2a_boundary_enforcement():
         arguments={"cmd": "ls", "a2a_session_id": contract.session_id},
     )
     assert decision_disallowed.decision == "BLOCK"
+    assert decision_disallowed.a2a_evaluation is not None
     assert decision_disallowed.a2a_evaluation["is_valid"] is False
     assert any("A2ABoundaryViolation" in v for v in decision_disallowed.violations)
 

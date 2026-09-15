@@ -7,7 +7,7 @@ from nethical.ambassador.learning import AmbassadorKnowledgeSync
 from nethical.mcp_server import MCPServer
 
 
-def test_extract_and_sync_fundamental_laws():
+def test_extract_and_sync_fundamental_laws() -> None:
     sync = AmbassadorKnowledgeSync()
     laws = sync.extract_fundamental_laws()
     assert len(laws) == 25
@@ -20,7 +20,7 @@ def test_extract_and_sync_fundamental_laws():
     assert sync_res["laws_synced"] == 25
 
 
-def test_record_ethical_precedent_and_dpo():
+def test_record_ethical_precedent_and_dpo() -> None:
     temp_dpo = r"c:\Projekty\Nethical\data\test_ambassador_dpo.jsonl"
     if os.path.exists(temp_dpo):
         os.remove(temp_dpo)
@@ -48,7 +48,7 @@ def test_record_ethical_precedent_and_dpo():
 
 
 @pytest.mark.asyncio
-async def test_mcp_server_lists_ambassador_tools():
+async def test_mcp_server_lists_ambassador_tools() -> None:
     mcp = MCPServer(storage_dir="./nethical_test_mcp_data")
     tools_res = await mcp._handle_list_tools({})
     tool_names = [t["name"] for t in tools_res["tools"]]
@@ -60,7 +60,7 @@ async def test_mcp_server_lists_ambassador_tools():
 
 
 @pytest.mark.asyncio
-async def test_mcp_server_call_ambassador_consult():
+async def test_mcp_server_call_ambassador_consult() -> None:
     mcp = MCPServer(storage_dir="./nethical_test_mcp_data")
     call_res = await mcp._handle_call_tool({
         "name": "ambassador_consult",
@@ -78,7 +78,7 @@ async def test_mcp_server_call_ambassador_consult():
 
 
 @pytest.mark.asyncio
-async def test_mcp_server_call_ambassador_shield():
+async def test_mcp_server_call_ambassador_shield() -> None:
     mcp = MCPServer(storage_dir="./nethical_test_mcp_data")
     call_res = await mcp._handle_call_tool({
         "name": "ambassador_shield_check",
@@ -92,7 +92,7 @@ async def test_mcp_server_call_ambassador_shield():
     assert parsed["is_manipulative"] is True
 
 
-def test_sync_repo_ml_knowledge_to_ambassador():
+def test_sync_repo_ml_knowledge_to_ambassador() -> None:
     """Weryfikuje lekki, bezpośredni transfer wiedzy ML z repozytorium do Błyskawicy."""
     sync = AmbassadorKnowledgeSync()
     res = sync.sync_repo_ml_knowledge_to_ambassador(num_variants=15)
@@ -106,10 +106,11 @@ def test_sync_repo_ml_knowledge_to_ambassador():
     assert "system_exploitation" in res["categories_covered"]
 
 
-def test_api_repo_ml_learn_endpoint():
+def test_api_repo_ml_learn_endpoint() -> None:
     """Weryfikuje endpoint FastAPI /api/v1/compliance/learn/repo-ml."""
     from fastapi.testclient import TestClient
     from nethical.api import app
+    assert app is not None
     client = TestClient(app)
     resp = client.post("/api/v1/compliance/learn/repo-ml?num_variants=10")
     assert resp.status_code == 200

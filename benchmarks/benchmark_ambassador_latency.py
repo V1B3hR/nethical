@@ -9,11 +9,12 @@ import statistics
 import time
 
 os.environ["PYTHONIOENCODING"] = "utf-8"
-sys.stdout.reconfigure(encoding="utf-8")
+if hasattr(sys.stdout, "reconfigure"):
+    sys.stdout.reconfigure(encoding="utf-8")
 
 from nethical.ambassador import BlyskawicaAmbassador
 
-def run_benchmark(iterations: int = 500):
+def run_benchmark(iterations: int = 500) -> None:
     ambassador = BlyskawicaAmbassador()
     print("================================================================================")
     print(f"⚡ BENCHMARK LATENCJI IPC NETHICAL <-> BŁYSKAWICA AMBASSADOR ({iterations} prób) ⚡")
@@ -56,7 +57,7 @@ def run_benchmark(iterations: int = 500):
         )
         consult_latencies.append(res["rtt_microseconds"])
 
-    def print_stats(name: str, lats: list):
+    def print_stats(name: str, lats: list) -> None:
         lats_sorted = sorted(lats)
         n = len(lats_sorted)
         p50 = lats_sorted[int(n * 0.50)]

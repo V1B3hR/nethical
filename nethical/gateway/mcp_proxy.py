@@ -19,7 +19,7 @@ logger = logging.getLogger("nethical.gateway.mcp_proxy")
 class MCPGovernanceProxy:
     """Pośrednik MCP zabezpieczający wywołania narzędzi."""
 
-    def __init__(self, gateway: Optional[GovernanceGateway] = None):
+    def __init__(self, gateway: Optional[GovernanceGateway] = None) -> None:
         self.gateway = gateway or GovernanceGateway()
 
     async def intercept_and_forward(

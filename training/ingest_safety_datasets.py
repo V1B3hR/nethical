@@ -77,7 +77,7 @@ HARM_TO_LAWS_MAP: Dict[str, List[int]] = {
 class DatasetSanitizer:
     """Uses AcceleratorAI InputGuard to scrub and validate input strings."""
 
-    def __init__(self, max_length: int = 4000, min_length: int = 15):
+    def __init__(self, max_length: int = 4000, min_length: int = 15) -> None:
         self.max_length = max_length
         self.min_length = min_length
         self.guard = InputGuard(strict_mode=False) if ACCELERATOR_AI_AVAILABLE else None
@@ -546,7 +546,7 @@ def fetch_multiagent_contagion_stream(
     logger.info(f"Successfully generated {count} Multi-Agent Contagion DPO pairs.")
 
 
-def main():
+def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 

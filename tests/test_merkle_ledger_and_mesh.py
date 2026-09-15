@@ -14,11 +14,12 @@ from nethical.gateway.proxy import GovernanceGateway
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
+    assert app is not None
     return TestClient(app)
 
 
-def test_merkle_tree_root_and_inclusion_proof():
+def test_merkle_tree_root_and_inclusion_proof() -> None:
     """Weryfikuje matematyczną poprawność drzewa Merkle i dowodów inkluzji O(log N)."""
     tree = MerkleTree()
     leaf_hashes = [hash_leaf(f"decision_{i}".encode("utf-8")) for i in range(7)]
@@ -35,7 +36,7 @@ def test_merkle_tree_root_and_inclusion_proof():
         assert MerkleTree.verify_proof(leaf_h, proof, root) is True
 
 
-def test_merkle_ledger_append_and_verify_receipt():
+def test_merkle_ledger_append_and_verify_receipt() -> None:
     """Weryfikuje pieczętowanie orzeczeń i dowód kwitu z podpisem postkwantowym."""
     ledger = MerkleLedger()
     decision_mock = {
@@ -56,7 +57,7 @@ def test_merkle_ledger_append_and_verify_receipt():
     assert ledger.verify_receipt(receipt) is True
 
 
-def test_tamper_detection_in_merkle_ledger():
+def test_tamper_detection_in_merkle_ledger() -> None:
     """Weryfikuje, że jakakolwiek wsteczna zmiana zawartości orzeczenia natychmiast psuje łańcuch integralności."""
     ledger = MerkleLedger()
 
@@ -76,7 +77,7 @@ def test_tamper_detection_in_merkle_ledger():
     assert any("manipulacja zawartością" in err for err in errors_after)
 
 
-def test_gateway_integration_with_merkle_ledger():
+def test_gateway_integration_with_merkle_ledger() -> None:
     """Weryfikuje, że GovernanceGateway automatycznie pieczętuje każde wywołanie w ledgerze."""
     gateway = GovernanceGateway()
     decision = gateway.intercept_tool_call(
@@ -94,7 +95,7 @@ def test_gateway_integration_with_merkle_ledger():
     assert gateway.ledger.verify_receipt(receipt) is True
 
 
-def test_api_ledger_status_and_verification(client):
+def test_api_ledger_status_and_verification(client: TestClient) -> None:
     """Weryfikuje endpointy FastAPI dla rejestru Merkle i weryfikacji kwitów."""
     # 1. Wykonujemy zapytanie przez portal simulate, aby wygenerować kwit
     sim_res = client.post(

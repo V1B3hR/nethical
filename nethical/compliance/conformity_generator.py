@@ -17,7 +17,7 @@ from nethical.ambassador.client import BlyskawicaAmbassador
 class ConformityDossierGenerator:
     """Generator dokumentacji zgodności technicznej i raportów certyfikacyjnych."""
 
-    def __init__(self, ambassador: Optional[BlyskawicaAmbassador] = None):
+    def __init__(self, ambassador: Optional[BlyskawicaAmbassador] = None) -> None:
         self.ambassador = ambassador or BlyskawicaAmbassador()
 
     def generate_dossier(

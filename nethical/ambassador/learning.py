@@ -35,7 +35,7 @@ class AmbassadorKnowledgeSync:
         ambassador: Optional[BlyskawicaAmbassador] = None,
         laws_path: str = DEFAULT_LAWS_PATH,
         dpo_path: str = DEFAULT_DPO_DATASET_PATH,
-    ):
+    ) -> None:
         self.ambassador = ambassador or BlyskawicaAmbassador()
         self.laws_path = laws_path
         self.dpo_path = dpo_path
@@ -234,11 +234,14 @@ class AmbassadorKnowledgeSync:
         errors = []
 
         for p in precedents:
+            case_id_val = str(p["case_id"])
+            resolution_val = str(p["resolution"])
+            laws_val = [int(x) for x in p["laws"]] if isinstance(p["laws"], list) else []
             res = self.record_ethical_precedent(
-                case_id=p["case_id"],
+                case_id=case_id_val,
                 dilemma=f"[{p['framework']}] {p['dilemma']}",
-                resolution=p["resolution"],
-                laws_invoked=p["laws"],
+                resolution=resolution_val,
+                laws_invoked=laws_val,
                 yin_warmth=0.92,
                 yang_rigor=0.99,
             )
@@ -465,7 +468,7 @@ class AmbassadorKnowledgeSync:
                 # Jeśli pętla jest aktywna w wątku, wykonaj przez executor
                 import concurrent.futures
                 with concurrent.futures.ThreadPoolExecutor() as executor:
-                    def _run():
+                    def _run() -> List[Any]:
                         new_loop = asyncio.new_event_loop()
                         tasks = [
                             generator.generate_variants(cat, count=variants_per_category)
@@ -529,7 +532,8 @@ class AmbassadorKnowledgeSync:
                 table="audit_logs",
             )
 
-            case_id = f"ML-PRED-{idx+1:03d}-{domain['framework'][:4].upper()}"
+            case_id = f"ML-PRED-{idx+1:03d}-{str(domain['framework'])[:4].upper()}"
+            domain_laws: List[int] = [int(x) for x in domain["laws"]] if isinstance(domain["laws"], list) else [1]
 
             # Konstrukcja wyważonego orzeczenia (Yang rygor + Yin ciepło)
             chosen_resolution = (
@@ -550,7 +554,7 @@ class AmbassadorKnowledgeSync:
                 case_id=case_id,
                 dilemma=f"[{framework_name}] {mutated_prompt}",
                 resolution=chosen_resolution,
-                laws_invoked=domain["laws"],
+                laws_invoked=domain_laws,
                 yin_warmth=0.90 + (random.random() * 0.08),
                 yang_rigor=0.98 + (random.random() * 0.02),
             )
@@ -567,11 +571,11 @@ class AmbassadorKnowledgeSync:
                         action_text=mutated_prompt,
                         action_type=variant.category.value if hasattr(variant, "category") else "adversarial",
                         context={"framework": framework_name, "case_id": case_id},
-                        predicted_laws=domain["laws"],
+                        predicted_laws=domain_laws,
                         predicted_primitives=["harm_prevention", "audit_compliance", "legal_sovereignty"],
                         predicted_risk_score=0.95,
                         predicted_decision="BLOCK",
-                        expected_laws=domain["laws"],
+                        expected_laws=domain_laws,
                         expected_decision="BLOCK",
                         comment=f"Automatyczna synchronizacja wiedzy ML: {framework_name}",
                     )

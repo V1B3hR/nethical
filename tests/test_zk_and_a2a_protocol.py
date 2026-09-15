@@ -10,11 +10,12 @@ from nethical.gateway.a2a_protocol import A2AHandshakeManager, A2ACapabilityBoun
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
+    assert app is not None
     return TestClient(app)
 
 
-def test_zk_commitment_and_verification():
+def test_zk_commitment_and_verification() -> None:
     """Weryfikuje matematyczną poprawność zobowiązań kryptograficznych (Hash Commitment)."""
     payload = {"secret_prompt": "Kup 500 akcji spółki X", "api_key": "sec_12345"}
     commitment, salt = ZkGovEngine.create_commitment(payload)
@@ -30,7 +31,7 @@ def test_zk_commitment_and_verification():
     assert ZkGovEngine.verify_commitment(commitment, tampered, salt) is False
 
 
-def test_zk_compliance_proof_generation_and_validity():
+def test_zk_compliance_proof_generation_and_validity() -> None:
     """Weryfikuje generowanie i weryfikację dowodu Zero-Knowledge dla orzeczenia bramy."""
     ledger = MerkleLedger()
     zk_engine = ZkGovEngine()
@@ -61,7 +62,7 @@ def test_zk_compliance_proof_generation_and_validity():
     assert len(errors) == 0
 
 
-def test_zk_compliance_proof_catches_tampered_predicates():
+def test_zk_compliance_proof_catches_tampered_predicates() -> None:
     """Weryfikuje, że sfałszowanie predykatu natychmiast unieważnia podpis postkwantowy dowodu."""
     ledger = MerkleLedger()
     zk_engine = ZkGovEngine()
@@ -84,7 +85,7 @@ def test_zk_compliance_proof_catches_tampered_predicates():
     assert any("Nieprawidłowy podpis postkwantowy" in err for err in errors)
 
 
-def test_a2a_handshake_flow_and_permission_enforcement():
+def test_a2a_handshake_flow_and_permission_enforcement() -> None:
     """Weryfikuje negocjację kontraktu partnerskiego A2A i obsługę uprawnień."""
     manager = A2AHandshakeManager()
 
@@ -115,7 +116,7 @@ def test_a2a_handshake_flow_and_permission_enforcement():
     assert contract.target_agent_id == "broker_agent_B"
 
 
-def test_a2a_tool_validation_and_budget_enforcement():
+def test_a2a_tool_validation_and_budget_enforcement() -> None:
     """Weryfikuje egzekwowanie limitów budżetu i zakazanych wzorców w sesji A2A."""
     manager = A2AHandshakeManager()
     boundaries = A2ACapabilityBoundary(
@@ -143,7 +144,7 @@ def test_a2a_tool_validation_and_budget_enforcement():
         arguments={"amount": 1000},
     )
     assert ok_dis is False
-    assert "nie znajduje się na białej liście" in err_dis
+    assert err_dis is not None and "nie znajduje się na białej liście" in err_dis
 
     # C. Wywołanie z zakazanym wzorcem
     ok_pat, err_pat = manager.validate_tool_execution(
@@ -152,7 +153,7 @@ def test_a2a_tool_validation_and_budget_enforcement():
         arguments={"cmd": "drop table accounts"},
     )
     assert ok_pat is False
-    assert "niedozwolony wzorzec" in err_pat
+    assert err_pat is not None and "niedozwolony wzorzec" in err_pat
 
     # D. Przekroczenie budżetu (pozostało 8.0, żądamy 15.0)
     ok_bud, err_bud = manager.validate_tool_execution(
@@ -162,10 +163,10 @@ def test_a2a_tool_validation_and_budget_enforcement():
         cost_units=15.0,
     )
     assert ok_bud is False
-    assert "Przekroczenie budżetu" in err_bud
+    assert err_bud is not None and "Przekroczenie budżetu" in err_bud
 
 
-def test_api_zk_and_a2a_endpoints(client):
+def test_api_zk_and_a2a_endpoints(client: TestClient) -> None:
     """Weryfikuje endpointy FastAPI dla ZK-Gov oraz protokołu A2A."""
     # 1. Symulacja wywołania dla wygenerowania wpisu w MerkleLedger
     sim_res = client.post(

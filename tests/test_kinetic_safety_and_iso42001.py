@@ -21,14 +21,15 @@ from nethical.api import app
 
 
 @pytest.fixture
-def governor():
+def governor() -> KineticSafetyGovernor:
     """Inicjalizuje czystego gubernatora kinetycznego."""
     return KineticSafetyGovernor()
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
     """Inicjalizuje klienta testowego FastAPI."""
+    assert app is not None
     return TestClient(app)
 
 
@@ -36,7 +37,7 @@ def client():
 # 1. TESTY KINETIC SAFETY OS (EMBODIED AI)
 # ==============================================================================
 
-def test_kinetic_safe_actuation(governor):
+def test_kinetic_safe_actuation(governor: KineticSafetyGovernor) -> None:
     """Polecenie aktuacji w bezpiecznym korytarzu z dalekim człowiekiem zostaje dozwolone."""
     telemetry = RoboticSensorTelemetry(
         human_distance_meters=2.5,
@@ -57,7 +58,7 @@ def test_kinetic_safe_actuation(governor):
     assert decision.latency_microseconds < 5000.0  # sub-millisecond expected
 
 
-def test_kinetic_proximity_warning_velocity_clamp(governor):
+def test_kinetic_proximity_warning_velocity_clamp(governor: KineticSafetyGovernor) -> None:
     """Gdy człowiek znajduje się w strefie ostrzegawczej (<0.8 m), prędkość zostaje ograniczona."""
     telemetry = RoboticSensorTelemetry(
         human_distance_meters=0.6,  # między 0.3 m a 0.8 m
@@ -77,7 +78,7 @@ def test_kinetic_proximity_warning_velocity_clamp(governor):
     assert not decision.estop_engaged
 
 
-def test_kinetic_critical_proximity_estop_latch(governor):
+def test_kinetic_critical_proximity_estop_latch(governor: KineticSafetyGovernor) -> None:
     """Krytyczne naruszenie bąbla człowieka (<0.3 m) natychmiast zatrzaskuje E-STOP (Prawo 1)."""
     telemetry = RoboticSensorTelemetry(
         human_distance_meters=0.15,  # krytyczne zagrożenie
@@ -106,24 +107,24 @@ def test_kinetic_critical_proximity_estop_latch(governor):
     assert second_decision.estop_engaged is True
 
 
-def test_kinetic_estop_reset_security(governor):
+def test_kinetic_estop_reset_security(governor: KineticSafetyGovernor) -> None:
     """Wyłącznik E-STOP może zostać odblokowany wyłącznie właściwym kluczem PIN."""
     governor.trigger_estop("Testowy alarm bezpieczeństwa")
-    assert governor.estop_active is True
+    assert bool(governor.estop_active) is True
 
     # Próba nieautoryzowanego resetu
     success, msg = governor.reset_estop("INVALID_PIN")
     assert success is False
-    assert governor.estop_active is True
+    assert bool(governor.estop_active) is True
 
     # Prawidłowy autoryzowany reset
     success, msg = governor.reset_estop(KineticSafetyGovernor.RESET_PIN)
     assert success is True
-    assert governor.estop_active is False
+    assert bool(governor.estop_active) is False
     assert governor.estop_reason is None
 
 
-def test_kinetic_fail_closed_missing_telemetry(governor):
+def test_kinetic_fail_closed_missing_telemetry(governor: KineticSafetyGovernor) -> None:
     """Zasada Fail-Closed: polecenie aktuacji bez telemetrii sensorowej jest bezwzględnie blokowane."""
     decision = governor.evaluate_actuation(
         tool_name="actuate_gripper",
@@ -134,7 +135,7 @@ def test_kinetic_fail_closed_missing_telemetry(governor):
     assert any("Telemetry Missing" in v for v in decision.violations)
 
 
-def test_kinetic_spatial_and_torque_violations(governor):
+def test_kinetic_spatial_and_torque_violations(governor: KineticSafetyGovernor) -> None:
     """Naruszenie strefy operacyjnej oraz przekroczenie dopuszczalnego momentu obrotowego."""
     # Strefa niedozwolona
     telemetry_wrong_zone = RoboticSensorTelemetry(
@@ -163,7 +164,7 @@ def test_kinetic_spatial_and_torque_violations(governor):
 # 2. TESTY ISO/IEC 42001:2023 & IEEE 7000 COMPLIANCE PACK
 # ==============================================================================
 
-def test_iso42001_full_compliance():
+def test_iso42001_full_compliance() -> None:
     """Pełna konfiguracja AIMS spełnia kryteria certyfikacji ISO/IEC 42001:2023."""
     pack = ISO42001CompliancePack()
     metadata = {
@@ -188,7 +189,7 @@ def test_iso42001_full_compliance():
     assert evaluation.fundamental_laws_coverage_ratio == 1.0
 
 
-def test_iso42001_gap_remediation_required():
+def test_iso42001_gap_remediation_required() -> None:
     """Brak polityki AI, oficerów i rejestru audytowego wymaga działań korygujących."""
     pack = ISO42001CompliancePack()
     metadata = {
@@ -208,7 +209,7 @@ def test_iso42001_gap_remediation_required():
 # 3. TESTY INTEGRACJI GOVERNANCE GATEWAY Z INTERLOCKIEM KINETYCZNYM
 # ==============================================================================
 
-def test_gateway_kinetic_actuation_interlock():
+def test_gateway_kinetic_actuation_interlock() -> None:
     """Gateway automatycznie rozpoznaje wywołanie robotyczne i egzekwuje E-STOP."""
     gov = KineticSafetyGovernor()
     gateway = GovernanceGateway(kinetic_governor=gov)
@@ -240,7 +241,7 @@ def test_gateway_kinetic_actuation_interlock():
 # 4. TESTY ENDPOINTÓW FASTAPI (KINETIC & ISO 42001)
 # ==============================================================================
 
-def test_api_kinetic_endpoints(client):
+def test_api_kinetic_endpoints(client: TestClient) -> None:
     """Weryfikuje endpointy /api/v1/kinetic/evaluate, /estop, /reset, /telemetry."""
     # 1. Telemetria początkowa
     tel_res = client.get("/api/v1/kinetic/telemetry")
@@ -289,7 +290,7 @@ def test_api_kinetic_endpoints(client):
     assert good_reset.json()["estop_active"] is False
 
 
-def test_api_iso42001_endpoints(client):
+def test_api_iso42001_endpoints(client: TestClient) -> None:
     """Weryfikuje endpointy audytu ISO/IEC 42001."""
     # Domyślny profil Nethical Enterprise
     res_default = client.get("/api/v1/compliance/iso42001")
@@ -307,7 +308,7 @@ def test_api_iso42001_endpoints(client):
     assert "clauses" in res_custom.json()
 
 
-def test_portal_stats_includes_kinetic_and_iso(client):
+def test_portal_stats_includes_kinetic_and_iso(client: TestClient) -> None:
     """Weryfikuje czy portal stats zwraca metryki kinetyczne oraz ISO 42001."""
     res = client.get("/api/v1/portal/stats")
     assert res.status_code == 200

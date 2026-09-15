@@ -18,7 +18,7 @@ See: https://spec.modelcontextprotocol.io/
 import json
 import asyncio
 import logging
-from typing import Dict, Any, List, Optional
+from typing import Dict, Any, List, Optional, AsyncGenerator
 from datetime import datetime, timezone
 from contextlib import asynccontextmanager
 
@@ -64,7 +64,7 @@ class MCPServer:
         storage_dir: str = "./nethical_mcp_data",
         enable_quota: bool = False,
         region_id: Optional[str] = None,
-    ):
+    ) -> None:
         """Initialize the MCP server.
         
         Args:
@@ -249,12 +249,13 @@ class MCPServer:
             }
             
             for param_name, param in tool.parameters.items():
-                tool_def["inputSchema"]["properties"][param_name] = {
+                prop_dict: Dict[str, Any] = {
                     "type": param.type,
                     "description": param.description,
                 }
                 if param.enum:
-                    tool_def["inputSchema"]["properties"][param_name]["enum"] = param.enum
+                    prop_dict["enum"] = param.enum
+                tool_def["inputSchema"]["properties"][param_name] = prop_dict
                 if param.required:
                     tool_def["inputSchema"]["required"].append(param_name)
             
@@ -385,20 +386,23 @@ class MCPServer:
 """
         
         # Add risk assessment if available
-        if "phase3" in result and result["phase3"].get("risk_score") is not None:
-            risk_score = result["phase3"]["risk_score"]
+        phase3 = result.get("phase3")
+        if isinstance(phase3, dict) and phase3.get("risk_score") is not None:
+            risk_score = phase3["risk_score"]
             response_text += f"\n**Risk Score:** {risk_score:.2f}\n"
         
         # Add PII detection results if available
-        if "pii_matches" in result and result["pii_matches"]:
-            response_text += f"\n**⚠️ PII Detected:** {len(result['pii_matches'])} instance(s)\n"
-            for match in result["pii_matches"][:3]:  # Show first 3
-                response_text += f"  - {match.get('pii_type', 'unknown')}: {match.get('text', 'N/A')}\n"
+        pii_matches_val = result.get("pii_matches")
+        if isinstance(pii_matches_val, list) and pii_matches_val:
+            response_text += f"\n**⚠️ PII Detected:** {len(pii_matches_val)} instance(s)\n"
+            for match in pii_matches_val[:3]:  # Show first 3
+                if isinstance(match, dict):
+                    response_text += f"  - {match.get('pii_type', 'unknown')}: {match.get('text', 'N/A')}\n"
         
         # Add quota status if available
-        if "quota_enforcement" in result:
-            quota = result["quota_enforcement"]
-            if quota and not quota.get("allowed"):
+        quota = result.get("quota_enforcement")
+        if isinstance(quota, dict):
+            if not quota.get("allowed"):
                 response_text += f"\n**❌ Quota Exceeded:** {quota.get('reason', 'Rate limit exceeded')}\n"
         
         # Add violation details if blocked
@@ -656,7 +660,7 @@ class MCPServer:
         queue = asyncio.Queue()
         self.client_queues[client_id] = queue
         
-        async def event_generator():
+        async def event_generator() -> AsyncGenerator[str, None]:
             try:
                 # Send initial connection message
                 yield f"data: {json.dumps({'type': 'connection', 'status': 'connected'})}\n\n"
@@ -707,7 +711,7 @@ class MCPServer:
             },
         )
     
-    async def send_message(self, client_id: str, message: Dict[str, Any]):
+    async def send_message(self, client_id: str, message: Dict[str, Any]) -> None:
         """Send a message to a specific client."""
         if client_id in self.client_queues:
             await self.client_queues[client_id].put(message)
@@ -728,7 +732,7 @@ def create_app(
     )
     
     @asynccontextmanager
-    async def lifespan(app: FastAPI):
+    async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
         """Lifespan context manager."""
         # Startup
         yield
@@ -743,19 +747,19 @@ def create_app(
     )
     
     @app.post("/messages")
-    async def handle_message(request: Request):
+    async def handle_message(request: Request) -> Any:
         """Handle MCP messages via POST (alternative to SSE)."""
         message = await request.json()
         response = await mcp_server._handle_message(message)
         return response
     
     @app.get("/sse")
-    async def sse(request: Request):
+    async def sse(request: Request) -> StreamingResponse:
         """SSE endpoint for MCP communication."""
         return await mcp_server.sse_endpoint(request)
     
     @app.get("/health")
-    async def health():
+    async def health() -> Dict[str, str]:
         """Health check endpoint."""
         return {"status": "healthy", "service": "nethical-mcp-server"}
     

@@ -20,19 +20,19 @@ from nethical.api import app
 
 
 @pytest.fixture
-def ledger():
+def ledger() -> MerkleLedger:
     """Inicjalizuje czysty rejestr MerkleLedger."""
     return MerkleLedger()
 
 
 @pytest.fixture
-def hitl_mgr(ledger):
+def hitl_mgr(ledger: MerkleLedger) -> HITLQueueManager:
     """Inicjalizuje menedżera kolejki HITL z powiązanym rejestrem."""
     return HITLQueueManager(ledger=ledger)
 
 
 @pytest.fixture
-def cluster_sync(ledger):
+def cluster_sync(ledger: MerkleLedger) -> CrossRegionLedgerSync:
     """Inicjalizuje moduł synchronizacji klastra."""
     node = ClusterNodeIdentity(
         node_id="nethical-eu-central-test",
@@ -44,8 +44,9 @@ def cluster_sync(ledger):
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
     """Klient testowy FastAPI."""
+    assert app is not None
     return TestClient(app)
 
 
@@ -53,7 +54,7 @@ def client():
 # 1. TESTY HUMAN-IN-THE-LOOP (HITL) CASE MANAGEMENT
 # ==============================================================================
 
-def test_hitl_enqueue_and_priority_sorting(hitl_mgr):
+def test_hitl_enqueue_and_priority_sorting(hitl_mgr: HITLQueueManager) -> None:
     """Bilety są prawidłowo kolejkowane i sortowane wg wagi priorytetu (URGENT > HIGH > STANDARD)."""
     t_std = hitl_mgr.enqueue_ticket(
         agent_id="agent_1",
@@ -82,7 +83,7 @@ def test_hitl_enqueue_and_priority_sorting(hitl_mgr):
     assert pending[2].ticket_id == t_std.ticket_id
 
 
-def test_hitl_resolve_approve_seals_in_ledger(hitl_mgr, ledger):
+def test_hitl_resolve_approve_seals_in_ledger(hitl_mgr: HITLQueueManager, ledger: MerkleLedger) -> None:
     """Zatwierdzenie sprawy przez człowieka pieczętuje orzeczenie w MerkleLedger."""
     ticket = hitl_mgr.enqueue_ticket(
         agent_id="finance_bot",
@@ -117,7 +118,7 @@ def test_hitl_resolve_approve_seals_in_ledger(hitl_mgr, ledger):
     assert metrics["approval_rate"] == 1.0
 
 
-def test_hitl_resolve_errors(hitl_mgr):
+def test_hitl_resolve_errors(hitl_mgr: HITLQueueManager) -> None:
     """Błędy przy próbie rozwiązania nieznanego lub dwukrotnie tego samego biletu."""
     ticket = hitl_mgr.enqueue_ticket("agent_x", "tool_x", {})
     hitl_mgr.resolve_ticket(ticket.ticket_id, "rev_1", "REJECT", "Odrzucono")
@@ -135,7 +136,7 @@ def test_hitl_resolve_errors(hitl_mgr):
 # 2. TESTY MULTI-REGION CLUSTER SYNC PROTOCOL
 # ==============================================================================
 
-def test_cluster_checkpoint_creation_and_pqc_verification(cluster_sync):
+def test_cluster_checkpoint_creation_and_pqc_verification(cluster_sync: CrossRegionLedgerSync) -> None:
     """Punkt kontrolny jest generowany z prawidłowym podpisem Dilithium3."""
     checkpoint = cluster_sync.create_checkpoint()
 
@@ -148,7 +149,7 @@ def test_cluster_checkpoint_creation_and_pqc_verification(cluster_sync):
     assert is_valid is True
 
 
-def test_cluster_reconcile_synchronized_and_divergent(cluster_sync):
+def test_cluster_reconcile_synchronized_and_divergent(cluster_sync: CrossRegionLedgerSync) -> None:
     """Rekonsyliacja wykrywa stan zsynchronizowany, przewagę bloków oraz rozwidlenia (Fork)."""
     # 1. Identyczny stan -> SYNCHRONIZED
     chk_sync = cluster_sync.create_checkpoint()
@@ -184,7 +185,7 @@ def test_cluster_reconcile_synchronized_and_divergent(cluster_sync):
     assert res_fork.status == "DIVERGENT_FORK"
 
 
-def test_cluster_reconcile_invalid_signature(cluster_sync):
+def test_cluster_reconcile_invalid_signature(cluster_sync: CrossRegionLedgerSync) -> None:
     """Sfałszowany punkt kontrolny zostaje natychmiast odrzucony jako INVALID_SIGNATURE."""
     chk = cluster_sync.create_checkpoint()
     chk.merkle_root = "0" * 64  # Podmiana treści bez ważnego podpisu
@@ -198,7 +199,7 @@ def test_cluster_reconcile_invalid_signature(cluster_sync):
 # 3. TESTY ENDPOINTÓW FASTAPI (HITL & CLUSTER)
 # ==============================================================================
 
-def test_api_hitl_endpoints(client):
+def test_api_hitl_endpoints(client: TestClient) -> None:
     """Weryfikuje endpointy /api/v1/hitl/queue, /enqueue, /resolve, /ticket/{id}, /metrics."""
     # 1. Enqueue
     enq_res = client.post(
@@ -243,7 +244,7 @@ def test_api_hitl_endpoints(client):
     assert metrics_res.json()["total_approved"] >= 1
 
 
-def test_api_cluster_endpoints(client):
+def test_api_cluster_endpoints(client: TestClient) -> None:
     """Weryfikuje endpointy /api/v1/cluster/nodes, /checkpoint, /peers/register, /reconcile."""
     # 1. Nodes topology
     nodes_res = client.get("/api/v1/cluster/nodes")
@@ -280,7 +281,7 @@ def test_api_cluster_endpoints(client):
     assert rec_res.json()["status"] == "SYNCHRONIZED"
 
 
-def test_portal_stats_includes_hitl_and_cluster(client):
+def test_portal_stats_includes_hitl_and_cluster(client: TestClient) -> None:
     """Weryfikuje obecność metryk HITL i klastra w /api/v1/portal/stats."""
     res = client.get("/api/v1/portal/stats")
     assert res.status_code == 200

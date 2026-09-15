@@ -18,7 +18,7 @@ logger = logging.getLogger("nethical.ambassador.client")
 class BlyskawicaAmbassador:
     """Interfejs Ambasadora Nethical reprezentowany przez suwerenny proces Błyskawicy."""
 
-    def __init__(self, pipe_path: Optional[str] = None):
+    def __init__(self, pipe_path: Optional[str] = None) -> None:
         self.channel = AmbassadorChannel(pipe_path) if pipe_path else AmbassadorChannel()
         self.local_memory: Dict[str, str] = {}
 

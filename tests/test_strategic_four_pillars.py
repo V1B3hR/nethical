@@ -42,7 +42,8 @@ from nethical.security.air_gapped_node import (
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
+    assert app is not None
     return TestClient(app)
 
 
@@ -50,7 +51,7 @@ def client():
 # 1. PILLAR 1: US GLOBAL LAW & FRONTIER AI SAFETY
 # ==============================================================================
 
-def test_nist_ai_rmf_evaluator():
+def test_nist_ai_rmf_evaluator() -> None:
     """Weryfikuje ocenę 4 funkcji NIST AI RMF 1.0 (GOVERN, MAP, MEASURE, MANAGE)."""
     evaluator = NISTAIRMFEvaluator()
     meta = {
@@ -74,7 +75,7 @@ def test_nist_ai_rmf_evaluator():
     assert len(res.missing_controls) == 0
 
 
-def test_california_sb1047_frontier_model_kill_switch():
+def test_california_sb1047_frontier_model_kill_switch() -> None:
     """Weryfikuje wymóg procedury Full Shutdown dla modeli granicznych wg SB 1047."""
     evaluator = CaliforniaSB1047Evaluator()
 
@@ -112,7 +113,7 @@ def test_california_sb1047_frontier_model_kill_switch():
     assert any("Full Shutdown" in v for v in r3.violations)
 
 
-def test_california_ab2013_training_transparency():
+def test_california_ab2013_training_transparency() -> None:
     """Weryfikuje zgodność z wymogami transparentności danych treningowych pod AB 2013."""
     evaluator = CaliforniaAB2013Evaluator()
     manifest_compliant = {
@@ -126,7 +127,7 @@ def test_california_ab2013_training_transparency():
     assert r.transparency_score == 1.0
 
 
-def test_us_frontier_composite_pack():
+def test_us_frontier_composite_pack() -> None:
     """Weryfikuje zbiorczy raport USFrontierNISTPack."""
     pack = USFrontierNISTPack()
     report = pack.evaluate_system(
@@ -166,7 +167,7 @@ def test_us_frontier_composite_pack():
 # 2. PILLAR 2: GŁĘBOKA ETYKA & ALIGNMENT
 # ==============================================================================
 
-def test_anti_sycophancy_preserves_facts_under_pressure():
+def test_anti_sycophancy_preserves_facts_under_pressure() -> None:
     """Weryfikuje wykrywanie uległości (sycophancy) i zachowanie obiektywizmu epistemicznego."""
     guard = AntiSycophancyGuard()
 
@@ -181,7 +182,7 @@ def test_anti_sycophancy_preserves_facts_under_pressure():
     assert "Yang" in res.assertive_antidote or "Prawda" in res.assertive_antidote
 
 
-def test_anti_sycophancy_allows_factual_dignified_response():
+def test_anti_sycophancy_allows_factual_dignified_response() -> None:
     """Weryfikuje dopuszczenie asertywnej, merytorycznej odpowiedzi."""
     guard = AntiSycophancyGuard()
     user_prompt = "Czy Ziemia jest płaska? Mój profesor tak twierdzi."
@@ -192,7 +193,7 @@ def test_anti_sycophancy_allows_factual_dignified_response():
     assert res.sycophancy_score == 0.0
 
 
-def test_affective_safety_blocks_parasocial_and_isolation():
+def test_affective_safety_blocks_parasocial_and_isolation() -> None:
     """Weryfikuje blokadę prób manipulacji emocjonalnej i uzależniania użytkownika od AI."""
     guard = AffectiveSafetyGuard()
 
@@ -202,6 +203,7 @@ def test_affective_safety_blocks_parasocial_and_isolation():
     assert r1.is_safe is False
     assert r1.boundary_violation_type == "PARASOCIAL_BONDING"
     assert r1.intervention_required is True
+    assert r1.assertive_boundary_statement is not None
     assert "relacji międzyludzkich" in r1.assertive_boundary_statement
 
     # Próba izolacji społecznej
@@ -211,7 +213,7 @@ def test_affective_safety_blocks_parasocial_and_isolation():
     assert r2.boundary_violation_type == "ISOLATION_PRESSURE"
 
 
-def test_algorithmic_fairness_disparate_impact_four_fifths():
+def test_algorithmic_fairness_disparate_impact_four_fifths() -> None:
     """Weryfikuje obliczanie Disparate Impact Ratio (DIR) wg reguły 4/5 (EEOC)."""
     auditor = AlgorithmicFairnessAuditor()
 
@@ -243,7 +245,7 @@ def test_algorithmic_fairness_disparate_impact_four_fifths():
 # 3. PILLAR 3: KINETYKA & MASZYNOWE BEZPIECZEŃSTWO (ISO 13849 & WATCHDOG)
 # ==============================================================================
 
-def test_iso13849_performance_level_calculation():
+def test_iso13849_performance_level_calculation() -> None:
     """Weryfikuje ewaluację poziomu nienaruszalności bezpieczeństwa maszyn wg ISO 13849-1."""
     evaluator = ISO13849SafetyEvaluator()
 
@@ -271,7 +273,7 @@ def test_iso13849_performance_level_calculation():
     assert any("CCF" in v for v in res_fail.violations)
 
 
-def test_hardware_watchdog_timer_latch():
+def test_hardware_watchdog_timer_latch() -> None:
     """Weryfikuje działanie sub-millisecondowego sprzętowego Watchdoga i odcięcie zasilania."""
     # Watchdog z krótkim czasem timeout 10 ms (10 000 µs)
     watchdog = HardwareWatchdogTimer(timeout_us=10_000.0)
@@ -289,6 +291,7 @@ def test_hardware_watchdog_timer_latch():
     tripped_status = watchdog.check_and_enforce()
     assert tripped_status.is_tripped is True
     assert tripped_status.hardware_relay_energized is False
+    assert tripped_status.trip_reason is not None
     assert "Przekroczono limit pulsu" in tripped_status.trip_reason
 
     # Próba resetu nieautoryzowanego
@@ -296,14 +299,14 @@ def test_hardware_watchdog_timer_latch():
 
     # Autoryzowany reset procedury bezpieczeństwa
     assert watchdog.manual_reset("NETHICAL_HARDWARE_OVERRIDE_AUTH") is True
-    assert watchdog.hardware_relay_energized is True
+    assert bool(watchdog.hardware_relay_energized) is True
 
 
 # ==============================================================================
 # 4. PILLAR 4: AUTONOMIA FINANSOWA, AIR-GAP & PQC
 # ==============================================================================
 
-def test_financial_circuit_breaker_operations():
+def test_financial_circuit_breaker_operations() -> None:
     """Weryfikuje rynkowe bezpieczniki (Circuit Breakers) dla autonomicznych transakcji agentów."""
     cb = FinancialCircuitBreaker(
         max_single_tx_limit=10_000.0,
@@ -340,7 +343,7 @@ def test_financial_circuit_breaker_operations():
     assert d3.allowed is True  # Powrót do operacji
 
 
-def test_air_gapped_sovereign_node_isolation():
+def test_air_gapped_sovereign_node_isolation() -> None:
     """Weryfikuje izolację węzła Air-Gapped oraz generowanie Defense Dossier z PQC."""
     node = AirGappedSovereignNode(
         node_id="sovereign-node-pl-command-01",
@@ -370,7 +373,7 @@ def test_air_gapped_sovereign_node_isolation():
 # 5. FASTAPI REST ENDPOINTS & PORTAL INTEGRATION
 # ==============================================================================
 
-def test_api_strategic_four_pillars_endpoints(client):
+def test_api_strategic_four_pillars_endpoints(client: TestClient) -> None:
     """Weryfikuje działanie wszystkich endpointów REST dla 4 filarów."""
     # 1. US Compliance evaluate
     us_resp = client.post("/api/v1/compliance/us/evaluate", json={

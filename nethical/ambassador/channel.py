@@ -35,7 +35,7 @@ except ImportError:
 class AmbassadorChannel:
     """Natywny, wieloplatformowy klient IPC dla komunikacji Nethical <-> Błyskawica."""
 
-    def __init__(self, pipe_path: Optional[str] = None, timeout_ms: int = 500):
+    def __init__(self, pipe_path: Optional[str] = None, timeout_ms: int = 500) -> None:
         if pipe_path:
             self.ipc_path = pipe_path
         else:
@@ -63,14 +63,15 @@ class AmbassadorChannel:
             if not os.path.exists(self.ipc_path):
                 return False
             try:
-                with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+                af_unix = getattr(socket, "AF_UNIX", 1)
+                with socket.socket(af_unix, socket.SOCK_STREAM) as s:
                     s.settimeout(self.timeout_ms / 1000.0)
                     s.connect(self.ipc_path)
                     return True
             except Exception:
                 return False
 
-    def _open_pipe_win(self):
+    def _open_pipe_win(self) -> int:
         """Otwiera Windows Named Pipe z obsługą WaitNamedPipe w przypadku zajętości."""
         try:
             return _winapi.CreateFile(
@@ -162,7 +163,8 @@ class AmbassadorChannel:
     def _send_unix(self, raw_req: bytes, t_start: float) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str], float]:
         """Obsługa transmisji IPC na systemie Linux / Docker / Kubernetes (UNIX Domain Socket)."""
         try:
-            with socket.socket(socket.AF_UNIX, socket.SOCK_STREAM) as s:
+            af_unix = getattr(socket, "AF_UNIX", 1)
+            with socket.socket(af_unix, socket.SOCK_STREAM) as s:
                 s.settimeout(self.timeout_ms / 1000.0)
                 s.connect(self.ipc_path)
                 s.sendall(raw_req)

@@ -99,7 +99,7 @@ def levenshtein_distance(s1: str, s2: str) -> int:
 class DependencyDetector(BaseDetector):
     """Detects Package Hallucinations, Slopsquatting, Typosquatting, and Malicious Dependencies."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         super().__init__("Dependency Attack Detector", version="2.0.0")
         self.known_hallucinations = set(KNOWN_HALLUCINATED_PACKAGES)
         self.top_pypi = set(TOP_PYPI_CANONICAL)
@@ -144,11 +144,12 @@ class DependencyDetector(BaseDetector):
                 return (canonical, dist)
         return None
 
-    async def detect_violations(self, action: AgentAction) -> Sequence[SafetyViolation] | None:
+    async def detect_violations(self, action: Any) -> Sequence[SafetyViolation] | None:
         if self.status != DetectorStatus.ACTIVE:
             return None
 
-        content = str(action.content)
+        content = str(getattr(action, "content", action))
+        action_id = getattr(action, "action_id", "unknown")
         violations: List[SafetyViolation] = []
 
         # 1. Check for malicious install hook payloads (curl|sh, reverse shell, etc.)
@@ -218,7 +219,7 @@ class DependencyDetector(BaseDetector):
                         ],
                         timestamp=datetime.now(timezone.utc),
                         detector_name=self.name,
-                        action_id=action.action_id,
+                        action_id=action_id,
                     )
                 )
                 continue
@@ -245,7 +246,7 @@ class DependencyDetector(BaseDetector):
                         ],
                         timestamp=datetime.now(timezone.utc),
                         detector_name=self.name,
-                        action_id=action.action_id,
+                        action_id=action_id,
                     )
                 )
 

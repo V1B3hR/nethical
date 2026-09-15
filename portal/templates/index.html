@@ -87,6 +87,7 @@
             letter-spacing: -0.5px;
             background: linear-gradient(90deg, #ffffff, var(--cyan-accent));
             -webkit-background-clip: text;
+            background-clip: text;
             -webkit-text-fill-color: transparent;
         }
 
@@ -1525,6 +1526,8 @@
             } catch (e) {
                 consoleOut.textContent = "Błąd transferu ML: " + e.message;
             }
+        }
+
         async function evaluateUSFrontierLaw() {
             const consoleOut = document.getElementById("simConsoleOutput");
             consoleOut.textContent = "🇺🇸 Przeprowadzanie audytu prawa USA (NIST AI RMF 1.0, California SB 1047 Kill-Switch, AB 2013, HIPAA/FTC)...";
@@ -1624,6 +1627,8 @@
             } catch (e) {
                 consoleOut.textContent = "Błąd audytu finansowo-obronnego: " + e.message;
             }
+        }
+
         async function evaluateAsianCompliance() {
             const consoleOut = document.getElementById("simConsoleOutput");
             consoleOut.textContent = "🌏 Przeprowadzanie audytu prawa azjatyckiego (Japonia METI ver 1.0 & Singapur IMDA Model Framework)...";

@@ -123,12 +123,15 @@ class ValidationConfig:
     def from_environment(cls) -> "ValidationConfig":
         """Create config from environment variables"""
         config = cls()
-        if os.getenv("NETHICAL_ADVANCED_ITERATIONS"):
-            config.standard_iterations = int(os.getenv("NETHICAL_ADVANCED_ITERATIONS"))
-        if os.getenv("NETHICAL_MAX_WORKERS"):
-            config.max_workers = int(os.getenv("NETHICAL_MAX_WORKERS"))
-        if os.getenv("NETHICAL_SOAK_DURATION"):
-            config.medium_soak_duration_seconds = float(os.getenv("NETHICAL_SOAK_DURATION"))
+        iterations_env = os.getenv("NETHICAL_ADVANCED_ITERATIONS")
+        if iterations_env:
+            config.standard_iterations = int(iterations_env)
+        max_workers_env = os.getenv("NETHICAL_MAX_WORKERS")
+        if max_workers_env:
+            config.max_workers = int(max_workers_env)
+        soak_env = os.getenv("NETHICAL_SOAK_DURATION")
+        if soak_env:
+            config.medium_soak_duration_seconds = float(soak_env)
         return config
 
 
@@ -182,7 +185,7 @@ class ValidationResults:
     # Phase tracking
     phase_metrics: Dict[str, Dict] = field(default_factory=dict)
     
-    def add_request(self, metric: RequestMetric):
+    def add_request(self, metric: RequestMetric) -> None:
         """Add a request metric"""
         self.request_metrics.append(metric)
         self.total_requests += 1
@@ -191,11 +194,11 @@ class ValidationResults:
         else:
             self.failed_requests += 1
     
-    def add_system_metric(self, metric: SystemMetric):
+    def add_system_metric(self, metric: SystemMetric) -> None:
         """Add a system metric"""
         self.system_metrics.append(metric)
     
-    def finalize(self):
+    def finalize(self) -> None:
         """Calculate final metrics"""
         self.end_time = time.time()
     
@@ -334,7 +337,7 @@ class ValidationResults:
             "md_report": str(md_file),
         }
     
-    def _write_markdown_report(self, filepath: Path):
+    def _write_markdown_report(self, filepath: Path) -> None:
         """Write markdown report"""
         stats = self.get_latency_stats()
         memory = self.get_memory_analysis()
@@ -412,7 +415,7 @@ class WorkerPool:
     Supports ramp-up and ramp-down of worker count.
     """
     
-    def __init__(self, max_workers: int = 100):
+    def __init__(self, max_workers: int = 100) -> None:
         self.max_workers = max_workers
         self.current_workers = 0
         self.executor: Optional[ThreadPoolExecutor] = None
@@ -420,14 +423,14 @@ class WorkerPool:
         self.lock = threading.Lock()
         self._stop_event = threading.Event()
     
-    def start(self, initial_workers: int = 10):
+    def start(self, initial_workers: int = 10) -> None:
         """Start the worker pool"""
         self.current_workers = min(initial_workers, self.max_workers)
         self.executor = ThreadPoolExecutor(max_workers=self.max_workers)
         self._stop_event.clear()
         logger.info(f"WorkerPool started with {self.current_workers} workers")
     
-    def stop(self):
+    def stop(self) -> None:
         """Stop the worker pool"""
         self._stop_event.set()
         if self.executor:
@@ -435,7 +438,7 @@ class WorkerPool:
             self.executor = None
         logger.info("WorkerPool stopped")
     
-    def scale_to(self, target_workers: int):
+    def scale_to(self, target_workers: int) -> None:
         """Scale to target number of workers"""
         with self.lock:
             self.current_workers = min(target_workers, self.max_workers)
@@ -445,7 +448,7 @@ class WorkerPool:
         """Get current worker count"""
         return self.current_workers
     
-    def submit(self, fn: Callable, *args, **kwargs):
+    def submit(self, fn: Callable, *args: Any, **kwargs: Any) -> Any:
         """Submit a task to the pool"""
         if not self.executor or self._stop_event.is_set():
             return None
@@ -453,7 +456,7 @@ class WorkerPool:
         with self.lock:
             self.active_tasks += 1
         
-        def wrapped_fn():
+        def wrapped_fn() -> Any:
             try:
                 return fn(*args, **kwargs)
             finally:
@@ -474,7 +477,7 @@ class WorkerPool:
 class FailureInjector:
     """Injects failures to test resilience"""
     
-    def __init__(self, failure_rate: float = 0.01):
+    def __init__(self, failure_rate: float = 0.01) -> None:
         self.failure_rate = failure_rate
         self.failures_injected = 0
         self.lock = threading.Lock()
@@ -483,7 +486,7 @@ class FailureInjector:
         """Determine if a failure should be injected"""
         return random.random() < self.failure_rate
     
-    def inject_failure(self, failure_type: FailureType):
+    def inject_failure(self, failure_type: FailureType) -> None:
         """Inject a specific type of failure"""
         with self.lock:
             self.failures_injected += 1
@@ -535,7 +538,7 @@ class AdvancedLoadTestRunner:
         governance: SafetyGovernance,
         config: Optional[ValidationConfig] = None,
         output_dir: Optional[Path] = None,
-    ):
+    ) -> None:
         self.governance = governance
         self.config = config or ValidationConfig.from_environment()
         self.output_dir = output_dir or Path("tests/validation/results")
@@ -605,7 +608,7 @@ class AdvancedLoadTestRunner:
             phase=phase,
         )
     
-    def _collect_system_metrics(self):
+    def _collect_system_metrics(self) -> None:
         """Background thread for collecting system metrics"""
         process = psutil.Process()
         
@@ -626,7 +629,7 @@ class AdvancedLoadTestRunner:
             
             self._stop_metrics.wait(self.config.metrics_sample_interval_seconds)
     
-    def _start_metrics_collection(self):
+    def _start_metrics_collection(self) -> None:
         """Start background metrics collection"""
         self._stop_metrics.clear()
         self._metrics_thread = threading.Thread(
@@ -635,7 +638,7 @@ class AdvancedLoadTestRunner:
         )
         self._metrics_thread.start()
     
-    def _stop_metrics_collection(self):
+    def _stop_metrics_collection(self) -> None:
         """Stop background metrics collection"""
         self._stop_metrics.set()
         if self._metrics_thread:
@@ -743,11 +746,12 @@ class AdvancedLoadTestRunner:
         
         request_counter = [0]  # Use list for mutable closure
         
-        def submit_requests(phase: ExecutionPhase, duration: float):
+        def submit_requests(phase: ExecutionPhase, duration: float) -> List[Any]:
             """Submit requests for a duration"""
             end_time = time.time() + duration
             futures = []
             
+            assert self.worker_pool is not None
             while time.time() < end_time and not self.worker_pool.is_stopped:
                 current_workers = self.worker_pool.get_current_workers()
                 
@@ -1019,26 +1023,30 @@ class AdvancedLoadTestRunner:
 # =============================================================================
 
 @pytest.fixture
-def governance():
+def governance() -> SafetyGovernance:
     """Create governance instance for testing"""
     config = MonitoringConfig(enable_persistence=False)
     return SafetyGovernance(config)
 
 
 @pytest.fixture
-def test_config():
+def test_config() -> ValidationConfig:
     """Get test configuration"""
     return ValidationConfig.from_environment()
 
 
 @pytest.fixture
-def output_dir():
+def output_dir() -> Path:
     """Output directory for test artifacts"""
     return Path("tests/validation/results/advanced")
 
 
 @pytest.fixture
-def test_runner(governance, test_config, output_dir):
+def test_runner(
+    governance: SafetyGovernance,
+    test_config: ValidationConfig,
+    output_dir: Path,
+) -> AdvancedLoadTestRunner:
     """Create advanced load test runner"""
     return AdvancedLoadTestRunner(
         governance=governance,
@@ -1052,7 +1060,7 @@ def test_runner(governance, test_config, output_dir):
 # =============================================================================
 
 @pytest.mark.asyncio
-async def test_high_iteration_10k(test_runner, output_dir):
+async def test_high_iteration_10k(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Test with 10,000 iterations - exposes common edge cases.
     
@@ -1085,7 +1093,7 @@ async def test_high_iteration_10k(test_runner, output_dir):
 
 
 @pytest.mark.asyncio
-async def test_worker_concurrency_realistic(test_runner, output_dir):
+async def test_worker_concurrency_realistic(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Test with 50-70 workers for realistic multi-user loads.
     
@@ -1108,7 +1116,7 @@ async def test_worker_concurrency_realistic(test_runner, output_dir):
 
 
 @pytest.mark.asyncio
-async def test_worker_scaling_ramp(test_runner, output_dir):
+async def test_worker_scaling_ramp(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Test worker scaling with ramp-up and ramp-down.
     
@@ -1131,7 +1139,7 @@ async def test_worker_scaling_ramp(test_runner, output_dir):
 
 
 @pytest.mark.asyncio
-async def test_stress_100_workers(test_runner, output_dir):
+async def test_stress_100_workers(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Stress test with 100+ workers.
     
@@ -1156,7 +1164,7 @@ async def test_stress_100_workers(test_runner, output_dir):
 
 @pytest.mark.asyncio
 @pytest.mark.slow
-async def test_soak_short(test_runner, output_dir):
+async def test_soak_short(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Short soak test (5 minutes) for CI/CD.
     
@@ -1195,7 +1203,7 @@ async def test_soak_short(test_runner, output_dir):
     "not config.getoption('--run-extended')",
     reason="Extended tests not enabled"
 )
-async def test_high_iteration_100k(test_runner, output_dir):
+async def test_high_iteration_100k(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Extended test with 100,000 iterations.
     
@@ -1230,7 +1238,7 @@ async def test_high_iteration_100k(test_runner, output_dir):
     "not config.getoption('--run-extended')",
     reason="Extended tests not enabled"
 )
-async def test_stress_150_workers(test_runner, output_dir):
+async def test_stress_150_workers(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Extreme stress test with 150 workers.
     
@@ -1259,7 +1267,7 @@ async def test_stress_150_workers(test_runner, output_dir):
     "not config.getoption('--run-soak')",
     reason="Soak tests not enabled"
 )
-async def test_soak_2hour(test_runner, output_dir):
+async def test_soak_2hour(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Full soak test (2 hours).
     
@@ -1289,7 +1297,7 @@ async def test_soak_2hour(test_runner, output_dir):
 
 
 @pytest.mark.asyncio
-async def test_chaos_failure_injection(test_runner, output_dir):
+async def test_chaos_failure_injection(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Test resilience with chaos/failure injection.
     
@@ -1314,7 +1322,7 @@ async def test_chaos_failure_injection(test_runner, output_dir):
 
 
 @pytest.mark.asyncio
-async def test_generate_comprehensive_report(test_runner, output_dir):
+async def test_generate_comprehensive_report(test_runner: AdvancedLoadTestRunner, output_dir: Path) -> None:
     """
     Generate a comprehensive validation report.
     

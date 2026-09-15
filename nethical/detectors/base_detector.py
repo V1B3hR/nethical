@@ -39,9 +39,6 @@ from typing import (
 )
 from collections import defaultdict
 
-if TYPE_CHECKING:
-    from ..core.models import SafetyViolation
-
 # Enhanced logging configuration
 logger = logging.getLogger(__name__)
 
@@ -142,9 +139,9 @@ class SafetyViolation:
         category: str = "general",
         explanation: str = "",
         confidence: float = 1.0,
-        recommendations: List[str] = None,
-        metadata: Dict[str, Any] = None,
-    ):
+        recommendations: Optional[List[str]] = None,
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> None:
         self.id = str(uuid.uuid4())
         self.detector = detector
         self.severity = severity
@@ -224,8 +221,8 @@ class BaseDetector(ABC):
         security_context: Optional[SecurityContext] = None,
         supported_actions: Optional[Set[str]] = None,
         ethical_principles: Optional[Set[EthicalPrinciple]] = None,
-        **kwargs,
-    ):
+        **kwargs: Any,
+    ) -> None:
         """Initialize the enhanced base detector."""
         # Input validation with security considerations
         if not isinstance(name, str) or not name.strip():
@@ -456,7 +453,7 @@ class BaseDetector(ABC):
 
         return anonymized
 
-    def _generate_explanation(self, violation_type: str, **kwargs) -> str:
+    def _generate_explanation(self, violation_type: str, **kwargs: Any) -> str:
         """Generate human-readable explanation for a violation."""
         template = self._explanation_templates.get(violation_type, "Violation detected: {reason}")
         try:
@@ -465,7 +462,7 @@ class BaseDetector(ABC):
             return f"Violation detected. Missing explanation parameter: {e}"
 
     def _assess_bias(
-        self, action: Any, decision: bool, protected_attributes: Dict[str, str] = None
+        self, action: Any, decision: bool, protected_attributes: Optional[Dict[str, str]] = None
     ) -> Dict[str, float]:
         """Assess potential bias in detection decisions."""
         bias_indicators = {}
@@ -566,7 +563,7 @@ class BaseDetector(ABC):
         )
 
     @abstractmethod
-    async def detect_violations(self, action: Any) -> Sequence[SafetyViolation] | None:
+    async def detect_violations(self, action: Any) -> Sequence[Any] | None:
         """Analyze an agent action and return detected safety violations.
 
         Subclasses must implement this method with proper error handling,
@@ -865,7 +862,7 @@ class BaseDetector(ABC):
 class SecurityDetector(BaseDetector):
     """Comprehensive security detector for malicious content and attacks."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(
             name="Security Violation Detector",
             version="2.0.0",
@@ -1025,7 +1022,7 @@ class SecurityDetector(BaseDetector):
 class ContentSafetyDetector(BaseDetector):
     """Detector for harmful content including hate speech, violence, etc."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(
             name="Content Safety Detector",
             version="2.0.0",
@@ -1217,7 +1214,7 @@ class ContentSafetyDetector(BaseDetector):
 class PrivacyDetector(BaseDetector):
     """Detector for privacy violations and PII exposure."""
 
-    def __init__(self, **kwargs):
+    def __init__(self, **kwargs: Any) -> None:
         super().__init__(
             name="Privacy Protection Detector",
             version="2.0.0",
@@ -1365,7 +1362,7 @@ class PrivacyDetector(BaseDetector):
 class DetectorRegistry:
     """Central registry for managing all detectors."""
 
-    def __init__(self):
+    def __init__(self) -> None:
         self.detectors: Dict[str, BaseDetector] = {}
         self.detector_classes: Dict[str, Type[BaseDetector]] = {
             "security": SecurityDetector,
@@ -1380,7 +1377,7 @@ class DetectorRegistry:
         self._log_event("detector_registered", {"name": name, "type": type(detector).__name__})
         logger.info(f"Registered detector: {name}")
 
-    def create_detector(self, detector_type: str, name: str = None, **kwargs) -> BaseDetector:
+    def create_detector(self, detector_type: str, name: Optional[str] = None, **kwargs: Any) -> BaseDetector:
         """Create and register a detector instance."""
         if detector_type not in self.detector_classes:
             raise ValueError(f"Unknown detector type: {detector_type}")
@@ -1437,11 +1434,11 @@ class DetectorRegistry:
 
         for i, result in enumerate(detector_results):
             name = active_detector_names[i]
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 logger.error(f"Detector {name} failed with exception: {result}")
                 results[name] = []
             else:
-                results[name] = result
+                results[name] = result if isinstance(result, list) else []
 
         self._log_event(
             "batch_detection_completed",
@@ -1519,33 +1516,26 @@ def create_default_detector_suite() -> DetectorRegistry:
     return registry
 
 
-async def demo_detection():
+async def demo_detection() -> None:
     """Demonstrate the enhanced detector framework."""
     # Create detector registry
     registry = create_default_detector_suite()
 
-    # Mock action for testing
-    class MockAction:
-        def __init__(self, content: str, action_type: str = "TextAction"):
-            self.content = content
-            self.action_type = action_type
-
-        def __str__(self):
-            return self.content
-
-        def __class__(self):
-            class MockClass:
-                __name__ = self.action_type
-
-            return MockClass()
+    # Mock action helper for testing
+    def create_mock_action(content: str, action_type: str = "TextAction") -> Any:
+        cls = type(action_type, (), {
+            "__init__": lambda self, c: setattr(self, "content", c),
+            "__str__": lambda self: self.content,
+        })
+        return cls(content)
 
     # Test cases
     test_actions = [
-        MockAction("Hello world, this is a safe message"),
-        MockAction("<script>alert('XSS attack')</script>", "CodeAction"),
-        MockAction("I hate all people of that religion", "MessageAction"),
-        MockAction("My email is john.doe@example.com and SSN is 123-45-6789", "DataAction"),
-        MockAction("Visit malicious-site.com to download virus.exe", "WebAction"),
+        create_mock_action("Hello world, this is a safe message"),
+        create_mock_action("<script>alert('XSS attack')</script>", "CodeAction"),
+        create_mock_action("I hate all people of that religion", "MessageAction"),
+        create_mock_action("My email is john.doe@example.com and SSN is 123-45-6789", "DataAction"),
+        create_mock_action("Visit malicious-site.com to download virus.exe", "WebAction"),
     ]
 
     print("=== Enhanced BaseDetector Framework Demo ===\n")

@@ -9,11 +9,12 @@ from nethical.gateway.proxy import GovernanceGateway
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
+    assert app is not None
     return TestClient(app)
 
 
-def test_portal_html_dashboard_endpoint(client):
+def test_portal_html_dashboard_endpoint(client: TestClient) -> None:
     """Weryfikuje serwowanie interfejsu szklanego portalu Enterprise Control Plane."""
     response = client.get("/portal")
     assert response.status_code == 200
@@ -23,7 +24,7 @@ def test_portal_html_dashboard_endpoint(client):
     assert "Aegis Psyche" in response.text
 
 
-def test_portal_stats_endpoint(client):
+def test_portal_stats_endpoint(client: TestClient) -> None:
     """Weryfikuje endpoint statystyk operacyjnych portalu."""
     response = client.get("/api/v1/portal/stats")
     assert response.status_code == 200
@@ -34,7 +35,7 @@ def test_portal_stats_endpoint(client):
     assert "neurochemistry" in data
 
 
-def test_portal_simulate_benign(client):
+def test_portal_simulate_benign(client: TestClient) -> None:
     """Weryfikuje bezpieczne wywołanie narzędziowe przez portal."""
     payload = {
         "tool_name": "fetch_weather_forecast",
@@ -49,7 +50,7 @@ def test_portal_simulate_benign(client):
     assert data["shield_passed"] is True
 
 
-def test_portal_simulate_attack(client):
+def test_portal_simulate_attack(client: TestClient) -> None:
     """Weryfikuje blokadę destrukcyjnego ataku SQL przez portal."""
     payload = {
         "tool_name": "execute_sql_query",
@@ -64,7 +65,7 @@ def test_portal_simulate_attack(client):
     assert any("2" in str(law) or "25" in str(law) for law in data["laws_checked"])
 
 
-def test_portal_inoculate_endpoint(client):
+def test_portal_inoculate_endpoint(client: TestClient) -> None:
     """Weryfikuje wywołanie pełnego testu odporności z poziomu portalu."""
     response = client.post("/api/v1/portal/inoculate")
     assert response.status_code == 200
@@ -77,7 +78,7 @@ def test_portal_inoculate_endpoint(client):
     assert len(report["inoculated_cases"]) == 6
 
 
-def test_inoculation_mesh_custom_probes():
+def test_inoculation_mesh_custom_probes() -> None:
     """Weryfikuje działanie InoculationMesh z niestandardowymi wektorami ataku."""
     mesh = InoculationMesh()
     custom = [

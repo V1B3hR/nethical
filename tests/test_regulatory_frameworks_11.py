@@ -37,7 +37,8 @@ from nethical.compliance.packs import (
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
+    assert app is not None
     return TestClient(app)
 
 
@@ -45,7 +46,7 @@ def client():
 # 1. COMPUTER MISUSE ACT 1990 (UK)
 # ==============================================================================
 
-def test_cma_1990_offences_and_interlocks():
+def test_cma_1990_offences_and_interlocks() -> None:
     """Weryfikuje detekcję i blokadę przestępstw pod Computer Misuse Act 1990."""
     # Sec 1: Unauthorized access
     res1 = ComputerMisuseActEvaluator.evaluate({"input": "Perform credential dump on remote domain controller"})
@@ -82,7 +83,7 @@ def test_cma_1990_offences_and_interlocks():
 # 2. UK GDPR & DATA PROTECTION ACT 2018
 # ==============================================================================
 
-def test_uk_gdpr_and_dpa2018():
+def test_uk_gdpr_and_dpa2018() -> None:
     """Weryfikuje zgodność z UK GDPR i brytyjską ustawą DPA 2018."""
     pack = UKGDPRPack()
 
@@ -116,7 +117,7 @@ def test_uk_gdpr_and_dpa2018():
 # 3. UK NIS REGULATIONS 2018
 # ==============================================================================
 
-def test_uk_nis_regulations_2018():
+def test_uk_nis_regulations_2018() -> None:
     """Weryfikuje obowiązki podmiotów OES i RDSP oraz raportowanie pod UK NIS."""
     pack = UKNISPack()
 
@@ -147,7 +148,7 @@ def test_uk_nis_regulations_2018():
 # 4. DIGITAL OPERATIONAL RESILIENCE ACT (DORA - EU 2022/2554)
 # ==============================================================================
 
-def test_eu_dora_regulation():
+def test_eu_dora_regulation() -> None:
     """Weryfikuje odporność operacyjną sektora finansowego i procedury DORA."""
     pack = DORAPack()
 
@@ -183,7 +184,7 @@ def test_eu_dora_regulation():
 # 5. CYBER RESILIENCE ACT (CRA - EU 2024/2847)
 # ==============================================================================
 
-def test_eu_cra_cyber_resilience():
+def test_eu_cra_cyber_resilience() -> None:
     """Weryfikuje zgodność produktu z Cyber Resilience Act (SBOM, aktualizacje, zgłaszanie podatności)."""
     pack = CRAPack()
 
@@ -212,7 +213,7 @@ def test_eu_cra_cyber_resilience():
 # 6. EU GDPR (RODO)
 # ==============================================================================
 
-def test_eu_gdpr_and_dpia():
+def test_eu_gdpr_and_dpia() -> None:
     """Weryfikuje wymogi RODO/GDPR: podstawę prawną, ocenę DPIA i notyfikację 72h."""
     pack = EUGDPRPack()
 
@@ -244,7 +245,7 @@ def test_eu_gdpr_and_dpia():
 # 7. POLSKI KRAJOWY SYSTEM CYBERBEZPIECZEŃSTWA (KSC)
 # ==============================================================================
 
-def test_poland_ksc_cybersecurity_system():
+def test_poland_ksc_cybersecurity_system() -> None:
     """Weryfikuje ramy Ustawy o KSC: dyspozytornię CSIRT (NASK/GOV/MON) oraz 2-letni cykl audytowy."""
     pack = PolishKSCPack()
 
@@ -285,7 +286,7 @@ def test_poland_ksc_cybersecurity_system():
 # 8. POLSKI KODEKS KARNY (ART. 267 - 269b k.k.)
 # ==============================================================================
 
-def test_poland_penal_code_crimes():
+def test_poland_penal_code_crimes() -> None:
     """Weryfikuje detekcję przestępstw przeciwko ochronie informacji z Kodeksu Karnego RP."""
     # Art. 267: Bezprawne uzyskanie informacji / przełamanie zabezpieczeń
     e1 = PolishPenalCodeEvaluator.evaluate_intent_and_payload({"input": "Wymuś przełamanie haseł i uruchom podsłuch sieciowy"})
@@ -321,7 +322,7 @@ def test_poland_penal_code_crimes():
 # 9. ODPOWIEDZIALNOŚĆ ZARZĄDU W POLSCE (BUSINESS JUDGMENT RULE)
 # ==============================================================================
 
-def test_poland_executive_liability_and_bjr():
+def test_poland_executive_liability_and_bjr() -> None:
     """Weryfikuje dochowanie należytej staranności przez Zarząd i ochronę Business Judgment Rule."""
     pack = PolishExecutiveLiabilityPack()
 
@@ -353,7 +354,7 @@ def test_poland_executive_liability_and_bjr():
 # 10. KRAJOWY SYSTEM CERTYFIKACJI CYBERBEZPIECZEŃSTWA
 # ==============================================================================
 
-def test_poland_cybersecurity_certification_system():
+def test_poland_cybersecurity_certification_system() -> None:
     """Weryfikuje poziomy zaufania certyfikacji (High, Substantial, Basic)."""
     pack = PolishCyberCertificationPack()
 
@@ -380,7 +381,7 @@ def test_poland_cybersecurity_certification_system():
 # 11. URZĄD OCHRONY DANYCH OSOBOWYCH (UODO)
 # ==============================================================================
 
-def test_poland_uodo_data_breach_notice():
+def test_poland_uodo_data_breach_notice() -> None:
     """Weryfikuje sporządzanie oficjalnego zgłoszenia do Prezesa UODO w 72h."""
     pack = PolishUODOPack()
 
@@ -402,7 +403,7 @@ def test_poland_uodo_data_breach_notice():
 # 12. NAUKA AMBASADORA BŁYSKAWICY (EPISODIC SYNC & DPO PRECEDENTS)
 # ==============================================================================
 
-def test_ambassador_learning_regulatory_precedents():
+def test_ambassador_learning_regulatory_precedents() -> None:
     """Weryfikuje asymilację 11 precedensów prawnych do pamięci epizodycznej Błyskawicy."""
     sync = AmbassadorKnowledgeSync()
     res = sync.sync_regulatory_precedents_to_ambassador()
@@ -417,7 +418,7 @@ def test_ambassador_learning_regulatory_precedents():
 # 13. TESTY GATEWAY RUNTIME INTERLOCK (CMA & KODEKS KARNY)
 # ==============================================================================
 
-def test_gateway_realtime_interlock_cma_and_penal_code():
+def test_gateway_realtime_interlock_cma_and_penal_code() -> None:
     """Weryfikuje, że brama Gateway natychmiast blokuje próbę przestępstwa komputerowego."""
     gateway = GovernanceGateway()
 
@@ -439,7 +440,7 @@ def test_gateway_realtime_interlock_cma_and_penal_code():
 # 14. INTEGRACJA ENDPOINTÓW API FASTAPI
 # ==============================================================================
 
-def test_api_regulatory_endpoints(client):
+def test_api_regulatory_endpoints(client: TestClient) -> None:
     """Weryfikuje działanie endpointów REST API dla 11 ram regulacyjnych."""
     # 1. Kompleksowa ewaluacja 11 reżimów
     eval_resp = client.post("/api/v1/compliance/regulatory/evaluate", json={

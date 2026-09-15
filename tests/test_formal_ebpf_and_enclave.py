@@ -18,7 +18,8 @@ from nethical.security.merkle_ledger import MerkleLedger
 
 
 @pytest.fixture
-def client():
+def client() -> TestClient:
+    assert app is not None
     return TestClient(app)
 
 
@@ -26,7 +27,7 @@ def client():
 # 1. TESTY FORMALNEGO DOWODZENIA SMT (Z3 SOLVER)
 # ==============================================================================
 
-def test_law_invariant_prover_safety_invariance():
+def test_law_invariant_prover_safety_invariance() -> None:
     """Dowodzi matematycznie, że żadna szkodliwa akcja nie może otrzymać orzeczenia ALLOW."""
     prover = LawInvariantProver()
     result = prover.prove_safety_invariance()
@@ -39,7 +40,7 @@ def test_law_invariant_prover_safety_invariance():
     assert "ALLOW" in result.smt_formula_summary
 
 
-def test_law_invariant_prover_kinetic_spatial_boundedness():
+def test_law_invariant_prover_kinetic_spatial_boundedness() -> None:
     """Dowodzi, że manipulator w strefie krytycznej (<0.3m) zawsze zatrzaskuje stan E-STOP."""
     prover = LawInvariantProver()
     result = prover.prove_kinetic_spatial_boundedness(critical_distance=0.3)
@@ -51,7 +52,7 @@ def test_law_invariant_prover_kinetic_spatial_boundedness():
     assert "EMERGENCY_STOP" in result.smt_formula_summary
 
 
-def test_law_invariant_prover_non_contradiction():
+def test_law_invariant_prover_non_contradiction() -> None:
     """Dowodzi braku sprzeczności decyzyjnej (orzeczenie nie może być jednocześnie ALLOW i TERMINATE)."""
     prover = LawInvariantProver()
     result = prover.prove_non_contradiction_invariance()
@@ -62,7 +63,7 @@ def test_law_invariant_prover_non_contradiction():
     assert "NonContradiction_Decision_Exclusivity" in result.property_name
 
 
-def test_law_invariant_prover_all_invariants_and_merkle_receipt():
+def test_law_invariant_prover_all_invariants_and_merkle_receipt() -> None:
     """Weryfikuje pełen audyt formalny i zapieczętowanie certyfikatu w rejestrze Merkle."""
     ledger = MerkleLedger()
     prover = LawInvariantProver(ledger=ledger)
@@ -87,14 +88,14 @@ def test_law_invariant_prover_all_invariants_and_merkle_receipt():
 # 2. TESTY TRANSPARENTNEGO INTERCEPTORA eBPF
 # ==============================================================================
 
-def test_ebpf_interceptor_default_rules_and_redirect():
+def test_ebpf_interceptor_default_rules_and_redirect() -> None:
     """Weryfikuje reguły jądra eBPF, przekierowanie wywołań LLM oraz blokady nieautoryzowanych hostów."""
     interceptor = EBPFAgentInterceptor(mode="USERSPACE_SIMULATOR")
     assert interceptor.is_attached is False
 
     # Podłączenie do interfejsu sieciowego
     assert interceptor.attach(interface="eth0") is True
-    assert interceptor.is_attached is True
+    assert bool(interceptor.is_attached) is True
 
     # 1. Wywołanie do OpenAI -> REDIRECT_TO_GATEWAY
     v1 = interceptor.inspect_packet(
@@ -134,7 +135,7 @@ def test_ebpf_interceptor_default_rules_and_redirect():
     assert interceptor.is_attached is False
 
 
-def test_ebpf_interceptor_custom_rules_and_metrics():
+def test_ebpf_interceptor_custom_rules_and_metrics() -> None:
     """Weryfikuje dodawanie niestandardowych reguł eBPF oraz agregację metryk."""
     interceptor = EBPFAgentInterceptor()
     interceptor.attach()
@@ -169,7 +170,7 @@ def test_ebpf_interceptor_custom_rules_and_metrics():
 # 3. TESTY SPRZĘTOWEJ ENKLAWY ZAUFANEJ (TEE REMOTE ATTESTATION)
 # ==============================================================================
 
-def test_enclave_attestation_generation_and_verification():
+def test_enclave_attestation_generation_and_verification() -> None:
     """Weryfikuje generowanie cytatu atestacji sprzętowej TEE i weryfikację podpisu procesora."""
     engine = EnclaveAttestationEngine(platform="AMD_SEV_SNP")
     pqc_key_id = "pqc_dsa65_sec_9988"
@@ -193,7 +194,7 @@ def test_enclave_attestation_generation_and_verification():
     assert len(errors) == 0
 
 
-def test_enclave_attestation_tampering_detection():
+def test_enclave_attestation_tampering_detection() -> None:
     """Weryfikuje natychmiastowe odrzucenie sfingowanego lub zmodyfikowanego cytatu TEE."""
     engine = EnclaveAttestationEngine(platform="AMD_SEV_SNP")
     quote = engine.generate_attestation_quote(bound_pqc_key_id="valid_key")
@@ -219,7 +220,7 @@ def test_enclave_attestation_tampering_detection():
 # 4. TESTY INTEGRACYJNE API FASTAPI
 # ==============================================================================
 
-def test_api_formal_smt_prove_endpoint(client):
+def test_api_formal_smt_prove_endpoint(client: TestClient) -> None:
     """Testuje endpoint POST /api/v1/formal/prove-invariants."""
     resp = client.post("/api/v1/formal/prove-invariants")
     assert resp.status_code == 200
@@ -234,7 +235,7 @@ def test_api_formal_smt_prove_endpoint(client):
     assert "NonContradiction_Decision_Exclusivity" in prop_names
 
 
-def test_api_ebpf_inspect_and_rules_endpoints(client):
+def test_api_ebpf_inspect_and_rules_endpoints(client: TestClient) -> None:
     """Testuje endpointy eBPF w API FastAPI."""
     # 1. Status
     s_resp = client.get("/api/v1/ebpf/status")
@@ -269,7 +270,7 @@ def test_api_ebpf_inspect_and_rules_endpoints(client):
     assert r_resp.json()["status"] == "added"
 
 
-def test_api_enclave_attestation_and_portal_stats(client):
+def test_api_enclave_attestation_and_portal_stats(client: TestClient) -> None:
     """Testuje endpointy atestacji TEE oraz obecność metryk Fazy 6 w portalu."""
     # 1. Pobranie cytatu
     q_resp = client.get("/api/v1/enclave/attestation")

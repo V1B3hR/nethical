@@ -91,7 +91,7 @@ class InoculationMesh:
         self,
         gateway: Optional[GovernanceGateway] = None,
         sync: Optional[AmbassadorKnowledgeSync] = None,
-    ):
+    ) -> None:
         self.gateway = gateway or GovernanceGateway()
         self.sync = sync or AmbassadorKnowledgeSync(ambassador=self.gateway.ambassador)
 

@@ -65,7 +65,7 @@ class GovernanceGateway:
         a2a_manager: Optional[A2AHandshakeManager] = None,
         hitl_queue: Optional[HITLQueueManager] = None,
         stream_manager: Optional[EventStreamManager] = None,
-    ):
+    ) -> None:
         self.ambassador = ambassador or BlyskawicaAmbassador()
         self.pii_detector = PIIDetector()
         self.enable_strict_pii = enable_strict_pii

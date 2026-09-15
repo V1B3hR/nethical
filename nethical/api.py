@@ -28,7 +28,7 @@ import json
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, AsyncGenerator, Dict, List, Optional, Set
 
 from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
@@ -108,13 +108,13 @@ metrics_manager = ConnectionManager()
 
 
 @asynccontextmanager
-async def lifespan(app: FastAPI):
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
     global governance, rate_limiter, auth_manager, concurrency_semaphore, semantic_cache
     global startup_time, startup_complete
     startup_time = datetime.now(timezone.utc)
     try:
-        if IntegratedGovernance:
-            config = MonitoringConfig(use_semantic_intent=True, enable_timings=True)
+        if IntegratedGovernance is not None and MonitoringConfig is not None:
+            config = MonitoringConfig(use_semantic_intent=True)
             governance = IntegratedGovernance(config=config)
             logger.info("Governance initialized")
         else:
@@ -291,7 +291,7 @@ async def compute_semantic_similarity(intent: Optional[str], action: str) -> flo
     return max(0.0, min(1.0, overlap))
 
 @app.get("/")
-async def root():
+async def root() -> Dict[str, Any]:
     return {
         "name": "Nethical Governance API",
         "version": API_VERSION,
@@ -367,7 +367,7 @@ async def evaluate(
     async with concurrency_semaphore:
         try:
             action_id = eval_request.id or f"action_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S_%f')}"
-            async def do_eval():
+            async def do_eval() -> Any:
                 if hasattr(governance, "process_action"):
                     return governance.process_action(
                         action=eval_request.actual_action,
@@ -376,7 +376,7 @@ async def evaluate(
                         stated_intent=eval_request.stated_intent,
                         context=eval_request.context or {}
                     )
-                else:
+                elif AgentAction is not None and hasattr(governance, "evaluate_action"):
                     action = AgentAction(
                         action_id=action_id,
                         agent_id=eval_request.agent_id,
@@ -387,6 +387,7 @@ async def evaluate(
                         intent=eval_request.stated_intent,
                     )
                     return governance.evaluate_action(action)
+                return None
 
             try:
                 result = await asyncio.wait_for(do_eval(), timeout=EVAL_TIMEOUT)
@@ -396,7 +397,7 @@ async def evaluate(
             similarity = None
             if eval_request.stated_intent:
                 if semantic_cache:
-                    async def compute_fn():
+                    async def compute_fn() -> float:
                         return await compute_semantic_similarity(eval_request.stated_intent, eval_request.actual_action)
                     similarity = await semantic_cache.get_or_compute(
                         eval_request.stated_intent,
@@ -735,7 +736,7 @@ enclave_attestation_instance = EnclaveAttestationEngine()
 # Strategic Four Pillars Singletons
 from nethical.compliance.packs.us_frontier_nist_pack import USFrontierNISTPack
 from nethical.ethics.deep_alignment import DeepAlignmentEngine
-from nethical.edge.iso13849_watchdog import ISO13849SafetyEvaluator, HardwareWatchdogTimer
+from nethical.edge.iso13849_watchdog import ISO13849SafetyEvaluator, HardwareWatchdogTimer, PerformanceLevel
 from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker, FinancialTransaction
 from nethical.security.air_gapped_node import AirGappedSovereignNode
 
@@ -1772,12 +1773,7 @@ async def get_iso13849_machinery_status() -> Dict[str, Any]:
         mttf_d_years=35.0,
         dc_avg_pct=92.5,
         ccf_score=75,
-        required_pl=from_enum if False else "PL_d",
-    ) if False else iso13849_evaluator_instance.evaluate_performance_level(
-        category="Cat 3",
-        mttf_d_years=35.0,
-        dc_avg_pct=92.5,
-        ccf_score=75,
+        required_pl=PerformanceLevel.PL_D,
     )
     watchdog_st = hardware_watchdog_instance.check_and_enforce()
     return {

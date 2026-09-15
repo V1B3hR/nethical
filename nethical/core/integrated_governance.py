@@ -842,6 +842,8 @@ class IntegratedGovernance:
         # For regional processing
         region_id: Optional[str] = None,
         compliance_requirements: Optional[List[str]] = None,
+        stated_intent: Optional[str] = None,
+        **kwargs: Any,
     ) -> Dict[str, Any]:
         """Process an action through all enabled governance phases.
 

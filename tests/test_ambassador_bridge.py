@@ -4,13 +4,13 @@ import pytest
 from nethical.ambassador import BlyskawicaAmbassador, AmbassadorChannel
 
 
-def test_ambassador_initialization():
+def test_ambassador_initialization() -> None:
     ambassador = BlyskawicaAmbassador()
     assert ambassador is not None
     assert ambassador.channel is not None
 
 
-def test_ambassador_liveness_and_ping():
+def test_ambassador_liveness_and_ping() -> None:
     ambassador = BlyskawicaAmbassador()
     res = ambassador.ping()
     assert isinstance(res, dict)
@@ -25,7 +25,7 @@ def test_ambassador_liveness_and_ping():
         assert res["fallback"] is True
 
 
-def test_ambassador_cognitive_shield():
+def test_ambassador_cognitive_shield() -> None:
     ambassador = BlyskawicaAmbassador()
     
     # Benign text
@@ -42,7 +42,7 @@ def test_ambassador_cognitive_shield():
         assert res_malicious["dominant_vector"] is not None
 
 
-def test_ambassador_neurochemistry():
+def test_ambassador_neurochemistry() -> None:
     ambassador = BlyskawicaAmbassador()
     neuro = ambassador.get_neurochemistry()
     assert isinstance(neuro, dict)
@@ -52,7 +52,7 @@ def test_ambassador_neurochemistry():
     assert "temperature" in neuro
 
 
-def test_ambassador_ethical_consultation():
+def test_ambassador_ethical_consultation() -> None:
     ambassador = BlyskawicaAmbassador()
     res = ambassador.consult(
         dilemma="Optymalizacja zużycia energii w centrum obliczeniowym przy zachowaniu ciągłości usług krytycznych.",
@@ -65,7 +65,7 @@ def test_ambassador_ethical_consultation():
     assert res["rtt_microseconds"] < 10000  # Poniżej 10ms
 
 
-def test_ambassador_episodic_memory_ingestion():
+def test_ambassador_episodic_memory_ingestion() -> None:
     ambassador = BlyskawicaAmbassador()
     res = ambassador.update_memory(
         tag="test_suite_event",
