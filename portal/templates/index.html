@@ -1369,6 +1369,45 @@
                     </div>
                 </section>
 
+                <!-- KARTA 2: EKSPORTER DOKUMENTACJI TECHNICZNEJ & DOSSIER DLA REGULATORÓW -->
+                <section class="card col-12">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>📜</span> Generator & Eksporter Oficjalnych Dossier Certyfikacyjnych (15 Standardów)
+                        </div>
+                        <span class="badge" style="color: var(--purple-accent);">NIST FIPS 204 ML-DSA-65 Attested</span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.2rem;">
+                        Jedno kliknięcie generuje pełną, gotową do przedłożenia regulatorom dokumentację techniczną (Annex IV EU AI Act, ISO/IEC 42001, Common Criteria EAL4+, raporty CSIRT 24h, NATO PRU). Wszystkie raporty zawierają niezmienny dowód inkluzji Merkle-DAG weryfikowalny matematycznie offline.
+                    </p>
+
+                    <div style="display: flex; gap: 1rem; flex-wrap: wrap; align-items: center; margin-bottom: 1rem;">
+                        <select id="dossierStandardSelect" style="flex: 2; min-width: 280px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: var(--cyan-accent); border-radius: 6px; padding: 0.6rem; font-family: var(--font-mono); font-size: 0.82rem; font-weight: 600;">
+                            <option value="EU_AI_ACT_ANNEX_IV">🇪🇺 EU AI Act - Annex IV Technical Documentation (Art. 11)</option>
+                            <option value="ISO_IEC_42001_AIMS">🌐 ISO/IEC 42001:2023 - AI Management System (AIMS)</option>
+                            <option value="COMMON_CRITERIA_ISO15408_EAL4">🔬 Common Criteria (ISO/IEC 15408 EAL4+) Security Target</option>
+                            <option value="NATO_DEFENSE_RESPONSIBLE_AI">🛡️ NATO AI Strategy - Responsible Defense & Zero-Egress</option>
+                            <option value="POLISH_BJR_KSC_CERTIFICATION">🇵🇱 KSC Poziom Wysoki & Business Judgment Rule (KSH)</option>
+                            <option value="CSIRT_KSC_CRA_INCIDENT_DECLARATION">🚨 CSIRT NASK / ENISA - Serious Incident Declaration</option>
+                            <option value="SOC_2_TYPE_II">🔒 SOC 2 Type II - Continuous Trust Services</option>
+                            <option value="HEALTHCARE_MEDTECH_MDR">🏥 MDR EU 2017/745 - SaMD Medical Clinical Safety</option>
+                        </select>
+                        <button class="btn btn-primary" onclick="exportDossierMarkdownUI()" style="font-size: 0.82rem; padding: 0.6rem 1.2rem;">
+                            📥 Pobierz Dossier (.md)
+                        </button>
+                        <button class="btn btn-secondary" onclick="exportDossierJsonUI()" style="font-size: 0.82rem; padding: 0.6rem 1.2rem;">
+                            📦 Pobierz Paczkę PQC (.json)
+                        </button>
+                        <button class="btn btn-secondary" onclick="declareCsirtIncidentPrompt()" style="font-size: 0.82rem; padding: 0.6rem 1.2rem; color: #f43f5e; border-color: rgba(244,63,94,0.4);">
+                            🚨 Zgłoś Incydent CSIRT (24h)
+                        </button>
+                    </div>
+
+                    <div id="dossierExportStatus" style="font-family: var(--font-mono); font-size: 0.78rem; color: var(--text-muted); padding: 0.6rem; background: rgba(0,0,0,0.3); border-radius: 6px;">
+                        Wybierz standard regulacyjny i kliknij Pobierz Dossier, aby wygenerować dokumentację z podpisem postkwantowym.
+                    </div>
+                </section>
+
             </div>
         </div>
 
@@ -2552,6 +2591,110 @@
             } catch (e) {
                 resEl.textContent = "Błąd: " + e.message;
                 resEl.style.color = "var(--crimson-alert)";
+            }
+        }
+
+        async function exportDossierMarkdownUI() {
+            const std = document.getElementById("dossierStandardSelect").value;
+            const statusEl = document.getElementById("dossierExportStatus");
+            statusEl.textContent = `⏳ Generowanie oficjalnego Dossier dla ${std} z podpisem NIST ML-DSA-65...`;
+            statusEl.style.color = "var(--cyan-accent)";
+
+            try {
+                const res = await fetch("/api/v1/compliance/export-dossier-markdown", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ standard: std })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    statusEl.innerHTML = `<span style="color: var(--emerald-accent); font-weight: 600;">✅ DOSSIER WYGENEROWANE:</span> Identyfikator: <code>${data.package_id}</code> | Gotowość: <strong>${(data.readiness_score * 100).toFixed(1)}%</strong> | Merkle Root: <code>${data.merkle_anchor_root.slice(0, 16)}...</code>`;
+
+                    const blob = new Blob([data.markdown], { type: "text/markdown;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `NETHICAL_DOSSIER_${data.standard}_${data.package_id}.md`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                } else {
+                    const err = await res.json();
+                    statusEl.textContent = "Błąd: " + (err.detail || res.statusText);
+                    statusEl.style.color = "var(--crimson-alert)";
+                }
+            } catch(e) {
+                statusEl.textContent = "Błąd połączenia: " + e.message;
+                statusEl.style.color = "var(--crimson-alert)";
+            }
+        }
+
+        async function exportDossierJsonUI() {
+            const std = document.getElementById("dossierStandardSelect").value;
+            const statusEl = document.getElementById("dossierExportStatus");
+            statusEl.textContent = `⏳ Pobieranie kanonicznej paczki dowodowej JSON dla ${std}...`;
+
+            try {
+                const res = await fetch("/api/v1/compliance/generate-dossier", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ standard: std })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    statusEl.innerHTML = `<span style="color: var(--emerald-accent); font-weight: 600;">✅ PAKIET PQC POBRANY:</span> <code>${data.package_id}</code> z pieczęcią postkwantową.`;
+
+                    const blob = new Blob([JSON.stringify(data, null, 2)], { type: "application/json;charset=utf-8" });
+                    const url = URL.createObjectURL(blob);
+                    const a = document.createElement("a");
+                    a.href = url;
+                    a.download = `NETHICAL_EVIDENCE_PACKAGE_${data.package_id}.json`;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }
+            } catch(e) {
+                statusEl.textContent = "Błąd: " + e.message;
+                statusEl.style.color = "var(--crimson-alert)";
+            }
+        }
+
+        async function declareCsirtIncidentPrompt() {
+            const title = prompt("Podaj tytuł zgłoszenia incydentu do CSIRT (np. Nieautoryzowana próba modyfikacji wag AI):", "Wykrycie próby ataku na model autonomiczny");
+            if (!title) return;
+            const asset = prompt("Podaj oznaczenie chronionego zasobu (OUK / Podmiot Kluczowy):", "SYSTEM_GOV_AI_01");
+            if (!asset) return;
+
+            const statusEl = document.getElementById("dossierExportStatus");
+            statusEl.textContent = "🚨 Pieczętowanie incydentu w rejestrze Merkle-DAG i generowanie deklaracji CSIRT...";
+            statusEl.style.color = "#f43f5e";
+
+            try {
+                const tenantId = document.getElementById("tenantSelect").value || "gov_pl_cyber";
+                const res = await fetch("/api/v1/compliance/csirt-incident-report", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        incident_title: title,
+                        severity: "HIGH",
+                        affected_asset: asset,
+                        description: "Incydent wygenerowany z konsoli operatora Nethical w trybie suwerennym.",
+                        indicators_of_compromise: ["10.0.4.15", "rule:critical_drift_estop"],
+                        tenant_id: tenantId
+                    })
+                });
+                if (res.ok) {
+                    const data = await res.json();
+                    statusEl.innerHTML = `<span style="color: var(--emerald-accent); font-weight: bold;">🚨 INCYDENT ZAPROCZEŚLONY:</span> ID: <code>${data.incident_id}</code> | Kwit Merkle: <code>${data.receipt_id}</code> | Zgodność: KSC Art. 11 & CRA Art. 11`;
+                    fetchTenantLedger(tenantId);
+                } else {
+                    const err = await res.json();
+                    statusEl.textContent = "Błąd zgłaszania incydentu: " + (err.detail || res.statusText);
+                }
+            } catch(e) {
+                statusEl.textContent = "Błąd: " + e.message;
             }
         }
 

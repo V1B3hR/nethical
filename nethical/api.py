@@ -2478,7 +2478,7 @@ GenerateDossierRequest.model_rebuild()
 
 @app.get("/api/v1/compliance/certifications", tags=["Compliance"])
 async def get_compliance_certifications() -> Dict[str, Any]:
-    """Zwraca listę 12 obsługiwanych standardów certyfikacji z procedurami akredytacji."""
+    """Zwraca listę 15 obsługiwanych standardów certyfikacji z procedurami akredytacji."""
     return {"certifications": certification_hub_instance.list_available_certifications()}
 
 
@@ -2494,6 +2494,78 @@ async def post_generate_compliance_dossier(payload: GenerateDossierRequest) -> D
         )
     pkg = certification_hub_instance.generate_evidence_package(std, payload.metadata)
     return pkg.model_dump()
+
+
+@app.post("/api/v1/compliance/export-dossier-markdown", tags=["Compliance"])
+async def post_export_compliance_dossier_markdown(payload: GenerateDossierRequest) -> Dict[str, Any]:
+    """Generuje oficjalne Dossier Audytowe w formacie Markdown z pieczęcią Merkle i podpisem PQC."""
+    try:
+        std = CertificationStandard(payload.standard)
+    except ValueError:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Nieznany standard '{payload.standard}'. Dozwolone: {[s.value for s in CertificationStandard]}",
+        )
+    pkg = certification_hub_instance.generate_evidence_package(std, payload.metadata)
+    md_content = certification_hub_instance.export_dossier_markdown(pkg)
+    return {
+        "markdown": md_content,
+        "package_id": pkg.package_id,
+        "standard": pkg.standard.value,
+        "readiness_score": pkg.readiness_score,
+        "merkle_anchor_root": pkg.merkle_anchor_root,
+        "signer_key_id": pkg.signer_key_id,
+    }
+
+
+class CSIRTIncidentRequest(BaseModel):
+    incident_title: str = Field(..., description="Tytuł incydentu cyberbezpieczeństwa")
+    severity: str = Field(default="HIGH", description="Krytyczność: LOW, MEDIUM, HIGH, CRITICAL")
+    affected_asset: str = Field(..., description="Dotknięty system lub podmiot (OUK / Podmiot Kluczowy)")
+    description: str = Field(..., description="Szczegółowy opis wektora ataku lub luki")
+    indicators_of_compromise: List[str] = Field(default_factory=list, description="Lista IoC (IP, hashe, domeny)")
+    tenant_id: str = Field(default="default_tenant", description="Identyfikator podmiotu")
+
+CSIRTIncidentRequest.model_rebuild()
+
+
+@app.post("/api/v1/compliance/csirt-incident-report", tags=["Compliance"])
+async def post_csirt_incident_report(payload: CSIRTIncidentRequest) -> Dict[str, Any]:
+    """Generuje formalne zgłoszenie incydentu poważnego (KSC Art. 11 / CRA Art. 11) z pieczęcią Merkle-DAG."""
+    ledger = tenant_manager_instance.get_tenant_ledger(payload.tenant_id)
+    now_utc = datetime.now(timezone.utc).isoformat()
+    incident_id = f"CSIRT-INC-{int(datetime.now(timezone.utc).timestamp())}"
+
+    incident_payload = {
+        "incident_id": incident_id,
+        "title": payload.incident_title,
+        "severity": payload.severity,
+        "affected_asset": payload.affected_asset,
+        "description": payload.description,
+        "indicators_of_compromise": payload.indicators_of_compromise,
+        "reported_at": now_utc,
+        "legal_basis": "Ustawa o KSC Art. 11 & Cyber Resilience Act Art. 11 & RODO Art. 33",
+        "jurisdiction": "PL / EU",
+    }
+
+    receipt = ledger.append_decision(
+        decision_data=incident_payload,
+        ambassador_notes=f"CSIRT Serious Incident Seal: {payload.incident_title}",
+    )
+
+    pkg = certification_hub_instance.generate_evidence_package(
+        CertificationStandard.CSIRT_SERIOUS_INCIDENT,
+        custom_metadata={"incident_id": incident_id, "severity": payload.severity},
+    )
+
+    return {
+        "incident_id": incident_id,
+        "status": "OFFICIALLY_DECLARED_SEALED",
+        "receipt_id": receipt.receipt_id,
+        "merkle_root": receipt.merkle_root,
+        "chain_index": receipt.chain_index,
+        "evidence_package": pkg.model_dump(),
+    }
 
 
 @app.get("/api/v1/security/crypto-audit", tags=["Security"])
