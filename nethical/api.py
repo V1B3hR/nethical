@@ -739,6 +739,7 @@ from nethical.ethics.deep_alignment import DeepAlignmentEngine
 from nethical.edge.iso13849_watchdog import ISO13849SafetyEvaluator, HardwareWatchdogTimer, PerformanceLevel
 from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker, FinancialTransaction
 from nethical.security.air_gapped_node import AirGappedSovereignNode
+from nethical.security.data_diode import DataDiodeBridge, SovereignPackage, SovereignPackageHeader
 
 # Three Advanced Horizons Singletons
 from nethical.compliance.packs.asian_sovereign_pack import AsianSovereignPack
@@ -751,6 +752,7 @@ iso13849_evaluator_instance = ISO13849SafetyEvaluator()
 hardware_watchdog_instance = HardwareWatchdogTimer()
 financial_circuit_breaker_instance = FinancialCircuitBreaker()
 air_gapped_node_instance = AirGappedSovereignNode()
+data_diode_bridge_instance = DataDiodeBridge(node_id="sovereign-diode-gateway-01")
 
 # Three Advanced Horizons Singletons
 from nethical.compliance.packs.asian_sovereign_pack import AsianSovereignPack
@@ -814,6 +816,7 @@ from nethical.auth import TenantManager, RBACManager, SovereignAuthToken
 from nethical.core.models import ClassificationLevel, UserRole, UserIdentity, TenantConfig
 
 tenant_manager_instance = TenantManager(default_ledger=gateway_instance.ledger)
+gateway_instance.tenant_manager = tenant_manager_instance
 rbac_manager_instance = RBACManager()
 
 
@@ -1984,15 +1987,96 @@ async def check_financial_transaction(req: FinancialCheckRequest) -> Dict[str, A
     return decision.model_dump()
 
 
-@app.get("/api/v1/security/airgap/status", tags=["StrategicPillars"])
+class AirgapExportPackageRequest(BaseModel):
+    target_tenant_id: str = Field(default="default_tenant", description="Docelowy podmiot suwerenny (Tenant ID)")
+    payload: Dict[str, Any] = Field(..., description="Ładunek operacyjny lub reguły do wyeksportowania")
+    package_type: str = Field(default="POLICY_UPDATE", description="Typ paczki: POLICY_UPDATE, REGULATORY_PACK, PRECEDENT_DOSSIER")
+    classification: str = Field(default="SECRET", description="Poziom klauzuli tajności")
+
+AirgapExportPackageRequest.model_rebuild()
+
+class AirgapImportPackageRequest(BaseModel):
+    package: Dict[str, Any] = Field(..., description="Kompletny suwerenny pakiet danych (SovereignPackage)")
+    target_tenant_id: Optional[str] = Field(default=None, description="Opcjonalne nadpisanie tenanta docelowego")
+
+AirgapImportPackageRequest.model_rebuild()
+
+class AirgapSimulateEgressRequest(BaseModel):
+    target_host: str = Field(..., description="Docelowy host lub adres IP")
+    port: int = Field(default=443, description="Port sieciowy docelowy")
+
+AirgapSimulateEgressRequest.model_rebuild()
+
+
+@app.get("/api/v1/security/airgap/status", tags=["AirGapSecurity"])
 async def get_airgap_sovereign_status() -> Dict[str, Any]:
-    """Zwraca status suwerennego węzła Air-Gapped oraz możliwość pobrania Defense Dossier."""
+    """Zwraca status suwerennego węzła Air-Gapped oraz telemetrię Diody Danych (ML-DSA-65)."""
     st = air_gapped_node_instance.get_status()
     dossier = air_gapped_node_instance.export_defense_dossier()
+    diode_status = {
+        "node_id": data_diode_bridge_instance.node_id,
+        "trusted_keys_count": len(data_diode_bridge_instance._trusted_public_keys),
+        "processed_nonces_count": len(data_diode_bridge_instance._processed_nonces),
+        "pqc_algorithm": "ML-DSA-65 (CRYSTALS-Dilithium Level 3)",
+        "active_key_id": data_diode_bridge_instance.keypair.key_id,
+    }
     return {
         "node_status": st,
         "latest_defense_dossier": dossier.model_dump(),
+        "data_diode": diode_status,
     }
+
+
+@app.post("/api/v1/security/airgap/export-package", tags=["AirGapSecurity"])
+async def post_airgap_export_package(req: AirgapExportPackageRequest) -> Dict[str, Any]:
+    """Tworzy i pieczętuje postkwantowo suwerenny pakiet synchronizacyjny (.sovereign.pkg)."""
+    try:
+        cls_level = ClassificationLevel(req.classification)
+    except Exception:
+        cls_level = ClassificationLevel.SECRET
+
+    pkg = data_diode_bridge_instance.create_package(
+        target_tenant_id=req.target_tenant_id,
+        payload=req.payload,
+        package_type=req.package_type,
+        classification=cls_level,
+    )
+    return pkg.model_dump(mode="json")
+
+
+@app.post("/api/v1/security/airgap/import-package", tags=["AirGapSecurity"])
+async def post_airgap_import_package(req: AirgapImportPackageRequest) -> Dict[str, Any]:
+    """Weryfikuje pakiet PQC i trwale kotwiczy go w izolowanym Merkle Ledgerze danego tenanta."""
+    try:
+        pkg = SovereignPackage.model_validate(req.package)
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Nieprawidłowy format suwerennego pakietu: {e}")
+
+    target_tenant = req.target_tenant_id or pkg.header.target_tenant_id
+    ledger = tenant_manager_instance.get_tenant_ledger(target_tenant)
+
+    success, msg, receipt = data_diode_bridge_instance.import_and_seal(
+        package=pkg,
+        ledger=ledger,
+    )
+    if not success:
+        raise HTTPException(status_code=422, detail=msg)
+
+    return {
+        "success": True,
+        "message": msg,
+        "target_tenant": target_tenant,
+        "receipt": receipt.model_dump(mode="json") if receipt else None,
+    }
+
+
+@app.post("/api/v1/security/airgap/simulate-egress", tags=["AirGapSecurity"])
+async def post_airgap_simulate_egress(req: AirgapSimulateEgressRequest) -> Dict[str, Any]:
+    """Testuje ochronę Zero-Egress węzła Air-Gapped przed nieautoryzowanym wyjściem do sieci."""
+    return air_gapped_node_instance.intercept_network_egress(
+        target_host_or_ip=req.target_host,
+        port=req.port,
+    )
 
 
 # ==============================================================================

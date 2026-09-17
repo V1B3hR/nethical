@@ -25,12 +25,18 @@ from nethical.gateway.a2a_protocol import A2AHandshakeManager
 from nethical.gateway.hitl import HITLQueueManager
 from nethical.streaming.event_stream_manager import EventStreamManager, get_stream_manager
 
+try:
+    from nethical.auth.tenant_manager import TenantManager
+except ImportError:
+    TenantManager = None
+
 logger = logging.getLogger("nethical.gateway.proxy")
 
 
 class GatewayDecision(BaseModel):
     """Wynik weryfikacji bramy governance dla wywołania narzędziowego."""
     decision: str = Field(..., description="ALLOW, RESTRICT, BLOCK, TERMINATE")
+    tenant_id: str = Field(default="default_tenant", description="Identyfikator suwerennego tenanta")
     tool_name: str = Field(..., description="Nazwa przechwyconego narzędzia")
     agent_id: str = Field(..., description="Identyfikator agenta")
     reasons: List[str] = Field(default_factory=list, description="Uzasadnienie decyzji")
@@ -60,6 +66,7 @@ class GovernanceGateway:
         enable_strict_pii: bool = True,
         enable_shield: bool = True,
         ledger: Optional[MerkleLedger] = None,
+        tenant_manager: Optional[Any] = None,
         kinetic_governor: Optional[KineticSafetyGovernor] = None,
         financial_circuit_breaker: Optional[FinancialCircuitBreaker] = None,
         a2a_manager: Optional[A2AHandshakeManager] = None,
@@ -71,6 +78,12 @@ class GovernanceGateway:
         self.enable_strict_pii = enable_strict_pii
         self.enable_shield = enable_shield
         self.ledger = ledger or MerkleLedger()
+        self.tenant_manager = tenant_manager
+        if self.tenant_manager is not None and "default_tenant" in getattr(self.tenant_manager, "_ledgers", {}):
+            if ledger is not None:
+                self.tenant_manager._ledgers["default_tenant"] = self.ledger
+            else:
+                self.ledger = self.tenant_manager._ledgers["default_tenant"]
         self.kinetic_governor = kinetic_governor or KineticSafetyGovernor()
         self.financial_circuit_breaker = financial_circuit_breaker or FinancialCircuitBreaker()
         self.a2a_manager = a2a_manager or A2AHandshakeManager()
@@ -119,6 +132,11 @@ class GovernanceGateway:
         shield_passed = True
 
         raw_args_text = " ".join(f"{k}={v}" for k, v in arguments.items())
+        tenant_id = "default_tenant"
+        if context and "tenant_id" in context:
+            tenant_id = str(context["tenant_id"])
+        elif "tenant_id" in arguments:
+            tenant_id = str(arguments["tenant_id"])
 
         # 1. Weryfikacja przez Tarczę Kognitywną Błyskawicy (< 100 µs IPC)
         if self.enable_shield:
@@ -340,11 +358,22 @@ class GovernanceGateway:
             hitl_ticket_id = ticket.ticket_id
 
         # 5. Pieczętowanie w rejestrze Merkle-DAG (Faza 3: Post-Quantum Attestation)
+        target_ledger = self.ledger
+        if self.tenant_manager is not None:
+            target_ledger = self.tenant_manager.get_tenant_ledger(tenant_id)
+        elif tenant_id != "default_tenant":
+            try:
+                from nethical.auth.tenant_manager import get_tenant_manager
+                target_ledger = get_tenant_manager().get_tenant_ledger(tenant_id)
+            except Exception:
+                target_ledger = self.ledger
+
         receipt_id = None
         merkle_root = None
-        if self.ledger is not None:
+        if target_ledger is not None:
             decision_payload = {
                 "decision": decision,
+                "tenant_id": tenant_id,
                 "tool_name": tool_name,
                 "agent_id": agent_id,
                 "reasons": reasons,
@@ -354,7 +383,7 @@ class GovernanceGateway:
                 "estop_engaged": estop_engaged,
                 "arguments_preview": raw_args_text[:300],
             }
-            receipt = self.ledger.append_decision(
+            receipt = target_ledger.append_decision(
                 decision_data=decision_payload,
                 ambassador_notes=ambassador_notes,
             )
@@ -369,6 +398,7 @@ class GovernanceGateway:
                 topic="governance.decisions",
                 payload={
                     "agent_id": agent_id,
+                    "tenant_id": tenant_id,
                     "tool_name": tool_name,
                     "decision": decision,
                     "latency_us": round(t_elapsed_us, 2),
@@ -380,6 +410,7 @@ class GovernanceGateway:
 
         return GatewayDecision(
             decision=decision,
+            tenant_id=tenant_id,
             tool_name=tool_name,
             agent_id=agent_id,
             reasons=reasons or ["Weryfikacja pomyślna - zgodność z 25 Prawami potwierdzona."],

@@ -1262,6 +1262,66 @@
                     <div id="newTenantResult" style="margin-top: 0.5rem; font-size: 0.78rem; font-family: var(--font-mono);"></div>
                 </section>
 
+                <!-- KARTA 4: DIODA DANYCH & SYNCHRONIZACJA AIR-GAP (.sovereign.pkg) -->
+                <section class="card col-12">
+                    <div class="card-header">
+                        <div class="card-title">
+                            <span>🔀</span> Jednokierunkowa Dioda Danych & Pakiety Suwerenne (.sovereign.pkg)
+                        </div>
+                        <span class="badge" style="color: var(--cyan-accent); font-family: var(--font-mono);">NIST FIPS 204 ML-DSA-65 & SHA3-512</span>
+                    </div>
+                    <p style="color: var(--text-secondary); font-size: 0.85rem; margin-bottom: 1.5rem;">
+                        Synchronizacja polityk i reguł bezpieczeństwa z węzłami fizycznie odciętymi od sieci (Air-Gapped / NATO / Bunkry Danych). Każdy pakiet posiada jednorazowy Nonce anti-replay oraz postkwantową pieczęć cyfrową.
+                    </p>
+
+                    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); gap: 1.5rem; margin-bottom: 1rem;">
+                        <!-- Egress Interlock Simulation -->
+                        <div style="background: rgba(0,0,0,0.35); padding: 1.2rem; border-radius: 10px; border: 1px solid var(--border-subtle);">
+                            <div style="font-weight: 700; font-size: 0.9rem; color: #f43f5e; margin-bottom: 0.5rem;">🛡️ Test Blokady Zero-Egress (Air-Gap)</div>
+                            <div style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 1rem;">Sprawdź czy węzeł natychmiastowo zrzuca próby kontaktu ze światem zewnętrznym.</div>
+                            
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.8rem;">
+                                <input type="text" id="airgapEgressHost" value="api.openai.com" placeholder="Host docelowy" style="flex: 2; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; padding: 0.5rem; font-family: var(--font-mono); font-size: 0.82rem;">
+                                <input type="number" id="airgapEgressPort" value="443" placeholder="Port" style="width: 70px; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; padding: 0.5rem; font-family: var(--font-mono); font-size: 0.82rem;">
+                                <button class="btn btn-secondary" onclick="simulateAirgapEgressUI()" style="white-space: nowrap; font-size: 0.78rem;">Test Egress</button>
+                            </div>
+                            <div id="airgapEgressResult" style="font-family: var(--font-mono); font-size: 0.75rem; color: var(--text-muted); padding: 0.5rem; background: rgba(0,0,0,0.4); border-radius: 6px; min-height: 48px;">Gotowy do testu blokady...</div>
+                        </div>
+
+                        <!-- Export Sovereign Package -->
+                        <div style="background: rgba(0,0,0,0.35); padding: 1.2rem; border-radius: 10px; border: 1px solid var(--border-subtle);">
+                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--cyan-accent); margin-bottom: 0.5rem;">📦 Eksport Suwerennego Pakietu</div>
+                            <div style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 0.8rem;">Generuj paczkę .sovereign.pkg z podpisem ML-DSA-65.</div>
+
+                            <div style="display: flex; gap: 0.5rem; margin-bottom: 0.6rem;">
+                                <select id="exportTargetTenant" style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; padding: 0.4rem; font-size: 0.8rem;">
+                                    <option value="gov_pl_cyber">gov_pl_cyber</option>
+                                    <option value="enterprise_fin_eu">enterprise_fin_eu</option>
+                                    <option value="defense_airgap" selected>defense_airgap</option>
+                                    <option value="default_tenant">default_tenant</option>
+                                </select>
+                                <select id="exportPackageType" style="flex: 1; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; padding: 0.4rem; font-size: 0.8rem;">
+                                    <option value="POLICY_UPDATE">POLICY_UPDATE</option>
+                                    <option value="DEFENSE_DIRECTIVE">DEFENSE_DIRECTIVE</option>
+                                    <option value="REGULATORY_PACK">REGULATORY_PACK</option>
+                                </select>
+                            </div>
+                            <textarea id="exportPayloadJson" rows="2" style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; padding: 0.4rem; font-family: var(--font-mono); font-size: 0.75rem; margin-bottom: 0.6rem;">{"rule": "enforce_zero_trust", "audit_cycle": "1h"}</textarea>
+                            <button class="btn btn-primary" style="width: 100%; font-size: 0.78rem;" onclick="exportSovereignPackageUI()">⚡ Podpisz & Generuj Pakiet PQC</button>
+                        </div>
+
+                        <!-- Import Sovereign Package -->
+                        <div style="background: rgba(0,0,0,0.35); padding: 1.2rem; border-radius: 10px; border: 1px solid var(--border-subtle);">
+                            <div style="font-weight: 700; font-size: 0.9rem; color: var(--emerald-accent); margin-bottom: 0.5rem;">📥 Ingest Diody & Kotwiczenie Merkle</div>
+                            <div style="font-size: 0.76rem; color: var(--text-muted); margin-bottom: 0.8rem;">Weryfikuj podpis postkwantowy i pieczętuj w rejestrze tenanta.</div>
+
+                            <textarea id="importPackageJson" rows="4" placeholder="Wklej zawartość JSON paczki .sovereign.pkg..." style="width: 100%; background: rgba(0,0,0,0.4); border: 1px solid var(--border-subtle); color: var(--text-primary); border-radius: 6px; padding: 0.4rem; font-family: var(--font-mono); font-size: 0.75rem; margin-bottom: 0.6rem;"></textarea>
+                            <button class="btn btn-secondary" style="width: 100%; font-size: 0.78rem;" onclick="importSovereignPackageUI()">🔒 Zweryfikuj & Pieczętuj w Merkle DAG</button>
+                            <div id="importPackageResult" style="margin-top: 0.5rem; font-family: var(--font-mono); font-size: 0.75rem;"></div>
+                        </div>
+                    </div>
+                </section>
+
             </div>
         </div>
 
@@ -2397,6 +2457,101 @@
                 alert("✅ Stan bezpieczeństwa zresetowany pomyślnie.");
             } else {
                 alert("Błędny kod autoryzacyjny.");
+            }
+        }
+
+        async function simulateAirgapEgressUI() {
+            const host = document.getElementById("airgapEgressHost").value.trim();
+            const port = parseInt(document.getElementById("airgapEgressPort").value, 10) || 443;
+            const resEl = document.getElementById("airgapEgressResult");
+            resEl.textContent = "🛡️ Wysyłanie próby egress...";
+            try {
+                const res = await fetch("/api/v1/security/airgap/simulate-egress", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ target_host: host, port: port })
+                });
+                const data = await res.json();
+                if (data.allowed === false) {
+                    resEl.innerHTML = `<span style="color: #f43f5e; font-weight: bold;">⛔ BLOKADA ZERO-EGRESS:</span> ${data.reason}`;
+                } else {
+                    resEl.innerHTML = `<span style="color: var(--amber-accent);">OSTRZEŻENIE: Ruch dozwolony</span>`;
+                }
+            } catch (e) {
+                resEl.textContent = "Błąd: " + e.message;
+            }
+        }
+
+        async function exportSovereignPackageUI() {
+            const tenant = document.getElementById("exportTargetTenant").value;
+            const pType = document.getElementById("exportPackageType").value;
+            let payload = {};
+            try {
+                payload = JSON.parse(document.getElementById("exportPayloadJson").value);
+            } catch(e) {
+                alert("Nieprawidłowy format JSON ładunku!");
+                return;
+            }
+
+            try {
+                const res = await fetch("/api/v1/security/airgap/export-package", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        target_tenant_id: tenant,
+                        payload: payload,
+                        package_type: pType,
+                        classification: "SECRET"
+                    })
+                });
+                if (res.ok) {
+                    const pkg = await res.json();
+                    document.getElementById("importPackageJson").value = JSON.stringify(pkg, null, 2);
+                    alert(`✅ Wygenerowano suwerenny pakiet ${pkg.header.package_id} z podpisem ML-DSA-65! Zawartość została skopiowana do pola Ingest.`);
+                } else {
+                    alert("Błąd generowania pakietu: " + res.statusText);
+                }
+            } catch (e) {
+                alert("Błąd: " + e.message);
+            }
+        }
+
+        async function importSovereignPackageUI() {
+            const raw = document.getElementById("importPackageJson").value.trim();
+            const resEl = document.getElementById("importPackageResult");
+            if (!raw) {
+                resEl.textContent = "Wklej najpierw pakiet JSON!";
+                resEl.style.color = "var(--crimson-alert)";
+                return;
+            }
+            let pkg = {};
+            try {
+                pkg = JSON.parse(raw);
+            } catch (e) {
+                resEl.textContent = "Błąd parsowania JSON!";
+                resEl.style.color = "var(--crimson-alert)";
+                return;
+            }
+
+            resEl.textContent = "Weryfikacja podpisu NIST ML-DSA-65 & SHA3-512...";
+            resEl.style.color = "var(--cyan-accent)";
+
+            try {
+                const res = await fetch("/api/v1/security/airgap/import-package", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ package: pkg })
+                });
+                const data = await res.json();
+                if (res.ok && data.success) {
+                    resEl.innerHTML = `<span style="color: var(--emerald-accent); font-weight: bold;">✅ ZAPROCZEŚLONO:</span> Kwit Merkle: ${data.receipt ? data.receipt.receipt_id : 'N/A'}`;
+                    switchTenant(data.target_tenant);
+                } else {
+                    resEl.innerHTML = `<span style="color: var(--crimson-alert); font-weight: bold;">❌ ODRZUCONO:</span> ${data.detail || data.message}`;
+                }
+            } catch (e) {
+                resEl.textContent = "Błąd: " + e.message;
+                resEl.style.color = "var(--crimson-alert)";
             }
         }
 

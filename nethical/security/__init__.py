@@ -393,8 +393,17 @@ __all__ = [
     "TokenizeResponse",
     "DetokenizeResponse",
     "MachineUnlearningProofEngine",
-    "UnlearningAttestation",
+    # Data Diode & Sovereign Air-Gapped Synchronization
+    "DataDiodeBridge",
+    "SovereignPackage",
+    "SovereignPackageHeader",
 ]
+
+from .data_diode import (
+    DataDiodeBridge,
+    SovereignPackage,
+    SovereignPackageHeader,
+)
 
 from .aispm_scanner import (
     AISPMScanner,
@@ -420,4 +429,5 @@ from .unlearning_proof import (
     MachineUnlearningProofEngine,
     UnlearningAttestation,
 )
+
 
