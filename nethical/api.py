@@ -806,6 +806,180 @@ hardware_watchdog_instance.register_fieldbus_callback(
     industrial_fieldbus_instance.trigger_emergency_cutoff
 )
 
+# ==============================================================================
+# MULTI-TENANCY & SOVEREIGN AUTHENTICATION SUBSYSTEM (Faza 1 Planu)
+# ==============================================================================
+
+from nethical.auth import TenantManager, RBACManager, SovereignAuthToken
+from nethical.core.models import ClassificationLevel, UserRole, UserIdentity, TenantConfig
+
+tenant_manager_instance = TenantManager(default_ledger=gateway_instance.ledger)
+rbac_manager_instance = RBACManager()
+
+
+class AuthLoginRequest(BaseModel):
+    username: str = Field(..., description="Nazwa użytkownika")
+    password: str = Field(..., description="Hasło użytkownika")
+
+
+AuthLoginRequest.model_rebuild()
+
+
+class CreateTenantRequest(BaseModel):
+    name: str = Field(..., description="Nazwa organizacji / podmiotu")
+    jurisdiction: str = Field(default="EU", description="Jurysdykcja prawna (np. PL, EU, GLOBAL)")
+    classification: str = Field(default="unclassified", description="Poziom klauzuli tajności")
+    allowed_frameworks: Optional[List[str]] = Field(default=None, description="Dozwolone pakiety regulacyjne")
+    metadata: Optional[Dict[str, Any]] = Field(default=None, description="Metadane suwerenne")
+
+
+CreateTenantRequest.model_rebuild()
+
+
+def get_authenticated_user(
+    authorization: Optional[str] = None,
+    x_api_key: Optional[str] = None,
+) -> Optional[UserIdentity]:
+    """Weryfikuje tożsamość na podstawie tokenu Sovereign Bearer lub klucza API."""
+    if authorization and authorization.startswith("Bearer "):
+        token = authorization.split(" ", 1)[1]
+        user = rbac_manager_instance.authenticate_token(token)
+        if user:
+            return user
+    if x_api_key:
+        user = rbac_manager_instance.authenticate_api_key(x_api_key)
+        if user:
+            return user
+    return None
+
+
+@app.post("/api/v1/auth/login", tags=["Auth"])
+async def auth_login(req: AuthLoginRequest) -> Dict[str, Any]:
+    """Logowanie do suwerennego Control Plane z weryfikacją offline HMAC-SHA256."""
+    auth = rbac_manager_instance.authenticate(req.username, req.password)
+    if not auth:
+        raise HTTPException(status_code=401, detail="Nieprawidłowy login lub hasło suwerenne")
+    user, token = auth
+    role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
+    return {
+        "access_token": token,
+        "token_type": "bearer",
+        "user": {
+            "user_id": user.user_id,
+            "username": user.username,
+            "role": role_val,
+            "tenant_id": user.tenant_id,
+            "full_name": user.full_name,
+            "email": user.email,
+        },
+    }
+
+
+@app.get("/api/v1/auth/me", tags=["Auth"])
+async def get_current_user_profile(
+    authorization: Optional[str] = Header(default=None),
+    x_api_key: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    """Zwraca tożsamość zalogowanego użytkownika oraz uprawnienia RBAC."""
+    user = get_authenticated_user(authorization, x_api_key)
+    if not user:
+        raise HTTPException(status_code=401, detail="Brak autoryzacji")
+    role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
+    from nethical.auth.rbac import ROLE_PERMISSIONS
+    role_enum = UserRole(user.role) if isinstance(user.role, str) else user.role
+    perms = list(ROLE_PERMISSIONS.get(role_enum, set()))
+    return {
+        "user_id": user.user_id,
+        "username": user.username,
+        "role": role_val,
+        "tenant_id": user.tenant_id,
+        "full_name": user.full_name,
+        "permissions": perms,
+    }
+
+
+@app.get("/api/v1/tenants", tags=["MultiTenancy"])
+async def list_tenants(
+    authorization: Optional[str] = Header(default=None),
+    x_api_key: Optional[str] = Header(default=None),
+) -> List[Dict[str, Any]]:
+    """Zwraca listę dostępnych przestrzeni suwerennych (tenants)."""
+    user = get_authenticated_user(authorization, x_api_key)
+    tenants = tenant_manager_instance.list_tenants()
+    if user:
+        role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
+        if role_val != UserRole.GLOBAL_ADMIN.value:
+            tenants = [t for t in tenants if t.tenant_id == user.tenant_id]
+    return [
+        {
+            "tenant_id": t.tenant_id,
+            "name": t.name,
+            "jurisdiction": t.jurisdiction,
+            "classification_level": t.classification_level.value if hasattr(t.classification_level, "value") else str(t.classification_level),
+            "allowed_frameworks": t.allowed_frameworks,
+            "metadata": t.metadata,
+        }
+        for t in tenants
+    ]
+
+
+@app.post("/api/v1/tenants", tags=["MultiTenancy"])
+async def create_tenant(
+    req: CreateTenantRequest,
+    authorization: Optional[str] = Header(default=None),
+    x_api_key: Optional[str] = Header(default=None),
+) -> Dict[str, Any]:
+    """Tworzy nowy podmiot/instytucję z dedykowanym rejestrem Merkle-DAG."""
+    user = get_authenticated_user(authorization, x_api_key)
+    if user:
+        role_val = user.role.value if hasattr(user.role, "value") else str(user.role)
+        if role_val != UserRole.GLOBAL_ADMIN.value:
+            raise HTTPException(status_code=403, detail="Wymagane uprawnienia GLOBAL_ADMIN")
+
+    try:
+        classif = ClassificationLevel(req.classification)
+    except Exception:
+        classif = ClassificationLevel.UNCLASSIFIED
+
+    created = tenant_manager_instance.create_tenant(
+        name=req.name,
+        jurisdiction=req.jurisdiction,
+        classification=classif,
+        allowed_frameworks=req.allowed_frameworks,
+        metadata=req.metadata,
+    )
+    return {
+        "status": "created",
+        "tenant_id": created.tenant_id,
+        "name": created.name,
+        "jurisdiction": created.jurisdiction,
+        "classification_level": created.classification_level.value if hasattr(created.classification_level, "value") else str(created.classification_level),
+        "allowed_frameworks": created.allowed_frameworks,
+    }
+
+
+@app.get("/api/v1/tenants/{tenant_id}/ledger", tags=["MultiTenancy"])
+async def get_tenant_ledger_status(tenant_id: str) -> Dict[str, Any]:
+    """Zwraca status odizolowanego rejestru Merkle-DAG podmiotu."""
+    tenant = tenant_manager_instance.get_tenant(tenant_id)
+    if not tenant:
+        raise HTTPException(status_code=404, detail="Podmiot o podanym ID nie istnieje")
+    ledger = tenant_manager_instance.get_tenant_ledger(tenant_id)
+    is_valid, errors = ledger.verify_integrity()
+    return {
+        "tenant_id": tenant_id,
+        "tenant_name": tenant.name,
+        "jurisdiction": tenant.jurisdiction,
+        "classification_level": tenant.classification_level.value if hasattr(tenant.classification_level, "value") else str(tenant.classification_level),
+        "total_blocks": ledger.total_blocks,
+        "merkle_root": ledger.current_root,
+        "pqc_algorithm": "ML-DSA-65 (CRYSTALS-Dilithium Level 3)",
+        "signer_key_id": ledger.keypair.key_id,
+        "integrity_valid": is_valid,
+        "integrity_errors": errors,
+    }
+
+
 PORTAL_TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "portal" / "templates" / "index.html"
 
 
@@ -901,6 +1075,20 @@ async def get_portal_stats() -> Dict[str, Any]:
             "merkle_root": ledger.current_root,
             "pqc_algorithm": "ML-DSA-65 (Dilithium3)",
             "integrity_valid": is_valid,
+        },
+        "multitenancy": {
+            "active_tenants_count": len(tenant_manager_instance.list_tenants()),
+            "registered_users_count": len(rbac_manager_instance.list_users()),
+            "tenants": [
+                {
+                    "tenant_id": t.tenant_id,
+                    "name": t.name,
+                    "jurisdiction": t.jurisdiction,
+                    "classification": t.classification_level.value if hasattr(t.classification_level, "value") else str(t.classification_level),
+                    "blocks": tenant_manager_instance.get_tenant_ledger(t.tenant_id).total_blocks,
+                }
+                for t in tenant_manager_instance.list_tenants()
+            ],
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
     }

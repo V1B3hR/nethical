@@ -31,7 +31,7 @@ logger = logging.getLogger("nethical.security.merkle_ledger")
 
 def canonical_json_bytes(data: Any) -> bytes:
     """Zwraca znormalizowany ciąg bajtów JSON (RFC 8785) dla powtarzalnego hashowania."""
-    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
+    return json.dumps(data, sort_keys=True, separators=(",", ":"), ensure_ascii=True, default=str).encode("utf-8")
 
 
 def hash_leaf(data_bytes: bytes) -> str:

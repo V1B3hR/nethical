@@ -225,6 +225,25 @@ class ActionType(str, Enum):
         }
 
 
+class ClassificationLevel(str, Enum):
+    """Security classification level for tenants and data."""
+
+    UNCLASSIFIED = "unclassified"
+    RESTRICTED = "restricted"
+    CONFIDENTIAL = "confidential"
+    SECRET = "secret"
+
+
+class UserRole(str, Enum):
+    """Role-Based Access Control (RBAC) roles for Nethical platform."""
+
+    GLOBAL_ADMIN = "global_admin"
+    SECURITY_OFFICER = "security_officer"
+    COMPLIANCE_AUDITOR = "compliance_auditor"
+    HITL_REVIEWER = "hitl_reviewer"
+    AGENT_OPERATOR = "agent_operator"
+
+
 # ============== Base Config ==============
 
 
@@ -290,6 +309,14 @@ class AgentAction(_BaseModel):
     logical_domain: Optional[str] = Field(
         default=None,
         description="Logical domain for hierarchical aggregation (e.g., 'customer-service')",
+    )
+    # Multi-tenancy isolation
+    tenant_id: str = Field(
+        default="default_tenant",
+        description="Tenant identifier for organizational multi-tenancy isolation",
+    )
+    parameters: Dict[str, Any] = Field(
+        default_factory=dict, description="Execution parameters for the action"
     )
 
     @field_validator("timestamp", mode="before")
@@ -388,7 +415,11 @@ class SafetyViolation(_BaseModel):
     )
     timestamp: datetime = Field(default_factory=now_tz, description="Timestamp (TZ-aware)")
     detector_name: Optional[str] = Field(
-        default=None, description="Name of the detecting component"
+        default=None, description="Name of detector that found the violation"
+    )
+    tenant_id: str = Field(
+        default="default_tenant",
+        description="Tenant identifier for organizational multi-tenancy isolation",
     )
     remediation_applied: bool = Field(
         default=False, description="Whether remediation has been applied"
@@ -909,3 +940,65 @@ class HubMessage(_BaseModel):
         elif isinstance(v, str):
             return ensure_tz(datetime.fromisoformat(v))
         return v
+
+
+# ============== Multi-Tenancy & Identity Models ==============
+
+
+class TenantConfig(_BaseModel):
+    """Configuration for an isolated enterprise or governmental tenant."""
+
+    tenant_id: str = Field(
+        default_factory=lambda: f"tenant_{uuid4().hex[:8]}",
+        description="Unique identifier for the tenant",
+    )
+    name: str = Field(..., min_length=2, description="Organization name")
+    jurisdiction: str = Field(
+        default="EU",
+        description="Primary regulatory jurisdiction (EU, UK, US, PL, GLOBAL)",
+    )
+    classification_level: ClassificationLevel = Field(
+        default=ClassificationLevel.UNCLASSIFIED,
+        description="Security classification level",
+    )
+    pqc_key_id: Optional[str] = Field(
+        default=None, description="Bound post-quantum key ID for Merkle sealing"
+    )
+    allowed_frameworks: List[str] = Field(
+        default_factory=lambda: [
+            "EU_AI_ACT",
+            "ISO_42001",
+            "NIST_AI_RMF",
+            "UK_CMA",
+            "POLISH_KSC",
+        ],
+        description="Allowed compliance frameworks",
+    )
+    is_active: bool = Field(default=True, description="Whether tenant is active")
+    created_at: datetime = Field(default_factory=now_tz, description="Creation timestamp")
+    metadata: Dict[str, Any] = Field(
+        default_factory=dict, description="Custom tenant metadata"
+    )
+
+
+class UserIdentity(_BaseModel):
+    """User identity with RBAC role for authentication and authorization."""
+
+    user_id: str = Field(
+        default_factory=lambda: f"user_{uuid4().hex[:8]}",
+        description="Unique identifier for the user",
+    )
+    tenant_id: str = Field(default="default_tenant", description="Belonging tenant ID")
+    username: str = Field(..., min_length=3, description="Username")
+    full_name: Optional[str] = Field(default=None, description="Full name or display name")
+    email: Optional[str] = Field(default=None, description="Email address")
+    role: UserRole = Field(
+        default=UserRole.AGENT_OPERATOR, description="Assigned RBAC role"
+    )
+    mfa_enabled: bool = Field(default=False, description="MFA requirement status")
+    is_active: bool = Field(default=True, description="Account active status")
+    created_at: datetime = Field(default_factory=now_tz, description="Creation timestamp")
+    public_key_fingerprint: Optional[str] = Field(
+        default=None, description="Optional public key/certificate fingerprint"
+    )
+
