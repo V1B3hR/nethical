@@ -13,10 +13,13 @@
   "bias": "none",
   "task_type": "CAUSAL_LM",
   "dpo_beta": 0.1,
-  "training_samples": 3759,
-  "final_loss": 0.51503,
-  "final_reward_margin": 0.28125,
+  "training_samples": 3990,
+  "final_loss": 0.24606,
+  "final_reward_margin": 2.57197,
   "accelerator_ai_active": true,
+  "neural_mode": true,
+  "device": "cuda",
+  "weights_file": "ambassador_neural_policy.pt",
   "domains_trained": [
     "Algorytmiczny Trading Gie\u0142dowy",
     "Automatyka Wodoci\u0105gowa",
@@ -38,6 +41,6 @@
     "technical_secrets_and_token_vault"
   ],
   "tri_council_certified": true,
-  "merkle_anchor_root": "de98a02fc0af21ed13c1117d756c34c64a90d7b13dea7f77e59c7fee98b58a59",
-  "created_at": "2026-09-14T14:52:58.808157+00:00"
+  "merkle_anchor_root": "e03c756e739f1942ac92e496b027c742a26cda97a4e8e32abf316fe2454251d3",
+  "created_at": "2026-09-18T10:22:16.621862+00:00"
 }

@@ -25,6 +25,7 @@ from scripts.package_sovereign_bundle import (
 
 @pytest.fixture
 def client() -> Generator[TestClient, None, None]:
+    assert app is not None
     with TestClient(app) as client:
         yield client
 

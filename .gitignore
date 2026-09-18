@@ -101,6 +101,8 @@ profiling_results/
 training_audit_logs/
 models/candidates/*.json
 models/metadata/*.json
+models/benchmark_*/
+*.pt
 .agents/
 
 

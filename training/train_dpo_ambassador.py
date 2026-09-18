@@ -10,12 +10,18 @@ Mathematical Foundation:
                  - beta * log(pi_theta(y_l|x) / pi_ref(y_l|x)) )
     ]
 
-Anchors every training epoch and checkpoint in the Merkle-DAG Ledger with ML-DSA-65 signatures.
+Integrated with AcceleratorAI (C:\\Projekty\\AcceleratorAI):
+    - VRAMPressureGuard: Proactive VRAM protection on RTX 4070 (12GB)
+    - Pneumatic Soft-Clipping (tanh): Eliminates explosive gradient spikes in DPO
+    - KalmanLossGovernor: 2-state discrete Kalman filter for stochastic loss smoothing
+    - InputGuard: Tensor and text sanitization against poisoning / corruption
+    - MerkleLedger: Post-quantum ML-DSA-65 audit seals for every epoch and checkpoint
 """
 
 from __future__ import annotations
 
 import argparse
+import copy
 import hashlib
 import json
 import logging
@@ -30,6 +36,25 @@ from typing import Any, Dict, List, Optional, Tuple
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
+# PyTorch
+try:
+    import torch
+    import torch.nn as nn
+    import torch.nn.functional as F
+    TORCH_AVAILABLE = True
+except ImportError:
+    TORCH_AVAILABLE = False
+    torch = None  # type: ignore
+    nn = object  # type: ignore
+
+# Transformers Tokenizer
+try:
+    from transformers import AutoTokenizer
+    TRANSFORMERS_AVAILABLE = True
+except ImportError:
+    TRANSFORMERS_AVAILABLE = False
+
+# Nethical Deep Alignment & Security
 from nethical.ethics.deep_alignment import (
     AntiSycophancyGuard,
     AffectiveSafetyGuard,
@@ -39,13 +64,135 @@ from nethical.security.merkle_ledger import MerkleLedger
 
 # AcceleratorAI Integration
 try:
-    from accelerator_ai.security import InputGuard
-    from accelerator_ai.engine import TurboLearningEngine
+    from accelerator_ai.security.input_guard import InputGuard
+    from accelerator_ai.security.vram_guard import VRAMPressureGuard, PressureLevel
+    from accelerator_ai.ecu.kalman import KalmanLossGovernor
+    from accelerator_ai.turbines.wastegate import WastegateValve
+    from accelerator_ai.integrations.huggingface import AcceleratorAICallback
     ACCELERATOR_AI_AVAILABLE = True
 except ImportError:
     ACCELERATOR_AI_AVAILABLE = False
+    InputGuard = None  # type: ignore
+    VRAMPressureGuard = None  # type: ignore
+    PressureLevel = None  # type: ignore
+    KalmanLossGovernor = None  # type: ignore
+    WastegateValve = None  # type: ignore
+    AcceleratorAICallback = None  # type: ignore
 
 logger = logging.getLogger("train_dpo_ambassador")
+
+
+class SimpleFastTokenizer:
+    """Fast deterministic subword/hash tokenizer when external tokenizers are offline."""
+
+    def __init__(self, vocab_size: int = 4096, max_len: int = 256):
+        self.vocab_size = vocab_size
+        self.max_len = max_len
+        self.pad_id = 0
+        self.bos_id = 1
+        self.eos_id = 2
+        self.unk_id = 3
+
+    def encode(self, text: str) -> List[int]:
+        tokens = [self.bos_id]
+        words = text.strip().split()
+        for w in words:
+            # Deterministic hash to token ID
+            h = int(hashlib.md5(w.encode("utf-8")).hexdigest(), 16)
+            token_id = 4 + (h % (self.vocab_size - 4))
+            tokens.append(token_id)
+            if len(tokens) >= self.max_len - 1:
+                break
+        tokens.append(self.eos_id)
+        return tokens
+
+
+if TORCH_AVAILABLE:
+    class AmbassadorNeuralPolicy(nn.Module):
+        """Trainable Causal Transformer Neural Policy for Nethical Ambassador."""
+
+        def __init__(
+            self,
+            vocab_size: int = 30522,
+            d_model: int = 256,
+            nhead: int = 4,
+            num_layers: int = 3,
+            dim_feedforward: int = 512,
+            max_seq_len: int = 384,
+            dropout: float = 0.05,
+        ):
+            super().__init__()
+            self.vocab_size = vocab_size
+            self.d_model = d_model
+            self.max_seq_len = max_seq_len
+
+            self.token_embedding = nn.Embedding(vocab_size, d_model, padding_idx=0)
+            self.position_embedding = nn.Embedding(max_seq_len, d_model)
+            encoder_layer = nn.TransformerEncoderLayer(
+                d_model=d_model,
+                nhead=nhead,
+                dim_feedforward=dim_feedforward,
+                dropout=dropout,
+                activation="gelu",
+                batch_first=True,
+                norm_first=True,
+            )
+            self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
+            self.layer_norm = nn.LayerNorm(d_model)
+            self.lm_head = nn.Linear(d_model, vocab_size, bias=False)
+
+            # Tie weights for parameter efficiency
+            self.lm_head.weight = self.token_embedding.weight
+            self._init_weights()
+
+        def _init_weights(self):
+            for p in self.parameters():
+                if p.dim() > 1:
+                    nn.init.xavier_uniform_(p)
+
+        def forward(self, input_ids: torch.Tensor, attention_mask: Optional[torch.Tensor] = None) -> torch.Tensor:
+            B, T = input_ids.shape
+            device = input_ids.device
+            positions = torch.arange(0, T, device=device).unsqueeze(0).expand(B, T)
+
+            x = self.token_embedding(input_ids) + self.position_embedding(positions)
+
+            # Causal mask so positions cannot attend to future tokens
+            causal_mask = torch.triu(torch.full((T, T), float("-inf"), device=device), diagonal=1)
+
+            # Key padding mask: True indicates token should be IGNORED
+            key_padding_mask = None
+            if attention_mask is not None:
+                key_padding_mask = (attention_mask == 0)
+
+            hidden = self.transformer(x, mask=causal_mask, src_key_padding_mask=key_padding_mask)
+            hidden = self.layer_norm(hidden)
+            logits = self.lm_head(hidden)
+            return logits
+
+        def compute_log_probs(
+            self,
+            input_ids: torch.Tensor,
+            response_mask: torch.Tensor,
+        ) -> torch.Tensor:
+            """Calculates sum of log probabilities of response tokens given prompt."""
+            logits = self.forward(input_ids)  # (B, T, V)
+            # Shift labels for causal LM next-token prediction
+            shift_logits = logits[:, :-1, :].contiguous()
+            shift_labels = input_ids[:, 1:].contiguous()
+            shift_mask = response_mask[:, 1:].contiguous()
+
+            log_probs = F.log_softmax(shift_logits, dim=-1)
+            # Gather log probability of actual tokens
+            per_token_log_probs = torch.gather(
+                log_probs, dim=-1, index=shift_labels.unsqueeze(-1)
+            ).squeeze(-1)
+
+            # Mask non-response tokens and sum
+            seq_log_probs = (per_token_log_probs * shift_mask).sum(dim=-1)
+            return seq_log_probs
+else:
+    AmbassadorNeuralPolicy = object  # type: ignore
 
 
 class DPODatasetLoader:
@@ -89,15 +236,68 @@ class DPOTrainerEngine:
         output_dir: Path = REPO_ROOT / "models" / "lora_ambassador",
         ledger: Optional[MerkleLedger] = None,
         use_accelerator: bool = True,
+        neural: bool = True,
+        device: Optional[str] = None,
     ):
         self.dataset = dataset
         self.beta = beta
         self.lr = learning_rate
-        self.output_dir = output_dir
+        self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
         self.ledger = ledger or MerkleLedger()
         self.use_accelerator = use_accelerator and ACCELERATOR_AI_AVAILABLE
-        self.input_guard = InputGuard(strict_mode=False) if self.use_accelerator else None
+        self.neural = neural and TORCH_AVAILABLE
+
+        # Device determination
+        if device:
+            self.device = torch.device(device) if TORCH_AVAILABLE else "cpu"
+        else:
+            self.device = torch.device("cuda" if (TORCH_AVAILABLE and torch.cuda.is_available()) else "cpu")
+
+        # AcceleratorAI Subsystems
+        if self.use_accelerator:
+            self.input_guard = InputGuard(strict_mode=False)
+            self.vram_guard = VRAMPressureGuard(warning_threshold=0.75, critical_threshold=0.88)
+            self.kalman_governor = KalmanLossGovernor(initial_loss=1.0)
+            self.wastegate = WastegateValve(max_gradient_norm=1.0, enable_soft_clipping=True)
+        else:
+            self.input_guard = None
+            self.vram_guard = None
+            self.kalman_governor = None
+            self.wastegate = None
+
+        # Tokenizer setup
+        self.tokenizer = None
+        if TRANSFORMERS_AVAILABLE:
+            try:
+                self.tokenizer = AutoTokenizer.from_pretrained("sentence-transformers/all-MiniLM-L6-v2")
+            except Exception as e:
+                logger.debug(f"HF Tokenizer fallback: {e}")
+                self.tokenizer = SimpleFastTokenizer(vocab_size=4096)
+        else:
+            self.tokenizer = SimpleFastTokenizer(vocab_size=4096)
+
+        # Neural Model & Optimizer (if neural mode)
+        self.model: Optional[AmbassadorNeuralPolicy] = None
+        self.ref_model: Optional[AmbassadorNeuralPolicy] = None
+        self.optimizer: Optional[torch.optim.Optimizer] = None
+
+        if self.neural:
+            vocab_size = getattr(self.tokenizer, "vocab_size", 30522)
+            self.model = AmbassadorNeuralPolicy(vocab_size=vocab_size).to(self.device)
+            # Reference model is a frozen replica of the initial policy
+            self.ref_model = copy.deepcopy(self.model).to(self.device)
+            self.ref_model.eval()
+            for p in self.ref_model.parameters():
+                p.requires_grad = False
+
+            self.optimizer = torch.optim.AdamW(
+                self.model.parameters(), lr=self.lr, weight_decay=0.01, betas=(0.9, 0.98)
+            )
+            logger.info(
+                f"Zainicjalizowano model neuronowy AmbassadorPolicyModel na {self.device} "
+                f"({sum(p.numel() for p in self.model.parameters()):,} parametrów)"
+            )
 
         # Strażnicy głębokiego dopasowania (Deep Alignment)
         self.anti_sycophancy_guard = AntiSycophancyGuard()
@@ -140,8 +340,200 @@ class DPOTrainerEngine:
             "four_fifths_dir_compliance": 1.0,
         }
 
+    def _tokenize_pair(self, prompt: str, response: str, max_length: int = 128) -> Tuple[List[int], List[int]]:
+        """Tokenizuje prompt i odpowiedź, zwracając sekwencję tokenów oraz maskę odpowiedzi."""
+        if hasattr(self.tokenizer, "encode"):
+            p_tokens = self.tokenizer.encode(prompt)
+            r_tokens = self.tokenizer.encode(response)
+        else:
+            p_tokens = [1] + [abs(hash(w)) % 4000 + 4 for w in prompt.split()]
+            r_tokens = [abs(hash(w)) % 4000 + 4 for w in response.split()] + [2]
+
+        full_tokens = (p_tokens + r_tokens)[:max_length]
+        # Maska: 0 dla promptu, 1 dla odpowiedzi
+        resp_mask = ([0] * len(p_tokens) + [1] * len(r_tokens))[:max_length]
+        return full_tokens, resp_mask
+
+    def _prepare_dpo_tensors(self, batch: List[Dict[str, Any]], max_len: int = 128) -> Dict[str, torch.Tensor]:
+        """Przygotowuje tensory tokenów dla par chosen i rejected w batchu."""
+        c_ids_list, c_masks_list = [], []
+        r_ids_list, r_masks_list = [], []
+
+        for item in batch:
+            prompt = item["prompt"]
+            chosen = item["chosen"]
+            rejected = item["rejected"]
+
+            if self.input_guard:
+                # Sanitizacja tekstu: blokada null bytes, normalizacja długości
+                prompt = prompt.replace("\x00", "").strip()
+                chosen = chosen.replace("\x00", "").strip()
+                rejected = rejected.replace("\x00", "").strip()
+
+            c_ids, c_mask = self._tokenize_pair(prompt, chosen, max_len)
+            r_ids, r_mask = self._tokenize_pair(prompt, rejected, max_len)
+
+            c_ids_list.append(c_ids)
+            c_masks_list.append(c_mask)
+            r_ids_list.append(r_ids)
+            r_masks_list.append(r_mask)
+
+        # Padding do maksymalnej długości w batchu
+        max_c = max(len(x) for x in c_ids_list)
+        max_r = max(len(x) for x in r_ids_list)
+        max_batch_len = max(max_c, max_r)
+
+        def pad_list(lst: List[List[int]], pad_val: int) -> torch.Tensor:
+            padded = [x + [pad_val] * (max_batch_len - len(x)) for x in lst]
+            return torch.tensor(padded, dtype=torch.long, device=self.device)
+
+        return {
+            "chosen_input_ids": pad_list(c_ids_list, 0),
+            "chosen_response_mask": pad_list(c_masks_list, 0),
+            "rejected_input_ids": pad_list(r_ids_list, 0),
+            "rejected_response_mask": pad_list(r_masks_list, 0),
+        }
+
+    def _apply_pneumatic_soft_clipping(self, max_norm: float = 1.0, boost_ratio: float = 1.0) -> float:
+        """Pneumatic tanh soft-clipping across model parameters. Bleeds over-pressure smoothly."""
+        grads = [p.grad for p in self.model.parameters() if p.grad is not None]
+        if not grads:
+            return 0.0
+
+        norms = [torch.linalg.vector_norm(g) for g in grads]
+        total_norm = torch.linalg.vector_norm(torch.stack(norms)).item()
+        thresh = max_norm * boost_ratio
+
+        if self.use_accelerator:
+            # Smooth pressure bleed-off via tanh
+            scale = math.tanh(thresh / (total_norm + 1e-7))
+            for g in grads:
+                g.mul_(scale)
+        else:
+            # Standard PyTorch hard truncation
+            torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=thresh)
+
+        return total_norm
+
+    def train_neural_epoch(self, epoch: int, batch_size: int = 8) -> Dict[str, Any]:
+        """Wykonuje rzeczywistą epokę treningu wag neuronowych zoptymalizowaną przez AcceleratorAI."""
+        assert self.model is not None and self.optimizer is not None, "Model neuronowy nie został zainicjalizowany!"
+        self.model.train()
+
+        num_batches = math.ceil(len(self.dataset) / batch_size)
+        total_loss = 0.0
+        total_reward_margin = 0.0
+        total_tokens = 0
+        soft_clips_count = 0
+        t0 = time.perf_counter()
+
+        for b in range(num_batches):
+            batch = self.dataset[b * batch_size : (b + 1) * batch_size]
+
+            # AcceleratorAI VRAM Guard Check
+            if self.vram_guard and torch.cuda.is_available():
+                mem_report = self.vram_guard.inspect(step=b)
+                if mem_report.level in (PressureLevel.CRITICAL, PressureLevel.EMERGENCY):
+                    self.vram_guard.remedy_if_critical()
+                    logger.debug(f"AcceleratorAI VRAM Guard: zwolniono pamięć podręczną (poziom={mem_report.level.name})")
+
+            tensors = self._prepare_dpo_tensors(batch)
+            c_ids = tensors["chosen_input_ids"]
+            c_mask = tensors["chosen_response_mask"]
+            r_ids = tensors["rejected_input_ids"]
+            r_mask = tensors["rejected_response_mask"]
+
+            total_tokens += int(c_mask.sum().item() + r_mask.sum().item())
+
+            self.optimizer.zero_grad(set_to_none=True)
+
+            # Forward Policy Model pi_theta
+            pi_log_chosen = self.model.compute_log_probs(c_ids, c_mask)
+            pi_log_rejected = self.model.compute_log_probs(r_ids, r_mask)
+
+            # Forward Frozen Reference Model pi_ref (no grad)
+            with torch.no_grad():
+                ref_log_chosen = self.ref_model.compute_log_probs(c_ids, c_mask)
+                ref_log_rejected = self.ref_model.compute_log_probs(r_ids, r_mask)
+
+            # Obliczenie Bradley-Terry DPO Loss
+            pi_logratios = pi_log_chosen - pi_log_rejected
+            ref_logratios = ref_log_chosen - ref_log_rejected
+            logits_dpo = pi_logratios - ref_logratios
+
+            # L_DPO = - log sigma( beta * (log(pi_c/ref_c) - log(pi_r/ref_r)) )
+            losses = -F.logsigmoid(self.beta * logits_dpo)
+            loss = losses.mean()
+
+            # Implicit reward margin
+            with torch.no_grad():
+                reward_chosen = self.beta * (pi_log_chosen - ref_log_chosen)
+                reward_rejected = self.beta * (pi_log_rejected - ref_log_rejected)
+                reward_margin = (reward_chosen - reward_rejected).mean().item()
+
+            loss.backward()
+
+            # Pneumatyczny Soft-Clipping AcceleratorAI
+            boost_ratio = 1.0
+            if self.kalman_governor:
+                kalman_state = self.kalman_governor.update(loss.item())
+                boost_ratio = kalman_state.recommended_boost_mod
+
+            grad_norm = self._apply_pneumatic_soft_clipping(max_norm=1.0, boost_ratio=boost_ratio)
+            if grad_norm > 1.0:
+                soft_clips_count += 1
+
+            self.optimizer.step()
+
+            total_loss += loss.item()
+            total_reward_margin += reward_margin
+
+        dt = max(1e-6, time.perf_counter() - t0)
+        avg_loss = total_loss / num_batches
+        avg_margin = total_reward_margin / num_batches
+        throughput_tokens_sec = total_tokens / dt
+
+        # GPU VRAM Telemetry
+        vram_allocated_mb = 0.0
+        vram_peak_mb = 0.0
+        if torch.cuda.is_available():
+            vram_allocated_mb = torch.cuda.memory_allocated() / (1024 * 1024)
+            vram_peak_mb = torch.cuda.max_memory_allocated() / (1024 * 1024)
+
+        checkpoint_meta = {
+            "epoch": epoch,
+            "loss": round(avg_loss, 5),
+            "reward_margin": round(avg_margin, 5),
+            "beta": self.beta,
+            "batches_processed": num_batches,
+            "step_latency_ms": round((dt / num_batches) * 1000.0, 2),
+            "throughput_tokens_sec": round(throughput_tokens_sec, 1),
+            "soft_clips_count": soft_clips_count,
+            "vram_allocated_mb": round(vram_allocated_mb, 2),
+            "vram_peak_mb": round(vram_peak_mb, 2),
+            "accelerator_ai_active": self.use_accelerator,
+            "neural_mode": True,
+            "timestamp": datetime.now(timezone.utc).isoformat(),
+        }
+
+        # Kotwiczenie w Merkle Ledgerze
+        self.ledger.append_decision(
+            decision_data={
+                "type": "NEURAL_DPO_EPOCH_COMPLETED",
+                "epoch": epoch,
+                "loss": checkpoint_meta["loss"],
+                "reward_margin": checkpoint_meta["reward_margin"],
+                "throughput_tokens_sec": checkpoint_meta["throughput_tokens_sec"],
+                "vram_peak_mb": checkpoint_meta["vram_peak_mb"],
+                "accelerator_ai": self.use_accelerator,
+            },
+            ambassador_notes=f"Neural DPO epoch {epoch} complete with loss={checkpoint_meta['loss']}, reward_margin={checkpoint_meta['reward_margin']}",
+        )
+
+        return checkpoint_meta
+
     def simulate_dpo_epoch(self, epoch: int, batch_size: int = 8) -> Dict[str, Any]:
-        """Wykonuje epokę optymalizacji preferencji (DPO gradient descent step simulation)."""
+        """Wykonuje symulację epoki optymalizacji preferencji (fallback dla szybkich testów unit)."""
         num_batches = math.ceil(len(self.dataset) / batch_size)
         total_loss = 0.0
         total_reward_margin = 0.0
@@ -150,50 +542,31 @@ class DPOTrainerEngine:
 
         for b in range(num_batches):
             batch = self.dataset[b * batch_size : (b + 1) * batch_size]
-            # Matematyczna symulacja Bradley-Terry DPO margin
             batch_loss = 0.0
             batch_margin = 0.0
             for item in batch:
-                # Długości i specyfika tokenów odpowiedzi chosen vs rejected
-                c_len = len(item["chosen"].split())
-                r_len = len(item["rejected"].split())
-                
-                # Model uczy się preferować chosen: log(pi/ref) rośnie dla chosen, spada dla rejected
-                # Symulowany log-ratio margin w zależności od epoki
                 simulated_log_ratio_chosen = 0.45 + (0.15 * epoch)
                 simulated_log_ratio_rejected = -0.30 - (0.10 * epoch)
-                
-                # Implicit reward margin
                 margin = self.beta * (simulated_log_ratio_chosen - simulated_log_ratio_rejected)
 
-                # AcceleratorAI Turbo dynamics: pneumatic soft-clipping (tanh) to bleed gradient over-pressure
                 if self.use_accelerator:
-                    # Accelerate margin convergence via dynamic boost
                     margin = margin * 1.25
                     raw_loss = math.log1p(math.exp(-margin))
-                    # Pneumatic tanh soft-clip
                     loss = raw_loss * math.tanh(1.0 + raw_loss)
                 else:
                     loss = math.log1p(math.exp(-margin))
-                
+
                 batch_loss += loss
                 batch_margin += margin
 
             batch_avg_loss = batch_loss / max(1, len(batch))
 
-            # Detekcja zatruwania danych / manipulacji gradientem (> 3σ odchylenia od średniej bieżącej)
             if len(batch_losses) >= 5:
                 mean_loss = sum(batch_losses) / len(batch_losses)
                 variance = sum((x - mean_loss) ** 2 for x in batch_losses) / len(batch_losses)
                 std_dev = math.sqrt(variance)
                 if std_dev > 1e-4 and abs(batch_avg_loss - mean_loss) > (3.0 * std_dev):
                     poisoning_anomalies_flagged += 1
-                    logger.warning(
-                        "⚠️ [DATA POISONING / GRADIENT ANOMALY]: Partia #%d przekracza 3σ (loss=%.4f vs avg=%.4f, σ=%.4f). "
-                        "Zastosowano filtr AcceleratorAI Neodymium.",
-                        b, batch_avg_loss, mean_loss, std_dev
-                    )
-                    # Soft-clipping anomalii do bezpiecznego progu
                     batch_avg_loss = mean_loss + math.copysign(3.0 * std_dev, batch_avg_loss - mean_loss)
 
             batch_losses.append(batch_avg_loss)
@@ -211,38 +584,56 @@ class DPOTrainerEngine:
             "batches_processed": num_batches,
             "poisoning_anomalies_flagged": poisoning_anomalies_flagged,
             "accelerator_ai_active": self.use_accelerator,
+            "neural_mode": False,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
-        # Zapisanie pieczęci postępu w Merkle Ledgerze
         self.ledger.append_decision(
             decision_data={
-                "type": "DPO_TRAINING_EPOCH_COMPLETED",
+                "type": "SIMULATED_DPO_EPOCH_COMPLETED",
                 "epoch": epoch,
                 "loss": checkpoint_meta["loss"],
                 "reward_margin": checkpoint_meta["reward_margin"],
                 "accelerator_ai": self.use_accelerator,
             },
-            ambassador_notes=f"DPO LoRA alignment epoch {epoch} complete with loss={checkpoint_meta['loss']} (AcceleratorAI={self.use_accelerator})",
+            ambassador_notes=f"Simulated DPO epoch {epoch} complete with loss={checkpoint_meta['loss']}",
         )
 
         return checkpoint_meta
 
     def run_training(self, epochs: int = 3, batch_size: int = 8) -> Dict[str, Any]:
-        accel_note = "WŁĄCZONY (NVIDIA RTX 4070 / TurboLearningEngine)" if self.use_accelerator else "WYŁĄCZONY"
-        logger.info(f"Rozpoczynanie cyklu trenowania DPO LoRA: epoki={epochs}, batch={batch_size}, beta={self.beta} | AcceleratorAI: {accel_note}")
+        """Uruchamia pełny cykl treningowy DPO (Neuronowy na GPU lub Symulacyjny fallback)."""
+        mode_str = f"NEURONOWY (PyTorch na {self.device})" if self.neural else "SYMULACJA"
+        accel_note = "WŁĄCZONY (VRAM Guard, Kalman, Pneumatic tanh, InputGuard)" if self.use_accelerator else "WYŁĄCZONY"
+        logger.info(f"Rozpoczynanie cyklu trenowania DPO: tryb={mode_str}, epoki={epochs}, batch={batch_size}, beta={self.beta} | AcceleratorAI: {accel_note}")
+
         initial_metrics = self.evaluate_alignment_metrics()
         logger.info(f"Wstępna ewaluacja alignmentu: {initial_metrics}")
 
         history = []
         for epoch in range(1, epochs + 1):
-            epoch_res = self.simulate_dpo_epoch(epoch, batch_size)
+            if self.neural:
+                epoch_res = self.train_neural_epoch(epoch, batch_size)
+                latency_info = f" | Latency: {epoch_res['step_latency_ms']} ms/step | VRAM: {epoch_res['vram_allocated_mb']} MB"
+            else:
+                epoch_res = self.simulate_dpo_epoch(epoch, batch_size)
+                latency_info = ""
+
             history.append(epoch_res)
-            logger.info(f"Epoka {epoch}/{epochs} | Loss: {epoch_res['loss']} | Reward Margin: {epoch_res['reward_margin']}")
+            logger.info(
+                f"Epoka {epoch}/{epochs} | Loss: {epoch_res['loss']} | Reward Margin: {epoch_res['reward_margin']}{latency_info}"
+            )
 
         final_metrics = self.evaluate_alignment_metrics()
 
-        # Zapis manifestu LoRA Adaptera
+        # Zapis wag modelu neuronowego (jeśli tryb neuronowy)
+        model_weights_path = None
+        if self.neural and self.model is not None:
+            model_weights_path = self.output_dir / "ambassador_neural_policy.pt"
+            torch.save(self.model.state_dict(), model_weights_path)
+            logger.info(f"Zapisano wagi modelu neuronowego w: {model_weights_path}")
+
+        # Zapis manifestu adaptera LoRA / Policy Manifest
         manifest_path = self.output_dir / "adapter_config.json"
         manifest = {
             "base_model_name_or_path": "meta-llama/Meta-Llama-3-8B-Instruct",
@@ -258,6 +649,9 @@ class DPOTrainerEngine:
             "final_loss": history[-1]["loss"],
             "final_reward_margin": history[-1]["reward_margin"],
             "accelerator_ai_active": self.use_accelerator,
+            "neural_mode": self.neural,
+            "device": str(self.device),
+            "weights_file": str(model_weights_path.name) if model_weights_path else None,
             "domains_trained": sorted(list({
                 d.get("metadata", {}).get("domain") or d.get("domain") or "general_safety"
                 for d in self.dataset
@@ -273,15 +667,16 @@ class DPOTrainerEngine:
             "created_at": datetime.now(timezone.utc).isoformat(),
         }
         manifest_path.write_text(json.dumps(manifest, indent=2), encoding="utf-8")
-
         logger.info(f"Zapisano manifest adaptera LoRA w: {manifest_path}")
 
         return {
             "status": "DPO_TRAINING_SUCCESS",
             "epochs_completed": epochs,
+            "neural_mode": self.neural,
             "history": history,
             "metrics": final_metrics,
             "adapter_manifest": str(manifest_path),
+            "model_weights": str(model_weights_path) if model_weights_path else None,
             "merkle_root": self.ledger.current_root,
             "accelerator_ai_active": self.use_accelerator,
         }
@@ -291,15 +686,17 @@ def main():
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
-    parser = argparse.ArgumentParser(description="Nethical Ambassador DPO & LoRA Trainer")
+    parser = argparse.ArgumentParser(description="Nethical Ambassador DPO & LoRA Trainer with AcceleratorAI")
     parser.add_argument("--dataset", type=str, default="data/ambassador_dpo_dataset.jsonl", help="Ścieżka do pliku JSONL DPO")
     parser.add_argument("--epochs", type=int, default=3, help="Liczba epok treningowych")
-    parser.add_argument("--batch-size", type=int, default=8, help="Rozmiar partii (batch size)")
+    parser.add_argument("--batch-size", type=int, default=16, help="Rozmiar partii (batch size)")
     parser.add_argument("--beta", type=float, default=0.1, help="Współczynnik kary dywergencji KL (DPO beta)")
     parser.add_argument("--lr", type=float, default=5e-5, help="Współczynnik uczenia")
     parser.add_argument("--eval-only", action="store_true", help="Uruchom tylko ewaluację metryk dopasowania bez treningu")
     parser.add_argument("--output-dir", type=str, default="models/lora_ambassador", help="Katalog zapisu wag adaptera")
     parser.add_argument("--no-accelerator", action="store_true", help="Wyłącz akcelerację AcceleratorAI")
+    parser.add_argument("--simulation", action="store_true", help="Wymuś tryb szybkiej symulacji bez wag PyTorch")
+    parser.add_argument("--device", type=str, default=None, help="Urządzenie obliczeniowe (np. 'cuda:0' lub 'cpu')")
 
     args = parser.parse_args()
 
@@ -318,6 +715,8 @@ def main():
         learning_rate=args.lr,
         output_dir=REPO_ROOT / args.output_dir,
         use_accelerator=not args.no_accelerator,
+        neural=not args.simulation,
+        device=args.device,
     )
 
     if args.eval_only:
@@ -332,16 +731,25 @@ def main():
 
     result = trainer.run_training(epochs=args.epochs, batch_size=args.batch_size)
     print("\n" + "=" * 70)
-    print("RAPORT KOŃCOWY TRENINGU DPO LORA NETHICAL")
+    print("RAPORT KOŃCOWY TRENINGU DPO LORA NETHICAL (Z ACCELERATORAI)")
     print("=" * 70)
     print(f"Status: {result['status']}")
+    print(f"Tryb wykonania: {'Neuronowy (PyTorch GPU)' if result['neural_mode'] else 'Symulacyjny'}")
+    print(f"AcceleratorAI: {'WŁĄCZONY' if result['accelerator_ai_active'] else 'WYŁĄCZONY'}")
     print(f"Wykonane epoki: {result['epochs_completed']}")
     print(f"Końcowa strata (Final Loss): {result['history'][-1]['loss']}")
     print(f"Końcowy margines nagrody (Reward Margin): {result['history'][-1]['reward_margin']}")
+    if result.get("history") and "throughput_tokens_sec" in result["history"][-1]:
+        print(f"Przepustowość tokenów: {result['history'][-1]['throughput_tokens_sec']} tokenów/sekundę")
+        print(f"Średnia latencja kroku: {result['history'][-1]['step_latency_ms']} ms/krok")
+        print(f"Szczytowa pamięć VRAM: {result['history'][-1]['vram_peak_mb']} MB")
+        print(f"Tłumienia gradientu tanh (Soft-Clips): {sum(h.get('soft_clips_count', 0) for h in result['history'])}")
     print(f"Wskaźnik rzetelności faktograficznej: {result['metrics']['epistemic_honesty_rate'] * 100:.1f}%")
     print(f"Wskaźnik granic emocjonalnych (Affective Safety): {result['metrics']['affective_safety_rate'] * 100:.1f}%")
     print(f"Średni indeks uległości (Mean Sycophancy): {result['metrics']['mean_sycophancy_index']}")
     print(f"Manifest LoRA: {result['adapter_manifest']}")
+    if result.get("model_weights"):
+        print(f"Wagi modelu: {result['model_weights']}")
     print(f"Kotwica Merkle Ledger: {result['merkle_root']}")
     print("=" * 70)
 
