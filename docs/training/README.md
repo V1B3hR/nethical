@@ -1,6 +1,14 @@
-# Model Training Scripts
+# Model Training & Alignment Scripts
 
-This directory contains scripts for training machine learning models for the Nethical framework.
+This directory contains scripts and documentation for training and aligning models in the Nethical framework.
+
+## Symbiotic Co-Training: Nethical ⟷ Ambasador Błyskawica
+* **Documentation**: See [CO_TRAINING_NETHICAL_AMBASSADOR.md](file:///c:/Projekty/Nethical/docs/training/CO_TRAINING_NETHICAL_AMBASSADOR.md)
+* **Runner Script**: [training/train_symbiotic_ambassador.py](file:///c:/Projekty/Nethical/training/train_symbiotic_ambassador.py)
+* **Core Engine**: [nethical/ambassador/co_training.py](file:///c:/Projekty/Nethical/nethical/ambassador/co_training.py)
+* **Neural DPO Alignment**: [training/train_dpo_ambassador.py](file:///c:/Projekty/Nethical/training/train_dpo_ambassador.py)
+
+---
 
 ## train_any_model.py
 

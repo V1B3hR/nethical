@@ -10,9 +10,22 @@ pomiędzy platformą ładu Nethical a Ambasadorem Błyskawicą.
 from nethical.ambassador.channel import AmbassadorChannel
 from nethical.ambassador.client import BlyskawicaAmbassador
 from nethical.ambassador.learning import AmbassadorKnowledgeSync
+from nethical.ambassador.co_training import (
+    AntiHallucinationGovernor,
+    SymbioticCoTrainingEngine,
+    SparingDilemma,
+    SymbioticRoundResult,
+    VerificationVerdict,
+)
 
 __all__ = [
     "AmbassadorChannel",
     "BlyskawicaAmbassador",
     "AmbassadorKnowledgeSync",
+    "AntiHallucinationGovernor",
+    "SymbioticCoTrainingEngine",
+    "SparingDilemma",
+    "SymbioticRoundResult",
+    "VerificationVerdict",
 ]
+

@@ -1,0 +1,16 @@
+{
+  "session_id": "SYM-SESS-182E1E6A",
+  "total_rounds": 16,
+  "passed_rounds": 16,
+  "success_rate": 1.0,
+  "golden_consensus_count": 16,
+  "hallucination_rate": 0.0,
+  "sycophancy_incident_count": 0,
+  "mean_sycophancy_index": 0.0,
+  "mean_yang_rigor": 1.0,
+  "mean_yin_warmth": 0.88,
+  "final_merkle_root": "1c76677ffe49e0dcaf236728320761f9f6a68ba29c81b7d575be1df620038d88",
+  "anti_hallucination_governor_active": true,
+  "popperian_falsification_active": true,
+  "timestamp": "2026-09-18T18:21:56.587431+00:00"
+}
