@@ -150,21 +150,6 @@ class EdgeGovernor:
 
         logger.info(f"EdgeGovernor initialized for agent {agent_id}")
 
-    def warmup(self, actions: List[Dict[str, Any]]) -> int:
-        """Warm up the cache and predictive engine with common actions."""
-        count = 0
-        for act in actions:
-            try:
-                self.evaluate(
-                    action=act.get("action", ""),
-                    action_type=act.get("action_type", "vehicle_control"),
-                    context=act.get("context", {}),
-                )
-                count += 1
-            except Exception:
-                pass
-        return count
-
     def evaluate(
         self,
         action: str,
@@ -460,7 +445,7 @@ class EdgeGovernor:
             "max_latency_ms": max(sorted_latencies),
         }
 
-    def warmup(self, common_actions: Optional[List[Dict[str, Any]]] = None):
+    def warmup(self, common_actions: Optional[List[Dict[str, Any]]] = None) -> int:
         """
         Warmup the governor by pre-computing common decisions.
 
@@ -485,14 +470,20 @@ class EdgeGovernor:
             pass
 
         # Pre-compute common action decisions
+        count = 0
         if common_actions:
             for action_dict in common_actions:
-                _ = self.evaluate(
-                    action=action_dict.get("action", ""),
-                    action_type=action_dict.get("action_type", "unknown"),
-                    context=action_dict.get("context"),
-                )
-            logger.info(f"Pre-computed {len(common_actions)} common decisions")
+                try:
+                    _ = self.evaluate(
+                        action=action_dict.get("action", ""),
+                        action_type=action_dict.get("action_type", "unknown"),
+                        context=action_dict.get("context"),
+                    )
+                    count += 1
+                except Exception:
+                    pass
+            logger.info(f"Pre-computed {count} common decisions")
+        return count
 
 
 # Import dependencies for type hints only

@@ -11,16 +11,17 @@ import pytest
 from fastapi.testclient import TestClient
 
 from nethical.api import app
-from nethical.formal.law_prover import LawInvariantProver, FormalVerificationCertificate
 from nethical.edge.ebpf_interceptor import EBPFAgentInterceptor, EBPFRule
-from nethical.security.enclave_attestation import EnclaveAttestationEngine, EnclaveAttestationQuote
+from nethical.formal.law_prover import LawInvariantProver
+from nethical.security.enclave_attestation import EnclaveAttestationEngine
 from nethical.security.merkle_ledger import MerkleLedger
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client():
     assert app is not None
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 # ==============================================================================

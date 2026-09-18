@@ -22,6 +22,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Optional, Tuple
 
+from cachetools import TTLCache
+
 from pydantic import BaseModel, Field
 
 from nethical.security.merkle_ledger import (
@@ -115,7 +117,8 @@ class DataDiodeBridge:
         self._trusted_public_keys: Dict[str, bytes] = {
             self.keypair.key_id: self.keypair.public_key
         }
-        self._processed_nonces: set[str] = set()
+        # Anti-replay nonce cache: max 100K entries, 24h TTL auto-eviction
+        self._processed_nonces: TTLCache[str, bool] = TTLCache(maxsize=100_000, ttl=86400)
 
     def register_trusted_key(self, key_id: str, public_key: bytes) -> None:
         """Rejestruje zaufany klucz publiczny PQC nadawcy."""
@@ -240,7 +243,7 @@ class DataDiodeBridge:
             return False, msg, None
 
         # Rejestracja Nonce w celu ochrony przed powtórzeniem
-        self._processed_nonces.add(package.header.nonce)
+        self._processed_nonces[package.header.nonce] = True
 
         # Pieczętowanie zdarzenia w dedykowanym Merkle Ledgerze
         seal_payload = {

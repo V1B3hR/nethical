@@ -55,7 +55,7 @@ class SLABreach:
     target_value: float
     actual_value: float
     breach_percentage: float
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     duration_seconds: float = 0.0
     metadata: Dict[str, Any] = field(default_factory=dict)
 
@@ -284,7 +284,12 @@ class SLAMonitor:
         # Calculate uptime metrics
         total_measurements = metrics["sample_count"]
         breach_count = len(
-            [b for b in self.breaches if b.timestamp > datetime.now(timezone.utc) - timedelta(hours=24)]
+            [
+                b
+                for b in self.breaches
+                if (b.timestamp.replace(tzinfo=timezone.utc) if b.timestamp.tzinfo is None else b.timestamp.astimezone(timezone.utc))
+                > datetime.now(timezone.utc) - timedelta(hours=24)
+            ]
         )
 
         # P95 specific check (primary SLA)

@@ -126,6 +126,10 @@ class HealthcarePHIDetector(DetectorPlugin):
 
         return violations
 
+    def redact(self, payload: Any) -> Any:
+        """Universal redaction entrypoint for strings or structured payloads."""
+        return self.redact_payload(payload)
+
     # Optional helper to offer redaction for callers/policies
     def redact_text(self, text: str) -> str:
         redacted = text
@@ -133,15 +137,15 @@ class HealthcarePHIDetector(DetectorPlugin):
             if t not in self.enabled_patterns:
                 continue
 
-            def _sub(m: re.Match) -> str:
+            def _sub(m: re.Match, token_type: str = t) -> str:
                 val = m.group(0)
-                if t == "email" and val.lower() in self.allowlist_emails:
+                if token_type == "email" and val.lower() in self.allowlist_emails:
                     return val
                 if self.pseudonymize:
-                    return self._pseudonymize(val, t)
+                    return self._pseudonymize(val, token_type)
                 if self.preserve_format:
-                    return self._preserve_format_token(val, t)
-                return self.redaction_token.format(type=t)
+                    return self._preserve_format_token(val, token_type)
+                return self.redaction_token.format(type=token_type)
 
             redacted = pattern.sub(_sub, redacted, count=self.max_matches_per_type)
         return redacted

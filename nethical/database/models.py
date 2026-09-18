@@ -9,7 +9,7 @@ from datetime import datetime, timezone
 from typing import Any
 
 from sqlalchemy import Boolean, Column, DateTime, Float, Integer, String, Text, JSON
-from sqlalchemy.ext.declarative import declarative_base
+from sqlalchemy.orm import declarative_base
 
 Base = declarative_base()
 

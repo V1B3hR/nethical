@@ -414,7 +414,7 @@ async def test_phase3_detector_count():
     from nethical.core.attack_registry import get_statistics
     
     stats = get_statistics()
-    assert stats["total"] == 65  # Phase 1 (36) + Phase 2 (17) + Phase 3 (12)
+    assert stats["total"] >= 65  # Phase 1 (36) + Phase 2 (17) + Phase 3 (12), plus subsequent phases
 
 
 @pytest.mark.asyncio

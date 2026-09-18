@@ -9,14 +9,13 @@ Weryfikuje:
 import pytest
 from fastapi.testclient import TestClient
 
-from nethical.security.merkle_ledger import MerkleLedger
-from nethical.security.cluster_sync import (
-    CrossRegionLedgerSync,
-    ClusterNodeIdentity,
-    ClusterCheckpoint,
-)
-from nethical.gateway.hitl import HITLQueueManager
 from nethical.api import app
+from nethical.gateway.hitl import HITLQueueManager
+from nethical.security.cluster_sync import (
+    ClusterNodeIdentity,
+    CrossRegionLedgerSync,
+)
+from nethical.security.merkle_ledger import MerkleLedger
 
 
 @pytest.fixture
@@ -44,10 +43,11 @@ def cluster_sync(ledger: MerkleLedger) -> CrossRegionLedgerSync:
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client():
     """Klient testowy FastAPI."""
     assert app is not None
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 # ==============================================================================
@@ -161,7 +161,7 @@ def test_cluster_reconcile_synchronized_and_divergent(cluster_sync: CrossRegionL
     chk_ahead = cluster_sync.create_checkpoint()
     chk_ahead.total_blocks += 5
     # Podpisujemy zaktualizowany stan
-    payload = f"{chk_ahead.node.node_id}:{chk_ahead.merkle_root}:{chk_ahead.total_blocks}".encode("utf-8")
+    payload = f"{chk_ahead.node.node_id}:{chk_ahead.merkle_root}:{chk_ahead.total_blocks}".encode()
     sig_ahead = cluster_sync.ledger.pqc_dilithium.sign(
         payload, cluster_sync.ledger.keypair.private_key, cluster_sync.ledger.keypair.key_id
     )
@@ -174,7 +174,7 @@ def test_cluster_reconcile_synchronized_and_divergent(cluster_sync: CrossRegionL
     # 3. Równa liczba bloków, lecz różny korzeń Merkle -> DIVERGENT_FORK
     chk_fork = cluster_sync.create_checkpoint()
     chk_fork.merkle_root = "f" * 64
-    payload_fork = f"{chk_fork.node.node_id}:{chk_fork.merkle_root}:{chk_fork.total_blocks}".encode("utf-8")
+    payload_fork = f"{chk_fork.node.node_id}:{chk_fork.merkle_root}:{chk_fork.total_blocks}".encode()
     sig_fork = cluster_sync.ledger.pqc_dilithium.sign(
         payload_fork, cluster_sync.ledger.keypair.private_key, cluster_sync.ledger.keypair.key_id
     )

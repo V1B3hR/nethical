@@ -4,14 +4,14 @@ import pytest
 from fastapi.testclient import TestClient
 
 from nethical.api import app
-from nethical.security.inoculation_mesh import InoculationMesh, InoculationAttackVector
-from nethical.gateway.proxy import GovernanceGateway
+from nethical.security.inoculation_mesh import InoculationAttackVector, InoculationMesh
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client():
     assert app is not None
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 def test_portal_html_dashboard_endpoint(client: TestClient) -> None:

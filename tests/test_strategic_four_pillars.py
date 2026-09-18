@@ -8,43 +8,44 @@ Tests:
 5. FastAPI Endpoints & Portal Telemetry Integration
 """
 
-import pytest
 import time
+
+import pytest
 from fastapi.testclient import TestClient
 
 from nethical.api import app
 from nethical.compliance.packs.us_frontier_nist_pack import (
-    USFrontierNISTPack,
-    NISTAIRMFEvaluator,
-    CaliforniaSB1047Evaluator,
     CaliforniaAB2013Evaluator,
-)
-from nethical.ethics.deep_alignment import (
-    AntiSycophancyGuard,
-    AffectiveSafetyGuard,
-    AlgorithmicFairnessAuditor,
-    DeepAlignmentEngine,
+    CaliforniaSB1047Evaluator,
+    NISTAIRMFEvaluator,
+    USFrontierNISTPack,
 )
 from nethical.edge.iso13849_watchdog import (
+    HardwareWatchdogTimer,
     ISO13849SafetyEvaluator,
     PerformanceLevel,
-    HardwareWatchdogTimer,
 )
-from nethical.security.financial_circuit_breaker import (
-    FinancialCircuitBreaker,
-    FinancialTransaction,
-    CircuitBreakerState,
+from nethical.ethics.deep_alignment import (
+    AffectiveSafetyGuard,
+    AlgorithmicFairnessAuditor,
+    AntiSycophancyGuard,
 )
 from nethical.security.air_gapped_node import (
     AirGappedSovereignNode,
     SecurityClassification,
 )
+from nethical.security.financial_circuit_breaker import (
+    CircuitBreakerState,
+    FinancialCircuitBreaker,
+    FinancialTransaction,
+)
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client():
     assert app is not None
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 # ==============================================================================

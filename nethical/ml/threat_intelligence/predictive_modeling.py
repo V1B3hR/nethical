@@ -237,20 +237,39 @@ class PredictiveModeler:
             Attack prediction or None
         """
         try:
-            # Calculate probability based on threat density and severity
+            # Calculate probability based on threat confidence, severity, and density
             num_threats = len(related_threats)
-            
             if num_threats == 0:
                 return None
-            
-            # Simple probability model (would be ML-based in production)
-            base_probability = min(0.9, num_threats * 0.1)
-            
-            # Adjust for time horizon (farther = less certain)
-            time_factor = 1.0 / (1 + horizon_days / 30)
-            probability = base_probability * time_factor
-            
-            # Calculate confidence (simplified)
+
+            # Incorporate threat confidence and severity
+            avg_conf = (
+                float(np.mean([getattr(t, "confidence", 0.8) for t in related_threats]))
+                if related_threats
+                else 0.8
+            )
+
+            # Severity weight
+            first_threat = related_threats[0]
+            sev = getattr(first_threat, "severity", "high")
+            sev_str = sev.value if hasattr(sev, "value") else str(sev)
+            severity_weights = {
+                "critical": 1.0,
+                "high": 0.85,
+                "medium": 0.7,
+                "low": 0.5,
+            }
+            weight = severity_weights.get(sev_str.lower(), 0.8)
+
+            # Threat density boost
+            density_boost = min(0.2, (num_threats - 1) * 0.05)
+            base_probability = min(0.95, (avg_conf * weight) + density_boost)
+
+            # Adjust for time horizon (slight decay for farther horizons)
+            time_factor = 1.0 / (1.0 + horizon_days / 180.0)
+            probability = round(base_probability * time_factor, 3)
+
+            # Calculate confidence
             confidence = min(0.95, 0.5 + num_threats * 0.05)
             
             # Extract indicators from threats

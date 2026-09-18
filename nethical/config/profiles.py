@@ -256,6 +256,7 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
 
         def _cf_list(
             values: Iterable[str | ComplianceFramework],
+            reg_name: str = region_name,
         ) -> Tuple[ComplianceFramework, ...]:
             out = []
             for v in values:
@@ -266,7 +267,7 @@ def load_overrides_from_yaml(path: str) -> Mapping[Region, RegionProfile]:
                         out.append(ComplianceFramework(v))
                     except ValueError as exc:
                         raise ValueError(
-                            f"Unknown compliance framework '{v}' for region '{region_name}'"
+                            f"Unknown compliance framework '{v}' for region '{reg_name}'"
                         ) from exc
             return tuple(out)
 

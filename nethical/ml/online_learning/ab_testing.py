@@ -25,6 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone, timedelta
 from enum import Enum
 import uuid
+from typing import Any, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -39,6 +40,7 @@ class TestStatus(Enum):
 
 class TestVariant(Enum):
     """Test variant identifier."""
+    __test__ = False
     CONTROL = "control"  # Current version
     TREATMENT = "treatment"  # New version
 
@@ -46,6 +48,7 @@ class TestVariant(Enum):
 @dataclass
 class TestConfig:
     """Configuration for A/B test."""
+    __test__ = False
     
     test_id: str = field(default_factory=lambda: str(uuid.uuid4()))
     detector_name: str = ""

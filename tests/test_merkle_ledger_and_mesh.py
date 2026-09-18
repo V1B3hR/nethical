@@ -4,25 +4,25 @@ import pytest
 from fastapi.testclient import TestClient
 
 from nethical.api import app
-from nethical.security.merkle_ledger import (
-    MerkleTree,
-    MerkleLedger,
-    hash_leaf,
-    canonical_json_bytes,
-)
 from nethical.gateway.proxy import GovernanceGateway
+from nethical.security.merkle_ledger import (
+    MerkleLedger,
+    MerkleTree,
+    hash_leaf,
+)
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client():
     assert app is not None
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 def test_merkle_tree_root_and_inclusion_proof() -> None:
     """Weryfikuje matematyczną poprawność drzewa Merkle i dowodów inkluzji O(log N)."""
     tree = MerkleTree()
-    leaf_hashes = [hash_leaf(f"decision_{i}".encode("utf-8")) for i in range(7)]
+    leaf_hashes = [hash_leaf(f"decision_{i}".encode()) for i in range(7)]
     for h in leaf_hashes:
         tree.add_leaf(h)
 

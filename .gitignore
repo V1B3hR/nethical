@@ -51,6 +51,7 @@ env/
 htmlcov/
 .tox/
 tests/validation/results/
+tests/performance/results/
 
 # Logs & Runtime Chunks
 *.log
@@ -86,6 +87,7 @@ sealed-secret.yaml
 # Test data directories
 test_unified_data*/
 test_governance*/
+data/kpi/kpi_data_*.json
 
 # Benchmark results
 benchmark_results/

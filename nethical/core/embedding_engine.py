@@ -21,9 +21,12 @@ import hashlib
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any, Tuple, TYPE_CHECKING
 from datetime import datetime, timezone
 from uuid import uuid4
+
+if TYPE_CHECKING:
+    from .embedding_config import EmbeddingConfig, ProviderConfig
 
 logger = logging.getLogger(__name__)
 

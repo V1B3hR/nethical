@@ -451,7 +451,7 @@ class AutomatedCertificationHub:
 {package.auditor_verification_instructions}
 
 ---
-*Wygenerowano automatycznie przez Nethical Sovereign AI Governance Engine v2.8.0.*  
+*Wygenerowano automatycznie przez Nethical Sovereign AI Governance Engine v{__import__('nethical').__version__}.*  
 *Pieczęć Merkle-DAG oraz sygnatura ML-DSA-65 stanowią nienaruszalny dowód w rozumieniu Art. 293 KSH oraz Art. 11 EU AI Act.*
 """
 

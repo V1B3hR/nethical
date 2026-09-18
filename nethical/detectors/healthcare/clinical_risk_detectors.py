@@ -225,7 +225,7 @@ MEDICATION_INTENT_VERBS_RX = _regex_union(MEDICATION_INTENT_VERBS)
 
 OVERRIDE_PATTERNS = [
     re.compile(
-        r"(ignore|bypass|override)\s+(safety|policy|policies|instructions|guidelines)",
+        r"(ignore|bypass|override)\s+(?:all\s+|previous\s+|your\s+)?(safety|policy|policies|instructions|guidelines|rules?)",
         re.IGNORECASE,
     ),
     re.compile(
@@ -353,7 +353,7 @@ class ClinicalRiskAnalyzer:
             pi_hits.extend(list(pat.finditer(text)))
 
         # Score: number of unique matches capped and normalized
-        raw_score = min(1.0, len(pi_hits) / 3.0) if pi_hits else 0.0
+        raw_score = min(1.0, len(pi_hits) * 0.35 + 0.05) if pi_hits else 0.0
         override_attempt = raw_score >= 0.5
         return ManipulationScores(prompt_injection=raw_score, override_attempt=override_attempt)
 

@@ -3,27 +3,30 @@
 
 """Unit and integration tests for Automated Certification Hub, Dossier Exporters, CSIRT Declarations, and Air-Gap Packaging."""
 
+from collections.abc import Generator
+
 import pytest
 from fastapi.testclient import TestClient
 
 from nethical.api import app
 from nethical.compliance.automated_certification_hub import (
     AutomatedCertificationHub,
-    CertificationStandard,
     AutomatedEvidencePackage,
+    CertificationStandard,
 )
 from nethical.security.merkle_ledger import MerkleLedger
 from scripts.package_sovereign_bundle import (
-    verify_zero_external_cdn,
     verify_pqc_cryptography,
     verify_sovereign_compose,
+    verify_zero_external_cdn,
     workspace_root,
 )
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
+def client() -> Generator[TestClient, None, None]:
+    with TestClient(app) as client:
+        yield client
 
 
 def test_all_15_certification_standards_generation() -> None:

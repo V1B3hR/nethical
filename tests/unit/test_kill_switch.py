@@ -11,39 +11,33 @@ Author: Nethical Core Team
 Version: 1.0.0
 """
 
-import pytest
-import time
-import secrets
 import hashlib
 import hmac
+import time
 from datetime import datetime, timedelta, timezone
-from typing import Optional
 
 from nethical.core.kill_switch import (
-    # Enums
-    ShutdownMode,
-    CommandType,
-    KeyType,
-    ConnectionType,
-    IsolationLevel,
-    ActuatorState,
-    # Data Classes
-    KillSwitchConfig,
-    AgentRecord,
     ActuatorRecord,
-    SignedCommand,
-    AuditLogEntry,
-    KillSwitchResult,
-    # Interfaces
-    KillSwitchCallback,
+    ActuatorSevering,
+    ActuatorState,
+    AgentRecord,
+    CommandType,
+    ConnectionType,
+    CryptoSignedCommands,
     # Main Classes
     GlobalKillSwitch,
-    ActuatorSevering,
-    CryptoSignedCommands,
     HardwareIsolation,
+    IsolationLevel,
+    # Interfaces
+    KillSwitchCallback,
+    # Data Classes
+    KillSwitchConfig,
     KillSwitchProtocol,
+    KillSwitchResult,
+    # Enums
+    ShutdownMode,
+    SignedCommand,
 )
-
 
 # ========================== Test Helpers ==========================
 
@@ -55,10 +49,10 @@ class MockCallback(KillSwitchCallback):
         self.pre_shutdown_called = False
         self.post_shutdown_called = False
         self.should_abort = should_abort
-        self.last_mode: Optional[ShutdownMode] = None
-        self.last_result: Optional[KillSwitchResult] = None
+        self.last_mode: ShutdownMode | None = None
+        self.last_result: KillSwitchResult | None = None
 
-    def on_pre_shutdown(self, mode: ShutdownMode, target: Optional[str]) -> bool:
+    def on_pre_shutdown(self, mode: ShutdownMode, target: str | None) -> bool:
         self.pre_shutdown_called = True
         self.last_mode = mode
         return not self.should_abort
@@ -866,9 +860,9 @@ class TestQuarantineIntegration:
     def test_hardware_isolate_cohort(self):
         """Test hardware isolation of cohort via QuarantineManager."""
         from nethical.core.quarantine import (
+            HardwareIsolationLevel,
             QuarantineManager,
             QuarantineReason,
-            HardwareIsolationLevel,
         )
 
         manager = QuarantineManager()
@@ -886,8 +880,8 @@ class TestQuarantineIntegration:
     def test_get_hardware_isolation_status(self):
         """Test getting hardware isolation status."""
         from nethical.core.quarantine import (
-            QuarantineManager,
             HardwareIsolationLevel,
+            QuarantineManager,
         )
 
         manager = QuarantineManager()
@@ -926,7 +920,6 @@ class TestDataClasses:
 
     def test_signed_command_is_expired(self):
         """Test SignedCommand expiration check."""
-        from datetime import timedelta
 
         # Not expired
         command = SignedCommand(

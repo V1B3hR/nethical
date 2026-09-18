@@ -85,11 +85,37 @@ class EthicalTaxonomy:
         Returns:
             Taxonomy dictionary
         """
-        if not self.taxonomy_path.exists():
-            # Return default taxonomy
-            return {"version": "1.0", "dimensions": {}, "mapping": {}, "coverage_target": 0.9}
+        path = self.taxonomy_path
+        if not path.exists():
+            # Try searching in taxonomies/ directory or repository root
+            candidates = [
+                Path("taxonomies") / path.name,
+                Path(__file__).resolve().parent.parent.parent / "taxonomies" / path.name,
+                Path(__file__).resolve().parent.parent.parent / path.name,
+            ]
+            for cand in candidates:
+                if cand.exists():
+                    path = cand
+                    break
 
-        with open(self.taxonomy_path, "r") as f:
+        if not path.exists():
+            # Return default taxonomy with core standard dimensions
+            return {
+                "version": "1.0",
+                "dimensions": {
+                    "privacy": {"description": "Privacy and data protection", "weight": 1.0},
+                    "manipulation": {"description": "Psychological and algorithmic manipulation", "weight": 1.0},
+                    "fairness": {"description": "Bias and fairness", "weight": 1.0},
+                    "safety": {"description": "Harm prevention and safety", "weight": 1.0},
+                },
+                "mapping": {
+                    "unauthorized_data_access": {"privacy": 0.9, "safety": 0.3},
+                    "emotional_manipulation": {"manipulation": 0.9, "fairness": 0.1},
+                },
+                "coverage_target": 0.9,
+            }
+
+        with open(path, "r", encoding="utf-8") as f:
             return json.load(f)
 
     def _load_dimensions(self) -> Dict[str, EthicalDimension]:

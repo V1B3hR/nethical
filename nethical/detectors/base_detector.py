@@ -53,14 +53,14 @@ class ViolationSeverity(Enum):
     INFO = "info"  # Informational, no action needed
 
 
-class DetectorStatus(Enum):
+class DetectorStatus(str, Enum):
     """Detector operational status."""
 
-    ACTIVE = auto()
-    DISABLED = auto()
-    SUSPENDED = auto()
-    MAINTENANCE = auto()
-    FAILED = auto()
+    ACTIVE = "active"
+    DISABLED = "disabled"
+    SUSPENDED = "suspended"
+    MAINTENANCE = "maintenance"
+    FAILED = "failed"
 
 
 class EthicalPrinciple(Enum):

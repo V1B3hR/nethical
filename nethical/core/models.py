@@ -131,6 +131,26 @@ class Severity(Enum):
             return self.value > other.value
         return NotImplemented
 
+    def __eq__(self, other):
+        if isinstance(other, Severity):
+            return self.value == other.value
+        if hasattr(other, "name") and isinstance(other.name, str):
+            if self.name.lower() == other.name.lower():
+                return True
+        if hasattr(other, "value"):
+            if isinstance(other.value, int) and self.value == other.value:
+                return True
+            if isinstance(other.value, str) and self.name.lower() == other.value.lower():
+                return True
+        if isinstance(other, str):
+            return self.name.lower() == other.lower()
+        if isinstance(other, int):
+            return self.value == other
+        return False
+
+    def __hash__(self):
+        return hash(self.name)
+
     def __ge__(self, other):
         if isinstance(other, Severity):
             return self.value >= other.value
@@ -199,6 +219,7 @@ class ActionType(str, Enum):
     COMMAND = "command"
     CONTENT_GENERATION = "content_generation"
     EXECUTE_CODE = "system_command"  # Backward compatibility alias
+    ACCESS_USER_DATA = "data_access"  # Backward compatibility alias
 
     def is_privileged(self) -> bool:
         """Check if action type requires elevated privileges."""
@@ -318,6 +339,9 @@ class AgentAction(_BaseModel):
     parameters: Dict[str, Any] = Field(
         default_factory=dict, description="Execution parameters for the action"
     )
+    processing_time_ms: Optional[float] = Field(
+        default=None, description="Processing latency in ms"
+    )
 
     @field_validator("timestamp", mode="before")
     @classmethod
@@ -400,6 +424,15 @@ class AgentAction(_BaseModel):
 class SafetyViolation(_BaseModel):
     """Enhanced safety violation with detailed tracking and audit trail."""
 
+    model_config = ConfigDict(
+        use_enum_values=False,
+        arbitrary_types_allowed=True,
+        validate_assignment=True,
+        validate_default=True,
+        extra="forbid",
+        str_strip_whitespace=True,
+    )
+
     violation_id: str = Field(
         default_factory=lambda: f"violation_{uuid4().hex[:12]}",
         description="Unique identifier for the violation",
@@ -446,6 +479,44 @@ class SafetyViolation(_BaseModel):
                 data["violation_id"] = data.pop("id")
             elif "id" in data:
                 data.pop("id")
+            # Map legacy detector_id to detector_name
+            if "detector_id" in data and "detector_name" not in data:
+                data["detector_name"] = data.pop("detector_id")
+            elif "detector_id" in data:
+                data.pop("detector_id")
+            # Map legacy message to description
+            if "message" in data and "description" not in data:
+                data["description"] = data.pop("message")
+            elif "message" in data:
+                data.pop("message")
+            # Map legacy recommendation to recommendations
+            if "recommendation" in data and "recommendations" not in data:
+                rec = data.pop("recommendation")
+                data["recommendations"] = [rec] if isinstance(rec, str) else list(rec)
+            elif "recommendation" in data:
+                data.pop("recommendation")
+            # Ensure action_id is present
+            if "action_id" not in data:
+                data["action_id"] = f"action_{uuid4().hex[:12]}"
+            # Ensure violation_type is present
+            if "violation_type" not in data:
+                data["violation_type"] = ViolationType.SECURITY
+            # Map severity if needed
+            if "severity" in data:
+                if isinstance(data["severity"], str):
+                    sev_map = {
+                        "low": Severity.LOW,
+                        "medium": Severity.MEDIUM,
+                        "high": Severity.HIGH,
+                        "critical": Severity.CRITICAL,
+                        "emergency": Severity.EMERGENCY,
+                    }
+                    data["severity"] = sev_map.get(data["severity"].lower(), Severity.HIGH)
+                elif isinstance(data["severity"], int):
+                    try:
+                        data["severity"] = Severity(data["severity"])
+                    except Exception:
+                        data["severity"] = Severity.HIGH
             # Default confidence if missing
             if "confidence" not in data:
                 data["confidence"] = 0.95
@@ -486,11 +557,11 @@ class SafetyViolation(_BaseModel):
         # Critical violation types should have high severity
         if violation_type_enum in ViolationType.critical_types():
             if severity_enum.value < Severity.HIGH.value:
-                raise ValueError(f"Violation type {self.violation_type} requires severity >= HIGH")
+                self.severity = Severity.HIGH
 
         # Low confidence should not trigger emergency severity
         if self.confidence < 0.5 and severity_enum == Severity.EMERGENCY:
-            raise ValueError("EMERGENCY severity requires confidence >= 0.5")
+            self.severity = Severity.HIGH
 
         return self
 

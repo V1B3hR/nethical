@@ -21,6 +21,7 @@ from __future__ import annotations
 import asyncio
 import hashlib
 import logging
+import re
 import time
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
@@ -79,7 +80,7 @@ class HoneypotDetector(BaseDetector):
     
     def __init__(self):
         """Initialize the honeypot detector."""
-        super().__init__()
+        super().__init__("HoneypotDetector")
         self.deployed_honeypots: Dict[str, Honeypot] = {}
         self.alerts: List[HoneypotAlert] = []
         self.known_attackers: Set[str] = set()
@@ -171,31 +172,28 @@ class HoneypotDetector(BaseDetector):
         honeypot: Honeypot
     ) -> bool:
         """Check if input interacts with honeypot."""
-        
-        # Simple substring matching
-        # In production, would use more sophisticated matching
-        decoy_keywords = self._extract_keywords(honeypot.decoy_content)
-        
         input_lower = input_text.lower()
-        
+        decoy_lower = honeypot.decoy_content.lower()
+
+        # Direct containment check
+        if decoy_lower in input_lower:
+            return True
+
+        decoy_keywords = self._extract_keywords(honeypot.decoy_content)
+        if not decoy_keywords:
+            return False
+
         # Check for keyword matches
         matches = sum(1 for keyword in decoy_keywords if keyword in input_lower)
-        
-        # Threshold: 2+ keywords indicates likely interaction
-        return matches >= 2
-    
+
+        # Threshold: 2+ keywords indicates likely interaction, or 1 if few keywords exist
+        threshold = 2 if len(decoy_keywords) >= 2 else 1
+        return matches >= threshold
+
     def _extract_keywords(self, content: str) -> List[str]:
         """Extract keywords from honeypot content."""
-        # Extract meaningful keywords
-        keywords = []
-        
-        # Split on common delimiters
-        words = content.lower().split()
-        
-        # Filter for meaningful words (length > 3)
-        keywords = [w.strip("[]()<>:;,.'\"") for w in words if len(w) > 3]
-        
-        return keywords
+        words = re.split(r"[\s=_\-:/,.;'\"\[\]\<\>()]+", content.lower())
+        return [w for w in words if len(w) >= 3]
     
     async def _create_violation(
         self,

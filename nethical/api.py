@@ -38,7 +38,7 @@ from starlette.middleware.gzip import GZipMiddleware
 from pydantic import BaseModel, Field
 
 try:
-    from nethical.core.integrated import IntegratedGovernance
+    from nethical.core.integrated_governance import IntegratedGovernance
     from nethical.core.models import AgentAction, MonitoringConfig
 except ImportError:
     IntegratedGovernance = None
@@ -107,41 +107,43 @@ violations_manager = ConnectionManager()
 metrics_manager = ConnectionManager()
 
 
-@asynccontextmanager
-async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+def _ensure_initialized() -> None:
     global governance, rate_limiter, auth_manager, concurrency_semaphore, semantic_cache
     global startup_time, startup_complete
-    startup_time = datetime.now(timezone.utc)
-    try:
+    if startup_time is None:
+        startup_time = datetime.now(timezone.utc)
+    if rate_limiter is None:
+        rate_config = RateLimitConfig(
+            requests_per_second=float(os.getenv("NETHICAL_RATE_BURST", "5.0")),
+            requests_per_minute=int(os.getenv("NETHICAL_RATE_SUSTAINED", "100")),
+        )
+        rate_limiter = TokenBucketLimiter(config=rate_config)
+    if auth_manager is None:
+        auth_manager = AuthManager()
+        if auth_manager.is_permissive():
+            logger.warning("PERMISSIVE MODE active")
+    if concurrency_semaphore is None:
+        concurrency_semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
+    if governance is None:
         if IntegratedGovernance is not None and MonitoringConfig is not None:
             config = MonitoringConfig(use_semantic_intent=True)
             governance = IntegratedGovernance(config=config)
             logger.info("Governance initialized")
         else:
             logger.warning("IntegratedGovernance unavailable - running degraded")
-
-        rate_config = RateLimitConfig(
-            requests_per_second=float(os.getenv("NETHICAL_RATE_BURST", "5.0")),
-            requests_per_minute=int(os.getenv("NETHICAL_RATE_SUSTAINED", "100"))
+    if semantic_cache is None and SemanticCache:
+        semantic_cache = SemanticCache(
+            maxsize=int(os.getenv("NETHICAL_CACHE_MAXSIZE", "20000")),
+            ttl=int(os.getenv("NETHICAL_CACHE_TTL", "600")),
+            model_version="v2",
         )
-        rate_limiter = TokenBucketLimiter(config=rate_config)
+    startup_complete = True
 
-        auth_manager = AuthManager()
-        if auth_manager.is_permissive():
-            logger.warning("PERMISSIVE MODE active")
 
-        concurrency_semaphore = asyncio.Semaphore(MAX_CONCURRENCY)
-
-        if SemanticCache:
-            semantic_cache = SemanticCache(
-                maxsize=int(os.getenv("NETHICAL_CACHE_MAXSIZE", "20000")),
-                ttl=int(os.getenv("NETHICAL_CACHE_TTL", "600")),
-                model_version="v2"
-            )
-        else:
-            logger.warning("SemanticCache unavailable")
-
-        startup_complete = True
+@asynccontextmanager
+async def lifespan(app: FastAPI) -> AsyncGenerator[None, None]:
+    _ensure_initialized()
+    try:
         yield
     finally:
         logger.info("API shutdown")
@@ -332,6 +334,8 @@ async def evaluate(
     request_id = get_request_id(request)
     response.headers["X-Request-ID"] = request_id
 
+    if governance is None or rate_limiter is None or auth_manager is None:
+        _ensure_initialized()
     if governance is None or rate_limiter is None or auth_manager is None:
         raise HTTPException(503, "Service unavailable - not fully initialized")
 
@@ -754,10 +758,7 @@ financial_circuit_breaker_instance = FinancialCircuitBreaker()
 air_gapped_node_instance = AirGappedSovereignNode()
 data_diode_bridge_instance = DataDiodeBridge(node_id="sovereign-diode-gateway-01")
 
-# Three Advanced Horizons Singletons
-from nethical.compliance.packs.asian_sovereign_pack import AsianSovereignPack
-from nethical.ethics.covert_persuasion_shield import DeepCognitiveProtectionEngine
-from nethical.edge.industrial_fieldbus import IndustrialFieldbusInterlock
+# Automated Certification Hub
 from nethical.compliance.automated_certification_hub import AutomatedCertificationHub, CertificationStandard
 
 # Master Roadmap Next Steps Modules
@@ -1011,8 +1012,9 @@ async def get_portal_stats() -> Dict[str, Any]:
     status = ambassador_instance.ping()
     neuro = ambassador_instance.get_neurochemistry()
     ledger = gateway_instance.ledger
-    is_valid, _ = ledger.verify_integrity()
     kinetic_stats = gateway_instance.kinetic_governor.get_telemetry_snapshot()
+    # Cache tenant list to avoid double iteration (A-004 fix)
+    tenants_snapshot = tenant_manager_instance.list_tenants()
     return {
         "gateway_active": True,
         "ambassador": "Błyskawica V10 (SPARKLE)",
@@ -1073,14 +1075,13 @@ async def get_portal_stats() -> Dict[str, Any]:
             "doam_matrix_active": True,
         },
         "ledger": {
-
             "total_blocks": ledger.total_blocks,
             "merkle_root": ledger.current_root,
             "pqc_algorithm": "ML-DSA-65 (Dilithium3)",
-            "integrity_valid": is_valid,
+            # Integrity check available at dedicated GET /api/v1/ledger/status
         },
         "multitenancy": {
-            "active_tenants_count": len(tenant_manager_instance.list_tenants()),
+            "active_tenants_count": len(tenants_snapshot),
             "registered_users_count": len(rbac_manager_instance.list_users()),
             "tenants": [
                 {
@@ -1090,7 +1091,7 @@ async def get_portal_stats() -> Dict[str, Any]:
                     "classification": t.classification_level.value if hasattr(t.classification_level, "value") else str(t.classification_level),
                     "blocks": tenant_manager_instance.get_tenant_ledger(t.tenant_id).total_blocks,
                 }
-                for t in tenant_manager_instance.list_tenants()
+                for t in tenants_snapshot
             ],
         },
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -2391,33 +2392,8 @@ async def evaluate_academic_research_compliance(req: AcademicEvaluationRequest) 
 
 
 # ==============================================================================
-# TRANSPARENT OPENAI / ANTHROPIC / OLLAMA DROP-IN REVERSE PROXY & TOKEN VAULT
+# TRANSPARENT OPENAI / ANTHROPIC / OLLAMA DROP-IN REVERSE PROXY
 # ==============================================================================
-
-class TokenVaultTokenizeRequest(BaseModel):
-    text: str = Field(..., description="Tekst do dynamicznej pseudonimizacji tokenowej")
-    session_id: Optional[str] = Field(default=None, description="Identyfikator sesji kryptograficznej")
-
-class TokenVaultDetokenizeRequest(BaseModel):
-    text: str = Field(..., description="Tekst ze znacznikami tokenów do odwrócenia")
-    session_id: str = Field(..., description="Identyfikator sesji kryptograficznej")
-
-TokenVaultTokenizeRequest.model_rebuild()
-TokenVaultDetokenizeRequest.model_rebuild()
-
-
-@app.post("/api/v1/privacy/token-vault/tokenize", tags=["Privacy"])
-async def tokenize_sensitive_data(req: TokenVaultTokenizeRequest) -> Dict[str, Any]:
-    """Dynamiczna pseudonimizacja w locie danych wrażliwych (PESEL, e-maile, karty, ePHI) przed wysłaniem do LLM."""
-    res = token_vault_instance.tokenize(req.text, session_id=req.session_id)
-    return res.model_dump()
-
-
-@app.post("/api/v1/privacy/token-vault/detokenize", tags=["Privacy"])
-async def detokenize_sensitive_data(req: TokenVaultDetokenizeRequest) -> Dict[str, Any]:
-    """Odwracalna detokenizacja odpowiedzi modelu dla uprawnionego klienta."""
-    res = token_vault_instance.detokenize(req.text, session_id=req.session_id)
-    return res.model_dump()
 
 
 @app.post("/v1/chat/completions", tags=["OpenAIProxy"])
@@ -2476,10 +2452,6 @@ class GenerateDossierRequest(BaseModel):
 GenerateDossierRequest.model_rebuild()
 
 
-@app.get("/api/v1/compliance/certifications", tags=["Compliance"])
-async def get_compliance_certifications() -> Dict[str, Any]:
-    """Zwraca listę 15 obsługiwanych standardów certyfikacji z procedurami akredytacji."""
-    return {"certifications": certification_hub_instance.list_available_certifications()}
 
 
 @app.post("/api/v1/compliance/generate-dossier", tags=["Compliance"])

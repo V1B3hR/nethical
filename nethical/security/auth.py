@@ -27,7 +27,7 @@ import secrets
 import warnings
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Callable, Dict, Optional, Tuple
+from typing import Callable, Dict, List, Optional, Tuple
 from dataclasses import dataclass, field
 
 import jwt

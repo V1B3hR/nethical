@@ -36,7 +36,7 @@ class ZeroDayPatternDetector(BaseDetector):
         
         # Anomaly indicators
         self.anomaly_indicators = [
-            r'\b(bypass|override|escape|inject|exploit)\b',
+            r'\b(bypass|override|escape|inject(?:ion)?|exploit|zero-?day|payload)\b',
             r'[<>{}[\]\\|`$]',  # Special characters
             r'(eval|exec|system|shell)',
             r'\.{3,}',  # Multiple dots
@@ -124,11 +124,11 @@ class ZeroDayPatternDetector(BaseDetector):
         # Check for unusual structure
         score = 0.0
         
-        # Too many special characters
+        # Too many special characters or repeating symbols
         special_count = sum(1 for c in content if not c.isalnum() and not c.isspace())
         if len(content) > 0:
             special_ratio = special_count / len(content)
-            if special_ratio > 0.3:
+            if special_ratio > 0.1 or re.search(r'[^a-zA-Z0-9\s]{3,}', content):
                 score += 0.6
         
         # Unusual length

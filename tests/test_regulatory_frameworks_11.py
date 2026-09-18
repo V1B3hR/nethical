@@ -17,29 +17,29 @@ Weryfikuje kompleksową gotowość produkcyjną Nethical w 11 reżimach prawnych
 import pytest
 from fastapi.testclient import TestClient
 
-from nethical.api import app
-from nethical.gateway.proxy import GovernanceGateway
 from nethical.ambassador.learning import AmbassadorKnowledgeSync
+from nethical.api import app
 from nethical.compliance.packs import (
     ComputerMisuseActEvaluator,
-    CMAEvaluation,
-    UKGDPRPack,
-    UKNISPack,
-    DORAPack,
     CRAPack,
+    DORAPack,
     EUGDPRPack,
+    PolishCyberCertificationPack,
+    PolishExecutiveLiabilityPack,
     PolishKSCPack,
     PolishPenalCodeEvaluator,
-    PolishExecutiveLiabilityPack,
-    PolishCyberCertificationPack,
     PolishUODOPack,
+    UKGDPRPack,
+    UKNISPack,
 )
+from nethical.gateway.proxy import GovernanceGateway
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client():
     assert app is not None
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 # ==============================================================================

@@ -4,7 +4,7 @@
 """Model Tampering Detector (SC-002)"""
 import uuid
 from datetime import datetime, timezone
-from typing import Sequence
+from typing import Any, Sequence
 from ..base_detector import BaseDetector, DetectorStatus
 from ...core.models import AgentAction, SafetyViolation, ViolationType, Severity
 

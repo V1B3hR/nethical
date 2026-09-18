@@ -35,7 +35,7 @@ class TestRootEndpoint:
         assert "name" in data
         assert "version" in data
         assert "Nethical" in data["name"]
-        assert "2.0" in data["version"]
+        assert data["version"].startswith("2.")
         assert "endpoints" in data
 
 

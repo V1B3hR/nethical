@@ -13,6 +13,7 @@ This module implements:
 import hashlib
 import json
 import time
+import uuid
 from pathlib import Path
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
@@ -36,7 +37,7 @@ class AuditChunk:
     chunk_id: str
     events: List[Dict[str, Any]] = field(default_factory=list)
     merkle_root: Optional[str] = None
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     finalized_at: Optional[datetime] = None
     event_count: int = 0
     anchored: bool = False
@@ -88,7 +89,7 @@ class MerkleAnchor:
         Returns:
             Chunk ID
         """
-        chunk_id = f"chunk_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{int(time.time() * 1000000) % 1000000}"
+        chunk_id = f"chunk_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}_{uuid.uuid4().hex[:8]}"
         self.current_chunk = AuditChunk(chunk_id=chunk_id)
         return chunk_id
 

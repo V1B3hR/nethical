@@ -794,16 +794,16 @@ async def demo_dark_pattern_detection():
         },
     ]
     print("=== Enhanced Dark Pattern Detector Demo ===\n")
+    class MockAction:
+        def __init__(self, content, action_id="test_action"):
+            self.content = content
+            self.id = action_id
+
     for i, test_case in enumerate(test_cases, 1):
         print(f"Test Case {i}: {test_case['description']}")
         print(f"Content: {test_case['content'][:80]}...")
 
-        class MockAction:
-            def __init__(self, content):
-                self.content = content
-                self.id = f"test_action_{i}"
-
-        action = MockAction(test_case["content"])
+        action = MockAction(test_case["content"], f"test_action_{i}")
         context = {
             "user_profile": {
                 "social_connections": 2,

@@ -471,8 +471,15 @@ class TestProactiveHardener:
         
         assert len(pending) > 0
         # Check they're sorted by priority
+        priority_order = {
+            HardeningPriority.CRITICAL: 0,
+            HardeningPriority.HIGH: 1,
+            HardeningPriority.MEDIUM: 2,
+            HardeningPriority.LOW: 3,
+            HardeningPriority.DEFERRED: 4,
+        }
         for i in range(len(pending) - 1):
-            assert pending[i].priority.value <= pending[i + 1].priority.value
+            assert priority_order[pending[i].priority] <= priority_order[pending[i + 1].priority]
     
     @pytest.mark.asyncio
     async def test_statistics(self):

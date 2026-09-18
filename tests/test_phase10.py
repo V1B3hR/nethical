@@ -40,7 +40,7 @@ class TestPhase10Documentation(unittest.TestCase):
     def test_maintenance_policy_sections(self):
         """Test that maintenance policy contains required sections."""
         policy_file = self.docs_operations / "maintenance_policy.md"
-        with open(policy_file, 'r') as f:
+        with open(policy_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         required_sections = [
@@ -69,7 +69,7 @@ class TestPhase10Documentation(unittest.TestCase):
     def test_audit_scope_categories(self):
         """Test that audit scope defines all required audit categories."""
         audit_scope_file = self.audit_dir / "audit_scope.md"
-        with open(audit_scope_file, 'r') as f:
+        with open(audit_scope_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         required_categories = [
@@ -88,7 +88,7 @@ class TestPhase10Documentation(unittest.TestCase):
     def test_audit_scope_certifications(self):
         """Test that audit scope covers required certifications."""
         audit_scope_file = self.audit_dir / "audit_scope.md"
-        with open(audit_scope_file, 'r') as f:
+        with open(audit_scope_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         certifications = [
@@ -113,7 +113,7 @@ class TestPhase10Documentation(unittest.TestCase):
     def test_fairness_recalibration_metrics(self):
         """Test that fairness recalibration covers all metrics."""
         recal_file = self.governance_dir / "fairness_recalibration_report.md"
-        with open(recal_file, 'r') as f:
+        with open(recal_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         required_metrics = [
@@ -316,7 +316,7 @@ class TestMaintenanceProcesses(unittest.TestCase):
     def test_proof_maintenance_documentation(self):
         """Test proof maintenance procedures are documented."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Proof Coverage Monitoring", content)
@@ -326,7 +326,7 @@ class TestMaintenanceProcesses(unittest.TestCase):
     def test_security_patching_slas(self):
         """Test security patching SLAs are defined."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # Check for severity-based SLAs
@@ -337,7 +337,7 @@ class TestMaintenanceProcesses(unittest.TestCase):
     def test_dependency_update_policy(self):
         """Test dependency update policy is defined."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Dependency Classification", content)
@@ -347,7 +347,7 @@ class TestMaintenanceProcesses(unittest.TestCase):
     def test_incident_response_procedures(self):
         """Test incident response procedures are defined."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Incident Classification", content)
@@ -365,7 +365,7 @@ class TestAuditReadiness(unittest.TestCase):
     def test_audit_categories_defined(self):
         """Test all audit categories are defined."""
         audit_file = Path(__file__).parent.parent / "audit" / "audit_scope.md"
-        with open(audit_file, 'r') as f:
+        with open(audit_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         categories = [
@@ -383,7 +383,7 @@ class TestAuditReadiness(unittest.TestCase):
     def test_audit_evidence_collection(self):
         """Test audit evidence collection is documented."""
         audit_file = Path(__file__).parent.parent / "audit" / "audit_scope.md"
-        with open(audit_file, 'r') as f:
+        with open(audit_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Evidence Collection", content)
@@ -393,7 +393,7 @@ class TestAuditReadiness(unittest.TestCase):
     def test_auditor_access_procedures(self):
         """Test auditor access procedures are defined."""
         audit_file = Path(__file__).parent.parent / "audit" / "audit_scope.md"
-        with open(audit_file, 'r') as f:
+        with open(audit_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Auditor Access Provisioning", content)
@@ -403,7 +403,7 @@ class TestAuditReadiness(unittest.TestCase):
     def test_certification_requirements(self):
         """Test certification requirements are documented."""
         audit_file = Path(__file__).parent.parent / "audit" / "audit_scope.md"
-        with open(audit_file, 'r') as f:
+        with open(audit_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         certifications = [
@@ -423,7 +423,7 @@ class TestFairnessRecalibration(unittest.TestCase):
     def test_recalibration_schedule_defined(self):
         """Test recalibration schedule is defined."""
         recal_file = Path(__file__).parent.parent / "governance" / "fairness_recalibration_report.md"
-        with open(recal_file, 'r') as f:
+        with open(recal_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # Check for quarterly schedule
@@ -436,7 +436,7 @@ class TestFairnessRecalibration(unittest.TestCase):
     def test_fairness_metrics_documented(self):
         """Test all fairness metrics are documented in template."""
         recal_file = Path(__file__).parent.parent / "governance" / "fairness_recalibration_report.md"
-        with open(recal_file, 'r') as f:
+        with open(recal_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         metrics = [
@@ -453,7 +453,7 @@ class TestFairnessRecalibration(unittest.TestCase):
     def test_protected_attributes_coverage(self):
         """Test protected attributes are covered."""
         recal_file = Path(__file__).parent.parent / "governance" / "fairness_recalibration_report.md"
-        with open(recal_file, 'r') as f:
+        with open(recal_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         attributes = ["Age", "Race", "Gender", "Disability"]
@@ -464,7 +464,7 @@ class TestFairnessRecalibration(unittest.TestCase):
     def test_mitigation_strategies_documented(self):
         """Test bias mitigation strategies are documented."""
         recal_file = Path(__file__).parent.parent / "governance" / "fairness_recalibration_report.md"
-        with open(recal_file, 'r') as f:
+        with open(recal_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         strategies = [
@@ -480,7 +480,7 @@ class TestFairnessRecalibration(unittest.TestCase):
     def test_stakeholder_engagement_process(self):
         """Test stakeholder engagement process is defined."""
         recal_file = Path(__file__).parent.parent / "governance" / "fairness_recalibration_report.md"
-        with open(recal_file, 'r') as f:
+        with open(recal_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Stakeholder Consultation", content)
@@ -494,7 +494,7 @@ class TestContinuousImprovement(unittest.TestCase):
     def test_monthly_reporting_defined(self):
         """Test monthly reporting process is defined."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Monthly Reports", content)
@@ -503,7 +503,7 @@ class TestContinuousImprovement(unittest.TestCase):
     def test_quarterly_review_defined(self):
         """Test quarterly review process is defined."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Quarterly Reports", content)
@@ -512,7 +512,7 @@ class TestContinuousImprovement(unittest.TestCase):
     def test_annual_review_defined(self):
         """Test annual review process is defined."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Annual Reports", content)
@@ -522,7 +522,7 @@ class TestContinuousImprovement(unittest.TestCase):
     def test_kpi_thresholds_defined(self):
         """Test KPI thresholds are clearly defined."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # Check for specific thresholds
@@ -537,7 +537,7 @@ class TestSustainabilityMetrics(unittest.TestCase):
     def test_sustainability_section_exists(self):
         """Test sustainability metrics section exists."""
         maintenance_file = Path(__file__).parent.parent / "docs" / "operations" / "maintenance_policy.md"
-        with open(maintenance_file, 'r') as f:
+        with open(maintenance_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Success Metrics", content)
@@ -547,7 +547,7 @@ class TestSustainabilityMetrics(unittest.TestCase):
     def test_long_term_planning_documented(self):
         """Test long-term planning is documented."""
         audit_file = Path(__file__).parent.parent / "audit" / "audit_scope.md"
-        with open(audit_file, 'r') as f:
+        with open(audit_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         # Check audit scope includes long-term considerations
@@ -557,7 +557,7 @@ class TestSustainabilityMetrics(unittest.TestCase):
     def test_continuous_assurance_framework(self):
         """Test continuous assurance framework is defined."""
         audit_file = Path(__file__).parent.parent / "audit" / "audit_scope.md"
-        with open(audit_file, 'r') as f:
+        with open(audit_file, 'r', encoding='utf-8') as f:
             content = f.read()
         
         self.assertIn("Continuous Assurance", content)

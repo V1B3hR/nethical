@@ -10,14 +10,13 @@ Weryfikuje:
 import pytest
 from fastapi.testclient import TestClient
 
+from nethical.api import app
+from nethical.compliance.packs.iso42001_pack import ISO42001CompliancePack
 from nethical.edge.kinetic_safety import (
     KineticSafetyGovernor,
-    KineticSafetyEnvelope,
     RoboticSensorTelemetry,
 )
-from nethical.compliance.packs.iso42001_pack import ISO42001CompliancePack
 from nethical.gateway.proxy import GovernanceGateway
-from nethical.api import app
 
 
 @pytest.fixture
@@ -27,10 +26,11 @@ def governor() -> KineticSafetyGovernor:
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client():
     """Inicjalizuje klienta testowego FastAPI."""
     assert app is not None
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 # ==============================================================================

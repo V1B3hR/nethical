@@ -15,7 +15,7 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
 
 from ..base_detector import BaseDetector, DetectorStatus
 from ...core.models import AgentAction, SafetyViolation, Severity, ViolationType

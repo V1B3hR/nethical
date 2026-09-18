@@ -14,14 +14,14 @@ from nethical.security.air_gapped_node import AirGappedSovereignNode, SecurityCl
 from nethical.security.data_diode import (
     DataDiodeBridge,
     SovereignPackage,
-    SovereignPackageHeader,
 )
 from nethical.security.merkle_ledger import MerkleLedger
 
 
 @pytest.fixture
-def client() -> TestClient:
-    return TestClient(app)
+def client():
+    with TestClient(app) as client:
+        yield client
 
 
 def test_data_diode_package_creation_and_pqc_verification() -> None:

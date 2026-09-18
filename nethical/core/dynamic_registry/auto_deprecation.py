@@ -269,8 +269,14 @@ class AutoDeprecation:
             True if flagged successfully
         """
         if vector_id not in self.vector_stats:
-            logger.warning(f"Vector {vector_id} not found in stats")
-            return False
+            self.vector_stats[vector_id] = VectorUsageStats(
+                vector_id=vector_id,
+                total_detections=0,
+                last_detection=None,
+                false_positive_count=0,
+                known_variants=0,
+                avg_confidence=0.0,
+            )
         
         # Create or update candidate
         if vector_id not in self.deprecation_candidates:

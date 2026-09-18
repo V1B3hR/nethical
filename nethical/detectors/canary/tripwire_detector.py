@@ -80,7 +80,7 @@ class TripwireDetector(BaseDetector):
     
     def __init__(self):
         """Initialize the tripwire detector."""
-        super().__init__()
+        super().__init__("TripwireDetector")
         self.tripwire_endpoints: Dict[str, TripwireEndpoint] = {}
         self.violations: List[TripwireViolation] = []
         self.blocked_agents: Set[str] = set()

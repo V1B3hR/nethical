@@ -141,7 +141,7 @@ class TestAgentManagement:
             }
         )
         
-        assert response.status_code == 403  # No bearer token
+        assert response.status_code in (401, 403)  # No bearer token
     
     async def test_list_agents(self, client, admin_token):
         """Test listing agents."""

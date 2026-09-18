@@ -175,7 +175,8 @@ class TestHealthEndpoints:
         """Create test client for the API."""
         from fastapi.testclient import TestClient
         from nethical.api import app
-        return TestClient(app)
+        with TestClient(app) as test_client:
+            yield test_client
 
     def test_liveness_endpoint(self, client):
         """Test /health/live endpoint."""
@@ -212,7 +213,8 @@ class TestAPIUpdates:
         """Create test client for the API."""
         from fastapi.testclient import TestClient
         from nethical.api import app
-        return TestClient(app)
+        with TestClient(app) as test_client:
+            yield test_client
 
     def test_root_endpoint_version(self, client):
         """Test root endpoint returns correct version."""

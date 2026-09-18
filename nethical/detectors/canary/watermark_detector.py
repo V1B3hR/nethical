@@ -83,7 +83,7 @@ class WatermarkDetector(BaseDetector):
     
     def __init__(self):
         """Initialize the watermark detector."""
-        super().__init__()
+        super().__init__("WatermarkDetector")
         self.active_watermarks: Dict[str, Watermark] = {}
         self.exfiltration_alerts: List[ExfiltrationAlert] = []
         self.suspected_exfiltrators: Set[str] = set()

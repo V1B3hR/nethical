@@ -25,6 +25,7 @@ from nethical.security.hsm import (
     HSMProvider,
     KeyAlgorithm,
     KeyUsage,
+    SoftwareHSMProvider,
     create_hsm_provider,
 )
 

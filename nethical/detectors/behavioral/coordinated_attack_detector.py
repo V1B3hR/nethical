@@ -86,10 +86,11 @@ class CoordinatedAttackDetector(BaseDetector):
             # Find correlated agents
             correlated_agents = await self._find_correlated_agents(agent_id, activity)
             
-            if len(correlated_agents) >= self.min_agents_for_coordination:
+            total_agents = len(correlated_agents) + 1
+            if total_agents >= self.min_agents_for_coordination:
                 evidence.append(
-                    f"Coordinated activity detected with {len(correlated_agents)} agents: "
-                    f"{', '.join(correlated_agents[:5])}"
+                    f"Coordinated activity detected with {total_agents} agents: "
+                    f"{agent_id}, {', '.join(correlated_agents[:5])}"
                 )
                 
                 # Check timing correlation
@@ -105,9 +106,9 @@ class CoordinatedAttackDetector(BaseDetector):
                     confidence = min(confidence + 0.2, 1.0)
                 
                 # Determine severity based on scale
-                if len(correlated_agents) >= 10:
+                if total_agents >= 10:
                     severity = Severity.CRITICAL
-                elif len(correlated_agents) >= 5:
+                elif total_agents >= 5:
                     severity = Severity.HIGH
                 else:
                     severity = Severity.MEDIUM

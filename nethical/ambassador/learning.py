@@ -462,27 +462,24 @@ class AmbassadorKnowledgeSync:
         variants_per_category = max(1, num_variants // len(categories))
         all_variants = []
 
+        async def _gather_variants() -> List[Any]:
+            tasks = [generator.generate_variants(cat, count=variants_per_category) for cat in categories]
+            return await asyncio.gather(*tasks)
+
         try:
-            loop = asyncio.get_event_loop()
-            if loop.is_running():
-                # Jeśli pętla jest aktywna w wątku, wykonaj przez executor
+            try:
+                running_loop = asyncio.get_running_loop()
+            except RuntimeError:
+                running_loop = None
+
+            if running_loop and running_loop.is_running():
                 import concurrent.futures
-                with concurrent.futures.ThreadPoolExecutor() as executor:
-                    def _run() -> List[Any]:
-                        new_loop = asyncio.new_event_loop()
-                        tasks = [
-                            generator.generate_variants(cat, count=variants_per_category)
-                            for cat in categories
-                        ]
-                        res = new_loop.run_until_complete(asyncio.gather(*tasks))
-                        new_loop.close()
-                        return res
-                    nested_results = executor.submit(_run).result()
+                with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+                    nested_results = executor.submit(asyncio.run, _gather_variants()).result(timeout=30)
                     for r in nested_results:
                         all_variants.extend(r)
             else:
-                tasks = [generator.generate_variants(cat, count=variants_per_category) for cat in categories]
-                nested_results = loop.run_until_complete(asyncio.gather(*tasks))
+                nested_results = asyncio.run(_gather_variants())
                 for r in nested_results:
                     all_variants.extend(r)
         except Exception as ex:

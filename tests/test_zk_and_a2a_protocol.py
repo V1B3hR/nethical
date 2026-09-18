@@ -4,15 +4,16 @@ import pytest
 from fastapi.testclient import TestClient
 
 from nethical.api import app
+from nethical.gateway.a2a_protocol import A2ACapabilityBoundary, A2AHandshakeManager
 from nethical.security.merkle_ledger import MerkleLedger
 from nethical.security.zk_gov import ZkGovEngine
-from nethical.gateway.a2a_protocol import A2AHandshakeManager, A2ACapabilityBoundary
 
 
 @pytest.fixture
-def client() -> TestClient:
+def client():
     assert app is not None
-    return TestClient(app)
+    with TestClient(app) as client:
+        yield client
 
 
 def test_zk_commitment_and_verification() -> None:

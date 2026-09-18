@@ -186,6 +186,12 @@ class RiskEngine:
 
         return new_score
 
+    @staticmethod
+    def _to_utc(dt: datetime) -> datetime:
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+        return dt.astimezone(timezone.utc)
+
     def _apply_decay(self, profile: RiskProfile) -> float:
         """Apply exponential decay to risk score.
 
@@ -194,7 +200,8 @@ class RiskEngine:
         if profile.current_score == 0.0:
             return 0.0
 
-        time_delta = datetime.now(timezone.utc) - profile.last_update
+        last_update = self._to_utc(profile.last_update)
+        time_delta = datetime.now(timezone.utc) - last_update
         hours_elapsed = time_delta.total_seconds() / 3600.0
 
         # Decay constant
@@ -225,10 +232,11 @@ class RiskEngine:
     def _calculate_frequency_score(self, profile: RiskProfile) -> float:
         """Calculate frequency-based risk component."""
         # Recent violations (last hour)
+        now = datetime.now(timezone.utc)
         recent_count = sum(
             1
             for ts, _ in profile.tier_history[-10:]
-            if (datetime.now(timezone.utc) - ts).total_seconds() < 3600
+            if (now - self._to_utc(ts)).total_seconds() < 3600
         )
 
         # Normalize to 0-1
@@ -236,7 +244,8 @@ class RiskEngine:
 
     def _calculate_recency_score(self, profile: RiskProfile) -> float:
         """Calculate recency-based risk component."""
-        time_since_last = (datetime.now(timezone.utc) - profile.last_update).total_seconds()
+        last_update = self._to_utc(profile.last_update)
+        time_since_last = (datetime.now(timezone.utc) - last_update).total_seconds()
 
         # Score decreases with time (recent = higher risk)
         # Max score at 0 seconds, min at 24 hours

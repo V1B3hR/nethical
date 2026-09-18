@@ -89,6 +89,7 @@ class IntegratedGovernance:
     def __init__(
         self,
         storage_dir: str = "./nethical_data",
+        config: Optional[Any] = None,
         # Regional & Sharding config
         region_id: Optional[str] = None,
         logical_domain: Optional[str] = None,
@@ -1004,7 +1005,7 @@ class IntegratedGovernance:
         # Extract violation information
         detected_violations = judgment.violations
         decision = judgment.decision
-        violation_detected = len(detected_violations) > 0
+        violation_detected = violation_detected or (len(detected_violations) > 0)
         
         # Determine violation type and severity from detected violations
         if detected_violations:
@@ -1180,7 +1181,7 @@ class IntegratedGovernance:
             
             results["phase4"]["merkle"] = {
                 "chunk_id": self.merkle_anchor.current_chunk.chunk_id,
-                "event_count": self.merkle_anchor.current_chunk.event_count,
+                "event_count": self.merkle_anchor.current_chunk.event_count + len(self._merkle_pending),
                 "pending_batch_size": len(self._merkle_pending),
             }
 
@@ -1421,7 +1422,7 @@ class IntegratedGovernance:
         # Extract violation information
         detected_violations = judgment.violations
         decision = judgment.decision
-        violation_detected = len(detected_violations) > 0
+        violation_detected = violation_detected or (len(detected_violations) > 0)
         
         # Determine violation type and severity from detected violations
         if detected_violations:
@@ -1562,6 +1563,12 @@ class IntegratedGovernance:
                     self._merkle_pending = self._merkle_pending[self.merkle_batch_size:]
                     for evt in batch:
                         self.merkle_anchor.add_event(evt)
+
+                results["phase4"]["merkle"] = {
+                    "chunk_id": self.merkle_anchor.current_chunk.chunk_id,
+                    "event_count": self.merkle_anchor.current_chunk.event_count + len(self._merkle_pending),
+                    "pending_batch_size": len(self._merkle_pending),
+                }
 
             # Policy diff auditing
             if self.policy_auditor:
