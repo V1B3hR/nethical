@@ -829,6 +829,16 @@ class AuthLoginRequest(BaseModel):
 AuthLoginRequest.model_rebuild()
 
 
+class AuthBootstrapRequest(BaseModel):
+    username: str = Field(default="admin", description="Login pierwszego administratora")
+    password: Optional[str] = Field(default=None, description="Hasło administratora (jeśli brak, wygenerowane losowo)")
+    email: Optional[str] = Field(default=None, description="Adres e-mail administratora")
+    tenant_id: str = Field(default="default_tenant", description="Identyfikator tenanta")
+
+
+AuthBootstrapRequest.model_rebuild()
+
+
 class CreateTenantRequest(BaseModel):
     name: str = Field(..., description="Nazwa organizacji / podmiotu")
     jurisdiction: str = Field(default="EU", description="Jurysdykcja prawna (np. PL, EU, GLOBAL)")
@@ -857,9 +867,49 @@ def get_authenticated_user(
     return None
 
 
+@app.post("/api/v1/auth/bootstrap", tags=["Auth"])
+async def auth_bootstrap(req: AuthBootstrapRequest) -> Dict[str, Any]:
+    """Bezpieczny bootstrap pierwszego konta Globalnego Administratora. Dostępny tylko przy braku kont."""
+    if rbac_manager_instance.is_bootstrapped():
+        raise HTTPException(
+            status_code=403,
+            detail="System został już zainicjalizowany (bootstrap completed). Użyj standardowego logowania.",
+        )
+    user, pwd, api_key = rbac_manager_instance.bootstrap_admin(
+        username=req.username,
+        password=req.password,
+        email=req.email,
+        tenant_id=req.tenant_id,
+    )
+    return {
+        "status": "BOOTSTRAP_SUCCESS",
+        "message": "Globalny Administrator pomyślnie utworzony. Zapisz poniższe poświadczenia!",
+        "username": user.username,
+        "password": pwd,
+        "api_key": api_key,
+        "tenant_id": user.tenant_id,
+        "role": user.role.value if hasattr(user.role, "value") else str(user.role),
+    }
+
+
+@app.get("/api/v1/auth/status", tags=["Auth"])
+async def auth_status() -> Dict[str, Any]:
+    """Zwraca stan inicjalizacji podsystemu uwierzytelniania."""
+    return {
+        "bootstrapped": rbac_manager_instance.is_bootstrapped(),
+        "users_count": len(rbac_manager_instance.list_users()),
+        "dev_defaults_active": os.environ.get("NETHICAL_ALLOW_DEV_DEFAULTS", "0").lower() in ("1", "true", "yes"),
+    }
+
+
 @app.post("/api/v1/auth/login", tags=["Auth"])
 async def auth_login(req: AuthLoginRequest) -> Dict[str, Any]:
     """Logowanie do suwerennego Control Plane z weryfikacją offline HMAC-SHA256."""
+    if not rbac_manager_instance.is_bootstrapped():
+        raise HTTPException(
+            status_code=401,
+            detail="System nie został jeszcze zainicjalizowany. Skonfiguruj konto administratora przez /api/v1/auth/bootstrap lub CLI: 'nethical admin bootstrap'.",
+        )
     auth = rbac_manager_instance.authenticate(req.username, req.password)
     if not auth:
         raise HTTPException(status_code=401, detail="Nieprawidłowy login lub hasło suwerenne")

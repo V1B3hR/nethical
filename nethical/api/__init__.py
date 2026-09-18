@@ -68,9 +68,15 @@ try:
             spec.loader.exec_module(api_module)
             app = api_module.app
             API_VERSION = api_module.API_VERSION
+            rbac_manager_instance = getattr(api_module, "rbac_manager_instance", None)
+            tenant_manager_instance = getattr(api_module, "tenant_manager_instance", None)
+            gateway_instance = getattr(api_module, "gateway_instance", None)
 except Exception:
     app = None
     API_VERSION = "2.3.0"
+    rbac_manager_instance = None
+    tenant_manager_instance = None
+    gateway_instance = None
 
 __all__ = [
     # Core API components
@@ -80,6 +86,9 @@ __all__ = [
     "kill_switch_router",
     "app",
     "API_VERSION",
+    "rbac_manager_instance",
+    "tenant_manager_instance",
+    "gateway_instance",
     # v2 API
     "create_v2_app",
     "v2_router",

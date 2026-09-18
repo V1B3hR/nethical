@@ -109,9 +109,39 @@ def test_sovereign_auth_token_lifecycle() -> None:
     assert token_service.verify_token(expired_token) is None
 
 
+def test_production_rbac_unseeded_fails_secure() -> None:
+    """Verifies that in default production mode, RBACManager starts unseeded with zero accounts."""
+    rbac = RBACManager(auto_seed_dev=False)
+    assert rbac.is_bootstrapped() is False
+    assert len(rbac.list_users()) == 0
+    # Authentication fails for any user
+    assert rbac.authenticate("admin", "nethical_admin_sovereign_password") is None
+    assert rbac.authenticate_api_key("sk-nethical-admin-global-mesh-token") is None
+
+
+def test_production_rbac_bootstrap_admin() -> None:
+    """Verifies production bootstrapping of initial administrator with high-entropy credentials."""
+    rbac = RBACManager(auto_seed_dev=False)
+    user, pwd, api_key = rbac.bootstrap_admin(username="enterprise_ciso", tenant_id="corp_hq")
+    assert rbac.is_bootstrapped() is True
+    assert user.username == "enterprise_ciso"
+    assert user.role == UserRole.GLOBAL_ADMIN
+    assert len(pwd) >= 20  # High entropy generated password
+    assert api_key.startswith("sk-sovereign-")
+
+    # Authenticate with bootstrapped credentials
+    auth_result = rbac.authenticate("enterprise_ciso", pwd)
+    assert auth_result is not None
+    assert rbac.authenticate_api_key(api_key) is not None
+
+    # Cannot bootstrap twice
+    with pytest.raises(RuntimeError, match="already bootstrapped"):
+        rbac.bootstrap_admin(username="attacker")
+
+
 def test_rbac_authentication_and_permissions() -> None:
     """Verifies RBAC authentication, password verification, and permission boundaries."""
-    rbac = RBACManager()
+    rbac = RBACManager(auto_seed_dev=True)
 
     # 1. Successful authentication with seeded credentials
     auth_result = rbac.authenticate("admin", "nethical_admin_sovereign_password")
@@ -154,7 +184,7 @@ def test_rbac_authentication_and_permissions() -> None:
 
 def test_rbac_tenant_access_control() -> None:
     """Verifies multi-tenant access boundaries: non-admins cannot access foreign tenant workspaces."""
-    rbac = RBACManager()
+    rbac = RBACManager(auto_seed_dev=True)
 
     admin = rbac.get_user("admin")
     secops = rbac.get_user("secops_lead")
@@ -181,7 +211,7 @@ def test_rbac_tenant_access_control() -> None:
 
 def test_api_key_authentication() -> None:
     """Verifies authentication via pre-shared sovereign API keys."""
-    rbac = RBACManager()
+    rbac = RBACManager(auto_seed_dev=True)
     user = rbac.authenticate_api_key("sk-nethical-admin-global-mesh-token")
     assert user is not None
     assert user.username == "admin"
@@ -191,23 +221,43 @@ def test_api_key_authentication() -> None:
 
 
 def test_api_endpoints_auth_and_multitenancy() -> None:
-    """Verifies FastAPI endpoints for login, profile, multi-tenancy, and isolated ledger queries."""
+    """Verifies FastAPI endpoints for bootstrap, login, profile, multi-tenancy, and isolated ledger queries."""
     from fastapi.testclient import TestClient
-    from nethical.api import app
+    from nethical.api import app, rbac_manager_instance
 
-    client = TestClient(app)
+    with TestClient(app) as client:
+        # 0. Test Bootstrap endpoint if not already bootstrapped
+        if not rbac_manager_instance.is_bootstrapped():
+            boot_resp = client.post(
+                "/api/v1/auth/bootstrap",
+                json={"username": "admin", "password": "nethical_admin_sovereign_password"},
+            )
+            assert boot_resp.status_code == 200
+            assert boot_resp.json()["status"] == "BOOTSTRAP_SUCCESS"
 
-    # 1. Login endpoint with valid sovereign admin credentials
-    login_resp = client.post(
-        "/api/v1/auth/login",
-        json={"username": "admin", "password": "nethical_admin_sovereign_password"},
-    )
-    assert login_resp.status_code == 200
-    login_data = login_resp.json()
-    assert "access_token" in login_data
-    assert login_data["user"]["username"] == "admin"
-    assert login_data["user"]["role"] == "global_admin"
-    token = login_data["access_token"]
+            # Subsequent bootstrap attempts must be forbidden (HTTP 403)
+            second_boot = client.post(
+                "/api/v1/auth/bootstrap",
+                json={"username": "attacker", "password": "hacked"},
+            )
+            assert second_boot.status_code == 403
+
+        # 0b. Verify auth status endpoint
+        status_resp = client.get("/api/v1/auth/status")
+        assert status_resp.status_code == 200
+        assert status_resp.json()["bootstrapped"] is True
+
+        # 1. Login endpoint with valid sovereign admin credentials
+        login_resp = client.post(
+            "/api/v1/auth/login",
+            json={"username": "admin", "password": "nethical_admin_sovereign_password"},
+        )
+        assert login_resp.status_code == 200
+        login_data = login_resp.json()
+        assert "access_token" in login_data
+        assert login_data["user"]["username"] == "admin"
+        assert login_data["user"]["role"] == "global_admin"
+        token = login_data["access_token"]
 
     # 2. Login with bad credentials
     bad_login = client.post(

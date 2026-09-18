@@ -506,20 +506,26 @@
             </p>
 
             <div style="margin-bottom: 1rem;">
-                <div style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono); margin-bottom: 0.5rem;">SZYBKIE LOGOWANIE DO RÓL TESTOWYCH:</div>
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 0.5rem;">
+                    <span style="font-size: 0.75rem; color: var(--text-muted); font-family: var(--font-mono);">SZYBKIE LOGOWANIE DO RÓL:</span>
+                    <span style="font-size: 0.65rem; background: rgba(245, 158, 11, 0.15); color: #f59e0b; border: 1px solid rgba(245, 158, 11, 0.3); border-radius: 4px; padding: 2px 6px;">DEMO / SANDBOX</span>
+                </div>
                 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 0.5rem;">
                     <button class="btn btn-secondary" style="font-size: 0.75rem; text-align: left; padding: 0.5rem;" onclick="quickLogin('admin', 'nethical_admin_sovereign_password')">
-                        👑 <strong>admin</strong><br><small style="color: var(--text-muted);">GLOBAL_ADMIN</small>
+                        👑 <strong>admin</strong><br><small style="color: var(--text-muted);">GLOBAL_ADMIN (DEV)</small>
                     </button>
                     <button class="btn btn-secondary" style="font-size: 0.75rem; text-align: left; padding: 0.5rem;" onclick="quickLogin('secops_lead', 'secops_sovereign_password')">
-                        🛡️ <strong>secops_lead</strong><br><small style="color: var(--text-muted);">SECURITY_OFFICER</small>
+                        🛡️ <strong>secops_lead</strong><br><small style="color: var(--text-muted);">SECURITY_OFFICER (DEV)</small>
                     </button>
                     <button class="btn btn-secondary" style="font-size: 0.75rem; text-align: left; padding: 0.5rem;" onclick="quickLogin('auditor_anna', 'auditor_sovereign_password')">
-                        ⚖️ <strong>auditor_anna</strong><br><small style="color: var(--text-muted);">COMPLIANCE_AUDITOR</small>
+                        ⚖️ <strong>auditor_anna</strong><br><small style="color: var(--text-muted);">COMPLIANCE_AUDITOR (DEV)</small>
                     </button>
                     <button class="btn btn-secondary" style="font-size: 0.75rem; text-align: left; padding: 0.5rem;" onclick="quickLogin('reviewer_jan', 'reviewer_sovereign_password')">
-                        👁️ <strong>reviewer_jan</strong><br><small style="color: var(--text-muted);">HITL_REVIEWER</small>
+                        👁️ <strong>reviewer_jan</strong><br><small style="color: var(--text-muted);">HITL_REVIEWER (DEV)</small>
                     </button>
+                </div>
+                <div style="font-size: 0.65rem; color: var(--text-muted); margin-top: 0.35rem; font-style: italic;">
+                    * Konta demonstracyjne aktywne tylko w trybie NETHICAL_ALLOW_DEV_DEFAULTS=1. W środowisku produkcyjnym wymagany bootstrap CLI.
                 </div>
             </div>
 

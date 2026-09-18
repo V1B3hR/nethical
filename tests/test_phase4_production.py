@@ -278,6 +278,18 @@ class TestCLI:
             assert result.exit_code == 0
             assert "Created configuration file" in result.output
 
+    def test_admin_bootstrap_command(self):
+        """Test admin bootstrap CLI command creates administrator credentials."""
+        from click.testing import CliRunner
+        from nethical.cli import cli
+
+        runner = CliRunner()
+        result = runner.invoke(cli, ["admin", "bootstrap", "--username", "test_sovereign_ciso"])
+        assert result.exit_code == 0
+        assert "NETHICAL SOVEREIGN ADMIN BOOTSTRAP: SUKCES" in result.output
+        assert "test_sovereign_ciso" in result.output
+        assert "sk-sovereign-" in result.output
+
 
 class TestBenchmarkFramework:
     """Tests for benchmark framework."""

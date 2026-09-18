@@ -10,7 +10,7 @@ Command-line interface for the Nethical AI Safety Governance Platform.
 import json
 import os
 import sys
-from typing import Any, Dict, Optional
+from typing import Any
 
 if sys.platform == "win32":
     try:
@@ -143,8 +143,8 @@ def init(config_dir: str, force: bool) -> None:
 def evaluate(
     action: str,
     agent_id: str,
-    intent: Optional[str],
-    context: Optional[str],
+    intent: str | None,
+    context: str | None,
     output: str,
 ) -> None:
     """Evaluate an action against governance policies."""
@@ -155,7 +155,7 @@ def evaluate(
         sys.exit(1)
 
     # Parse context if provided
-    ctx: Dict[str, Any] = {}
+    ctx: dict[str, Any] = {}
     if context:
         try:
             ctx = json.loads(context)
@@ -213,7 +213,7 @@ def evaluate(
         else:
             decision_str = click.style(str(decision), fg="yellow", bold=True)
 
-        click.echo(f"\n📋 Evaluation Result")
+        click.echo("\n📋 Evaluation Result")
         click.echo(f"   Decision: {decision_str}")
         click.echo(f"   Confidence: {confidence:.2%}")
         click.echo(f"   Reasoning: {reasoning}")
@@ -342,7 +342,7 @@ def serve(host: str, port: int, reload: bool) -> None:
     default=None,
     help="Path to signature file",
 )
-def verify_plugin(plugin_path: str, signature: Optional[str]) -> None:
+def verify_plugin(plugin_path: str, signature: str | None) -> None:
     """Verify a plugin's signature."""
     from nethical.core.plugin_security import PluginVerifier, VerificationStatus
 
@@ -395,7 +395,7 @@ def ambassador_consult(dilemma: str, context: str) -> None:
     """Skonsultuj dylemat etyczny z Ambasadorem Błyskawicą."""
     from nethical.ambassador import BlyskawicaAmbassador
     amb = BlyskawicaAmbassador()
-    click.echo(f"\n⚡ Konsultacja z Ambasadorem Błyskawicą...")
+    click.echo("\n⚡ Konsultacja z Ambasadorem Błyskawicą...")
     res = amb.consult(dilemma=dilemma, context=context)
     click.echo(f"  Werdykt: {res.get('ambassador_verdict')}")
     click.echo(f"  Tarcza Kognitywna: {'✅ PRZESZŁA' if res.get('shield_passed') else '⛔ ODRZUCONA'}")
@@ -428,7 +428,7 @@ def gateway_scan(text: str) -> None:
     from nethical.gateway import GovernanceGateway
     gw = GovernanceGateway()
     dec = gw.intercept_tool_call(agent_id="cli_operator", tool_name="cli_scan", arguments={"input": text})
-    click.echo(f"\n🛡️ NETHICAL GATEWAY INTERCEPTION RESULT:")
+    click.echo("\n🛡️ NETHICAL GATEWAY INTERCEPTION RESULT:")
     click.echo(f"  Decyzja: {'✅ ALLOW' if dec.decision == 'ALLOW' else '⛔ ' + dec.decision}")
     click.echo(f"  Powody: {'; '.join(dec.reasons)}")
     if dec.violations:
@@ -463,8 +463,8 @@ def gateway_start(host: str, port: int, upstream: str, mock: bool, reload: bool)
     click.echo(f"  Portal & Dashboard:  http://{host}:{port}/portal")
     click.echo(f"  Nadrzędny upstream:  {upstream}")
     click.echo(f"  Tryb pracy:          {'SOVEREIGN-MOCK (Air-Gapped)' if mock else 'LIVE-INTERCEPTION (In-Flight PII Masking)'}")
-    click.echo(f"  Rejestr audytowy:    Merkle-DAG (NIST FIPS 204 ML-DSA-65)")
-    click.echo(f"  Pakiety ochronne:    EU AI Act, HIPAA, GDPR, ISO 13849, k.k. 267-269b")
+    click.echo("  Rejestr audytowy:    Merkle-DAG (NIST FIPS 204 ML-DSA-65)")
+    click.echo("  Pakiety ochronne:    EU AI Act, HIPAA, GDPR, ISO 13849, k.k. 267-269b")
     click.echo("-" * 76)
     click.echo("💡 Użycie w dowolnej aplikacji (Zero zmian w kodzie klienta!):")
     click.echo(f'   export OPENAI_BASE_URL="http://127.0.0.1:{port}/v1"')
@@ -488,6 +488,7 @@ def cli_benchmark(suite: str) -> None:
         runner.run_benchmark()
     if suite in ("latency", "throughput"):
         import asyncio
+
         from benchmarks.runner import run_default_benchmarks
         asyncio.run(run_default_benchmarks())
 
@@ -500,7 +501,7 @@ def cli_security() -> None:
 
 @cli_security.command("audit-crypto")
 @click.option("--output", default=None, help="Ścieżka do zapisu raportu audytowego JSON")
-def cli_audit_crypto(output: Optional[str]) -> None:
+def cli_audit_crypto(output: str | None) -> None:
     """Wykonaj pełny audyt kryptograficzny, weryfikację CVE-2026-26007 i skan krzywych binarnych."""
     from nethical.security.audit_crypto_curves import run_comprehensive_crypto_audit
 
@@ -537,7 +538,7 @@ def cli_compliance() -> None:
 @cli_compliance.command("generate-dossier")
 @click.option("--standard", default="ISO_IEC_42001_AIMS", help="Standard certyfikacji (np. ISO_IEC_42001_AIMS, SOC_2_TYPE_II, NATO_DEFENSE_AI)")
 @click.option("--output", default=None, help="Ścieżka do zapisu wygenerowanego dossier JSON")
-def cli_generate_dossier(standard: str, output: Optional[str]) -> None:
+def cli_generate_dossier(standard: str, output: str | None) -> None:
     """Wygeneruj poświadczone kryptograficznie dossier certyfikacyjne z podpisem ML-DSA-65."""
     from nethical.compliance.automated_certification_hub import AutomatedCertificationHub, CertificationStandard
 
@@ -566,6 +567,68 @@ def cli_generate_dossier(standard: str, output: Optional[str]) -> None:
         with open(output, "w", encoding="utf-8") as f:
             json.dump(pkg.model_dump(), f, indent=2, ensure_ascii=False)
         click.echo(f"📁 Zapisano dossier do: {output}")
+
+
+@cli.group("admin")
+def cli_admin() -> None:
+    """Zarządzanie uwierzytelnianiem i bezpiecznym bootstrapem administratora."""
+    pass
+
+
+@cli_admin.command("bootstrap")
+@click.option("--username", default="admin", help="Nazwa użytkownika pierwszego administratora")
+@click.option("--password", default=None, help="Hasło (jeśli nie podano, zostanie wygenerowane losowo)")
+@click.option("--email", default=None, help="Adres e-mail administratora")
+@click.option("--tenant-id", default="default_tenant", help="Identyfikator tenanta")
+@click.option("--output", default=None, help="Ścieżka do pliku, w którym zapisać poświadczenia")
+def cli_admin_bootstrap(
+    username: str,
+    password: str | None,
+    email: str | None,
+    tenant_id: str,
+    output: str | None,
+) -> None:
+    """Bezpieczny bootstrap pierwszego konta Globalnego Administratora."""
+    from nethical.auth.rbac import RBACManager
+
+    manager = RBACManager()
+    try:
+        user, pwd, api_key = manager.bootstrap_admin(
+            username=username,
+            password=password,
+            email=email,
+            tenant_id=tenant_id,
+        )
+    except RuntimeError as e:
+        click.echo(f"❌ Błąd bootstrapu: {e}")
+        return
+
+    click.echo("\n" + "=" * 76)
+    click.echo("🔐 NETHICAL SOVEREIGN ADMIN BOOTSTRAP: SUKCES 🔐")
+    click.echo("=" * 76)
+    click.echo(f"  Użytkownik:  {user.username}")
+    click.echo(f"  Hasło:       {pwd}")
+    click.echo(f"  API Key:     {api_key}")
+    click.echo(f"  Rola:        {user.role.value if hasattr(user.role, 'value') else user.role}")
+    click.echo(f"  Tenant:      {user.tenant_id}")
+    click.echo("-" * 76)
+    click.echo("⚠️ ZAPISZ POWYŻSZE POŚWIADCZENIA! Hasło nie zostanie ponownie wyświetlone.")
+    click.echo("=" * 76 + "\n")
+
+    if output:
+        with open(output, "w", encoding="utf-8") as f:
+            json.dump(
+                {
+                    "username": user.username,
+                    "password": pwd,
+                    "api_key": api_key,
+                    "tenant_id": user.tenant_id,
+                    "role": user.role.value if hasattr(user.role, "value") else str(user.role),
+                },
+                f,
+                indent=2,
+            )
+        click.echo(f"📁 Zapisano poświadczenia do: {output}")
 
 
 def main() -> None:
