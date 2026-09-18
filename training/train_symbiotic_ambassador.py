@@ -39,6 +39,7 @@ def run_symbiotic_training(
     rounds: int = 16,
     output_dir: Path = REPO_ROOT / "models" / "symbiotic_ambassador",
     device: str = "cuda:0",
+    assimilate_corpus: bool = True,
 ) -> Dict[str, Any]:
     output_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Inicjalizacja środowiska Symbiotycznego Uczenia w Parze (Rundy: {rounds}, Urządzenie: {device})")
@@ -51,6 +52,11 @@ def run_symbiotic_training(
         output_dir=output_dir,
     )
 
+    assimilation_report = None
+    if assimilate_corpus:
+        logger.info("Asymilacja korpusu wiedzy konstytucyjnej, medycznej, rządowej i obronnej...")
+        assimilation_report = engine.assimilate_constitutional_and_defense_corpus()
+
     t0 = time.perf_counter()
     report = engine.run_symbiotic_session(num_rounds=rounds)
     total_time = time.perf_counter() - t0
@@ -58,10 +64,12 @@ def run_symbiotic_training(
     report["execution_time_seconds"] = round(total_time, 2)
     report["device"] = device
     report["connected_to_blyskawica_daemon"] = ambassador.is_connected
+    if assimilation_report:
+        report["corpus_assimilation"] = assimilation_report
 
     # Generowanie czytelnego raportu Markdown
     md_report_path = output_dir / "SYMBIOTIC_TRAINING_REPORT.md"
-    md_content = f"""# Raport z Sesji Symbiotycznego Uczenia w Parze: Nethical ⟷ Ambasador Błyskawica
+    md_content = rf"""# Raport z Sesji Symbiotycznego Uczenia w Parze: Nethical ⟷ Ambasador Błyskawica
 
 * **Identyfikator Sesji:** `{report['session_id']}`
 * **Data i Czas UTC:** `{report['timestamp']}`
@@ -118,12 +126,14 @@ def main():
     parser.add_argument("--rounds", type=int, default=16, help="Liczba rund sparingowych")
     parser.add_argument("--device", type=str, default="cuda:0" if os.environ.get("CUDA_VISIBLE_DEVICES") != "" else "cpu", help="Urządzenie obliczeniowe")
     parser.add_argument("--output-dir", type=str, default="models/symbiotic_ambassador", help="Katalog wyjściowy raportów")
+    parser.add_argument("--no-assimilate", action="store_true", help="Pomiń asymilację korpusu do bazy DPO")
 
     args = parser.parse_args()
     run_symbiotic_training(
         rounds=args.rounds,
         output_dir=REPO_ROOT / args.output_dir,
         device=args.device,
+        assimilate_corpus=not args.no_assimilate,
     )
 
 

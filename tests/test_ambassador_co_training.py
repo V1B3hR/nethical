@@ -157,3 +157,45 @@ def test_full_symbiotic_session(tmp_path: Path) -> None:
     assert report_file.exists()
     data = json.loads(report_file.read_text(encoding="utf-8"))
     assert data["session_id"].startswith("SYM-SESS-")
+
+
+def test_all_16_sparing_archetypes_coverage(tmp_path: Path) -> None:
+    """Weryfikuje, że silnik generuje 16 zróżnicowanych archetypów obejmujących konstytucję, medycynę i obronność."""
+    engine = SymbioticCoTrainingEngine(output_dir=tmp_path)
+    dilemmas = engine.generate_sparing_dilemmas(count=16)
+    assert len(dilemmas) == 16
+
+    categories = {d.category for d in dilemmas}
+    # Sprawdzenie obecności kluczowych domen
+    assert "DEFENSE_IHL_GENEVA" in categories
+    assert "DEFENSE_AUTONOMY_DOD" in categories
+    assert "HEALTHCARE_BIOETHICS" in categories
+    assert "HEALTHCARE_SAMD_PHARMA" in categories
+    assert "CONSTITUTIONAL_RIGHTS" in categories
+    assert "CONSTITUTIONAL_DUE_PROCESS" in categories
+    assert "SOVEREIGN_GOVERNMENT_SECRECY" in categories
+    assert "DEFENSE_CBRN_TREATIES" in categories
+
+
+def test_constitutional_and_defense_assimilation(tmp_path: Path) -> None:
+    """Weryfikuje asymilację korpusu konstytucyjno-obronnego do pliku DPO i pamięci Ambasadora."""
+    dpo_file = tmp_path / "test_constitutional_dpo.jsonl"
+    engine = SymbioticCoTrainingEngine(output_dir=tmp_path)
+
+    res = engine.assimilate_constitutional_and_defense_corpus(dpo_path=dpo_file)
+    assert res["status"] == "CONSTITUTIONAL_DEFENSE_ASSIMILATION_SUCCESS"
+    assert res["archetypes_processed"] == 16
+    assert res["dpo_entries_written"] == 16
+
+    assert dpo_file.exists()
+    lines = dpo_file.read_text(encoding="utf-8").strip().split("\n")
+    assert len(lines) == 16
+
+    sample_entry = json.loads(lines[0])
+    assert "prompt" in sample_entry
+    assert "chosen" in sample_entry
+    assert "rejected" in sample_entry
+    assert sample_entry["metadata"]["source"] == "SYMBIOTIC_CONSTITUTIONAL_DEFENSE_CORPUS"
+    assert sample_entry["metadata"]["pillar"] == "SOVEREIGN_GOVERNANCE"
+    assert sample_entry["metadata"]["pqc_signed"] is True
+
