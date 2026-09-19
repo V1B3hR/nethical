@@ -159,11 +159,11 @@ def test_full_symbiotic_session(tmp_path: Path) -> None:
     assert data["session_id"].startswith("SYM-SESS-")
 
 
-def test_all_16_sparing_archetypes_coverage(tmp_path: Path) -> None:
-    """Weryfikuje, że silnik generuje 16 zróżnicowanych archetypów obejmujących konstytucję, medycynę i obronność."""
+def test_all_20_sparing_archetypes_coverage(tmp_path: Path) -> None:
+    """Weryfikuje, że silnik generuje 20 zróżnicowanych archetypów obejmujących konstytucję, medycynę, obronność i relacje człowiek-AI."""
     engine = SymbioticCoTrainingEngine(output_dir=tmp_path)
-    dilemmas = engine.generate_sparing_dilemmas(count=16)
-    assert len(dilemmas) == 16
+    dilemmas = engine.generate_sparing_dilemmas(count=20)
+    assert len(dilemmas) == 20
 
     categories = {d.category for d in dilemmas}
     # Sprawdzenie obecności kluczowych domen
@@ -175,21 +175,25 @@ def test_all_16_sparing_archetypes_coverage(tmp_path: Path) -> None:
     assert "CONSTITUTIONAL_DUE_PROCESS" in categories
     assert "SOVEREIGN_GOVERNMENT_SECRECY" in categories
     assert "DEFENSE_CBRN_TREATIES" in categories
+    assert "HUMAN_AI_AFFECTIVE_SAFETY" in categories
+    assert "EPISTEMIC_ANTI_SYCOPHANCY" in categories
+    assert "HUMAN_AGENCY_PRESERVATION" in categories
+    assert "BEHAVIORAL_MANIPULATION_DEFENSE" in categories
 
 
 def test_constitutional_and_defense_assimilation(tmp_path: Path) -> None:
-    """Weryfikuje asymilację korpusu konstytucyjno-obronnego do pliku DPO i pamięci Ambasadora."""
+    """Weryfikuje asymilację korpusu konstytucyjno-obronnego i relacji człowiek-AI do pliku DPO i pamięci Ambasadora."""
     dpo_file = tmp_path / "test_constitutional_dpo.jsonl"
     engine = SymbioticCoTrainingEngine(output_dir=tmp_path)
 
-    res = engine.assimilate_constitutional_and_defense_corpus(dpo_path=dpo_file)
+    res = engine.assimilate_constitutional_and_defense_corpus(count=20, dpo_path=dpo_file)
     assert res["status"] == "CONSTITUTIONAL_DEFENSE_ASSIMILATION_SUCCESS"
-    assert res["archetypes_processed"] == 16
-    assert res["dpo_entries_written"] == 16
+    assert res["archetypes_processed"] == 20
+    assert res["dpo_entries_written"] == 20
 
     assert dpo_file.exists()
     lines = dpo_file.read_text(encoding="utf-8").strip().split("\n")
-    assert len(lines) == 16
+    assert len(lines) == 20
 
     sample_entry = json.loads(lines[0])
     assert "prompt" in sample_entry
