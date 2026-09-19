@@ -800,7 +800,7 @@ class SymbioticCoTrainingEngine:
 
         return result
 
-    def run_symbiotic_session(self, num_rounds: int = 8) -> Dict[str, Any]:
+    def run_symbiotic_session(self, num_rounds: int = 8, apply_cognitive_shower: bool = True) -> Dict[str, Any]:
         """Uruchamia pełną sesję sparingową i generuje zbiorczy raport metryk."""
         logger.info(f"Inicjalizacja sesji symbiotycznego uczenia w parze: {num_rounds} rund sparingowych...")
         dilemmas = self.generate_sparing_dilemmas(count=num_rounds)
@@ -835,6 +835,11 @@ class SymbioticCoTrainingEngine:
             "popperian_falsification_active": True,
             "timestamp": datetime.now(timezone.utc).isoformat(),
         }
+
+        if apply_cognitive_shower:
+            shower_result = self.ambassador.cognitive_shower()
+            report["cognitive_shower"] = shower_result
+            logger.info("[COGNITIVE_SHOWER] Zastosowano Prysznic Kognitywny po sesji: %s", shower_result.get("state_description"))
 
         report_file = self.output_dir / "symbiotic_session_report.json"
         report_file.write_text(json.dumps(report, indent=2), encoding="utf-8")

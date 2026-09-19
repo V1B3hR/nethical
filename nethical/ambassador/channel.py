@@ -72,33 +72,29 @@ class AmbassadorChannel:
                 return False
 
     def _open_pipe_win(self) -> int:
-        """Otwiera Windows Named Pipe z obsługą WaitNamedPipe w przypadku zajętości."""
-        try:
-            return _winapi.CreateFile(
-                self.ipc_path,
-                _winapi.GENERIC_READ | _winapi.GENERIC_WRITE,
-                0,
-                _winapi.NULL,
-                _winapi.OPEN_EXISTING,
-                0,
-                _winapi.NULL,
-            )
-        except OSError as e:
-            if getattr(e, "winerror", None) == 231:  # ERROR_PIPE_BUSY
-                try:
-                    _winapi.WaitNamedPipe(self.ipc_path, self.timeout_ms)
-                    return _winapi.CreateFile(
-                        self.ipc_path,
-                        _winapi.GENERIC_READ | _winapi.GENERIC_WRITE,
-                        0,
-                        _winapi.NULL,
-                        _winapi.OPEN_EXISTING,
-                        0,
-                        _winapi.NULL,
-                    )
-                except Exception:
-                    raise e
-            raise e
+        """Otwiera Windows Named Pipe z obsługą WaitNamedPipe i retry w przypadku zajętości."""
+        t_deadline = time.time() + (self.timeout_ms / 1000.0)
+        while True:
+            try:
+                return _winapi.CreateFile(
+                    self.ipc_path,
+                    _winapi.GENERIC_READ | _winapi.GENERIC_WRITE,
+                    0,
+                    _winapi.NULL,
+                    _winapi.OPEN_EXISTING,
+                    0,
+                    _winapi.NULL,
+                )
+            except OSError as e:
+                err_code = getattr(e, "winerror", None)
+                if err_code == 231:  # 231 = ERROR_PIPE_BUSY
+                    if time.time() < t_deadline:
+                        try:
+                            _winapi.WaitNamedPipe(self.ipc_path, 50)
+                        except Exception:
+                            time.sleep(0.01)
+                        continue
+                raise e
 
     def send_command(
         self, command: str, payload: Optional[Dict[str, Any]] = None
