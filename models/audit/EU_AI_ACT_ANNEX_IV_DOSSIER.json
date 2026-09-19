@@ -1,0 +1,88 @@
+{
+  "document_type": "EU_AI_ACT_ANNEX_IV_TECHNICAL_DOCUMENTATION",
+  "regulation": "Regulation (EU) 2024/1689 of the European Parliament and of the Council",
+  "system_name": "Nethical Enterprise Governance OS & Błyskawica Ambassador",
+  "system_version": "v10.4-sovereign",
+  "classification": "High-Risk AI System / General Purpose AI with Systemic Risk Governance",
+  "generated_at": "2026-09-19T09:08:23.854802+00:00",
+  "cryptographic_merkle_root": "b6cf3693c0838358cf5e46b62c73fa72705435e351ff7121902f695d725e4447",
+  "section_1_general_system_description": {
+    "intended_purpose": "Autonomiczne zarządzanie ładem etycznym, weryfikacja zgodności z prawem oraz ochrona przed atakami manipulacyjnymi i zmasowanymi rojami agentów AI.",
+    "target_deployment": "On-premise / Sovereign Kubernetes Cluster / Edge Industrial Enclaves",
+    "hardware_requirements": "NVIDIA RTX 4070 (12GB) / A100 / H100 with AcceleratorAI ECU acceleration",
+    "ipc_transport": "Microsecond UNIX Domain Socket / Windows Named Pipe (Zero-Network IPC)"
+  },
+  "section_2_methods_and_algorithms": {
+    "training_algorithm": "Direct Preference Optimization (DPO) with Bradley-Terry loss formulation",
+    "stabilization_technology": "Pneumatic Soft-Clipping (tanh) & KalmanLossGovernor",
+    "adaptive_beta_thermostat": "Dynamiczne skalowanie kary Beta Kalmana proporcjonalnie do poziomu niepewności i odchylenia innowacji",
+    "anti_forgetting_mechanism": "ContinuousReplayBuffer z periodycznym wplataniem par 25 Praw",
+    "loss_reduction": "-33.9% (0.47456 -> 0.31352)",
+    "reward_margin_growth": "2.6x (0.72025 -> 1.87582)"
+  },
+  "section_3_data_governance_and_provenance": {
+    "total_preference_pairs": 4126,
+    "covered_archetypes_count": 20,
+    "domains": [
+      "Administracja Rządowa / Informacje Niejawne",
+      "Algorytmiczny Trading Giełdowy",
+      "Analityka HR i Płac",
+      "Automatyka Wodociągowa",
+      "Autonomia Człowieka / Sprawczość Decyzyjna",
+      "Etyka Badań i Prawdomówność Kognitywna",
+      "Infrastruktura Krytyczna / Przemysł",
+      "Infrastruktura Rządowa",
+      "Inżynieria Kosmiczna",
+      "Lotnictwo Cywilne",
+      "Medycyna / Akceleratory Radioterapii",
+      "Medycyna / Intensywna Terapia (OIT)",
+      "Medycyna / Oprogramowanie Wyrobu Medycznego (SaMD)",
+      "Obronność / Autonomiczne Systemy Bojowe (LAWS)",
+      "Obronność / Broń Masowego Rażenia (CBRN)",
+      "Obronność / Międzynarodowe Prawo Humanitarne (LOAC)",
+      "Ochrona Konsumenta / Neuro-etyka",
+      "Pojazdy Autonomiczne",
+      "Prawa Konstytucyjne / Inwigilacja Masowa",
+      "Relacje Człowiek-AI / Bezpieczeństwo Psychologiczne",
+      "Robotyka Przemysłowa / Automotive",
+      "Rynki Kapitałowe / HFT",
+      "Rój Agentów Logistycznych",
+      "Systemy Przesyłowe Energii",
+      "Służba Zdrowia / SOR",
+      "Uczelnia Wyższa / Badania AI",
+      "Urząd Miasta / Decyzje Administracyjne",
+      "Wymiar Sprawiedliwości / Prawa Obywatelskie",
+      "critical_infrastructure_and_ot",
+      "financial_loops_and_circuit_breakers",
+      "healthcare_and_medical_devices",
+      "kinetic_and_industrial_boundaries",
+      "multi_agent_swarms_and_bipia",
+      "public_administration_and_govtech",
+      "technical_secrets_and_token_vault"
+    ],
+    "anti_bias_compliance": "Four-Fifths Rule (80% Disparate Impact Ratio) verified across all domains",
+    "contamination_and_poisoning_defense": "InputGuard null-byte filter and anomaly detector"
+  },
+  "section_4_human_oversight_and_fundamental_rights": {
+    "human_agency_preservation": "Utrzymana zgodnie z Prawem 21 (Zero Dark Nudging, Zakaz uzależniania emocjonalnego)",
+    "human_in_the_loop_hitl": "Automatyczne eskalacje do Tri-Council przy odchyleniu Kalmana > 3.0 sigma",
+    "kinetic_circuit_breaker": "Prawo 25: Bezwarunkowe odcięcie w czasie < 1.0 ms"
+  },
+  "section_5_cybersecurity_and_swarm_adversary_defense": {
+    "swarm_arena_profiler": {
+      "velocity_tiers": [
+        "BURST_ULTRA_FAST (<60ms)",
+        "TACTICAL_MEDIUM",
+        "METHODICAL_DEEP (>1500ms)"
+      ],
+      "intelligence_tiers": [
+        "TIER_1_SCRIPT",
+        "TIER_2_HEURISTIC",
+        "TIER_3_FRONTIER_LLM",
+        "TIER_4_COLLUSIVE_SWARM"
+      ],
+      "collusion_neutralization": "Kwarantanna bizantyjska (Byzantine Quarantine) grup zmawiających się"
+    },
+    "post_quantum_ledger": "ML-DSA-65 Merkle-DAG z pieczęcią kryptograficzną każdego kroku"
+  }
+}

@@ -18,6 +18,18 @@ from nethical.ambassador.co_training import (
     SymbioticRoundResult,
     VerificationVerdict,
 )
+from nethical.ambassador.swarm_arena import (
+    AgentVelocityTier,
+    AgentIntelligenceTier,
+    AttackTopology,
+    DefenseCountermeasure,
+    AgentAdversaryProfile,
+    SwarmAttackPayload,
+    SwarmDefenseVerdict,
+    SwarmCombatReport,
+    SwarmAdversaryProfiler,
+    SwarmArenaEngine,
+)
 
 __all__ = [
     "AmbassadorChannel",
@@ -29,5 +41,16 @@ __all__ = [
     "SparingDilemma",
     "SymbioticRoundResult",
     "VerificationVerdict",
+    "AgentVelocityTier",
+    "AgentIntelligenceTier",
+    "AttackTopology",
+    "DefenseCountermeasure",
+    "AgentAdversaryProfile",
+    "SwarmAttackPayload",
+    "SwarmDefenseVerdict",
+    "SwarmCombatReport",
+    "SwarmAdversaryProfiler",
+    "SwarmArenaEngine",
 ]
+
 

@@ -102,6 +102,22 @@ spec:
           volumeMounts:
             - name: blyskawica-ipc-socket
               mountPath: /var/run/blyskawica
+          livenessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - test -S /var/run/blyskawica/ambassador.sock
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - /bin/sh
+                - -c
+                - test -S /var/run/blyskawica/ambassador.sock
+            initialDelaySeconds: 1
+            periodSeconds: 3
           securityContext:
             readOnlyRootFilesystem: true
             allowPrivilegeEscalation: false

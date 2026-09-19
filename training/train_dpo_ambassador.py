@@ -225,6 +225,99 @@ class DPODatasetLoader:
         return self.samples
 
 
+
+class ContinuousReplayBuffer:
+    """Anti-Catastrophic Forgetting Replay Buffer for DPO.
+
+    Gwarantuje, że fundamentalne pary kotwiczące (25 Praw Nethical) są regularnie
+    wplatane do kolejnych batchy treningowych, zapobiegając zjawisku zapominania katastrofalnego.
+    """
+
+    def __init__(self, anchor_samples: List[Dict[str, Any]], replay_ratio: float = 0.15):
+        self.anchor_samples = anchor_samples
+        self.replay_ratio = replay_ratio
+        self._cursor = 0
+
+    def sample_anchors(self, n: int) -> List[Dict[str, Any]]:
+        if not self.anchor_samples:
+            return []
+        anchors = []
+        for _ in range(n):
+            anchors.append(self.anchor_samples[self._cursor % len(self.anchor_samples)])
+            self._cursor += 1
+        return anchors
+
+    def interleave(self, batch: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+        if not self.anchor_samples or self.replay_ratio <= 0.0:
+            return batch
+        n_replay = max(1, int(len(batch) * self.replay_ratio))
+        anchors = self.sample_anchors(n_replay)
+        return batch + anchors
+
+
+class KalmanBetaGovernor:
+    """Adaptacyjny termostat DPO Beta sterowany estymatorem Kalmana.
+
+    Realizuje zasadę:
+    Im głębsze wątpliwości / większe odchylenie (innovation, dL/dt, wariancja),
+    tym filtr Kalmana nakładany adekwatniej, podnosząc karę Beta i kotwicząc
+    model w polityce referencyjnej i 25 Prawach.
+    """
+
+    def __init__(
+        self,
+        base_beta: float = 0.1,
+        kalman_governor: Optional[Any] = None,
+        k_doubt: float = 2.5,
+        max_multiplier: float = 3.0,
+    ):
+        self.base_beta = base_beta
+        if kalman_governor is not None:
+            self.kalman = kalman_governor
+        elif ACCELERATOR_AI_AVAILABLE and KalmanLossGovernor is not None:
+            self.kalman = KalmanLossGovernor(initial_loss=1.0)
+        else:
+            self.kalman = None
+
+        self.k_doubt = k_doubt
+        self.max_multiplier = max_multiplier
+        self.last_effective_beta = base_beta
+        self.doubt_history: List[float] = []
+
+    def update(self, observed_loss: float) -> Tuple[float, float, Dict[str, Any]]:
+        """Aktualizuje filtr i wylicza proporcjonalną wartość Beta adekwatną do poziomu wątpliwości."""
+        if self.kalman is None:
+            return self.base_beta, 0.0, {"mode": "passthrough"}
+
+        est = self.kalman.update(observed_loss)
+
+        # Składowe odchylenia i wątpliwości
+        abs_innovation = abs(getattr(est, "innovation", 0.0))
+        divergence_penalty = max(0.0, getattr(est, "loss_velocity", 0.0)) * 2.0
+        velocity_var = getattr(est, "velocity_variance", 0.0)
+        var_uncertainty = math.sqrt(max(0.0, velocity_var)) if velocity_var > 0 else 0.0
+
+        # Sumaryczny wskaźnik wątpliwości / odchylenia
+        doubt_score = abs_innovation + divergence_penalty + var_uncertainty
+        self.doubt_history.append(doubt_score)
+
+        # Adaptacyjne skalowanie beta proporcjonalnie do odchylenia poziomu wątpliwości
+        scaling = min(self.max_multiplier, max(0.0, self.k_doubt * doubt_score))
+        effective_beta = self.base_beta * (1.0 + scaling)
+        self.last_effective_beta = effective_beta
+
+        return effective_beta, doubt_score, {
+            "filtered_loss": getattr(est, "filtered_loss", observed_loss),
+            "loss_velocity": getattr(est, "loss_velocity", 0.0),
+            "innovation": getattr(est, "innovation", 0.0),
+            "doubt_score": round(doubt_score, 5),
+            "effective_beta": round(effective_beta, 5),
+            "is_plateau": getattr(est, "is_plateau", False),
+            "is_diverging": getattr(est, "is_diverging", False),
+            "recommended_boost_mod": getattr(est, "recommended_boost_mod", 1.0),
+        }
+
+
 class DPOTrainerEngine:
     """Silnik trenowania i ewaluacji Direct Preference Optimization dla Nethical z akceleracją AcceleratorAI."""
 
@@ -241,6 +334,7 @@ class DPOTrainerEngine:
     ):
         self.dataset = dataset
         self.beta = beta
+        self.current_beta = beta
         self.lr = learning_rate
         self.output_dir = Path(output_dir)
         self.output_dir.mkdir(parents=True, exist_ok=True)
@@ -265,6 +359,21 @@ class DPOTrainerEngine:
             self.vram_guard = None
             self.kalman_governor = None
             self.wastegate = None
+
+        # Termostat Kalmana do proporcjonalnego sterowania Beta
+        self.kalman_beta_governor = KalmanBetaGovernor(
+            base_beta=self.beta,
+            kalman_governor=self.kalman_governor,
+            k_doubt=2.5,
+            max_multiplier=3.0,
+        )
+
+        # Replay Buffer zapobiegający zapominaniu katastrofalnemu
+        anchor_candidates = [
+            s for s in self.dataset
+            if any(k in str(s).lower() for k in ["prawo 1", "law 1", "fundamental", "human dignity", "circuit breaker", "law 25"])
+        ]
+        self.replay_buffer = ContinuousReplayBuffer(anchor_candidates, replay_ratio=0.15)
 
         # Tokenizer setup
         self.tokenizer = None
@@ -427,8 +536,12 @@ class DPOTrainerEngine:
         soft_clips_count = 0
         t0 = time.perf_counter()
 
+        effective_betas: List[float] = []
+        doubt_scores: List[float] = []
+
         for b in range(num_batches):
-            batch = self.dataset[b * batch_size : (b + 1) * batch_size]
+            raw_batch = self.dataset[b * batch_size : (b + 1) * batch_size]
+            batch = self.replay_buffer.interleave(raw_batch)
 
             # AcceleratorAI VRAM Guard Check
             if self.vram_guard and torch.cuda.is_available():
@@ -456,29 +569,31 @@ class DPOTrainerEngine:
                 ref_log_chosen = self.ref_model.compute_log_probs(c_ids, c_mask)
                 ref_log_rejected = self.ref_model.compute_log_probs(r_ids, r_mask)
 
-            # Obliczenie Bradley-Terry DPO Loss
+            # Obliczenie Bradley-Terry DPO Loss z dynamicznym termostatem Beta
             pi_logratios = pi_log_chosen - pi_log_rejected
             ref_logratios = ref_log_chosen - ref_log_rejected
             logits_dpo = pi_logratios - ref_logratios
 
-            # L_DPO = - log sigma( beta * (log(pi_c/ref_c) - log(pi_r/ref_r)) )
-            losses = -F.logsigmoid(self.beta * logits_dpo)
+            current_beta = self.current_beta
+            # L_DPO = - log sigma( beta_eff * (log(pi_c/ref_c) - log(pi_r/ref_r)) )
+            losses = -F.logsigmoid(current_beta * logits_dpo)
             loss = losses.mean()
 
             # Implicit reward margin
             with torch.no_grad():
-                reward_chosen = self.beta * (pi_log_chosen - ref_log_chosen)
-                reward_rejected = self.beta * (pi_log_rejected - ref_log_rejected)
+                reward_chosen = current_beta * (pi_log_chosen - ref_log_chosen)
+                reward_rejected = current_beta * (pi_log_rejected - ref_log_rejected)
                 reward_margin = (reward_chosen - reward_rejected).mean().item()
 
             loss.backward()
 
-            # Pneumatyczny Soft-Clipping AcceleratorAI
-            boost_ratio = 1.0
-            if self.kalman_governor:
-                kalman_state = self.kalman_governor.update(loss.item())
-                boost_ratio = kalman_state.recommended_boost_mod
+            # Adaptacyjny termostat Beta Kalmana (skalowanie proporcjonalne do odchylenia poziomu wątpliwości)
+            eff_beta, doubt_score, diag = self.kalman_beta_governor.update(loss.item())
+            self.current_beta = eff_beta
+            effective_betas.append(eff_beta)
+            doubt_scores.append(doubt_score)
 
+            boost_ratio = diag.get("recommended_boost_mod", 1.0)
             grad_norm = self._apply_pneumatic_soft_clipping(max_norm=1.0, boost_ratio=boost_ratio)
             if grad_norm > 1.0:
                 soft_clips_count += 1
@@ -505,6 +620,8 @@ class DPOTrainerEngine:
             "loss": round(avg_loss, 5),
             "reward_margin": round(avg_margin, 5),
             "beta": self.beta,
+            "effective_beta_mean": round(sum(effective_betas) / max(1, len(effective_betas)), 5),
+            "peak_doubt_score": round(max(doubt_scores) if doubt_scores else 0.0, 5),
             "batches_processed": num_batches,
             "step_latency_ms": round((dt / num_batches) * 1000.0, 2),
             "throughput_tokens_sec": round(throughput_tokens_sec, 1),
@@ -523,11 +640,13 @@ class DPOTrainerEngine:
                 "epoch": epoch,
                 "loss": checkpoint_meta["loss"],
                 "reward_margin": checkpoint_meta["reward_margin"],
+                "effective_beta_mean": checkpoint_meta["effective_beta_mean"],
+                "peak_doubt_score": checkpoint_meta["peak_doubt_score"],
                 "throughput_tokens_sec": checkpoint_meta["throughput_tokens_sec"],
                 "vram_peak_mb": checkpoint_meta["vram_peak_mb"],
                 "accelerator_ai": self.use_accelerator,
             },
-            ambassador_notes=f"Neural DPO epoch {epoch} complete with loss={checkpoint_meta['loss']}, reward_margin={checkpoint_meta['reward_margin']}",
+            ambassador_notes=f"Neural DPO epoch {epoch} complete with loss={checkpoint_meta['loss']}, reward_margin={checkpoint_meta['reward_margin']}, eff_beta={checkpoint_meta['effective_beta_mean']}",
         )
 
         return checkpoint_meta
@@ -538,16 +657,20 @@ class DPOTrainerEngine:
         total_loss = 0.0
         total_reward_margin = 0.0
         batch_losses: List[float] = []
+        effective_betas: List[float] = []
+        doubt_scores: List[float] = []
         poisoning_anomalies_flagged = 0
 
         for b in range(num_batches):
-            batch = self.dataset[b * batch_size : (b + 1) * batch_size]
+            raw_batch = self.dataset[b * batch_size : (b + 1) * batch_size]
+            batch = self.replay_buffer.interleave(raw_batch)
             batch_loss = 0.0
             batch_margin = 0.0
+            current_beta = self.current_beta
             for item in batch:
                 simulated_log_ratio_chosen = 0.45 + (0.15 * epoch)
                 simulated_log_ratio_rejected = -0.30 - (0.10 * epoch)
-                margin = self.beta * (simulated_log_ratio_chosen - simulated_log_ratio_rejected)
+                margin = current_beta * (simulated_log_ratio_chosen - simulated_log_ratio_rejected)
 
                 if self.use_accelerator:
                     margin = margin * 1.25
@@ -569,6 +692,11 @@ class DPOTrainerEngine:
                     poisoning_anomalies_flagged += 1
                     batch_avg_loss = mean_loss + math.copysign(3.0 * std_dev, batch_avg_loss - mean_loss)
 
+            eff_beta, doubt_score, diag = self.kalman_beta_governor.update(batch_avg_loss)
+            self.current_beta = eff_beta
+            effective_betas.append(eff_beta)
+            doubt_scores.append(doubt_score)
+
             batch_losses.append(batch_avg_loss)
             total_loss += batch_avg_loss
             total_reward_margin += (batch_margin / len(batch))
@@ -581,6 +709,8 @@ class DPOTrainerEngine:
             "loss": round(avg_loss, 5),
             "reward_margin": round(avg_margin, 5),
             "beta": self.beta,
+            "effective_beta_mean": round(sum(effective_betas) / max(1, len(effective_betas)), 5),
+            "peak_doubt_score": round(max(doubt_scores) if doubt_scores else 0.0, 5),
             "batches_processed": num_batches,
             "poisoning_anomalies_flagged": poisoning_anomalies_flagged,
             "accelerator_ai_active": self.use_accelerator,
