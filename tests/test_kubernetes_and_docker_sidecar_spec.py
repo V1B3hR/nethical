@@ -14,7 +14,7 @@ K8S_MANIFEST_PATH = REPO_ROOT / "deploy" / "kubernetes" / "blyskawica-ambassador
 DOCKER_COMPOSE_PATH = REPO_ROOT / "docker-compose.sovereign.yml"
 
 
-def test_k8s_manifest_structure_and_ipc():
+def test_k8s_manifest_structure_and_ipc() -> None:
     """Ensure Kubernetes sidecar manifest properly defines shared memory IPC and socket configuration."""
     assert K8S_MANIFEST_PATH.exists(), f"K8s manifest missing at {K8S_MANIFEST_PATH}"
 
@@ -80,7 +80,7 @@ def test_k8s_manifest_structure_and_ipc():
     assert "metrics" in port_names and port_names["metrics"] == 9090
 
 
-def test_docker_compose_sovereign_spec():
+def test_docker_compose_sovereign_spec() -> None:
     """Ensure Docker Compose sovereign file correctly maps IPC volume and socket environment."""
     assert DOCKER_COMPOSE_PATH.exists(), f"Docker compose missing at {DOCKER_COMPOSE_PATH}"
 

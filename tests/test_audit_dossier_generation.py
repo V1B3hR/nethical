@@ -16,7 +16,7 @@ REPO_ROOT = Path(__file__).parent.parent
 AUDIT_DIR = REPO_ROOT / "models" / "audit"
 
 
-def test_eu_ai_act_annex_iv_dossier_structure():
+def test_eu_ai_act_annex_iv_dossier_structure() -> None:
     """Verify that EU AI Act Annex IV dossier contains all mandatory regulatory sections."""
     data, md = generate_eu_ai_act_annex_iv_dossier()
 
@@ -36,7 +36,7 @@ def test_eu_ai_act_annex_iv_dossier_structure():
     assert "Merkle Anchor Root" in md
 
 
-def test_iso_42001_aims_dossier_structure():
+def test_iso_42001_aims_dossier_structure() -> None:
     """Verify that ISO/IEC 42001 AIMS dossier contains all clauses and Annex A controls."""
     data, md = generate_iso_42001_dossier()
 
@@ -55,7 +55,7 @@ def test_iso_42001_aims_dossier_structure():
     assert len(data["annex_a_controls"]) >= 8
 
 
-def test_audit_dossier_disk_generation():
+def test_audit_dossier_disk_generation() -> None:
     """Verify that running generator creates disk artifacts with valid JSON."""
     run_generator()
 

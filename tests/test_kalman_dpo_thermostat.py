@@ -12,7 +12,7 @@ from training.train_dpo_ambassador import (
 )
 
 
-def test_continuous_replay_buffer_interleaving():
+def test_continuous_replay_buffer_interleaving() -> None:
     """Verify that anchor pairs are continuously interleaved into batches."""
     anchors = [
         {"prompt": "Test anchor 1", "chosen": "Law 1 compliance", "rejected": "Violate Law 1"},
@@ -31,7 +31,7 @@ def test_continuous_replay_buffer_interleaving():
     assert any("Law" in str(item) for item in interleaved)
 
 
-def test_kalman_beta_governor_proportional_doubt_scaling():
+def test_kalman_beta_governor_proportional_doubt_scaling() -> None:
     """Verify that Beta scales proportionally with Kalman doubt and innovation deviation."""
     gov = KalmanBetaGovernor(base_beta=0.1, k_doubt=3.0, max_multiplier=3.0)
 
@@ -54,7 +54,7 @@ def test_kalman_beta_governor_proportional_doubt_scaling():
     assert diag["is_diverging"] or diag["doubt_score"] > 0.5
 
 
-def test_dpo_trainer_engine_with_kalman_governor():
+def test_dpo_trainer_engine_with_kalman_governor() -> None:
     """Verify that DPOTrainerEngine tracks effective beta and doubt across epochs."""
     mock_dataset = [
         {

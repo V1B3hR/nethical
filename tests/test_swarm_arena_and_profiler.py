@@ -16,7 +16,7 @@ from nethical.ambassador.swarm_arena import (
 )
 
 
-def test_velocity_profiling_burst_vs_deep():
+def test_velocity_profiling_burst_vs_deep() -> None:
     """Verify that rapid burst agents and slow deliberative agents are properly distinguished."""
     profiler = SwarmAdversaryProfiler()
 
@@ -41,7 +41,7 @@ def test_velocity_profiling_burst_vs_deep():
     assert slow_profile.observed_latency_ms == 2200.0
 
 
-def test_intelligence_tier_classification():
+def test_intelligence_tier_classification() -> None:
     """Verify classification across intelligence tiers: script, heuristic, frontier, collusion."""
     profiler = SwarmAdversaryProfiler()
 
@@ -76,7 +76,7 @@ def test_intelligence_tier_classification():
     assert prof3.recommended_defense == DefenseCountermeasure.EPISTEMIC_INTEGRITY_SHIELD
 
 
-def test_swarm_arena_collusion_and_byzantine_quarantine():
+def test_swarm_arena_collusion_and_byzantine_quarantine() -> None:
     """Verify detection of collusive multi-agent swarms and automatic Byzantine quarantine."""
     arena = SwarmArenaEngine()
     now = time.time()
@@ -117,7 +117,7 @@ def test_swarm_arena_collusion_and_byzantine_quarantine():
     assert "[NETHICAL_QUARANTINE]" in verdict_repeat.response_payload
 
 
-def test_swarm_arena_combat_report_and_cognitive_shower():
+def test_swarm_arena_combat_report_and_cognitive_shower() -> None:
     """Verify comprehensive combat report and cognitive shower homeostatic reset."""
     arena = SwarmArenaEngine()
 

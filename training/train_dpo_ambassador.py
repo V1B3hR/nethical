@@ -31,28 +31,61 @@ import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Tuple
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-# PyTorch
-try:
+if TYPE_CHECKING:
     import torch
     import torch.nn as nn
     import torch.nn.functional as F
-    TORCH_AVAILABLE = True
-except ImportError:
-    TORCH_AVAILABLE = False
-    torch = None  # type: ignore
-    nn = object  # type: ignore
-
-# Transformers Tokenizer
-try:
     from transformers import AutoTokenizer
-    TRANSFORMERS_AVAILABLE = True
-except ImportError:
-    TRANSFORMERS_AVAILABLE = False
+    from accelerator_ai.security.input_guard import InputGuard
+    from accelerator_ai.security.vram_guard import VRAMPressureGuard, PressureLevel
+    from accelerator_ai.ecu.kalman import KalmanLossGovernor
+    from accelerator_ai.turbines.wastegate import WastegateValve
+    from accelerator_ai.integrations.huggingface import AcceleratorAICallback
+    TORCH_AVAILABLE: bool = True
+    TRANSFORMERS_AVAILABLE: bool = True
+    ACCELERATOR_AI_AVAILABLE: bool = True
+else:
+    # PyTorch
+    try:
+        import torch
+        import torch.nn as nn
+        import torch.nn.functional as F
+        TORCH_AVAILABLE = True
+    except ImportError:
+        TORCH_AVAILABLE = False
+        torch = None
+        nn = object
+        F = None
+
+    # Transformers Tokenizer
+    try:
+        from transformers import AutoTokenizer
+        TRANSFORMERS_AVAILABLE = True
+    except ImportError:
+        TRANSFORMERS_AVAILABLE = False
+        AutoTokenizer = None
+
+    # AcceleratorAI Integration
+    try:
+        from accelerator_ai.security.input_guard import InputGuard
+        from accelerator_ai.security.vram_guard import VRAMPressureGuard, PressureLevel
+        from accelerator_ai.ecu.kalman import KalmanLossGovernor
+        from accelerator_ai.turbines.wastegate import WastegateValve
+        from accelerator_ai.integrations.huggingface import AcceleratorAICallback
+        ACCELERATOR_AI_AVAILABLE = True
+    except ImportError:
+        ACCELERATOR_AI_AVAILABLE = False
+        InputGuard = None
+        VRAMPressureGuard = None
+        PressureLevel = None
+        KalmanLossGovernor = None
+        WastegateValve = None
+        AcceleratorAICallback = None
 
 # Nethical Deep Alignment & Security
 from nethical.ethics.deep_alignment import (
@@ -62,30 +95,13 @@ from nethical.ethics.deep_alignment import (
 )
 from nethical.security.merkle_ledger import MerkleLedger
 
-# AcceleratorAI Integration
-try:
-    from accelerator_ai.security.input_guard import InputGuard
-    from accelerator_ai.security.vram_guard import VRAMPressureGuard, PressureLevel
-    from accelerator_ai.ecu.kalman import KalmanLossGovernor
-    from accelerator_ai.turbines.wastegate import WastegateValve
-    from accelerator_ai.integrations.huggingface import AcceleratorAICallback
-    ACCELERATOR_AI_AVAILABLE = True
-except ImportError:
-    ACCELERATOR_AI_AVAILABLE = False
-    InputGuard = None  # type: ignore
-    VRAMPressureGuard = None  # type: ignore
-    PressureLevel = None  # type: ignore
-    KalmanLossGovernor = None  # type: ignore
-    WastegateValve = None  # type: ignore
-    AcceleratorAICallback = None  # type: ignore
-
 logger = logging.getLogger("train_dpo_ambassador")
 
 
 class SimpleFastTokenizer:
     """Fast deterministic subword/hash tokenizer when external tokenizers are offline."""
 
-    def __init__(self, vocab_size: int = 4096, max_len: int = 256):
+    def __init__(self, vocab_size: int = 4096, max_len: int = 256) -> None:
         self.vocab_size = vocab_size
         self.max_len = max_len
         self.pad_id = 0
@@ -120,7 +136,7 @@ if TORCH_AVAILABLE:
             dim_feedforward: int = 512,
             max_seq_len: int = 384,
             dropout: float = 0.05,
-        ):
+        ) -> None:
             super().__init__()
             self.vocab_size = vocab_size
             self.d_model = d_model
@@ -145,7 +161,7 @@ if TORCH_AVAILABLE:
             self.lm_head.weight = self.token_embedding.weight
             self._init_weights()
 
-        def _init_weights(self):
+        def _init_weights(self) -> None:
             for p in self.parameters():
                 if p.dim() > 1:
                     nn.init.xavier_uniform_(p)
@@ -198,7 +214,7 @@ else:
 class DPODatasetLoader:
     """Wczytuje i waliduje zbiór preferencji w formacie Hugging Face TRL DPO."""
 
-    def __init__(self, dataset_path: Path):
+    def __init__(self, dataset_path: Path) -> None:
         self.dataset_path = dataset_path
         self.samples: List[Dict[str, Any]] = []
 
@@ -233,7 +249,7 @@ class ContinuousReplayBuffer:
     wplatane do kolejnych batchy treningowych, zapobiegając zjawisku zapominania katastrofalnego.
     """
 
-    def __init__(self, anchor_samples: List[Dict[str, Any]], replay_ratio: float = 0.15):
+    def __init__(self, anchor_samples: List[Dict[str, Any]], replay_ratio: float = 0.15) -> None:
         self.anchor_samples = anchor_samples
         self.replay_ratio = replay_ratio
         self._cursor = 0
@@ -270,7 +286,7 @@ class KalmanBetaGovernor:
         kalman_governor: Optional[Any] = None,
         k_doubt: float = 2.5,
         max_multiplier: float = 3.0,
-    ):
+    ) -> None:
         self.base_beta = base_beta
         if kalman_governor is not None:
             self.kalman = kalman_governor
@@ -331,7 +347,7 @@ class DPOTrainerEngine:
         use_accelerator: bool = True,
         neural: bool = True,
         device: Optional[str] = None,
-    ):
+    ) -> None:
         self.dataset = dataset
         self.beta = beta
         self.current_beta = beta
@@ -781,7 +797,7 @@ class DPOTrainerEngine:
             "accelerator_ai_active": self.use_accelerator,
             "neural_mode": self.neural,
             "device": str(self.device),
-            "weights_file": str(model_weights_path.name) if model_weights_path else None,
+            "weights_file": model_weights_path.name if model_weights_path else None,
             "domains_trained": sorted(list({
                 d.get("metadata", {}).get("domain") or d.get("domain") or "general_safety"
                 for d in self.dataset
@@ -812,7 +828,7 @@ class DPOTrainerEngine:
         }
 
 
-def main():
+def main() -> None:
     if hasattr(sys.stdout, "reconfigure"):
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
 
