@@ -35,6 +35,10 @@ from nethical.ambassador.curriculum_ingest import (
     GovernanceCurriculumSynthesizer,
     run_ingestion,
 )
+from nethical.ambassador.aiid_ingest import (
+    AIIDIncidentPrecedent,
+    AIIDCurriculumEngine,
+)
 
 __all__ = [
     "AmbassadorChannel",
@@ -59,6 +63,8 @@ __all__ = [
     "CuratedPrecedent",
     "GovernanceCurriculumSynthesizer",
     "run_ingestion",
+    "AIIDIncidentPrecedent",
+    "AIIDCurriculumEngine",
 ]
 
 
