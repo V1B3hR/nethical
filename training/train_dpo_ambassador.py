@@ -770,6 +770,17 @@ class DPOTrainerEngine:
                 f"Epoka {epoch}/{epochs} | Loss: {epoch_res['loss']} | Reward Margin: {epoch_res['reward_margin']}{latency_info}"
             )
 
+            # Kalman Plateau & Early-Convergence Safeguard (ochrona przed reward over-optimization przy 10-15 epokach)
+            if epoch >= 4 and len(history) >= 3:
+                recent_losses = [h["loss"] for h in history[-3:]]
+                max_diff = max(recent_losses) - min(recent_losses)
+                if max_diff < 0.0015:
+                    logger.info(
+                        f"Kalman Governor: Osiągnięto optymalne plateau zbieżności DPO w epoce {epoch}/{epochs} "
+                        f"(delta={max_diff:.5f} < 0.0015). Bezpieczne lądowanie wag neuronowych."
+                    )
+                    break
+
         final_metrics = self.evaluate_alignment_metrics()
 
         # Zapis wag modelu neuronowego (jeśli tryb neuronowy)

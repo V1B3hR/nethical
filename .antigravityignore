@@ -1,0 +1,53 @@
+# Antigravity Language Server & Indexer Ignore File
+# Blocks heavy build artifacts, tensors, logs, and databases from unnecessary indexing/upload.
+
+# Virtual Environments
+.venv/
+venv/
+env/
+ENV/
+
+# Python Cache & Build Artifacts
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+build/
+dist/
+*.egg-info/
+.pytest_cache/
+.ruff_cache/
+
+# Model Weights & Binary Checkpoints
+*.pt
+*.bin
+*.safetensors
+*.onnx
+models/candidates/*.json
+models/benchmark_*/
+
+# Heavy Databases & SQLite Files
+*.sqlite
+*.sqlite3
+*.db
+governance_data.sqlite
+nethical.db
+test_agents.db
+test_hub.db
+test_security_gaps.db
+
+# Logs, Telemetry & Profiling Chunks
+*.log
+logs/
+audit_logs/
+feedback_logs/
+training_audit_logs/
+profiling_results/
+
+# Temporary Mock & Agent Data
+nethical_test_mcp_data/
+nethical_api_data/
+nethical_claude_data/
+nethical_data/
+test_unified_data*/
+test_governance*/

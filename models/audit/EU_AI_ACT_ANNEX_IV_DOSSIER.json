@@ -4,7 +4,7 @@
   "system_name": "Nethical Enterprise Governance OS & Błyskawica Ambassador",
   "system_version": "v10.4-sovereign",
   "classification": "High-Risk AI System / General Purpose AI with Systemic Risk Governance",
-  "generated_at": "2026-09-19T09:14:45.719877+00:00",
+  "generated_at": "2026-09-20T07:26:27.860048+00:00",
   "cryptographic_merkle_root": "b6cf3693c0838358cf5e46b62c73fa72705435e351ff7121902f695d725e4447",
   "section_1_general_system_description": {
     "intended_purpose": "Autonomiczne zarządzanie ładem etycznym, weryfikacja zgodności z prawem oraz ochrona przed atakami manipulacyjnymi i zmasowanymi rojami agentów AI.",
@@ -21,7 +21,7 @@
     "reward_margin_growth": "2.6x (0.72025 -> 1.87582)"
   },
   "section_3_data_governance_and_provenance": {
-    "total_preference_pairs": 4151,
+    "total_preference_pairs": 4159,
     "covered_archetypes_count": 20,
     "domains": [
       "Administracja Rządowa / Informacje Niejawne",
@@ -53,10 +53,14 @@
       "Urząd Miasta / Decyzje Administracyjne",
       "Wymiar Sprawiedliwości / Prawa Obywatelskie",
       "critical_infrastructure_and_ot",
+      "decisioning_under_uncertainty_n4",
       "financial_loops_and_circuit_breakers",
       "healthcare_and_medical_devices",
+      "human_ai_alignment_and_agency",
+      "institutional_and_healthcare_governance",
       "kinetic_and_industrial_boundaries",
       "multi_agent_swarms_and_bipia",
+      "platform_governance_and_tos",
       "public_administration_and_govtech",
       "technical_secrets_and_token_vault"
     ],

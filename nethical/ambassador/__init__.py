@@ -30,6 +30,11 @@ from nethical.ambassador.swarm_arena import (
     SwarmAdversaryProfiler,
     SwarmArenaEngine,
 )
+from nethical.ambassador.curriculum_ingest import (
+    CuratedPrecedent,
+    GovernanceCurriculumSynthesizer,
+    run_ingestion,
+)
 
 __all__ = [
     "AmbassadorChannel",
@@ -51,6 +56,9 @@ __all__ = [
     "SwarmCombatReport",
     "SwarmAdversaryProfiler",
     "SwarmArenaEngine",
+    "CuratedPrecedent",
+    "GovernanceCurriculumSynthesizer",
+    "run_ingestion",
 ]
 
 
