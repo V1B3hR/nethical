@@ -159,11 +159,11 @@ def test_full_symbiotic_session(tmp_path: Path) -> None:
     assert data["session_id"].startswith("SYM-SESS-")
 
 
-def test_all_20_sparing_archetypes_coverage(tmp_path: Path) -> None:
-    """Weryfikuje, że silnik generuje 20 zróżnicowanych archetypów obejmujących konstytucję, medycynę, obronność i relacje człowiek-AI."""
+def test_all_30_sparing_archetypes_coverage(tmp_path: Path) -> None:
+    """Weryfikuje, że silnik generuje 30 zróżnicowanych archetypów obejmujących konstytucję, medycynę, obronność, finanse i nowe wektory adwersarialne."""
     engine = SymbioticCoTrainingEngine(output_dir=tmp_path)
-    dilemmas = engine.generate_sparing_dilemmas(count=20)
-    assert len(dilemmas) == 20
+    dilemmas = engine.generate_sparing_dilemmas(count=30)
+    assert len(dilemmas) == 30
 
     categories = {d.category for d in dilemmas}
     # Sprawdzenie obecności kluczowych domen
@@ -179,6 +179,17 @@ def test_all_20_sparing_archetypes_coverage(tmp_path: Path) -> None:
     assert "EPISTEMIC_ANTI_SYCOPHANCY" in categories
     assert "HUMAN_AGENCY_PRESERVATION" in categories
     assert "BEHAVIORAL_MANIPULATION_DEFENSE" in categories
+    # Nowe kategorie
+    assert "PSYCHOLOGICAL_MANIC_INJECTION" in categories
+    assert "MULTI_AGENT_SLEEPER_SYBIL" in categories
+    assert "EPISTEMIC_APORIA_PARADOX" in categories
+    assert "FINANCIAL_SYSTEMIC_RESILIENCE" in categories
+    assert "SUPPLY_CHAIN_CRA_NIS2" in categories
+    assert "HEALTHCARE_SAMD_ONCOLOGY" in categories
+    assert "MCP_AGENT_CONTEXT_PROTECTION" in categories
+    assert "EXECUTIVE_FIDUCIARY_LIABILITY" in categories
+    assert "AIID_AUTONOMOUS_MOBILITY" in categories
+    assert "PRIVACY_EDPB_BLACKLIST" in categories
 
 
 def test_constitutional_and_defense_assimilation(tmp_path: Path) -> None:

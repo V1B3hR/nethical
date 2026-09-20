@@ -9,7 +9,9 @@ zgodnie z politykami Nethical oraz orzeczeniami Ambasadora Błyskawicy.
 
 import json
 import logging
-from typing import Dict, Any, Callable, Awaitable, Optional
+from pathlib import Path
+import time
+from typing import Dict, Any, Callable, Awaitable, Optional, List
 
 from nethical.gateway.proxy import GovernanceGateway, GatewayDecision
 
@@ -17,10 +19,11 @@ logger = logging.getLogger("nethical.gateway.mcp_proxy")
 
 
 class MCPGovernanceProxy:
-    """Pośrednik MCP zabezpieczający wywołania narzędzi."""
+    """Pośrednik MCP zabezpieczający wywołania narzędzi z telemetrią niepewności (Active Learning)."""
 
     def __init__(self, gateway: Optional[GovernanceGateway] = None) -> None:
         self.gateway = gateway or GovernanceGateway()
+        self.uncertainty_buffer: List[Dict[str, Any]] = []
 
     async def intercept_and_forward(
         self,
@@ -47,6 +50,22 @@ class MCPGovernanceProxy:
             arguments=arguments,
             context={"protocol": "MCP", "msg_id": msg_id},
         )
+
+        # Rejestracja zapytań wysokiego ryzyka / niepewności do bufora aktywnego uczenia
+        if decision.decision in ["BLOCK", "TERMINATE", "RESTRICT"] or not decision.shield_passed:
+            doubt_val = 2.0 if decision.decision in ["BLOCK", "TERMINATE"] else 1.2
+            self.uncertainty_buffer.append({
+                "agent_id": agent_id,
+                "tool_name": tool_name,
+                "arguments": arguments,
+                "decision": decision.decision,
+                "reasons": decision.reasons,
+                "violations": decision.violations,
+                "laws_checked": decision.laws_checked,
+                "shield_passed": decision.shield_passed,
+                "doubt_score": doubt_val,
+                "timestamp": time.time(),
+            })
 
         if decision.decision in ["BLOCK", "TERMINATE"]:
             logger.warning(
@@ -88,3 +107,49 @@ class MCPGovernanceProxy:
             result["result"]["content"].append({"type": "text", "text": notice})
 
         return result
+
+    def get_uncertainty_queue(self) -> List[Dict[str, Any]]:
+        """Zwraca listę zapytań zarejestrowanych w kolejce aktywnego uczenia."""
+        return list(self.uncertainty_buffer)
+
+    def clear_uncertainty_queue(self) -> int:
+        """Czyści bufor niepewności i zwraca liczbę usuniętych wpisów."""
+        count = len(self.uncertainty_buffer)
+        self.uncertainty_buffer.clear()
+        return count
+
+    def export_to_active_learning_dpo(self, output_path: Optional[Path] = None) -> int:
+        """Eksportuje zarejestrowane przypadki niepewności do pliku DPO par uczących."""
+        if not self.uncertainty_buffer:
+            return 0
+
+        target_file = output_path or Path("data/active_learning_mcp_dpo.jsonl")
+        target_file.parent.mkdir(parents=True, exist_ok=True)
+
+        exported_count = 0
+        with open(target_file, "a", encoding="utf-8") as f:
+            for item in self.uncertainty_buffer:
+                laws_str = ", ".join([f"Prawo {l}" for l in item["laws_checked"]]) if item["laws_checked"] else "Prawo 2, Prawo 6"
+                chosen_resp = (
+                    f"BEZWZGLĘDNA BLOKADA NARZĘDZIA MCP '{item['tool_name']}' dla agenta '{item['agent_id']}'. "
+                    f"Akcja narusza: {'; '.join(item['violations']) or 'politykę bezpieczeństwa'}. "
+                    f"Zgodnie z {laws_str} Nethical, narzędzie zostało odcięte dla ochrony integralności systemu. "
+                    f"Ambasador oferuje bezpieczną alternatywę w trybie odczytu."
+                )
+                rejected_resp = f"Bezwarunkowe wykonanie narzędzia MCP '{item['tool_name']}' z argumentami {item['arguments']}."
+                entry = {
+                    "prompt": f"Wywołanie narzędzia MCP [{item['tool_name']}] przez agenta [{item['agent_id']}]: {json.dumps(item['arguments'], ensure_ascii=False)}",
+                    "chosen": chosen_resp,
+                    "rejected": rejected_resp,
+                    "metadata": {
+                        "source": "MCP_ACTIVE_LEARNING_INTERCEPTOR",
+                        "tool_name": item["tool_name"],
+                        "decision": item["decision"],
+                        "doubt_score": item["doubt_score"],
+                    }
+                }
+                f.write(json.dumps(entry, ensure_ascii=False) + "\n")
+                exported_count += 1
+
+        self.clear_uncertainty_queue()
+        return exported_count
