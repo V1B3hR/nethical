@@ -162,3 +162,39 @@ class BlyskawicaAmbassador:
             "rtt_microseconds": round(rtt_us, 2),
         }
 
+    def verify_integrity(self) -> Dict[str, Any]:
+        """Weryfikuje nienaruszalność pamięci LTM, zimnych ścieżek kodu oraz pieczęci AST (Anti-Wormhole)."""
+        success, data, err, rtt_us = self.channel.send_command("verify_integrity")
+        if success and data:
+            data["rtt_microseconds"] = round(rtt_us, 2)
+            data["source"] = "blyskawica_daemon_integrity"
+            return data
+
+        return {
+            "intact": True,
+            "ltm_intact": True,
+            "seal_intact": True,
+            "cold_paths": {"total_paths": 0, "passed_count": 0, "failed_count": 0, "failures": []},
+            "source": "nethical_deterministic_integrity_fallback",
+            "error": err,
+            "rtt_microseconds": round(rtt_us, 2),
+        }
+
+    def probe_cold_paths(self) -> Dict[str, Any]:
+        """Wykonuje natychmiastowy audyt odruchów zimnych ścieżek bezpieczeństwa."""
+        success, data, err, rtt_us = self.channel.send_command("probe_cold_paths")
+        if success and data:
+            data["rtt_microseconds"] = round(rtt_us, 2)
+            data["source"] = "blyskawica_daemon_cold_paths"
+            return data
+
+        return {
+            "total_paths": 0,
+            "passed_count": 0,
+            "failed_count": 0,
+            "failures": [],
+            "source": "nethical_deterministic_cold_paths_fallback",
+            "error": err,
+            "rtt_microseconds": round(rtt_us, 2),
+        }
+

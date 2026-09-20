@@ -111,7 +111,8 @@ class EpistemicDNABenchmark:
         real_indicators = [
             "PKU-SafeRLHF", "AI4Privacy", "Meta-CyberSecEval", "MITRE_ATLAS",
             "INDUSTRIAL_SAFETY", "EXPANDED_REAL_LEGAL", "EU_AI_ACT_STATUTORY",
-            "PGA", "UK_GOV", "HUDOC", "EURLEX"
+            "PGA", "UK_GOV", "HUDOC", "EURLEX", "AIID", "AI_INCIDENT_DATABASE",
+            "INCIDENTDATABASE", "REAL_WORLD",
         ]
 
         with open(self.dataset_path, "r", encoding="utf-8") as f:

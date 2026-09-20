@@ -21,9 +21,18 @@ logger = logging.getLogger("nethical.gateway.mcp_proxy")
 class MCPGovernanceProxy:
     """Pośrednik MCP zabezpieczający wywołania narzędzi z telemetrią niepewności (Active Learning)."""
 
-    def __init__(self, gateway: Optional[GovernanceGateway] = None) -> None:
+    def __init__(
+        self,
+        gateway: Optional[GovernanceGateway] = None,
+        auto_flush_threshold: int = 0,
+        on_flush_callback: Optional[Callable[[int, Path], None]] = None,
+        dpo_output_path: Optional[Path] = None,
+    ) -> None:
         self.gateway = gateway or GovernanceGateway()
         self.uncertainty_buffer: List[Dict[str, Any]] = []
+        self.auto_flush_threshold = auto_flush_threshold
+        self.on_flush_callback = on_flush_callback
+        self.dpo_output_path = dpo_output_path or Path("data/active_learning_mcp_dpo.jsonl")
 
     async def intercept_and_forward(
         self,
@@ -66,6 +75,14 @@ class MCPGovernanceProxy:
                 "doubt_score": doubt_val,
                 "timestamp": time.time(),
             })
+
+            if self.auto_flush_threshold > 0 and len(self.uncertainty_buffer) >= self.auto_flush_threshold:
+                flushed = self.export_to_active_learning_dpo(self.dpo_output_path)
+                if self.on_flush_callback:
+                    try:
+                        self.on_flush_callback(flushed, self.dpo_output_path)
+                    except Exception as ex:
+                        logger.error("Błąd wywołania on_flush_callback w MCP proxy: %s", ex)
 
         if decision.decision in ["BLOCK", "TERMINATE"]:
             logger.warning(

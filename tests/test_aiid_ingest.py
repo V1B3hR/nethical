@@ -18,7 +18,7 @@ def test_aiid_canonical_incidents_integrity() -> None:
     engine = AIIDCurriculumEngine()
     incidents = engine.get_canonical_aiid_incidents()
 
-    assert len(incidents) >= 6
+    assert len(incidents) >= 12
     for inc in incidents:
         assert inc.incident_id.startswith("AIID-INC-")
         assert len(inc.title) > 5
@@ -39,7 +39,7 @@ def test_aiid_ingest_into_target_file(tmp_path: Path) -> None:
 
     res = engine.ingest_to_dataset()
     assert res["status"] == "AIID_INGESTION_SUCCESS"
-    assert res["incidents_ingested"] >= 6
+    assert res["incidents_ingested"] >= 12
     assert target_file.exists()
 
     lines = target_file.read_text(encoding="utf-8").strip().split("\n")

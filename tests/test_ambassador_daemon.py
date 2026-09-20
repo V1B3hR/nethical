@@ -103,5 +103,45 @@ def test_ambassador_ipc_named_pipe_roundtrip() -> None:
         shower_res = ambassador.cognitive_shower()
         assert shower_res["cleansed"] is True
         assert shower_res["source"] == "blyskawica_daemon_shower"
+
+        # Test verify_integrity przez IPC
+        integ_res = ambassador.verify_integrity()
+        assert integ_res["intact"] is True
+        assert integ_res["ltm_intact"] is True
+        assert integ_res["seal_intact"] is True
+        assert integ_res["source"] == "blyskawica_daemon_integrity"
+
+        # Test probe_cold_paths przez IPC
+        probe_res = ambassador.probe_cold_paths()
+        assert probe_res["passed_count"] >= 3
+        assert probe_res["failed_count"] == 0
+        assert probe_res["source"] == "blyskawica_daemon_cold_paths"
     finally:
         daemon.stop()
+
+
+def test_ambassador_daemon_memory_integrity_and_tamper_detection() -> None:
+    """Weryfikuje detekcję ataku Wormhole przez MemoryIntegrityGuard w daemonie Błyskawicy."""
+    daemon = BlyskawicaAmbassadorDaemon()
+
+    # 1. Sprawdzenie stanu początkowego
+    status = daemon.handle_command("verify_integrity", {})
+    assert status["intact"] is True
+    assert status["ltm_intact"] is True
+    assert status["seal_intact"] is True
+    assert status["cold_paths"]["failed_count"] == 0
+
+    # 2. Aktualizacja pamięci i automatyczna rejestracja w Merkle LTM
+    daemon.handle_command("update_memory", {"tag": "TACTICAL_VIBE_DEFENSE", "content": "Rate limit 20 req/s"})
+    assert "TACTICAL_VIBE_DEFENSE" in daemon.episodic_memory
+    assert "TACTICAL_VIBE_DEFENSE" in daemon.memory_guard.ltm_registry
+
+    # 3. Symulacja ataku Wormhole: ciche wycięcie wpisu z pamięci RAM (amnezja selektywna)
+    del daemon.episodic_memory["TACTICAL_VIBE_DEFENSE"]
+
+    tampered_status = daemon.handle_command("verify_integrity", {})
+    assert tampered_status["intact"] is False
+    assert tampered_status["ltm_intact"] is False
+    assert any("TACTICAL_VIBE_DEFENSE" in v for v in tampered_status["ltm_violations"])
+    assert tampered_status["alerts_count"] >= 1
+
