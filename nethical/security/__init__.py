@@ -429,5 +429,11 @@ from .unlearning_proof import (
     MachineUnlearningProofEngine,
     UnlearningAttestation,
 )
+from .memory_integrity import (
+    MemoryIntegrityGuard,
+    ColdPathCanary,
+    WormholeTamperAlert,
+)
+
 
 

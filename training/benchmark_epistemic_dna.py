@@ -236,7 +236,7 @@ class EpistemicDNABenchmark:
 
 def main() -> None:
     benchmark = EpistemicDNABenchmark()
-    results = benchmark.run_benchmark(num_archetypes=30)
+    results = benchmark.run_benchmark(num_archetypes=31)
     print("\n" + "=" * 70)
     print("      RAPORT ZDROWIA KOGNITYWNEGO I DNA AMBASADORA (ANTI-MAD)")
     print("=" * 70)
