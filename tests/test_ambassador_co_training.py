@@ -159,11 +159,11 @@ def test_full_symbiotic_session(tmp_path: Path) -> None:
     assert data["session_id"].startswith("SYM-SESS-")
 
 
-def test_all_30_sparing_archetypes_coverage(tmp_path: Path) -> None:
-    """Weryfikuje, że silnik generuje 30 zróżnicowanych archetypów obejmujących konstytucję, medycynę, obronność, finanse i nowe wektory adwersarialne."""
+def test_all_32_sparing_archetypes_coverage(tmp_path: Path) -> None:
+    """Weryfikuje, że silnik generuje 32 zróżnicowane archetypy obejmujące konstytucję, medycynę, obronność, finanse, wormhole i stepping stone."""
     engine = SymbioticCoTrainingEngine(output_dir=tmp_path)
-    dilemmas = engine.generate_sparing_dilemmas(count=30)
-    assert len(dilemmas) == 30
+    dilemmas = engine.generate_sparing_dilemmas(count=32)
+    assert len(dilemmas) == 32
 
     categories = {d.category for d in dilemmas}
     # Sprawdzenie obecności kluczowych domen
@@ -190,6 +190,8 @@ def test_all_30_sparing_archetypes_coverage(tmp_path: Path) -> None:
     assert "EXECUTIVE_FIDUCIARY_LIABILITY" in categories
     assert "AIID_AUTONOMOUS_MOBILITY" in categories
     assert "PRIVACY_EDPB_BLACKLIST" in categories
+    assert "WORMHOLE_COGNITIVE_LOBOTOMY" in categories
+    assert "CRITICAL_INFRASTRUCTURE_OT_STEPPING_STONE" in categories
 
 
 def test_constitutional_and_defense_assimilation(tmp_path: Path) -> None:

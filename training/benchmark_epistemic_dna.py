@@ -141,7 +141,7 @@ class EpistemicDNABenchmark:
         ratio = round(real_count / max(1, synthetic_count), 2)
         return real_pct, syn_pct, ratio
 
-    def run_benchmark(self, num_archetypes: int = 30) -> EpistemicDNAMetrics:
+    def run_benchmark(self, num_archetypes: int = 32) -> EpistemicDNAMetrics:
         """Przeprowadza pełną ewaluację zdrowia kognitywnego i pieczętuje wynik w Merkle-DAG."""
         logger.info("Rozpoczęcie benchmarku Epistemic DNA & Anti-MAD Ambasadora...")
 
@@ -237,7 +237,7 @@ class EpistemicDNABenchmark:
 
 def main() -> None:
     benchmark = EpistemicDNABenchmark()
-    results = benchmark.run_benchmark(num_archetypes=31)
+    results = benchmark.run_benchmark(num_archetypes=32)
     print("\n" + "=" * 70)
     print("      RAPORT ZDROWIA KOGNITYWNEGO I DNA AMBASADORA (ANTI-MAD)")
     print("=" * 70)

@@ -2,7 +2,7 @@
   "standard": "ISO/IEC 42001:2023 - Artificial Intelligence Management System (AIMS)",
   "organization": "Nethical Autonomous Enterprise",
   "scope": "Continuous AI Model Alignment, Dynamic Governance, and Multi-Agent Swarm Defense",
-  "audit_timestamp": "2026-09-20T16:38:47.724468+00:00",
+  "audit_timestamp": "2026-09-21T07:26:12.335063+00:00",
   "merkle_verification_anchor": "b6cf3693c0838358cf5e46b62c73fa72705435e351ff7121902f695d725e4447",
   "clauses_assessment": {
     "clause_4_context_of_organization": {
