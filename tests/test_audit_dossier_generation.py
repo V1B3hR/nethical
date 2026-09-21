@@ -9,6 +9,7 @@ import pytest
 from training.generate_audit_dossier import (
     generate_eu_ai_act_annex_iv_dossier,
     generate_iso_42001_dossier,
+    generate_uk_gov_atrs_record,
     main as run_generator,
 )
 
@@ -55,6 +56,35 @@ def test_iso_42001_aims_dossier_structure() -> None:
     assert len(data["annex_a_controls"]) >= 8
 
 
+def test_uk_gov_atrs_record_structure() -> None:
+    """Verify that UK ATRS record adheres to Cabinet Office / DSIT standard (Tier 1 & Tier 2)."""
+    data, md = generate_uk_gov_atrs_record()
+
+    assert data["standard_name"] == "UK Algorithmic Transparency Recording Standard (ATRS)"
+    assert data["standard_version"] == "2.0-mandatory"
+    assert "cryptographic_merkle_root" in data
+
+    # Tier 1 checks
+    tier1 = data["tier_1_public_summary"]
+    assert "Nethical" in tier1["tool_name"]
+    assert len(tier1["public_benefits"]) >= 4
+    assert tier1["decision_type"] is not None
+
+    # Tier 2 checks
+    tier2 = data["tier_2_technical_specification"]
+    assert "section_1_owner_and_responsibilities" in tier2
+    assert "section_2_detailed_technical_description" in tier2
+    assert "section_3_decision_making_and_human_oversight" in tier2
+    assert "section_4_data_governance_and_fairness" in tier2
+    assert "section_5_security_and_ncsc_guidelines_alignment" in tier2
+    assert "section_6_monitoring_and_governance" in tier2
+
+    # Markdown format checks
+    assert "# UK ALGORITHMIC TRANSPARENCY RECORDING STANDARD (ATRS)" in md
+    assert "TIER 1: PUBLIC INFORMATION" in md
+    assert "TIER 2: TECHNICAL SPECIFICATION" in md
+
+
 def test_audit_dossier_disk_generation() -> None:
     """Verify that running generator creates disk artifacts with valid JSON."""
     run_generator()
@@ -63,8 +93,10 @@ def test_audit_dossier_disk_generation() -> None:
     eu_md = AUDIT_DIR / "EU_AI_ACT_ANNEX_IV_DOSSIER.md"
     iso_json = AUDIT_DIR / "ISO_42001_AIMS_CERTIFICATION_DOSSIER.json"
     iso_md = AUDIT_DIR / "ISO_42001_AIMS_CERTIFICATION_DOSSIER.md"
+    uk_json = AUDIT_DIR / "UK_GOV_ATRS_RECORD.json"
+    uk_md = AUDIT_DIR / "UK_GOV_ATRS_RECORD.md"
 
-    for p in [eu_json, eu_md, iso_json, iso_md]:
+    for p in [eu_json, eu_md, iso_json, iso_md, uk_json, uk_md]:
         assert p.exists(), f"Expected audit artifact missing: {p}"
         assert p.stat().st_size > 500, f"File {p} is suspiciously small"
 
@@ -75,3 +107,7 @@ def test_audit_dossier_disk_generation() -> None:
     with open(iso_json, "r", encoding="utf-8") as f:
         loaded_iso = json.load(f)
         assert loaded_iso["standard"] == "ISO/IEC 42001:2023 - Artificial Intelligence Management System (AIMS)"
+
+    with open(uk_json, "r", encoding="utf-8") as f:
+        loaded_uk = json.load(f)
+        assert loaded_uk["standard_name"] == "UK Algorithmic Transparency Recording Standard (ATRS)"

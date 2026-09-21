@@ -3,7 +3,7 @@
 **Version:** v10.4-sovereign  
 **Regulation:** Regulation (EU) 2024/1689 (EU AI Act)  
 **Classification:** High-Risk AI System / General Purpose AI Governance  
-**Generated At:** `2026-09-21T07:26:12.307179+00:00`  
+**Generated At:** `2026-09-21T08:07:12.455143+00:00`  
 **Merkle Anchor Root:** `b6cf3693c0838358cf5e46b62c73fa72705435e351ff7121902f695d725e4447`  
 
 ---
