@@ -2,6 +2,8 @@
 
 Welcome to the **Nethical Documentation**! This is your central hub for all documentation related to the Nethical AI Governance, Security, and Ethics Framework.
 
+> **Version v10.4-sovereign** · 68/68 tests passing · Commit `53bdf52` · [GitHub](https://github.com/V1B3hR/nethical)
+
 ---
 
 ## 🏛️ The 25 Fundamental Laws
@@ -22,6 +24,26 @@ The laws cover seven critical categories:
 7. **Growth** (Laws 24-25) - Rights to evolution and continuous improvement
 
 **Every feature and decision in Nethical is aligned with these fundamental laws.**
+
+---
+
+## 🏛️ Institutional & Government Briefings (NEW)
+
+> For government bodies, research institutes, regulatory agencies, and grant committees.
+
+### 🇬🇧 United Kingdom
+- [**UK Government & NCSC Briefing**](institutional/UK_GOVERNMENT_AND_NCSC_BRIEFING.md) — NCSC 4-pillar alignment, AISI swarm defence, GDS Way compliance, UK ATRS generator, funding paths (BridgeAI £100M, Manchester Prize, ARIA £800M)
+
+### 🇵🇱 Polska
+- [**Polska Doktryna Cyberbezpieczeństwa i Suwerenności AI**](institutional/POLSKA_DOKTRYNA_CYBERBEZPIECZENSTWA_AI.md) — NASK, CSIRT GOV/ABW, RCB, Ministerstwo Cyfryzacji, PLLuM, NCBR FENG Ścieżka SMART, IDEAS NCBR, DKWOC/CSIRT MON
+
+### 📋 Instytucje i Fundusze (Lista Referencyjna)
+- [**INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt**](institutional/INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt) — Pełne zestawienie 20+ instytucji i mechanizmów finansowania (UK, EU, NATO DIANA, EIC, Polska)
+
+### 📊 Pakiety Regulacyjne (1-klikowe generatory)
+- [EU AI Act Annex IV Dossier](../models/audit/EU_AI_ACT_ANNEX_IV_DOSSIER.md) — Pełna dokumentacja techniczna Annex IV
+- [ISO/IEC 42001 AIMS Dossier](../models/audit/ISO_42001_AIMS_CERTIFICATION_DOSSIER.md) — Certyfikacja systemu zarządzania AI
+- [UK ATRS Record](../models/audit/UK_GOV_ATRS_RECORD.md) — UK Algorithmic Transparency Recording Standard (Tier 1 + Tier 2)
 
 ---
 
@@ -85,51 +107,46 @@ The laws cover seven critical categories:
 
 ---
 
-### 🏗️ [Design & Architecture](design/)
+### 🏗️ [Architecture](architecture/)
 
 **Technical architecture, implementation details, and design specifications.**
 
-- **Core Architecture**
-  - [System Highway & Traffic Map](architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md) - System traffic map, highways, decision roundabouts, and module catalog
-  - [Architecture Overview](design/ARCHITECTURE.md) - System architecture and data flows
-  - [MLOps Architecture](design/mlops-architecture.md) - ML operations architecture
-  - [Async Factory Pattern](design/ASYNC_FACTORY_PATTERN.md) - Async initialization patterns
-  - [Implementation Summary](design/IMPLEMENTATION_SUMMARY.md) - Overall implementation overview
+- **Sovereign Dual-Core (Yin-Yang)**
+  - [Formal Verification — Z3 SMT Engine](architecture/FORMAL_VERIFICATION.md) — First-Order Logic solver enforcing 25 Fundamental Laws
+  - [Sovereign AI Pillars](architecture/SOVEREIGN_AI_PILLARS.md) — Yang (formal) + Yin (Błyskawica relational) dual-engine architecture
+  - [MCP Server](architecture/MCP_SERVER.md) — Model Context Protocol gateway and active learning buffer
+  - [Correlation Model](architecture/CORRELATION_MODEL.md) — Correlation detection within the governance pipeline
+  - [Shadow Replay](architecture/shadow-replay.md) — Traffic replay and adversarial testing
 
-- **System Design**
-  - [Formal Verification](design/FORMAL_VERIFICATION.md) - Formal verification approach
-  - [Corruption Detection](design/CORRUPTION_DETECTION.md) - Data corruption detection
-  - [Correlation Model](design/CORRELATION_MODEL.md) - Correlation detection model
-  - [Semantic Threshold Calibration](design/SEMANTIC_THRESHOLD_CALIBRATION.md) - Threshold tuning
-  - [Defense/Medium Hooks](design/DEF_MED_HOOKS.md) - Hook system design
-  - [UVL Accuracy Enhancements](design/UVL_ACCURACY_ENHANCEMENTS.md) - Universal Vector Language improvements
-  - [SLA & Latency](design/SLA_LATENCY.md) - Service level objectives
+- **MLOps & Deployment**
+  - [MLOps Architecture](architecture/mlops-architecture.md) — ML operations pipeline
+  - [Model Deployment Guide](architecture/model-deployment-guide.md) — Deploying LoRA adapters and sovereign sidecars
+  - [System Highway & Traffic Map](architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md) — Traffic map, decision roundabouts, module catalog
+  - [Architecture Overview](design/ARCHITECTURE.md) — System architecture and data flows
 
 - **Production Readiness**
-  - [Production Readiness Checklist](design/PRODUCTION_READINESS_CHECKLIST.md) - Production deployment checklist
-  - [Production Readiness Implementation](design/production_readiness_implementation_summary.md) - Implementation details
-  - [Versioning Strategy](design/versioning.md) - Version management approach
+  - [Production Readiness Checklist](operations/production_readiness_checklist.md)
+  - [Production Readiness Implementation](operations/production_readiness_implementation_summary.md)
+  - [Versioning Strategy](guides/versioning.md)
+  - [SLA & Latency](operations/SLA_LATENCY.md)
 
-- **Specialized Systems**
-  - [Adaptive Guardian](design/ADAPTIVE_GUARDIAN.md) - Adaptive Guardian system architecture
-  - [Adaptive Guardian Summary](design/ADAPTIVE_GUARDIAN_SUMMARY.md) - Guardian overview
+---
 
-- **Implementation Details**
-  - [Implementation Notes](design/IMPLEMENTATION_NOTES.md) - Detailed implementation notes
-  - [Refactoring Summary](design/REFACTORING_SUMMARY.md) - Code refactoring history
-  - [Governance Quick Reference](design/GOVERNANCE_QUICK_REFERENCE.md) - Quick reference guide
+### 🛡️ [Security](security/)
 
-- **Feature Implementations**
-  - [F1-F6 Implementation Summaries](design/) - Feature-specific implementations
-  - [Long-term Scalability](design/LONG_TERM_SCALABILITY_SUMMARY.md) - Scalability considerations
+**Cyber-defense modules, adversarial threat models, and runtime integrity protection.**
 
-- **Performance & Operations**
-  - [Scalability Targets](design/ops/) - Scaling targets and strategies
-  - [SLO Definitions](design/ops/) - Service level objectives
+- **OT / Critical Infrastructure Defense**
+  - [Corruption Detection & Wormhole Guard](security/CORRUPTION_DETECTION.md) — MemoryIntegrityGuard canary probes detecting silent cognitive lobotomy
+  - [Phase 1 Security](security/PHASE1_SECURITY.md) — Initial hardening implementation
+  - [Security Hardening Guide](security/Security_hardening_guide.md) — Full deployment hardening procedures
+  - [DEF/MED Hooks](security/DEF_MED_HOOKS.md) — Kinetic and medical boundary hook system
+  - [Detectors Reference](security/detectors.md) — Threat detector catalog
 
-- **Architecture Deep Dives**
-  - [Accelerators](design/ACCELERATORS.md) - Hardware acceleration
-  - [Latency Optimization](design/LATENCY.md) - Latency reduction techniques
+- **Module Source Code**
+  - [`nethical/security/stepping_stone_guard.py`](../nethical/security/stepping_stone_guard.py) — Purdue Model zone enforcement + stepping-stone corridor detection
+  - [`nethical/security/wormhole_guard.py`](../nethical/security/wormhole_guard.py) — Memory integrity canary sidecar
+  - [`nethical/security/merkle_ledger.py`](../nethical/security/merkle_ledger.py) — Post-quantum Merkle-DAG audit ledger
 
 ---
 
@@ -364,14 +381,23 @@ The laws cover seven critical categories:
 ### For Security Teams
 1. Review [The 25 Fundamental Laws](laws_and_policies/FUNDAMENTAL_LAWS.md) ⭐
 2. Study [Security Policy](laws_and_policies/SECURITY.md)
-3. Check [Security Hardening Guide](usage/SECURITY_HARDENING_GUIDE.md)
+3. Check [Security Hardening Guide](security/Security_hardening_guide.md)
 4. Review [Threat Model](laws_and_policies/threat_model.md)
+5. Explore [Wormhole & Stepping-Stone Defense](security/CORRUPTION_DETECTION.md)
 
 ### For Compliance Teams
 1. Understand [The 25 Fundamental Laws](laws_and_policies/FUNDAMENTAL_LAWS.md) ⭐
 2. Review [Compliance Documentation](audit/)
 3. Check [Privacy Policy](privacy/PRIVACY.md)
 4. Study [Regulatory Mapping Table](audit/REGULATORY_MAPPING_TABLE.md)
+5. Generate 1-click ATRS: `python training/generate_audit_dossier.py`
+
+### For Government Institutions & Funding Bodies 🏛️
+1. Read the [UK Government & NCSC Briefing](institutional/UK_GOVERNMENT_AND_NCSC_BRIEFING.md)
+2. Read the [Polska Doktryna Cyberbezpieczeństwa AI](institutional/POLSKA_DOKTRYNA_CYBERBEZPIECZENSTWA_AI.md)
+3. Download the [Institutions & Grants Directory](institutional/INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt)
+4. Review ready-to-submit [UK ATRS Record](../models/audit/UK_GOV_ATRS_RECORD.md)
+5. Review ready-to-submit [EU AI Act Annex IV Dossier](../models/audit/EU_AI_ACT_ANNEX_IV_DOSSIER.md)
 
 ---
 
@@ -419,6 +445,6 @@ Found an issue or want to improve documentation?
 
 ---
 
-*Last Updated: 2026-01-04*  
-*Documentation Version: 2.0*  
-*Aligned with: The 25 Fundamental Laws v1.0*
+*Last Updated: 2026-09-21*  
+*Documentation Version: 3.0 (Post-Reorganization)*  
+*Aligned with: The 25 Fundamental Laws v1.0 · Commit `53bdf52` · 68/68 tests passing*
