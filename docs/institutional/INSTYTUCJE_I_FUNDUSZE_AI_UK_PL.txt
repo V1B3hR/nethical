@@ -1,209 +1,208 @@
 ================================================================================
-INSTYTUCJE RZĄDOWE, INSTYTUTY BADAWCZE I FUNDUSZE GRANTOWE DLA NETHICAL
-Zestawienie Instytucji Wielkiej Brytanii, Podmiotów Globalnych oraz Polskich Odpowiedników
+GOVERNMENTAL INSTITUTIONS, RESEARCH BODIES, AND GRANT VEHICLES FOR NETHICAL
+Comprehensive Directory of UK Institutions, Global Entities, and Polish Counterparts
 ================================================================================
-Data opracowania: 21 września 2026 r.
-Repozytorium projektu: https://github.com/V1B3hR/nethical
-Status projektu: 64/64 testy zaliczone (100%), pełna zgodność z GDS Way, ISO 42001, EU AI Act i ATRS
+Date of Compilation: 21 September 2026
+Source Repository: https://github.com/V1B3hR/nethical
+Project Status: 64/64 automated tests passing (100%), full alignment with GDS Way, ISO/IEC 42001, EU AI Act, and ATRS
 
 --------------------------------------------------------------------------------
-CZĘŚĆ 1: 6 WSKAZANYCH INSTYTUCJI WIELKIEJ BRYTANII (UK)
+PART 1: 6 MANDATED INSTITUTIONS OF THE UNITED KINGDOM (UK)
 --------------------------------------------------------------------------------
 
 1. NCSC (National Cyber Security Centre)
-   - Adres WWW: https://www.ncsc.gov.uk/
-   - Rola: Główna brytyjska agencja ds. cyberbezpieczeństwa (część GCHQ).
-   - Kluczowe wytyczne: "Guidelines for secure AI system development" (4 filary: Secure Design, Development, Deployment, Operation).
-   - Zastosowanie Nethical:
-     * SilentTargetSteppingStoneGuard: Wymuszanie stref i kanałów modelu Purdue (ISA/IEC 62443 L0-L5) dla infrastruktury krytycznej.
-     * MemoryIntegrityGuard: Ochrona przed cichym wycinaniem funkcji modelu (atak "Wormhole") za pomocą kanarków AST.
-     * Architektura zero-network IPC: Gniazda pamięci RAM emptyDir bez wystawiania portów TCP/HTTP na świat.
-   - Gotowość: GOTOWY NA AUDYT TECHNICZNY I PILOTAŻ.
+   - Web: https://www.ncsc.gov.uk/
+   - Role: The UK's technical authority for cyber incidents and security (part of GCHQ).
+   - Core Guidelines: "Guidelines for secure AI system development" (4 pillars: Secure Design, Development, Deployment, Operation).
+   - Nethical Integration:
+     * SilentTargetSteppingStoneGuard: Enforcing Purdue Model zones and conduits (ISA/IEC 62443 L0-L5) for critical national infrastructure.
+     * MemoryIntegrityGuard: Defence against silent runtime model function stripping ("Wormhole" cognitive attacks) via active AST canaries.
+     * Zero-Network IPC Architecture: Shared RAM emptyDir memory sockets eliminating untrusted external TCP/HTTP attack surfaces.
+   - Readiness: READY FOR TECHNICAL AUDIT AND SANDBOX PILOT.
 
 2. The Alan Turing Institute
-   - Adres WWW: https://www.turing.ac.uk/
-   - Rola: Narodowy instytut naukowy ds. data science i sztucznej inteligencji; współtwórca AI Standards Hub (z DSIT i BSI).
-   - Programy: Public Policy Programme, badania nad etyką i odpornością algorytmów.
-   - Zastosowanie Nethical:
-     * Ochrona przed Model Autophagy Disorder (MAD / Model Collapse): Utrzymanie >50% real-world data i entropii Shannona >7.1 bitów.
-     * Neuro-symboliczna fuzja: Dowodzenie matematyczne Z3 SMT (25 Praw) połączone z adaptacyjnym DPO i termostatem Kalmana.
-     * Testy bezstronności (Fairness): Ciągły monitoring reguły 80% (Four-Fifths Rule / Disparate Impact Ratio) pod Equality Act 2010.
-   - Gotowość: GOTOWY DO PARTNERSTWA NAUKOWO-BADAWCZEGO I PUBLIKACJI.
+   - Web: https://www.turing.ac.uk/
+   - Role: The UK's national institute for data science and artificial intelligence; co-creator of the AI Standards Hub (with DSIT and BSI).
+   - Key Programmes: Public Policy Programme, Algorithmic Fairness & Robustness Research.
+   - Nethical Integration:
+     * Protection against Model Autophagy Disorder (MAD / Model Collapse): Guaranteeing >50% real-world data ratio and Shannon entropy >7.1 bits.
+     * Neuro-Symbolic Synthesis: Z3 SMT First-Order Logic mathematical proofs (25 Fundamental Laws) coupled with adaptive DPO LoRA and Kalman thermostat loss governance.
+     * Algorithmic Fairness Audits: Continuous enforcement of the 80% rule (Four-Fifths Rule / Disparate Impact Ratio) under the UK Equality Act 2010.
+   - Readiness: READY FOR RESEARCH PARTNERSHIP AND PEER-REVIEWED PUBLICATION.
 
 3. UKRI (UK Research and Innovation) & Innovate UK
-   - Adres WWW: https://www.ukri.org/
-   - Rola: Największa publiczna agencja finansująca badania naukowe i innowacje w Wielkiej Brytanii.
-   - Konkretne programy finansowania (wg raportu NAO HC 612):
-     * Innovate UK BridgeAI (£100 milionów): Finansowanie bezpiecznej adopcji AI w kluczowych sektorach gospodarki.
-     * UKRI Challenge Fund (AI and Data Economy): Finansowanie bezpieczeństwa danych i odporności modeli.
-     * Fairness Innovation Challenge (£400 000 od DSIT): Eliminacja uprzedzeń i stronniczości w algorytmach decyzyjnych.
-     * The Manchester Prize (£1 milion rocznie przez 10 lat): Przełomowe AI dla dobra publicznego (energia, infrastruktura, odporność).
-   - Gotowość: GOTOWY DO ZŁOŻENIA WNIOSKU GRANTOWEGO (najlepiej w konsorcjum z brytyjskim partnerem).
+   - Web: https://www.ukri.org/
+   - Role: The UK's largest public funding body for scientific research and enterprise innovation.
+   - Targeted Funding Streams (Ref: NAO Report HC 612):
+     * Innovate UK BridgeAI (£100M): Adoption and deployment of trusted AI across critical economic sectors.
+     * UKRI Challenge Fund (AI and Data Economy): Data security, algorithmic assurance, and foundation model resilience.
+     * Fairness Innovation Challenge (£400k via DSIT): Eliminating algorithmic bias and disparate impact in decision engines.
+     * The Manchester Prize (£1M/year over 10 years): Breakthrough public-good AI for clean energy, public infrastructure, and national resilience.
+   - Readiness: READY FOR GRANT CONSORTIUM APPLICATION (ideally with a UK academic or industrial partner).
 
 4. AISI (Artificial Intelligence Safety Institute)
-   - Adres WWW: https://www.aisi.gov.uk/
-   - Rola: Czołowy globalny instytut ewaluacji modeli granicznych (frontier models) powołany przez rząd UK pod egidą DSIT.
-   - Obszary badań: Uśpieni agenci (sleeper agents), steganografia, zmowa autonomicznych rojów agentów, cyberzagrożenia.
-   - Zastosowanie Nethical:
-     * Swarm Arena: Profilowanie prędkości i inteligencji agentów, wykrywanie zmowy w głosowaniach Borda/Copeland i kwarantanna bizantyjska.
-     * Tarcza antystepping-stone: Blokada wieloskokowego tranzytu przez sieci domowe (np. 1 -> 4 -> 7 -> 21 -> 77 -> 98).
-     * Ochrona pamięci LTM: Wykrywanie utajonych manipulacji kognitywnych i demencji modelu.
-   - Gotowość: IDEALNY BENCHMARK I POLIGON TESTOWY DLA AISI.
+   - Web: https://www.aisi.gov.uk/
+   - Role: Frontier AI evaluation authority established by HM Government under the Department for Science, Innovation and Technology (DSIT).
+   - Research Domains: Sleeper agents, steganography, autonomous multi-agent swarm conspiracies, critical cyber risks.
+   - Nethical Integration:
+     * Swarm Arena: Multi-agent velocity and intelligence profiling, Byzantine quorum detection, and Borda/Copeland voting collusion filtering.
+     * Anti-Stepping-Stone Shield: Interception of multi-hop residential proxy cascades (e.g. Node 1 -> 4 -> 7 -> 21 -> 77 -> 98).
+     * Long-Term Memory (LTM) Protection: Detection of covert cognitive manipulation, weight tampering, and latent model dementia.
+   - Readiness: IDEAL FRONTIER MODEL BENCHMARK AND TESTBED FOR AISI.
 
 5. GDS (Government Digital Service) & CDDO (Central Digital and Data Office)
-   - Adres WWW: https://www.gov.uk/government/organisations/government-digital-service
-   - Rola: Organ Kancelarii Premiera UK (Cabinet Office) nadzorujący transformację cyfrową, standardy technologiczne i zakupy IT rządu.
-   - Obowiązkowe standardy: Algorithmic Transparency Recording Standard (ATRS - obowiązkowy od 2024 r.), Technology Code of Practice (TCoP).
-   - Zastosowanie Nethical:
-     * Automatyczny generator rekordów ATRS (Tier 1 Public Summary + Tier 2 Technical Specification).
-     * Rozwiązanie problemu 70% departamentów UK nieposiadających wiedzy jak audytować i raportować narzędzia AI.
-   - Gotowość: GOTOWE ROZWIĄZANIE DLA ZESPOŁÓW CYFROWYCH WHITEHALL.
+   - Web: https://www.gov.uk/government/organisations/government-digital-service
+   - Role: Cabinet Office executive bodies directing digital transformation, cross-government technology standards, and procurement policies.
+   - Mandatory Standards: Algorithmic Transparency Recording Standard (ATRS - mandatory across central government), Technology Code of Practice (TCoP).
+   - Nethical Integration:
+     * Automated ATRS Record Generator (producing Tier 1 Public Summary and Tier 2 Technical Specification JSON records).
+     * Direct solution for the 70% of UK public departments lacking internal resources to audit and document automated AI tools.
+   - Readiness: TURNKEY RUNTIME SOLUTION FOR WHITEHALL DIGITAL DELIVERY TEAMS.
 
 6. GDS Way: Open Source & GitHub Standards
-   - Adres WWW: https://gds-way.digital.cabinet-office.gov.uk/standards/source-code/use-github.html
-   - Rola: Oficjalny brytyjski standard jakości kodu źródłowego dla sektora publicznego.
-   - Wymogi: Kod otwarty domyślnie, brak wycieków sekretów w historii git, licencja open source, kompletna dokumentacja i testy CI/CD.
-   - Stan Nethical:
-     * 100% zgodności ze standardem GDS Way.
-     * Repozytorium: https://github.com/V1B3hR/nethical
-     * Licencja MIT, pełne pliki ładu (SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, CLA.md).
-     * 64/64 testy automatyczne przechodzące bez ostrzeżeń.
-   - Gotowość: 100% ZGODNOŚCI (10 / 10).
+   - Web: https://gds-way.digital.cabinet-office.gov.uk/standards/source-code/use-github.html
+   - Role: HM Government's official source code quality and open-source publication standard for the public sector.
+   - Compliance Requirements: Open by default, zero secret leakage in git commit lineage, approved open-source licence, complete CI/CD automated test suites and governance documentation.
+   - Nethical Status:
+     * 100% GDS Way compliance verified.
+     * Public repository: https://github.com/V1B3hR/nethical
+     * MIT Licence with complete governance files (SECURITY.md, CONTRIBUTING.md, CODE_OF_CONDUCT.md, CLA.md).
+     * 64/64 automated pytest suites executing with zero critical warnings.
+   - Readiness: 100% COMPLIANT (Score: 10 / 10).
 
 --------------------------------------------------------------------------------
-CZĘŚĆ 2: DODATKOWE PODMIOTY UK, ŚWIATOWE ORAZ FUNDUSZE FINANSOWANIA
+PART 2: ADDITIONAL UK, ALLIED, AND GLOBAL BODIES & GRANT SCHEMES
 --------------------------------------------------------------------------------
 
 1. i.AI (Incubator for Artificial Intelligence - 10 Downing Street / Cabinet Office)
-   - Adres WWW: https://ai.gov.uk/
-   - Budżet: £101 milionów na lata 2024-2029 (zespół ~70 inżynierów AI elity rządowej).
-   - Rola: Szybkie prototypowanie i wdrażanie bezpiecznego AI w ministerstwach Wielkiej Brytanii.
-   - Cel dla Nethical: Dostarczenie gotowego sidecara governance dla projektów prowadzonych przez i.AI.
+   - Web: https://ai.gov.uk/
+   - Budget: £101 Million (2024-2029 allocation, elite government engineering team of ~70 AI specialists).
+   - Role: Rapid prototyping, testing, and deployment of secure AI tools across UK central ministries.
+   - Target for Nethical: Provision of a drop-in governance sidecar for i.AI public projects.
 
 2. ARIA (Advanced Research and Invention Agency - UK)
-   - Adres WWW: https://www.aria.org.uk/
-   - Budżet: £800 milionów (brytyjski odpowiednik DARPA).
-   - Kluczowy program: "Safeguarded AI" (matematyczne gwarancje bezpieczeństwa systemów AI).
-   - Cel dla Nethical: Finansowanie prac nad rozwojem metod formalnych Z3 SMT i post-kwantowych rejestrów Merkle-DAG.
+   - Web: https://www.aria.org.uk/
+   - Budget: £800 Million (UK statutory equivalent to US DARPA).
+   - Core Flagship Programme: "Safeguarded AI" (Mathematical and formal verification guarantees for autonomous systems).
+   - Target for Nethical: Funding vehicle for the development of Z3 SMT formal methods and post-quantum Merkle-DAG ledger scalability.
 
 3. DSTL (Defence Science and Technology Laboratory) & DAIC (Defence AI Centre - UK MoD)
-   - Adres WWW: https://www.gov.uk/government/organisations/defence-science-and-technology-laboratory
-   - Rola: Badania obronne dla brytyjskiego Ministerstwa Obrony.
-   - Cel dla Nethical: Wykorzystanie kinetycznych wyłączników awaryjnych (<1.0 ms) i taktycznego węzła brzegowego nethical-edge w enklawach odciętych od sieci (Air-Gap).
+   - Web: https://www.gov.uk/government/organisations/defence-science-and-technology-laboratory
+   - Role: Defence research and military operational science for the UK Ministry of Defence.
+   - Target for Nethical: Deployment of sub-millisecond kinetic emergency interlocks (<1.0 ms) and tactical nethical-edge enclaves in air-gapped field operations.
 
 4. Crown Commercial Service (CCS) - AI Dynamic Purchasing System (DPS)
-   - Adres WWW: https://www.crowncommercial.gov.uk/
-   - Rola: Centralna platforma zakupowa dla całego brytyjskiego sektora publicznego.
-   - Cel dla Nethical: Rejestracja w rejestrze dostawców DPS, umożliwiająca bezpośredni zakup oprogramowania przez dowolny urząd w UK.
+   - Web: https://www.crowncommercial.gov.uk/
+   - Role: Central public procurement agency for all UK central and municipal public sector organisations.
+   - Target for Nethical: Vendor DPS registration enabling direct software procurement by any UK public authority without lengthy bespoke tenders.
 
 5. NATO DIANA (Defence Innovation Accelerator for the North Atlantic)
-   - Adres WWW: https://www.diana.nato.int/
-   - Typ wsparcia: Bezzwrotne granty do 400 000 EUR na fazę + dostęp do centrów testowych NATO.
-   - Obszar: Ochrona infrastruktury krytycznej, suwerenność danych, odporność na ataki hybrydowe i wojnę kognitywną.
-   - Cel dla Nethical: Testowanie modułu SilentTargetSteppingStoneGuard w scenariuszach sojuszniczych.
+   - Web: https://www.diana.nato.int/
+   - Grant Mechanism: Non-dilutive grants up to €400,000 per phase + access to accredited NATO test centres.
+   - Focus: Critical national infrastructure protection, data sovereignty, resilience against hybrid threats and cognitive warfare.
+   - Target for Nethical: Validating SilentTargetSteppingStoneGuard in allied mission scenarios.
 
-6. EIC Accelerator (European Innovation Council - Horyzont Europa)
-   - Adres WWW: https://eic.ec.europa.eu/eic-funding-opportunities/eic-accelerator_en
-   - Typ wsparcia: Grant do 2,5 miliona EUR + finansowanie kapitałowe (equity) do 15 milionów EUR.
-   - Obszar: Przełomowe technologie głębokie (Deep Tech) budujące strategiczną suwerenność Europy w dziedzinie bezpiecznego AI.
+6. EIC Accelerator (European Innovation Council - Horizon Europe)
+   - Web: https://eic.ec.europa.eu/eic-funding-opportunities/eic-accelerator_en
+   - Grant Mechanism: Non-dilutive grants up to €2.5M + equity coinvestment up to €15M.
+   - Focus: Deep Tech breakthroughs fostering strategic European sovereignty in trustworthy and verifiable AI.
 
 7. ENISA (European Union Agency for Cybersecurity)
-   - Adres WWW: https://www.enisa.europa.eu/
-   - Rola: Europejska agencja certyfikacji i standardów cyberbezpieczeństwa (wytyczne NIS2, Cyber Resilience Act).
+   - Web: https://www.enisa.europa.eu/
+   - Role: European cybersecurity certification body and technical agency (NIS2 guidelines, Cyber Resilience Act).
 
 --------------------------------------------------------------------------------
-CZĘŚĆ 3: PEŁNE ZESTAWIENIE POLSKICH ODPOWIEDNIKÓW I INSTYTUCJI RZĄDOWYCH
+PART 3: DIRECTORY OF POLISH ENTITIES, REGULATORS, AND GRANT SCHEMES
 --------------------------------------------------------------------------------
 
-1. NASK (Naukowa i Akademicka Sieć Komputerowa – PIB) oraz CSIRT NASK
-   - Odpowiednik UK: NCSC / The Alan Turing Institute
-   - Adres WWW: https://www.nask.pl/ | https://incydent.cert.pl/
-   - Rola: Państwowy Instytut Badawczy oraz jeden z trzech Zespołów Reagowania na Incydenty Bezpieczeństwa Komputerowego poziomu krajowego (Krajowy System Cyberbezpieczeństwa).
-   - Punkty styku z Nethical:
-     * Badania nad wykrywaniem anomalii i ataków tranzytowych w sieciach ISP (SilentTargetSteppingStoneGuard).
-     * Ochrona przed złośliwymi rojami botów, dezinformacją i zmową agentów (Swarm Arena).
-     * Dział Badań i Rozwoju NASK (projekty badawcze z zakresu uczenia maszynowego i cyberbezpieczeństwa).
+1. NASK (Naukowa i Akademicka Siec Komputerowa – PIB) and CSIRT NASK
+   - UK Counterpart: NCSC / The Alan Turing Institute
+   - Web: https://www.nask.pl/ | https://incydent.cert.pl/
+   - Role: National Research Institute and one of three statutory CSIRTs operating at the national level (National Cybersecurity System - KSC).
+   - Integration Touchpoints with Nethical:
+     * Research on transit anomaly and stepping-stone proxy detection across domestic ISP networks (SilentTargetSteppingStoneGuard).
+     * Defence against malicious bot swarms, cognitive disinformation, and multi-agent collusion (Swarm Arena).
+     * NASK R&D Division collaboration on verifiable ML and post-quantum lattice ledgers.
 
-2. CSIRT GOV (Agencja Bezpieczeństwa Wewnętrznego - ABW)
-   - Odpowiednik UK: NCSC (Critical National Infrastructure Team) / MI5 Cyber
-   - Adres WWW: https://csirt.gov.pl/
-   - Rola: Ochrona teleinformatyczna administracji rządowej oraz obiektów Infrastruktury Krytycznej (IK) RP.
-   - Punkty styku z Nethical:
-     * Wymuszenie modelu strefowego Purdue (ISA/IEC 62443) w elektrociepłowniach, sieciach energetycznych i ujęciach wody.
-     * Zgodność z wymogami Ustawy o KSC i Dyrektywą NIS2 w zakresie bezpieczeństwa łańcucha dostaw oprogramowania AI.
+2. CSIRT GOV (Internal Security Agency - ABW)
+   - UK Counterpart: NCSC (Critical National Infrastructure Team) / MI5 Cyber
+   - Web: https://csirt.gov.pl/
+   - Role: Telecommunications and cyber protection of state administration and Polish Critical Infrastructure (Infrastruktura Krytyczna - IK).
+   - Integration Touchpoints with Nethical:
+     * Purdue Model zone and conduit enforcement (ISA/IEC 62443) across district heating plants, power grids, and water filtration facilities.
+     * Compliance with KSC Act and NIS2 Article 21 mandates regarding AI software supply chain integrity.
 
-3. Rządowe Centrum Bezpieczeństwa (RCB)
-   - Odpowiednik UK: Cabinet Office Civil Contingencies Secretariat
-   - Adres WWW: https://www.gov.pl/web/rcb
-   - Rola: Główny koordynator ochrony Infrastruktury Krytycznej (IK) w Polsce; wdrażanie Dyrektywy CER (Art. 12 - odporność podmiotów krytycznych).
-   - Punkty styku z Nethical:
-     * Ochrona przed kaskadowym wyłączaniem zasilania i ogrzewania miejskiego na skutek cyberataków hybrydowych.
+3. Government Centre for Security (RCB - Rządowe Centrum Bezpieczeństwa)
+   - UK Counterpart: Cabinet Office Civil Contingencies Secretariat
+   - Web: https://www.gov.pl/web/rcb
+   - Role: Central coordinator for Critical Infrastructure Protection (IK) in Poland; transposing the CER Directive (Directive 2022/2557 Art. 12).
+   - Integration Touchpoints with Nethical:
+     * Protection against cascading blackouts, heating shutdowns, and physical actuator sabotage triggered by hybrid cyber incidents.
 
-4. Ministerstwo Cyfryzacji (MC)
-   - Odpowiednik UK: DSIT (Dept for Science, Innovation & Technology) oraz CDDO
-   - Adres WWW: https://www.gov.pl/web/cyfryzacja
-   - Departamenty:
-     * Departament Sztucznej Inteligencji i Innowacji (wdrażanie AI Act, Polityka Rozwoju SI w Polsce).
-     * Departament Cyberbezpieczeństwa (nowelizacja Ustawy o KSC, nadzór nad NIS2).
-   - Narzędzia finansowe:
-     * Fundusz Cyberbezpieczeństwa: Środki rządowe przeznaczone na wsparcie rozwiązań wzmacniających cyberodporność RP.
-   - Strategiczne inicjatywy:
-     * Projekt PLLuM (Polish Large Language Universal Model): Konsorcjum budujące polski model państwowy. Nethical stanowi idealny, suwerenny pancerz bezpieczeństwa i moduł audytowy dla wdrożeń PLLuM w administracji publicznej.
+4. Ministry of Digital Affairs (Ministerstwo Cyfryzacji - MC)
+   - UK Counterpart: DSIT (Dept for Science, Innovation & Technology) and CDDO
+   - Web: https://www.gov.pl/web/cyfryzacja
+   - Key Departments:
+     * Artificial Intelligence and Innovation Department (EU AI Act implementation, Polish AI Development Policy).
+     * Cybersecurity Department (KSC Act amendments, NIS2 oversight).
+   - Strategic Vehicles:
+     * Polish Cybersecurity Fund: State budgetary allocation dedicated to cyber resilience solutions.
+     * The PLLuM Consortium (Polish Large Language Universal Model): Polish national foundation model project. Nethical provides a sovereign safety shield, factual verification engine, and automated Annex IV audit exporter for PLLuM public sector deployments.
 
-5. NCBR (Narodowe Centrum Badań i Rozwoju)
-   - Odpowiednik UK: UKRI (UK Research and Innovation) & Innovate UK
-   - Adres WWW: https://www.gov.pl/web/ncbr
-   - Rola: Główna polska agencja rządowa finansująca projekty badawczo-rozwojowe (B+R).
-   - Główne programy finansowania dla Nethical:
-     * FENG (Fundusze Europejskie dla Nowoczesnej Gospodarki) - "Ścieżka SMART": Finansowanie modułów B+R, cyfryzacji i wdrożeń innowacji (budżety projektów od kilku do kilkunastu milionów PLN, dofinansowanie do 80%).
-     * Program Strategiczny INFOSTRATEG: Wsparcie dla zaawansowanych systemów AI, przetwarzania języka naturalnego i etycznej weryfikacji.
-     * Program CYBERSECIDENT: Dedykowane granty na cyberbezpieczeństwo i suwerenność tożsamości cyfrowej.
+5. NCBR (National Centre for Research and Development - Narodowe Centrum Badań i Rozwoju)
+   - UK Counterpart: UKRI (UK Research and Innovation) & Innovate UK
+   - Web: https://www.gov.pl/web/ncbr
+   - Role: Executive government agency financing enterprise and scientific R&D initiatives.
+   - Primary Grant Programmes for Nethical:
+     * FENG (European Funds for Modern Economy) – "SMART Path (Sciezka SMART)": Grant funding for R&D modules, software productisation, and digital transformation (budgets from several to tens of millions PLN, up to 80% co-financing).
+     * INFOSTRATEG Strategic Programme: Targeted grants for advanced AI systems, natural language verification, and ethical audit frameworks.
+     * CYBERSECIDENT Programme: Grants dedicated to national cybersecurity tools and sovereign digital identity safeguards.
 
 6. IDEAS NCBR
-   - Odpowiednik UK: The Alan Turing Institute / AISI
-   - Adres WWW: https://ideas-ncbr.pl/
-   - Rola: Prestiżowy instytut badawczo-rozwojowy skupiający czołowych polskich naukowców AI (założony m.in. przez prof. Piotra Sankowskiego).
-   - Obszary badawcze: Bezpieczne uczenie maszynowe, metody formalne w AI, teoria gier.
-   - Punkty styku z Nethical:
-     * Wspólne publikacje naukowe i recenzje algorytmiczne fuzji Z3 SMT z filtrem Kalmana i Bradley-Terry DPO.
-     * Rozwój zaawansowanych protokołów obrony przed zmową roju wieloagentowego.
+   - UK Counterpart: The Alan Turing Institute / AISI
+   - Web: https://ideas-ncbr.pl/
+   - Role: Research and innovation institute founded to assemble top Polish AI scientists (established under Prof. Piotr Sankowski).
+   - Core Areas: Provable ML safety, formal methods in AI, algorithmic game theory.
+   - Integration Touchpoints with Nethical:
+     * Joint peer-reviewed publications on Z3 SMT formal proof fusion with Kalman filter innovation bounds and Bradley-Terry DPO.
+     * Development of multi-agent Byzantine consensus and anti-collusion protocols.
 
-7. DKWOC (Dowództwo Komponentu Wojsk Obrony Cyberprzestrzeni) & CSIRT MON
-   - Odpowiednik UK: DSTL / Defence Cyber Academy
-   - Adres WWW: https://www.wojsko-polskie.pl/woc/
-   - Rola: Wojska Obrony Cyberprzestrzeni Sił Zbrojnych RP.
-   - Punkty styku z Nethical:
-     * Całkowita suwerenność brzegowa (nethical-edge) i praca w odciętych enklawach polowych (Air-Gap).
-     * Odporność post-kwantowa rejestrów Merkle-DAG.
-     * Ochrona pamięci i funkcji modeli przed atakiem typu "Wormhole" podczas długotrwałych działań operacyjnych.
+7. Cyber Defence Forces Component Command (DKWOC) & CSIRT MON
+   - UK Counterpart: DSTL / UK Defence AI Centre / Defence Cyber Academy
+   - Web: https://www.wojsko-polskie.pl/woc/
+   - Role: Cyber Defence Forces of the Polish Armed Forces.
+   - Integration Touchpoints with Nethical:
+     * Complete edge sovereignty (nethical-edge) operating in zero-egress, air-gapped field headquarters.
+     * Post-quantum Merkle-DAG ledgers sealed with NIST FIPS 204 ML-DSA-65 signatures.
+     * Protection of model weights and memory against runtime Wormhole attacks during prolonged military operations.
 
-8. PFR (Polski Fundusz Rozwoju) & GovTech Polska
-   - Odpowiednik UK: GDS Innovation / British Patient Capital
-   - Adres WWW: https://pfr.pl/ | https://govtech.gov.pl/
-   - Programy: GovTech Inno_Lab, programy PFR Ventures dla głębokich technologii (Deep Tech), akceleracja wdrożeń w administracji rządowej i samorządowej.
+8. PFR (Polish Development Fund) & GovTech Polska
+   - UK Counterpart: GDS Innovation / British Patient Capital
+   - Web: https://pfr.pl/ | https://govtech.gov.pl/
+   - Flagship Programmes: GovTech Inno_Lab, PFR Deep Tech venture capital funding, accelerated pilots within central and regional government.
 
-9. UODO (Urząd Ochrony Danych Osobowych)
-   - Odpowiednik UK: ICO (Information Commissioner's Office)
-   - Adres WWW: https://uodo.gov.pl/
-   - Rola: Państwowy nadzór nad ochroną danych osobowych i zgodnością algorytmów z RODO/GDPR.
-   - Punkty styku z Nethical:
-     * Audyt art. 22 RODO (zautomatyzowane podejmowanie decyzji i profilowanie) - Nethical zapewnia pełną transparentność decyzyjną oraz testy braku dyskryminacji.
+9. Personal Data Protection Office (UODO - Urząd Ochrony Danych Osobowych)
+   - UK Counterpart: ICO (Information Commissioner's Office)
+   - Web: https://uodo.gov.pl/
+   - Role: National data privacy supervisor and GDPR / statutory compliance authority.
+   - Integration Touchpoints with Nethical:
+     * Auditing Article 22 GDPR compliance (automated decision-making and profiling) - Nethical guarantees end-to-end transparency, explanation logs, and continuous non-discrimination audits.
 
 --------------------------------------------------------------------------------
-CZĘŚĆ 4: PLAN DZIAŁANIA I REKOMENDOWANE PIERWSZE KROKI
+PART 4: STRATEGIC ACTION PLAN & RECOMMENDED FIRST STEPS
 --------------------------------------------------------------------------------
 
-Krok 1 (Wielka Brytania):
-- Zgłoszenie kodu do review w ramach standardu GDS Way oraz wysłanie briefingu technicznego ("UK_GOVERNMENT_AND_NCSC_BRIEFING.md") do zespołów ewaluacji technicznej w NCSC oraz AI Safety Institute (AISI).
-- Wygenerowanie 1-klikowego rekordu ATRS (UK_GOV_ATRS_RECORD.json) i przedstawienie go jako gotowego narzędzia dla CDDO i Crown Commercial Service.
+Step 1 (United Kingdom):
+- Submit the Nethical codebase for review under the GDS Way standard and transmit the technical capability briefing ("UK_GOVERNMENT_AND_NCSC_BRIEFING.md") to technical evaluation teams at NCSC and the AI Safety Institute (AISI).
+- Generate a 1-click ATRS record (UK_GOV_ATRS_RECORD.json) and present it as a ready-to-deploy governance utility for CDDO and Crown Commercial Service.
 
-Krok 2 (Polska):
-- Złożenie fiszki projektowej do konkursu FENG Ścieżka SMART (NCBR) na rozwój i wdrożenie Narodowego Systemu Suwerennej Weryfikacji AI.
-- Prezentacja demonstratora walki z rojem botów oraz tarczy modelu Purdue dla Departamentu Cyberbezpieczeństwa Ministerstwa Cyfryzacji oraz CSIRT NASK.
-- Zaproponowanie Nethical jako komponentu ochronnego dla państwowego modelu PLLuM.
+Step 2 (Poland):
+- Prepare and submit a project concept note to the FENG SMART Path competition (NCBR) for the development and field deployment of the Sovereign National AI Verification Engine.
+- Conduct a live demonstration of multi-agent swarm collusion interception and Purdue Model critical infrastructure enforcement for the Cybersecurity Department of the Ministry of Digital Affairs and CSIRT NASK.
+- Propose Nethical as an integrated runtime governance and audit sidecar for the national PLLuM model.
 
-Krok 3 (Międzynarodowe):
-- Złożenie aplikacji do akceleratora NATO DIANA w ścieżce ochrony infrastruktury krytycznej i cyberodporności.
+Step 3 (Allied & International):
+- Submit a formal application to NATO DIANA under the Critical National Infrastructure and Cyber Resilience challenge streams.
 ================================================================================
-KONIEC ZESTAWIENIA
+END OF DIRECTORY
 ================================================================================

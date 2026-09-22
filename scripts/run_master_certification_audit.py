@@ -150,22 +150,22 @@ def run_full_master_audit() -> Dict[str, Any]:
             "sector": "Data Security & Agent Boundary",
         },
         "POLISH_BJR_KSC_CERTIFICATION": {
-            "title": "Business Judgment Rule (KSH) & Krajowy System Cyberbezpieczeństwa (Polska)",
+            "title": "Business Judgment Rule (KSH) & National Cybersecurity System (KSC)",
             "code_pack": "../../nethical/compliance/packs/poland_sovereign_ksc_uodo_pack.py",
             "doc_refs": [
                 ("Cyber Resilience Act & Polish KSC", "./CYBER_RESILIENCE_ACT.md"),
             ],
             "test_ref": "../../tests/test_sectoral_governance_packs.py",
-            "sector": "Polska Administracja & Tarcza Zarządu",
+            "sector": "Polish Public Administration & Board Assurance",
         },
         "NATO_DEFENSE_RESPONSIBLE_AI": {
-            "title": "NATO AI Strategy - Responsible Defense & Zero-Egress Attestation",
+            "title": "NATO AI Strategy - Responsible Defence & Zero-Egress Attestation",
             "code_pack": "../../nethical/compliance/packs/nato_defense_pack.py",
             "doc_refs": [
                 ("Post-Quantum Cryptography Guide (FIPS 204)", "../laws_and_policies/QUANTUM_CRYPTO_GUIDE.md"),
             ],
             "test_ref": "../../tests/test_sectoral_governance_packs.py",
-            "sector": "Allied Defense & Air-Gap Operations",
+            "sector": "Allied Defence & Air-Gap Operations",
         },
         "CANADA_AIDA_BILL_C27": {
             "title": "Canada Artificial Intelligence and Data Act (AIDA - Bill C-27)",
@@ -184,16 +184,16 @@ def run_full_master_audit() -> Dict[str, Any]:
                 ("Data Residency & ePHI Protection", "./DATA_RESIDENCY.md"),
             ],
             "test_ref": "../../tests/test_sectoral_governance_packs.py",
-            "sector": "Ochrona Zdrowia & SaMD",
+            "sector": "Healthcare & SaMD / Clinical Safety",
         },
         "PUBLIC_ADMIN_KPA_KRI": {
-            "title": "Kodeks Postępowania Administracyjnego (KPA) & Krajowe Ramy Interoperacyjności (KRI)",
+            "title": "Administrative Procedure Code (KPA) & National Interoperability Framework (KRI)",
             "code_pack": "../../nethical/compliance/packs/public_admin_gov_pack.py",
             "doc_refs": [
                 ("Governance Observability & Transparency", "../GOVERNANCE_OBSERVABILITY.md"),
             ],
             "test_ref": "../../tests/test_sectoral_governance_packs.py",
-            "sector": "Administracja Publiczna RP",
+            "sector": "Public Sector & Administrative Justice",
         },
         "ACADEMIC_RESEARCH_ALLEA": {
             "title": "The European Code of Conduct for Research Integrity (ALLEA)",
@@ -202,7 +202,34 @@ def run_full_master_audit() -> Dict[str, Any]:
                 ("Ethics Validation Framework", "../ETHICS_VALIDATION_FRAMEWORK.md"),
             ],
             "test_ref": "../../tests/test_sectoral_governance_packs.py",
-            "sector": "Środowisko Akademickie & Granty Badawcze",
+            "sector": "Academic Research & Grant Governance",
+        },
+        "EU_AI_ACT_ANNEX_IV": {
+            "title": "EU AI Act (Regulation 2024/1689) - Annex IV Technical Documentation",
+            "code_pack": "../../nethical/compliance/packs/eu_ai_act_pack.py",
+            "doc_refs": [
+                ("EU AI Act Compliance Guide", "./EU_AI_ACT_COMPLIANCE.md"),
+            ],
+            "test_ref": "../../tests/test_certification_and_dossiers.py",
+            "sector": "European Union High-Risk AI Systems",
+        },
+        "COMMON_CRITERIA_ISO15408_EAL4": {
+            "title": "Common Criteria (ISO/IEC 15408 / EAL4+) - Security Target Specification",
+            "code_pack": "../../nethical/gateway/proxy.py",
+            "doc_refs": [
+                ("Post-Quantum Crypto Guide", "../laws_and_policies/QUANTUM_CRYPTO_GUIDE.md"),
+            ],
+            "test_ref": "../../tests/test_certification_and_dossiers.py",
+            "sector": "International High-Assurance Evaluation",
+        },
+        "CSIRT_KSC_CRA_INCIDENT_DECLARATION": {
+            "title": "KSC Art. 11 & CRA Art. 11 - CSIRT Serious Incident Declaration",
+            "code_pack": "../../nethical/compliance/automated_certification_hub.py",
+            "doc_refs": [
+                ("Cyber Resilience Act & Polish KSC", "./CYBER_RESILIENCE_ACT.md"),
+            ],
+            "test_ref": "../../tests/test_certification_and_dossiers.py",
+            "sector": "Cyber Incident Management & CSIRT Reporting",
         },
     }
 
@@ -214,29 +241,29 @@ def run_full_master_audit() -> Dict[str, Any]:
     report_file = output_dir / "NETHICAL_MASTER_AUDIT_DOSSIER_v2.5.md"
 
     md_lines = [
-        "# Nethical Autonomous AI Governance & Compliance Master Dossier v2.5",
+        "# Nethical Autonomous AI Governance & Compliance Master Dossier v2.7.0",
         "",
         "> [!IMPORTANT]",
-        "> **Cyfrowy Master Dossier Akredytacyjny (SSOT - Single Source of Truth)**  ",
-        "> Niniejszy dokument stanowi cyfrowy oryginał poświadczenia stanu zgodności Nethical Enterprise OS v2.5.  ",
-        "> Wszystkie kontrole, matryce obrony i dowody są kryptograficznie zakotwiczone w Merkle-DAG oraz poświadczone podpisem postkwantowym ML-DSA-65.",
+        "> **Digital Accreditation Master Dossier (Single Source of Truth - SSOT)**  ",
+        "> This document constitutes the definitive cryptographic record of compliance for Nethical Enterprise OS.  ",
+        "> All controls, defensive matrices, and assurance artefacts are anchored in the Merkle-DAG and sealed via NIST FIPS 204 ML-DSA-65 post-quantum signatures.",
         "",
-        f"- **Status Certyfikacji:** `TIER-1 CERTIFIED AUDIT READY`",
-        f"- **Średni Indeks Gotowości Regulacyjnej:** **`{avg_readiness * 100:.2f}%`**",
-        f"- **Algorytm Podpisu:** `NIST FIPS 204 ML-DSA-65 (Post-Quantum Cryptography)`",
-        f"- **Kotwica Merkle-DAG:** `{ledger.current_root}`",
-        f"- **Data Pieczęci Dowodowej:** `{datetime.now(timezone.utc).isoformat()}`",
-        f"- **Klucz Podpisujący:** `{hub.keypair.key_id}`",
-        f"- **Skrypt Weryfikacji Na Żywo:** [`scripts/run_master_certification_audit.py`](../../scripts/run_master_certification_audit.py)",
-        f"- **Mapa Arterii i Ruchu Systemowego:** [`docs/architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md`](../architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md)",
+        f"- **Certification Status:** `TIER-1 CERTIFIED AUDIT READY`",
+        f"- **Mean Regulatory Readiness Index:** **`{avg_readiness * 100:.2f}%`**",
+        f"- **Signature Algorithm:** `NIST FIPS 204 ML-DSA-65 (Post-Quantum Lattice Cryptography)`",
+        f"- **Merkle-DAG Root Anchor (Kotwica Merkle-DAG):** `{ledger.current_root}`",
+        f"- **Evidentiary Seal Timestamp:** `{datetime.now(timezone.utc).isoformat()}`",
+        f"- **Signing Authority Key ID:** `{hub.keypair.key_id}`",
+        f"- **Live Verification Script:** [`scripts/run_master_certification_audit.py`](../../scripts/run_master_certification_audit.py)",
+        f"- **System Highway & Traffic Map:** [`docs/architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md`](../architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md)",
         "",
         "---",
         "",
-        "<a id=\"spis-treści\"></a>",
-        "## 🧭 Spis Treści i Macierz Szybkiej Nawigacji",
+        "<a id=\"table-of-contents\"></a>",
+        "## 🧭 Table of Contents & Rapid Navigation Matrix",
         "",
-        "1. [Executive Summary & Podsumowanie Oceny Zgodności](#1-executive-summary--podsumowanie-oceny-zgodności)",
-        "2. [Szczegółowe Matryce Kontroli i Dowody w Trzech Liniach Obrony](#2-szczegółowe-matryce-kontroli-i-dowody-w-trzech-liniach-obrony)",
+        "1. [Executive Summary & Conformity Assessment Overview](#1-executive-summary--conformity-assessment-overview)",
+        "2. [Granular Control Matrices & Three Lines of Defence Evidence](#2-granular-control-matrices--three-lines-of-defence-evidence)",
     ]
 
     for item in audit_summary:
@@ -247,16 +274,16 @@ def run_full_master_audit() -> Dict[str, Any]:
         md_lines.append(f"   - [{s_val}](#{anchor_name}) – *{title}*")
 
     md_lines.extend([
-        "3. [Wnioski Audytowe i Oficjalna Rekomendacja](#3-wnioski-audytowe-i-oficjalna-rekomendacja)",
-        "4. [Polecenia Odtwarzania i Weryfikacji Kryptograficznej](#4-polecenia-odtwarzania-i-weryfikacji-kryptograficznej)",
+        "3. [Audit Findings & Formal Recommendations](#3-audit-findings--formal-recommendations)",
+        "4. [Cryptographic Reproduction & Live Verification Commands](#4-cryptographic-reproduction--live-verification-commands)",
         "",
         "---",
         "",
-        "## 1. Executive Summary & Podsumowanie Oceny Zgodności",
+        "## 1. Executive Summary & Conformity Assessment Overview",
         "",
-        "Poniższa tabela przedstawia wyniki wielowymiarowego audytu autonomicznego przeprowadzonego przez [`AutomatedCertificationHub`](../../nethical/compliance/automated_certification_hub.py) na silniku Nethical Enterprise OS.",
+        "The table below summarises the multi-dimensional autonomous audit conducted by [`AutomatedCertificationHub`](../../nethical/compliance/automated_certification_hub.py) across Nethical Enterprise OS.",
         "",
-        "| Norma / Standard Regulacyjny | Identyfikator Pakietu | Gotowość | Status PQC | Kontrole | Sektor / Rola w Łańcuchu Nadzoru | Kod Silnika |",
+        "| Regulatory Standard / Framework | Evidence Package ID | Readiness Score | PQC Signature Status | Controls | Domain / Oversight Role | Engine Package |",
         "| :--- | :--- | :---: | :---: | :---: | :--- | :---: |",
     ])
 
@@ -266,7 +293,7 @@ def run_full_master_audit() -> Dict[str, Any]:
         pqc_status = "VERIFIED (FIPS 204)" if item["pqc_signature_valid"] else "FAILED"
         anchor_link = f"[{std_name}](#standard-{std_name.lower()})"
         meta = STANDARD_METADATA.get(std_name, {})
-        code_link = f"[📦 Silnik]({meta.get('code_pack', '#')})" if meta.get("code_pack") else "-"
+        code_link = f"[📦 Engine]({meta.get('code_pack', '#')})" if meta.get("code_pack") else "-"
         md_lines.append(
             f"| **{anchor_link}** | `{packages[std_name].package_id[:16]}...` | **{score_pct}** | `{pqc_status}` | {item['controls_count']} | {meta.get('sector', item['instructions'][:40])} | {code_link} |"
         )
@@ -275,7 +302,7 @@ def run_full_master_audit() -> Dict[str, Any]:
         "",
         "---",
         "",
-        "## 2. Szczegółowe Matryce Kontroli i Dowody w Trzech Liniach Obrony",
+        "## 2. Granular Control Matrices & Three Lines of Defence Evidence",
         "",
     ])
 
@@ -291,25 +318,25 @@ def run_full_master_audit() -> Dict[str, Any]:
             f"<a id=\"{anchor_name}\"></a>",
             f"### Standard: {std.value}",
             "",
-            f"> **Pełna Nazwa:** {meta.get('title', std.value)}  ",
-            f"> **Sektor Docelowy:** {meta.get('sector', 'Ogólny')}  ",
-            f"> **Indeks Gotowości (Readiness Score):** `{pkg.readiness_score * 100:.1f}%`  ",
-            f"> **Identyfikator Paczki Dowodowej:** `{pkg.package_id}`  ",
-            f"> **Instrukcja dla Audytora Zewnętrznego:** {pkg.auditor_verification_instructions}",
+            f"> **Full Name:** {meta.get('title', std.value)}  ",
+            f"> **Target Domain:** {meta.get('sector', 'General')}  ",
+            f"> **Readiness Score:** `{pkg.readiness_score * 100:.1f}%`  ",
+            f"> **Evidence Package Identifier:** `{pkg.package_id}`  ",
+            f"> **External Auditor Verification Instructions:** {pkg.auditor_verification_instructions}",
             "",
-            "#### Powiązane Zasoby Cyfrowe i Testy:",
-            f"- **Pakiet Kodu Implementacyjnego:** [`{Path(code_pack).name}`]({code_pack})",
-            f"- **Pakiet Testów Poświadczających:** [`{Path(test_ref).name}`]({test_ref})",
+            "#### Associated Digital Assets & Automated Test Suites:",
+            f"- **Implementation Code Package:** [`{Path(code_pack).name}`]({code_pack})",
+            f"- **Verifying Test Suite:** [`{Path(test_ref).name}`]({test_ref})",
         ])
 
         if doc_refs:
             doc_items = [f"[{doc_name}]({doc_path})" for doc_name, doc_path in doc_refs]
-            md_lines.append(f"- **Dokumentacja i Polityki Powiązane:** {', '.join(doc_items)}")
+            md_lines.append(f"- **Associated Documentation & Policies:** {', '.join(doc_items)}")
 
         md_lines.extend([
             "",
-            "#### Matryca Wymogów i Pokrycia Kontroli:",
-            "| Kontrola / Wymóg Standardu | Status / Wdrożony Mechanizm Nethical |",
+            "#### Requirements & Control Coverage Matrix:",
+            "| Standard Control / Requirement | Implemented Nethical Mechanism |",
             "| :--- | :--- |",
         ])
         for ctrl_key, ctrl_val in pkg.controls_matrix.items():
@@ -317,53 +344,53 @@ def run_full_master_audit() -> Dict[str, Any]:
 
         md_lines.extend([
             "",
-            "#### Trzy Linie Obrony (Three Lines of Defense - GovS 002):",
-            f"- **1st Line (Operacyjna):** {pkg.three_lines_of_defense.get('line_1_operational', 'Zdefiniowana')}",
-            f"- **2nd Line (Nadzór i Zgodność):** {pkg.three_lines_of_defense.get('line_2_compliance_risk', 'Zdefiniowana')}",
-            f"- **3rd Line (Niezależny Audyt):** {pkg.three_lines_of_defense.get('line_3_internal_audit', 'Zdefiniowana')}",
+            "#### Three Lines of Defence Alignment (GovS 002):",
+            f"- **1st Line (Operational Delivery):** {pkg.three_lines_of_defense.get('first_line_operational') or pkg.three_lines_of_defense.get('line_1_operational', 'Defined')}",
+            f"- **2nd Line (Compliance & Risk Oversight):** {pkg.three_lines_of_defense.get('second_line_risk_compliance') or pkg.three_lines_of_defense.get('line_2_compliance_risk', 'Defined')}",
+            f"- **3rd Line (Independent Audit):** {pkg.three_lines_of_defense.get('third_line_independent_audit') or pkg.three_lines_of_defense.get('line_3_internal_audit', 'Defined')}",
             "",
             "<details>",
-            f"<summary>🔐 <strong>Podpis Postkwantowy ML-DSA-65 SHA3 (Kliknij, aby rozwinąć dowód kryptograficzny)</strong></summary>",
+            f"<summary>🔐 <strong>Post-Quantum ML-DSA-65 SHA-3 Signature (Click to expand cryptographic proof)</strong></summary>",
             "",
             "```text",
-            f"Algorytm: NIST FIPS 204 ML-DSA-65",
-            f"Klucz Publiczny Podpisujący: {hub.keypair.key_id}",
-            f"Kotwica Merkle Root: {pkg.merkle_anchor_root}",
-            f"Sygnatura (hex):",
+            f"Algorithm: NIST FIPS 204 ML-DSA-65",
+            f"Signing Public Key: {hub.keypair.key_id}",
+            f"Merkle Root Anchor: {pkg.merkle_anchor_root}",
+            f"Signature (hex):",
             f"{pkg.pqc_signature}",
             "```",
             "</details>",
             "",
-            "[⬆ Powrót do spisu treści](#spis-treści)",
+            "[⬆ Return to Table of Contents](#table-of-contents)",
             "",
             "---",
             "",
         ])
 
     md_lines.extend([
-        "## 3. Wnioski Audytowe i Oficjalna Rekomendacja",
+        "## 3. Audit Findings & Formal Recommendations",
         "",
-        "1. **Brak Krytycznych Luk Architektonicznych:** Wszystkie badane standardy osiągają poziom >= 95% gotowości do certyfikacji akredytowanej.",
-        "2. **Niezmienność Dowodowa:** Zastosowanie postkwantowego algorytmu ML-DSA-65 oraz łańcucha Merkle-DAG uniemożliwia jakąkolwiek manipulację danymi po wydaniu orzeczenia.",
-        "3. **Rekomendacja dla Zarządu i Jednostek Notyfikowanych:** Przedłożenie niniejszego Dossier do akredytowanych jednostek certyfikujących (BSI Group, TÜV SÜD, Cabinet Office IPA, UODO) jako kompletnego operacyjnego dowodu spełnienia wymogów art. 11-15 Aktu o Sztucznej Inteligencji (EU AI Act) oraz normy ISO/IEC 42001.",
+        "1. **Absence of Critical Architectural Deficits:** All evaluated standards achieve >= 95% accredited certification readiness.",
+        "2. **Evidentiary Immutability:** Post-quantum ML-DSA-65 lattice signatures and the append-only Merkle-DAG ledger prevent post-facto tampering with governance verdicts.",
+        "3. **Board & Conformity Assessment Body Recommendation:** Formal submission of this Dossier to accredited notified bodies (BSI Group, TÜV SÜD, Cabinet Office IPA, UODO) as operational evidence of conformity with Articles 11–15 of the EU AI Act and ISO/IEC 42001.",
         "",
         "---",
         "",
-        "## 4. Polecenia Odtwarzania i Weryfikacji Kryptograficznej",
+        "## 4. Cryptographic Reproduction & Live Verification Commands",
         "",
-        "Dowolny audytor, kontroler lub inżynier CI/CD może w dowolnej chwili zreprodukować niniejszy dokument i zweryfikować sygnatury postkwantowe uruchamiając:",
+        "Any auditor, compliance officer, or CI/CD engineer can reproduce this document and verify post-quantum signatures via:",
         "",
         "```bash",
-        "# Regeneracja pełnego dossier wraz z walidacją podpisów FIPS 204",
+        "# Regenerate full master dossier with live FIPS 204 signature verification",
         "python scripts/run_master_certification_audit.py",
         "",
-        "# Uruchomienie zestawu testów poświadczeń sektorowych",
+        "# Execute sectoral governance pack test suite",
         "pytest -v tests/test_sectoral_governance_packs.py",
         "```",
         "",
-        "> **Wygenerowano przez:** Nethical Autonomous Governance Engine v2.5 ([`AutomatedCertificationHub`](../../nethical/compliance/automated_certification_hub.py))",
+        "> **Generated by:** Nethical Autonomous Governance Engine v2.7.0 ([`AutomatedCertificationHub`](../../nethical/compliance/automated_certification_hub.py))",
         "",
-        "[⬆ Powrót na początek dokumentu](#nethical-autonomous-ai-governance--compliance-master-dossier-v25)",
+        "[⬆ Return to Top of Document](#nethical-autonomous-ai-governance--compliance-master-dossier-v270)",
     ])
 
     report_content = "\n".join(md_lines)

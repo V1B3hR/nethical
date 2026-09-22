@@ -2,7 +2,7 @@
 
 This directory contains scripts and documentation for training and aligning models in the Nethical framework.
 
-## Symbiotic Co-Training: Nethical ⟷ Ambasador Błyskawica
+## Symbiotic Co-Training: Nethical ⟷ Blyskawica Ambassador
 * **Historical Retrospective & Evolution**: See [RETROSPECTION_AND_EVOLUTION.md](file:///c:/Projekty/Nethical/docs/training/RETROSPECTION_AND_EVOLUTION.md)
 * **Documentation**: See [CO_TRAINING_NETHICAL_AMBASSADOR.md](file:///c:/Projekty/Nethical/docs/training/CO_TRAINING_NETHICAL_AMBASSADOR.md)
 * **Runner Script**: [training/train_symbiotic_ambassador.py](file:///c:/Projekty/Nethical/training/train_symbiotic_ambassador.py)

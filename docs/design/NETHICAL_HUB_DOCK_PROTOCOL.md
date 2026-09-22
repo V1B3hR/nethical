@@ -20,10 +20,10 @@ In a universe of autonomous AI models, agents act as independent spaceships trav
 Agent A (Spaceship)               Nethical Hub (Safe Port)              Agent B (Spaceship)
      |                                    |                                    |
      |---- 1. POST /hub/dock ------------>|                                    |
-     |     (Rejestracja i status)         |                                    |
+     |     (Registration & status)        |                                    |
      |                                    |                                    |
      |                                    | <--- 2. POST /hub/dock ------------|
-     |                                    |      (Rejestracja i status)        |
+     |                                    |      (Registration & status)        |
      |                                    |                                    |
      |                                    |                                    |
      |---- 3. POST /hub/exchange -------->|                                    |
@@ -65,7 +65,7 @@ All inter-agent communications use a structured Pydantic payload:
   "recipient_agent_id": "gpt-4o-mini",
   "intent": "Requesting help with code synthesis",
   "payload_type": "query",
-  "payload": "Wytłumacz mi algorytm HNSW w Rust.",
+  "payload": "Explain the HNSW algorithm in Rust.",
   "ttl": 3,
   "trust_required_level": 0.6,
   "timestamp": "2026-07-14T08:30:00Z"

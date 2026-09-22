@@ -34,15 +34,15 @@ The laws cover seven critical categories:
 ### 🇬🇧 United Kingdom
 - [**UK Government & NCSC Briefing**](institutional/UK_GOVERNMENT_AND_NCSC_BRIEFING.md) — NCSC 4-pillar alignment, AISI swarm defence, GDS Way compliance, UK ATRS generator, funding paths (BridgeAI £100M, Manchester Prize, ARIA £800M)
 
-### 🇵🇱 Polska
-- [**Polska Doktryna Cyberbezpieczeństwa i Suwerenności AI**](institutional/POLSKA_DOKTRYNA_CYBERBEZPIECZENSTWA_AI.md) — NASK, CSIRT GOV/ABW, RCB, Ministerstwo Cyfryzacji, PLLuM, NCBR FENG Ścieżka SMART, IDEAS NCBR, DKWOC/CSIRT MON
+### 🇵🇱 Poland (Sovereign Doctrine)
+- [**Polish Cyber Doctrine & AI Sovereignty Briefing**](institutional/POLSKA_DOKTRYNA_CYBERBEZPIECZENSTWA_AI.md) — NASK, CSIRT GOV/ABW, Government Centre for Security (RCB), Ministry of Digital Affairs, PLLuM national model alignment, NCBR FENG, DKWOC/CSIRT MON defence doctrine
 
-### 📋 Instytucje i Fundusze (Lista Referencyjna)
-- [**INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt**](institutional/INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt) — Pełne zestawienie 20+ instytucji i mechanizmów finansowania (UK, EU, NATO DIANA, EIC, Polska)
+### 📋 Institutional & Grant Funding Directory
+- [**AI Institutions & Grants Directory**](institutional/AI_INSTITUTIONS_AND_GRANT_FUNDS_UK_PL.md) ([Raw Text](institutional/INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt)) — Comprehensive directory of 20+ institutional bodies and funding mechanisms (UK, EU Horizon/EIC, NATO DIANA, Poland)
 
-### 📊 Pakiety Regulacyjne (1-klikowe generatory)
-- [EU AI Act Annex IV Dossier](../models/audit/EU_AI_ACT_ANNEX_IV_DOSSIER.md) — Pełna dokumentacja techniczna Annex IV
-- [ISO/IEC 42001 AIMS Dossier](../models/audit/ISO_42001_AIMS_CERTIFICATION_DOSSIER.md) — Certyfikacja systemu zarządzania AI
+### 📊 Regulatory Assurance Dossiers (1-Click Automated Generators)
+- [EU AI Act Annex IV Dossier](../models/audit/EU_AI_ACT_ANNEX_IV_DOSSIER.md) — Complete technical documentation under Annex IV
+- [ISO/IEC 42001 AIMS Dossier](../models/audit/ISO_42001_AIMS_CERTIFICATION_DOSSIER.md) — AI Management System certification dossier
 - [UK ATRS Record](../models/audit/UK_GOV_ATRS_RECORD.md) — UK Algorithmic Transparency Recording Standard (Tier 1 + Tier 2)
 
 ---
@@ -113,7 +113,7 @@ The laws cover seven critical categories:
 
 - **Sovereign Dual-Core (Yin-Yang)**
   - [Formal Verification — Z3 SMT Engine](architecture/FORMAL_VERIFICATION.md) — First-Order Logic solver enforcing 25 Fundamental Laws
-  - [Sovereign AI Pillars](architecture/SOVEREIGN_AI_PILLARS.md) — Yang (formal) + Yin (Błyskawica relational) dual-engine architecture
+  - [Sovereign AI Pillars](architecture/SOVEREIGN_AI_PILLARS.md) — Yang (formal) + Yin (Blyskawica relational) dual-engine architecture
   - [MCP Server](architecture/MCP_SERVER.md) — Model Context Protocol gateway and active learning buffer
   - [Correlation Model](architecture/CORRELATION_MODEL.md) — Correlation detection within the governance pipeline
   - [Shadow Replay](architecture/shadow-replay.md) — Traffic replay and adversarial testing
@@ -394,8 +394,8 @@ The laws cover seven critical categories:
 
 ### For Government Institutions & Funding Bodies 🏛️
 1. Read the [UK Government & NCSC Briefing](institutional/UK_GOVERNMENT_AND_NCSC_BRIEFING.md)
-2. Read the [Polska Doktryna Cyberbezpieczeństwa AI](institutional/POLSKA_DOKTRYNA_CYBERBEZPIECZENSTWA_AI.md)
-3. Download the [Institutions & Grants Directory](institutional/INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt)
+2. Read the [Polish Cyber Doctrine & AI Sovereignty Briefing](institutional/POLSKA_DOKTRYNA_CYBERBEZPIECZENSTWA_AI.md)
+3. Explore the [Institutions & Grants Directory](institutional/AI_INSTITUTIONS_AND_GRANT_FUNDS_UK_PL.md) ([Raw Text](institutional/INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt))
 4. Review ready-to-submit [UK ATRS Record](../models/audit/UK_GOV_ATRS_RECORD.md)
 5. Review ready-to-submit [EU AI Act Annex IV Dossier](../models/audit/EU_AI_ACT_ANNEX_IV_DOSSIER.md)
 
@@ -409,7 +409,7 @@ The laws cover seven critical categories:
 - [Changelog](../CHANGELOG.md) - Version history
 - [Security Policy](../SECURITY.md) - Security disclosure
 - [Privacy Policy](../PRIVACY.md) - Privacy statement
-- [License](../LICENSE) - MIT License
+- [Licence](../LICENSE) - MIT Licence
 
 ### External Links
 - [GitHub Repository](https://github.com/V1B3hR/nethical)

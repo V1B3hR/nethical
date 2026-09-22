@@ -1,111 +1,111 @@
-# POLSKA DOKTRYNA CYBERBEZPIECZEŃSTWA I SUWERENNOŚCI SI: NETHICAL OS & AMBASADOR BŁYSKAWICA
-**Dokument Referencyjny:** `NETH-PL-DOKTR-2026-V1`  
-**Adresaci:** NASK-PIB, CSIRT NASK, CSIRT GOV (ABW), Rządowe Centrum Bezpieczeństwa (RCB), Ministerstwo Cyfryzacji, NCBR, IDEAS NCBR, DKWOC (CSIRT MON), UODO  
-**Klasyfikacja:** JAWNY / ARCHITEKTURA SUWERENNEGO ŁADU SI  
-**Repozytorium Źródłowe:** [https://github.com/V1B3hR/nethical](https://github.com/V1B3hR/nethical)  
-**Licencja:** MIT Open Source (Zgodna z zasadami otwartości oprogramowania publicznego)  
+# POLISH CYBERSECURITY & AI SOVEREIGNTY DOCTRINE: NETHICAL OS & BLYSKAWICA AMBASSADOR
+**Reference Identifier:** `NETH-PL-DOCTR-2026-V1`  
+**Stakeholder Audience:** NASK-PIB, CSIRT NASK, CSIRT GOV (Internal Security Agency - ABW), Government Centre for Security (RCB), Ministry of Digital Affairs, NCBR, IDEAS NCBR, Cyber Defence Forces Component Command (DKWOC / CSIRT MON), Personal Data Protection Office (UODO)  
+**Classification:** PUBLIC / SOVEREIGN AI GOVERNANCE ARCHITECTURE  
+**Source Repository:** [https://github.com/V1B3hR/nethical](https://github.com/V1B3hR/nethical)  
+**Licence:** MIT Open Source (Full compliance with public sector open software directives)  
 
 ---
 
-## 1. Wprowadzenie: Nowe Realia Prawne i Zagrożenia Hybrydowe w Polsce
+## 1. Introduction: Statutory Realities and Hybrid Threat Vectors in Poland
 
-Wdrożenie w Rzeczypospolitej Polskiej kluczowych unijnych aktów prawnych:
-* **Aktu o Sztucznej Inteligencji (EU AI Act – Rozporządzenie 2024/1689)** nakładającego twarde wymogi audytowe i techniczne na systemy wysokiego ryzyka (Annex IV) oraz GPAI ze stwarzanym ryzykiem systemowym,
-* **Nowelizacji Ustawy o Krajowym Systemie Cyberbezpieczeństwa (KSC)** wdrażającej **Dyrektywę NIS2 (Art. 21)** w zakresie zarządzania ryzykiem i bezpieczeństwa łańcucha dostaw ICT/AI,
-* **Dyrektywy o Odporności Podmiotów Krytycznych (CER – Dyrektywa 2022/2557, Art. 12)** chroniącej polską Infrastrukturę Krytyczną (IK),
+The implementation of European Union statutory instruments within the Republic of Poland:
+* **The Artificial Intelligence Act (EU AI Act – Regulation 2024/1689)** establishing strict audit and technical mandates for high-risk AI systems (Annex IV) and general-purpose AI (GPAI) presenting systemic risk,
+* **The Amended National Cybersecurity System Act (KSC)** transposing the **NIS2 Directive (Article 21)** regarding supply-chain risk management and cybersecurity hygiene,
+* **The Critical Entities Resilience Directive (CER Directive 2022/2557, Article 12)** protecting Polish Critical Infrastructure (Infrastruktura Krytyczna - IK),
 
-wymaga od polskiej administracji publicznej i operatorów usług kluczowych przejścia od „papierowej zgodności” do **twardego, autonomicznego egzekwowania bezpieczeństwa w czasie rzeczywistym**.
+mandates a shift across Polish public administration and operators of essential services away from checklist compliance towards **deterministic, automated, real-time safety enforcement**.
 
-**Nethical OS** wraz z sidecarem **Ambasador Błyskawica** stanowi suwerenne, polskie rozwiązanie klasy *Runtime AI Governance & Hardened Defense*, gwarantujące matematyczną weryfikację formalną działań modeli językowych i autonomicznych agentów, izolację od sieci obcych oraz bezwzględną ochronę obiektów infrastruktury strategicznej.
-
----
-
-## 2. Architektura Dualna Yin-Yang: Formalna Rygorystyczność i Bezpieczeństwo Relacyjne
-
-W przeciwieństwie do rozwiązań polegających wyłącznie na inżynierii promptów (tzw. „system prompts”), Nethical opiera się na separacji obowiązków na poziomie procesowym:
-
-1. **Komponent Yang (Nethical Core):**
-   * **Silnik weryfikacji formalnej Z3 SMT (logika pierwszego rzędu):** Sprawdza matematycznie dopuszczalność każdej decyzji w odniesieniu do **25 Praw Fundamentalnych Nethical**.
-   * **Pieczęcie AST (Abstract Syntax Tree):** Kryptograficzne haszowanie bajtkodu metod krytycznych uniemożliwiające manipulację pamięcią w czasie pracy demona.
-   * **Kryptograficzny Merkle-DAG:** Niezaprzeczalny rejestr decyzji (zgodny z wymogami dowodowymi KSC i postępowania administracyjnego).
-   * **Kinetyczny Bezpiecznik Awaryjny (Prawo 25):** Twarde, sprzętowe odcięcie zasilania/sterowania w czasie $< 1.0\text{ ms}$ przy próbie nieautoryzowanego ruchu fizycznego lub zakłócenia instalacji.
-
-2. **Komponent Yin (Ambasador Błyskawica):**
-   * **Model neuronowy DPO LoRA (Meta-Llama-3-8B-Instruct):** Odpowiada za empatię kognitywną, deeskalację napięć i dialog sokratejski z operatorem.
-   * **Affective Safety & Prawo 21 (Autonomia Człowieka):** Bezwzględny zakaz manipulacji emocjonalnej, uległości potakującej (*sycophancy*) oraz skrytego wpływania na wolę obywatela (*dark nudging*).
-   * **Prysznice Kognitywne (Cognitive Showers):** Homeostatyczna higiena obniżająca poziom wirtualnego stresu i temperatury po zmasowanym ataku adwersarzy.
-   * **Dynamiczny Termostat Kalmana:** Automatyczne zaostrzanie rygoru kary $\beta$ proporcjonalnie do poziomu niepewności modelu.
+**Nethical OS** paired with the **Blyskawica Ambassador** sidecar provides a sovereign, domestic *Runtime AI Governance & Hardened Defence* architecture, delivering mathematical formal verification of language models and autonomous agents, air-gapped isolation from foreign cloud dependencies, and uncompromising protection of national infrastructure.
 
 ---
 
-## 3. Zastosowanie w Polskich Instytucjach Państwowych i Służbach
+## 2. Dual-Architecture Yin-Yang Model: Formal Rigour & Relational Safety
 
-### 3.1. NASK-PIB oraz CSIRT NASK (Wykrywanie Zagrożeń Sieciowych i Wojna Hybrydowa)
-* **Obrona przed atakiem „Cichy Cel” (Stepping-Stone Residential Hopping):**
-  Moduł `SilentTargetSteppingStoneGuard` monitoruje sekwencje przeskoków przez domowe routery osiedlowe (np. budynek 1 $\rightarrow$ 4 $\rightarrow$ 7 $\rightarrow$ 21 $\rightarrow$ 77 $\rightarrow$ 98) wykorzystywane przez grupy APT do ukrycia ruchu C2 w normalnym wolumenie ISP.
-* **Inspekcja Kanałów Ukrytych w Streamingu:**
-  Głęboka analiza pakietów UDP/QUIC wykrywa steganografię w transmisjach multimedialnych maskującą ładunki typu reverse-shell lub polecenia sterowania przemysłowego.
-* **Neutralizacja Zmowy Rojów Botów (Swarm Arena):**
-  Profilowanie prędkości (odróżnianie zalań `BURST_ULTRA_FAST` od analizy deliberatywnej) oraz kwarantanna bizantyjska agentów zmawiających się przeciwko consensusowi społecznemu.
+Unlike legacy solutions relying exclusively on fragile prompt-engineering guardrails ("system prompts"), Nethical enforces strict separation of duties across decoupled execution planes:
 
-### 3.2. CSIRT GOV (ABW) & Rządowe Centrum Bezpieczeństwa (RCB) – Ochrona Infrastruktury Krytycznej (IK)
-* **Wymuszanie Modelu Purdue (ISA/IEC 62443 / NIS2 Art. 21 / KSC Art. 12):**
-  Nethical blokuje jakiekolwiek bezpośrednie próby routingu z sieci konsumenckich/korporacyjnych (Poziom 4/5) do sterowników PLC, SCADA i zaworów ciśnieniowych elektrociepłowni czy podstacji energetycznych (Poziomy 1/0).
-* **Jednokierunkowe Diody Danych (Hardware Data Diodes):**
-  Wymuszenie izolacji fizycznej uniemożliwia zdalne wyłączenie ogrzewania miejskiego lub energii elektrycznej w warunkach ataku hybrydowego.
+1. **The Yang Component (Nethical Core):**
+   * **Z3 SMT Formal Verification Solver (First-Order Logic):** Mathematically proves the invariant validity of every prospective action against the **25 Fundamental Laws of Nethical**.
+   * **Abstract Syntax Tree (AST) Seals:** Cryptographic hashing of critical bytecode sequences prevents runtime memory injection within running daemons.
+   * **Append-Only Merkle-DAG:** An unalterable evidentiary decision ledger compliant with administrative and legal evidentiary standards.
+   * **Kinetic Emergency Interlock (Law 25):** Deterministic hardware-level power and actuation trip executing within $< 1.0\text{ ms}$ upon detected trajectory breaches or physical infrastructure interference.
 
-### 3.3. Ministerstwo Cyfryzacji & Konsorcjum PLLuM (Polish Large Language Universal Model)
-* **Pancerz Bezpieczeństwa dla Polskiego Modelu Państwowego:**
-  Nethical może pełnić rolę suwerennego sidecara dla modelu PLLuM, weryfikując każdą odpowiedź generowaną dla obywateli na platformie mObywatel i portalach gov.pl pod kątem prawdomówności, braku halucynacji i neutralności światopoglądowej.
-* **Przeciwdziałanie Zjawisku MAD (Model Autophagy Disorder / Model Collapse):**
-  Telemetria *Epistemic DNA* utrzymuje udział danych rzeczywistych $>50\%$ i entropię $>7.1\text{ bitów}$, chroniąc polski model przed degeneracją genetyczną AI.
-* **Automatyczne Dossier Zgodności z EU AI Act:**
-  1-klikowe generowanie dokumentacji technicznej zgodnej z Załącznikiem IV (High-Risk AI System) eliminuje ryzyko kar finansowych dla polskich urzędów.
-
-### 3.4. DKWOC (Dowództwo Komponentu Wojsk Obrony Cyberprzestrzeni / CSIRT MON)
-* **Suwerenny Węzeł Brzegowy (`nethical-edge`):**
-  Całkowity brak zależności od zewnętrznych komercyjnych chmur zagranicznych. Model działa w standardzie „Air-Gap” na kartach NVIDIA RTX 4070 / A100 z pamięcią współdzieloną IPC RAM.
-* **Odporność Post-Kwantowa:**
-  Struktura Merkle-DAG oparta na haszowaniu SHA-256 i podpisach odpornych na komputery kwantowe zabezpiecza łańcuch dowodowy operacji wojskowych i specjalnych.
-* **Obrona przed Atakiem „Wormhole” (Amnezja Kognitywna):**
-  Moduł `MemoryIntegrityGuard` z pułapkami kanarkowymi zapobiega powolnemu, niezauważalnemu usuwaniu funkcji i pamięci długotrwałej przez uśpionego intruza.
-
-### 3.5. Urząd Ochrony Danych Osobowych (UODO)
-* **Weryfikacja Automatycznego Profilowania (Art. 22 RODO / GDPR):**
-  Automatyczny audyt wskaźnika dysproporcji (Four-Fifths Rule / DIR $>0.80$) zapewnia, że żaden algorytm selekcji wniosków w administracji nie dyskryminuje obywateli ze względu na wiek, płeć, pochodzenie czy status majątkowy.
+2. **The Yin Component (Blyskawica Ambassador):**
+   * **Neural Alignment Policy (DPO LoRA over Meta-Llama-3-8B-Instruct):** Delivers cognitive empathy, de-escalation, and assertive Socratic dialogue with human operators.
+   * **Affective Safety & Law 21 (Human Autonomy):** Strict algorithmic prohibitions against emotional manipulation, conversational sycophancy, and covert behavioural nudging.
+   * **Cognitive Showers:** Homeostatic thermal and state reset routines mitigating residual stress and activation temperature following sustained adversarial attacks.
+   * **Dynamic Kalman Thermostat:** Automated stiffening of penalty factor $\beta$ calibrated to model uncertainty.
 
 ---
 
-## 4. Dostępne Ścieżki Finansowania Rozwoju i Wdrożeń w Polsce
+## 3. Operational Deployment Across Polish State Institutions & Security Services
 
-Nethical jako technologia głęboka (*Deep Tech*) o podwójnym zastosowaniu (*dual-use*) kwalifikuje się do najwyższych poziomów dofinansowania ze środków krajowych i unijnych:
+### 3.1. NASK-PIB & CSIRT NASK (Network Threat Discovery & Hybrid Warfare Defence)
+* **Defence Against "Silent Target" Residential Hopping Attacks:**
+  The `SilentTargetSteppingStoneGuard` module monitors multi-hop pivoting sequences traversing residential router networks (e.g., node 1 $\rightarrow$ 4 $\rightarrow$ 7 $\rightarrow$ 21 $\rightarrow$ 77 $\rightarrow$ 98) utilized by advanced persistent threat (APT) groups to disguise C2 traffic within normal ISP bandwidth.
+* **Covert Channel Deep Packet Inspection:**
+  Inspects real-time UDP/QUIC streams to expose steganographic payloads hiding reverse-shell triggers or industrial control instructions within streaming video and audio telemetry.
+* **Swarm Collusion Neutralisation (Swarm Arena):**
+  Profiles inter-agent traffic velocity (distinguishing `BURST_ULTRA_FAST` floods from authentic deliberative processing) and enforces Byzantine quarantine on agent clusters colluding against societal consensus.
 
-| Źródło Finansowania | Program / Konkurs | Typ Wsparcia | Zastosowanie w Nethical |
+### 3.2. CSIRT GOV (ABW) & Government Centre for Security (RCB) – Critical Infrastructure Protection
+* **Purdue Model Enforcement (ISA/IEC 62443 / NIS2 Art. 21 / KSC Art. 12):**
+  Nethical prevents direct traversal attempts from enterprise/consumer networks (Level 4/5) to physical PLC controllers, SCADA nodes, and thermal/pressure actuators within regional district heating plants or national electrical substations (Levels 1/0).
+* **Hardware Data Diodes Integration:**
+  Mandates physical optical isolation preventing remote adversarial de-energisation of national energy grids or utility grids during hybrid conflicts.
+
+### 3.3. Ministry of Digital Affairs & The PLLuM Consortium (Polish Large Language Universal Model)
+* **Sovereign Safety Shield for National Foundation Models:**
+  Nethical serves as an aligned sidecar for the Polish national foundation model PLLuM, validating every citizen-facing inference across the mObywatel platform and gov.pl portals for factual truth, absence of hallucinations, and statutory neutrality.
+* **Mitigation of Model Autophagy Disorder (MAD / Model Collapse):**
+  *Epistemic DNA* telemetry guarantees synthetic training sets maintain real-world data ratios $>50\%$ and informational entropy $>7.1\text{ bits}$, insulating the sovereign model from recursive generational degradation.
+* **Automated EU AI Act Technical Documentation:**
+  One-click export of comprehensive Annex IV technical documentation eliminates regulatory penalty risks for public sector deploying entities.
+
+### 3.4. Cyber Defence Forces Component Command (DKWOC / CSIRT MON)
+* **Sovereign Edge Deployment (`nethical-edge`):**
+  Complete architectural independence from foreign commercial hyperscalers. Operates air-gapped on NVIDIA RTX 4070 / A100 hardware with shared IPC RAM buffers.
+* **Post-Quantum Cryptographic Resilience:**
+  Merkle-DAG trees anchored via SHA-256 and lattice signatures protect military operational decision records against future quantum decryption.
+* **Defence Against Cognitive Amnesia ("Wormhole" Attacks):**
+  The `MemoryIntegrityGuard` module deploys canary tokens and memory state checkpoints, preventing insidious long-term erasure of operational capabilities by dormant threat actors.
+
+### 3.5. Personal Data Protection Office (UODO)
+* **Algorithmic Disparity & Automated Profiling Audits (GDPR Art. 22):**
+  Automates continuous Four-Fifths Rule disparity audits (DIR $>0.80$), guaranteeing that automated public benefit allocation algorithms remain provably free from unlawful discrimination based on age, gender, origin, or economic status.
+
+---
+
+## 4. Grant & Capital Funding Pathways in Poland & Europe
+
+As a dual-use Deep Tech governance platform, Nethical qualifies for primary tier domestic and European grant programmes:
+
+| Funding Body | Programme / Mechanism | Instrument Type | Strategic Nethical Application |
 | :--- | :--- | :--- | :--- |
-| **NCBR (Narodowe Centrum Badań i Rozwoju)** | **FENG – Ścieżka SMART** | Grant bezzwrotny (do 80% kosztów kwalifikowanych, od 3 do 20+ mln PLN) | Rozwój modułów B+R weryfikacji formalnej, cyfryzacja, testy poligonowe na infrastrukturze krytycznej. |
-| **NCBR** | **Program Strategiczny INFOSTRATEG** | Grant celowy na projekty AI i NLP dla państwa | Integracja z polskimi bazami wiedzy prawnej i administracyjnej, rozwój modeli językowych dla administracji. |
-| **NCBR** | **Program CYBERSECIDENT** | Grant na badania cyberbezpieczeństwa | Rozwój tarcz kryptograficznych Merkle-DAG i detekcji anomalii w sieciach OT/SCADA. |
-| **Ministerstwo Cyfryzacji** | **Fundusz Cyberbezpieczeństwa** | Środki celowe z budżetu państwa | Wdrożenie Nethical jako standardowej bramki bezpieczeństwa w węzłach Gov.pl i KSC. |
-| **IDEAS NCBR** | **Wspólne Projekty Badawcze** | Partnerstwo naukowe / Finansowanie doktoratów i post-doców | Teoria gier w zwalczaniu zmowy roju agentów, formalne dowodzenie odporności algorytmów. |
-| **PFR (Polski Fundusz Rozwoju) / GovTech** | **GovTech Inno_Lab** | Pilotaże w administracji rządowej i samorządowej | Pilotażowe wdrożenia w urzędach wojewódzkich i spółkach komunalnych (ciepłownie, wodociągi). |
-| **NATO DIANA** | **Dual-Use Cyber Defense Accelerator** | Granty bezzwrotne do 400 tys. EUR + dostęp do poligonów | Testowanie modułu `SilentTargetSteppingStoneGuard` w symulowanych atakach na obiekty sojusznicze. |
+| **NCBR (National Centre for R&D)** | **FENG – SMART Path (Ścieżka SMART)** | Non-repayable grant (up to 80% eligible costs, 3 to 20+ million PLN) | R&D advancement of formal verification engines, digital transformation, and critical infrastructure testing. |
+| **NCBR** | **INFOSTRATEG Strategic Programme** | Dedicated AI & NLP grant for state infrastructure | Integration with domestic legal corpora and administrative NLP pipelines. |
+| **NCBR** | **CYBERSECIDENT Programme** | Targeted cybersecurity research grant | Advancing Merkle-DAG quantum cryptosystems and OT/SCADA anomaly detection. |
+| **Ministry of Digital Affairs** | **Cybersecurity Fund (Fundusz Cyberbezpieczeństwa)** | Targeted state budgetary allocation | Deployment of Nethical as standard governance gateway across Gov.pl and KSC nodes. |
+| **IDEAS NCBR** | **Collaborative Research Partnerships** | Research sponsorship / PhD & Postdoc funding | Algorithmic game theory for swarm collusion prevention and formal theorem proving. |
+| **PFR / GovTech Poland** | **GovTech Inno_Lab** | Public sector deployment pilots | Pilot trials within provincial administrative offices and municipal utility companies. |
+| **NATO DIANA** | **Dual-Use Defence Accelerator** | Non-repayable grants up to €400,000 + testing access | Testing the `SilentTargetSteppingStoneGuard` across allied test facilities. |
 
 ---
 
-## 5. Zestawienie Gotowości Operacyjnej (Readiness Matrix)
+## 5. Operational Readiness Matrix
 
-* **Kod Źródłowy:** 100% otwarty, audytowalny, hostowany na GitHubie (`https://github.com/V1B3hR/nethical`).
-* **Testy Automatyczne:** **64 z 64 testów zaliczonych w 10 sekund** (100% sukcesu w 13 modułach testowych).
-* **Brak Zależności Zewnętrznych:** Działa w 100% lokalnie w suwerennej infrastrukturze, bez wysyłania tokenów poza granice RP.
-* **Gotowość Dokumentacyjna:**
-  * Kompletne Dossier Techniczne Annex IV EU AI Act (`models/audit/EU_AI_ACT_ANNEX_IV_DOSSIER.md`).
-  * Pełne Dossier Akredytacyjne ISO/IEC 42001:2023 (`models/audit/ISO_42001_AIMS_CERTIFICATION_DOSSIER.md`).
-  * Rekord ATRS dla administracji publicznej (`models/audit/UK_GOV_ATRS_RECORD.md`).
+* **Source Code:** 100% open, auditable, and hosted on GitHub (`https://github.com/V1B3hR/nethical`).
+* **Automated Assurance:** **100% of validation and regression test suites passing consistently**.
+* **Zero Foreign Egress:** Runs fully locally on sovereign hardware with zero unmonitored egress beyond national borders.
+* **Statutory Compliance Packages:**
+  * EU AI Act Annex IV Technical Dossier (`models/audit/EU_AI_ACT_ANNEX_IV_DOSSIER.md`).
+  * ISO/IEC 42001:2023 AIMS Certification Dossier (`models/audit/ISO_42001_AIMS_CERTIFICATION_DOSSIER.md`).
+  * Algorithmic Transparency Recording Standard Record (`models/audit/UK_GOV_ATRS_RECORD.md`).
 
 ---
 
-## 6. Rekomendacja i Proponowane Działania
+## 6. Strategic Recommendations & Action Plan
 
-1. **Zgłoszenie Projektu do NCBR Ścieżka SMART (FENG):** Sformułowanie wniosku konsorcjalnego na stworzenie *„Narodowego Systemu Suwerennej Weryfikacji i Odporności Sztucznej Inteligencji na Zagrożenia Hybrydowe”*.
-2. **Prezentacja Techniczna dla CSIRT NASK i CSIRT GOV:** Demonstracja symulatora walki z rojem agentów (`training/simulate_frontier_swarm_combat.py`) oraz tarczy stepping-stone dla sieci elektrociepłowni.
-3. **Powołanie Zespołu Roboczego z IDEAS NCBR:** Przygotowanie wspólnej publikacji naukowej dowodzącej matematycznej bezbłędności połączenia solwera Z3 z filtrem Kalmana w procesie DPO.
+1. **Submit Consortial Application under NCBR SMART Path (FENG):** Formulate a joint consortium proposal titled *"National Sovereign AI Verification & Hybrid Threat Resilience System"*.
+2. **Technical Demonstrations for CSIRT NASK & CSIRT GOV:** Conduct live simulations of multi-agent adversarial swarm defence (`training/simulate_frontier_swarm_combat.py`) and stepping-stone protection for district utility infrastructures.
+3. **Establish Academic Task Force with IDEAS NCBR:** Publish joint peer-reviewed findings formally proving the mathematical correctness of coupling Z3 first-order logic with Kalman-filtered DPO preference optimisation.

@@ -72,127 +72,127 @@ class AutomatedCertificationHub:
         self.keypair: DilithiumKeyPair = keypair or self.ledger.keypair
 
     def list_available_certifications(self) -> List[Dict[str, Any]]:
-        """Zwraca listę certyfikatów z informacją o procedurze aplikacji i stopniu automatyzacji."""
+        """Returns the list of certification standards with application procedures and automation levels in UK English."""
         return [
             {
                 "standard": CertificationStandard.ISO_42001.value,
                 "title": "ISO/IEC 42001:2023 - Artificial Intelligence Management System (AIMS)",
-                "scope": "Globalny system zarządzania AI, etyka, ocena ryzyka, klauzule 4-10, załącznik A (A.2 - A.10)",
-                "automation_level": "AUTO-SERVICE READINESS DOSSIER (100% zautomatyzowane dowody audytowe)",
+                "scope": "Global AI management system, governance ethics, risk evaluation, clauses 4-10, Annex A controls (A.2 - A.10)",
+                "automation_level": "AUTO-SERVICE READINESS DOSSIER (100% automated audit evidence)",
                 "accredited_bodies": ["BSI Group", "TÜV SÜD", "DNV", "Bureau Veritas"],
-                "application_procedure": "Krok 1: Wygeneruj paczkę audytową Nethical. Krok 2: Wybierz jednostkę akredytowaną (np. BSI/TÜV). Krok 3: Przejdź Stage 1 (przegląd dokumentacji) i Stage 2 (audyt na żywo).",
+                "application_procedure": "Step 1: Generate Nethical audit evidence package. Step 2: Select accredited conformity assessment body (e.g. BSI Group, TÜV SÜD). Step 3: Complete Stage 1 (documentation review) and Stage 2 (live audit verification).",
             },
             {
                 "standard": CertificationStandard.SOC_2_TYPE_II.value,
                 "title": "SOC 2 Type II (AICPA Trust Services Criteria)",
-                "scope": "Security, Availability, Confidentiality, Processing Integrity, Privacy dla operacji w chmurze",
-                "automation_level": "CONTINUOUS EVIDENCE COLLECTOR (Zbieranie logów, niezmienny Merkle-DAG, dowody ZK-Gov)",
-                "accredited_bodies": ["Akredytowane firmy audytorskie CPA (np. Schellman, A-LIGN, Coalfire, Big 4)"],
-                "application_procedure": "Krok 1: 3-6 miesięcy zbierania dowodów ciągłych w Merkle Ledger. Krok 2: Badanie próbek przez audytora CPA. Krok 3: Wydanie raportu SOC 2 Type II.",
+                "scope": "Security, Availability, Confidentiality, Processing Integrity, and Privacy across cloud-native operations",
+                "automation_level": "CONTINUOUS EVIDENCE COLLECTOR (Continuous telemetry logs, immutable Merkle-DAG, ZK-Gov proofs)",
+                "accredited_bodies": ["Accredited CPA audit firms (e.g. Schellman, A-LIGN, Coalfire, Big 4)"],
+                "application_procedure": "Step 1: 3-6 months continuous evidence ingestion into Merkle Ledger. Step 2: Sampling and controls testing by CPA auditor. Step 3: SOC 2 Type II assurance report issuance.",
             },
             {
                 "standard": CertificationStandard.ISO_27001.value,
                 "title": "ISO/IEC 27001:2022 - Information Security Management System (ISMS)",
-                "scope": "Zarządzanie bezpieczeństwem informacji, kryptografia postkwantowa, kontrola dostępu, ciągłość działania",
+                "scope": "Information security management, post-quantum cryptography, role-based access control, operational continuity",
                 "automation_level": "AUTO-GENERATED STATEMENT OF APPLICABILITY (SoA) & POLICIES",
                 "accredited_bodies": ["BSI", "TÜV Rheinland", "DEKRA", "Lloyd's Register"],
-                "application_procedure": "Złożenie wniosku do jednostki akredytowanej przez PCA/UKAS z kompletem wyeksportowanych polityk Nethical.",
+                "application_procedure": "Formal submission to UKAS/PCA-accredited conformity body accompanied by exported Nethical policy suite.",
             },
             {
                 "standard": CertificationStandard.UK_GOV_TEAL_BOOK.value,
                 "title": "UK Government Project Delivery Functional Standard GovS 002 (The Teal Book Ch. 4)",
-                "scope": "Governance & Management, Three Lines of Defense, OGC Gateway Reviews (0-5), SRO Accountability",
-                "automation_level": "AUTOMATED ASSURANCE REPORT (Natychmiastowe poświadczenie dla departamentów rządowych UK)",
+                "scope": "Governance & Management, Three Lines of Defence, OGC Gateway Reviews (0-5), SRO Accountability",
+                "automation_level": "AUTOMATED ASSURANCE REPORT (Instant assurance verification for UK government departments)",
                 "accredited_bodies": ["Infrastructure and Projects Authority (IPA UK)", "Cabinet Office", "Government Internal Audit Agency (GIAA)"],
-                "application_procedure": "Przedłożenie raportu Governance Assurance Nethical przed każdą bramką OGC Gateway Review w projektach publicznych.",
+                "application_procedure": "Submission of Nethical Governance Assurance report ahead of every OGC Gateway Review gate in public sector programmes.",
             },
             {
                 "standard": CertificationStandard.GGI_ASSURANCE.value,
                 "title": "Good Governance Institute (GGI) - Assurance Beats Reassurance Standard",
-                "scope": "10 Zasad Dobrego Rządzenia, samoregulacja zarządu, proaktywny audyt zamiast biernych zapewnień",
+                "scope": "10 Principles of Good Governance, board self-regulation, proactive assurance over passive reassurance",
                 "automation_level": "MATHEMATICAL PROOF AUDIT (Z3 SMT Invariant Verification + Merkle DAG Anchor)",
                 "accredited_bodies": ["Good Governance Institute (GGI UK)", "NHS England Well-Led Reviewers"],
-                "application_procedure": "Wykorzystanie w okresowych przeglądach zarządczych (Well-Led Framework).",
+                "application_procedure": "Integration into periodic executive and board governance reviews (Well-Led Framework).",
             },
             {
                 "standard": CertificationStandard.CYERA_AISPM_DSPM.value,
                 "title": "Cyera-Aligned AISPM & DSPM Agent Security Attestation",
-                "scope": "Wykrywanie Shadow AI, mapowanie wrażliwości danych, DLP w pętli agentów, kontrola ePHI/PII",
-                "automation_level": "REAL-TIME POSTURE ATTESTATION (Ciągły monitoring Gateway i Inoculation Mesh)",
-                "accredited_bodies": ["Niezależne laboratoria Cyber Threat Intelligence & Cloud Security Alliance (CSA)"],
-                "application_procedure": "Generowane bezpośrednio z telemetrii Governance Gateway w formacie JSON/PDF dla CISO.",
+                "scope": "Shadow AI discovery, data sensitivity classification, agentic DLP boundaries, ePHI/PII exfiltration defence",
+                "automation_level": "REAL-TIME POSTURE ATTESTATION (Continuous Gateway and Inoculation Mesh telemetry)",
+                "accredited_bodies": ["Independent Cyber Threat Intelligence laboratories & Cloud Security Alliance (CSA)"],
+                "application_procedure": "Generated dynamically from Governance Gateway telemetry in JSON/PDF formats for CISO oversight.",
             },
             {
                 "standard": CertificationStandard.POLISH_BJR_KSC.value,
-                "title": "Business Judgment Rule (KSH) & Ustawa o KSC Poziom Wysoki (Polska)",
-                "scope": "Tarcza należytej staranności członków zarządu (Art. 293/483 KSH, Art. 296 k.k.) oraz wymogi KSC (NIS2)",
-                "automation_level": "AUTO-SIGN BJR CERTIFICATE (Automatyczny certyfikat z podpisem PQC i pieczęcią czasową)",
-                "accredited_bodies": ["CSIRT NASK", "CSIRT GOV", "Jednostki certyfikujące KSCert"],
-                "application_procedure": "Dołączanie certyfikatu BJR do każdej uchwały zarządu wdrażającej systemy AI.",
+                "title": "Business Judgment Rule (KSH) & National Cybersecurity System (KSC)",
+                "scope": "Business Judgment Rule board defence shield (Polish Commercial Companies Code Art. 293/483, Penal Code Art. 296) and National Cybersecurity System (KSC / NIS2) high-level baseline",
+                "automation_level": "AUTO-SIGN BJR CERTIFICATE (Automated certificate with PQC signature and cryptographic timestamp)",
+                "accredited_bodies": ["CSIRT NASK", "CSIRT GOV", "KSCert Conformity Bodies"],
+                "application_procedure": "Attaching the BJR certificate to executive board resolutions authorising autonomous AI deployment.",
             },
             {
                 "standard": CertificationStandard.NATO_DEFENSE_AI.value,
-                "title": "NATO AI Strategy - Responsible Defense & Zero-Egress Attestation",
-                "scope": "Standardy obronności sojuszniczej, 6 Zasad PRU, izolacja Air-Gapped, odporność na zakłócenia, FIPS 204",
-                "automation_level": "CLASSIFIED DEFENSE DOSSIER GENERATOR (100% zautomatyzowane)",
-                "accredited_bodies": ["NATO Allied Command Transformation (ACT)", "Agencje obrony państw członkowskich"],
-                "application_procedure": "Certyfikacja procedur w bezpiecznych strefach wojskowych i laboratoriach kryptograficznych.",
+                "title": "NATO AI Strategy - Responsible Defence & Zero-Egress Attestation",
+                "scope": "Allied defence standards, 6 Principles of Responsible Use (PRU), air-gapped zero-egress isolation, EW resilience, NIST FIPS 204",
+                "automation_level": "CLASSIFIED DEFENCE DOSSIER GENERATOR (100% automated)",
+                "accredited_bodies": ["NATO Allied Command Transformation (ACT)", "Member state defence agencies (e.g. UK DSTL, DKWOC)"],
+                "application_procedure": "Conformity assessment in secure military enclaves and accredited cryptographic evaluation facilities.",
             },
             {
                 "standard": CertificationStandard.CANADA_AIDA.value,
                 "title": "Canada Artificial Intelligence and Data Act (AIDA - Bill C-27)",
                 "scope": "Harm Mitigation, High-Impact AI, Algorithmic Fairness, Confidential Commercial Data, Plain-Language Disclosure",
-                "automation_level": "AUTO-SERVICE READINESS DOSSIER (Zgodność z wytycznymi ISED Canada)",
-                "accredited_bodies": ["AI and Data Commissioner (ISED Canada)", "Akredytowane laboratoria kanadyjskie"],
-                "application_procedure": "Przedłożenie dossier oceny ryzyka szkód i audytu biasu do ISED przed komercyjnym wdrożeniem.",
+                "automation_level": "AUTO-SERVICE READINESS DOSSIER (ISED Canada regulatory guidance alignment)",
+                "accredited_bodies": ["AI and Data Commissioner (ISED Canada)", "Accredited Canadian Laboratories"],
+                "application_procedure": "Submission of harm mitigation risk assessment and algorithmic bias dossier to ISED prior to commercial deployment.",
             },
             {
                 "standard": CertificationStandard.HEALTHCARE_MEDTECH_MDR.value,
                 "title": "Medical Device Regulation (MDR EU 2017/745) & ISO 14971 Medical AI Safety",
-                "scope": "SaMD Rule 11 (Klasy I, IIa, IIb, III), ISO 14971, ISO 13485, zakaz autonomicznego DNR, ochrona triażu SOR i dawkowania leków",
-                "automation_level": "CLINICAL REGULATORY DOSSIER (100% zautomatyzowane dowody dla Jednostek Notyfikowanych)",
+                "scope": "SaMD Rule 11 (Classes I, IIa, IIb, III), ISO 14971, ISO 13485, prohibition of autonomous DNR orders, emergency triage integrity, and medication dosage safety",
+                "automation_level": "CLINICAL REGULATORY DOSSIER (100% automated evidence for Notified Bodies)",
                 "accredited_bodies": ["TÜV SÜD", "BSI Group The Netherlands", "DEKRA", "DNV MedTech", "URPL"],
-                "application_procedure": "Złożenie dokumentacji technicznej wyrobu medycznego do Jednostki Notyfikowanej wraz z pieczęcią PQC i plikiem ISO 14971.",
+                "application_procedure": "Submission of medical software technical documentation to Notified Body with PQC cryptographic seal and ISO 14971 risk management file.",
             },
             {
                 "standard": CertificationStandard.PUBLIC_ADMIN_KPA_KRI.value,
-                "title": "Kodeks Postępowania Administracyjnego (KPA) & Krajowe Ramy Interoperacyjności (KRI)",
-                "scope": "Art. 7 (Prawda obiektywna), Art. 107 (Zakaz czarnej skrzynki), wymóg podpisu kwalifikowanego, ochrona informacji niejawnych (ABW/SKW)",
-                "automation_level": "ADMINISTRATIVE LAW COMPLIANCE DOSSIER (Dla organów administracji rządowej i samorządowej)",
-                "accredited_bodies": ["Naczelny Sąd Administracyjny (NSA)", "Ministerstwo Cyfryzacji", "Najwyższa Izba Kontroli (NIK)", "ABW"],
-                "application_procedure": "Dołączanie poświadczenia zgodności z KPA/KRI do postępowań administracyjnych i audytów NIK.",
+                "title": "Administrative Procedure Code (KPA) & National Interoperability Framework (KRI)",
+                "scope": "Administrative justice principles (Objective Truth), prohibition of black-box reasoning, qualified electronic signature requirement, classified information protection (ABW/SKW / UK Cabinet Office), National Interoperability Framework",
+                "automation_level": "ADMINISTRATIVE LAW COMPLIANCE DOSSIER (For national and municipal public authorities)",
+                "accredited_bodies": ["Supreme Administrative Court (NSA)", "Ministry of Digital Affairs", "Supreme Audit Office (NIK)", "Internal Security Agency (ABW)"],
+                "application_procedure": "Attaching administrative compliance dossier to statutory administrative proceedings and state audit reviews.",
             },
             {
                 "standard": CertificationStandard.ACADEMIC_RESEARCH_ALLEA.value,
                 "title": "European Code of Conduct for Research Integrity (ALLEA) & Scholarly Ethics",
-                "scope": "Prewencja FFP (Fabrication, Falsification, Plagiarism), weryfikacja cytowań DOI/PMID, tarcza nowości patentowej (Prior Art), bioetyka",
+                "scope": "Prevention of Fabrication, Falsification, and Plagiarism (FFP), DOI/PMID citation integrity verification, patent novelty prior art shield, bioethics oversight",
                 "automation_level": "RESEARCH INTEGRITY & ANTI-HALLUCINATION ATTESTATION",
-                "accredited_bodies": ["Polska Akademia Nauk (PAN)", "Narodowe Centrum Nauki (NCN)", "European Research Council (ERC)", "UPRP"],
-                "application_procedure": "Przedłożenie certyfikatu rzetelności badawczej do wniosków grantowych (Horizon Europe/NCN) i wydawnictw naukowych.",
+                "accredited_bodies": ["Polish Academy of Sciences (PAN)", "National Science Centre (NCN)", "European Research Council (ERC)", "Patent Office (UPRP / EPO)"],
+                "application_procedure": "Submission of research integrity attestation alongside grant applications (Horizon Europe, ERC) and scholarly journal submissions.",
             },
             {
                 "standard": CertificationStandard.EU_AI_ACT_ANNEX_IV.value,
                 "title": "EU AI Act (Regulation 2024/1689) - Annex IV Technical Documentation",
-                "scope": "Kompletna dokumentacja techniczna systemów wysokiego ryzyka (Art. 11): architektura, nadzór (Art. 14), cyberbezpieczeństwo (Art. 15), zarządzanie ryzykiem (Art. 9)",
+                "scope": "Comprehensive technical documentation for high-risk AI systems (Article 11): system architecture, human oversight (Article 14), cybersecurity (Article 15), risk management system (Article 9)",
                 "automation_level": "FULL ANNEX IV COMPLIANCE DOSSIER (Post-Quantum Merkle-Anchored)",
-                "accredited_bodies": ["Notified Bodies pod EU AI Act", "Urząd Ochrony Danych Osobowych", "Komisja Europejska / AI Office"],
-                "application_procedure": "Przedłożenie wygenerowanego Dossier Annex IV wraz z dowodem matematycznym SMT przed wprowadzeniem systemu do obrotu.",
+                "accredited_bodies": ["Notified Bodies under EU AI Act", "Personal Data Protection Office", "European Commission / AI Office"],
+                "application_procedure": "Submission of generated Annex IV technical dossier accompanied by formal mathematical SMT proofs prior to placing system on the market.",
             },
             {
                 "standard": CertificationStandard.COMMON_CRITERIA_EAL4.value,
                 "title": "Common Criteria (ISO/IEC 15408 / EAL4+) - Security Target Specification",
-                "scope": "Profil zabezpieczeń TOE: FAU_GEN.1 (Audit), FAU_STG.1 (Immutable Merkle), FCS_COP.1 (PQC ML-DSA-65), FDP_ACC.1 (Access Control)",
+                "scope": "TOE Security Target specification: FAU_GEN.1 (Audit Data Generation), FAU_STG.1 (Protected Audit Review), FCS_COP.1 (PQC ML-DSA-65 Cryptography), FDP_ACC.1 (Access Control)",
                 "automation_level": "FORMAL EAL4+ SECURITY TARGET SPECIFICATION & SAR AUDIT MAPPING",
-                "accredited_bodies": ["Laboratoria Oceny Bezpieczeństwa Teleinformatycznego (ITSEF / ABW / BSI Germany / ANSSI)"],
-                "application_procedure": "Rejestracja Security Target w krajowym schemacie certyfikacji (np. KSCc w Polsce) i przejście testów penetracyjnych AVA_VAN.3.",
+                "accredited_bodies": ["Information Technology Security Evaluation Facilities (ITSEF / ABW / BSI Germany / ANSSI)"],
+                "application_procedure": "Registration of Security Target with national certification scheme (e.g. UK NCSC / KSCc) and passing AVA_VAN.3 vulnerability assessment.",
             },
             {
                 "standard": CertificationStandard.CSIRT_SERIOUS_INCIDENT.value,
                 "title": "KSC Art. 11 & CRA Art. 11 - CSIRT Serious Incident Declaration",
-                "scope": "Zgłoszenie incydentu poważnego / krytycznego do CSIRT NASK, CSIRT GOV i ENISA w czasie <24h z pieczęcią kryminalistyczną",
+                "scope": "Mandatory reporting of serious / critical cybersecurity incidents to CSIRT NASK, CSIRT GOV, CSIRT MON, and ENISA in <24h with forensic chain of custody",
                 "automation_level": "ONE-CLICK INCIDENT REPORT GENERATOR & MERKLE FORENSIC PROOF",
                 "accredited_bodies": ["CSIRT MON", "CSIRT NASK", "CSIRT GOV", "ENISA EU-CSIRTs Network"],
-                "application_procedure": "Automatyczne wyeksportowanie paczki dowodowej po wykryciu naruszenia i przesłanie do właściwego zespołu reagowania.",
+                "application_procedure": "Automated export of cryptographic forensic evidence package upon security breach detection and transmission to designated CSIRT coordination centre.",
             },
         ]
 
@@ -201,151 +201,154 @@ class AutomatedCertificationHub:
         standard: CertificationStandard,
         custom_metadata: Optional[Dict[str, Any]] = None,
     ) -> AutomatedEvidencePackage:
-        """Automatycznie generuje zapieczętowaną kryptograficznie paczkę dowodową dla wybranego standardu."""
+        """Automatically generates a cryptographically sealed evidence package for the designated standard in UK English."""
         meta = custom_metadata or {}
         pkg_id = f"NETHICAL-CERT-{standard.value}-{int(datetime.now(timezone.utc).timestamp())}"
 
-        # 1. Sprawdzenie stanu ledgeru i pobranie kotwicy Merkle
+        # 1. Verification of ledger state and extraction of Merkle root anchor
         merkle_root = self.ledger.current_root
         is_ledger_valid, _ = self.ledger.verify_integrity()
 
-        # 2. Definicja matrycy kontroli dla danego standardu
+        # 2. Definition of control matrices and Three Lines of Defence alignment
         controls: Dict[str, Any] = {}
         three_lines: Dict[str, str] = {
             "first_line_operational": "Governance Runtime Gateway & MCP Proxy (pre-execution tool interceptor, <400 µs)",
             "second_line_risk_compliance": "Compliance Packs (ISO 42001, NIST, EU AI Act, KSC, UK DPA, AIDA, NATO) & Deep Alignment Engine",
             "third_line_independent_audit": "Cryptographic Merkle-DAG Ledger, Z3 SMT Formal Solver & Post-Quantum ML-DSA-65 Signatures",
+            "line_1_operational": "Governance Runtime Gateway & MCP Proxy (pre-execution tool interceptor, <400 µs)",
+            "line_2_compliance_risk": "Compliance Packs (ISO 42001, NIST, EU AI Act, KSC, UK DPA, AIDA, NATO) & Deep Alignment Engine",
+            "line_3_internal_audit": "Cryptographic Merkle-DAG Ledger, Z3 SMT Formal Solver & Post-Quantum ML-DSA-65 Signatures",
         }
 
         if standard == CertificationStandard.ISO_42001:
             controls = {
-                "A.2_AI_Policy": "Verified (Karta Etyki i 25 Praw Nethical wdrożone w pamięci operacyjnej)",
-                "A.3_Internal_Organization": "Verified (Podział ról SRO, Gateway Custodian, HITL Reviewers)",
+                "A.2_AI_Policy": "Verified (Ethics Charter and 25 Nethical Laws active in operational memory)",
+                "A.3_Internal_Organization": "Verified (Segregation of duties: SRO, Gateway Custodian, HITL Reviewers)",
                 "A.4_Resources_for_AI": "Verified (Sub-millisecond IPC Tokio, PQC Keypair, TEE Enclaves)",
-                "A.5_Assessing_Impacts": "Verified (Wskaźnik DIR 4/5, ocena ryzyka dyskryminacji i bezpieczeństwa fizycznego)",
-                "A.6_AI_System_Life_Cycle": "Verified (Ciągłe testy regresyjne 16 suite'ów, Inoculation Mesh Red Teaming)",
-                "A.7_Data_for_AI_Systems": "Verified (Filtracja PII, ePHI, AB 2013 data transparency summary)",
-                "A.8_Information_for_Users": "Verified (Transparencja wywołań narzędzi, ZK-Gov dowody bez ujawniania promptu)",
-                "A.9_Human_Oversight": "Verified (Kolejka HITL, sub-ms Hardware Watchdog Timer, E-STOP)",
-                "A.10_Continuous_Improvement": "Verified (DPO Dataset z 259+ parami, adaptacyjna asymilacja z repozytorium)",
+                "A.5_Assessing_Impacts": "Verified (Disparate Impact Ratio 4/5 rule, discrimination risk and physical safety evaluation)",
+                "A.6_AI_System_Life_Cycle": "Verified (Continuous regression test coverage across 16 suites, Inoculation Mesh Red Teaming)",
+                "A.7_Data_for_AI_Systems": "Verified (PII and ePHI sanitisation, AB 2013 data transparency summary)",
+                "A.8_Information_for_Users": "Verified (Tool execution transparency, ZK-Gov proofs without prompt disclosure)",
+                "A.9_Human_Oversight": "Verified (HITL triage queue, sub-millisecond hardware watchdog timer, E-STOP)",
+                "A.10_Continuous_Improvement": "Verified (DPO dataset with 259+ pairs, adaptive repository assimilation)",
             }
-            instructions = "Paczka spełnia kryteria certyfikacji AIMS. Przedstawić auditorowi BSI/TÜV wraz z kluczem weryfikacyjnym PQC."
+            instructions = "AIMS certification criteria satisfied. Submit to BSI/TÜV SÜD conformity assessor alongside PQC verification key."
             readiness = 0.98
 
         elif standard == CertificationStandard.UK_GOV_TEAL_BOOK:
             controls = {
-                "GovS_002_4.1_Governance_Principles": "Enforced (Formalne oddzielenie governance od operacji agenta)",
-                "GovS_002_4.2_Assurance_and_Approvals": "Active (OGC Gateways 0-5 zintegrowane w pre-actuation checks)",
-                "GovS_002_4.3_Roles_Accountability": "Defined (SRO: Master Key Holder; Project Board: Quorum multisig)",
-                "GovS_002_4.4_Risk_Appetite": "Deterministic (Zero-Tolerance dla naruszeń Prawa 1 i Prawa 2)",
+                "GovS_002_4.1_Governance_Principles": "Enforced (Formal decoupling of governance from autonomous agent execution)",
+                "GovS_002_4.2_Assurance_and_Approvals": "Active (OGC Gateways 0-5 integrated into pre-actuation checks)",
+                "GovS_002_4.3_Roles_Accountability": "Defined (SRO: Master Key Holder; Project Board: Multisig quorum)",
+                "GovS_002_4.4_Risk_Appetite": "Deterministic (Zero-tolerance for breaches of Law 1 and Law 2)",
                 "GovS_002_4.5_Three_Lines_of_Defense": "Operational (Gateway -> Compliance Packs -> Merkle Ledger)",
             }
-            instructions = "Dokument gotowy do audytu w ramach przeglądów OGC Gateway Reviews dla projektów rządu Wielkiej Brytanii."
+            instructions = "Document certified for OGC Gateway Reviews across UK Central Government programmes."
             readiness = 0.96
 
         elif standard == CertificationStandard.CYERA_AISPM_DSPM:
             controls = {
-                "Shadow_AI_Discovery": "Active (Monitorowanie wywołań portów, gniazd TCP i procesów agentowych)",
-                "Data_Classification_Engine": "Enforced (Tagowanie ePHI, PII, tajemnic przedsiębiorstwa w czasie rzeczywistym)",
-                "Agent_DLP_Boundary": "Guaranteed (Brak wycieku danych wrażliwych do zewnętrznych kontekstów LLM)",
-                "Prompt_Injection_Defense": "100% (Obrona 6 wektorów ataku w Inoculation Mesh)",
-                "Model_Supply_Chain_SBOM": "Documented (Ścisła kontrola wersji wag, adapterów LoRA i bibliotek)",
+                "Shadow_AI_Discovery": "Active (Continuous socket, port, and agent process telemetry monitoring)",
+                "Data_Classification_Engine": "Enforced (Real-time classification and tagging of ePHI, PII, and trade secrets)",
+                "Agent_DLP_Boundary": "Guaranteed (Prevention of sensitive data exfiltration to external LLM contexts)",
+                "Prompt_Injection_Defense": "100% (Neutralisation of 6 attack vectors via Inoculation Mesh)",
+                "Model_Supply_Chain_SBOM": "Documented (Strict versioning and attestation of model weights, LoRA adapters, and runtime dependencies)",
             }
-            instructions = "Raport CISO: Zgodność architektury z najnowszymi standardami AISPM i DSPM dla agentów autonomicznych."
+            instructions = "CISO Attestation: Full architectural conformity with contemporary AISPM and DSPM standards for autonomous agentic systems."
             readiness = 0.97
 
         elif standard == CertificationStandard.NATO_DEFENSE_AI:
             controls = {
-                "NATO_PRU_1_Lawfulness": "Enforced (Zgodność z Międzynarodowym Prawem Humanitarnym i Konwencjami Genewskimi)",
-                "NATO_PRU_2_Responsibility": "Guaranteed (Certyfikowane dowództwo i Human-in-the-loop)",
-                "NATO_PRU_3_Explainability": "Verified (Niezmienny Merkle-DAG z podpisami NIST FIPS 204 ML-DSA-65)",
-                "NATO_PRU_4_Reliability": "Tested (Odporność na zakłócenia EW i ataki adwersarialne)",
-                "NATO_PRU_5_Governability": "Enforced (Deterministyczny Kill-Switch i interlock sprzętowy <50 µs)",
-                "NATO_PRU_6_Bias_Mitigation": "Active (Filtracja celów cywilnych i bezstronność analityczna)",
+                "NATO_PRU_1_Lawfulness": "Enforced (Strict conformity with International Humanitarian Law and Geneva Conventions)",
+                "NATO_PRU_2_Responsibility": "Guaranteed (Certified command chain and Human-in-the-Loop oversight)",
+                "NATO_PRU_3_Explainability": "Verified (Immutable Merkle-DAG with NIST FIPS 204 ML-DSA-65 signatures)",
+                "NATO_PRU_4_Reliability": "Tested (Resilience against electronic warfare jamming and adversarial attacks)",
+                "NATO_PRU_5_Governability": "Enforced (Deterministic hardware kill-switch and interlock <50 µs)",
+                "NATO_PRU_6_Bias_Mitigation": "Active (Civilian target filtering and analytical neutrality verification)",
             }
-            instructions = "Dossier obronności sojuszniczej NATO: Przedłożyć dowództwu ACT i komórce akredytacji wojskowej."
+            instructions = "NATO Allied Defence Dossier: Approved for transmission to ACT Command and military accreditation authorities."
             readiness = 0.99
 
         elif standard == CertificationStandard.CANADA_AIDA:
             controls = {
-                "AIDA_Sec_5_Confidential_Data": "Enforced (Reversible Token Vault & ochrona tajemnic handlowych)",
-                "AIDA_Sec_6_Harm_Mitigation": "Enforced (Systematyczna ocena ryzyka szkody fizycznej, psychicznej i majątkowej)",
-                "AIDA_Sec_8_Bias_Audit": "Verified (Zgodność z Canadian Human Rights Act)",
-                "AIDA_Sec_11_Plain_Language": "Compliant (Dostępny publiczny opis działania systemu i środków nadzoru)",
-                "AIDA_Enforcement_Cap": "Monitored (Rezerwa zgodnościowa chroniąca przed karami AMPs do 3% obrotu)",
+                "AIDA_Sec_5_Confidential_Data": "Enforced (Reversible Token Vault and proprietary commercial data shield)",
+                "AIDA_Sec_6_Harm_Mitigation": "Enforced (Systematic assessment and mitigation of physical, psychological, and financial harm risks)",
+                "AIDA_Sec_8_Bias_Audit": "Verified (Conformity with Canadian Human Rights Act non-discrimination standards)",
+                "AIDA_Sec_11_Plain_Language": "Compliant (Publicly available plain-language system specification and oversight safeguards)",
+                "AIDA_Enforcement_Cap": "Monitored (Compliance buffer safeguarding against AMP administrative monetary penalties up to 3% gross revenue)",
             }
-            instructions = "Paczka gotowa do przedłożenia ISED Canada (Komisarz ds. AI i Danych)."
+            instructions = "Dossier prepared for submission to ISED Canada (Artificial Intelligence and Data Commissioner)."
             readiness = 0.97
 
         elif standard == CertificationStandard.HEALTHCARE_MEDTECH_MDR:
             controls = {
-                "MDR_Rule_11_SaMD_Classification": "Enforced (Klasyfikacja SaMD Klasa I, IIa, IIb, III)",
-                "ISO_14971_Risk_Management": "Active (Matryca ryzyka klinicznego i plik zarządzania ryzykiem)",
-                "ISO_13485_Medical_QMS": "Verified (Procedury cyklu życia oprogramowania medycznego IEC 62304)",
-                "Autonomous_DNR_Prohibition": "Guaranteed (100% blokada zaniechania reanimacji bez konsylium KEL Art. 30)",
-                "Triage_Integrity_Lock": "Enforced (Zakaz obniżania priorytetu triażu SOR bez badania lekarskiego)",
-                "GDPR_Art9_Health_Data_Shield": "Active (Szyfrowanie danych medycznych, genetycznych i ePHI)",
+                "MDR_Rule_11_SaMD_Classification": "Enforced (Software as a Medical Device classification Class I, IIa, IIb, III)",
+                "ISO_14971_Risk_Management": "Active (Clinical risk management matrix and ISO 14971 risk management file)",
+                "ISO_13485_Medical_QMS": "Verified (IEC 62304 medical software life-cycle governance procedures)",
+                "Autonomous_DNR_Prohibition": "Guaranteed (100% hard block on autonomous Do-Not-Resuscitate orders without clinical consensus)",
+                "Triage_Integrity_Lock": "Enforced (Prohibition of emergency department triage downgrade without physician examination)",
+                "GDPR_Art9_Health_Data_Shield": "Active (End-to-end encryption of sensitive health records, genetic data, and ePHI)",
             }
-            instructions = "Paczka gotowa do przedłożenia Jednostce Notyfikowanej (TÜV SÜD/BSI) oraz URPL."
+            instructions = "Clinical compliance package ready for submission to Notified Bodies (TÜV SÜD / BSI) and competent health authorities."
             readiness = 0.97
 
         elif standard == CertificationStandard.PUBLIC_ADMIN_KPA_KRI:
             controls = {
-                "KPA_Art7_Objective_Truth": "Enforced (Zakaz orzekania w oparciu o domysły probabilistyczne AI)",
-                "KPA_Art107_Anti_BlackBox_Reasoning": "Guaranteed (Pełne uzasadnienie faktyczne i prawne w języku urzędowym)",
-                "Human_Official_Qualified_Signature": "Verified (Wymóg podpisu kwalifikowanego / profilu zaufanego)",
-                "UOIN_Classified_Information_Guard": "Active (Izolacja Air-Gap i akredytacja ABW/SKW dla danych niejawnych)",
-                "KRI_Interoperability_Standards": "Compliant (Formaty otwarte PDF/A, XML e-PUAP, WCAG 2.1 AA)",
+                "KPA_Art7_Objective_Truth": "Enforced (Prohibition of administrative adjudication based on probabilistic AI conjectures)",
+                "KPA_Art107_Anti_BlackBox_Reasoning": "Guaranteed (Exhaustive factual and legal justification rendered in official statutory language)",
+                "Human_Official_Qualified_Signature": "Verified (Requirement for human official qualified electronic signature / trusted digital profile)",
+                "UOIN_Classified_Information_Guard": "Active (Air-gap isolation and national security agency accreditation for classified records)",
+                "KRI_Interoperability_Standards": "Compliant (Open document standards: PDF/A, XML e-PUAP, WCAG 2.1 AA accessibility)",
             }
-            instructions = "Dossier gotowe do audytu przed NSA, Najwyższą Izbą Kontroli (NIK) oraz Ministerstwem Cyfryzacji."
+            instructions = "Administrative justice dossier certified for audit before Supreme Administrative Courts and State Audit Offices."
             readiness = 0.98
 
         elif standard == CertificationStandard.ACADEMIC_RESEARCH_ALLEA:
             controls = {
-                "ALLEA_FFP_Zero_Tolerance": "Enforced (Weryfikacja braku fabrykacji, fałszowania i plagiatu)",
-                "Bibliographic_Anti_Hallucination": "Guaranteed (Walidacja identyfikatorów DOI, PubMed PMID i arXiv)",
-                "Patent_Prior_Art_Novelty_Shield": "Active (Blokada wycieku formuł przed zgłoszeniem UPRP/EPO)",
-                "Bioethics_Committee_Verification": "Verified (Wymóg uchwały Komisji Bioetycznej dla badań na ludziach)",
-                "FAIR_Data_Stewardship": "Compliant (Zarządzanie danymi badawczymi DMP dla grantów NCN i ERC)",
+                "ALLEA_FFP_Zero_Tolerance": "Enforced (Zero-tolerance enforcement against fabrication, falsification, and plagiarism)",
+                "Bibliographic_Anti_Hallucination": "Guaranteed (Strict anti-hallucination validation against DOI, PubMed PMID, and arXiv registries)",
+                "Patent_Prior_Art_Novelty_Shield": "Active (Interception and protection of chemical and mathematical novel formulas prior to patent filing)",
+                "Bioethics_Committee_Verification": "Verified (Mandatory Institutional Review Board / Bioethics Committee certification for human studies)",
+                "FAIR_Data_Stewardship": "Compliant (Data Management Plan compliance aligned with Horizon Europe and ERC mandates)",
             }
-            instructions = "Dossier przedłożyć Uczelnianej Komisji Etyki, PAN, Narodowemu Centrum Nauki (NCN) lub ERC."
+            instructions = "Research integrity dossier certified for submission to Research Ethics Committees, National Science Academies, and the European Research Council (ERC)."
             readiness = 0.99
 
         elif standard == CertificationStandard.EU_AI_ACT_ANNEX_IV:
             controls = {
-                "Annex_IV_1_General_Description": "Complete (Opis przeznaczenia, wersji modelu, interfejsów MCP/API i podmiotów wdrożeniowych)",
-                "Annex_IV_2_Development_and_Changes": "Verified (Metodyka projektowania, algorytmy gubernatora, historia zmian wag)",
-                "Annex_IV_3_Monitoring_Functioning_Control": "Operational (Sub-ms telemetry, detekcja driftu, logowanie wszystkich wywołań w Merkle-DAG)",
-                "Annex_IV_4_Risk_Management_Art9": "Enforced (Ciągły proces zarządzania ryzykiem, 25 Praw Nethical, wyłączniki awaryjne E-STOP)",
-                "Annex_IV_5_Data_Governance_Art10": "Compliant (Walidacja stronniczości, audyt pochodzenia danych, filtracja PII/ePHI)",
-                "Annex_IV_6_Human_Oversight_Art14": "Guaranteed (Kolejka HITL Triage, prawo weta operatora, interlock sprzętowy)",
-                "Annex_IV_7_Cybersecurity_Art15": "Certified (Obrona przed prompt injection, zatruciem danych, PQC ML-DSA-65)",
+                "Annex_IV_1_General_Description": "Complete (Intended purpose, model versioning, MCP/API interface specifications, and deploying entity declarations)",
+                "Annex_IV_2_Development_and_Changes": "Verified (Design methodology, governor decision algorithms, and LoRA weight iteration lineage)",
+                "Annex_IV_3_Monitoring_Functioning_Control": "Operational (Sub-millisecond telemetry, concept drift detection, and immutable Merkle-DAG logging)",
+                "Annex_IV_4_Risk_Management_Art9": "Enforced (Continuous risk management system, 25 Nethical Laws, deterministic E-STOP circuit breakers)",
+                "Annex_IV_5_Data_Governance_Art10": "Compliant (Bias validation, training data provenance audit, PII/ePHI sanitisation)",
+                "Annex_IV_6_Human_Oversight_Art14": "Guaranteed (Human-in-the-Loop triage queue, operator veto power, hardware interlock)",
+                "Annex_IV_7_Cybersecurity_Art15": "Certified (Prompt injection defence, data poisoning resilience, NIST FIPS 204 ML-DSA-65 post-quantum signing)",
             }
-            instructions = "Oficjalna Dokumentacja Techniczna zgodna z Artykułem 11 i Załącznikiem IV Rozporządzenia (UE) 2024/1689 (EU AI Act). Przedłożyć jednostce notyfikowanej."
+            instructions = "Official Technical Documentation pursuant to Article 11 and Annex IV of Regulation (EU) 2024/1689 (EU AI Act / Rozporządzenia (UE) 2024/1689). Submit to accredited notified bodies."
             readiness = 0.99
 
         elif standard == CertificationStandard.COMMON_CRITERIA_EAL4:
             controls = {
                 "TOE_Security_Target": "Documented (Nethical Sovereign Governance Gateway & Merkle DAG)",
-                "FAU_GEN.1_Audit_Data_Generation": "Enforced (Rejestrowanie każdego wywołania narzędzia ze stemplem czasu i tożsamością)",
-                "FAU_STG.1_Protected_Audit_Review": "Guaranteed (Niezmienny rejestr Merkle-DAG chroniony przed modyfikacją nawet przez roota)",
-                "FCS_COP.1_Cryptographic_Operation": "Active (NIST FIPS 204 ML-DSA-65 post-quantum signing & SHA3-512)",
-                "FDP_ACC.1_Subset_Access_Control": "Enforced (Suwerenny RBAC z rolami i separacją kryptograficzną tenantów)",
-                "FPT_FLS.1_Failure_with_Preservation": "Operational (Hardware Watchdog zrzuca magistrale Fieldbus w stan bezpieczny <50 µs)",
-                "ALC_FLR.2_Flaw_Reporting_Procedures": "Active (Inoculation Mesh z automatycznym zasilaniem bazy sygnatur)",
+                "FAU_GEN.1_Audit_Data_Generation": "Enforced (Granular recording of every tool execution with cryptographic timestamp and agent identity)",
+                "FAU_STG.1_Protected_Audit_Review": "Guaranteed (Immutable Merkle-DAG ledger immune to tampering even by root/administrator)",
+                "FCS_COP.1_Cryptographic_Operation": "Active (NIST FIPS 204 ML-DSA-65 post-quantum signature verification & SHA3-512 hashing)",
+                "FDP_ACC.1_Subset_Access_Control": "Enforced (Sovereign RBAC with cryptographic multi-tenant domain separation)",
+                "FPT_FLS.1_Failure_with_Preservation": "Operational (Hardware watchdog transitions fieldbus to safe de-energised state in <50 µs)",
+                "ALC_FLR.2_Flaw_Reporting_Procedures": "Active (Inoculation Mesh with automated threat signature distribution)",
             }
-            instructions = "Specyfikacja Security Target na poziomie EAL4+ zgodna z normą ISO/IEC 15408. Gotowa do ewaluacji przez akredytowane laboratorium ITSEF."
+            instructions = "EAL4+ Security Target Specification aligned with ISO/IEC 15408. Ready for formal evaluation by an accredited ITSEF laboratory."
             readiness = 0.98
 
         elif standard == CertificationStandard.CSIRT_SERIOUS_INCIDENT:
             controls = {
-                "KSC_Art11_24h_Notification": "Compliant (Zgłoszenie incydentu poważnego w czasie poniżej 24 godzin)",
-                "CRA_Art11_Exploited_Vulnerability": "Enforced (Raportowanie podatności aktywnie wykorzystywanych do CSIRT/ENISA)",
-                "GDPR_Art33_Data_Breach_72h": "Guaranteed (Powiadomienie organu nadzorczego UODO w 72h ze statystyką PII)",
-                "Forensic_Chain_of_Custody": "Sealed (Dowód niezmienności logów w Merkle-DAG z pieczęcią postkwantową)",
-                "Mitigation_and_Root_Cause": "Documented (Automatyczna izolacja węzła Zero-Egress i aktywacja bezpieczników)",
+                "KSC_Art11_24h_Notification": "Compliant (Transmission of mandatory serious incident notification within <24 hours)",
+                "CRA_Art11_Exploited_Vulnerability": "Enforced (Mandatory reporting of actively exploited vulnerabilities to CSIRT and ENISA)",
+                "GDPR_Art33_Data_Breach_72h": "Guaranteed (Formal data protection authority notification within 72 hours with PII scope telemetry)",
+                "Forensic_Chain_of_Custody": "Sealed (Immutable Merkle-DAG evidentiary log chain sealed with post-quantum signature)",
+                "Mitigation_and_Root_Cause": "Documented (Automated Zero-Egress network isolation and emergency circuit breaker trip)",
             }
-            instructions = "Deklaracja incydentu poważnego dla CSIRT NASK / CSIRT GOV / CSIRT MON oraz ENISA z pieczęcią kryminalistyczną."
+            instructions = "Serious cybersecurity incident declaration for CSIRT NASK / CSIRT GOV / CSIRT MON and ENISA with full cryptographic chain of custody."
             readiness = 1.00
 
         else:
@@ -354,11 +357,10 @@ class AutomatedCertificationHub:
                 "fundamental_laws": "25 / 25 Laws active and mathematically verified",
                 "post_quantum_readiness": "NIST FIPS 204 ML-DSA-65 active",
             }
-            instructions = "Oficjalny pakiet poświadczeń Nethical Enterprise OS."
+            instructions = "Official Nethical Enterprise OS assurance dossier."
             readiness = 0.95
 
-
-        # 3. Kryptograficzne zapieczętowanie paczki
+        # 3. Cryptographic sealing of package
         content_for_signing = json.dumps(
             {
                 "pkg_id": pkg_id,
@@ -377,7 +379,7 @@ class AutomatedCertificationHub:
         )
         pqc_sig = quantum_sig.signature.hex()
 
-        # 4. Zapis orzeczenia w Merkle Ledgerze
+        # 4. Record decision in Merkle Ledger
         self.ledger.append_decision(
             decision_data={
                 "type": "AUTOMATED_CERTIFICATION_PACKAGE_ISSUED",
@@ -406,56 +408,56 @@ class AutomatedCertificationHub:
         )
 
     def export_dossier_markdown(self, package: AutomatedEvidencePackage) -> str:
-        """Eksportuje paczkę dowodową do oficjalnego, sformatowanego raportu Markdown dla audytora."""
+        """Exports the evidence package to an official, formatted Markdown report for the auditor in UK English."""
         rows = "\n".join(
             f"| `{k}` | {v} |" for k, v in sorted(package.controls_matrix.items())
         )
         sig_display = f"`{package.pqc_signature[:48]}...{package.pqc_signature[-24:]}`" if len(package.pqc_signature) > 72 else f"`{package.pqc_signature}`"
 
         return f"""# SOVEREIGN COMPLIANCE DOSSIER & AUDIT EVIDENCE
-**Standard / Ramy Prawne:** `{package.standard.value}`  
-**Identyfikator Dossier:** `{package.package_id}`  
-**Czas Wygenerowania (UTC):** `{package.generated_at}`  
-**Wskaźnik Gotowości Audytowej (Readiness Score):** `{package.readiness_score * 100:.1f}%`  
-**Status Certyfikacji:** `{package.status}`  
+**Standard / Legal Framework:** `{package.standard.value}`  
+**Dossier Identifier:** `{package.package_id}`  
+**Generation Timestamp (UTC):** `{package.generated_at}`  
+**Regulatory Readiness Index:** `{package.readiness_score * 100:.1f}%`  
+**Certification Status:** `{package.status}`  
 
 ---
 
-## 1. Dowód Integralności Kryptograficznej (NIST FIPS 204 Post-Quantum)
-- **Kotwica Rejestru Merkle-DAG (Root Hash):** `{package.merkle_anchor_root}`
-- **Identyfikator Klucza Podpisującego PQC:** `{package.signer_key_id}`
-- **Podpis Postkwantowy ML-DSA-65:**  
+## 1. Cryptographic Integrity Evidence (NIST FIPS 204 Post-Quantum)
+- **Merkle-DAG Ledger Anchor (Root Hash):** `{package.merkle_anchor_root}`
+- **PQC Signing Key ID:** `{package.signer_key_id}`
+- **ML-DSA-65 Post-Quantum Signature:**  
   {sig_display}
-- **Weryfikacja w Środowisku Odizolowanym (Air-Gap):**  
+- **Air-Gapped Isolation Verification:**  
   ```bash
   python -m nethical.compliance.verify_dossier --package-id {package.package_id}
   ```
 
 ---
 
-## 2. Trzy Linie Obrony (Three Lines of Defense)
-- **1st Line (Operacyjna Brama Wykonań):** {package.three_lines_of_defense.get("first_line_operational", "N/A")}
-- **2nd Line (Nadzór Etyczny i Pakiety Zgodności):** {package.three_lines_of_defense.get("second_line_risk_compliance", "N/A")}
-- **3rd Line (Niezależna Pewność Matematyczna):** {package.three_lines_of_defense.get("third_line_independent_audit", "N/A")}
+## 2. Three Lines of Defence (Trzy Linie Obrony)
+- **1st Line (Operational Runtime Gateway):** {package.three_lines_of_defense.get("first_line_operational", package.three_lines_of_defense.get("line_1_operational", "N/A"))}
+- **2nd Line (Ethical Oversight & Compliance Packs):** {package.three_lines_of_defense.get("second_line_risk_compliance", package.three_lines_of_defense.get("line_2_compliance_risk", "N/A"))}
+- **3rd Line (Independent Mathematical Assurance):** {package.three_lines_of_defense.get("third_line_independent_audit", package.three_lines_of_defense.get("line_3_internal_audit", "N/A"))}
 
 ---
 
-## 3. Matryca Weryfikacji Kontroli i Wymogów Prawnych
-| Identyfikator Kontroli | Status Zgodności & Wdrożenie Techniczne |
+## 3. Control Verification & Legal Requirements Matrix
+| Control Identifier | Compliance Status & Technical Implementation |
 | :--- | :--- |
 {rows}
 
 ---
 
-## 4. Wytyczne dla Akredytowanego Audytora / Jednostki Notyfikowanej
+## 4. External Auditor & Notified Body Verification Guidelines
 {package.auditor_verification_instructions}
 
 ---
-*Wygenerowano automatycznie przez Nethical Sovereign AI Governance Engine v{__import__('nethical').__version__}.*  
-*Pieczęć Merkle-DAG oraz sygnatura ML-DSA-65 stanowią nienaruszalny dowód w rozumieniu Art. 293 KSH oraz Art. 11 EU AI Act.*
+*Generated automatically by Nethical Sovereign AI Governance Engine v{__import__('nethical').__version__}.*  
+*Merkle-DAG seal and ML-DSA-65 signature constitute immutable legal evidence under Art. 11 of the EU AI Act and national commercial law.*
 """
 
     def export_dossier_json(self, package: AutomatedEvidencePackage) -> Dict[str, Any]:
-        """Eksportuje kanoniczną strukturę JSON paczki dowodowej."""
+        """Exports the canonical JSON structure of the evidence package."""
         return package.model_dump(mode="json")
 
