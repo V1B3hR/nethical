@@ -1,0 +1,48 @@
+{
+  "standard_suite": "Global Institutional & Jurisdictional Intelligence Framework",
+  "system_name": "Nethical Enterprise Governance OS & Jurisdictional Trust Engine",
+  "version": "v10.4-sovereign",
+  "generated_at": "2026-09-22T10:04:33.398114+00:00",
+  "cryptographic_merkle_root": "d4eb3d41086345f067581e3d819108eafba08786a35de9de534c5390a93b9fdd",
+  "institutions_integrated": [
+    {
+      "institution": "World Bank",
+      "framework": "Worldwide Governance Indicators (WGI) & GovData360",
+      "dimensions": [
+        "Rule of Law",
+        "Regulatory Quality",
+        "Government Effectiveness",
+        "Control of Corruption",
+        "Voice & Accountability",
+        "Political Stability"
+      ],
+      "function": "Automated Jurisdictional Trust Scoring (JTS) for cross-border data transfer auditing."
+    },
+    {
+      "institution": "OECD",
+      "framework": "Indicators of Regulatory Policy and Governance (iREG)",
+      "function": "Regulatory Impact Assessment (RIA) methodology and public stakeholder consultation proportionality."
+    },
+    {
+      "institution": "UK Government Cabinet Office / i.AI",
+      "framework": "Awesome Gov Datasets & Crown Commercial Service AI Framework",
+      "function": "Public procurement integrity, Contracts Finder compliance, and ATRS v2.0 alignment."
+    },
+    {
+      "institution": "University of Gothenburg",
+      "framework": "Quality of Government (QoG) Institute Data",
+      "function": "Bureaucratic impartiality and systemic anti-corruption scoring."
+    },
+    {
+      "institution": "European Union & NATO",
+      "framework": "GDPR / RODO Arts. 44-49 (Schrems II) & Purdue Model Critical Infrastructure",
+      "function": "Hard data diode isolation and cross-border sovereign transfer gatekeeping."
+    }
+  ],
+  "operational_controls": {
+    "jurisdictional_gatekeeping": "ACTIVE (Auto-block transfers to low Rule-of-Law destinations without TEE/SCC)",
+    "sovereignty_lockdown": "ACTIVE (Zero egress for Purdue L0/L1 OT telemetry and defense restricted data)",
+    "impartiality_enforcement": "ACTIVE (Rejection of unverified algorithmic priority in grants and procurement)",
+    "ria_proportionality": "ACTIVE (Formal algorithmic impact and risk-mitigation scoring)"
+  }
+}

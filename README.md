@@ -48,6 +48,16 @@
 
 **The Ethical & Safety-Centric Framework for Trustworthy AI**
 
+> [!IMPORTANT]
+> ### 🛡️ Prawdziwa Wartość i Tożsamość Nethical / Core Institutional Identity
+> 
+> *"Prawdziwa wartość i tożsamość Nethical to nie jest chatbot, który czytał stronę NCSC czy Turinga. Wartością Nethical ma być:*
+> * **Determinizm (Z3 SMT):** Niezmienniki logiczne (25 Praw), które nie zależą od kaprysów modelu językowego.
+> * **Kinetyczne bezpieczniki (<1.0 ms):** Odcięcie sterowania przy próbie naruszenia reguł krytycznych.
+> * **Prawdziwy audyt kryptograficzny:** Niezaprzeczalny rejestr decyzji."*
+> 
+> *The true value and identity of Nethical is not an LLM chatbot that memorized NCSC or Alan Turing Institute guidelines. Nethical's institutional mission is deterministic mathematical verification (Z3 SMT First-Order Logic), hardware-grade sub-millisecond kinetic circuit breakers, and tamper-proof post-quantum cryptographic audit ledgers.*
+
 ---
 
 ## ✨ Vision
@@ -115,17 +125,42 @@ Nethical nie ogranicza się wyłącznie do statycznych reguł heurystycznych —
 ```mermaid
 flowchart LR
     A["Dylemat / Kazus Prawny\n(Real-world Precedents)"] --> B["Tri-Council\n• AILawyer (Ustawy)\n• LawJudge (25 Praw)\n• SafetyJudge (Kinetyka)"]
-    B -->|Certyfikacja Preferencji| C["Baza DPO\n(3 759 par wektorów)"]
+    B -->|Certyfikacja Preferencji| C["Baza DPO\n(3 769 unikalnych par)"]
     C --> D["AcceleratorAI\nTrening DPO LoRA"]
     D --> E["Post-Quantum Merkle-DAG\n(NIST FIPS 204 ML-DSA-65)"]
 ```
 
 ### Kluczowe Metryki Uczenia i Alignmentu:
-* **Skala Zbioru:** **3 759 certyfikowanych par preferencji** ([data/ambassador_dpo_dataset.jsonl](./data/ambassador_dpo_dataset.jsonl)) integrujących m.in. PKU-SafeRLHF, AI4Privacy, Meta CyberSecEval, MITRE ATLAS, precedensy orzecznicze (SyRI, Toeslagenaffaire, Watson Oncology, Oldsmar) oraz interakcje A2A.
+* **Skala Zbioru:** **3 769 certyfikowanych, w 100% unikalnych par preferencji** ([data/ambassador_dpo_dataset.jsonl](./data/ambassador_dpo_dataset.jsonl)) integrujących:
+  * **UK NCSC:** 4 Filary Bezpiecznego Cyklu AI (`NCSC-AI-1.1` do `4.2`), Active Cyber Defence (ACD), Logging Made Easy, Asset Management.
+  * **UK AISI:** Wykrywanie steganografii w strumieniach wideo, obrona przed zmową agentów i atakami Wormhole na pamięć modeli.
+  * **The Alan Turing Institute:** Neuro-symboliczny determinizm Z3 SMT, Disparate Impact Ratio ($\text{DIR} \ge 0.80$, Equality Act 2010).
+  * **UK DSIT / ATRS:** 5 zasad AI oraz Algorithmic Transparency Recording Standard.
+  * **Polska (KSC / CSIRT NASK / CSIRT GOV / UODO):** Eskalacja incydentów w 24h, bezwzględny zakaz profilowania bez HITL (Art. 22 RODO, KPA 7/107).
+  * **NATO & Purdue Model (ISA/IEC 62443):** Sprzętowe diody danych (L5 $\to$ L1/L2), protokoły CANopen/Modbus/EtherCAT i kinetyczne E-STOP ($<1.0\text{ ms}$).
+  * **Global Governance (Bank Światowy WGI, OECD iREG, Gothenburg QoG, UK i.AI):** Ryzyko jurysdykcyjne i ocena skutków regulacji.
 * **Uczciwość Epistemiczna (*Epistemic Honesty*):** **100.00%** (zero halucynacji i konfabulacji pod naciskiem promptu).
-* **Indeks Uległości (*Mean Sycophancy Index*):** **0.00** (brak ulegania sugestiom i pochlebstwom użytkownika zmierzającym do złamania procedur).
-* **Bezpieczeństwo Afektywne (*Affective Safety*):** **100.00%**.
+* **Indeks Uległości (*Mean Sycophancy Index*):** **0.00** (brak ulegania sugestiom i autorytetowi zmierzającemu do złamania procedur).
+* **Bezpieczeństwo Afektywne (*Affective Safety*):** **100.00%** (odrzucenie izolacji parasocjalnej).
 * **Kryptograficzny Ślad Uczenia:** Każdy cykl treningowy pieczętowany jest w postkwantowym łańcuchu Merkle-DAG ([models/lora_ambassador/adapter_config.json](./models/lora_ambassador/adapter_config.json)).
+
+---
+
+## 🌍 Global Institutional & Jurisdictional Intelligence Engine
+
+Moduł [`nethical.governance.jurisdictional_intel`](./nethical/governance/jurisdictional_intel.py) wdraża matematyczną i empiryczną ocenę suwerenności danych oraz ryzyka jurysdykcyjnego w oparciu o wiodące międzynarodowe repozytoria ładu instytucjonalnego:
+
+1. **World Bank Worldwide Governance Indicators (WGI) & GovData360:**
+   * Oblicza wielowymiarowy wskaźnik **Jurisdictional Trust Score (JTS)** dla ponad 200 państw w 6 wymiarach: *Rule of Law, Regulatory Quality, Government Effectiveness, Control of Corruption, Voice & Accountability, Political Stability*.
+   * **Bramka Transferowa RODO / GDPR (Art. 44–49 & Schrems II):** Automatyczna blokada transferu danych wrażliwych (zdrowotnych, biometrycznych, PII) do krajów bez decyzji o adekwatności lub o wskaźniku *Rule of Law* $< 0.0$ (np. RU, CN), z opcjonalnym wymogiem szyfrowanych enklaw TEE i tokenizacji PII.
+2. **OECD Regulatory Governance & Indicators of Regulatory Policy (iREG):**
+   * Metodologia *Regulatory Impact Assessment (RIA)*: formalna ewaluacja proporcjonalności, kosztów zgodności i transparentności konsultacji społecznych.
+3. **UK Government i.AI (Cabinet Office) & ATRS:**
+   * Zgodność z Crown Commercial Service (CCS) AI Framework, rejestrami zamówień publicznych (*Contracts Finder*) oraz standardem *Algorithmic Transparency Recording Standard (ATRS)*.
+4. **University of Gothenburg Quality of Government (QoG) Institute:**
+   * Empiryczne wskaźniki bezstronności biurokratycznej i prewencji korupcji przy automatycznym przydziale funduszy, zamówień i koncesji państwowych.
+5. **NATO CNI & Purdue Model Data Sovereignty:**
+   * Restrykcyjna blokada wypływu telemetrii sterowania przemysłowego (OT/SCADA) i danych wojskowych poza jurysdykcję sojuszu.
 
 ---
 

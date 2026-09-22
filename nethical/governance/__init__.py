@@ -41,6 +41,13 @@ __all__ = [
     'ReservedPowerCategory',
     'DOAMStatus',
     'DOAMEvaluationResult',
+    # Global Jurisdictional & Institutional Intelligence
+    'JurisdictionalTrustEngine',
+    'JurisdictionProfile',
+    'GovernanceDimension',
+    'DataClassification',
+    'TransferVerdict',
+    'OECDRegulatoryImpactResult',
 ]
 
 from .doam_matrix import (
@@ -49,5 +56,14 @@ from .doam_matrix import (
     ReservedPowerCategory,
     DOAMStatus,
     DOAMEvaluationResult,
+)
+
+from .jurisdictional_intel import (
+    JurisdictionalTrustEngine,
+    JurisdictionProfile,
+    GovernanceDimension,
+    DataClassification,
+    TransferVerdict,
+    OECDRegulatoryImpactResult,
 )
 

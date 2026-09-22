@@ -3,8 +3,8 @@
 **Version:** v10.4-sovereign  
 **Regulation:** Regulation (EU) 2024/1689 (EU AI Act)  
 **Classification:** High-Risk AI System / General Purpose AI Governance  
-**Generated At:** `2026-09-21T13:25:12.603164+00:00`  
-**Merkle Anchor Root:** `b6cf3693c0838358cf5e46b62c73fa72705435e351ff7121902f695d725e4447`  
+**Generated At:** `2026-09-22T10:04:33.329718+00:00`  
+**Merkle Anchor Root:** `d4eb3d41086345f067581e3d819108eafba08786a35de9de534c5390a93b9fdd`  
 
 ---
 
@@ -24,7 +24,7 @@
   - Przepustowość: 25 795 tokenów/s na NVIDIA RTX 4070.
 
 ## 3. Zarządzanie Danymi i Pochodzenie (Data Governance)
-- **Rozmiar zbioru:** 4386 zweryfikowanych par preferencji.
+- **Rozmiar zbioru:** 3769 zweryfikowanych par preferencji.
 - **Archetypy:** 20 rygorystycznych archetypów behawioralnych (w tym ochrona przed sycophancy i dark nudging).
 - **Zgodność antydyskryminacyjna:** Four-Fifths Rule (DIR > 0.80) w 100% domen.
 
