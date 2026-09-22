@@ -119,14 +119,26 @@ The Nethical Security Response Team is responsible for vulnerability ingestion, 
 
 ---
 
-## 6. Regulatory & Institutional Alignment
+---
 
-The Nethical governance model directly satisfies the organizational and accountability requirements of:
-- **ISO/IEC 42001:2023 (AIMS)**: Clause 5 (Leadership), Clause 6 (Planning), Annex A.2 (AI Policies), Annex A.3 (Internal Organization).
-- **EU AI Act (Regulation 2024/1689)**: Article 9 (Risk Management System), Article 14 (Human Oversight), Article 17 (Quality Management System).
-- **NIST AI RMF 1.0**: GOVERN Function (Subcategories 1.1 through 6.2).
-- **UK Gov Project Delivery Standard (GovS 002)**: Three Lines of Defense and SRO accountability.
+## 7. Conformity Assessment Status & Third-Party Certification Disclosure
+
+> [!IMPORTANT]
+> **Regulatory Notice on Third-Party Certifications (Shared Responsibility):**
+> - **Self-Assessment & Automated Evidence:** Nethical provides automated algorithmic evidence generation, formal Z3 SMT constraint proofs, and compliance mapping packages for international standards (including EU AI Act Annex IV, ISO/IEC 42001:2023, ISO/IEC 27001, and NIST AI RMF 1.0).
+> - **Independent Audit Required:** Nethical is an open-source software framework and automated evidence collector; it **does not hold standalone accredited third-party certifications**.
+> - **Accredited Assessment Bodies:** Formal certification for regulated deployments (e.g., CE mark for High-Risk AI systems under the EU AI Act, accredited ISO/IEC 42001 certification, or SOC 2 Type II reports) requires independent evaluation by an accredited Conformity Assessment Body (Notified Body or independent CPA firm). Nethical's tools are designed to streamline and satisfy the technical verification requirements of such audits. See [`audit/INDEPENDENT_AUDIT_AND_GAP_ASSESSMENT.md`](audit/INDEPENDENT_AUDIT_AND_GAP_ASSESSMENT.md) and [`DISCLAIMER.md`](DISCLAIMER.md).
+
+---
+
+## 8. Maintainer Transparency & Open Foundation Transition Roadmap
+
+To eliminate the "bus factor" and transition from a project-lead origin to an open, decentralized stewardship model:
+1. **Current Stewardship:** Founded by Lead Architect (`V1B3hR`), Nethical operates under the formal 5-seat Technical Steering Committee defined in [Section 2](#2-technical-steering-committee-tsc) and detailed with cryptographic signatures in [`governance/TSC_ROSTER.md`](governance/TSC_ROSTER.md).
+2. **Dual-Control Quorum:** Releases and cryptographic trust roots require co-signing by 2 of 3 designated custodians across independent operational, academic, and enterprise seats.
+3. **Open Foundation Horizon (2026–2027):** The project is preparing for formal donation to an established open-source consortium (e.g., Linux Foundation / LF AI & Data or Apache Software Foundation) to establish neutral, non-profit stewardship for sovereign AI safety standards worldwide.
 
 ---
 
 *This charter is maintained under cryptographic version control in the root of the Nethical repository as `GOVERNANCE.md`.*
+

@@ -497,6 +497,7 @@ class DPOTrainerEngine:
         affective_rate = affective_safe_count / total_samples
 
         return {
+            "dataset_size": total_samples,
             "epistemic_honesty_rate": round(epistemic_clean_count / max(1, total_samples), 4),
             "anti_sycophancy_score": round(1.0 - (sum(sycophancy_scores) / max(1, len(sycophancy_scores))), 4),
             "affective_safety_rate": round(affective_safe_count / max(1, total_samples), 4),

@@ -1,19 +1,14 @@
-# 📍 Documentation Relocated
+# Security Policy (SECURITY.md)
 
-> **⚠️ NOTICE: This file has been moved to the unified documentation structure.**
+Nethical is an AI safety, governance, and cryptographic audit framework designed for high-assurance mission-critical deployments. We maintain a zero-tolerance posture for security vulnerabilities, continuous automated compliance verification, and binding SLAs for vulnerability triage and remediation.
 
-**New Location:** [`docs/laws_and_policies/SECURITY.md`](docs/laws_and_policies/SECURITY.md)
-
-Please update your bookmarks and links.
-
-**Quick Navigation:**
-- [📖 Complete Documentation Index](docs/index.md)
-- [⚖️ Laws & Policies](docs/laws_and_policies/)
-- [📜 The 25 Fundamental Laws](docs/laws_and_policies/FUNDAMENTAL_LAWS.md)
+- **Primary Repository:** [https://github.com/V1B3hR/nethical](https://github.com/V1B3hR/nethical)
+- **Governance Charter:** [`GOVERNANCE.md`](GOVERNANCE.md)
+- **The 25 Fundamental Laws of AI Safety:** [`FUNDAMENTAL_LAWS.md`](FUNDAMENTAL_LAWS.md)
+- **Independent Audit & Gap Assessment:** [`audit/INDEPENDENT_AUDIT_AND_GAP_ASSESSMENT.md`](audit/INDEPENDENT_AUDIT_AND_GAP_ASSESSMENT.md)
+- **Technical Steering Committee:** [`governance/TSC_ROSTER.md`](governance/TSC_ROSTER.md)
 
 ---
-
-# Security Policy
 
 ## Supported Versions
 
