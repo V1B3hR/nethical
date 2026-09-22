@@ -50,7 +50,7 @@ class AlertChannel(Enum):
 class RateLimiter:
     """Prevent alert storms with rate limiting."""
     
-    def __init__(self, max_alerts_per_minute: int = 10):
+    def __init__(self, max_alerts_per_minute: int = 10) -> None:
         """Initialize rate limiter.
         
         Args:
@@ -113,7 +113,7 @@ class AlertManager:
     - Discord
     """
 
-    def __init__(self, config: Dict[str, Any]):
+    def __init__(self, config: Dict[str, Any]) -> None:
         """Initialize alert manager.
         
         Args:

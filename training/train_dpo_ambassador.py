@@ -439,7 +439,7 @@ class DPOTrainerEngine:
 
         if self.neural:
             vocab_size = getattr(self.tokenizer, "vocab_size", 30522)
-            self.model = cast(AmbassadorNeuralPolicy, AmbassadorNeuralPolicy(vocab_size=vocab_size).to(self.device))
+            self.model = AmbassadorNeuralPolicy(vocab_size=vocab_size).to(self.device)
             weights_file = self.output_dir / "ambassador_neural_policy.pt"
             if self.resume and weights_file.exists():
                 try:
@@ -450,7 +450,7 @@ class DPOTrainerEngine:
                     logger.warning(f"Nie udało się załadować wag z {weights_file}: {e}")
 
             # Reference model is a frozen replica of the policy before this round of training
-            self.ref_model = cast(AmbassadorNeuralPolicy, copy.deepcopy(self.model).to(self.device))
+            self.ref_model = copy.deepcopy(self.model).to(self.device)
             self.ref_model.eval()
             for p in self.ref_model.parameters():
                 p.requires_grad = False

@@ -17,7 +17,8 @@ import time
 import asyncio
 import logging
 from statistics import mean, median, quantiles
-from typing import List, Dict
+from pathlib import Path
+from typing import Any, Dict, List, Optional
 import json
 from datetime import datetime
 from nethical.core.integrated_governance import IntegratedGovernance
@@ -87,11 +88,11 @@ class PerformanceMetrics:
 class LoadTester:
     """Load testing utility"""
     
-    def __init__(self, governance: IntegratedGovernance):
+    def __init__(self, governance: IntegratedGovernance) -> None:
         self.governance = governance
     
     def run_synchronous_load_test(self, num_requests: int = 100, 
-                                   test_actions: List[str] = None) -> Dict:
+                                   test_actions: Optional[List[str]] = None) -> Dict[str, Any]:
         """
         Run synchronous load test
         
@@ -158,24 +159,24 @@ class LoadTester:
 
 
 @pytest.fixture
-def governance():
+def governance() -> IntegratedGovernance:
     """Initialize governance"""
     return IntegratedGovernance()
 
 
 @pytest.fixture
-def load_tester(governance):
+def load_tester(governance: IntegratedGovernance) -> LoadTester:
     """Initialize load tester"""
     return LoadTester(governance)
 
 
 @pytest.fixture
-def performance_metrics():
+def performance_metrics() -> PerformanceMetrics:
     """Initialize performance metrics calculator"""
     return PerformanceMetrics()
 
 
-def test_baseline_latency_p50(load_tester):
+def test_baseline_latency_p50(load_tester: LoadTester) -> None:
     """Test p50 latency under baseline load"""
     result = load_tester.run_synchronous_load_test(num_requests=100)
     
@@ -190,7 +191,7 @@ def test_baseline_latency_p50(load_tester):
     assert p50_ms < 200, f"P50 latency {p50_ms:.2f}ms exceeds 200ms baseline"
 
 
-def test_baseline_latency_p95(load_tester):
+def test_baseline_latency_p95(load_tester: LoadTester) -> None:
     """Test p95 latency under baseline load"""
     logger.info("=" * 80)
     logger.info("PERFORMANCE TEST - Baseline P95 Latency")
@@ -256,7 +257,7 @@ def test_baseline_latency_p95(load_tester):
     )
 
 
-def test_burst_latency_p99(load_tester):
+def test_burst_latency_p99(load_tester: LoadTester) -> None:
     """Test p99 latency under burst load"""
     # Simulate burst with rapid requests
     result = load_tester.run_synchronous_load_test(num_requests=500)
@@ -271,7 +272,7 @@ def test_burst_latency_p99(load_tester):
     assert p99_ms < 500, f"P99 latency {p99_ms:.2f}ms exceeds 500ms burst SLO"
 
 
-def test_error_rate_baseline(load_tester):
+def test_error_rate_baseline(load_tester: LoadTester) -> None:
     """Test error rate under baseline load"""
     logger.info("=" * 80)
     logger.info("PERFORMANCE TEST - Error Rate")
@@ -336,7 +337,7 @@ def test_error_rate_baseline(load_tester):
     )
 
 
-def test_sustained_load_performance(load_tester):
+def test_sustained_load_performance(load_tester: LoadTester) -> None:
     """Test sustained load performance"""
     # Run multiple batches to simulate sustained load
     all_latencies = []
@@ -372,7 +373,7 @@ def test_sustained_load_performance(load_tester):
 
 
 @pytest.mark.slow
-def test_soak_test_stability(load_tester):
+def test_soak_test_stability(load_tester: LoadTester) -> None:
     """Test stability under extended soak test (marked as slow)"""
     # Mini soak test: 10 batches of 20 requests each
     duration_batches = 10
@@ -407,9 +408,9 @@ def test_soak_test_stability(load_tester):
     assert degradation < 0.5 or late_p95 < 0.05, f"Performance degraded by {degradation:.1%} during soak test (late P95: {late_p95*1000:.2f}ms)"
 
 
-def test_generate_performance_report(load_tester, tmp_path):
+def test_generate_performance_report(load_tester: LoadTester, tmp_path: Path) -> None:
     """Generate comprehensive performance report"""
-    report = {
+    report: Dict[str, Any] = {
         "timestamp": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
         "test_suite": "performance_validation",
         "tests": {}
