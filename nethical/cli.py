@@ -81,7 +81,7 @@ def init(config_dir: str, force: bool) -> None:
         )
         return
 
-    with open(config_file, "w") as f:
+    with open(config_file, "w", encoding="utf-8") as f:
         json.dump(default_config, f, indent=2)
 
     click.echo(f"✅ Created configuration file: {config_file}")
@@ -106,7 +106,7 @@ def init(config_dir: str, force: bool) -> None:
 
     policy_file = policies_dir / "default.json"
     if not policy_file.exists() or force:
-        with open(policy_file, "w") as f:
+        with open(policy_file, "w", encoding="utf-8") as f:
             json.dump(default_policy, f, indent=2)
         click.echo(f"✅ Created policy file: {policy_file}")
 
@@ -250,7 +250,7 @@ def status(config: str, verbose: bool) -> None:
     if config_path.exists():
         click.echo(f"✅ Configuration: {config_path}")
         if verbose:
-            with open(config_path) as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 cfg = json.load(f)
             click.echo(f"   Version: {cfg.get('version', 'unknown')}")
     else:
