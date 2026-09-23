@@ -1,7 +1,7 @@
 """Tests for failover manager."""
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import MagicMock, AsyncMock, patch
 
 from nethical.connectivity.satellite.failover import (
@@ -104,7 +104,7 @@ class TestFailoverEvent:
     def test_event_creation(self):
         """Test failover event creation."""
         event = FailoverEvent(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             from_connection=ConnectionType.TERRESTRIAL,
             to_connection=ConnectionType.SATELLITE,
             reason=FailoverReason.LATENCY_THRESHOLD,

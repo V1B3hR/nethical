@@ -18,8 +18,9 @@ Features:
 
 import logging
 import math
+from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -261,8 +262,8 @@ class GPSTracker:
         self._update_interval = update_interval_seconds
 
         self._current_position: Optional[Position] = None
-        self._position_history: List[Position] = []
         self._max_history_size = 1000
+        self._position_history: deque[Position] = deque(maxlen=self._max_history_size)
 
         self._geofences: Dict[str, Geofence] = {}
         self._geofence_states: Dict[str, bool] = {}  # Inside or outside
@@ -350,7 +351,7 @@ class GPSTracker:
             hdop=1.2,
             vdop=1.8,
             pdop=2.2,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             constellation=self._constellations[0],
         )
 
@@ -363,8 +364,6 @@ class GPSTracker:
 
         # Store in history
         self._position_history.append(position)
-        if len(self._position_history) > self._max_history_size:
-            self._position_history.pop(0)
 
         # Trigger callbacks
         for callback in self._callbacks["on_position_update"]:
@@ -483,8 +482,8 @@ class GPSTracker:
             List of historical positions
         """
         if limit:
-            return self._position_history[-limit:]
-        return self._position_history.copy()
+            return list(self._position_history)[-limit:]
+        return list(self._position_history)
 
     def get_travel_distance_m(self) -> float:
         """

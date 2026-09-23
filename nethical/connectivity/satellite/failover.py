@@ -11,8 +11,9 @@ connection quality scoring.
 
 import asyncio
 import logging
+from collections import deque
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
@@ -124,9 +125,9 @@ class FailoverManager:
         self._terrestrial_consecutive_failures = 0
         self._satellite_consecutive_failures = 0
 
-        # Event history
-        self._failover_events: List[FailoverEvent] = []
+        # Event history (bounded deque for O(1) appending and eviction)
         self._max_events = 100
+        self._failover_events: deque[FailoverEvent] = deque(maxlen=self._max_events)
 
         # Callbacks
         self._callbacks: Dict[str, List[Callable]] = {
@@ -157,7 +158,7 @@ class FailoverManager:
     @property
     def failover_events(self) -> List[FailoverEvent]:
         """Get failover event history."""
-        return self._failover_events.copy()
+        return list(self._failover_events)
 
     async def start_monitoring(self):
         """Start continuous health monitoring."""
@@ -288,18 +289,17 @@ class FailoverManager:
         elif self.is_on_satellite and self.config.auto_failback:
             if self._terrestrial_healthy:
                 # Check minimum time on backup
+                now = datetime.now(timezone.utc)
                 if self._last_failover:
-                    time_on_satellite = (
-                        datetime.utcnow() - self._last_failover
-                    ).total_seconds()
+                    lf = self._last_failover if self._last_failover.tzinfo else self._last_failover.replace(tzinfo=timezone.utc)
+                    time_on_satellite = (now - lf).total_seconds()
                     if time_on_satellite < self.config.min_time_on_backup_seconds:
                         return
 
                 # Check failback delay
                 if self._last_failback:
-                    time_since_failback = (
-                        datetime.utcnow() - self._last_failback
-                    ).total_seconds()
+                    lb = self._last_failback if self._last_failback.tzinfo else self._last_failback.replace(tzinfo=timezone.utc)
+                    time_since_failback = (now - lb).total_seconds()
                     if time_since_failback < self.config.failback_delay_seconds:
                         return
 
@@ -316,7 +316,7 @@ class FailoverManager:
         details: Optional[Dict[str, Any]] = None,
     ):
         """Execute failover."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         success = True
 
         try:
@@ -328,14 +328,14 @@ class FailoverManager:
                     await self._satellite_provider.connect()
 
             self._active_connection = to_conn
-            self._last_failover = datetime.utcnow()
+            self._last_failover = datetime.now(timezone.utc)
 
         except Exception as e:
             logger.error(f"Failover failed: {e}")
             success = False
 
         # Record event
-        duration = (datetime.utcnow() - start_time).total_seconds() * 1000
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
         event = FailoverEvent(
             timestamp=start_time,
             from_connection=from_conn,
@@ -363,20 +363,20 @@ class FailoverManager:
         to_conn: ConnectionType,
     ):
         """Execute failback to preferred connection."""
-        start_time = datetime.utcnow()
+        start_time = datetime.now(timezone.utc)
         success = True
 
         try:
             logger.info(f"Initiating failback: {from_conn.value} -> {to_conn.value}")
             self._active_connection = to_conn
-            self._last_failback = datetime.utcnow()
+            self._last_failback = datetime.now(timezone.utc)
 
         except Exception as e:
             logger.error(f"Failback failed: {e}")
             success = False
 
         # Record event
-        duration = (datetime.utcnow() - start_time).total_seconds() * 1000
+        duration = (datetime.now(timezone.utc) - start_time).total_seconds() * 1000
         event = FailoverEvent(
             timestamp=start_time,
             from_connection=from_conn,
@@ -395,8 +395,6 @@ class FailoverManager:
     def _record_event(self, event: FailoverEvent):
         """Record a failover event."""
         self._failover_events.append(event)
-        if len(self._failover_events) > self._max_events:
-            self._failover_events.pop(0)
 
     async def force_failover_to_satellite(self) -> bool:
         """

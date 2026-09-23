@@ -15,7 +15,7 @@ provides the interface structure for future integration.
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from .base import (
@@ -122,7 +122,7 @@ class KuiperProvider(SatelliteProvider):
         self.state = ConnectionState.CONNECTING
         await asyncio.sleep(0.1)  # Simulated connection delay
 
-        self._connection_start = datetime.utcnow()
+        self._connection_start = datetime.now(timezone.utc)
         self.state = ConnectionState.CONNECTED
         self._trigger_callbacks("on_connect")
 

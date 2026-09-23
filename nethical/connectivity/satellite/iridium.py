@@ -12,7 +12,7 @@ Iridium is ideal for safety-critical and maritime applications.
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from .base import (
@@ -128,7 +128,7 @@ class IridiumProvider(SatelliteProvider):
             # Get initial status
             await self._poll_modem_status()
 
-            self._connection_start = datetime.utcnow()
+            self._connection_start = datetime.now(timezone.utc)
             self.state = ConnectionState.CONNECTED
             self._trigger_callbacks("on_connect")
 
@@ -310,7 +310,7 @@ class IridiumProvider(SatelliteProvider):
 
         success = await self.send(data)
         if success:
-            return f"SBD-{datetime.utcnow().strftime('%Y%m%d%H%M%S')}"
+            return f"SBD-{datetime.now(timezone.utc).strftime('%Y%m%d%H%M%S')}"
         return None
 
     async def check_mailbox(self) -> int:

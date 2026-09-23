@@ -15,7 +15,7 @@ import asyncio
 import logging
 import statistics
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Tuple
 
@@ -175,7 +175,7 @@ class LatencyOptimizer:
             success: Whether request succeeded
         """
         measurement = LatencyMeasurement(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             latency_ms=latency_ms,
             request_size_bytes=request_size_bytes,
             response_size_bytes=response_size_bytes,
@@ -186,10 +186,13 @@ class LatencyOptimizer:
         self._measurements.append(measurement)
 
         # Trim old measurements
-        cutoff = datetime.utcnow() - timedelta(
+        cutoff = datetime.now(timezone.utc) - timedelta(
             seconds=self.config.measurement_window_seconds
         )
-        self._measurements = [m for m in self._measurements if m.timestamp > cutoff]
+        self._measurements = [
+            m for m in self._measurements
+            if (m.timestamp if m.timestamp.tzinfo else m.timestamp.replace(tzinfo=timezone.utc)) > cutoff
+        ]
 
         if len(self._measurements) > self.config.max_measurements:
             self._measurements = self._measurements[-self.config.max_measurements :]
@@ -331,7 +334,7 @@ class LatencyOptimizer:
             data=data,
             priority=priority,
             timeout_ms=timeout,
-            created_at=datetime.utcnow(),
+            created_at=datetime.now(timezone.utc),
             callback=callback,
         )
 
@@ -363,8 +366,11 @@ class LatencyOptimizer:
             return True
 
         # Check batch window
+        now = datetime.now(timezone.utc)
         oldest = min(r.created_at for r in self._batch_queue)
-        age_ms = (datetime.utcnow() - oldest).total_seconds() * 1000
+        if oldest.tzinfo is None:
+            oldest = oldest.replace(tzinfo=timezone.utc)
+        age_ms = (now - oldest).total_seconds() * 1000
         if age_ms >= self.config.batch_window_ms:
             return True
 

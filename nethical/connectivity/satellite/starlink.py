@@ -15,7 +15,7 @@ including support for:
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from .base import (
@@ -221,7 +221,7 @@ class StarlinkProvider(SatelliteProvider):
             else:
                 self.state = ConnectionState.CONNECTED
 
-            self._connection_start = datetime.utcnow()
+            self._connection_start = datetime.now(timezone.utc)
             self._trigger_callbacks("on_connect")
 
             latency_info = ""
@@ -410,7 +410,7 @@ class StarlinkProvider(SatelliteProvider):
                 self._dish_status.obstruction_percent if self._dish_status else 0.0
             ),
             "wedge_obstructions": [],
-            "last_update": datetime.utcnow().isoformat(),
+            "last_update": datetime.now(timezone.utc).isoformat(),
         }
 
     async def _check_dish_connectivity(self) -> bool:
@@ -447,7 +447,7 @@ class StarlinkProvider(SatelliteProvider):
                 boresight_elevation_deg=45.0,
                 alerts=[],
             )
-            self._last_dish_poll = datetime.utcnow()
+            self._last_dish_poll = datetime.now(timezone.utc)
 
         except Exception as e:
             logger.error(f"Failed to poll Starlink dish: {e}")

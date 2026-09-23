@@ -11,7 +11,7 @@ focusing on enterprise and government connectivity solutions.
 import asyncio
 import logging
 from dataclasses import dataclass
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import Any, Dict, Optional
 
 from .base import (
@@ -114,7 +114,7 @@ class OneWebProvider(SatelliteProvider):
                     self.provider_name,
                 )
 
-            self._connection_start = datetime.utcnow()
+            self._connection_start = datetime.now(timezone.utc)
             self.state = ConnectionState.CONNECTED
             self._trigger_callbacks("on_connect")
 

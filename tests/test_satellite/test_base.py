@@ -1,7 +1,7 @@
 """Tests for satellite base classes."""
 
 import pytest
-from datetime import datetime
+from datetime import datetime, timezone
 from unittest.mock import AsyncMock, MagicMock
 
 from nethical.connectivity.satellite.base import (
@@ -27,7 +27,7 @@ class MockSatelliteProvider(SatelliteProvider):
 
     async def connect(self) -> bool:
         self.state = ConnectionState.CONNECTED
-        self._connection_start = datetime.utcnow()
+        self._connection_start = datetime.now(timezone.utc)
         return True
 
     async def disconnect(self) -> bool:

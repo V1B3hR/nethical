@@ -12,7 +12,7 @@ and state tracking.
 import logging
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
@@ -37,7 +37,7 @@ class SatelliteConnectionError(Exception):
         super().__init__(message)
         self.provider = provider
         self.details = details or {}
-        self.timestamp = datetime.utcnow()
+        self.timestamp = datetime.now(timezone.utc)
 
 
 class SatelliteTimeoutError(SatelliteConnectionError):
@@ -191,9 +191,11 @@ class SatelliteProvider(ABC):
     def metrics(self) -> ConnectionMetrics:
         """Get current connection metrics."""
         if self._connection_start:
-            self._metrics.uptime_seconds = (
-                datetime.utcnow() - self._connection_start
-            ).total_seconds()
+            now = datetime.now(timezone.utc)
+            start = self._connection_start
+            if start.tzinfo is None:
+                start = start.replace(tzinfo=timezone.utc)
+            self._metrics.uptime_seconds = (now - start).total_seconds()
         return self._metrics
 
     @property
@@ -345,7 +347,7 @@ class SatelliteProvider(ABC):
             self._metrics.bandwidth_kbps = bandwidth_kbps
         if signal_dbm is not None:
             self._metrics.signal_strength_dbm = signal_dbm
-        self._metrics.last_update = datetime.utcnow()
+        self._metrics.last_update = datetime.now(timezone.utc)
 
     def get_metrics_summary(self) -> Dict[str, Any]:
         """

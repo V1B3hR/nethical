@@ -12,7 +12,7 @@ packet loss, and connection reliability.
 import logging
 import statistics
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
 
@@ -34,7 +34,7 @@ class SignalQuality(Enum):
 class ConnectionMetrics:
     """Connection quality metrics snapshot."""
 
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     # Latency metrics
     latency_ms: float = 0.0
@@ -192,7 +192,7 @@ class SatelliteMetrics:
             packet_success: Whether packet was successful
         """
         sample = MetricsSample(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             latency_ms=latency_ms,
             jitter_ms=jitter_ms,
             signal_dbm=signal_dbm,
@@ -205,7 +205,7 @@ class SatelliteMetrics:
         self._current_latency_ms = latency_ms
         self._current_jitter_ms = jitter_ms
         self._current_signal_dbm = signal_dbm
-        self._last_update = datetime.utcnow()
+        self._last_update = datetime.now(timezone.utc)
 
         # Update counters
         self._total_packets_sent += 1
@@ -217,8 +217,11 @@ class SatelliteMetrics:
 
     def _trim_samples(self):
         """Remove samples outside the window."""
-        cutoff = datetime.utcnow() - self._sample_window
-        self._samples = [s for s in self._samples if s.timestamp > cutoff]
+        cutoff = datetime.now(timezone.utc) - self._sample_window
+        self._samples = [
+            s for s in self._samples
+            if (s.timestamp if s.timestamp.tzinfo else s.timestamp.replace(tzinfo=timezone.utc)) > cutoff
+        ]
 
         if len(self._samples) > self._max_samples:
             self._samples = self._samples[-self._max_samples :]
@@ -241,7 +244,7 @@ class SatelliteMetrics:
 
     def set_connection_start(self, start_time: Optional[datetime] = None):
         """Set connection start time."""
-        self._connection_start = start_time or datetime.utcnow()
+        self._connection_start = start_time or datetime.now(timezone.utc)
 
     def update_bandwidth(self, download_kbps: float, upload_kbps: float):
         """Update current bandwidth measurements."""
@@ -261,10 +264,12 @@ class SatelliteMetrics:
 
         uptime = 0.0
         if self._connection_start:
-            uptime = (datetime.utcnow() - self._connection_start).total_seconds()
+            now = datetime.now(timezone.utc)
+            cs = self._connection_start if self._connection_start.tzinfo else self._connection_start.replace(tzinfo=timezone.utc)
+            uptime = (now - cs).total_seconds()
 
         return ConnectionMetrics(
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             latency_ms=self._current_latency_ms,
             latency_min_ms=latency_stats["min"],
             latency_max_ms=latency_stats["max"],
