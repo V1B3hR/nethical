@@ -13,7 +13,7 @@ import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, Any, List, Optional
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -136,10 +136,14 @@ class ThresholdVersionManager:
         """
         self.storage_dir = Path(storage_dir).resolve()
         # Validate path doesn't escape expected boundaries
-        if not str(self.storage_dir).startswith(str(Path.cwd().resolve())):
-            # Allow absolute paths in /tmp for testing
-            if not str(self.storage_dir).startswith('/tmp'):
-                raise ValueError(f"Storage directory must be within current directory: {storage_dir}")
+        import tempfile
+        system_temp = Path(tempfile.gettempdir()).resolve()
+        if not (
+            str(self.storage_dir).startswith(str(Path.cwd().resolve()))
+            or str(self.storage_dir).startswith(str(system_temp))
+            or str(self.storage_dir).startswith('/tmp')
+        ):
+            raise ValueError(f"Storage directory must be within current directory: {storage_dir}")
         self.storage_dir.mkdir(parents=True, exist_ok=True)
         
         self.versions: Dict[str, ThresholdConfig] = {}
@@ -153,7 +157,7 @@ class ThresholdVersionManager:
         version_file = self.storage_dir / "versions.json"
         
         if version_file.exists():
-            with open(version_file, 'r') as f:
+            with open(version_file, 'r', encoding="utf-8") as f:
                 data = json.load(f)
             
             self.current_version = data.get('current_version')
@@ -169,11 +173,11 @@ class ThresholdVersionManager:
         data = {
             'current_version': self.current_version,
             'total_versions': len(self.versions),
-            'last_updated': datetime.utcnow().isoformat(),
+            'last_updated': datetime.now(timezone.utc).isoformat(),
             'versions': [config.to_dict() for config in self.versions.values()]
         }
         
-        with open(version_file, 'w') as f:
+        with open(version_file, 'w', encoding="utf-8") as f:
             json.dump(data, f, indent=2)
     
     def create_version(self,
@@ -201,7 +205,7 @@ class ThresholdVersionManager:
         
         config = ThresholdConfig(
             version=version,
-            timestamp=datetime.utcnow().isoformat(),
+            timestamp=datetime.now(timezone.utc).isoformat(),
             author=author,
             description=description,
             thresholds=thresholds,

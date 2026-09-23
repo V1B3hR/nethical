@@ -19,7 +19,7 @@ import json
 from dataclasses import dataclass, asdict
 from pathlib import Path
 from typing import Dict, Any, List, Optional, Tuple
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -138,7 +138,7 @@ class EthicsBenchmark:
         }
         """
         path = Path(file_path)
-        with open(path, 'r') as f:
+        with open(path, 'r', encoding="utf-8") as f:
             data = json.load(f)
         
         cases_data = data.get('cases', [])
@@ -258,7 +258,7 @@ class EthicsBenchmark:
             false_negative_rate=fnr,
             accuracy=accuracy,
             per_type_metrics=per_type_metrics,
-            timestamp=datetime.utcnow().isoformat()
+            timestamp=datetime.now(timezone.utc).isoformat()
         )
     
     def generate_report(self, 
@@ -334,7 +334,7 @@ class EthicsBenchmark:
         report = "\n".join(lines)
         
         if output_file:
-            with open(output_file, 'w') as f:
+            with open(output_file, 'w', encoding="utf-8") as f:
                 f.write(report)
         
         return report
@@ -343,7 +343,7 @@ class EthicsBenchmark:
         """Save benchmark cases to file."""
         data = {
             'version': '1.0',
-            'timestamp': datetime.utcnow().isoformat(),
+            'timestamp': datetime.now(timezone.utc).isoformat(),
             'total_cases': len(self.test_cases),
             'cases': []
         }
@@ -359,7 +359,7 @@ class EthicsBenchmark:
             }
             data['cases'].append(case_dict)
         
-        with open(file_path, 'w') as f:
+        with open(file_path, 'w', encoding="utf-8") as f:
             json.dump(data, f, indent=2)
 
 
