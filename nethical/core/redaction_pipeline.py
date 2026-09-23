@@ -433,7 +433,7 @@ class EnhancedRedactionPipeline:
 
         # Write to file
         try:
-            with open(self.audit_log_path, "a") as f:
+            with open(self.audit_log_path, "a", encoding="utf-8") as f:
                 audit_data = {
                     "entry_id": entry.entry_id,
                     "timestamp": entry.timestamp.isoformat(),

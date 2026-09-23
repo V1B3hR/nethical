@@ -38,7 +38,7 @@ class DecisionExplanation:
     rules_matched: List[str] = field(default_factory=list)
     threshold_comparisons: Dict[str, Any] = field(default_factory=dict)
     natural_language: str = ""
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 

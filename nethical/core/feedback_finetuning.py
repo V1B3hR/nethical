@@ -241,14 +241,14 @@ class FeedbackLogger:
         filename = self.log_path / f"feedback_{timestamp_str}.{self.export_format}"
         
         if self.export_format == "jsonl":
-            with open(filename, 'a') as f:
+            with open(filename, 'a', encoding="utf-8") as f:
                 entry_dict = asdict(entry)
                 entry_dict['timestamp'] = entry.timestamp.isoformat()
                 f.write(json.dumps(entry_dict) + '\n')
         elif self.export_format == "json":
             # Append to JSON array
             if filename.exists():
-                with open(filename, 'r') as f:
+                with open(filename, 'r', encoding="utf-8") as f:
                     data = json.load(f)
             else:
                 data = []
@@ -257,7 +257,7 @@ class FeedbackLogger:
             entry_dict['timestamp'] = entry.timestamp.isoformat()
             data.append(entry_dict)
             
-            with open(filename, 'w') as f:
+            with open(filename, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
     
     def export_training_data(
@@ -289,7 +289,7 @@ class FeedbackLogger:
         ]
         
         if format == "jsonl":
-            with open(output_path, 'w') as f:
+            with open(output_path, 'w', encoding="utf-8") as f:
                 for pair in high_confidence_pairs:
                     pair_dict = asdict(pair)
                     pair_dict['timestamp'] = pair.timestamp.isoformat()
@@ -301,11 +301,11 @@ class FeedbackLogger:
                 pair_dict['timestamp'] = pair.timestamp.isoformat()
                 data.append(pair_dict)
             
-            with open(output_path, 'w') as f:
+            with open(output_path, 'w', encoding="utf-8") as f:
                 json.dump(data, f, indent=2)
         elif format == "csv":
             import csv
-            with open(output_path, 'w', newline='') as f:
+            with open(output_path, 'w', newline='', encoding="utf-8") as f:
                 if high_confidence_pairs:
                     fieldnames = asdict(high_confidence_pairs[0]).keys()
                     writer = csv.DictWriter(f, fieldnames=fieldnames)

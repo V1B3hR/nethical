@@ -293,7 +293,7 @@ class FairnessSampler:
         job_file = self.storage_dir / f"{job.job_id}.json"
 
         try:
-            with open(job_file, "w") as f:
+            with open(job_file, "w", encoding="utf-8") as f:
                 json.dump(job.to_dict(), f, indent=2)
         except Exception:
             pass  # Silent fail
@@ -355,7 +355,7 @@ class FairnessSampler:
         job_file = self.storage_dir / f"{job_id}.json"
         if job_file.exists():
             try:
-                with open(job_file, "r") as f:
+                with open(job_file, "r", encoding="utf-8") as f:
                     job_dict = json.load(f)
                     job = SamplingJob(
                         job_id=job_dict["job_id"],

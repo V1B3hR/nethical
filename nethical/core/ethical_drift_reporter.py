@@ -69,7 +69,7 @@ class EthicalDriftReport:
     cohorts: Dict[str, CohortProfile]
     drift_metrics: Dict[str, Any]
     recommendations: List[str]
-    generated_at: datetime = field(default_factory=datetime.utcnow)
+    generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -386,7 +386,7 @@ class EthicalDriftReporter:
         # Save to disk
         report_file = self.report_dir / f"{report.report_id}.json"
         try:
-            with open(report_file, "w") as f:
+            with open(report_file, "w", encoding="utf-8") as f:
                 f.write(report.to_json())
         except Exception:
             pass  # Silent fail

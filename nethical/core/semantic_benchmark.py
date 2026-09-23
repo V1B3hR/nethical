@@ -450,7 +450,7 @@ class SemanticAccuracyBenchmark:
         
         # Save detailed results
         results_file = self.output_dir / f"benchmark_results_{timestamp}.json"
-        with open(results_file, 'w') as f:
+        with open(results_file, 'w', encoding="utf-8") as f:
             results_data = {
                 "metrics": metrics,
                 "results": [asdict(r) for r in self.results],

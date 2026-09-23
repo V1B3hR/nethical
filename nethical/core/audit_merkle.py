@@ -234,7 +234,7 @@ class MerkleAnchor:
             "events": chunk.events,
         }
 
-        with open(chunk_file, "w") as f:
+        with open(chunk_file, "w", encoding="utf-8") as f:
             json.dump(chunk_data, f, indent=2)
 
     def _anchor_to_s3(self, chunk: AuditChunk):

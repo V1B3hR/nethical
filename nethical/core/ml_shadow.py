@@ -437,7 +437,7 @@ class MLShadowClassifier:
 
             # Append to predictions log
             log_file = os.path.join(self.storage_path, "shadow_predictions.jsonl")
-            with open(log_file, "a") as f:
+            with open(log_file, "a", encoding="utf-8") as f:
                 f.write(json.dumps(prediction.to_dict()) + "\n")
         except Exception:
             pass  # Silent fail for logging

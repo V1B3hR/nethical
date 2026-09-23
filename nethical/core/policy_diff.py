@@ -55,7 +55,7 @@ class PolicyDiffResult:
 
     old_version: str
     new_version: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     changes: List[PolicyChange] = field(default_factory=list)
     risk_score: float = 0.0
     risk_level: RiskLevel = RiskLevel.LOW
@@ -351,7 +351,7 @@ class PolicyDiffAuditor:
             "policy": policy,
         }
 
-        with open(version_file, "w") as f:
+        with open(version_file, "w", encoding="utf-8") as f:
             json.dump(version_data, f, indent=2)
 
         self.version_history.append(version_data)
@@ -370,7 +370,7 @@ class PolicyDiffAuditor:
         if not version_file.exists():
             return None
 
-        with open(version_file, "r") as f:
+        with open(version_file, "r", encoding="utf-8") as f:
             version_data = json.load(f)
 
         return version_data.get("policy")

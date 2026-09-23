@@ -264,7 +264,7 @@ class PluginVerifier:
             return None
 
         try:
-            with open(manifest_path) as f:
+            with open(manifest_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             return PluginManifest(

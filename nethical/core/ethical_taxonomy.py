@@ -45,7 +45,7 @@ class ViolationTagging:
     violation_type: str
     tags: List[EthicalTag] = field(default_factory=list)
     primary_dimension: Optional[str] = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
@@ -354,7 +354,7 @@ class EthicalTaxonomy:
 
     def _save_taxonomy(self):
         """Save taxonomy to file."""
-        with open(self.taxonomy_path, "w") as f:
+        with open(self.taxonomy_path, "w", encoding="utf-8") as f:
             json.dump(self.taxonomy, f, indent=2)
 
     def get_dimension_report(self, dimension: str) -> Dict[str, Any]:

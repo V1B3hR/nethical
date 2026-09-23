@@ -325,7 +325,7 @@ def load_embedding_config(
     if config_path:
         import yaml
         try:
-            with open(config_path, 'r') as f:
+            with open(config_path, 'r', encoding="utf-8") as f:
                 config_dict = yaml.safe_load(f)
                 if 'embedding' in config_dict:
                     config_dict = config_dict['embedding']
