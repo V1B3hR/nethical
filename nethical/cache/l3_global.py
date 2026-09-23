@@ -137,6 +137,10 @@ class L3GlobalCache:
         # Other providers would implement their delete
         return self._memory_delete(key)
 
+    def exists(self, key: str) -> bool:
+        """Check if key exists in cache and is not expired."""
+        return self.get(key) is not None
+
     # Memory fallback implementation
     def _memory_get(self, key: str) -> Optional[Any]:
         """In-memory get implementation."""

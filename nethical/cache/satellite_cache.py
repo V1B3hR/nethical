@@ -19,9 +19,10 @@ import hashlib
 import json
 import logging
 import pickle
+import tempfile
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set
@@ -72,7 +73,7 @@ class OfflineRequest:
     operation: str  # get, set, delete
     key: str
     value: Optional[Any] = None
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     priority: int = 0
     retry_count: int = 0
     max_retries: int = 3
@@ -97,7 +98,9 @@ class SatelliteCacheConfig:
 
     # Persistence settings
     persistence_enabled: bool = True
-    persistence_path: str = "/tmp/nethical_cache"
+    persistence_path: str = field(
+        default_factory=lambda: str(Path(tempfile.gettempdir()) / "nethical_cache")
+    )
     persistence_sync_interval_seconds: float = 60.0
 
     # Offline queue settings
@@ -167,6 +170,7 @@ class SatelliteCache:
 
         # Callbacks
         self._conflict_callback: Optional[Callable] = None
+        self._callbacks: Dict[str, List[Callable]] = {}
 
         # Background tasks
         self._sync_task: Optional[asyncio.Task] = None
@@ -232,6 +236,7 @@ class SatelliteCache:
         key: str,
         value: Any,
         ttl: Optional[int] = None,
+        ttl_seconds: Optional[int] = None,
         write_through: bool = True,
     ):
         """
@@ -241,10 +246,11 @@ class SatelliteCache:
             key: Cache key
             value: Value to cache
             ttl: TTL in seconds (uses default if None)
+            ttl_seconds: Alias for ttl in seconds
             write_through: Whether to queue for sync
         """
         # Calculate TTL with satellite multiplier
-        base_ttl = ttl or self.config.default_ttl_seconds
+        base_ttl = ttl or ttl_seconds or self.config.default_ttl_seconds
         if not self._is_online:
             # Longer TTL when offline
             base_ttl = int(base_ttl * self.config.satellite_ttl_multiplier)
@@ -266,7 +272,7 @@ class SatelliteCache:
                 self._compression_savings_bytes += size_bytes - compressed_size
 
         # Create entry
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         existing = self._cache.get(key)
         version = (existing.version + 1) if existing else 1
 
@@ -372,7 +378,7 @@ class SatelliteCache:
         # Process offline queue
         synced += await self._process_offline_queue()
 
-        self._last_sync = datetime.utcnow()
+        self._last_sync = datetime.now(timezone.utc)
         self._sync_operations += 1
 
         logger.info(f"Synced {synced} cache entries")
@@ -414,9 +420,12 @@ class SatelliteCache:
     ):
         """Queue a request for offline processing."""
         if len(self._offline_queue) >= self.config.offline_queue_max_size:
-            # Remove oldest low-priority request
-            self._offline_queue.sort(key=lambda r: (r.priority, r.timestamp))
-            self._offline_queue.pop(0)
+            # Remove lowest priority, oldest request
+            min_idx = min(
+                range(len(self._offline_queue)),
+                key=lambda i: (self._offline_queue[i].priority, self._offline_queue[i].timestamp),
+            )
+            self._offline_queue.pop(min_idx)
 
         request = OfflineRequest(
             request_id=f"{key}_{int(time.time()*1000)}",
@@ -527,6 +536,12 @@ class SatelliteCache:
         """Set callback for conflict resolution."""
         self._conflict_callback = callback
 
+    def register_callback(self, event: str, callback: Callable) -> None:
+        """Register a callback for an event (e.g. 'on_sync')."""
+        if event not in self._callbacks:
+            self._callbacks[event] = []
+        self._callbacks[event].append(callback)
+
     def _compress(self, value: Any) -> bytes:
         """Compress value for storage."""
         data = pickle.dumps(value)
@@ -544,7 +559,10 @@ class SatelliteCache:
     def _is_expired(self, entry: CacheEntry) -> bool:
         """Check if entry is expired."""
         expiry = entry.updated_at + timedelta(seconds=entry.ttl_seconds)
-        return datetime.utcnow() > expiry
+        now = datetime.now(timezone.utc)
+        if entry.updated_at.tzinfo is None:
+            expiry = expiry.replace(tzinfo=timezone.utc)
+        return now > expiry
 
     def _save_to_persistence(self, entry: CacheEntry):
         """Save entry to persistent storage."""

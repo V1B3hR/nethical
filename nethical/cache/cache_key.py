@@ -69,8 +69,8 @@ def generate_cache_key(
     # Create deterministic JSON
     json_str = json.dumps(components, sort_keys=True, separators=(",", ":"))
 
-    # Hash for consistent key
-    key_hash = hashlib.md5(json_str.encode()).hexdigest()
+    # Hash for consistent key (non-cryptographic caching context)
+    key_hash = hashlib.md5(json_str.encode(), usedforsecurity=False).hexdigest()
 
     return CacheKey(
         key=key_hash,
@@ -109,7 +109,7 @@ def generate_decision_key(
     cache_key = generate_cache_key(
         "decision",
         agent_id=agent_id,
-        action_hash=hashlib.md5(action.encode()).hexdigest()[:16],
+        action_hash=hashlib.md5(action.encode(), usedforsecurity=False).hexdigest()[:16],
         action_type=action_type,
         **stable_context,
     )
