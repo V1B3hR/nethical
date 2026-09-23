@@ -10,7 +10,7 @@ to integrate with Nethical governance.
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 
 
 @dataclass
@@ -39,7 +39,7 @@ class GovernanceMetrics:
     pii_detections: int
     latency_p50_ms: float
     latency_p99_ms: float
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class ObservabilityProvider(ABC):

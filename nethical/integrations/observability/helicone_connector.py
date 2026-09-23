@@ -4,6 +4,7 @@
 """Helicone integration for Nethical governance observability."""
 
 from .base import ObservabilityProvider, TraceSpan, GovernanceMetrics
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 import logging
 import requests
@@ -79,16 +80,16 @@ class HeliconeConnector(ObservabilityProvider):
             return
             
         try:
-            from datetime import datetime
             import uuid
             
+            now_iso = datetime.now(timezone.utc).isoformat()
             payload = {
                 "request_id": str(uuid.uuid4()),
                 "model": "nethical-governance",
                 "prompt": action[:1000],
                 "response": decision,
-                "start_time": datetime.utcnow().isoformat(),
-                "end_time": datetime.utcnow().isoformat(),
+                "start_time": now_iso,
+                "end_time": now_iso,
                 "properties": {
                     "decision": decision,
                     "risk_score": risk_score,

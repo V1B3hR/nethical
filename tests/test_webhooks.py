@@ -275,6 +275,35 @@ class TestSlackWebhookDispatcher:
         assert attachment['color'] == '#ff9900'  # Warning color
         assert len(attachment['fields']) == 2
 
+    @patch.object(HTTPWebhookDispatcher, 'dispatch')
+    def test_send_alert_blocks(self, mock_dispatch):
+        """Test sending Slack alert with blocks formatting"""
+        mock_delivery = WebhookDelivery(
+            "del_124",
+            "https://hooks.slack.com/services/...",
+            WebhookPayload("slack_message", {}),
+            status=WebhookStatus.SUCCESS
+        )
+        mock_dispatch.return_value = mock_delivery
+
+        dispatcher = SlackWebhookDispatcher("https://hooks.slack.com/services/...")
+
+        delivery = dispatcher.send_alert(
+            title="Block Alert",
+            message="This is a block alert",
+            severity="critical",
+            fields={"Cluster": "k8s-prod", "Pod": "agent-01"},
+            use_blocks=True
+        )
+
+        assert delivery.status == WebhookStatus.SUCCESS
+        call_args = mock_dispatch.call_args
+        payload = call_args[0][0]
+        blocks = payload.data.get('blocks', [])
+        assert len(blocks) >= 2
+        assert blocks[0]["type"] == "header"
+        assert blocks[0]["text"]["text"] == "Block Alert"
+
 
 class TestDiscordWebhookDispatcher:
     """Test Discord webhook dispatcher"""

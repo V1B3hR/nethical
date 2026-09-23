@@ -489,7 +489,7 @@ class SlackWebhookDispatcher(HTTPWebhookDispatcher):
         message: str,
         severity: str = "info",
         fields: Optional[Dict[str, str]] = None,
-        use_blocks: bool = True,
+        use_blocks: bool = False,
     ) -> WebhookDelivery:
         """
         Send formatted alert to Slack

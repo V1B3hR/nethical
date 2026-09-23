@@ -80,10 +80,10 @@ class SnowflakeCortexConnector(CloudMLProvider):
         
         try:
             import uuid
-            from datetime import datetime
+            from datetime import datetime, timezone
             
             run_id = str(uuid.uuid4())
-            run_name = run_name or f"run_{datetime.utcnow().strftime('%Y%m%d_%H%M%S')}"
+            run_name = run_name or f"run_{datetime.now(timezone.utc).strftime('%Y%m%d_%H%M%S')}"
             
             # Create experiment tracking table if not exists
             cursor = self.connection.cursor()

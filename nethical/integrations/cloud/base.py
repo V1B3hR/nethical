@@ -6,7 +6,7 @@
 from abc import ABC, abstractmethod
 from typing import Dict, Any, Optional, List
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 
 
@@ -27,7 +27,7 @@ class ExperimentRun:
     parameters: Dict[str, Any]
     metrics: Dict[str, float]
     artifacts: List[str] = field(default_factory=list)
-    start_time: datetime = field(default_factory=datetime.utcnow)
+    start_time: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     end_time: Optional[datetime] = None
     status: RunStatus = RunStatus.RUNNING
     tags: Dict[str, str] = field(default_factory=dict)

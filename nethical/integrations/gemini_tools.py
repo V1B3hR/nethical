@@ -183,16 +183,15 @@ def handle_nethical_tool(
         )
 
         # Extract key information
-        decision_str = compute_decision(result)
-        violations = result.get("violations", [])
+        decision, reason, violations = compute_decision(result)
 
         # Build response
         response = {
-            "decision": decision_str,
-            "reason": result.get("reason", "Action evaluated"),
+            "decision": decision,
+            "reason": reason or result.get("reason", "Action evaluated"),
             "agent_id": agent_id,
             "timestamp": datetime.now(timezone.utc).isoformat(),
-            "risk_score": result.get("risk_score"),
+            "risk_score": result.get("risk_score", result.get("phase3", {}).get("risk_score", 0.0)),
             "pii_detected": bool(result.get("pii_detected")),
             "pii_types": result.get("pii_types", []),
             "violations": format_violations_for_response(violations),

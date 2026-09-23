@@ -4,6 +4,7 @@
 """LangSmith integration for Nethical governance observability."""
 
 from .base import ObservabilityProvider, TraceSpan, GovernanceMetrics
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 import logging
 
@@ -77,8 +78,6 @@ class LangSmithConnector(ObservabilityProvider):
             return
             
         try:
-            from datetime import datetime
-            
             self.client.create_run(
                 name="governance_evaluation",
                 run_type="tool",
@@ -87,8 +86,8 @@ class LangSmithConnector(ObservabilityProvider):
                     "decision": decision,
                     "risk_score": risk_score
                 },
-                start_time=datetime.utcnow(),
-                end_time=datetime.utcnow(),
+                start_time=datetime.now(timezone.utc),
+                end_time=datetime.now(timezone.utc),
                 project_name=self.project_name,
                 extra=metadata,
                 tags=["nethical", "governance", decision.lower()]
@@ -102,8 +101,6 @@ class LangSmithConnector(ObservabilityProvider):
             return
             
         try:
-            from datetime import datetime
-            
             self.client.create_run(
                 name="governance_metrics",
                 run_type="chain",

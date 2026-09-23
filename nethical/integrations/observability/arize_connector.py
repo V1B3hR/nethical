@@ -4,6 +4,7 @@
 """Arize AI integration for Nethical governance observability."""
 
 from .base import ObservabilityProvider, TraceSpan, GovernanceMetrics
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 import logging
 
@@ -114,12 +115,11 @@ class ArizeConnector(ObservabilityProvider):
         try:
             import pandas as pd
             from arize.utils.types import Schema
-            from datetime import datetime
             import uuid
             
             data = {
                 "prediction_id": [str(uuid.uuid4())],
-                "prediction_timestamp": [datetime.utcnow()],
+                "prediction_timestamp": [datetime.now(timezone.utc)],
                 "prediction_label": [decision],
                 "prediction_score": [risk_score],
                 "prompt": [action[:1000]],

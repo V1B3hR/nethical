@@ -4,6 +4,7 @@
 """TruLens integration for Nethical governance observability."""
 
 from .base import ObservabilityProvider, TraceSpan, GovernanceMetrics
+from datetime import datetime, timezone
 from typing import Dict, Any, Optional
 import logging
 
@@ -89,7 +90,6 @@ class TruLensConnector(ObservabilityProvider):
             
         try:
             from trulens_eval.schema import Record
-            from datetime import datetime
             
             record = Record(
                 app_id=self.app_id,
@@ -101,7 +101,7 @@ class TruLensConnector(ObservabilityProvider):
                     **metadata
                 },
                 tags=["nethical", "governance", decision.lower()],
-                ts=datetime.utcnow(),
+                ts=datetime.now(timezone.utc),
                 cost={
                     "risk": risk_score
                 }

@@ -98,11 +98,11 @@ class NethicalRayServeMiddleware:
                 action=input_str, agent_id=self.agent_id, action_type="model_input"
             )
 
-            decision = compute_decision(input_result)
+            decision, reason, _ = compute_decision(input_result)
             if decision != "ALLOW":
                 return {
                     "error": "Input blocked by safety check",
-                    "reason": input_result.get("reason"),
+                    "reason": reason or input_result.get("reason"),
                     "decision": decision,
                 }
 
@@ -124,11 +124,11 @@ class NethicalRayServeMiddleware:
                 action=output_str, agent_id=self.agent_id, action_type="model_output"
             )
 
-            decision = compute_decision(output_result)
+            decision, reason, _ = compute_decision(output_result)
             if decision != "ALLOW":
                 return {
                     "error": "Output blocked by safety check",
-                    "reason": output_result.get("reason"),
+                    "reason": reason or output_result.get("reason"),
                     "decision": decision,
                 }
 
@@ -171,8 +171,9 @@ def create_safe_deployment(
             input_result = governance.process_action(
                 action=str(request), agent_id=agent, action_type="model_input"
             )
-            if compute_decision(input_result) != "ALLOW":
-                return {"error": "Input blocked", "reason": input_result.get("reason")}
+            input_decision, input_reason, _ = compute_decision(input_result)
+            if input_decision != "ALLOW":
+                return {"error": "Input blocked", "reason": input_reason or input_result.get("reason")}
 
         output = deployment_func(request)
 
@@ -180,10 +181,11 @@ def create_safe_deployment(
             output_result = governance.process_action(
                 action=str(output), agent_id=agent, action_type="model_output"
             )
-            if compute_decision(output_result) != "ALLOW":
+            output_decision, output_reason, _ = compute_decision(output_result)
+            if output_decision != "ALLOW":
                 return {
                     "error": "Output blocked",
-                    "reason": output_result.get("reason"),
+                    "reason": output_reason or output_result.get("reason"),
                 }
 
         return output
