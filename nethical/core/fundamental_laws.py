@@ -24,6 +24,7 @@ import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import List, Optional, Dict, Any, Set, Callable, Tuple
 
 
@@ -794,6 +795,8 @@ class LawEnforcer:
         registry: Optional[FundamentalLawsRegistry] = None,
         strict_mode: bool = False,
         enable_audit: bool = True,
+        category_weights: Optional[Dict[str, float]] = None,
+        config: Optional[Dict[str, Any]] = None,
     ):
         """Initialize law enforcer.
 
@@ -801,10 +804,14 @@ class LawEnforcer:
             registry: Laws registry (uses global if None)
             strict_mode: If True, any violation blocks action
             enable_audit: If True, log all evaluations
+            category_weights: Optional category weight mappings for compliance scoring
+            config: Optional full configuration dictionary
         """
         self.registry = registry or FUNDAMENTAL_LAWS
         self.strict_mode = strict_mode
         self.enable_audit = enable_audit
+        self.category_weights = category_weights or {}
+        self.config = config or {}
 
         # Audit trail
         self._audit_log: List[EnforcementResult] = []
@@ -817,6 +824,42 @@ class LawEnforcer:
 
         # Register default policy checks
         self._register_default_checks()
+
+    @classmethod
+    def from_dict(
+        cls,
+        data: Dict[str, Any],
+        registry: Optional[FundamentalLawsRegistry] = None,
+    ) -> LawEnforcer:
+        """Create LawEnforcer configured from dictionary."""
+        root = data.get("fundamental_laws", data)
+        enforcement = root.get("enforcement", {})
+        mode = enforcement.get("mode", "advisory")
+        strict_mode = mode in ("strict", "enforced") or root.get("judge", {}).get("strict_mode", False)
+        log_violations = enforcement.get("log_violations", True)
+        weights = root.get("category_weights", {})
+        return cls(
+            registry=registry,
+            strict_mode=strict_mode,
+            enable_audit=log_violations,
+            category_weights=weights,
+            config=data,
+        )
+
+    @classmethod
+    def from_yaml(
+        cls,
+        path: str | Path,
+        registry: Optional[FundamentalLawsRegistry] = None,
+    ) -> LawEnforcer:
+        """Load LawEnforcer from YAML configuration file."""
+        import yaml
+        file_path = Path(path)
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        if not isinstance(data, dict):
+            raise ValueError(f"Expected mapping in YAML file {file_path}, got {type(data)}")
+        return cls.from_dict(data, registry=registry)
 
     def _register_default_checks(self) -> None:
         """Register default policy checks for each law."""

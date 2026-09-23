@@ -33,8 +33,10 @@ redis:
     cross_az_latency_ms: 5
 
   high_availability:
+    # Note: Redis Cluster handles its own failover via gossip protocol.
+    # Sentinel is for standalone master-replica deployments and is disabled when cluster mode is enabled.
     sentinel:
-      enabled: true
+      enabled: false
       master_name: nethical-master
       quorum: 2
     failover:

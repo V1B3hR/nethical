@@ -30,6 +30,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import Any, Callable, Dict, List, Optional, Set, Tuple
 
 logger = logging.getLogger(__name__)
@@ -125,6 +126,82 @@ class KillSwitchConfig:
     audit_enabled: bool = True
     sign_logs: bool = True
     retention_days: int = 365
+
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> KillSwitchConfig:
+        """Create KillSwitchConfig from dictionary (supports raw and nested config/kill_switch.yaml shapes)."""
+        root = data.get("kill_switch", data)
+        multi_sig = root.get("multi_sig", {})
+        hardware_iso = root.get("hardware_isolation", {})
+        actuator_sev = root.get("actuator_severing", {})
+        audit = root.get("audit", {})
+
+        # Parse mode
+        mode_val = root.get("default_mode", "graceful")
+        if isinstance(mode_val, str):
+            try:
+                default_mode = ShutdownMode(mode_val.lower())
+            except ValueError:
+                default_mode = ShutdownMode.GRACEFUL
+        elif isinstance(mode_val, ShutdownMode):
+            default_mode = mode_val
+        else:
+            default_mode = ShutdownMode.GRACEFUL
+
+        # Parse key_type
+        key_type_val = multi_sig.get("key_type", root.get("key_type", "ed25519"))
+        if isinstance(key_type_val, str):
+            try:
+                key_type = KeyType(key_type_val.lower())
+            except ValueError:
+                key_type = KeyType.ED25519
+        elif isinstance(key_type_val, KeyType):
+            key_type = key_type_val
+        else:
+            key_type = KeyType.ED25519
+
+        # Parse isolation level
+        iso_val = hardware_iso.get("default_level", root.get("default_isolation_level", "network_only"))
+        if isinstance(iso_val, str):
+            try:
+                isolation_level = IsolationLevel(iso_val.lower())
+            except ValueError:
+                isolation_level = IsolationLevel.NETWORK_ONLY
+        elif isinstance(iso_val, IsolationLevel):
+            isolation_level = iso_val
+        else:
+            isolation_level = IsolationLevel.NETWORK_ONLY
+
+        return cls(
+            enabled=bool(root.get("enabled", True)),
+            sla_target_ms=int(root.get("sla_target_ms", 1000)),
+            default_mode=default_mode,
+            graceful_timeout_s=float(root.get("graceful_timeout_s", 5.0)),
+            multi_sig_enabled=bool(multi_sig.get("enabled", root.get("multi_sig_enabled", True))),
+            threshold=int(multi_sig.get("threshold", root.get("threshold", 2))),
+            total_signers=int(multi_sig.get("total_signers", root.get("total_signers", 3))),
+            key_type=key_type,
+            hardware_isolation_enabled=bool(hardware_iso.get("enabled", root.get("hardware_isolation_enabled", True))),
+            default_isolation_level=isolation_level,
+            network_interface_whitelist=list(hardware_iso.get("network_interface_whitelist", root.get("network_interface_whitelist", []))),
+            enforce_safe_state=bool(actuator_sev.get("enforce_safe_state", root.get("enforce_safe_state", True))),
+            safe_state_timeout_s=float(actuator_sev.get("safe_state_timeout_s", root.get("safe_state_timeout_s", 2.0))),
+            reconnection_cooldown_s=float(actuator_sev.get("reconnection_cooldown_s", root.get("reconnection_cooldown_s", 300.0))),
+            audit_enabled=bool(audit.get("enabled", root.get("audit_enabled", True))),
+            sign_logs=bool(audit.get("sign_logs", root.get("sign_logs", True))),
+            retention_days=int(audit.get("retention_days", root.get("retention_days", 365))),
+        )
+
+    @classmethod
+    def from_yaml(cls, path: str | Path) -> KillSwitchConfig:
+        """Load KillSwitchConfig from YAML file."""
+        import yaml
+        file_path = Path(path)
+        with open(file_path, "r", encoding="utf-8") as f:
+            data = yaml.safe_load(f)
+        if not isinstance(data, dict):
+            raise ValueError(f"Expected mapping in YAML file {file_path}, got {type(data)}")
+        return cls.from_dict(data)
 
 
 @dataclass

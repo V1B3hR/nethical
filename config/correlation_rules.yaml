@@ -54,7 +54,7 @@ multi_agent_patterns:
       
   # Anomalous Agent Cluster
   - name: "anomalous_agent_cluster"
-    description: "Detects clusters of agents with similar anomalous behavior"
+    description: "Detects clusters of agents with similar anomalous behaviour"
     enabled: true
     window_seconds: 600
     min_cluster_size: 4

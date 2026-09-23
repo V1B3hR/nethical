@@ -11,6 +11,7 @@ This module implements:
 
 import math
 import time
+import logging
 import yaml
 import json
 from pathlib import Path
@@ -18,6 +19,8 @@ from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from collections import defaultdict, deque
+
+logger = logging.getLogger(__name__)
 
 
 @dataclass
@@ -92,13 +95,22 @@ class CorrelationEngine:
         # Last cleanup time
         self.last_cleanup = time.time()
 
-    def _load_config(self, config_path: Path) -> Dict[str, Any]:
+    def _load_config(self, config_path: Path | str) -> Dict[str, Any]:
         """Load correlation rules configuration."""
+        target_path = Path(config_path)
         try:
-            with open(config_path, "r") as f:
-                return yaml.safe_load(f)
-        except Exception:
-            # Default minimal config if file not found
+            with open(target_path, "r", encoding="utf-8") as f:
+                data = yaml.safe_load(f)
+                return data if isinstance(data, dict) else {}
+        except FileNotFoundError:
+            logger.warning("Correlation config file not found at %s, using defaults", target_path)
+            return {
+                "multi_agent_patterns": [],
+                "correlation_engine": {"enabled": True},
+                "persistence": {"redis": {"enabled": True}},
+            }
+        except Exception as exc:
+            logger.error("Failed to parse correlation config at %s: %s", target_path, exc)
             return {
                 "multi_agent_patterns": [],
                 "correlation_engine": {"enabled": True},

@@ -107,7 +107,9 @@ class TestCorrelationEngine:
         
         # Use the actual config file
         import shutil
-        actual_config = Path(__file__).parent.parent.parent / "correlation_rules.yaml"
+        actual_config = Path(__file__).parent.parent / "config" / "correlation_rules.yaml"
+        if not actual_config.exists():
+            actual_config = Path(__file__).parent.parent / "correlation_rules.yaml"
         if actual_config.exists():
             shutil.copy(actual_config, config_path)
         

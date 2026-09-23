@@ -72,10 +72,10 @@ docker run -d \
 **Features**: 
 - Standard privacy mode
 - Conservative ML configuration (shadow + anomaly only)
-- Optimized for lower latency
-- Performance optimization enabled
+- Optimised for lower latency
+- Performance optimisation enabled
 
-**Use case**: Asia Pacific production region with latency optimization
+**Use case**: Asia Pacific production region with latency optimisation
 
 ```bash
 # Deploy with Docker
@@ -110,7 +110,7 @@ docker run -d \
 **Region**: Asia Pacific Southeast (Singapore)  
 **Target Capacity**: 100 RPS sustained, 500 peak, 1,000 agents  
 **Compliance**: Singapore PDPA, APAC Privacy  
-**Features**: Regional compliance, optimized caching
+**Features**: Regional compliance, optimised caching
 
 #### sa-east-1.env
 **Region**: South America East (São Paulo)  
@@ -273,7 +273,7 @@ With all optimizations enabled:
 For a high-throughput, low-latency deployment:
 
 ```bash
-# Performance-optimized configuration
+# Performance-optimised configuration
 NETHICAL_ENABLE_PII_CACHING=true
 NETHICAL_PII_CACHE_SIZE=50000
 NETHICAL_ENABLE_FAST_PATH=true

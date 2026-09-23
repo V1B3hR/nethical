@@ -5,7 +5,8 @@
 # configuration files.
 #
 # Usage:
-#   python nethical.py --config config/example_config.yaml
+#   nethical status --config config/example_config.yaml
+#   # Or programmatically via nethical.core or nethical.cli
 #
 # Note: Command-line arguments will override settings in this file.
 
@@ -93,14 +94,8 @@ governance:
 
 # Example use cases:
 #
-# 1. Basic scan with default settings:
-#    python nethical.py --config config/example_config.yaml --scan
+# 1. Basic status check with configuration:
+#    nethical status --config config/example_config.yaml
 #
-# 2. Process specific action:
-#    python nethical.py --config config/example_config.yaml --action "User login"
-#
-# 3. Override target from config:
-#    python nethical.py --config config/example_config.yaml --target agent_999 --scan
-#
-# 4. Enable all features via CLI:
-#    python nethical.py --config config/example_config.yaml --enable-all --scan
+# 2. Inspect with verbose details:
+#    nethical status --config config/example_config.yaml --verbose

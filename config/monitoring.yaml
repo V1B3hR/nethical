@@ -10,12 +10,12 @@ grafana:
   enabled: true
   port: 3000
   admin_user: admin
-  admin_password: ${GRAFANA_PASSWORD:-changeme}
+  admin_password: ${GRAFANA_PASSWORD:-}
 
 metrics_server:
   enabled: true
   port: 9091  # Separate from Prometheus to avoid conflicts
-  host: "0.0.0.0"
+  host: "${METRICS_HOST:-127.0.0.1}"
 
 alerting:
   enabled: true

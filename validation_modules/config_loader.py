@@ -28,6 +28,7 @@ class ValidationConfig:
             # Try multiple locations
             possible_paths = [
                 Path("validation.yaml"),
+                Path("config/validation_config.yaml"),
                 Path("config/validation.yaml"),
                 Path("validation_config.yaml"),
             ]
@@ -37,7 +38,7 @@ class ValidationConfig:
                     break
         
         if config_path and Path(config_path).exists():
-            with open(config_path, 'r') as f:
+            with open(config_path, "r", encoding="utf-8") as f:
                 self.config = yaml.safe_load(f)
             logger.info(f"Loaded configuration from {config_path}")
         else:
