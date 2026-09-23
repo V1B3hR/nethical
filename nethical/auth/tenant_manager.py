@@ -116,3 +116,12 @@ class TenantManager:
             metadata=metadata or {},
         )
         return self.register_tenant(tenant)
+
+    def remove_tenant(self, tenant_id: str) -> bool:
+        """Removes a tenant workspace and cleans up its ledger partition. Returns True if removed."""
+        if tenant_id in self._tenants:
+            del self._tenants[tenant_id]
+            self._ledgers.pop(tenant_id, None)
+            logger.info(f"Removed tenant: {tenant_id}")
+            return True
+        return False

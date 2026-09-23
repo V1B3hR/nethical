@@ -143,7 +143,7 @@ def _b64url_decode(data: str) -> bytes:
 class SovereignAuthToken:
     """Zero-external-dependency, air-gapped cryptographic token generator and validator.
 
-    Generates HMAC-SHA256 signed web tokens compatible with standard Bearer authorization
+    Generates HMAC-SHA256 signed web tokens compatible with standard Bearer authorisation
     without requiring external Identity Providers or network connectivity.
     """
 
@@ -153,6 +153,21 @@ class SovereignAuthToken:
         allow_ephemeral: bool = True,
     ) -> None:
         self.secret_key = resolve_signing_secret(secret_key, allow_ephemeral=allow_ephemeral)
+        self._revoked_jtis: set[str] = set()
+
+    def revoke_token(self, jti: str) -> None:
+        """Revokes a token identifier (JTI) immediately across the local instance."""
+        if jti:
+            self._revoked_jtis.add(jti)
+            logger.info(f"Token JTI '{jti}' successfully added to revocation list.")
+
+    def is_token_revoked(self, jti: str) -> bool:
+        """Checks if a given token JTI is in the revocation list."""
+        return jti in self._revoked_jtis
+
+    def clear_revoked_tokens(self) -> None:
+        """Clears all revoked token entries."""
+        self._revoked_jtis.clear()
 
     def generate_token(
         self,
@@ -186,9 +201,9 @@ class SovereignAuthToken:
         return f"{header_b64}.{payload_b64}.{sig_b64}"
 
     def verify_token(self, token_str: str) -> dict[str, Any] | None:
-        """Verifies a sovereign token signature and expiration.
+        """Verifies a sovereign token signature, revocation status, and expiration.
 
-        Returns payload dict if valid, or None if invalid/expired.
+        Returns payload dict if valid, or None if invalid/expired/revoked.
         """
         try:
             parts = token_str.strip().split(".")
@@ -206,6 +221,11 @@ class SovereignAuthToken:
 
             payload = json.loads(_b64url_decode(payload_b64).decode("utf-8"))
             now = int(time.time())
+
+            jti = payload.get("jti")
+            if jti and self.is_token_revoked(jti):
+                logger.warning(f"Token revoked for user '{payload.get('username')}' (jti={jti})")
+                return None
 
             if payload.get("exp") and now > payload["exp"]:
                 logger.warning(f"Token expired for user: {payload.get('username')}")
@@ -318,6 +338,22 @@ class RBACManager:
     def authenticate_api_key(self, api_key: str) -> UserIdentity | None:
         """Authenticates request via pre-shared API Key."""
         return self._api_keys.get(api_key)
+
+    def revoke_token(self, token_str_or_jti: str) -> bool:
+        """Revokes a sovereign token by raw token string or direct JTI."""
+        if "." in token_str_or_jti:
+            parts = token_str_or_jti.strip().split(".")
+            if len(parts) == 3:
+                try:
+                    payload = json.loads(_b64url_decode(parts[1]).decode("utf-8"))
+                    jti = payload.get("jti")
+                    if jti:
+                        self.token_service.revoke_token(jti)
+                        return True
+                except Exception:
+                    pass
+        self.token_service.revoke_token(token_str_or_jti)
+        return True
 
     def has_permission(self, user: UserIdentity, permission: str) -> bool:
         """Checks if a user's role grants a specific permission."""

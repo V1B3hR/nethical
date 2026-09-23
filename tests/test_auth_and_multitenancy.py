@@ -321,3 +321,36 @@ def test_api_endpoints_auth_and_multitenancy() -> None:
     assert "fonts.googleapis.com" not in portal_resp.text  # Zero external CDN calls in air-gap
 
 
+def test_sovereign_token_revocation() -> None:
+    """Verifies that sovereign tokens can be revoked immediately via JTI or token string."""
+    rbac = RBACManager(auto_seed_dev=True)
+    auth_result = rbac.authenticate("admin", "nethical_admin_sovereign_password")
+    assert auth_result is not None
+    user, token = auth_result
+
+    # Token initially valid
+    authenticated_user = rbac.authenticate_token(token)
+    assert authenticated_user is not None
+    assert authenticated_user.username == "admin"
+
+    # Revoke token
+    assert rbac.revoke_token(token) is True
+
+    # Token now invalid
+    assert rbac.authenticate_token(token) is None
+
+
+def test_tenant_removal() -> None:
+    """Verifies that a tenant can be safely removed and its ledger cleaned up."""
+    tm = TenantManager()
+    tenant = tm.create_tenant(name="Temporary Tenant", jurisdiction="EU")
+    tenant_id = tenant.tenant_id
+
+    assert tm.get_tenant(tenant_id) is not None
+    assert tm.remove_tenant(tenant_id) is True
+    assert tm.get_tenant(tenant_id) is None
+    # Subsequent removal returns False
+    assert tm.remove_tenant(tenant_id) is False
+
+
+
