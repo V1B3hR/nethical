@@ -463,6 +463,9 @@ class SafetyViolation(_BaseModel):
     logical_domain: Optional[str] = Field(
         default=None, description="Logical domain for hierarchical aggregation"
     )
+    category: str = Field(
+        default="safety", description="Category of violation for detector compatibility"
+    )
 
     @property
     def id(self) -> str:
