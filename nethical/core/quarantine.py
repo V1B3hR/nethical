@@ -64,7 +64,7 @@ class QuarantineRecord:
     cohort: str
     reason: QuarantineReason
     status: QuarantineStatus = QuarantineStatus.PENDING
-    initiated_at: datetime = field(default_factory=datetime.utcnow)
+    initiated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     activated_at: Optional[datetime] = None
     released_at: Optional[datetime] = None
     expires_at: Optional[datetime] = None
