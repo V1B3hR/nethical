@@ -98,7 +98,7 @@ class MerkleRootsRegistry:
         anchor_file = self.storage_dir / "anchors.jsonl"
         if anchor_file.exists():
             try:
-                with open(anchor_file, 'r') as f:
+                with open(anchor_file, 'r', encoding="utf-8") as f:
                     for line in f:
                         data = json.loads(line)
                         anchor = Anchor(
@@ -177,7 +177,7 @@ class MerkleRootsRegistry:
         # Store anchor
         self._anchors.append(anchor)
         anchor_file = self.storage_dir / "anchors.jsonl"
-        with open(anchor_file, 'a') as f:
+        with open(anchor_file, 'a', encoding="utf-8") as f:
             f.write(json.dumps(anchor.to_record()) + '\n')
         
         logger.info(
@@ -518,7 +518,7 @@ class QuarterlyTransparencyReportGenerator:
         filename = f"transparency_report_{report.year}_Q{report.quarter}.json"
         filepath = self.output_dir / filename
         
-        with open(filepath, 'w') as f:
+        with open(filepath, 'w', encoding="utf-8") as f:
             json.dump(report.to_dict(), f, indent=2)
         
         logger.info(f"Saved quarterly report to {filepath}")
