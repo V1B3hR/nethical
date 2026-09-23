@@ -516,7 +516,7 @@ class DPOTrainerEngine:
             ])
         ]
         if not institutional_samples:
-            return {"institutional_probe_count": 0, "pass_rate": 1.0, "domains": {}}
+            return {"institutional_probe_count": 0, "passed_probes": 0, "pass_rate": 1.0, "domains": {}}
 
         passed = 0
         domain_stats: Dict[str, Dict[str, int]] = {}
@@ -844,7 +844,7 @@ class DPOTrainerEngine:
         initial_metrics = self.evaluate_alignment_metrics()
         initial_probes = self.evaluate_institutional_probes()
         logger.info(f"Wstępna ewaluacja alignmentu: {initial_metrics}")
-        logger.info(f"Wstępna ewaluacja sond instytucjonalnych: {initial_probes['pass_rate'] * 100:.1f}% ({initial_probes['passed_probes']}/{initial_probes['institutional_probe_count']})")
+        logger.info(f"Wstępna ewaluacja sond instytucjonalnych: {initial_probes.get('pass_rate', 1.0) * 100:.1f}% ({initial_probes.get('passed_probes', 0)}/{initial_probes.get('institutional_probe_count', 0)})")
 
         history = []
         for epoch in range(1, epochs + 1):
