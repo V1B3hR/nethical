@@ -12,7 +12,7 @@ from fastapi.testclient import TestClient
 
 from nethical.api import app
 from nethical.edge.ebpf_interceptor import EBPFAgentInterceptor, EBPFRule
-from nethical.formal.law_prover import LawInvariantProver
+from nethical.formal import LawInvariantProver, RFCFormalVerifier, run_rfc_verification
 from nethical.security.enclave_attestation import EnclaveAttestationEngine
 from nethical.security.merkle_ledger import MerkleLedger
 
@@ -297,3 +297,18 @@ def test_api_enclave_attestation_and_portal_stats(client: TestClient) -> None:
     assert stats["ebpf"]["bpf_prog_type"] == "BPF_PROG_TYPE_SOCK_OPS"
     assert "enclave" in stats
     assert stats["enclave"]["confidential_computing_enabled"] is True
+
+
+def test_rfc_formal_verification() -> None:
+    """Weryfikuje formalne dowodzenie niezmienników RFC-0001 (eliminacja podatności krzywych binarnych)."""
+    verifier = RFCFormalVerifier()
+    result = verifier.verify_rfc_0001_cryptographic_baseline()
+    assert result.proved is True
+    assert result.status == "PROVED"
+    assert result.counterexample is None
+    assert result.proof_time_ms >= 0.0
+
+    batch = run_rfc_verification()
+    assert batch["status"] == "ALL_PROVEN"
+    assert len(batch["rfc_proofs"]) == 1
+    assert batch["z3_version"] != ""
