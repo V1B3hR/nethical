@@ -18,35 +18,57 @@ import json
 import yaml
 import argparse
 from pathlib import Path
-from typing import Dict, Any, List, Tuple
-from datetime import datetime
+from typing import Dict, Any, List, Optional
+from datetime import datetime, timezone
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Reconfigure stdout/stderr to UTF-8 on platforms with restrictive default encodings
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 from nethical.policy.engine import PolicyEngine
 from nethical.hooks.interfaces import Region
 
 
 def load_yaml_or_json(file_path: str) -> Dict[str, Any]:
-    """Load data from YAML or JSON file."""
+    """Load data from YAML or JSON file.
+    
+    Args:
+        file_path: Path to YAML or JSON file
+        
+    Returns:
+        Loaded dictionary
+    """
     path = Path(file_path)
     
     if not path.exists():
         raise FileNotFoundError(f"File not found: {file_path}")
     
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         if path.suffix in ['.json']:
             return json.load(f)
         elif path.suffix in ['.yaml', '.yml']:
-            return yaml.safe_load(f)
+            return yaml.safe_load(f) or {}
         else:
             # Try JSON first, then YAML
             content = f.read()
             try:
                 return json.loads(content)
             except (json.JSONDecodeError, ValueError):
-                return yaml.safe_load(content)
+                try:
+                    return yaml.safe_load(content) or {}
+                except yaml.YAMLError as exc:
+                    raise ValueError(f"Failed to parse file as JSON or YAML: {exc}") from exc
 
 
 def load_test_cases(file_path: str) -> List[Dict[str, Any]]:
@@ -74,24 +96,52 @@ def load_test_cases(file_path: str) -> List[Dict[str, Any]]:
         raise ValueError("Invalid test case format. Expected list or dict with 'test_cases' key")
 
 
-def simulate_policy(policy_file: str, input_file: str, region: str = "US", 
-                   output_format: str = "text", verbose: bool = False) -> Dict[str, Any]:
-    """Simulate policy evaluation against test inputs."""
+def _resolve_region(region_name: str) -> Region:
+    """Resolve region string to Region enum with fallback warning.
     
-    # Load policy - default to US if region not found
+    Args:
+        region_name: Regional jurisdiction identifier
+        
+    Returns:
+        Region enum instance
+    """
+    reg_clean = region_name.strip().upper()
     try:
-        region_enum = Region[region.upper()]
+        return Region[reg_clean]
     except KeyError:
-        region_enum = Region.US
+        print(f"Warning: Region '{region_name}' not recognised. Falling back to default 'US'.", file=sys.stderr)
+        return Region.US
+
+
+def simulate_policy(
+    policy_file: str,
+    input_file: str,
+    region: str = "US", 
+    output_format: str = "text",
+    verbose: bool = False
+) -> Dict[str, Any]:
+    """Simulate policy evaluation against test inputs.
+    
+    Args:
+        policy_file: Path to policy configuration file
+        input_file: Path to test cases file
+        region: Target regulatory region
+        output_format: Output format type
+        verbose: Whether to include verbose payload details
+        
+    Returns:
+        Simulation results dictionary
+    """
+    region_enum = _resolve_region(region)
     engine = PolicyEngine.load(policy_file, region_enum)
     
     # Load test cases
     test_cases = load_test_cases(input_file)
     
-    results = {
+    results: Dict[str, Any] = {
         "policy_file": policy_file,
-        "region": region,
-        "timestamp": datetime.utcnow().isoformat(),
+        "region": region_enum.name,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "total_cases": len(test_cases),
         "passed": 0,
         "failed": 0,
@@ -109,7 +159,7 @@ def simulate_policy(policy_file: str, input_file: str, region: str = "US",
         
         # Check if matches expected
         passed = True
-        if expected and actual_decision != expected:
+        if expected and str(actual_decision).upper() != str(expected).upper():
             passed = False
         
         if passed:
@@ -129,15 +179,26 @@ def simulate_policy(policy_file: str, input_file: str, region: str = "US",
     return results
 
 
-def dry_run_diff(old_policy: str, new_policy: str, test_cases_file: str,
-                region: str = "US", output_format: str = "text") -> Dict[str, Any]:
-    """Compare outcomes between old and new policy versions."""
+def dry_run_diff(
+    old_policy: str,
+    new_policy: str,
+    test_cases_file: str,
+    region: str = "US",
+    output_format: str = "text"
+) -> Dict[str, Any]:
+    """Compare outcomes between old and new policy versions.
     
-    # Default to US if region not found
-    try:
-        region_enum = Region[region.upper()]
-    except KeyError:
-        region_enum = Region.US
+    Args:
+        old_policy: Path to previous policy file
+        new_policy: Path to updated policy file
+        test_cases_file: Path to validation cases
+        region: Jurisdiction region
+        output_format: Output format identifier
+        
+    Returns:
+        Dry-run diff results dictionary
+    """
+    region_enum = _resolve_region(region)
     
     # Load both policies
     old_engine = PolicyEngine.load(old_policy, region_enum)
@@ -146,11 +207,11 @@ def dry_run_diff(old_policy: str, new_policy: str, test_cases_file: str,
     # Load test cases
     test_cases = load_test_cases(test_cases_file)
     
-    diff_results = {
+    diff_results: Dict[str, Any] = {
         "old_policy": old_policy,
         "new_policy": new_policy,
-        "region": region,
-        "timestamp": datetime.utcnow().isoformat(),
+        "region": region_enum.name,
+        "timestamp": datetime.now(timezone.utc).isoformat(),
         "total_cases": len(test_cases),
         "unchanged": 0,
         "changed": 0,
@@ -165,8 +226,8 @@ def dry_run_diff(old_policy: str, new_policy: str, test_cases_file: str,
         old_outcome = old_engine.evaluate(input_data)
         new_outcome = new_engine.evaluate(input_data)
         
-        old_decision = old_outcome.get('final_decision')
-        new_decision = new_outcome.get('final_decision')
+        old_decision = str(old_outcome.get('final_decision') or '')
+        new_decision = str(new_outcome.get('final_decision') or '')
         
         changed = old_decision != new_decision
         
@@ -191,10 +252,10 @@ def _is_more_restrictive(old: str, new: str) -> bool:
     """Determine if new decision is more restrictive than old."""
     restriction_order = ["ALLOW", "WARN", "AUDIT", "RESTRICT", "QUARANTINE", "DENY"]
     try:
-        old_idx = restriction_order.index(old)
-        new_idx = restriction_order.index(new)
+        old_idx = restriction_order.index(old.upper())
+        new_idx = restriction_order.index(new.upper())
         return new_idx > old_idx
-    except ValueError:
+    except (ValueError, AttributeError):
         return False
 
 
@@ -227,10 +288,11 @@ def format_text_output(data: Dict[str, Any]) -> str:
         for result in data['results']:
             status = "✓ PASS" if result['passed'] else "✗ FAIL"
             lines.append(f"\n{status} {result['name']}")
-            lines.append(f"  Decision: {result['outcome']['final_decision']}")
-            if result['expected']:
+            decision = result['outcome'].get('final_decision') if isinstance(result.get('outcome'), dict) else 'N/A'
+            lines.append(f"  Decision: {decision}")
+            if result.get('expected'):
                 lines.append(f"  Expected: {result['expected']}")
-            if result['outcome'].get('matched_rules'):
+            if isinstance(result.get('outcome'), dict) and result['outcome'].get('matched_rules'):
                 lines.append(f"  Matched rules: {len(result['outcome']['matched_rules'])}")
     
     elif 'old_policy' in data:  # dry-run diff results
@@ -245,7 +307,7 @@ def format_text_output(data: Dict[str, Any]) -> str:
         lines.append(f"Unchanged: {data['unchanged']}")
         lines.append(f"Changed: {data['changed']}")
         
-        if data['changes']:
+        if data.get('changes'):
             lines.append("\n" + "-" * 60)
             lines.append("CHANGES DETECTED:")
             lines.append("-" * 60)
@@ -258,8 +320,12 @@ def format_text_output(data: Dict[str, Any]) -> str:
     return "\n".join(lines)
 
 
-def main():
-    """Main CLI entry point."""
+def main() -> int:
+    """Main CLI entry point.
+    
+    Returns:
+        Exit code (0 on success, non-zero on error)
+    """
     parser = argparse.ArgumentParser(
         description="Policy Simulator & Dry-Run Tool",
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -279,6 +345,7 @@ def main():
     simulate_parser.add_argument('--verbose', action='store_true',
                                 help='Show full input data in results')
     simulate_parser.add_argument('--output', help='Output file (default: stdout)')
+    simulate_parser.add_argument('--debug', action='store_true', help='Show full stack traces on error')
     
     # Dry-run command
     dryrun_parser = subparsers.add_parser('dry-run', 
@@ -291,6 +358,7 @@ def main():
     dryrun_parser.add_argument('--format', choices=['text', 'json', 'yaml'],
                               default='text', help='Output format')
     dryrun_parser.add_argument('--output', help='Output file (default: stdout)')
+    dryrun_parser.add_argument('--debug', action='store_true', help='Show full stack traces on error')
     
     args = parser.parse_args()
     
@@ -315,12 +383,16 @@ def main():
                 args.region,
                 args.format
             )
+        else:
+            return 1
         
         # Format and output
         output = format_output(results, args.format)
         
         if args.output:
-            with open(args.output, 'w') as f:
+            out_path = Path(args.output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_path, 'w', encoding='utf-8') as f:
                 f.write(output)
             print(f"Results written to {args.output}")
         else:
@@ -328,10 +400,14 @@ def main():
         
         return 0
         
+    except FileNotFoundError as e:
+        print(f"Error: {e}", file=sys.stderr)
+        return 1
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
+        if getattr(args, 'debug', False):
+            import traceback
+            traceback.print_exc()
         return 1
 
 

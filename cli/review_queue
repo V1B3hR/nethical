@@ -16,9 +16,9 @@ Examples:
     python cli/review_queue next reviewer_alice
     
     # Submit feedback
-    python cli/review_queue feedback esc_abc123 reviewer_alice \\
-        --tags false_positive \\
-        --rationale "Content was actually safe" \\
+    python cli/review_queue feedback esc_abc123 reviewer_alice \
+        --tags false_positive \
+        --rationale "Content was actually safe" \
         --corrected-decision allow
     
     # View statistics
@@ -26,23 +26,58 @@ Examples:
 """
 
 import sys
-import json
 import argparse
 from pathlib import Path
 from datetime import datetime
+from typing import Any, Dict, List, Optional
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
+
+# Reconfigure stdout/stderr to UTF-8 on platforms with restrictive default encodings
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
 
 from nethical.core import (
     EscalationQueue,
     FeedbackTag,
     ReviewStatus,
-    ReviewPriority
+    ReviewPriority,
 )
+from nethical.core.human_feedback import EscalationCase, HumanFeedback, SLAMetrics
 
 
-def format_case(case) -> str:
+def _format_datetime(dt: Any) -> str:
+    """Safely format datetime object or ISO string.
+    
+    Args:
+        dt: datetime object or ISO string
+        
+    Returns:
+        Formatted string YYYY-MM-DD HH:MM:SS
+    """
+    if dt is None:
+        return "N/A"
+    if isinstance(dt, datetime):
+        return dt.strftime("%Y-%m-%d %H:%M:%S")
+    if isinstance(dt, str):
+        try:
+            parsed = datetime.fromisoformat(dt.replace("Z", "+00:00"))
+            return parsed.strftime("%Y-%m-%d %H:%M:%S")
+        except ValueError:
+            return dt
+    return str(dt)
+
+
+def format_case(case: EscalationCase) -> str:
     """Format case for display.
     
     Args:
@@ -51,47 +86,66 @@ def format_case(case) -> str:
     Returns:
         Formatted string
     """
+    status_str = case.status.value if hasattr(case.status, 'value') else str(case.status)
+    priority_str = case.priority.name if hasattr(case.priority, 'name') else str(case.priority)
+    
     lines = [
         f"Case ID: {case.case_id}",
-        f"Status: {case.status.value}",
-        f"Priority: {case.priority.name}",
+        f"Status: {status_str}",
+        f"Priority: {priority_str}",
         f"Agent: {case.agent_id}",
         f"Decision: {case.decision} (confidence: {case.confidence:.2f})",
         f"Violations: {len(case.violations)}",
-        f"Escalated: {case.escalated_at.strftime('%Y-%m-%d %H:%M:%S')}"
+        f"Escalated: {_format_datetime(case.escalated_at)}"
     ]
     
     if case.assigned_to:
         lines.append(f"Assigned to: {case.assigned_to}")
     
     if case.started_review_at:
-        lines.append(f"Review started: {case.started_review_at.strftime('%Y-%m-%d %H:%M:%S')}")
+        lines.append(f"Review started: {_format_datetime(case.started_review_at)}")
     
     # Show violation details
     if case.violations:
         lines.append("\nViolations:")
         for i, v in enumerate(case.violations, 1):
-            v_type = v.get('type', 'unknown')
-            v_severity = v.get('severity', 0)
-            v_desc = v.get('description', 'No description')
+            v_type = v.get('type', 'unknown') if isinstance(v, dict) else str(v)
+            v_severity = v.get('severity', 0) if isinstance(v, dict) else 0
+            v_desc = v.get('description', 'No description') if isinstance(v, dict) else 'No description'
             lines.append(f"  {i}. [{v_type}] Severity {v_severity}: {v_desc}")
     
     return "\n".join(lines)
 
 
-def cmd_list(args):
+def _get_queue(args: argparse.Namespace) -> EscalationQueue:
+    """Get initialised escalation queue with safe path resolution.
+    
+    Args:
+        args: Command arguments
+        
+    Returns:
+        Initialised EscalationQueue instance
+    """
+    db_path = Path(args.db_path).resolve()
+    return EscalationQueue(storage_path=str(db_path))
+
+
+def cmd_list(args: argparse.Namespace) -> int:
     """List pending cases.
     
     Args:
         args: Command arguments
+        
+    Returns:
+        Exit code (0 on success)
     """
-    queue = EscalationQueue(storage_path=args.db_path)
-    
-    cases = queue.list_pending_cases(limit=args.limit)
+    queue = _get_queue(args)
+    limit = max(1, min(args.limit, 1000))
+    cases = queue.list_pending_cases(limit=limit)
     
     if not cases:
         print("No pending cases in queue.")
-        return
+        return 0
     
     print(f"Pending Cases ({len(cases)}):")
     print("=" * 70)
@@ -99,21 +153,24 @@ def cmd_list(args):
     for i, case in enumerate(cases, 1):
         print(f"\n{i}. {format_case(case)}")
         print("-" * 70)
+    return 0
 
 
-def cmd_next(args):
+def cmd_next(args: argparse.Namespace) -> int:
     """Get next case for review.
     
     Args:
         args: Command arguments
+        
+    Returns:
+        Exit code (0 on success, 1 if no case found)
     """
-    queue = EscalationQueue(storage_path=args.db_path)
-    
+    queue = _get_queue(args)
     case = queue.get_next_case(reviewer_id=args.reviewer_id)
     
     if not case:
         print("No cases available for review.")
-        return
+        return 1
     
     print("Next Case for Review:")
     print("=" * 70)
@@ -125,40 +182,52 @@ def cmd_next(args):
     print(f"    --tags <tag1> [tag2 ...] \\")
     print(f"    --rationale \"<your explanation>\" \\")
     print(f"    [--corrected-decision <decision>]")
+    return 0
 
 
-def cmd_feedback(args):
+def cmd_feedback(args: argparse.Namespace) -> int:
     """Submit feedback for a case.
     
     Args:
         args: Command arguments
+        
+    Returns:
+        Exit code (0 on success, 1 on error)
     """
-    queue = EscalationQueue(storage_path=args.db_path)
+    if not (0.0 <= args.confidence <= 1.0):
+        print(f"Error: Confidence must be between 0.0 and 1.0 (received {args.confidence})", file=sys.stderr)
+        return 1
+
+    queue = _get_queue(args)
     
     # Get case
     case = queue.get_case(args.case_id)
     if not case:
-        print(f"Error: Case {args.case_id} not found")
-        return
+        print(f"Error: Case {args.case_id} not found", file=sys.stderr)
+        return 1
     
     # Parse feedback tags
     try:
         feedback_tags = [FeedbackTag(tag) for tag in args.tags]
-    except ValueError as e:
-        print(f"Error: Invalid feedback tag. Valid tags are:")
+    except ValueError:
+        print(f"Error: Invalid feedback tag. Valid tags are:", file=sys.stderr)
         for tag in FeedbackTag:
-            print(f"  - {tag.value}")
-        return
+            print(f"  - {tag.value}", file=sys.stderr)
+        return 1
     
     # Submit feedback
-    feedback = queue.submit_feedback(
-        case_id=args.case_id,
-        reviewer_id=args.reviewer_id,
-        feedback_tags=feedback_tags,
-        rationale=args.rationale,
-        corrected_decision=args.corrected_decision,
-        confidence=args.confidence
-    )
+    try:
+        feedback = queue.submit_feedback(
+            case_id=args.case_id,
+            reviewer_id=args.reviewer_id,
+            feedback_tags=feedback_tags,
+            rationale=args.rationale,
+            corrected_decision=args.corrected_decision,
+            confidence=args.confidence
+        )
+    except Exception as exc:
+        print(f"Error submitting feedback: {exc}", file=sys.stderr)
+        return 1
     
     print("Feedback Submitted Successfully!")
     print("=" * 70)
@@ -171,17 +240,25 @@ def cmd_feedback(args):
         print(f"Corrected Decision: {feedback.corrected_decision}")
     print(f"Confidence: {feedback.confidence:.2f}")
     print("=" * 70)
+    return 0
 
 
-def cmd_stats(args):
+def cmd_stats(args: argparse.Namespace) -> int:
     """Show SLA metrics.
     
     Args:
         args: Command arguments
+        
+    Returns:
+        Exit code (0 on success)
     """
-    queue = EscalationQueue(storage_path=args.db_path)
-    
+    queue = _get_queue(args)
     metrics = queue.get_sla_metrics()
+    
+    median_triage = getattr(metrics, 'median_triage_time_seconds', 0.0) or 0.0
+    p95_triage = getattr(metrics, 'p95_triage_time_seconds', 0.0) or 0.0
+    median_res = getattr(metrics, 'median_resolution_time_seconds', 0.0) or 0.0
+    p95_res = getattr(metrics, 'p95_resolution_time_seconds', 0.0) or 0.0
     
     print("SLA Metrics:")
     print("=" * 70)
@@ -190,84 +267,107 @@ def cmd_stats(args):
     print(f"Completed Cases: {metrics.completed_cases}")
     print()
     print("Triage SLA:")
-    print(f"  Median: {metrics.median_triage_time_seconds:.1f}s ({metrics.median_triage_time_seconds/60:.1f} min)")
-    print(f"  P95: {metrics.p95_triage_time_seconds:.1f}s ({metrics.p95_triage_time_seconds/60:.1f} min)")
+    print(f"  Median: {median_triage:.1f}s ({median_triage/60:.1f} min)")
+    print(f"  P95: {p95_triage:.1f}s ({p95_triage/60:.1f} min)")
     print()
     print("Resolution SLA:")
-    print(f"  Median: {metrics.median_resolution_time_seconds:.1f}s ({metrics.median_resolution_time_seconds/3600:.1f} hours)")
-    print(f"  P95: {metrics.p95_resolution_time_seconds:.1f}s ({metrics.p95_resolution_time_seconds/3600:.1f} hours)")
+    print(f"  Median: {median_res:.1f}s ({median_res/3600:.1f} hours)")
+    print(f"  P95: {p95_res:.1f}s ({p95_res/3600:.1f} hours)")
     print()
     print(f"SLA Breaches: {metrics.sla_breaches}")
     print("=" * 70)
+    return 0
 
 
-def cmd_summary(args):
+def cmd_summary(args: argparse.Namespace) -> int:
     """Show feedback summary.
     
     Args:
         args: Command arguments
+        
+    Returns:
+        Exit code (0 on success)
     """
-    queue = EscalationQueue(storage_path=args.db_path)
-    
+    queue = _get_queue(args)
     summary = queue.get_feedback_summary()
+    
+    total_fb = summary.get('total_feedback', 0)
+    cr_rate = summary.get('correction_rate', 0.0)
+    fp_rate = summary.get('false_positive_rate', 0.0)
+    mv_rate = summary.get('missed_violation_rate', 0.0)
+    pg_rate = summary.get('policy_gap_rate', 0.0)
     
     print("Feedback Summary:")
     print("=" * 70)
-    print(f"Total Feedback: {summary['total_feedback']}")
+    print(f"Total Feedback: {total_fb}")
     print()
     print("Rates:")
-    print(f"  Correction Rate: {summary['correction_rate']:.1%}")
-    print(f"  False Positive Rate: {summary['false_positive_rate']:.1%}")
-    print(f"  Missed Violation Rate: {summary['missed_violation_rate']:.1%}")
-    print(f"  Policy Gap Rate: {summary['policy_gap_rate']:.1%}")
+    print(f"  Correction Rate: {cr_rate:.1%}")
+    print(f"  False Positive Rate: {fp_rate:.1%}")
+    print(f"  Missed Violation Rate: {mv_rate:.1%}")
+    print(f"  Policy Gap Rate: {pg_rate:.1%}")
     print()
     print("Tag Counts:")
-    for tag, count in summary['tag_counts'].items():
+    for tag, count in summary.get('tag_counts', {}).items():
         print(f"  {tag}: {count}")
     print("=" * 70)
     
     # Recommendations
-    if summary['total_feedback'] > 0:
+    if total_fb > 0:
         print("\nRecommendations:")
-        if summary['false_positive_rate'] > 0.1:
+        if fp_rate > 0.1:
             print("  ⚠ High false positive rate - review detection thresholds")
-        if summary['missed_violation_rate'] > 0.05:
+        if mv_rate > 0.05:
             print("  ⚠ High missed violation rate - improve detection coverage")
-        if summary['policy_gap_rate'] > 0.1:
+        if pg_rate > 0.1:
             print("  ⚠ Policy gaps detected - update policy documentation")
+    return 0
 
 
-def main():
-    """Main CLI function."""
+def main() -> int:
+    """Main CLI function.
+    
+    Returns:
+        Process exit code
+    """
+    # Root parser defines default db_path
     parser = argparse.ArgumentParser(
         description="Human review queue CLI",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog=__doc__
     )
-    
     parser.add_argument(
         '--db-path',
         default='./data/escalations.db',
+        help='Path to escalation database (default: ./data/escalations.db)'
+    )
+
+    # Subparser parent inherits --db-path with SUPPRESS so it never overrides root value if omitted
+    sub_parent = argparse.ArgumentParser(add_help=False)
+    sub_parent.add_argument(
+        '--db-path',
+        default=argparse.SUPPRESS,
         help='Path to escalation database (default: ./data/escalations.db)'
     )
     
     subparsers = parser.add_subparsers(dest='command', help='Command to execute')
     
     # List command
-    list_parser = subparsers.add_parser('list', help='List pending cases')
+    list_parser = subparsers.add_parser('list', help='List pending cases', parents=[sub_parent])
     list_parser.add_argument(
         '--limit',
         type=int,
         default=10,
-        help='Maximum number of cases to show (default: 10)'
+        help='Maximum number of cases to show (default: 10, max: 1000)'
     )
     
     # Next command
-    next_parser = subparsers.add_parser('next', help='Get next case for review')
-    next_parser.add_argument('reviewer_id', help='Reviewer ID')
+    subparsers.add_parser('next', help='Get next case for review', parents=[sub_parent]).add_argument(
+        'reviewer_id', help='Reviewer ID'
+    )
     
     # Feedback command
-    feedback_parser = subparsers.add_parser('feedback', help='Submit feedback for a case')
+    feedback_parser = subparsers.add_parser('feedback', help='Submit feedback for a case', parents=[sub_parent])
     feedback_parser.add_argument('case_id', help='Case ID')
     feedback_parser.add_argument('reviewer_id', help='Reviewer ID')
     feedback_parser.add_argument(
@@ -289,33 +389,35 @@ def main():
         '--confidence',
         type=float,
         default=1.0,
-        help='Confidence in feedback (0-1, default: 1.0)'
+        help='Confidence in feedback (0.0-1.0, default: 1.0)'
     )
     
     # Stats command
-    stats_parser = subparsers.add_parser('stats', help='Show SLA metrics')
+    subparsers.add_parser('stats', help='Show SLA metrics', parents=[sub_parent])
     
     # Summary command
-    summary_parser = subparsers.add_parser('summary', help='Show feedback summary')
+    subparsers.add_parser('summary', help='Show feedback summary', parents=[sub_parent])
     
     args = parser.parse_args()
     
     if not args.command:
         parser.print_help()
-        return
+        return 1
     
     # Execute command
     if args.command == 'list':
-        cmd_list(args)
+        return cmd_list(args)
     elif args.command == 'next':
-        cmd_next(args)
+        return cmd_next(args)
     elif args.command == 'feedback':
-        cmd_feedback(args)
+        return cmd_feedback(args)
     elif args.command == 'stats':
-        cmd_stats(args)
+        return cmd_stats(args)
     elif args.command == 'summary':
-        cmd_summary(args)
+        return cmd_summary(args)
+    
+    return 1
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

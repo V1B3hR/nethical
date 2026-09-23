@@ -577,12 +577,82 @@ class EscalationQueue:
                 return sorted_data[-1]
             return sorted_data[f] + (k - f) * (sorted_data[c] - sorted_data[f])
 
-        median_triage = statistics.median(self.triage_times) if self.triage_times else 0.0
-        p95_triage = percentile(self.triage_times, 0.95) if self.triage_times else 0.0
+        triage_times = list(self.triage_times)
+        resolution_times = list(self.resolution_times)
+        sla_breaches = self.sla_breaches
+
+        # If persistent storage exists, calculate metrics from database
+        if hasattr(self, 'storage_path') and self.storage_path and Path(self.storage_path).exists():
+            try:
+                conn = sqlite3.connect(str(self.storage_path))
+                cursor = conn.cursor()
+                cursor.execute(
+                    """
+                    SELECT status, escalated_at, started_review_at, completed_at
+                    FROM escalation_cases
+                """
+                )
+                total = 0
+                pending = 0
+                completed = 0
+                db_triage: List[float] = []
+                db_res: List[float] = []
+                db_breaches = 0
+
+                for row in cursor.fetchall():
+                    status_val = row[0]
+                    esc_at = datetime.fromisoformat(row[1]) if row[1] else None
+                    start_at = datetime.fromisoformat(row[2]) if row[2] else None
+                    comp_at = datetime.fromisoformat(row[3]) if row[3] else None
+
+                    total += 1
+                    if status_val in ('pending', 'in_review'):
+                        pending += 1
+                    elif status_val == 'completed':
+                        completed += 1
+
+                    if esc_at and start_at:
+                        t_sec = (start_at - esc_at).total_seconds()
+                        db_triage.append(t_sec)
+                        if t_sec > self.triage_sla_seconds:
+                            db_breaches += 1
+
+                    if esc_at and comp_at:
+                        r_sec = (comp_at - esc_at).total_seconds()
+                        db_res.append(r_sec)
+                        if r_sec > self.resolution_sla_seconds:
+                            db_breaches += 1
+
+                conn.close()
+
+                if total > 0:
+                    triage_times = db_triage
+                    resolution_times = db_res
+                    sla_breaches = db_breaches
+                    median_triage = statistics.median(triage_times) if triage_times else 0.0
+                    p95_triage = percentile(triage_times, 0.95) if triage_times else 0.0
+                    median_res = statistics.median(resolution_times) if resolution_times else 0.0
+                    p95_res = percentile(resolution_times, 0.95) if resolution_times else 0.0
+
+                    return SLAMetrics(
+                        median_triage_time_seconds=median_triage,
+                        p95_triage_time_seconds=p95_triage,
+                        median_resolution_time_seconds=median_res,
+                        p95_resolution_time_seconds=p95_res,
+                        total_cases=total,
+                        pending_cases=pending,
+                        completed_cases=completed,
+                        sla_breaches=sla_breaches,
+                    )
+            except Exception:
+                pass
+
+        median_triage = statistics.median(triage_times) if triage_times else 0.0
+        p95_triage = percentile(triage_times, 0.95) if triage_times else 0.0
         median_resolution = (
-            statistics.median(self.resolution_times) if self.resolution_times else 0.0
+            statistics.median(resolution_times) if resolution_times else 0.0
         )
-        p95_resolution = percentile(self.resolution_times, 0.95) if self.resolution_times else 0.0
+        p95_resolution = percentile(resolution_times, 0.95) if resolution_times else 0.0
 
         # Count cases by status
         pending = sum(1 for c in self.cases_by_id.values() if c.status == ReviewStatus.PENDING)
@@ -596,7 +666,7 @@ class EscalationQueue:
             total_cases=len(self.cases_by_id),
             pending_cases=pending,
             completed_cases=completed,
-            sla_breaches=self.sla_breaches,
+            sla_breaches=sla_breaches,
         )
 
     def get_feedback_summary(self) -> Dict[str, Any]:

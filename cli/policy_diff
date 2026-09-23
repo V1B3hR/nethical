@@ -15,14 +15,27 @@ import json
 import yaml
 import argparse
 from pathlib import Path
+from typing import Any, Dict
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
+# Reconfigure stdout/stderr to UTF-8 on platforms with restrictive default encodings
+if hasattr(sys.stdout, 'reconfigure'):
+    try:
+        sys.stdout.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+if hasattr(sys.stderr, 'reconfigure'):
+    try:
+        sys.stderr.reconfigure(encoding='utf-8', errors='replace')
+    except Exception:
+        pass
+
 from nethical.core import PolicyDiffAuditor, RiskLevel
 
 
-def load_policy(file_path: str) -> dict:
+def load_policy(file_path: str) -> Dict[str, Any]:
     """Load policy from file (JSON or YAML).
     
     Args:
@@ -36,21 +49,24 @@ def load_policy(file_path: str) -> dict:
     if not path.exists():
         raise FileNotFoundError(f"Policy file not found: {file_path}")
     
-    with open(path, 'r') as f:
+    with open(path, 'r', encoding='utf-8') as f:
         if path.suffix in ['.json']:
             return json.load(f)
         elif path.suffix in ['.yaml', '.yml']:
-            return yaml.safe_load(f)
+            return yaml.safe_load(f) or {}
         else:
             # Try JSON first, then YAML
             content = f.read()
             try:
                 return json.loads(content)
-            except:
-                return yaml.safe_load(content)
+            except (json.JSONDecodeError, ValueError):
+                try:
+                    return yaml.safe_load(content) or {}
+                except yaml.YAMLError as exc:
+                    raise ValueError(f"Failed to parse policy as JSON or YAML: {exc}") from exc
 
 
-def format_text_output(auditor: PolicyDiffAuditor, diff_result) -> str:
+def format_text_output(auditor: PolicyDiffAuditor, diff_result: Any) -> str:
     """Format diff as text report.
     
     Args:
@@ -63,7 +79,7 @@ def format_text_output(auditor: PolicyDiffAuditor, diff_result) -> str:
     return auditor.format_diff_report(diff_result)
 
 
-def format_json_output(diff_result) -> str:
+def format_json_output(diff_result: Any) -> str:
     """Format diff as JSON.
     
     Args:
@@ -75,18 +91,18 @@ def format_json_output(diff_result) -> str:
     output = {
         'old_version': diff_result.old_version,
         'new_version': diff_result.new_version,
-        'timestamp': diff_result.timestamp.isoformat(),
+        'timestamp': diff_result.timestamp.isoformat() if hasattr(diff_result.timestamp, 'isoformat') else str(diff_result.timestamp),
         'risk_score': diff_result.risk_score,
-        'risk_level': diff_result.risk_level.value,
+        'risk_level': diff_result.risk_level.value if hasattr(diff_result.risk_level, 'value') else str(diff_result.risk_level),
         'summary': diff_result.summary,
         'recommendations': diff_result.recommendations,
         'changes': [
             {
                 'path': c.path,
-                'change_type': c.change_type.value,
+                'change_type': c.change_type.value if hasattr(c.change_type, 'value') else str(c.change_type),
                 'old_value': c.old_value,
                 'new_value': c.new_value,
-                'risk_level': c.risk_level.value,
+                'risk_level': c.risk_level.value if hasattr(c.risk_level, 'value') else str(c.risk_level),
                 'impact_score': c.impact_score,
                 'description': c.description
             }
@@ -97,8 +113,8 @@ def format_json_output(diff_result) -> str:
     return json.dumps(output, indent=2)
 
 
-def format_markdown_output(diff_result) -> str:
-    """Format diff as Markdown.
+def format_markdown_output(diff_result: Any) -> str:
+    """Format diff as Markdown report.
     
     Args:
         diff_result: Diff result
@@ -107,10 +123,12 @@ def format_markdown_output(diff_result) -> str:
         Markdown string
     """
     lines = []
-    lines.append(f"# Policy Diff: {diff_result.old_version} → {diff_result.new_version}")
+    lines.append(f"# Policy Diff: {diff_result.old_version} -> {diff_result.new_version}")
     lines.append("")
-    lines.append(f"**Timestamp**: {diff_result.timestamp.isoformat()}")
-    lines.append(f"**Risk Level**: {diff_result.risk_level.value.upper()}")
+    ts_str = diff_result.timestamp.isoformat() if hasattr(diff_result.timestamp, 'isoformat') else str(diff_result.timestamp)
+    lines.append(f"**Timestamp**: {ts_str}")
+    rl_str = diff_result.risk_level.value if hasattr(diff_result.risk_level, 'value') else str(diff_result.risk_level)
+    lines.append(f"**Risk Level**: {rl_str.upper()}")
     lines.append(f"**Risk Score**: {diff_result.risk_score:.3f}")
     lines.append("")
     
@@ -119,8 +137,9 @@ def format_markdown_output(diff_result) -> str:
     lines.append("")
     lines.append("| Metric | Count |")
     lines.append("|--------|-------|")
-    for key, value in diff_result.summary.items():
-        lines.append(f"| {key.replace('_', ' ').title()} | {value} |")
+    if diff_result.summary:
+        for key, value in diff_result.summary.items():
+            lines.append(f"| {key.replace('_', ' ').title()} | {value} |")
     lines.append("")
     
     # Changes by risk level
@@ -141,11 +160,12 @@ def format_markdown_output(diff_result) -> str:
             lines.append("")
             
             for change in level_changes:
+                c_type_val = change.change_type.value if hasattr(change.change_type, 'value') else str(change.change_type)
                 symbol = {
                     'added': "➕",
                     'removed': "➖",
                     'modified': "🔄"
-                }.get(change.change_type.value, "❓")
+                }.get(c_type_val, "❓")
                 
                 lines.append(f"#### {symbol} `{change.path}`")
                 lines.append("")
@@ -167,8 +187,12 @@ def format_markdown_output(diff_result) -> str:
     return "\n".join(lines)
 
 
-def main():
-    """Main CLI entry point."""
+def main() -> int:
+    """Main CLI entry point.
+    
+    Returns:
+        Exit code (0 for low risk, 1 for medium risk, 2 for high/critical risk, 3 for file error, 4 for execution error)
+    """
     parser = argparse.ArgumentParser(
         description='Compare two policy versions and assess risk',
         formatter_class=argparse.RawDescriptionHelpFormatter,
@@ -222,6 +246,12 @@ Examples:
         help='Policy history storage directory (default: policy_history)'
     )
     
+    parser.add_argument(
+        '--debug',
+        action='store_true',
+        help='Show full stack traces on error'
+    )
+    
     args = parser.parse_args()
     
     try:
@@ -229,7 +259,7 @@ Examples:
         old_policy = load_policy(args.old_policy)
         new_policy = load_policy(args.new_policy)
         
-        # Initialize auditor
+        # Initialise auditor
         auditor = PolicyDiffAuditor(storage_path=args.storage_dir)
         
         # Compare policies
@@ -250,7 +280,9 @@ Examples:
         
         # Write output
         if args.output:
-            with open(args.output, 'w') as f:
+            out_path = Path(args.output)
+            out_path.parent.mkdir(parents=True, exist_ok=True)
+            with open(out_path, 'w', encoding='utf-8') as f:
                 f.write(output)
             print(f"Report written to: {args.output}")
         else:
@@ -265,23 +297,24 @@ Examples:
             )
             print(f"\nSaved policy as version: {args.save_version}")
         
-        # Exit with appropriate code
+        # Exit with appropriate code based on risk assessment
         if diff_result.risk_level in [RiskLevel.CRITICAL, RiskLevel.HIGH]:
-            sys.exit(2)  # High risk
+            return 2  # High / Critical risk
         elif diff_result.risk_level == RiskLevel.MEDIUM:
-            sys.exit(1)  # Medium risk
+            return 1  # Medium risk
         else:
-            sys.exit(0)  # Low risk
+            return 0  # Low risk
             
     except FileNotFoundError as e:
         print(f"Error: {e}", file=sys.stderr)
-        sys.exit(3)
+        return 3
     except Exception as e:
         print(f"Error: {e}", file=sys.stderr)
-        import traceback
-        traceback.print_exc()
-        sys.exit(4)
+        if getattr(args, 'debug', False):
+            import traceback
+            traceback.print_exc()
+        return 4
 
 
 if __name__ == '__main__':
-    main()
+    sys.exit(main())
