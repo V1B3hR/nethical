@@ -44,7 +44,7 @@ alembic>=1.19.1
 
 # Transitive/supporting (explicitly pinned to keep lock stable)
 annotated-types==0.8.0
-marshmallow==3.26.2
+marshmallow==4.3.1
 typing-inspect==0.9.0
 typing-inspection==0.4.4
 mypy-extensions==1.1.0
