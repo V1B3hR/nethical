@@ -5,6 +5,10 @@ Target: <10ms p99 latency (sub-50 µs for hardware fieldbus cutoffs).
 Mode: Offline-first with CRDT sync & Hardware-coupled interlocks (CAN, Modbus, EtherCAT, ISO 26262, ISO 13849).
 """
 
+from __future__ import annotations
+
+from typing import Any, Optional
+
 from nethical.edge import (
     EdgeGovernor,
     EdgeDecision,
@@ -132,8 +136,8 @@ __all__ = [
 def create_governor(
     device_id: str,
     mode: str = "standard",
-    config_path: str = None,
-    **kwargs,
+    config_path: Optional[str] = None,
+    **kwargs: Any,
 ) -> EdgeGovernor:
     """Create an EdgeGovernor configured for edge deployment.
 

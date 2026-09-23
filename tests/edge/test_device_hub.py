@@ -112,8 +112,12 @@ class TestDeviceAdmission:
 
         assert res_robot.assigned_tier == EdgeCapabilityTier.TIER2_ROBOTICS
         assert res_drone.assigned_tier == EdgeCapabilityTier.TIER2_ROBOTICS
-        assert hub.get_device("fanuc_crx").declared_safety_envelope["max_tcp_velocity_mps"] == 0.25
-        assert hub.get_device("uav_skydio").declared_safety_envelope["max_altitude_agl_m"] == 120.0
+        dev_robot = hub.get_device("fanuc_crx")
+        dev_drone = hub.get_device("uav_skydio")
+        assert dev_robot is not None
+        assert dev_drone is not None
+        assert dev_robot.declared_safety_envelope["max_tcp_velocity_mps"] == 0.25
+        assert dev_drone.declared_safety_envelope["max_altitude_agl_m"] == 120.0
 
     def test_admit_medical_and_general_tier3(self, hub: EdgeDeviceHub) -> None:
         """Medical and general devices must receive TIER3_AI_EDGE."""
@@ -141,7 +145,9 @@ class TestDeviceAdmission:
         )
         res = hub.admit_device(profile)
         assert res.admitted is True
-        assert hub.get_device("agv_kivabot").declared_safety_envelope == custom_envelope
+        stored_agv = hub.get_device("agv_kivabot")
+        assert stored_agv is not None
+        assert stored_agv.declared_safety_envelope == custom_envelope
 
     def test_list_devices_and_filtering(self, hub: EdgeDeviceHub) -> None:
         """Listing devices returns all devices or filters by category."""
@@ -210,7 +216,8 @@ class TestHeartbeatAndWatchdog:
         # Watchdog trigger
         timed_out = hub.check_watchdogs()
         assert "node_timeout" in timed_out
-        assert fieldbus.is_interlocked is True
+        assert bool(fieldbus.is_interlocked) is True
+        assert fieldbus.last_trip_reason is not None
         assert "WATCHDOG_HEARTBEAT_TIMEOUT" in fieldbus.last_trip_reason
 
 

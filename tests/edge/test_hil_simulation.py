@@ -149,14 +149,14 @@ class TestFieldbusResetAuthorization:
         assert fieldbus.is_interlocked is True
 
         # Invalid PIN attempt
-        success, msg = fieldbus.reset_interlock("WRONG_RESET_CODE")
-        assert success is False
-        assert fieldbus.is_interlocked is True
+        success_invalid, _ = fieldbus.reset_interlock("WRONG_RESET_CODE")
+        assert not success_invalid
+        assert bool(fieldbus.is_interlocked)
 
         # Correct PIN attempt
-        success, msg = fieldbus.reset_interlock("NETHICAL-FIELDBUS-RESET-2026")
-        assert success is True
-        assert fieldbus.is_interlocked is False
+        success_valid, _ = fieldbus.reset_interlock("NETHICAL-FIELDBUS-RESET-2026")
+        assert success_valid
+        assert not bool(fieldbus.is_interlocked)
         assert fieldbus.ethercat_state == EtherCATState.OP
         assert fieldbus.fsoe_zeroed is False
 
