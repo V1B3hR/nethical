@@ -154,16 +154,25 @@ class DeepfakeWatermarkingSystem:
     
     def __init__(
         self,
-        watermark_strength: float = 0.3,
+        watermark_strength: Union[float, WatermarkStrength, str] = 0.3,
         c2pa_enabled: bool = True
     ):
         """Initialize watermarking system.
         
         Args:
-            watermark_strength: Watermark embedding strength (0.1-0.5)
+            watermark_strength: Watermark embedding strength (0.1-0.5, or WatermarkStrength enum)
             c2pa_enabled: Enable C2PA manifest embedding
         """
-        self.watermark_strength = max(0.1, min(0.5, watermark_strength))
+        if isinstance(watermark_strength, WatermarkStrength):
+            mapping = {WatermarkStrength.LOW: 0.1, WatermarkStrength.MEDIUM: 0.3, WatermarkStrength.HIGH: 0.5}
+            strength_val = mapping.get(watermark_strength, 0.3)
+        elif isinstance(watermark_strength, str):
+            mapping = {"low": 0.1, "medium": 0.3, "high": 0.5}
+            strength_val = mapping.get(watermark_strength.lower(), 0.3)
+        else:
+            strength_val = float(watermark_strength)
+
+        self.watermark_strength = max(0.1, min(0.5, strength_val))
         self.c2pa_enabled = c2pa_enabled
         
         # Watermark registry for tracking

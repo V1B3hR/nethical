@@ -80,6 +80,7 @@ class SignedManifest:
     certificate_chain: List[str]
     signature_timestamp: datetime
     manifest_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    manifest_digest: str = ""
 
 
 @dataclass
@@ -196,11 +197,13 @@ class C2PAIntegration:
         Returns:
             Signed manifest with signature
         """
-        # Serialize manifest for signing
+        # Serialize manifest for signing (excluding signature field)
+        manifest.signature = ""
         manifest_json = self._serialize_manifest(manifest)
         
         # Compute signature (simplified - use proper crypto in production)
         signature = self._compute_signature(manifest_json, private_key)
+        manifest_digest = hashlib.sha256(manifest_json.encode()).hexdigest()
         
         # Store signature in manifest
         manifest.signature = signature
@@ -215,6 +218,7 @@ class C2PAIntegration:
             signature=signature,
             certificate_chain=certificate_chain,
             signature_timestamp=datetime.now(timezone.utc),
+            manifest_digest=manifest_digest,
         )
         
         logger.info(f"Signed C2PA manifest: {signed.manifest_id}")
@@ -238,24 +242,42 @@ class C2PAIntegration:
         certificate_valid = False
         manifest_intact = False
         
-        # Verify signature (simplified - in production, use actual public key verification)
-        # For this simulation, we just check if signature exists and is non-empty
-        if signed_manifest.signature and len(signed_manifest.signature) > 0:
-            signature_valid = True
-        else:
-            errors.append("Signature verification failed")
-        
         # Verify certificate chain
         if len(signed_manifest.certificate_chain) > 0:
             certificate_valid = True
         else:
             errors.append("No certificate chain present")
-        
-        # Verify manifest integrity
-        if signed_manifest.manifest.instance_id:
-            manifest_intact = True
+
+        # Verify manifest integrity against digest
+        manifest_copy = C2PAManifest(
+            claim_generator=signed_manifest.manifest.claim_generator,
+            title=signed_manifest.manifest.title,
+            format=signed_manifest.manifest.format,
+            instance_id=signed_manifest.manifest.instance_id,
+            assertions=signed_manifest.manifest.assertions,
+            ingredients=signed_manifest.manifest.ingredients,
+            signature="",
+            signature_algorithm=signed_manifest.manifest.signature_algorithm,
+            created_at=signed_manifest.manifest.created_at,
+        )
+        current_json = self._serialize_manifest(manifest_copy)
+        current_digest = hashlib.sha256(current_json.encode()).hexdigest()
+
+        if signed_manifest.manifest_digest and signed_manifest.manifest_digest != current_digest:
+            errors.append("Manifest integrity check failed: content altered after signing")
+            manifest_intact = False
+            signature_valid = False
+        elif (
+            signed_manifest.signature
+            and len(signed_manifest.signature) > 0
+            and signed_manifest.signature == signed_manifest.manifest.signature
+        ):
+            signature_valid = True
+            manifest_intact = bool(signed_manifest.manifest.instance_id)
         else:
-            errors.append("Manifest structure invalid")
+            errors.append("Signature verification failed")
+            signature_valid = False
+            manifest_intact = False
         
         # Overall verification
         verified = signature_valid and certificate_valid and manifest_intact
