@@ -20,8 +20,9 @@ import logging
 import os
 import secrets
 import time
+from collections import deque
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Dict, List, Optional, Tuple, Union
+from typing import Any, AsyncGenerator, Deque, Dict, List, Optional, Tuple, Union
 
 import httpx
 from pydantic import BaseModel, Field
@@ -498,8 +499,8 @@ class OpenAIGovernanceProxy:
         elif "Authorization" in headers:
             forward_headers["Authorization"] = headers["Authorization"]
 
-        sliding_window: List[str] = []
         max_window_size = 20
+        sliding_window: Deque[str] = deque(maxlen=max_window_size)
 
         try:
             async with httpx.AsyncClient(timeout=120.0) as client:
@@ -523,8 +524,6 @@ class OpenAIGovernanceProxy:
 
                                 if delta_content:
                                     sliding_window.append(delta_content)
-                                    if len(sliding_window) > max_window_size:
-                                        sliding_window.pop(0)
 
                                     # Perform mid-stream E-STOP check on sliding window
                                     window_text = "".join(sliding_window)
