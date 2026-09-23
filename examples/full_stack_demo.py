@@ -8,7 +8,7 @@ This example demonstrates the complete ecosystem integration:
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from nethical.integrations.observability import create_observability_stack, GovernanceMetrics
 from nethical.integrations.cloud import VertexAIConnector, DatabricksConnector
 
@@ -90,7 +90,7 @@ def main():
         # Start experiment run
         run_id = vertex_ai.start_run(
             experiment_name="full-stack-demo",
-            run_name=f"run-{datetime.utcnow().strftime('%Y%m%d-%H%M%S')}"
+            run_name=f"run-{datetime.now(timezone.utc).strftime('%Y%m%d-%H%M%S')}"
         )
         print(f"   ✓ Experiment started: {run_id}")
         
@@ -104,7 +104,7 @@ def main():
                 "experiment_id": run_id,
                 "platform": "vertex_ai",
                 "data_classification": "confidential",
-                "timestamp": datetime.utcnow().isoformat()
+                "timestamp": datetime.now(timezone.utc).isoformat()
             }
         )
         print("   ✓ Governance events logged to all providers")
@@ -144,7 +144,7 @@ def main():
         pii_detections=75,
         latency_p50_ms=15.3,
         latency_p99_ms=52.7,
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
     
     obs_manager.log_metrics_all(metrics)

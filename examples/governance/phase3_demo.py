@@ -12,7 +12,7 @@ This script demonstrates all the Phase 3 features:
 """
 
 import time
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 
 from nethical.core import (
     Phase3IntegratedGovernance,
@@ -169,8 +169,8 @@ def demo_ethical_drift():
     
     print("\n2. Generate drift report:")
     report = reporter.generate_report(
-        start_time=datetime.utcnow() - timedelta(hours=1),
-        end_time=datetime.utcnow()
+        start_time=datetime.now(timezone.utc) - timedelta(hours=1),
+        end_time=datetime.now(timezone.utc)
     )
     
     print(f"   Report ID: {report.report_id}")

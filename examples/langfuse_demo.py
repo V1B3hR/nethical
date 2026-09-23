@@ -5,7 +5,7 @@ This example demonstrates how to use Langfuse for Nethical governance observabil
 """
 
 import os
-from datetime import datetime
+from datetime import datetime, timezone
 from nethical.integrations.observability import LangfuseConnector, TraceSpan, GovernanceMetrics
 
 def main():
@@ -13,7 +13,7 @@ def main():
     print("Langfuse Governance Observability Demo")
     print("=" * 60)
     
-    # Initialize Langfuse connector
+    # Initialise Langfuse connector
     # In production, use environment variables
     connector = LangfuseConnector(
         public_key=os.getenv("LANGFUSE_PUBLIC_KEY", "pk-lf-..."),
@@ -25,7 +25,7 @@ def main():
         print("\n⚠️  Langfuse not available. Install with: pip install langfuse")
         return
     
-    print("\n✓ Langfuse connector initialized")
+    print("\n✓ Langfuse connector initialised")
     
     # Example 1: Log a governance event
     print("\n1. Logging governance event...")
@@ -35,7 +35,7 @@ def main():
         risk_score=0.95,
         metadata={
             "agent_id": "code-assistant-1",
-            "timestamp": datetime.utcnow().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "reason": "Potentially destructive action"
         }
     )
@@ -48,8 +48,8 @@ def main():
         span_id="span-456",
         parent_span_id=None,
         name="code_generation",
-        start_time=datetime.utcnow(),
-        end_time=datetime.utcnow(),
+        start_time=datetime.now(timezone.utc),
+        end_time=datetime.now(timezone.utc),
         attributes={
             "action": "Generate greeting function",
             "agent_id": "code-assistant-1",
@@ -75,7 +75,7 @@ def main():
         pii_detections=15,
         latency_p50_ms=12.5,
         latency_p99_ms=45.2,
-        timestamp=datetime.utcnow()
+        timestamp=datetime.now(timezone.utc)
     )
     connector.log_metrics(metrics)
     print("   ✓ Metrics logged")
