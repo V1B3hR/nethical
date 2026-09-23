@@ -97,6 +97,12 @@ class IntelligenceEngine:
         # Calculate confidence
         assessment.confidence = self._calculate_confidence(assessment)
         
+        # Determine if corrupt
+        assessment.is_corrupt = self._is_corrupt(assessment)
+        
+        # Determine risk level
+        assessment.risk_level = self._determine_risk_level(assessment)
+
         # Update entity profile if entity_id provided
         if entity_id:
             self._update_entity_profile(entity_id, assessment)
@@ -106,12 +112,6 @@ class IntelligenceEngine:
             if entity_profile:
                 assessment.metadata["entity_risk_score"] = entity_profile.corruption_risk_score
                 assessment.metadata["entity_corruption_attempts"] = entity_profile.corruption_attempts
-        
-        # Determine if corrupt
-        assessment.is_corrupt = self._is_corrupt(assessment)
-        
-        # Determine risk level
-        assessment.risk_level = self._determine_risk_level(assessment)
         
         # Generate reasoning chain
         assessment.reasoning_chain = self._generate_reasoning_chain(assessment)
@@ -267,7 +267,10 @@ class IntelligenceEngine:
         correlation_boost = assessment.correlation_score * 0.3
         
         # Boost from multiple detectors
-        detector_multiplier = min(1.0 + (len(assessment.detectors_triggered) - 1) * 0.15, 1.3)
+        if assessment.detectors_triggered:
+            detector_multiplier = min(1.0 + (len(assessment.detectors_triggered) - 1) * 0.15, 1.3)
+        else:
+            detector_multiplier = 1.0
         
         confidence = base_confidence * evidence_multiplier * detector_multiplier + correlation_boost
         
@@ -283,7 +286,7 @@ class IntelligenceEngine:
             return True
         
         # High confidence single piece of evidence
-        if assessment.confidence >= 0.65 and len(assessment.evidence) >= 1:
+        if assessment.confidence >= 0.60 and len(assessment.evidence) >= 1:
             return True
         
         # Multiple detectors agree with moderate confidence
