@@ -6,7 +6,7 @@ Tests dashboard metrics, fairness tracking, policy lineage, and appeals.
 
 import pytest
 import json
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from dashboards import (
     GovernanceDashboard,
     DashboardMetrics,
@@ -238,7 +238,7 @@ class TestAppealsMetricsCollector:
         collector = AppealsMetricsCollector()
         
         # Record and resolve appeals
-        now = datetime.utcnow()
+        now = datetime.now(timezone.utc)
         
         collector.record_appeal("app_001", "dec_001", filed_at=now - timedelta(hours=48))
         collector.resolve_appeal("app_001", "upheld", resolved_at=now)
@@ -361,7 +361,7 @@ class TestGovernanceDashboard:
         result = ProbeResult(
             probe_name="test-probe",
             status=ProbeStatus.HEALTHY,
-            timestamp=datetime.utcnow(),
+            timestamp=datetime.now(timezone.utc),
             message="Test",
             violations=[]
         )
