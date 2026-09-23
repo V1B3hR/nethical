@@ -68,6 +68,8 @@ nethical_test_mcp_data/
 *.pfx
 secrets/
 .secrets/
+kaggle.json
+*kaggle.json
 
 # Database
 *.db
