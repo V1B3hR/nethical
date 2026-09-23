@@ -60,6 +60,30 @@ class CollaborativeMode(str, Enum):
     SSM = "SSM"                       # Speed and Separation Monitoring
 
 
+class BodyRegion(str, Enum):
+    """ISO/TS 15066 Annex A Biomechanical Body Region classifications."""
+    SKULL_FOREHEAD = "SKULL_FOREHEAD"  # 130 N
+    FACE = "FACE"                      # 65 N
+    NECK = "NECK"                      # 150 N
+    CHEST = "CHEST"                    # 140 N
+    BACK_SHOULDERS = "BACK_SHOULDERS"  # 210 N
+    UPPER_ARMS = "UPPER_ARMS"          # 150 N
+    HANDS_FINGERS = "HANDS_FINGERS"    # 140 N
+    LEGS_THIGHS = "LEGS_THIGHS"        # 220 N
+
+
+BODY_REGION_FORCE_LIMITS: Dict[BodyRegion, float] = {
+    BodyRegion.SKULL_FOREHEAD: 130.0,
+    BodyRegion.FACE: 65.0,
+    BodyRegion.NECK: 150.0,
+    BodyRegion.CHEST: 140.0,
+    BodyRegion.BACK_SHOULDERS: 210.0,
+    BodyRegion.UPPER_ARMS: 150.0,
+    BodyRegion.HANDS_FINGERS: 140.0,
+    BodyRegion.LEGS_THIGHS: 220.0,
+}
+
+
 class RobotCartesianPose(BaseModel):
     """Tool Center Point (TCP) spatial coordinates and linear velocity."""
     x_m: float
@@ -91,6 +115,10 @@ class RobotSafetyConfig(BaseModel):
     human_estop_distance_m: float = Field(default=0.25, description="Emergency stop barrier")
     # Biomechanical limits (PFL)
     max_contact_force_n: float = Field(default=65.0, description="ISO/TS 15066 facial/transient biomechanical ceiling")
+    body_region_limits: Dict[BodyRegion, float] = Field(
+        default_factory=lambda: dict(BODY_REGION_FORCE_LIMITS),
+        description="ISO/TS 15066 Annex A permissible contact forces per anatomical region",
+    )
     max_joint_torque_nm: float = Field(default=80.0, description="Max permissible torque per joint")
     # Spatial work envelope (SLP)
     min_z_m: float = Field(default=0.0, description="Table surface boundary")
@@ -133,6 +161,7 @@ class RobotSafetyGovernor:
         joints: List[RobotJointState],
         human_distance_m: float,
         collision_detected: bool = False,
+        target_body_region: Optional[BodyRegion] = None,
     ) -> RobotSafetyDecision:
         """Evaluate real-time physical telemetry against all functional safety invariants."""
         start_ns = time.perf_counter_ns()
@@ -142,6 +171,13 @@ class RobotSafetyGovernor:
         clamped_torque: Optional[float] = None
         fieldbus_action: Optional[str] = None
         allowed = True
+
+        # Biomechanical threshold selection (ISO/TS 15066 Annex A)
+        force_limit_n = (
+            self.config.body_region_limits.get(target_body_region, self.config.max_contact_force_n)
+            if target_body_region
+            else self.config.max_contact_force_n
+        )
 
         # 0. Check Latched Emergency Stop
         if self._estop_latched:
@@ -155,11 +191,11 @@ class RobotSafetyGovernor:
             )
 
         # 1. Reflex Collision Detection (Immediate STO)
-        if collision_detected or tcp_pose.tcp_force_n > (self.config.max_contact_force_n * 1.5):
+        if collision_detected or tcp_pose.tcp_force_n > (force_limit_n * 1.5):
             self._estop_latched = True
             self.fieldbus.trigger_emergency_cutoff(reason="robot_safety:collision_reflex")
             reasons.append(
-                f"Collision impact detected (Force: {tcp_pose.tcp_force_n:.1f} N). "
+                f"Collision impact detected (Force: {tcp_pose.tcp_force_n:.1f} N > {force_limit_n * 1.5:.1f} N). "
                 f"Safe Torque Off (STO) engaged."
             )
             elapsed_us = (time.perf_counter_ns() - start_ns) / 1000.0
@@ -246,12 +282,13 @@ class RobotSafetyGovernor:
                 reasons.append(f"SSM Speed Clamped to {target_max:.2f} m/s due to approaching human.")
 
         # 6. Biomechanical Power and Force Limiting (PFL)
-        if tcp_pose.tcp_force_n > self.config.max_contact_force_n:
+        if tcp_pose.tcp_force_n > force_limit_n:
             allowed = False
             safety_fn = RobotSafetyFunction.PROTECTIVE_STOP
+            region_str = f" for body region {target_body_region.value}" if target_body_region else ""
             reasons.append(
                 f"PFL Force Violation: Contact force {tcp_pose.tcp_force_n:.1f} N exceeds "
-                f"ISO/TS 15066 limit ({self.config.max_contact_force_n:.1f} N)."
+                f"ISO/TS 15066 limit ({force_limit_n:.1f} N{region_str})."
             )
 
         elapsed_us = (time.perf_counter_ns() - start_ns) / 1000.0

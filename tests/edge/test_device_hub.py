@@ -191,8 +191,13 @@ class TestHeartbeatAndWatchdog:
             device_type=DeviceType.GENERAL_ACTUATOR,
             mac_address="02:42:AC:11:00:02",
         )
-        hub.admit_device(profile)
+        adm = hub.admit_device(profile)
+        # Valid heartbeat without token (backwards compatible)
         assert hub.heartbeat("node_42") is True
+        # Valid heartbeat with authentic token
+        assert hub.heartbeat("node_42", token=adm.handshake_token) is True
+        # Rejected heartbeat with spoofed/invalid token
+        assert hub.heartbeat("node_42", token="spoofed_token_0x999") is False
 
     def test_watchdog_timeout_triggers_emergency_cutoff(self, hub: EdgeDeviceHub, fieldbus: IndustrialFieldbusInterlock) -> None:
         """Watchdog check detects stale heartbeat and trips physical fieldbus interlock."""

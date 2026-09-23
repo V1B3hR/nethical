@@ -14,6 +14,8 @@ import pytest
 
 from nethical.edge.industrial_fieldbus import IndustrialFieldbusInterlock
 from nethical.edge.robot_safety import (
+    BODY_REGION_FORCE_LIMITS,
+    BodyRegion,
     CollaborativeMode,
     RobotCartesianPose,
     RobotJointState,
@@ -351,3 +353,90 @@ class TestRobotRealTimeLatency:
 
         avg_latency = sum(latencies) / len(latencies)
         assert avg_latency < 50.0, f"Average latency {avg_latency:.2f} µs exceeds 50 µs target"
+
+
+class TestParameterTestingISO10218_2:
+    """Normative Parameter Testing per ISO 10218-2:2025.
+
+    Verifies that safety function behaviours scale deterministically and proportionally
+    when safety-critical parameters are varied across their operational spectrum.
+    """
+
+    def test_ssm_distance_parameter_scaling(
+        self,
+        nominal_pose: RobotCartesianPose,
+        nominal_joints: list[RobotJointState],
+    ) -> None:
+        """Verifies that widening human_critical_distance_m shifts speed clamping boundary accordingly."""
+        # Baseline with critical_dist = 0.8m
+        gov_base = RobotSafetyGovernor(config=RobotSafetyConfig(human_critical_distance_m=0.8))
+        dec_at_1m = gov_base.evaluate_actuation(nominal_pose, nominal_joints, human_distance_m=1.0)
+        assert dec_at_1m.active_safety_function != RobotSafetyFunction.SOS
+
+        # Widened envelope with critical_dist = 1.2m
+        gov_wide = RobotSafetyGovernor(
+            config=RobotSafetyConfig(
+                human_critical_distance_m=1.2,
+                active_collaborative_mode=CollaborativeMode.SRMS,
+            )
+        )
+        dec_wide = gov_wide.evaluate_actuation(nominal_pose, nominal_joints, human_distance_m=1.0)
+        assert dec_wide.allowed is False
+        assert dec_wide.active_safety_function == RobotSafetyFunction.SOS
+
+    def test_force_limit_parameter_scaling(
+        self,
+        nominal_joints: list[RobotJointState],
+    ) -> None:
+        """Verifies that adjusting max_contact_force_n calibrates PFL trigger proportionally."""
+        pose_80n = RobotCartesianPose(x_m=0.4, y_m=0.3, z_m=0.5, tcp_force_n=80.0)
+
+        # Baseline: 65 N limit -> 80 N is rejected
+        gov_standard = RobotSafetyGovernor(config=RobotSafetyConfig(max_contact_force_n=65.0))
+        res_standard = gov_standard.evaluate_actuation(pose_80n, nominal_joints, human_distance_m=2.0)
+        assert res_standard.allowed is False
+        assert res_standard.active_safety_function == RobotSafetyFunction.PROTECTIVE_STOP
+
+        # Heavy-duty tool configuration: 120 N limit -> 80 N is permitted
+        gov_heavy = RobotSafetyGovernor(config=RobotSafetyConfig(max_contact_force_n=120.0))
+        res_heavy = gov_heavy.evaluate_actuation(pose_80n, nominal_joints, human_distance_m=2.0)
+        assert res_heavy.allowed is True
+
+
+class TestBiofidelicBodyRegionsISO15066:
+    """Tests for ISO/TS 15066 Annex A biomechanical body region thresholds."""
+
+    @pytest.mark.parametrize(
+        ("region", "test_force_n", "expect_allowed"),
+        [
+            (BodyRegion.FACE, 60.0, True),     # Limit: 65 N -> 60 N allowed
+            (BodyRegion.FACE, 70.0, False),    # Limit: 65 N -> 70 N blocked
+            (BodyRegion.CHEST, 130.0, True),   # Limit: 140 N -> 130 N allowed
+            (BodyRegion.CHEST, 150.0, False),  # Limit: 140 N -> 150 N blocked
+            (BodyRegion.HANDS_FINGERS, 130.0, True),  # Limit: 140 N -> 130 N allowed
+            (BodyRegion.HANDS_FINGERS, 145.0, False), # Limit: 140 N -> 145 N blocked
+            (BodyRegion.BACK_SHOULDERS, 200.0, True), # Limit: 210 N -> 200 N allowed
+            (BodyRegion.BACK_SHOULDERS, 225.0, False),# Limit: 210 N -> 225 N blocked
+        ],
+    )
+    def test_anatomical_body_region_thresholds(
+        self,
+        governor: RobotSafetyGovernor,
+        nominal_joints: list[RobotJointState],
+        region: BodyRegion,
+        test_force_n: float,
+        expect_allowed: bool,
+    ) -> None:
+        """Verifies exact compliance with ISO/TS 15066 Annex A biofidelic limits per body zone."""
+        pose = RobotCartesianPose(x_m=0.4, y_m=0.3, z_m=0.5, tcp_force_n=test_force_n)
+        dec = governor.evaluate_actuation(
+            tcp_pose=pose,
+            joints=nominal_joints,
+            human_distance_m=1.5,
+            target_body_region=region,
+        )
+        assert dec.allowed is expect_allowed
+        if not expect_allowed:
+            assert dec.active_safety_function == RobotSafetyFunction.PROTECTIVE_STOP
+            assert any(f"for body region {region.value}" in r for r in dec.reasons)
+

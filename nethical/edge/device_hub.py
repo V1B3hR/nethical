@@ -101,6 +101,7 @@ class EdgeDeviceHub:
         self.fieldbus = fieldbus_interlock or IndustrialFieldbusInterlock()
         self.heartbeat_timeout_ms = default_heartbeat_timeout_ms
         self._devices: Dict[str, EdgeDeviceProfile] = {}
+        self._device_tokens: Dict[str, str] = {}
         self._last_heartbeat: Dict[str, float] = {}
         self._admission_log: List[DeviceAdmissionResult] = []
         self._server_socket: Optional[socket.socket] = None
@@ -146,6 +147,7 @@ class EdgeDeviceHub:
             )
 
             self._devices[profile.device_id] = profile
+            self._device_tokens[profile.device_id] = handshake_token
             self._last_heartbeat[profile.device_id] = time.perf_counter()
             self._admission_log.append(result)
 
@@ -159,10 +161,13 @@ class EdgeDeviceHub:
             )
             return result
 
-    def heartbeat(self, device_id: str) -> bool:
-        """Register a heartbeat tick from an active device."""
+    def heartbeat(self, device_id: str, token: Optional[str] = None) -> bool:
+        """Register a heartbeat tick from an active device, optionally verifying handshake token."""
         with self._lock:
             if device_id in self._devices:
+                if token is not None and self._device_tokens.get(device_id) != token:
+                    logger.warning("Heartbeat rejected for device %s: invalid token.", device_id)
+                    return False
                 self._last_heartbeat[device_id] = time.perf_counter()
                 return True
             return False
@@ -318,8 +323,9 @@ class EdgeDeviceHub:
                 response = {"status": "SUCCESS", "admission": admission.model_dump()}
             elif action == "heartbeat":
                 device_id = payload.get("device_id", "")
-                success = self.heartbeat(device_id)
-                response = {"status": "SUCCESS" if success else "UNKNOWN_DEVICE"}
+                token = payload.get("token")
+                success = self.heartbeat(device_id, token=token)
+                response = {"status": "SUCCESS" if success else "AUTH_OR_DEVICE_FAILED"}
             else:
                 response = {"status": "ERROR", "message": f"Unsupported action: {action}"}
 
