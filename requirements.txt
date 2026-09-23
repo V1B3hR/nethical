@@ -20,7 +20,7 @@ uvicorn==0.52.3
 
 # Data validation and serialization
 pydantic==2.13.4
-pydantic-core==2.48.0
+pydantic-core==2.46.4
 typing-extensions==4.16.0
 dataclasses-json==0.6.7
 

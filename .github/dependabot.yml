@@ -25,6 +25,8 @@ updates:
         update-types:
           - "minor"
           - "patch"
+    ignore:
+      - dependency-name: "pydantic-core"
 
   # Python dependencies (Nethical Edge)
   - package-ecosystem: "pip"
@@ -71,6 +73,5 @@ updates:
       - "security"
     reviewers:
       - "V1B3hR"
-    labels: []
     commit-message:
       prefix: "docker"
