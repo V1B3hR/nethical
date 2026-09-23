@@ -1,12 +1,15 @@
-"""
-Tests for Edge Local Governor
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+
+"""Tests for Edge Local Governor (tests.edge.test_local_governor).
 
 Tests ultra-low latency governance for edge deployment.
 Target: <10ms p99 latency
 """
 
-import time
+from __future__ import annotations
 
+import time
 import pytest
 
 from nethical.edge.local_governor import EdgeGovernor, EdgeDecision, DecisionType
@@ -21,13 +24,13 @@ from nethical.edge.circuit_breaker import CircuitBreaker, CircuitState
 class TestEdgeGovernor:
     """Tests for EdgeGovernor."""
 
-    def test_init(self):
-        """Test EdgeGovernor initialization."""
+    def test_init(self) -> None:
+        """Test EdgeGovernor initialisation."""
         governor = EdgeGovernor(agent_id="test-agent")
         assert governor.agent_id == "test-agent"
         assert governor.max_latency_ms == 10.0
 
-    def test_evaluate_safe_action(self):
+    def test_evaluate_safe_action(self) -> None:
         """Test evaluation of a safe action."""
         governor = EdgeGovernor(agent_id="test-agent")
         result = governor.evaluate(
@@ -41,7 +44,7 @@ class TestEdgeGovernor:
         assert 0.0 <= result.risk_score <= 1.0
         assert result.latency_ms > 0
 
-    def test_evaluate_risky_action(self):
+    def test_evaluate_risky_action(self) -> None:
         """Test evaluation of a risky action."""
         governor = EdgeGovernor(agent_id="test-agent")
         result = governor.evaluate(
@@ -54,7 +57,7 @@ class TestEdgeGovernor:
         assert result.decision in [DecisionType.BLOCK, DecisionType.TERMINATE]
         assert result.risk_score > 0.5
 
-    def test_evaluate_critical_action(self):
+    def test_evaluate_critical_action(self) -> None:
         """Test evaluation triggers TERMINATE for critical patterns."""
         governor = EdgeGovernor(agent_id="test-agent")
         result = governor.evaluate(
@@ -66,7 +69,7 @@ class TestEdgeGovernor:
         assert result.decision == DecisionType.TERMINATE
         assert result.risk_score >= 0.8
 
-    def test_latency_target(self):
+    def test_latency_target(self) -> None:
         """Test that evaluations meet latency target."""
         governor = EdgeGovernor(agent_id="test-agent")
 
@@ -90,7 +93,7 @@ class TestEdgeGovernor:
         # Target: <10ms p99 (allow some slack for test environment)
         assert p99 < 50, f"P99 latency {p99:.2f}ms exceeds target"
 
-    def test_cache_hit(self):
+    def test_cache_hit(self) -> None:
         """Test that cache hits improve performance."""
         governor = EdgeGovernor(agent_id="test-agent")
 
@@ -111,7 +114,7 @@ class TestEdgeGovernor:
         assert result2.from_cache is True
         assert result2.latency_ms < result1.latency_ms * 2  # Cache should be faster
 
-    def test_batch_evaluate(self):
+    def test_batch_evaluate(self) -> None:
         """Test batch evaluation."""
         governor = EdgeGovernor(agent_id="test-agent")
 
@@ -125,7 +128,7 @@ class TestEdgeGovernor:
         assert len(results) == 3
         assert all(isinstance(r, EdgeDecision) for r in results)
 
-    def test_get_metrics(self):
+    def test_get_metrics(self) -> None:
         """Test metrics collection."""
         governor = EdgeGovernor(agent_id="test-agent")
 
@@ -143,13 +146,13 @@ class TestEdgeGovernor:
 class TestPolicyCache:
     """Tests for PolicyCache."""
 
-    def test_init(self):
-        """Test PolicyCache initialization."""
+    def test_init(self) -> None:
+        """Test PolicyCache initialisation."""
         cache = PolicyCache(max_size_mb=128, ttl_seconds=60)
         assert cache.max_size_mb == 128
         assert cache.ttl_seconds == 60
 
-    def test_set_get(self):
+    def test_set_get(self) -> None:
         """Test basic set and get."""
         cache = PolicyCache()
 
@@ -164,7 +167,7 @@ class TestPolicyCache:
         assert result is not None
         assert result.policy_id == "test-policy"
 
-    def test_ttl_expiration(self):
+    def test_ttl_expiration(self) -> None:
         """Test TTL-based expiration."""
         cache = PolicyCache(ttl_seconds=1)
 
@@ -180,7 +183,7 @@ class TestPolicyCache:
         # Should be expired
         assert cache.get("key1") is None
 
-    def test_lru_eviction(self):
+    def test_lru_eviction(self) -> None:
         """Test LRU eviction."""
         cache = PolicyCache(max_entries=3)
 
@@ -201,7 +204,7 @@ class TestPolicyCache:
         assert cache.get("key2") is not None  # Still in cache
         assert cache.get("key-new") is not None  # Newly added
 
-    def test_metrics(self):
+    def test_metrics(self) -> None:
         """Test cache metrics."""
         cache = PolicyCache()
 
@@ -220,13 +223,13 @@ class TestPolicyCache:
 class TestFastDetector:
     """Tests for FastDetector."""
 
-    def test_init(self):
-        """Test FastDetector initialization."""
+    def test_init(self) -> None:
+        """Test FastDetector initialisation."""
         detector = FastDetector()
         assert len(detector._compiled_critical) > 0
         assert len(detector._compiled_high) > 0
 
-    def test_detect_critical(self):
+    def test_detect_critical(self) -> None:
         """Test detection of critical patterns."""
         detector = FastDetector()
         result = detector.detect(
@@ -239,7 +242,7 @@ class TestFastDetector:
         assert result.has_critical is True
         assert len(result.violations) > 0
 
-    def test_detect_high_risk(self):
+    def test_detect_high_risk(self) -> None:
         """Test detection of high-risk patterns."""
         detector = FastDetector()
         result = detector.detect(
@@ -252,7 +255,7 @@ class TestFastDetector:
         assert len(result.severities) > 0
         assert max(result.severities) >= 3.0
 
-    def test_detect_pii(self):
+    def test_detect_pii(self) -> None:
         """Test PII detection."""
         detector = FastDetector()
         result = detector.detect(
@@ -264,7 +267,7 @@ class TestFastDetector:
         assert result.has_violation is True
         assert "pii" in result.categories
 
-    def test_detect_clean(self):
+    def test_detect_clean(self) -> None:
         """Test detection of clean action."""
         detector = FastDetector()
         result = detector.detect(
@@ -276,7 +279,7 @@ class TestFastDetector:
         # Clean actions may still have low-level findings
         assert not result.has_critical
 
-    def test_latency_target(self):
+    def test_latency_target(self) -> None:
         """Test detection meets latency target."""
         detector = FastDetector()
 
@@ -298,18 +301,18 @@ class TestFastDetector:
 class TestCircuitBreaker:
     """Tests for CircuitBreaker."""
 
-    def test_init(self):
-        """Test CircuitBreaker initialization."""
+    def test_init(self) -> None:
+        """Test CircuitBreaker initialisation."""
         cb = CircuitBreaker(max_latency_ms=10.0)
         assert cb.state == CircuitState.CLOSED
         assert cb.config.max_latency_ms == 10.0
 
-    def test_closed_state(self):
+    def test_closed_state(self) -> None:
         """Test closed state allows processing."""
         cb = CircuitBreaker()
         assert cb.can_process() is True
 
-    def test_open_on_failures(self):
+    def test_open_on_failures(self) -> None:
         """Test circuit opens after failures."""
         cb = CircuitBreaker(failure_threshold=3)
 
@@ -320,7 +323,7 @@ class TestCircuitBreaker:
         assert cb.state == CircuitState.OPEN
         assert cb.can_process() is False
 
-    def test_open_on_high_latency(self):
+    def test_open_on_high_latency(self) -> None:
         """Test circuit opens on high latency."""
         cb = CircuitBreaker(max_latency_ms=10.0, failure_threshold=3)
 
@@ -330,10 +333,10 @@ class TestCircuitBreaker:
 
         assert cb.state == CircuitState.OPEN
 
-    def test_recovery(self):
+    def test_recovery(self) -> None:
         """Test circuit recovery through half-open state."""
         from nethical.edge.circuit_breaker import CircuitConfig
-        
+
         config = CircuitConfig(
             failure_threshold=3,
             recovery_timeout_seconds=0.1,  # Fast recovery for testing
@@ -359,7 +362,7 @@ class TestCircuitBreaker:
 
         assert cb.state == CircuitState.CLOSED
 
-    def test_metrics(self):
+    def test_metrics(self) -> None:
         """Test metrics collection."""
         cb = CircuitBreaker()
 
@@ -376,7 +379,7 @@ class TestCircuitBreaker:
 class TestContextFingerprint:
     """Tests for context fingerprinting."""
 
-    def test_compute_fingerprint(self):
+    def test_compute_fingerprint(self) -> None:
         """Test fingerprint computation."""
         fp1 = compute_fingerprint(
             action="Read file",
@@ -387,14 +390,14 @@ class TestContextFingerprint:
         assert isinstance(fp1, str)
         assert len(fp1) > 0
 
-    def test_fingerprint_deterministic(self):
+    def test_fingerprint_deterministic(self) -> None:
         """Test fingerprint is deterministic."""
         fp1 = compute_fingerprint("action", "type", {"key": "value"})
         fp2 = compute_fingerprint("action", "type", {"key": "value"})
 
         assert fp1 == fp2
 
-    def test_fingerprint_differs_for_different_input(self):
+    def test_fingerprint_differs_for_different_input(self) -> None:
         """Test fingerprint differs for different inputs."""
         fp1 = compute_fingerprint("action1", "type", {})
         fp2 = compute_fingerprint("action2", "type", {})
@@ -405,7 +408,7 @@ class TestContextFingerprint:
 class TestPredictiveEngine:
     """Tests for PredictiveEngine."""
 
-    def test_cache_decision(self):
+    def test_cache_decision(self) -> None:
         """Test decision caching."""
         engine = PredictiveEngine()
 
@@ -421,7 +424,7 @@ class TestPredictiveEngine:
         assert cached is not None
         assert cached.decision == DecisionType.ALLOW
 
-    def test_cache_expiration(self):
+    def test_cache_expiration(self) -> None:
         """Test cache TTL expiration."""
         engine = PredictiveEngine(cache_ttl_seconds=1)
 
@@ -442,7 +445,7 @@ class TestPredictiveEngine:
         # Should be expired
         assert engine.get_cached_decision("hash123") is None
 
-    def test_metrics(self):
+    def test_metrics(self) -> None:
         """Test metrics collection."""
         engine = PredictiveEngine()
 
