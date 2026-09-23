@@ -351,7 +351,7 @@ class CyberResilienceActCompliance:
         
         try:
             if requirements_path.exists():
-                with open(requirements_path) as f:
+                with open(requirements_path, "r", encoding="utf-8") as f:
                     for line in f:
                         line = line.strip()
                         if line and not line.startswith('#'):
