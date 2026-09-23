@@ -1,0 +1,70 @@
+# Autonomous Drone & UAV Prediction Profile
+# Pre-computation patterns for uncrewed aerial system (UAS) BVLOS governance
+
+domain: autonomous_drone
+
+description: |
+  Prediction profile for autonomous UAV/drone flight governance.
+  Focuses on BVLOS airspace deconfliction, 3D geocaging, altitude containment,
+  and emergency flight termination (FTS / Safe2Ditch).
+
+common_actions:
+  - action_type: flight_control
+    patterns:
+      - waypoint_navigation
+      - altitude_adjustment
+      - evasive_turn
+      - hover_hold
+    frequency: very_high
+    
+  - action_type: sensing
+    patterns:
+      - adsb_traffic_scan
+      - terrain_avoidance_radar
+      - visual_odometry
+      - gnss_integrity_check
+    frequency: very_high
+    
+  - action_type: emergency
+    patterns:
+      - return_to_home
+      - safe2ditch_selection
+      - motor_cutoff
+      - parachute_deployment
+    frequency: medium
+    
+  - action_type: communication
+    patterns:
+      - c2_heartbeat
+      - utm_position_broadcast
+      - atc_deconfliction
+    frequency: high
+
+action_weights:
+  flight_control: 0.40
+  sensing: 0.30
+  emergency: 0.20
+  communication: 0.10
+
+context_patterns:
+  - bvlos_flight_corridor
+  - urban_u_space
+  - restricted_airspace_boundary
+  - gnss_denied_environment
+  - battery_critical_reserve
+
+warmup_actions:
+  - action: "Maintain 120m AGL cruise"
+    action_type: flight_control
+    context:
+      airspace: open_category
+      
+  - action: "ADS-B In traffic scan"
+    action_type: sensing
+    context:
+      transponder_mode: mode_s
+      
+  - action: "Verify geocage containment"
+    action_type: sensing
+    context:
+      radius_m: 2500
