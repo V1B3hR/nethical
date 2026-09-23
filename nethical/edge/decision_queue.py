@@ -206,7 +206,7 @@ class DecisionQueue:
             with self._lock:
                 data = [d.to_dict() for d in self._queue]
 
-            with open(self.persist_path, "w") as f:
+            with open(self.persist_path, "w", encoding="utf-8") as f:
                 json.dump(data, f)
 
             logger.debug(f"Persisted {len(data)} decisions to disk")
@@ -220,7 +220,7 @@ class DecisionQueue:
             return
 
         try:
-            with open(self.persist_path, "r") as f:
+            with open(self.persist_path, "r", encoding="utf-8") as f:
                 data = json.load(f)
 
             with self._lock:

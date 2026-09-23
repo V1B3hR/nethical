@@ -10,9 +10,10 @@ Protects system from latency spikes by failing fast.
 import logging
 import threading
 import time
+from collections import deque
 from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Deque, Dict, List, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -96,7 +97,7 @@ class CircuitBreaker:
         self._open_time: Optional[float] = None
 
         # Latency tracking
-        self._latency_samples: List[float] = []
+        self._latency_samples: Deque[float] = deque(maxlen=self.config.window_size)
 
         # Half-open tracking
         self._half_open_successes = 0
@@ -152,8 +153,6 @@ class CircuitBreaker:
 
             # Record latency
             self._latency_samples.append(latency_ms)
-            if len(self._latency_samples) > self.config.window_size:
-                self._latency_samples.pop(0)
 
             # Check if latency is within threshold
             if latency_ms <= self.config.max_latency_ms:
@@ -183,8 +182,6 @@ class CircuitBreaker:
         else:
             with self._lock:
                 self._latency_samples.append(latency_ms)
-                if len(self._latency_samples) > self.config.window_size:
-                    self._latency_samples.pop(0)
                 self._record_failure()
 
     def _record_failure(self):

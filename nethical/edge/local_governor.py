@@ -20,9 +20,10 @@ Features:
 import hashlib
 import logging
 import time
+from collections import deque
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Deque, Dict, List, Optional
 
 import numpy as np
 
@@ -139,14 +140,13 @@ class EdgeGovernor:
         )
 
         # Decision history for pattern learning
-        self._decision_history: List[EdgeDecision] = []
         self._max_history = 1000
-
+        self._decision_history: Deque[EdgeDecision] = deque(maxlen=self._max_history)
 
         # Performance metrics
         self._total_decisions = 0
         self._cache_hits = 0
-        self._latency_samples: List[float] = []
+        self._latency_samples: Deque[float] = deque(maxlen=10000)
 
         logger.info(f"EdgeGovernor initialized for agent {agent_id}")
 
@@ -406,15 +406,7 @@ class EdgeGovernor:
         """Record decision for metrics and pattern learning."""
         self._total_decisions += 1
         self._latency_samples.append(decision.latency_ms)
-
-        # Trim latency samples
-        if len(self._latency_samples) > 10000:
-            self._latency_samples = self._latency_samples[-5000:]
-
-        # Add to history for pattern learning
         self._decision_history.append(decision)
-        if len(self._decision_history) > self._max_history:
-            self._decision_history.pop(0)
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get performance metrics."""
