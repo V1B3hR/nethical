@@ -57,7 +57,7 @@ tzdata==2025.3
 starlette>=1.6.0,<1.7.0
 
 # LLM Integration SDKs (optional - for specific integrations)
-anthropic>=0.122.0  # For Claude/Anthropic integration
+anthropic>=1.7.0  # For Claude/Anthropic integration
 
 # Optional LangChain integration (uncomment if needed; then re-run pip-compile)
 # langchain>=0.1.0
