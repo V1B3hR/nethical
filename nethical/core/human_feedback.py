@@ -201,7 +201,7 @@ class EscalationQueue:
         storage_path: str = "./data/escalations.db",
         triage_sla_seconds: float = 3600,  # 1 hour default
         resolution_sla_seconds: float = 86400,  # 24 hours default
-    ):
+    ) -> None:
         """Initialize escalation queue.
 
         Args:
@@ -214,7 +214,7 @@ class EscalationQueue:
         self.resolution_sla_seconds = resolution_sla_seconds
 
         # In-memory queue for fast access
-        self.pending_cases: deque = deque()
+        self.pending_cases: deque[EscalationCase] = deque()
         self.cases_by_id: Dict[str, EscalationCase] = {}
 
         # Metrics tracking
@@ -429,7 +429,7 @@ class EscalationQueue:
             return None
 
         # Get highest priority case
-        case = self.pending_cases.popleft()
+        case: EscalationCase = self.pending_cases.popleft()
         case.status = ReviewStatus.IN_REVIEW
         case.assigned_to = reviewer_id
         case.started_review_at = datetime.now()
@@ -774,7 +774,7 @@ class EscalationQueue:
         return True
 
 
-def _demo():
+def _demo() -> None:
     """Demonstrate the human feedback system functionality."""
     import tempfile
     import shutil
@@ -847,7 +847,16 @@ def _demo():
         ]
 
         for i, case_data in enumerate(test_cases, 1):
-            case = queue.add_case(**case_data)
+            case = queue.add_case(
+                judgment_id=str(case_data["judgment_id"]),
+                action_id=str(case_data["action_id"]),
+                agent_id=str(case_data["agent_id"]),
+                decision=str(case_data["decision"]),
+                confidence=float(case_data["confidence"]),  # type: ignore[arg-type]
+                violations=case_data["violations"],  # type: ignore[arg-type]
+                priority=case_data["priority"],  # type: ignore[arg-type]
+                context=case_data.get("context"),  # type: ignore[arg-type]
+            )
             print(f"\n   Case {i} added:")
             print(f"   - Case ID: {case.case_id}")
             print(f"   - Decision: {case.decision} (confidence: {case.confidence})")

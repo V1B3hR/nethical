@@ -12,15 +12,16 @@ import yaml
 import pytest
 import subprocess
 from pathlib import Path
+from typing import Tuple
 
 from nethical.core import (
     EscalationQueue,
-    FeedbackTag,
     ReviewPriority,
 )
+from nethical.core.human_feedback import EscalationCase
 
 
-def run_cli(*args):
+def run_cli(*args: str) -> subprocess.CompletedProcess[str]:
     """Run CLI tool with UTF-8 decoding and return CompletedProcess."""
     return subprocess.run(
         [sys.executable] + list(args),
@@ -32,14 +33,14 @@ def run_cli(*args):
 
 
 @pytest.fixture
-def temp_cli_db(tmp_path):
+def temp_cli_db(tmp_path: Path) -> str:
     """Provide temporary database path for review_queue testing."""
     db_file = tmp_path / "escalations_test.db"
     return str(db_file)
 
 
 @pytest.fixture
-def populated_queue(temp_cli_db):
+def populated_queue(temp_cli_db: str) -> Tuple[EscalationCase, str]:
     """Provide a queue pre-populated with a test escalation case."""
     queue = EscalationQueue(storage_path=temp_cli_db)
     case = queue.add_case(
@@ -56,7 +57,7 @@ def populated_queue(temp_cli_db):
     return case, temp_cli_db
 
 
-def test_review_queue_list_and_subcommand_flags(populated_queue):
+def test_review_queue_list_and_subcommand_flags(populated_queue: Tuple[EscalationCase, str]) -> None:
     """Test review_queue list command with flag both before and after subcommand."""
     case, db_path = populated_queue
     cli_path = str(Path("cli/review_queue").resolve())
@@ -74,7 +75,7 @@ def test_review_queue_list_and_subcommand_flags(populated_queue):
     assert case.case_id in res2.stdout
 
 
-def test_review_queue_next_and_feedback_flow(populated_queue):
+def test_review_queue_next_and_feedback_flow(populated_queue: Tuple[EscalationCase, str]) -> None:
     """Test getting next case, submitting feedback, and viewing persistent stats."""
     case, db_path = populated_queue
     cli_path = str(Path("cli/review_queue").resolve())
@@ -110,7 +111,7 @@ def test_review_queue_next_and_feedback_flow(populated_queue):
     assert "Total Feedback: 1" in res_sum.stdout
 
 
-def test_review_queue_error_exit_codes(temp_cli_db):
+def test_review_queue_error_exit_codes(temp_cli_db: str) -> None:
     """Test review_queue returns exit code 1 on invalid inputs."""
     cli_path = str(Path("cli/review_queue").resolve())
 
@@ -136,7 +137,7 @@ def test_review_queue_error_exit_codes(temp_cli_db):
     assert "Confidence must be between 0.0 and 1.0" in res2.stderr
 
 
-def test_policy_diff_flow(tmp_path):
+def test_policy_diff_flow(tmp_path: Path) -> None:
     """Test policy_diff execution across text, json, and markdown formats."""
     cli_path = str(Path("cli/policy_diff").resolve())
 
@@ -185,7 +186,7 @@ def test_policy_diff_flow(tmp_path):
     assert "# Policy Diff:" in res_md.stdout
 
 
-def test_policy_diff_missing_file():
+def test_policy_diff_missing_file() -> None:
     """Test policy_diff exits with code 3 when policy file is missing."""
     cli_path = str(Path("cli/policy_diff").resolve())
     res = run_cli(cli_path, "missing_v1.yaml", "missing_v2.yaml")
@@ -193,7 +194,7 @@ def test_policy_diff_missing_file():
     assert "Policy file not found" in res.stderr
 
 
-def test_policy_simulator_simulate_and_dryrun(tmp_path):
+def test_policy_simulator_simulate_and_dryrun(tmp_path: Path) -> None:
     """Test policy_simulator simulate and dry-run subcommands."""
     cli_path = str(Path("cli/policy_simulator").resolve())
 
