@@ -86,7 +86,7 @@ class DetectorPack:
 
     # Optional metadata
     version: str = "1.0.0"
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     deprecated: bool = False
 
     def validate(self) -> None:

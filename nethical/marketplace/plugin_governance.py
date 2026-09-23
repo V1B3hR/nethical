@@ -716,7 +716,7 @@ class PluginGovernance:
         plugin_id: str,
         nethical_version: str = "0.1.0",
         python_version: Optional[str] = None,
-        attempt_import: bool = True,
+        attempt_import: bool = False,
     ) -> CompatibilityReport:
         """Test plugin compatibility.
 

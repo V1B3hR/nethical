@@ -509,8 +509,7 @@ policies:
     
     def test_policy_file_loading(self, policy_engine):
         """Test loading policy from file."""
-        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False) as f:
-            yaml_content = """
+        yaml_content = """
 policies:
   - name: "file_policy"
     version: "1.0.0"
@@ -521,17 +520,18 @@ policies:
         actions:
           - audit_log
 """
+        with tempfile.NamedTemporaryFile(mode='w', suffix='.yaml', delete=False, encoding='utf-8') as f:
             f.write(yaml_content)
-            f.flush()
-            
-            loaded_names = policy_engine.load_policy_file(f.name)
-            
+            temp_path = f.name
+
+        try:
+            loaded_names = policy_engine.load_policy_file(temp_path)
             assert len(loaded_names) == 1
             assert "file_policy" in loaded_names
             assert "file_policy" in policy_engine.policies
-            
+        finally:
             # Cleanup
-            Path(f.name).unlink()
+            Path(temp_path).unlink(missing_ok=True)
 
 
 # ==================== Integration Tests ====================

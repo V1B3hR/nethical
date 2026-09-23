@@ -52,7 +52,7 @@ if not logger.handlers:
 # -----------------------------------------------------------------------------
 # Error Types
 # -----------------------------------------------------------------------------
-class MarketplaceError(Exception):
+class MarketplaceError(ValueError):
     """Base exception for marketplace operations."""
 
 
