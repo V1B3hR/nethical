@@ -121,8 +121,9 @@ class PolicyVerifier:
             
             # Add constraints for decision values
             for i, policy in enumerate(policies):
+                decision_str = str(policy.get("decision") or policy.get("effect") or "ALLOW").upper()
                 decision_val = {"ALLOW": 1, "RESTRICT": 2, "BLOCK": 3, "TERMINATE": 4}.get(
-                    policy.get("decision", "ALLOW"), 1
+                    decision_str, 1
                 )
                 priority_val = policy.get("priority", 1)
                 action_type_val = hash(policy.get("action_type", "default")) % 1000
@@ -313,6 +314,24 @@ class PolicyVerifier:
             self._solver.add(approval_rate_a <= 1.0)
             self._solver.add(approval_rate_b >= 0.0)
             self._solver.add(approval_rate_b <= 1.0)
+            
+            # Apply policy constraints if specified
+            if "approval_rate_a" in policy:
+                self._solver.add(approval_rate_a == float(policy["approval_rate_a"]))
+            elif "protected_rate" in policy:
+                self._solver.add(approval_rate_a == float(policy["protected_rate"]))
+
+            if "approval_rate_b" in policy:
+                self._solver.add(approval_rate_b == float(policy["approval_rate_b"]))
+            elif "unprotected_rate" in policy:
+                self._solver.add(approval_rate_b == float(policy["unprotected_rate"]))
+
+            if "min_rate" in policy:
+                self._solver.add(approval_rate_a >= float(policy["min_rate"]))
+                self._solver.add(approval_rate_b >= float(policy["min_rate"]))
+            if "max_rate" in policy:
+                self._solver.add(approval_rate_a <= float(policy["max_rate"]))
+                self._solver.add(approval_rate_b <= float(policy["max_rate"]))
             
             # Disparity calculation (absolute difference)
             self._solver.add(disparity == If(
@@ -531,6 +550,9 @@ class PolicyVerifier:
         
         self._verification_results = results
         return results
+
+    # Alias for API backwards compatibility
+    run_all_checks = verify_all
     
     def get_summary(self) -> Dict[str, Any]:
         """Get summary of verification results."""
