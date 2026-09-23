@@ -141,14 +141,14 @@ class TestRateLimiter:
 class TestFlamegraphProfiler:
     """Test flamegraph profiler."""
     
-    def test_profiler_initialization(self):
+    def test_profiler_initialization(self, tmp_path):
         """Test profiler initialization."""
-        profiler = FlamegraphProfiler(output_dir="/tmp/test_profiling")
+        profiler = FlamegraphProfiler(output_dir=str(tmp_path / "test_profiling"))
         assert profiler.output_dir.exists()
     
-    def test_profile_sync(self):
+    def test_profile_sync(self, tmp_path):
         """Test synchronous profiling."""
-        profiler = FlamegraphProfiler(output_dir="/tmp/test_profiling")
+        profiler = FlamegraphProfiler(output_dir=str(tmp_path / "test_profiling"))
         
         def test_function():
             total = 0
