@@ -16,7 +16,7 @@ import time
 import threading
 from typing import Dict, Any, List, Optional, Callable
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 
 
@@ -256,7 +256,7 @@ class AlertRuleManager:
                                 rule_name=rule.name,
                                 severity=rule.severity,
                                 message=f"{rule.description} (threshold: {rule.threshold})",
-                                timestamp=datetime.utcnow(),
+                                timestamp=datetime.now(timezone.utc),
                                 labels=rule.labels.copy(),
                                 annotations=rule.annotations.copy(),
                                 state=AlertState.ACTIVE
@@ -283,7 +283,7 @@ class AlertRuleManager:
                             if rule_name in self.active_alerts:
                                 alert = self.active_alerts[rule_name]
                                 alert.state = AlertState.RESOLVED
-                                alert.resolved_at = datetime.utcnow()
+                                alert.resolved_at = datetime.now(timezone.utc)
                                 del self.active_alerts[rule_name]
                 
                 except Exception as e:
