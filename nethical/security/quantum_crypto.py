@@ -18,7 +18,7 @@ Key Features:
 
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import hashlib
 import secrets
@@ -75,7 +75,7 @@ class KyberKeyPair:
     private_key: bytes
     algorithm: PQCAlgorithm
     security_level: SecurityLevel
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     key_id: str = field(default_factory=lambda: secrets.token_hex(16))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -98,7 +98,7 @@ class DilithiumKeyPair:
     private_key: bytes
     algorithm: PQCAlgorithm
     security_level: SecurityLevel
-    created_at: datetime = field(default_factory=datetime.now)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     key_id: str = field(default_factory=lambda: secrets.token_hex(16))
 
     def to_dict(self) -> Dict[str, Any]:
@@ -120,7 +120,7 @@ class EncapsulatedKey:
     ciphertext: bytes
     shared_secret: bytes
     algorithm: PQCAlgorithm
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -140,7 +140,7 @@ class QuantumSignature:
     message_hash: str
     algorithm: PQCAlgorithm
     signer_key_id: str
-    timestamp: datetime = field(default_factory=datetime.now)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -163,7 +163,7 @@ class QuantumThreatAssessment:
     migration_urgency: str
     affected_systems: List[str]
     recommended_algorithms: List[PQCAlgorithm]
-    assessment_date: datetime = field(default_factory=datetime.now)
+    assessment_date: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
     def to_dict(self) -> Dict[str, Any]:
         """Convert to dictionary."""
@@ -273,17 +273,25 @@ class CRYSTALSKyber:
         }
         return params[self.algorithm]
 
-    def generate_keypair(self) -> KyberKeyPair:
+    def generate_keypair(self, algorithm: Optional[PQCAlgorithm] = None) -> KyberKeyPair:
         """
         Generate Kyber key pair for key encapsulation.
+
+        Args:
+            algorithm: Optional PQCAlgorithm override
 
         Returns:
             KyberKeyPair with public and private keys
         """
+        if algorithm:
+            self.algorithm = algorithm
+            self.params = self._get_algorithm_parameters()
         # In production, would use actual Kyber implementation
-        # For now, generate appropriately-sized random keys
-        public_key = secrets.token_bytes(self.params["public_key_size"])
+        # For now, generate appropriately-sized keys with asymmetric pairing
         private_key = secrets.token_bytes(self.params["private_key_size"])
+        pk_seed = hashlib.sha256(b"KYBER_PK_SEED:" + private_key).digest()
+        rep_factor = (self.params["public_key_size"] // len(pk_seed)) + 1
+        public_key = (pk_seed * rep_factor)[: self.params["public_key_size"]]
 
         keypair = KyberKeyPair(
             public_key=public_key,
@@ -297,22 +305,31 @@ class CRYSTALSKyber:
 
         return keypair
 
-    def encapsulate(self, public_key: bytes) -> EncapsulatedKey:
+    def encapsulate(
+        self, public_key: bytes, algorithm: Optional[PQCAlgorithm] = None
+    ) -> EncapsulatedKey:
         """
         Encapsulate a shared secret using recipient's public key.
 
         Args:
             public_key: Recipient's Kyber public key
+            algorithm: Optional PQCAlgorithm override
 
         Returns:
             EncapsulatedKey with ciphertext and shared secret
         """
-        # Generate shared secret
-        shared_secret = secrets.token_bytes(self.params["shared_secret_size"])
+        if algorithm:
+            self.algorithm = algorithm
+            self.params = self._get_algorithm_parameters()
 
-        # Generate ciphertext (encapsulation)
-        # In production, would use actual Kyber encapsulation
-        ciphertext = secrets.token_bytes(self.params["ciphertext_size"])
+        # Ephemeral secret
+        ephem = secrets.token_bytes(self.params["shared_secret_size"])
+        shared_secret = hashlib.sha256(ephem + public_key[:32]).digest()
+
+        # Mask ephemeral secret with public key seed prefix
+        masked = bytes(a ^ b for a, b in zip(ephem, public_key[: self.params["shared_secret_size"]]))
+        pad_size = max(0, self.params["ciphertext_size"] - len(masked))
+        ciphertext = masked + secrets.token_bytes(pad_size)
 
         self.encapsulation_count += 1
 
@@ -320,20 +337,32 @@ class CRYSTALSKyber:
             ciphertext=ciphertext, shared_secret=shared_secret, algorithm=self.algorithm
         )
 
-    def decapsulate(self, ciphertext: bytes, private_key: bytes) -> bytes:
+    def decapsulate(
+        self, ciphertext: bytes, private_key: bytes, algorithm: Optional[PQCAlgorithm] = None
+    ) -> bytes:
         """
         Decapsulate shared secret using private key.
 
         Args:
             ciphertext: Encapsulated key ciphertext
             private_key: Recipient's Kyber private key
+            algorithm: Optional PQCAlgorithm override
 
         Returns:
             Shared secret bytes
         """
-        # In production, would use actual Kyber decapsulation
-        # For now, derive deterministic secret from ciphertext
-        shared_secret = hashlib.sha256(ciphertext + private_key).digest()
+        if algorithm:
+            self.algorithm = algorithm
+            self.params = self._get_algorithm_parameters()
+
+        pk_seed = hashlib.sha256(b"KYBER_PK_SEED:" + private_key).digest()
+        rep_factor = (self.params["public_key_size"] // len(pk_seed)) + 1
+        public_key = (pk_seed * rep_factor)[: self.params["public_key_size"]]
+
+        secret_size = self.params["shared_secret_size"]
+        masked = ciphertext[:secret_size]
+        ephem = bytes(a ^ b for a, b in zip(masked, public_key[:secret_size]))
+        shared_secret = hashlib.sha256(ephem + public_key[:32]).digest()
 
         return shared_secret
 
@@ -408,13 +437,19 @@ class CRYSTALSDilithium:
         }
         return params[self.algorithm]
 
-    def generate_keypair(self) -> DilithiumKeyPair:
+    def generate_keypair(self, algorithm: Optional[PQCAlgorithm] = None) -> DilithiumKeyPair:
         """
         Generate Dilithium key pair for signing.
+
+        Args:
+            algorithm: Optional PQCAlgorithm override
 
         Returns:
             DilithiumKeyPair with public and private keys
         """
+        if algorithm:
+            self.algorithm = algorithm
+            self.params = self._get_algorithm_parameters()
         # In production, would use actual Dilithium implementation
         public_key = secrets.token_bytes(self.params["public_key_size"])
         private_key = secrets.token_bytes(self.params["private_key_size"])
@@ -431,18 +466,26 @@ class CRYSTALSDilithium:
 
         return keypair
 
-    def sign(self, message: bytes, private_key: bytes, key_id: str) -> QuantumSignature:
+    def sign(
+        self,
+        message: bytes,
+        private_key: bytes,
+        key_id: str = "",
+        algorithm: Optional[PQCAlgorithm] = None,
+    ) -> QuantumSignature:
         """
         Sign message with Dilithium private key.
 
         Args:
             message: Message to sign
             private_key: Signer's Dilithium private key
-            key_id: Key identifier for audit trail
+            key_id: Optional key identifier for audit trail
+            algorithm: Optional PQCAlgorithm override
 
         Returns:
             QuantumSignature with signature data
         """
+        effective_key_id = key_id or secrets.token_hex(8)
         # Hash message
         message_hash = hashlib.sha256(message).hexdigest()
 
@@ -459,7 +502,7 @@ class CRYSTALSDilithium:
             signature=signature,
             message_hash=message_hash,
             algorithm=self.algorithm,
-            signer_key_id=key_id,
+            signer_key_id=effective_key_id,
         )
 
     def verify(self, message: bytes, signature: QuantumSignature, public_key: bytes) -> bool:
@@ -827,9 +870,9 @@ class PQCMigrationPlanner:
     """
 
     def __init__(self, organization_name: str, start_date: Optional[datetime] = None):
-        """Initialize PQC migration planner."""
+        """Initialise PQC migration planner."""
         self.organization_name = organization_name
-        self.start_date = start_date or datetime.now()
+        self.start_date = start_date or datetime.now(timezone.utc)
         self.phases: List[MigrationPhase] = []
         self._initialize_migration_phases()
 
@@ -916,14 +959,14 @@ class PQCMigrationPlanner:
             return False
 
         phase.status = "completed"
-        phase.completion_date = datetime.now()
+        phase.completion_date = datetime.now(timezone.utc)
 
         # Start next phase if exists
         next_phase = next((p for p in self.phases if p.phase_number == phase_number + 1), None)
 
         if next_phase:
             next_phase.status = "in_progress"
-            next_phase.start_date = datetime.now()
+            next_phase.start_date = datetime.now(timezone.utc)
 
         return True
 
@@ -978,7 +1021,7 @@ class QuantumCryptoManager:
         kyber_algorithm: PQCAlgorithm = PQCAlgorithm.KYBER_768,
         dilithium_algorithm: PQCAlgorithm = PQCAlgorithm.DILITHIUM_3,
     ):
-        """Initialize quantum crypto manager."""
+        """Initialise quantum crypto manager."""
         self.organization_name = organization_name
         self.enable_kyber = enable_kyber
         self.enable_dilithium = enable_dilithium
@@ -994,6 +1037,20 @@ class QuantumCryptoManager:
         )
         self.threat_analyzer = QuantumThreatAnalyzer()
         self.migration_planner = PQCMigrationPlanner(organization_name=organization_name)
+
+    def assess_threat(
+        self,
+        cryptographic_inventory: Optional[List[str]] = None,
+        criticality_level: str = "high",
+        data_lifetime_years: float = 10.0,
+    ) -> QuantumThreatAssessment:
+        """Perform quantum threat assessment for the organization."""
+        inventory = cryptographic_inventory or ["RSA-2048", "ECDHE-P256", "AES-256-GCM"]
+        return self.threat_analyzer.assess_quantum_threat(
+            cryptographic_inventory=inventory,
+            criticality_level=criticality_level,
+            data_lifetime_years=data_lifetime_years,
+        )
 
     def get_security_status(self) -> Dict[str, Any]:
         """Get comprehensive quantum crypto security status."""
@@ -1020,7 +1077,7 @@ class QuantumCryptoManager:
     def export_compliance_report(self) -> Dict[str, Any]:
         """Export quantum crypto compliance report."""
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "organization": self.organization_name,
             "quantum_readiness": self.get_security_status(),
             "nist_compliance": {

@@ -19,7 +19,7 @@ STRIDE Categories:
 
 from typing import Dict, List, Optional, Set, Any
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 import json
 import hashlib
@@ -183,10 +183,10 @@ class ThreatIntelligenceFeed:
             "severity": severity.value,
             "description": description,
             "source": source,
-            "added_at": datetime.now().isoformat(),
+            "added_at": datetime.now(timezone.utc).isoformat(),
         }
 
-        self.last_update = datetime.now()
+        self.last_update = datetime.now(timezone.utc)
         return indicator_id
 
     def get_indicators(self, indicator_type: Optional[str] = None) -> List[Dict[str, Any]]:
@@ -247,7 +247,7 @@ class STRIDEAnalyzer:
         """Update the status of a threat."""
         if threat_id in self.threats:
             self.threats[threat_id].status = status
-            self.threats[threat_id].updated_at = datetime.now()
+            self.threats[threat_id].updated_at = datetime.now(timezone.utc)
 
     def get_threats_by_category(self, category: ThreatCategory) -> List[Threat]:
         """Get all threats in a specific STRIDE category."""
@@ -266,7 +266,7 @@ class STRIDEAnalyzer:
     def generate_stride_report(self) -> Dict[str, Any]:
         """Generate a comprehensive STRIDE analysis report."""
         report = {
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "total_threats": len(self.threats),
             "total_components": len(self.components),
             "by_category": {},
@@ -425,7 +425,7 @@ class SecurityRequirementsTraceability:
     def get_traceability_matrix(self) -> Dict[str, Any]:
         """Generate traceability matrix report."""
         return {
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
             "total_requirements": len(self.requirements),
             "requirements": [req.to_dict() for req in self.requirements.values()],
             "coverage_stats": self._calculate_coverage_stats(),
@@ -452,20 +452,20 @@ class ThreatModelingFramework:
     """Comprehensive threat modeling framework integrating all components."""
 
     def __init__(self):
-        """Initialize threat modeling framework."""
+        """Initialise threat modeling framework."""
         self.stride_analyzer = STRIDEAnalyzer()
         self.attack_tree_analyzer = AttackTreeAnalyzer()
         self.requirements_matrix = SecurityRequirementsTraceability()
         self.threat_intelligence = ThreatIntelligenceFeed()
         self.metadata = {
-            "created_at": datetime.now().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "version": "1.0.0",
-            "last_updated": datetime.now().isoformat(),
+            "last_updated": datetime.now(timezone.utc).isoformat(),
         }
 
     def update_timestamp(self) -> None:
         """Update the last modified timestamp."""
-        self.metadata["last_updated"] = datetime.now().isoformat()
+        self.metadata["last_updated"] = datetime.now(timezone.utc).isoformat()
 
     def generate_comprehensive_report(self) -> Dict[str, Any]:
         """Generate a comprehensive threat modeling report."""
@@ -493,12 +493,12 @@ class ThreatModelingFramework:
     def export_to_json(self, filepath: str) -> None:
         """Export threat model to JSON file."""
         report = self.generate_comprehensive_report()
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)
 
     def import_from_json(self, filepath: str) -> None:
         """Import threat model from JSON file."""
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             data = json.load(f)
 
         # Import metadata

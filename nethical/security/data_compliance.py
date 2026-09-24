@@ -33,6 +33,10 @@ class DataRegion(Enum):
     EU_CENTRAL = "eu-central"
     APAC_SOUTHEAST = "apac-southeast"
     APAC_NORTHEAST = "apac-northeast"
+    # Convenience aliases
+    EU = "eu-central"
+    US = "us-east"
+    APAC = "apac-southeast"
 
 
 class DataCategory(Enum):
@@ -43,6 +47,10 @@ class DataCategory(Enum):
     TECHNICAL = "technical"  # IP addresses, device info
     DERIVED = "derived"  # Analytics, scores
     PUBLIC = "public"  # Public information
+    # Convenience aliases
+    PII = "personal_identifiable"
+    FINANCIAL = "sensitive_personal"
+    TELEMETRY = "technical"
 
 
 class ProcessingPurpose(Enum):
@@ -133,6 +141,30 @@ class DataSubjectRequest:
             "notes": self.notes
         }
 
+    @classmethod
+    def from_dict(cls, data: Dict[str, Any]) -> "DataSubjectRequest":
+        """Reconstruct request from dictionary representation."""
+        completed_at = None
+        if data.get("completed_at"):
+            try:
+                completed_at = datetime.fromisoformat(data["completed_at"])
+            except Exception:
+                pass
+
+        return cls(
+            request_id=data["request_id"],
+            request_type=RequestType(data["request_type"]),
+            subject_id=data["subject_id"],
+            submitted_at=datetime.fromisoformat(data["submitted_at"]),
+            status=RequestStatus(data["status"]),
+            completed_at=completed_at,
+            requested_data_categories=[DataCategory(c) for c in data.get("requested_data_categories", [])],
+            processed_stores=data.get("processed_stores", []),
+            results=data.get("results", {}),
+            verification_method=data.get("verification_method", ""),
+            notes=data.get("notes", ""),
+        )
+
 
 class DataResidencyMapper:
     """
@@ -166,7 +198,7 @@ class DataResidencyMapper:
         stores_file = self.storage_dir / "data_stores.json"
         if stores_file.exists():
             try:
-                with open(stores_file, 'r') as f:
+                with open(stores_file, 'r', encoding="utf-8") as f:
                     data = json.load(f)
                     for store_data in data:
                         store = DataStore(
@@ -183,6 +215,29 @@ class DataResidencyMapper:
                 logger.info(f"Loaded {len(self._stores)} data stores")
             except Exception as e:
                 logger.error(f"Failed to load data stores: {e}")
+
+        flows_file = self.storage_dir / "data_flows.json"
+        if flows_file.exists():
+            try:
+                with open(flows_file, 'r', encoding="utf-8") as f:
+                    data = json.load(f)
+                    for flow_data in data:
+                        flow = DataFlow(
+                            flow_id=flow_data["flow_id"],
+                            source=flow_data["source"],
+                            destination=flow_data["destination"],
+                            data_categories={DataCategory(c) for c in flow_data["data_categories"]},
+                            purpose=ProcessingPurpose(flow_data["purpose"]),
+                            frequency=flow_data.get("frequency", "continuous"),
+                            encryption_in_transit=flow_data.get("encryption_in_transit", True),
+                            cross_border=flow_data.get("cross_border", False),
+                            source_region=DataRegion(flow_data["source_region"]) if flow_data.get("source_region") else None,
+                            dest_region=DataRegion(flow_data["dest_region"]) if flow_data.get("dest_region") else None,
+                        )
+                        self._flows[flow.flow_id] = flow
+                logger.info(f"Loaded {len(self._flows)} data flows")
+            except Exception as e:
+                logger.error(f"Failed to load data flows: {e}")
     
     def register_data_store(
         self,
@@ -324,7 +379,7 @@ class DataResidencyMapper:
             for store in self._stores.values()
         ]
         
-        with open(stores_file, 'w') as f:
+        with open(stores_file, 'w', encoding="utf-8") as f:
             json.dump(data, f, indent=2)
     
     def _save_flows(self):
@@ -346,7 +401,7 @@ class DataResidencyMapper:
             for flow in self._flows.values()
         ]
         
-        with open(flows_file, 'w') as f:
+        with open(flows_file, 'w', encoding="utf-8") as f:
             json.dump(data, f, indent=2)
     
     def generate_data_flow_diagram(self, output_file: Optional[str] = None) -> Dict[str, Any]:
@@ -392,7 +447,7 @@ class DataResidencyMapper:
         }
         
         if output_file:
-            with open(output_file, 'w') as f:
+            with open(output_file, 'w', encoding="utf-8") as f:
                 json.dump(diagram, f, indent=2)
             logger.info(f"Saved data flow diagram to {output_file}")
         
@@ -431,9 +486,10 @@ class DataSubjectRequestHandler:
         
         # Request storage
         self._requests: Dict[str, DataSubjectRequest] = {}
+        self._load_requests()
         
         logger.info(
-            f"Data subject request handler initialized, SLA: {sla_hours} hours"
+            f"Data subject request handler initialised, SLA: {sla_hours} hours"
         )
     
     def submit_request(
@@ -606,10 +662,21 @@ class DataSubjectRequestHandler:
         
         return overdue
     
+    def _load_requests(self):
+        """Load existing requests from disk"""
+        for request_file in self.storage_dir.glob("dsr-*.json"):
+            try:
+                with open(request_file, 'r', encoding="utf-8") as f:
+                    data = json.load(f)
+                    req = DataSubjectRequest.from_dict(data)
+                    self._requests[req.request_id] = req
+            except Exception as e:
+                logger.error(f"Failed to load request {request_file}: {e}")
+
     def _save_request(self, request: DataSubjectRequest):
         """Save request to disk"""
         request_file = self.storage_dir / f"{request.request_id}.json"
-        with open(request_file, 'w') as f:
+        with open(request_file, 'w', encoding="utf-8") as f:
             json.dump(request.to_dict(), f, indent=2)
     
     def test_workflow(self) -> Dict[str, bool]:

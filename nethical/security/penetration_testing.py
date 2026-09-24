@@ -20,7 +20,7 @@ Capabilities:
 
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, timezone
 from enum import Enum
 import json
 import hashlib
@@ -52,6 +52,8 @@ class VulnerabilityStatus(Enum):
 class TestType(Enum):
     """Types of penetration tests."""
 
+    __test__ = False
+
     BLACK_BOX = "black_box"  # No prior knowledge
     GRAY_BOX = "gray_box"  # Partial knowledge
     WHITE_BOX = "white_box"  # Full knowledge
@@ -62,6 +64,8 @@ class TestType(Enum):
 
 class TestStatus(Enum):
     """Penetration test status."""
+
+    __test__ = False
 
     PLANNED = "planned"
     SCHEDULED = "scheduled"
@@ -123,16 +127,24 @@ class Vulnerability:
         if not self.target_fix_date:
             return True  # No SLA set
 
+        target = self.target_fix_date
+        if target.tzinfo is None:
+            target = target.replace(tzinfo=timezone.utc)
+
         if self.status in [
             VulnerabilityStatus.FIXED,
             VulnerabilityStatus.VERIFIED,
             VulnerabilityStatus.CLOSED,
         ]:
             if self.fixed_at:
-                return self.fixed_at <= self.target_fix_date
+                fixed = self.fixed_at
+                if fixed.tzinfo is None:
+                    fixed = fixed.replace(tzinfo=timezone.utc)
+                return fixed <= target
 
         # Still open, check if past due
-        return datetime.now() <= self.target_fix_date
+        now = datetime.now(timezone.utc)
+        return now <= target
 
 
 @dataclass
@@ -267,7 +279,7 @@ class VulnerabilityScanner:
     ) -> str:
         """Register a new vulnerability."""
         vuln_id = hashlib.sha256(
-            f"{title}:{','.join(affected_components)}:{datetime.now().isoformat()}".encode()
+            f"{title}:{','.join(affected_components)}:{datetime.now(timezone.utc).isoformat()}".encode()
         ).hexdigest()[:16]
 
         vulnerability = Vulnerability(
@@ -300,14 +312,14 @@ class VulnerabilityScanner:
                 vuln.assigned_to = assigned_to
 
             if status == VulnerabilityStatus.FIXED:
-                vuln.fixed_at = datetime.now()
+                vuln.fixed_at = datetime.now(timezone.utc)
             elif status == VulnerabilityStatus.VERIFIED:
-                vuln.verified_at = datetime.now()
+                vuln.verified_at = datetime.now(timezone.utc)
 
     def set_fix_deadline(self, vuln_id: str, days: int) -> None:
         """Set fix deadline based on severity SLA."""
         if vuln_id in self.vulnerabilities:
-            self.vulnerabilities[vuln_id].target_fix_date = datetime.now() + timedelta(days=days)
+            self.vulnerabilities[vuln_id].target_fix_date = datetime.now(timezone.utc) + timedelta(days=days)
 
     def get_vulnerabilities_by_severity(
         self, severity: VulnerabilitySeverity
@@ -352,7 +364,7 @@ class PenetrationTestManager:
     ) -> str:
         """Create a new penetration test."""
         test_id = hashlib.sha256(
-            f"{title}:{test_type.value}:{datetime.now().isoformat()}".encode()
+            f"{title}:{test_type.value}:{datetime.now(timezone.utc).isoformat()}".encode()
         ).hexdigest()[:16]
 
         test = PenetrationTest(
@@ -373,13 +385,13 @@ class PenetrationTestManager:
         """Start a penetration test."""
         if test_id in self.tests:
             self.tests[test_id].status = TestStatus.IN_PROGRESS
-            self.tests[test_id].start_date = datetime.now()
+            self.tests[test_id].start_date = datetime.now(timezone.utc)
 
     def complete_test(self, test_id: str, executive_summary: str) -> None:
         """Complete a penetration test."""
         if test_id in self.tests:
             self.tests[test_id].status = TestStatus.COMPLETED
-            self.tests[test_id].end_date = datetime.now()
+            self.tests[test_id].end_date = datetime.now(timezone.utc)
             self.tests[test_id].executive_summary = executive_summary
 
     def add_finding_to_test(self, test_id: str, vuln_id: str) -> None:
@@ -412,7 +424,7 @@ class PenetrationTestManager:
                 "by_severity": severity_counts,
                 "findings": [f.to_dict() for f in findings if f],
             },
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
 
@@ -543,7 +555,7 @@ class BugBountyProgram:
     ) -> str:
         """Submit a vulnerability through bug bounty program."""
         submission_id = hashlib.sha256(
-            f"{researcher}:{title}:{datetime.now().isoformat()}".encode()
+            f"{researcher}:{title}:{datetime.now(timezone.utc).isoformat()}".encode()
         ).hexdigest()[:16]
 
         self.submissions[submission_id] = {
@@ -552,7 +564,7 @@ class BugBountyProgram:
             "description": description,
             "severity": severity.value,
             "proof_of_concept": proof_of_concept,
-            "submitted_at": datetime.now().isoformat(),
+            "submitted_at": datetime.now(timezone.utc).isoformat(),
             "status": "submitted",
             "reward_amount": 0.0,
         }
@@ -588,7 +600,7 @@ class PenetrationTestingFramework:
     """Comprehensive penetration testing framework."""
 
     def __init__(self, organization: str):
-        """Initialize penetration testing framework."""
+        """Initialise penetration testing framework."""
         self.organization = organization
         self.test_manager = PenetrationTestManager()
         self.red_team_manager = RedTeamManager()
@@ -596,7 +608,7 @@ class PenetrationTestingFramework:
         self.bug_bounty_program = BugBountyProgram(f"{organization} Bug Bounty")
         self.metadata = {
             "organization": organization,
-            "created_at": datetime.now().isoformat(),
+            "created_at": datetime.now(timezone.utc).isoformat(),
             "version": "1.0.0",
         }
 
@@ -643,11 +655,11 @@ class PenetrationTestingFramework:
                 "exercises": [ex.to_dict() for ex in self.purple_team_manager.exercises.values()],
             },
             "bug_bounty": self.bug_bounty_program.get_program_stats(),
-            "generated_at": datetime.now().isoformat(),
+            "generated_at": datetime.now(timezone.utc).isoformat(),
         }
 
     def export_to_json(self, filepath: str) -> None:
         """Export penetration testing data to JSON file."""
         report = self.generate_comprehensive_report()
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(report, f, indent=2)

@@ -284,12 +284,16 @@ class TestSecurityDocumentation:
     
     def test_security_hardening_guide_exists(self):
         """Verify security hardening guide exists"""
-        guide = Path("docs/Security_hardening_guide.md")
+        guide = Path("docs/security/Security_hardening_guide.md")
+        if not guide.exists():
+            guide = Path("docs/Security_hardening_guide.md")
         assert guide.exists(), "Security hardening guide not found"
     
     def test_security_hardening_guide_completeness(self):
         """Verify security hardening guide covers all layers"""
-        guide = Path("docs/Security_hardening_guide.md")
+        guide = Path("docs/security/Security_hardening_guide.md")
+        if not guide.exists():
+            guide = Path("docs/Security_hardening_guide.md")
         with open(guide, encoding="utf-8") as f:
             content = f.read()
         

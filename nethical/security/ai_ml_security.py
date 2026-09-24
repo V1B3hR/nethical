@@ -23,7 +23,7 @@ Key Features:
 
 from typing import Dict, List, Optional, Any, Tuple, Callable, Union
 from dataclasses import dataclass, field
-from datetime import datetime
+from datetime import datetime, timezone
 from enum import Enum
 from abc import ABC, abstractmethod
 import numpy as np
@@ -2430,7 +2430,7 @@ class DifferentialPrivacyManager:
             "original_value": value,
             "noised_value": noised_value,
             "epsilon_cost": epsilon_cost,
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         })
 
         return noised_value, True
@@ -2577,7 +2577,7 @@ class FederatedLearningCoordinator:
         return {
             "update_count": len(updates),
             "aggregation_method": "secure",
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
         }
 
     def _simple_aggregate(self, updates: List[Dict[str, Any]]) -> Dict[str, Any]:
@@ -2881,7 +2881,7 @@ class AIMLSecurityManager:
     def export_security_report(self) -> Dict[str, Any]:
         """Export comprehensive security report."""
         return {
-            "timestamp": datetime.now().isoformat(),
+            "timestamp": datetime.now(timezone.utc).isoformat(),
             "security_status": self.get_security_status(),
             "compliance": {
                 "adversarial_protection": self.adversarial_defense is not None,
