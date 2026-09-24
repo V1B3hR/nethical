@@ -18,7 +18,7 @@ Key Features:
 from typing import Dict, List, Optional, Any, Callable, Set
 from dataclasses import dataclass, field
 from enum import Enum
-from datetime import datetime
+from datetime import datetime, timezone
 import threading
 import logging
 import json
@@ -78,7 +78,7 @@ class RuntimeState:
     pending_actions: List[Dict[str, Any]] = field(default_factory=list)
     latency_metrics: Dict[str, float] = field(default_factory=dict)
     policy_state: Dict[str, Any] = field(default_factory=dict)
-    last_updated: datetime = field(default_factory=datetime.now)
+    last_updated: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
 
 
 class RuntimeVerifier:
@@ -104,7 +104,7 @@ class RuntimeVerifier:
         monitoring_interval_ms: int = 100
     ):
         """
-        Initialize the runtime verifier.
+        Initialise the runtime verifier.
         
         Args:
             max_violations_before_halt: Maximum violations before triggering safe mode
@@ -220,7 +220,8 @@ class RuntimeVerifier:
         handler: Callable[[InvariantViolation], None]
     ) -> None:
         """Add a handler to be called when violations occur."""
-        self._violation_handlers.append(handler)
+        with self._lock:
+            self._violation_handlers.append(handler)
     
     def update_state(
         self,
@@ -259,7 +260,7 @@ class RuntimeVerifier:
             if policy_update:
                 self._state.policy_state.update(policy_update)
             
-            self._state.last_updated = datetime.now()
+            self._state.last_updated = datetime.now(timezone.utc)
         
         # Check invariants after state update
         self._check_all_invariants()
@@ -306,16 +307,17 @@ class RuntimeVerifier:
     
     def _get_state_dict(self) -> Dict[str, Any]:
         """Convert runtime state to dictionary for invariant checks."""
-        return {
-            "agent_states": dict(self._state.agent_states),
-            "decision_history": list(self._state.decision_history),
-            "terminated_agents": set(self._state.terminated_agents),
-            "risk_scores": dict(self._state.risk_scores),
-            "pending_actions": list(self._state.pending_actions),
-            "latency_metrics": dict(self._state.latency_metrics),
-            "policy_state": dict(self._state.policy_state),
-            "safe_mode": self._safe_mode
-        }
+        with self._lock:
+            return {
+                "agent_states": dict(self._state.agent_states),
+                "decision_history": list(self._state.decision_history),
+                "terminated_agents": set(self._state.terminated_agents),
+                "risk_scores": dict(self._state.risk_scores),
+                "pending_actions": list(self._state.pending_actions),
+                "latency_metrics": dict(self._state.latency_metrics),
+                "policy_state": dict(self._state.policy_state),
+                "safe_mode": self._safe_mode
+            }
     
     def _handle_violation(
         self,
@@ -323,19 +325,23 @@ class RuntimeVerifier:
         state: Dict[str, Any]
     ) -> None:
         """Handle an invariant violation."""
+        now = datetime.now(timezone.utc)
         violation = InvariantViolation(
             invariant_name=invariant.name,
             severity=invariant.severity,
-            timestamp=datetime.now(),
+            timestamp=now,
             details=f"Invariant '{invariant.description}' violated",
             evidence={"state_snapshot": state}
         )
         
-        self._violations.append(violation)
+        with self._lock:
+            self._violations.append(violation)
+            handlers = list(self._violation_handlers)
+
         logger.warning(f"Invariant violation: {violation}")
         
         # Notify handlers
-        for handler in self._violation_handlers:
+        for handler in handlers:
             try:
                 handler(violation)
             except Exception as e:
@@ -352,32 +358,37 @@ class RuntimeVerifier:
                     logger.error(f"Auto-remediation failed: {e}")
         
         # Check if we should enter safe mode
-        fatal_violations = sum(
-            1 for v in self._violations
-            if v.severity == InvariantSeverity.FATAL
-        )
-        
-        if fatal_violations >= 1 or len(self._violations) >= self._max_violations:
+        with self._lock:
+            fatal_violations = sum(
+                1 for v in self._violations
+                if v.severity == InvariantSeverity.FATAL
+            )
+            should_halt = fatal_violations >= 1 or len(self._violations) >= self._max_violations
+
+        if should_halt:
             self._trigger_safe_mode()
     
     def _trigger_safe_mode(self) -> None:
         """Trigger safe mode to halt dangerous operations."""
-        self._safe_mode = True
-        logger.critical("SAFE MODE TRIGGERED - Restricting all operations")
-        
-        # Create safe mode violation record
-        violation = InvariantViolation(
-            invariant_name="safe_mode_trigger",
-            severity=InvariantSeverity.FATAL,
-            timestamp=datetime.now(),
-            details="Safe mode triggered due to critical violations",
-            evidence={"total_violations": len(self._violations)}
-        )
-        self._violations.append(violation)
+        now = datetime.now(timezone.utc)
+        with self._lock:
+            self._safe_mode = True
+            logger.critical("SAFE MODE TRIGGERED - Restricting all operations")
+            
+            # Create safe mode violation record
+            violation = InvariantViolation(
+                invariant_name="safe_mode_trigger",
+                severity=InvariantSeverity.FATAL,
+                timestamp=now,
+                details="Safe mode triggered due to critical violations",
+                evidence={"total_violations": len(self._violations)}
+            )
+            self._violations.append(violation)
     
     def is_safe_mode(self) -> bool:
         """Check if system is in safe mode."""
-        return self._safe_mode
+        with self._lock:
+            return self._safe_mode
     
     def exit_safe_mode(self, authorization_key: str) -> bool:
         """
@@ -389,13 +400,14 @@ class RuntimeVerifier:
         Returns:
             True if safe mode was exited
         """
-        # In production, this would verify the authorization key
-        if authorization_key and len(authorization_key) >= 8:
-            self._safe_mode = False
-            self._violations.clear()
-            logger.info("Safe mode exited with authorization")
-            return True
-        return False
+        with self._lock:
+            # In production, this would verify the authorization key
+            if authorization_key and len(authorization_key) >= 8:
+                self._safe_mode = False
+                self._violations.clear()
+                logger.info("Safe mode exited with authorization")
+                return True
+            return False
     
     def get_violations(
         self,
@@ -467,21 +479,20 @@ class RuntimeVerifier:
         terminated = state.get("terminated_agents", set())
         history = state.get("decision_history", [])
         
-        for decision in history:
+        for allow_idx, decision in enumerate(history):
             agent_id = decision.get("agent_id")
             decision_type = decision.get("decision")
             
             if agent_id in terminated and decision_type == "ALLOW":
                 # Check if TERMINATE came before ALLOW
                 terminate_idx = -1
-                allow_idx = -1
-                
                 for i, d in enumerate(history):
-                    if d.get("agent_id") == agent_id:
-                        if d.get("decision") == "TERMINATE":
-                            terminate_idx = i
-                        elif d.get("decision") == "ALLOW" and i > terminate_idx >= 0:
-                            return False  # ALLOW after TERMINATE
+                    if d.get("agent_id") == agent_id and d.get("decision") == "TERMINATE":
+                        terminate_idx = i
+                
+                # If agent was terminated externally or TERMINATE was earlier in history
+                if terminate_idx == -1 or allow_idx > terminate_idx:
+                    return False  # ALLOW after TERMINATE
         
         return True
     
@@ -612,32 +623,34 @@ def get_runtime_verifier() -> RuntimeVerifier:
 def verify_before_decision(
     agent_id: str,
     action: str,
-    proposed_decision: str
+    proposed_decision: str,
+    verifier: Optional[RuntimeVerifier] = None,
 ) -> bool:
     """
     Verify invariants before making a decision.
     
     This function should be called before any governance decision
-    is finalized to ensure it won't violate safety invariants.
+    is finalised to ensure it won't violate safety invariants.
     
     Args:
         agent_id: The agent making the request
         action: The proposed action
         proposed_decision: The proposed governance decision
+        verifier: Optional RuntimeVerifier instance (uses global singleton if omitted)
         
     Returns:
         True if the decision is safe to proceed
     """
-    verifier = get_runtime_verifier()
+    v = verifier or get_runtime_verifier()
     
     # Check if in safe mode
-    if verifier.is_safe_mode():
+    if v.is_safe_mode():
         if proposed_decision == "ALLOW":
             logger.warning(f"Blocking ALLOW decision in safe mode: {agent_id}")
             return False
     
     # Check no-allow-after-terminate
-    state = verifier._get_state_dict()
+    state = v._get_state_dict()
     if agent_id in state.get("terminated_agents", set()):
         if proposed_decision == "ALLOW":
             logger.warning(
