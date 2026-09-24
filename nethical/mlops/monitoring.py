@@ -131,7 +131,7 @@ class Alert:
     severity: AlertSeverity
     title: str
     message: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     source: Optional[str] = None
     metadata: Dict[str, Any] = field(default_factory=dict)
     acknowledged: bool = False
@@ -154,7 +154,7 @@ class MetricPoint:
     name: str
     value: float
     metric_type: MetricType
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     tags: Dict[str, str] = field(default_factory=dict)
 
     def to_dict(self) -> Dict[str, Any]:

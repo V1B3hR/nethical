@@ -297,13 +297,13 @@ class AnomalyMLClassifier:
             "version": self.version
         }
         
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(model_data, f, indent=2)
     
     @classmethod
     def load(cls, filepath: str) -> "AnomalyMLClassifier":
         """Load trained model from JSON file."""
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             model_data = json.load(f)
         
         classifier = cls(

@@ -228,7 +228,7 @@ class DataVersion:
     path: str
     schema: DataSchema
     checksum: str
-    timestamp: datetime = field(default_factory=datetime.utcnow)
+    timestamp: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     metadata: Dict[str, Any] = field(default_factory=dict)
     status: DataStatus = DataStatus.PENDING
     validation_errors: List[str] = field(default_factory=list)
@@ -664,7 +664,7 @@ class DataPipeline:
 
     def _save_version_metadata(self, version: DataVersion) -> None:
         version_file = self.versions_dir / f"{version.version_id}.json"
-        with open(version_file, "w") as f:
+        with open(version_file, "w", encoding="utf-8") as f:
             json.dump(version.to_dict(), f, indent=2)
 
     def _load_versions(self) -> None:
@@ -672,7 +672,7 @@ class DataPipeline:
             if jf.name == self.MANIFEST_FILENAME:
                 continue
             try:
-                with open(jf) as f:
+                with open(jf, "r", encoding="utf-8") as f:
                     data = json.load(f)
                     version = DataVersion.from_dict(data)
                     self.versions[version.version_id] = version
@@ -722,7 +722,7 @@ class DataPipeline:
             ],
             "lineage_edges": self.export_lineage(),
         }
-        with open(manifest_path, "w") as f:
+        with open(manifest_path, "w", encoding="utf-8") as f:
             json.dump(manifest, f, indent=2)
 
     # ------------------------------------------------------------------
@@ -751,7 +751,7 @@ def ingest_all(dataset_list_path=Path("datasets/datasets"), download_dir=Path("d
     """Legacy function; retained for backward compatibility."""
     download_dir.mkdir(parents=True, exist_ok=True)
     try:
-        with open(dataset_list_path) as f:
+        with open(dataset_list_path, "r", encoding="utf-8") as f:
             for line in f:
                 url = line.strip()
                 if url and url.startswith("http"):

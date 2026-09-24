@@ -161,7 +161,7 @@ class ModelVersion:
     model_path: str
     stage: ModelStage
     status: ModelStatus = ModelStatus.ACTIVE
-    created_at: datetime = field(default_factory=datetime.utcnow)
+    created_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     created_by: Optional[str] = None
     description: Optional[str] = None
     tags: List[str] = field(default_factory=list)
@@ -363,10 +363,10 @@ class ModelRegistry:
     def register_model(
         self,
         name: str,
-        version: Optional[str],
-        model_path: Union[str, Path],
+        version: Optional[str] = None,
+        model_path: Optional[Union[str, Path]] = None,
         stage: ModelStage = ModelStage.DEVELOPMENT,
-        metrics: Optional[ModelMetrics] = None,
+        metrics: Optional[Union[ModelMetrics, Dict[str, Any]]] = None,
         hyperparameters: Optional[Dict[str, Any]] = None,
         description: Optional[str] = None,
         tags: Optional[List[str]] = None,
@@ -394,7 +394,7 @@ class ModelRegistry:
             version: Version string (semantic x.y.z recommended)
             model_path: File or directory of model artifact(s)
             stage: Initial stage (default: development)
-            metrics: Performance metrics
+            metrics: Performance metrics (ModelMetrics instance or dict)
             hyperparameters: Hyperparams used in training
             description: Human readable description
             tags: List of tags
@@ -410,9 +410,18 @@ class ModelRegistry:
         Returns:
             ModelVersion
         """
+        if model_path is None:
+            raise ValidationError("model_path must be specified to register a model")
+
         model_path = Path(model_path)
         if not model_path.exists():
             raise FileNotFoundError(f"Model artifact not found: {model_path}")
+
+        if isinstance(metrics, dict):
+            known_fields = {"accuracy", "precision", "recall", "f1_score", "auc_roc", "loss"}
+            std_fields = {k: v for k, v in metrics.items() if k in known_fields}
+            custom = {k: v for k, v in metrics.items() if k not in known_fields}
+            metrics = ModelMetrics(**std_fields, custom_metrics=custom)
 
         with self._lock:
             if version is None and self.auto_semver:
@@ -505,22 +514,30 @@ class ModelRegistry:
     def promote_model(
         self,
         version_id: str,
-        to_stage: ModelStage,
+        to_stage: Optional[ModelStage] = None,
         validate: bool = True,
         force: bool = False,
+        target_stage: Optional[ModelStage] = None,
     ) -> bool:
         """
         Promote a model to a new stage with optional validation and policy enforcement.
 
         Args:
             version_id: name:version
-            to_stage: destination stage
+            to_stage: destination stage (or target_stage)
             validate: run built-in validations
             force: bypass transition policy (still moves artifacts)
+            target_stage: alias for to_stage
 
         Returns:
             True on success
         """
+        if to_stage is None:
+            if target_stage is not None:
+                to_stage = target_stage
+            else:
+                raise ValidationError("to_stage or target_stage must be specified")
+
         with self._lock:
             model = self._require_model(version_id)
             from_stage = model.stage
@@ -639,6 +656,10 @@ class ModelRegistry:
         latest: bool = True,
     ) -> Optional[ModelVersion]:
         with self._lock:
+            if name and name in self.models:
+                return self.models[name]
+            if name and ":" in name:
+                return self.models.get(name)
             if name and version:
                 return self.models.get(f"{name}:{version}")
             candidates = list(self.models.values())
@@ -847,7 +868,7 @@ class ModelRegistry:
         filepath = self.metadata_dir / filename
         temp_fd, temp_path = tempfile.mkstemp(dir=str(self.metadata_dir), prefix=".tmp_meta_")
         try:
-            with os.fdopen(temp_fd, "w") as f:
+            with os.fdopen(temp_fd, "w", encoding="utf-8") as f:
                 json.dump(model.to_dict(), f, indent=2, sort_keys=True)
             os.replace(temp_path, filepath)
         except Exception:
@@ -861,7 +882,7 @@ class ModelRegistry:
         """Load existing model metadata files into memory."""
         for metadata_file in self.metadata_dir.glob("*.json"):
             try:
-                with open(metadata_file) as f:
+                with open(metadata_file, "r", encoding="utf-8") as f:
                     data = json.load(f)
                 model = ModelVersion.from_dict(data)
                 self.models[model.version_id] = model
@@ -874,7 +895,7 @@ class ModelRegistry:
             "exported_at": datetime.now(timezone.utc).isoformat(),
             "models": {vid: mv.to_dict() for vid, mv in self.models.items()},
         }
-        with open(export_path, "w") as f:
+        with open(export_path, "w", encoding="utf-8") as f:
             json.dump(payload, f, indent=2)
         logger.info("Exported registry metadata to %s", export_path)
         return export_path
@@ -883,7 +904,7 @@ class ModelRegistry:
         self, import_path: Union[str, Path], merge: bool = True, overwrite: bool = False
     ):
         with self._lock:
-            with open(import_path) as f:
+            with open(import_path, "r", encoding="utf-8") as f:
                 payload = json.load(f)
             models_data = payload.get("models", {})
             for vid, data in models_data.items():

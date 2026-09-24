@@ -4,6 +4,7 @@
 This test creates sample datasets, processes them, and trains a model.
 """
 import json
+import random
 import shutil
 import tempfile
 from pathlib import Path
@@ -32,7 +33,7 @@ def test_end_to_end_pipeline():
         
         # Cyber security attacks dataset
         attacks_csv = data_dir / "attacks.csv"
-        with open(attacks_csv, 'w') as f:
+        with open(attacks_csv, 'w', encoding='utf-8') as f:
             f.write("attack_type,severity,anomaly_score,packet_count,label\n")
             for i in range(50):
                 if i % 3 == 0:
@@ -42,7 +43,7 @@ def test_end_to_end_pipeline():
         
         # Microsoft incidents dataset
         incidents_csv = data_dir / "incidents.csv"
-        with open(incidents_csv, 'w') as f:
+        with open(incidents_csv, 'w', encoding='utf-8') as f:
             f.write("IncidentGrade,Severity,AlertCount,DeviceId\n")
             for i in range(30):
                 if i % 2 == 0:
@@ -50,8 +51,8 @@ def test_end_to_end_pipeline():
                 else:
                     f.write(f"FalsePositive,Low,{1+i%5},device_{i}\n")
         
-        print(f"  ✓ Created {attacks_csv.name} (50 records)")
-        print(f"  ✓ Created {incidents_csv.name} (30 records)")
+        print(f"  [OK] Created {attacks_csv.name} (50 records)")
+        print(f"  [OK] Created {incidents_csv.name} (30 records)")
         
         # Step 2: Process datasets
         print("\n[2/5] Processing datasets...")
@@ -62,24 +63,25 @@ def test_end_to_end_pipeline():
         processor1 = CyberSecurityAttacksProcessor(output_dir=processed_dir)
         records1 = processor1.process(attacks_csv)
         file1 = processor1.save_processed_data(records1)
-        print(f"  ✓ Processed attacks: {len(records1)} records")
+        print(f"  [OK] Processed attacks: {len(records1)} records")
         
         # Process incidents
         processor2 = MicrosoftSecurityProcessor(output_dir=processed_dir)
         records2 = processor2.process(incidents_csv)
         file2 = processor2.save_processed_data(records2)
-        print(f"  ✓ Processed incidents: {len(records2)} records")
+        print(f"  [OK] Processed incidents: {len(records2)} records")
         
         # Step 3: Merge datasets
         print("\n[3/5] Merging datasets...")
         
         all_records = records1 + records2
+        random.Random(42).shuffle(all_records)
         merged_file = tmpdir / "merged_data.json"
         
-        with open(merged_file, 'w') as f:
+        with open(merged_file, 'w', encoding='utf-8') as f:
             json.dump(all_records, f, indent=2)
         
-        print(f"  ✓ Merged {len(all_records)} total records")
+        print(f"  [OK] Merged {len(all_records)} total records")
         
         # Step 4: Train model
         print("\n[4/5] Training BaselineMLClassifier...")
@@ -93,8 +95,8 @@ def test_end_to_end_pipeline():
         clf = BaselineMLClassifier()
         clf.train(train_data)
         
-        print(f"  ✓ Trained on {len(train_data)} samples")
-        print(f"  ✓ Feature weights learned:")
+        print(f"  [OK] Trained on {len(train_data)} samples")
+        print(f"  [OK] Feature weights learned:")
         for feature, weight in clf.feature_weights.items():
             print(f"      {feature:20s}: {weight:.4f}")
         
@@ -135,10 +137,10 @@ def test_end_to_end_pipeline():
         assert pred1['label'] == pred2['label']
         assert abs(pred1['score'] - pred2['score']) < 0.001
         
-        print(f"  ✓ Model saved and loaded successfully")
+        print(f"  [OK] Model saved and loaded successfully")
         
         print("\n" + "=" * 70)
-        print("  ✓ All integration tests passed!")
+        print("  [OK] All integration tests passed!")
         print("=" * 70 + "\n")
 
 

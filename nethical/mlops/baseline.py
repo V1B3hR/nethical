@@ -279,7 +279,7 @@ class BaselineMLClassifier:
             "version": self.version
         }
         
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(model_data, f, indent=2)
     
     @classmethod
@@ -293,7 +293,7 @@ class BaselineMLClassifier:
         Returns:
             Loaded BaselineMLClassifier instance
         """
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             model_data = json.load(f)
         
         classifier = cls(
@@ -476,13 +476,13 @@ if _TORCH_AVAILABLE:
                 "scaler_scale": self.scaler.scale_.tolist() if self.scaler else None,
                 "version": "2.1"
             }
-            with open(filepath + ".meta.json", "w") as f:
+            with open(filepath + ".meta.json", "w", encoding="utf-8") as f:
                 json.dump(meta, f, indent=2)
 
         @classmethod
         def load(cls, filepath: str) -> "AdvancedMLClassifier":
             # Load meta
-            with open(filepath + ".meta.json", "r") as f:
+            with open(filepath + ".meta.json", "r", encoding="utf-8") as f:
                 meta = json.load(f)
             model = cls(meta["input_dim"], num_classes=meta["num_classes"], d_model=meta["d_model"])
             model.load_state_dict(torch.load(filepath + ".pt"))

@@ -261,13 +261,13 @@ class CorrelationMLClassifier:
             "version": self.version
         }
         
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(model_data, f, indent=2)
     
     @classmethod
     def load(cls, filepath: str) -> "CorrelationMLClassifier":
         """Load trained model from JSON file."""
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             model_data = json.load(f)
         
         classifier = cls(
@@ -472,13 +472,13 @@ class MultiPatternMLClassifier:
             "timestamp": self.timestamp or datetime.now().isoformat(),
             "version": "1.0",
         }
-        with open(filepath, "w") as f:
+        with open(filepath, "w", encoding="utf-8") as f:
             json.dump(model_data, f, indent=2)
 
     @classmethod
     def load(cls, filepath: str) -> "MultiPatternMLClassifier":
         """Load from JSON file."""
-        with open(filepath, "r") as f:
+        with open(filepath, "r", encoding="utf-8") as f:
             model_data = json.load(f)
         classifier = cls(
             pattern_types=model_data.get("pattern_types", None),
