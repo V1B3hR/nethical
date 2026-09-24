@@ -8,6 +8,14 @@ from .timescaledb import TimescaleDBStore
 from .elasticsearch_store import ElasticsearchAuditStore
 from .postgres_backend import PostgresBackend, PostgresConfig
 from .s3_backend import S3Backend, S3Config, ObjectMetadata
+from .tamper_store import (
+    TamperStore,
+    TamperEvidentOfflineStore,
+    Event,
+    Anchor,
+    MerkleAppender,
+    TamperStoreError,
+)
 
 __all__ = [
     "RedisCache",
@@ -18,4 +26,11 @@ __all__ = [
     "S3Backend",
     "S3Config",
     "ObjectMetadata",
+    "TamperStore",
+    "TamperEvidentOfflineStore",
+    "Event",
+    "Anchor",
+    "MerkleAppender",
+    "TamperStoreError",
 ]
+

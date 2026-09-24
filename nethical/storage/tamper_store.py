@@ -390,13 +390,14 @@ class TamperEvidentOfflineStore:
         Export a sequence of records suitable for durable persistence (e.g., JSONL).
         """
         with self._lock:
+            now = time.time()
             recs: List[Dict[str, Any]] = [
                 {
                     "type": "header",
                     "schema_version": self.SCHEMA_VERSION,
                     "digest": self._digest,
-                    "created_ts": time.time(),
-                    "created_ts_iso": _utc_iso(time.time()),
+                    "created_ts": now,
+                    "created_ts_iso": _utc_iso(now),
                 }
             ]
             recs.extend(ev.to_record() for ev in self._events)
@@ -408,11 +409,12 @@ class TamperEvidentOfflineStore:
         """
         Build a store from exported records. Verifies integrity as it loads.
         """
+        records_list = list(records)
         digest = "sha256"
         tsa_url: Optional[str] = None
 
         # find header if present
-        for r in records:
+        for r in records_list:
             if r.get("type") == "header":
                 digest = r.get("digest", "sha256")
                 break
@@ -420,10 +422,19 @@ class TamperEvidentOfflineStore:
         store = cls(tsa_url=tsa_url, digest=digest)
 
         seq_counter = 0
-        for r in records:
+        for r in records_list:
             rtype = r.get("type")
             if rtype == "event":
                 seq_counter += 1
+                if r.get("seq") != seq_counter:
+                    raise TamperStoreError(f"Event sequence mismatch: expected {seq_counter}, got {r.get('seq')}")
+
+                expected_prev = store._merkle.root()
+                if r.get("prev_root") != expected_prev:
+                    raise TamperStoreError(
+                        f"Event prev_root mismatch at seq {r.get('seq')}: expected {expected_prev}, got {r.get('prev_root')}"
+                    )
+
                 # Recreate hashing record and recompute leaf to verify integrity
                 record_for_hash = {
                     "_seq": r["seq"],
@@ -471,3 +482,7 @@ class TamperEvidentOfflineStore:
             raise TamperStoreError("Verification failed after import")
 
         return store
+
+
+# Convenient alias for sovereign tamper-evident store
+TamperStore = TamperEvidentOfflineStore

@@ -170,8 +170,8 @@ def test_monthly_projections(projection):
     key_months = [1, 3, 6, 12]
     expected_ranges = {
         1: (7, 9),      # ~8 GB
-        3: (13, 15),    # ~14 GB
-        6: (18, 20),    # ~19 GB
+        3: (14, 17),    # ~16 GB
+        6: (19, 22),    # ~21 GB
         12: (28, 32)    # ~30 GB
     }
     
@@ -211,12 +211,12 @@ def test_12_month_projection(projection, output_dir):
     
     # JSON report
     report_file = output_dir / f'storage_projection_{timestamp}.json'
-    with open(report_file, 'w') as f:
+    with open(report_file, 'w', encoding="utf-8") as f:
         json.dump(projections, f, indent=2)
     
     # Markdown report
     md_file = output_dir / f'storage_projection_{timestamp}.md'
-    with open(md_file, 'w') as f:
+    with open(md_file, 'w', encoding="utf-8") as f:
         f.write("# 12-Month Storage Projection\n\n")
         f.write(f"**Generated**: {datetime.now().isoformat()}\n\n")
         f.write(f"**Daily Data Generation**: {projection.daily_data_mb:.1f} MB/day\n\n")

@@ -52,6 +52,7 @@ htmlcov/
 .tox/
 tests/validation/results/
 tests/performance/results/
+tests/storage/results/
 
 # Logs & Runtime Chunks
 *.log

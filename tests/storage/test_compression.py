@@ -384,7 +384,7 @@ def test_compression_ratio_with_different_data_types(compression_metrics):
         'timestamp': datetime.now().isoformat(),
         'level': 'INFO',
         'message': 'Test message ' * 50,
-        'metadata': {'key': 'value'} * 20
+        'metadata': {f'key_{i}': 'value' for i in range(20)}
     }).encode()
     
     # Metrics (numerical, medium compression)
