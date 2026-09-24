@@ -147,7 +147,7 @@ class PolicyPack:
         versions_file = self.storage_dir / "versions.jsonl"
         if versions_file.exists():
             try:
-                with open(versions_file, 'r') as f:
+                with open(versions_file, 'r', encoding='utf-8') as f:
                     for line in f:
                         data = json.loads(line)
                         version = PolicyVersion(
@@ -169,7 +169,7 @@ class PolicyPack:
         state_file = self.storage_dir / "state.json"
         if state_file.exists():
             try:
-                with open(state_file, 'r') as f:
+                with open(state_file, 'r', encoding='utf-8') as f:
                     state = json.load(f)
                     self._current_version = state.get("current_version")
                     self._production_version = state.get("production_version")
@@ -185,7 +185,7 @@ class PolicyPack:
     def _save_version(self, version: PolicyVersion):
         """Save a version to storage"""
         versions_file = self.storage_dir / "versions.jsonl"
-        with open(versions_file, 'a') as f:
+        with open(versions_file, 'a', encoding='utf-8') as f:
             f.write(json.dumps(version.to_dict()) + '\n')
     
     def _save_state(self):
@@ -197,7 +197,7 @@ class PolicyPack:
             "last_updated": datetime.now(timezone.utc).isoformat()
         }
         state_file = self.storage_dir / "state.json"
-        with open(state_file, 'w') as f:
+        with open(state_file, 'w', encoding='utf-8') as f:
             json.dump(state, f, indent=2)
     
     def _calculate_checksum(self, content: Dict[str, Any]) -> str:
@@ -432,6 +432,18 @@ class PolicyPack:
             return None
         version = self._versions.get(self._canary_version)
         return version.content if version else None
+
+    def get_production_version(self) -> Optional[PolicyVersion]:
+        """Get production policy version object"""
+        if not self._production_version:
+            return None
+        return self._versions.get(self._production_version)
+
+    def get_canary_version(self) -> Optional[PolicyVersion]:
+        """Get canary policy version object"""
+        if not self._canary_version:
+            return None
+        return self._versions.get(self._canary_version)
     
     def test_rollback(self) -> bool:
         """

@@ -121,9 +121,9 @@ class PolicyEngine:
             if not _is_rule_enabled(rule):
                 continue
 
-            cond = rule.get("when", {})
+            cond = rule.get("when") or rule.get("conditions") or rule.get("condition") or {}
             if self._eval_condition(cond, eval_facts):
-                action = rule.get("action", {}) or {}
+                action = rule.get("action") or rule.get("actions") or {}
                 decision = _normalize_decision(
                     action.get("decision") or action.get("effect") or "RESTRICT"
                 )
