@@ -85,7 +85,7 @@ class FlamegraphProfiler:
         ps.print_stats(50)  # Top 50 functions
         
         report_file = self.output_dir / f"profile_{func_name}_{timestamp}.txt"
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             f.write(s.getvalue())
         
         logger.info(f"Profile saved to {report_file}")
