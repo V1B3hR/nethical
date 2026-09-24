@@ -21,8 +21,10 @@ Features:
 """
 
 import asyncio
+import collections
 import hashlib
 import logging
+import threading
 import time
 import uuid
 from dataclasses import dataclass, field
@@ -113,7 +115,7 @@ class MerkleTree:
 
     def __init__(self, branching_factor: int = 16):
         """
-        Initialize Merkle tree.
+        Initialise Merkle tree.
 
         Args:
             branching_factor: Number of children per internal node
@@ -305,13 +307,13 @@ class SyncSession:
 
 class AntiEntropyProtocol:
     """
-    Anti-Entropy Protocol for background synchronization.
+    Anti-Entropy Protocol for background synchronisation.
 
-    Implements gossip-based synchronization with:
+    Implements gossip-based synchronisation with:
     - Merkle tree-based efficient diffing
-    - Delta synchronization
+    - Delta synchronisation
     - Configurable sync intervals
-    - Prioritized updates for critical changes
+    - Prioritised updates for critical changes
 
     The protocol runs in three phases:
     1. Exchange digests (Merkle tree roots)
@@ -326,27 +328,30 @@ class AntiEntropyProtocol:
         sync_interval_sec: float = 30.0,
         max_concurrent_syncs: int = 3,
         max_delta_batch_size: int = 100,
+        max_completed_history: int = 100,
     ):
         """
-        Initialize anti-entropy protocol.
+        Initialise anti-entropy protocol.
 
         Args:
-            crdt: The PolicyCRDT to synchronize
+            crdt: The PolicyCRDT to synchronise
             node_id: ID of this node
             sync_interval_sec: Interval between sync attempts
             max_concurrent_syncs: Maximum concurrent sync sessions
             max_delta_batch_size: Maximum deltas per batch
+            max_completed_history: Number of completed sessions retained in history
         """
         self.crdt = crdt
         self.node_id = node_id
         self.sync_interval_sec = sync_interval_sec
         self.max_concurrent_syncs = max_concurrent_syncs
         self.max_delta_batch_size = max_delta_batch_size
+        self.max_completed_history = max_completed_history
+        self._lock = threading.RLock()
 
         # Sync state
         self.active_sessions: Dict[str, SyncSession] = {}
-        self.completed_sessions: List[SyncSession] = []
-        self.max_completed_history = 100
+        self.completed_sessions: collections.deque[SyncSession] = collections.deque(maxlen=max_completed_history)
 
         # Merkle tree for efficient comparison
         self.merkle_tree = MerkleTree()
@@ -363,7 +368,7 @@ class AntiEntropyProtocol:
         self._on_sync_complete: Optional[Callable[[SyncSession], None]] = None
         self._on_conflict: Optional[Callable[[str, PolicyState, PolicyState], None]] = None
 
-        logger.info(f"AntiEntropyProtocol initialized for node {node_id}")
+        logger.info(f"AntiEntropyProtocol initialised for node {node_id}")
 
     def add_peer(self, peer_id: str):
         """
@@ -518,9 +523,10 @@ class AntiEntropyProtocol:
 
         for delta in deltas:
             try:
+                is_new = delta.policy_id not in self.crdt.policies
                 applied = self.crdt.apply_delta(delta)
                 if applied:
-                    if delta.operation == "add":
+                    if is_new or delta.operation == "add":
                         result.new_policies.append(delta.policy_id)
                     else:
                         result.updated_policies.append(delta.policy_id)
@@ -546,15 +552,17 @@ class AntiEntropyProtocol:
         """
         session.completed_at = time.time()
 
-        if success:
-            session.state = SyncState.COMPLETED
-            self.successful_syncs += 1
-        else:
-            session.state = SyncState.FAILED
-            session.error = error
-            self.failed_syncs += 1
+        with self._lock:
+            if success:
+                session.state = SyncState.COMPLETED
+                self.successful_syncs += 1
+            else:
+                session.state = SyncState.FAILED
+                session.error = error
+                self.failed_syncs += 1
 
-        self.total_syncs += 1
+            self.total_syncs += 1
+
         self._complete_session(session)
 
         logger.info(
@@ -565,49 +573,50 @@ class AntiEntropyProtocol:
 
     def _complete_session(self, session: SyncSession):
         """Move session from active to completed."""
-        if session.session_id in self.active_sessions:
-            del self.active_sessions[session.session_id]
+        with self._lock:
+            if session.session_id in self.active_sessions:
+                del self.active_sessions[session.session_id]
 
-        self.completed_sessions.append(session)
+            self.completed_sessions.append(session)
+            cb = self._on_sync_complete
 
-        # Trim history
-        if len(self.completed_sessions) > self.max_completed_history:
-            self.completed_sessions = self.completed_sessions[-self.max_completed_history :]
-
-        # Call completion callback
-        if self._on_sync_complete:
-            self._on_sync_complete(session)
+        # Call completion callback outside lock
+        if cb:
+            cb(session)
 
     def on_sync_complete(self, callback: Callable[[SyncSession], None]):
         """Set callback for sync completion."""
-        self._on_sync_complete = callback
+        with self._lock:
+            self._on_sync_complete = callback
 
     def on_conflict(self, callback: Callable[[str, PolicyState, PolicyState], None]):
         """Set callback for conflict detection."""
-        self._on_conflict = callback
+        with self._lock:
+            self._on_conflict = callback
 
     def get_statistics(self) -> Dict[str, Any]:
         """Get synchronization statistics."""
-        return {
-            "total_syncs": self.total_syncs,
-            "successful_syncs": self.successful_syncs,
-            "failed_syncs": self.failed_syncs,
-            "success_rate": (
-                self.successful_syncs / self.total_syncs
-                if self.total_syncs > 0
-                else 0.0
-            ),
-            "active_sessions": len(self.active_sessions),
-            "peer_count": len(self.peers),
-            "current_digest": self.get_digest(),
-        }
+        with self._lock:
+            return {
+                "total_syncs": self.total_syncs,
+                "successful_syncs": self.successful_syncs,
+                "failed_syncs": self.failed_syncs,
+                "success_rate": (
+                    self.successful_syncs / self.total_syncs
+                    if self.total_syncs > 0
+                    else 0.0
+                ),
+                "active_sessions": len(self.active_sessions),
+                "peer_count": len(self.peers),
+                "current_digest": self.get_digest(),
+            }
 
-    async def run_background_sync(self, get_peer_digest: Callable[[str], str]):
+    async def run_background_sync(self, get_peer_digest: Callable[[str], Any]):
         """
         Run background synchronization loop.
 
         Args:
-            get_peer_digest: Async function to get digest from peer
+            get_peer_digest: Async or sync function to get digest from peer
         """
         logger.info(f"Starting background sync with interval {self.sync_interval_sec}s")
 
@@ -617,10 +626,20 @@ class AntiEntropyProtocol:
                 self.rebuild_merkle_tree()
 
                 # Sync with each peer
-                for peer_id in list(self.peers):
+                with self._lock:
+                    peer_list = list(self.peers)
+
+                for peer_id in peer_list:
                     try:
-                        # Get peer's digest
-                        peer_digest = get_peer_digest(peer_id)
+                        # Get peer's digest (handling sync or async callable)
+                        if asyncio.iscoroutinefunction(get_peer_digest):
+                            peer_digest = await get_peer_digest(peer_id)
+                        else:
+                            res = get_peer_digest(peer_id)
+                            if asyncio.iscoroutine(res):
+                                peer_digest = await res
+                            else:
+                                peer_digest = res
 
                         # Start sync if digests differ
                         if peer_digest != self.get_digest():

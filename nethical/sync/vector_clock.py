@@ -66,8 +66,8 @@ class VectorClock:
         Returns:
             Self for method chaining
         """
-        if self.node_id:
-            self.clock[self.node_id] = self.clock.get(self.node_id, 0) + 1
+        node = self.node_id or "local"
+        self.clock[node] = self.clock.get(node, 0) + 1
         return self
 
     def send_event(self) -> "VectorClock":

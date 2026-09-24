@@ -79,8 +79,8 @@ class GCounter:
         """
         if amount < 0:
             raise ValueError("GCounter can only be incremented")
-        if self.node_id:
-            self.counts[self.node_id] = self.counts.get(self.node_id, 0) + amount
+        node = self.node_id or "local"
+        self.counts[node] = self.counts.get(node, 0) + amount
         return self
 
     def value(self) -> int:
