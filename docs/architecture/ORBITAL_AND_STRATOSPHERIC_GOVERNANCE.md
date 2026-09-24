@@ -124,8 +124,14 @@ Where $G_{tx}(\theta) = \max(0, 32 - 25\log_{10}\theta)$ represents off-axis ant
 | [`nethical/space/detectors/spoofing_detector.py`](file:///c:/Projekty/Nethical/nethical/space/detectors/spoofing_detector.py) | Spaceborne GNSS cross-validation against star-tracker celestial references and IMUs. | Galileo OSNMA / Law 21 |
 | [`nethical/space/detectors/collision_detector.py`](file:///c:/Projekty/Nethical/nethical/space/detectors/collision_detector.py) | CARA conjunction risk, Foster $P_c$, and secondary debris collision vetoes. | EU Space Act / Law 21 & 22 |
 | [`nethical/space/detectors/beam_steering_auditor.py`](file:///c:/Projekty/Nethical/nethical/space/detectors/beam_steering_auditor.py) | Phased-array beam steering, ITU Article 22 EPFD limits, and radio quiet zones. | ITU Radio Regs / Law 20 |
+| [`nethical/space/detectors/stratospheric_detector.py`](file:///c:/Projekty/Nethical/nethical/space/detectors/stratospheric_detector.py) | Persistent surveillance dwell limiting, EMF frequency sniffing, and U-space FL000-FL600 transitions. | Law 25 (Privacy) / U-space |
 | [`nethical/space/orbital_governor.py`](file:///c:/Projekty/Nethical/nethical/space/orbital_governor.py) | Onboard satellite governor generating SHA-256 Merkle proofs in sub-100 µs latency loops. | ECSS-E-ST-40C / Law 13 |
 | [`nethical/edge/haps_governor.py`](file:///c:/Projekty/Nethical/nethical/edge/haps_governor.py) | Stratospheric pseudo-satellite governor: diurnal solar survival, station geocage, Law 25 privacy. | Law 25 (Privacy) / EASA HAPS |
+| [`nethical/space/ssa_client.py`](file:///c:/Projekty/Nethical/nethical/space/ssa_client.py) | Space Situational Awareness client ingesting CelesTrak TLEs and CCSDS 508.0-B-1 CDMs. | CCSDS 508.0-B-1 / EU SST |
+| [`nethical/space/hil_simulator.py`](file:///c:/Projekty/Nethical/nethical/space/hil_simulator.py) | Orbital Hardware-in-the-Loop simulator: jamming power ramps, spoofing steps, SEU radiation bit-flips. | ECSS-E-ST-40C Validation |
+| [`nethical/space/dual_use.py`](file:///c:/Projekty/Nethical/nethical/space/dual_use.py) | Dual-use payload classifier, optical GSD thresholds, and export control regimes (ITAR Cat XV / EU 2021/821). | ITAR Cat XV / EU 2021/821 |
+| [`nethical/space/certification.py`](file:///c:/Projekty/Nethical/nethical/space/certification.py) | Automated generators for ECSS-E-ST-40C/Q-ST-80C qualification dossiers and ITU Appendix 4 notices. | ESA ECSS / ITU-R Ap. 4 |
+| [`nethical/space/bus_security.py`](file:///c:/Projekty/Nethical/nethical/space/bus_security.py) | Spacecraft data bus security: SpaceWire, MIL-STD-1553B whitelist, and CCSDS telecommand HMAC guard. | ECSS-E-ST-50-12C / Law 21 |
 | [`nethical/compliance/packs/space_operations_pack.py`](file:///c:/Projekty/Nethical/nethical/compliance/packs/space_operations_pack.py) | Compliance pack for ITU, Outer Space Treaty, EU Space Act COM(2025) 335, and ESA Zero Debris. | International Space Treaties |
 
 ---
@@ -142,6 +148,13 @@ Where $G_{tx}(\theta) = \max(0, 32 - 25\log_{10}\theta)$ represents off-axis ant
 • Art. VII: Liability         • Art. 22: Non-GSO EPFD           • Mandatory CARA (Pc < 1e-4)
 • Art. IX: Due regard         • Quiet Zone Geofences            • 5-Year Deorbit Disposal
         │                                │                                │
+        ├────────────────────────────────┼────────────────────────────────┤
+        ▼                                ▼                                ▼
+[Dual-Use & Export Control]   [ECSS Space Standards]            [U-space Airspace]
+• US ITAR Category XV         • ECSS-E-ST-40C Software          • EU 2021/664 U-space
+• EU Reg 2021/821 Cat 7/9     • ECSS-Q-ST-80C Assurance         • FL000-FL600 Transition
+• Sub-half-metre GSD Gates    • SpaceWire ECSS-E-50-12C         • ADS-B Out / Mode S
+        │                                │                                │
         └────────────────────────────────┼────────────────────────────────┘
                                          ▼
                           [THE 25 FUNDAMENTAL LAWS]
@@ -157,7 +170,9 @@ Where $G_{tx}(\theta) = \max(0, 32 - 25\log_{10}\theta)$ represents off-axis ant
 
 All space modules and governors are covered by rigorous unit and integration suites in `tests/space/`, `tests/edge/test_haps_governor.py`, and `tests/compliance/`:
 - **Astrodynamics & TLE:** Verified Keplerian derivations, Euler coordinate rotations from orbital plane to ECI J2000, and NORAD TLE ingestion.
-- **Electronic Warfare:** Verified continuous-wave adaptive notch filter triggers and high-power barrage noise optical laser failovers.
-- **Conjunction Avoidance:** Verified Foster 2D collision probability calculation, miss distance thresholds, and secondary debris cloud maneuver vetoes.
-- **HAPS Solar & Privacy:** Verified night survival diurnal load-shedding and civilian sanctuary surveillance warrant verification.
-- **Test Results:** 41/41 tests passing in 1.05s with 100% green execution.
+- **Electronic Warfare & Hardware-in-the-Loop:** Verified continuous-wave adaptive notch filter triggers, barrage noise optical laser failovers, and HIL simulation latency benchmarks.
+- **Conjunction Avoidance & CCSDS CDMs:** Verified Foster 2D collision probability calculation, miss distance thresholds, CCSDS 508.0-B-1 CDM JSON/KVN parsing, and secondary debris cloud maneuver vetoes.
+- **HAPS Solar & Privacy:** Verified night survival diurnal load-shedding, persistent surveillance dwell time limits, EMF frequency intercept guards, and U-space FL000-FL600 transitions.
+- **Avionics Bus Security:** Verified SpaceWire/CCSDS telecommand HMAC authentication, kinetic opcode gating, and MIL-STD-1553B RT whitelist auditing.
+- **Institutional Certification:** Verified 1-click generation of ECSS-E-ST-40C/Q-ST-80C qualification dossiers and ITU Radio Regulations Appendix 4 space network notices.
+- **Test Results:** 59/59 tests passing in 1.12s with 100% green execution.

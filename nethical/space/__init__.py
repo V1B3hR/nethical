@@ -7,7 +7,14 @@ Provides autonomous space governance, astrodynamical state modeling,
 RF/optical link budget verification, electronic warfare detectors, and orbital collision avoidance.
 """
 
+from nethical.space.bus_security import (
+    BusSecurityAlert,
+    SpaceBusType,
+    SpacecraftBusGuard,
+)
+from nethical.space.certification import CertificationArtifactGenerator
 from nethical.space.detectors import (
+    AirspaceClass,
     BeamAuditResult,
     BeamPointingCommand,
     BeamSteeringAuditor,
@@ -17,6 +24,7 @@ from nethical.space.detectors import (
     CollisionCourseDetector,
     CollisionDetectorConfig,
     ConjunctionAlertLevel,
+    EMFInterceptAlert,
     JammingAlert,
     JammingDetector,
     JammingDetectorConfig,
@@ -29,6 +37,20 @@ from nethical.space.detectors import (
     SpoofingDetectorConfig,
     SpoofingMitigationAction,
     SpoofingSeverity,
+    StratosphericDetector,
+    StratosphericDwellAlert,
+    USpaceTransitionAlert,
+)
+from nethical.space.dual_use import (
+    DualUseCategory,
+    DualUseClassification,
+    DualUseClassifier,
+    ExportControlRegime,
+)
+from nethical.space.hil_simulator import (
+    OrbitalHILResult,
+    OrbitalHILSimulator,
+    SpaceFaultType,
 )
 from nethical.space.models import (
     BOLTZMANN_CONSTANT_J_K,
@@ -52,6 +74,10 @@ from nethical.space.orbital_governor import (
     OrbitalGovernor,
     OrbitalGovernorConfig,
     OrbitalSafetyDecision,
+)
+from nethical.space.ssa_client import (
+    CCSDSConjunctionDataMessage,
+    SSAClient,
 )
 
 __all__ = [
@@ -94,9 +120,32 @@ __all__ = [
     "BeamAuditResult",
     "BeamTargetType",
     "ProhibitedGeofence",
+    "StratosphericDetector",
+    "StratosphericDwellAlert",
+    "EMFInterceptAlert",
+    "USpaceTransitionAlert",
+    "AirspaceClass",
     # Governor
     "OrbitalGovernor",
     "OrbitalGovernorConfig",
     "OrbitalSafetyDecision",
     "OrbitalAction",
+    # SSA Client & Feeds
+    "SSAClient",
+    "CCSDSConjunctionDataMessage",
+    # Orbital HIL Simulation
+    "OrbitalHILSimulator",
+    "SpaceFaultType",
+    "OrbitalHILResult",
+    # Dual-Use & Export Control
+    "DualUseClassifier",
+    "DualUseCategory",
+    "ExportControlRegime",
+    "DualUseClassification",
+    # Certification Generators
+    "CertificationArtifactGenerator",
+    # Spacecraft Bus Security
+    "SpacecraftBusGuard",
+    "SpaceBusType",
+    "BusSecurityAlert",
 ]

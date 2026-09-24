@@ -32,6 +32,13 @@ from nethical.space.detectors.spoofing_detector import (
     SpoofingMitigationAction,
     SpoofingSeverity,
 )
+from nethical.space.detectors.stratospheric_detector import (
+    AirspaceClass,
+    EMFInterceptAlert,
+    StratosphericDetector,
+    StratosphericDwellAlert,
+    USpaceTransitionAlert,
+)
 
 __all__ = [
     "JammingDetector",
@@ -55,4 +62,9 @@ __all__ = [
     "BeamAuditResult",
     "BeamTargetType",
     "ProhibitedGeofence",
+    "StratosphericDetector",
+    "StratosphericDwellAlert",
+    "EMFInterceptAlert",
+    "USpaceTransitionAlert",
+    "AirspaceClass",
 ]
