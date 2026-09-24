@@ -40,7 +40,8 @@ The laws cover seven critical categories:
 ### 📋 Institutional & Grant Funding Directory
 - [**AI Institutions & Grants Directory**](institutional/AI_INSTITUTIONS_AND_GRANT_FUNDS_UK_PL.md) ([Raw Text](institutional/INSTYTUCJE_I_FUNDUSZE_AI_UK_PL.txt)) — Comprehensive directory of 20+ institutional bodies and funding mechanisms (UK, EU Horizon/EIC, NATO DIANA, Poland)
 
-### 📊 Regulatory Assurance Dossiers (1-Click Automated Generators)
+### 📊 Regulatory Assurance Dossiers & Codebase Audits
+- [**Alphabetical Audit & Platform Hardening Report**](audit/ALPHABETICAL_AUDIT_AND_HARDENING_REPORT.md) — Full sovereign audit across all 44 subpackages (`alerting` through `verification`), zero-defect remediation, PQC verification, and thread-safe hardening
 - [EU AI Act Annex IV Dossier](../models/audit/EU_AI_ACT_ANNEX_IV_DOSSIER.md) — Complete technical documentation under Annex IV
 - [ISO/IEC 42001 AIMS Dossier](../models/audit/ISO_42001_AIMS_CERTIFICATION_DOSSIER.md) — AI Management System certification dossier
 - [UK ATRS Record](../models/audit/UK_GOV_ATRS_RECORD.md) — UK Algorithmic Transparency Recording Standard (Tier 1 + Tier 2)
@@ -207,6 +208,7 @@ The laws cover seven critical categories:
 **Security audits, compliance reports, and transparency documentation.**
 
 - **Audit Reports**
+  - [**Alphabetical Audit & Platform Hardening Report**](audit/ALPHABETICAL_AUDIT_AND_HARDENING_REPORT.md) - Sovereign code audit across all 44 subpackages, thread-safe concurrency, PQC verification, and 100% test pass
   - [Audit Overview](audit/AUDIT.md) - Audit framework and processes
   - [Audit Scope](audit/audit_scope.md) - Audit scope definition
   - [Audit Portal Specification](audit/audit_portal_spec.md) - Audit portal design
@@ -387,10 +389,11 @@ The laws cover seven critical categories:
 
 ### For Compliance Teams
 1. Understand [The 25 Fundamental Laws](laws_and_policies/FUNDAMENTAL_LAWS.md) ⭐
-2. Review [Compliance Documentation](audit/)
-3. Check [Privacy Policy](privacy/PRIVACY.md)
-4. Study [Regulatory Mapping Table](audit/REGULATORY_MAPPING_TABLE.md)
-5. Generate 1-click ATRS: `python training/generate_audit_dossier.py`
+2. Review [Alphabetical Audit & Platform Hardening Report](audit/ALPHABETICAL_AUDIT_AND_HARDENING_REPORT.md)
+3. Review [Compliance Documentation](audit/)
+4. Check [Privacy Policy](privacy/PRIVACY.md)
+5. Study [Regulatory Mapping Table](audit/REGULATORY_MAPPING_TABLE.md)
+6. Generate 1-click ATRS: `python training/generate_audit_dossier.py`
 
 ### For Government Institutions & Funding Bodies 🏛️
 1. Read the [UK Government & NCSC Briefing](institutional/UK_GOVERNMENT_AND_NCSC_BRIEFING.md)
