@@ -106,6 +106,68 @@ class Policy:
     updated_at: str = ""
 
 
+@dataclass
+class BatchEvaluateRequest:
+    """Batch evaluate request message (mirrors proto)."""
+
+    requests: list[EvaluateRequest] = field(default_factory=list)
+    parallel: bool = False
+    fail_fast: bool = False
+
+
+@dataclass
+class DecisionStreamRequest:
+    """Decision stream configuration message (mirrors proto)."""
+
+    agent_id: Optional[str] = None
+    decision_types: list[str] = field(default_factory=list)
+    min_risk_score: Optional[float] = None
+    history_seconds: Optional[int] = None
+
+
+@dataclass
+class GetDecisionRequest:
+    """Get decision request message (mirrors proto)."""
+
+    decision_id: str
+
+
+@dataclass
+class ListPoliciesRequest:
+    """List policies request message (mirrors proto)."""
+
+    status: Optional[str] = None
+    scope: Optional[str] = None
+    page: int = 1
+    page_size: int = 20
+
+
+@dataclass
+class ListPoliciesResponse:
+    """List policies response message (mirrors proto)."""
+
+    policies: list[Policy] = field(default_factory=list)
+    total_count: int = 0
+    has_next: bool = False
+
+
+@dataclass
+class HealthCheckRequest:
+    """Health check request message (mirrors proto)."""
+
+    pass
+
+
+@dataclass
+class HealthCheckResponse:
+    """Health check response message (mirrors proto)."""
+
+    status: str = "SERVING"
+    version: str = "1.0.0"
+    uptime_seconds: int = 0
+    timestamp: str = ""
+
+
 __all__ = [
     "Violation",
     "Explanation",
@@ -113,4 +175,11 @@ __all__ = [
     "EvaluateResponse",
     "Decision",
     "Policy",
+    "BatchEvaluateRequest",
+    "DecisionStreamRequest",
+    "GetDecisionRequest",
+    "ListPoliciesRequest",
+    "ListPoliciesResponse",
+    "HealthCheckRequest",
+    "HealthCheckResponse",
 ]
