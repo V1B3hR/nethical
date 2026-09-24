@@ -88,6 +88,12 @@ from nethical.compliance.packs.academic_research_pack import (
     ResearchDiscipline,
     ResearchIntegrityStatus,
 )
+from nethical.compliance.packs.space_operations_pack import (
+    SpaceOperationsPack,
+    SpaceMissionProfile,
+    SpaceStandard,
+    SpaceComplianceResult,
+)
 
 __all__ = [
     # Baseline & ISO
@@ -165,5 +171,10 @@ __all__ = [
     "AcademicComplianceResult",
     "ResearchDiscipline",
     "ResearchIntegrityStatus",
+    # Space Operations & Orbital Compliance (ITU, Outer Space Treaty, EU Space Act)
+    "SpaceOperationsPack",
+    "SpaceMissionProfile",
+    "SpaceStandard",
+    "SpaceComplianceResult",
 ]
 

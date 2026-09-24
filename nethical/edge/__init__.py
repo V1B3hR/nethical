@@ -149,6 +149,11 @@ __all__ = [
     "DroneSafetyDecision",
     "DroneTelemetry",
     "ADSBTrafficTarget",
+    # High-Altitude Platform Station (HAPS) Stratospheric Governor
+    "HAPSGovernor",
+    "HAPSAction",
+    "HAPSSafetyDecision",
+    "HAPSGovernorConfig",
 ]
 
 from .industrial_fieldbus import IndustrialFieldbusInterlock
@@ -203,5 +208,12 @@ from .drone_safety import (
     DroneTelemetry,
     ADSBTrafficTarget,
 )
+from .haps_governor import (
+    HAPSGovernor,
+    HAPSAction,
+    HAPSSafetyDecision,
+    HAPSGovernorConfig,
+)
+
 
 

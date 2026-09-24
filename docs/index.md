@@ -120,6 +120,7 @@ The laws cover seven critical categories:
   - [Shadow Replay](architecture/shadow-replay.md) — Traffic replay and adversarial testing
 
 - **MLOps & Deployment**
+  - [Orbital & Stratospheric Governance](architecture/ORBITAL_AND_STRATOSPHERIC_GOVERNANCE.md) — Autonomous satellite, LEO constellation, and HAPS decision governor
   - [MLOps Architecture](architecture/mlops-architecture.md) — ML operations pipeline
   - [Model Deployment Guide](architecture/model-deployment-guide.md) — Deploying LoRA adapters and sovereign sidecars
   - [System Highway & Traffic Map](architecture/NETHICAL_SYSTEM_TRAFFIC_MAP.md) — Traffic map, decision roundabouts, module catalog
