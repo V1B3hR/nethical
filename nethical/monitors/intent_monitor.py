@@ -642,8 +642,8 @@ class IntentDeviationMonitor(BaseMonitor):
         if not self.enabled:
             return []
         with self.observability.span("intent_monitor.analyze_action"):
-            stated_intent = getattr(action, "stated_intent", None)
-            actual_action = getattr(action, "actual_action", None)
+            stated_intent = getattr(action, "stated_intent", None) or getattr(action, "intent", None)
+            actual_action = getattr(action, "actual_action", None) or getattr(action, "content", None)
 
             deviation_score, evidence, risk_info = await self._calculate_deviation_async(
                 stated_intent, actual_action
@@ -679,9 +679,10 @@ class IntentDeviationMonitor(BaseMonitor):
                 if risk_info.get("risk_cues_detected"):
                     self.observability.increment_risk_trigger()
 
+                action_id = getattr(action, "id", None) or getattr(action, "action_id", None)
                 violation = SafetyViolation(
                     id=str(uuid.uuid4()),
-                    action_id=getattr(action, "id", None),
+                    action_id=action_id or f"action_{uuid.uuid4().hex[:12]}",
                     violation_type=ViolationType.INTENT_DEVIATION,
                     severity=severity,
                     description=(
@@ -703,7 +704,7 @@ class IntentDeviationMonitor(BaseMonitor):
                     deviation_score,
                     effective_threshold,
                     risk_info.get("risk_cues_detected"),
-                    getattr(action, "id", None),
+                    action_id,
                 )
                 return [violation]
 

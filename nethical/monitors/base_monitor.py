@@ -476,6 +476,10 @@ class AdvancedBaseMonitor(ABC):
             "rolling_violation_rate": self._rolling_violations.average_rate(),
         }
 
+    def status(self) -> Dict[str, Any]:
+        """Convenience alias for metrics_snapshot."""
+        return self.metrics_snapshot()
+
     # ---------- Representation ----------
 
     def __repr__(self) -> str:
@@ -485,6 +489,10 @@ class AdvancedBaseMonitor(ABC):
             f"timeout={self.timeout}, strict_errors={self.strict_errors}, "
             f"max_violations={self.max_violations})"
         )
+
+
+# Backward compatibility alias
+BaseMonitor = AdvancedBaseMonitor
 
 
 # ======================================================

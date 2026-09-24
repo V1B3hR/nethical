@@ -170,6 +170,9 @@ class Severity(Enum):
         return cls.LOW
 
 
+SeverityLevel = Severity
+
+
 class Decision(str, Enum):
     """Extended decision types for nuanced responses."""
 
