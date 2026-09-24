@@ -8,6 +8,7 @@ Listens for policy updates from event stream.
 """
 
 import asyncio
+import collections
 import logging
 import threading
 import time
@@ -76,29 +77,31 @@ class PolicySubscriber:
         self,
         nats_client: Optional["NATSClient"] = None,
         cache_hierarchy: Optional[Any] = None,
+        max_history: int = 1000,
     ):
         """
-        Initialize PolicySubscriber.
+        Initialise PolicySubscriber.
 
         Args:
             nats_client: NATS client for streaming
             cache_hierarchy: Cache hierarchy for invalidation
+            max_history: Maximum update records retained in bounded history
         """
         self.nats_client = nats_client
         self.cache_hierarchy = cache_hierarchy
+        self._max_history = max_history
 
         # Update handlers
         self._handlers: List[Callable[[PolicyUpdate], None]] = []
         self._lock = threading.RLock()
 
-        # Update history
-        self._update_history: List[PolicyUpdate] = []
-        self._max_history = 1000
+        # Bounded history with O(1) eviction
+        self._update_history: collections.deque[PolicyUpdate] = collections.deque(maxlen=max_history)
 
         # Metrics
         self._updates_received = 0
 
-        logger.info("PolicySubscriber initialized")
+        logger.info("PolicySubscriber initialised")
 
     async def start(self):
         """Start listening for policy updates."""
@@ -133,18 +136,15 @@ class PolicySubscriber:
                 source=message.get("source", "unknown"),
             )
 
-            self._updates_received += 1
-
-            # Store in history
+            # Store in bounded history with lock
             with self._lock:
+                self._updates_received += 1
                 self._update_history.append(update)
-                if len(self._update_history) > self._max_history:
-                    self._update_history.pop(0)
 
             # Invalidate cache
             self._invalidate_cache(update)
 
-            # Notify handlers
+            # Notify handlers outside lock
             self._notify_handlers(update)
 
         except Exception as e:
@@ -162,13 +162,15 @@ class PolicySubscriber:
             logger.error(f"Cache invalidation error: {e}")
 
     def _notify_handlers(self, update: PolicyUpdate):
-        """Notify registered handlers."""
+        """Notify registered handlers safely outside lock."""
         with self._lock:
-            for handler in self._handlers:
-                try:
-                    handler(update)
-                except Exception as e:
-                    logger.error(f"Handler error: {e}")
+            handlers = list(self._handlers)
+
+        for handler in handlers:
+            try:
+                handler(update)
+            except Exception as e:
+                logger.error(f"Handler error: {e}")
 
     def on_update(self, handler: Callable[[PolicyUpdate], None]):
         """
@@ -210,17 +212,18 @@ class PolicySubscriber:
             if policy_id:
                 updates = [u for u in self._update_history if u.policy_id == policy_id]
             else:
-                updates = self._update_history.copy()
+                updates = list(self._update_history)
 
             return updates[-limit:]
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get subscriber metrics."""
-        return {
-            "updates_received": self._updates_received,
-            "handlers_registered": len(self._handlers),
-            "history_size": len(self._update_history),
-        }
+        with self._lock:
+            return {
+                "updates_received": self._updates_received,
+                "handlers_registered": len(self._handlers),
+                "history_size": len(self._update_history),
+            }
 
 
 # Type hints

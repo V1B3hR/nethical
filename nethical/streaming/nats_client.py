@@ -10,6 +10,7 @@ Real-time event streaming using NATS JetStream.
 import asyncio
 import json
 import logging
+import threading
 from dataclasses import dataclass, field
 from typing import Any, Callable, Dict, List, Optional
 
@@ -62,11 +63,11 @@ class NATSClient:
 
     def __init__(self, config: Optional[NATSConfig] = None):
         """
-        Initialize NATSClient (synchronous constructor).
+        Initialise NATSClient (synchronous constructor).
         
         Note:
             This only sets up basic attributes. Use the `create()` class method
-            for proper asynchronous initialization with automatic connection.
+            for proper asynchronous initialisation with automatic connection.
 
         Args:
             config: NATS configuration
@@ -75,6 +76,7 @@ class NATSClient:
         self._nc = None  # NATS connection
         self._js = None  # JetStream context
         self._connected = False
+        self._lock = threading.RLock()
 
         # Fallback in-memory queue
         self._memory_queue: Dict[str, List[Dict]] = {}
@@ -87,7 +89,7 @@ class NATSClient:
         self._messages_published = 0
         self._messages_received = 0
 
-        logger.info("NATSClient initialized")
+        logger.info("NATSClient initialised")
 
     async def async_setup(self) -> None:
         """
@@ -159,13 +161,15 @@ class NATSClient:
         """Close NATS connection."""
         if self._nc:
             await self._nc.close()
-            self._connected = False
+            with self._lock:
+                self._connected = False
             logger.info("NATS connection closed")
 
     @property
     def is_connected(self) -> bool:
         """Check if connected to NATS."""
-        return self._connected
+        with self._lock:
+            return self._connected
 
     async def create_stream(
         self,
@@ -223,7 +227,8 @@ class NATSClient:
         Returns:
             True if published successfully
         """
-        self._messages_published += 1
+        with self._lock:
+            self._messages_published += 1
 
         if self._connected and self._js:
             try:
@@ -235,9 +240,10 @@ class NATSClient:
                 # Fallthrough to memory queue
 
         # Memory fallback
-        if subject not in self._memory_queue:
-            self._memory_queue[subject] = []
-        self._memory_queue[subject].append(message)
+        with self._lock:
+            if subject not in self._memory_queue:
+                self._memory_queue[subject] = []
+            self._memory_queue[subject].append(message)
 
         # Notify subscribers
         await self._notify_subscribers(subject, message)
@@ -257,9 +263,10 @@ class NATSClient:
             callback: Function to call on message
             durable: Durable consumer name (optional)
         """
-        if subject not in self._subscribers:
-            self._subscribers[subject] = []
-        self._subscribers[subject].append(callback)
+        with self._lock:
+            if subject not in self._subscribers:
+                self._subscribers[subject] = []
+            self._subscribers[subject].append(callback)
 
         if self._connected and self._js:
             try:
@@ -268,7 +275,8 @@ class NATSClient:
                 async def message_handler(msg):
                     try:
                         data = json.loads(msg.data.decode())
-                        self._messages_received += 1
+                        with self._lock:
+                            self._messages_received += 1
                         callback(data)
                         await msg.ack()
                     except Exception as e:
@@ -286,27 +294,26 @@ class NATSClient:
 
     async def _notify_subscribers(self, subject: str, message: Dict[str, Any]):
         """Notify local subscribers (memory fallback)."""
-        self._messages_received += 1
-        for callback in self._subscribers.get(subject, []):
+        with self._lock:
+            self._messages_received += 1
+            direct_callbacks = list(self._subscribers.get(subject, []))
+
+            # Check pattern subscribers using cached prefixes for efficiency
+            pattern_callbacks = []
+            for pattern, callbacks in self._subscribers.items():
+                if pattern.endswith("*"):
+                    if pattern not in self._pattern_cache:
+                        self._pattern_cache[pattern] = pattern[:-1]
+                    prefix = self._pattern_cache[pattern]
+
+                    if subject.startswith(prefix):
+                        pattern_callbacks.extend(callbacks)
+
+        for callback in direct_callbacks + pattern_callbacks:
             try:
                 callback(message)
             except Exception as e:
                 logger.error(f"Subscriber error: {e}")
-
-        # Check pattern subscribers using cached prefixes for efficiency
-        for pattern, callbacks in self._subscribers.items():
-            if pattern.endswith("*"):
-                # Use cached prefix or compute and cache it
-                if pattern not in self._pattern_cache:
-                    self._pattern_cache[pattern] = pattern[:-1]
-                prefix = self._pattern_cache[pattern]
-                
-                if subject.startswith(prefix):
-                    for callback in callbacks:
-                        try:
-                            callback(message)
-                        except Exception as e:
-                            logger.error(f"Subscriber error: {e}")
 
     def get_queued_messages(self, subject: str) -> List[Dict[str, Any]]:
         """
@@ -318,14 +325,16 @@ class NATSClient:
         Returns:
             List of queued messages
         """
-        return self._memory_queue.get(subject, [])
+        with self._lock:
+            return list(self._memory_queue.get(subject, []))
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get client metrics."""
-        return {
-            "connected": self._connected,
-            "messages_published": self._messages_published,
-            "messages_received": self._messages_received,
-            "memory_queue_subjects": len(self._memory_queue),
-            "subscribers": len(self._subscribers),
-        }
+        with self._lock:
+            return {
+                "connected": self._connected,
+                "messages_published": self._messages_published,
+                "messages_received": self._messages_received,
+                "memory_queue_subjects": len(self._memory_queue),
+                "subscribers": sum(len(cbs) for cbs in self._subscribers.values()),
+            }

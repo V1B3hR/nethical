@@ -79,7 +79,7 @@ class EventPublisher:
         flush_interval: float = 1.0,
     ):
         """
-        Initialize EventPublisher.
+        Initialise EventPublisher.
 
         Args:
             nats_client: NATS client for publishing
@@ -103,7 +103,7 @@ class EventPublisher:
         self._events_buffered = 0
         self._batches_flushed = 0
 
-        logger.info("EventPublisher initialized")
+        logger.info("EventPublisher initialised")
 
     def start(self):
         """Start background event flushing."""
@@ -144,7 +144,17 @@ class EventPublisher:
             self._events_buffered += 1
 
             if len(self._buffer) >= self.batch_size:
-                self._flush_buffer()
+                events_to_flush = self._buffer
+                self._buffer = []
+            else:
+                events_to_flush = []
+
+        for ev in events_to_flush:
+            self._publish_event(ev)
+
+        if events_to_flush:
+            with self._lock:
+                self._batches_flushed += 1
 
     def publish_immediate(self, event: StreamEvent):
         """
@@ -167,11 +177,13 @@ class EventPublisher:
         for event in events:
             self._publish_event(event)
 
-        self._batches_flushed += 1
+        with self._lock:
+            self._batches_flushed += 1
 
     def _publish_event(self, event: StreamEvent):
         """Publish a single event."""
-        self._events_published += 1
+        with self._lock:
+            self._events_published += 1
 
         message = {
             "event_type": event.event_type.value,
@@ -182,15 +194,16 @@ class EventPublisher:
         }
 
         if self.nats_client:
-            # Use async in background
             try:
-                loop = asyncio.get_event_loop()
+                loop = asyncio.get_running_loop()
                 loop.create_task(
                     self.nats_client.publish(event.subject, message)
                 )
             except RuntimeError:
-                # No event loop, publish sync
-                asyncio.run(self.nats_client.publish(event.subject, message))
+                try:
+                    asyncio.run(self.nats_client.publish(event.subject, message))
+                except Exception as e:
+                    logger.error("Failed to publish event to NATS: %s", e)
 
     # Convenience methods for common events
 
@@ -257,12 +270,13 @@ class EventPublisher:
 
     def get_metrics(self) -> Dict[str, Any]:
         """Get publisher metrics."""
-        return {
-            "events_published": self._events_published,
-            "events_buffered": self._events_buffered,
-            "batches_flushed": self._batches_flushed,
-            "buffer_size": len(self._buffer),
-        }
+        with self._lock:
+            return {
+                "events_published": self._events_published,
+                "events_buffered": self._events_buffered,
+                "batches_flushed": self._batches_flushed,
+                "buffer_size": len(self._buffer),
+            }
 
 
 # Type hints

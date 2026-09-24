@@ -14,14 +14,14 @@ from __future__ import annotations
 
 import asyncio
 import collections
-import json
 import logging
+import threading
 import time
 import uuid
-from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
+from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 
 logger = logging.getLogger("nethical.streaming.event_stream_manager")
 
@@ -56,6 +56,7 @@ class TelemetryEvent:
             "topic": self.topic,
             "payload": self.payload,
             "timestamp": self.timestamp,
+            "timestamp_iso": datetime.fromtimestamp(self.timestamp, tz=timezone.utc).isoformat(),
             "source": self.source,
             "metadata": self.metadata,
         }
@@ -87,9 +88,14 @@ class EventStreamManager:
         self.published_count: int = 0
         self.dropped_count: int = 0
         self.delivered_count: int = 0
-        self._lock = asyncio.Lock() if asyncio.get_event_loop_policy() else None
+        self._lock = threading.RLock()
 
-    def publish_nowait(self, topic: str, payload: Dict[str, Any], metadata: Optional[Dict[str, Any]] = None) -> TelemetryEvent:
+    def publish_nowait(
+        self,
+        topic: str,
+        payload: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None,
+    ) -> TelemetryEvent:
         """Non-blocking sub-microsecond event publishing into the bounded ring buffer."""
         event = TelemetryEvent(
             topic=topic,
@@ -97,61 +103,95 @@ class EventStreamManager:
             metadata=metadata or {},
         )
 
-        if len(self._ring_buffer) >= self.max_queue_size:
-            if self.backpressure_strategy == BackpressureStrategy.DROP_NEWEST:
-                self.dropped_count += 1
-                logger.warning(f"Backpressure: Dropped newest event {event.event_id} on topic {topic}")
-                return event
-            elif self.backpressure_strategy == BackpressureStrategy.DROP_OLDEST:
-                self._ring_buffer.popleft()
-                self.dropped_count += 1
+        with self._lock:
+            if len(self._ring_buffer) >= self.max_queue_size:
+                if self.backpressure_strategy == BackpressureStrategy.DROP_NEWEST:
+                    self.dropped_count += 1
+                    logger.warning("Backpressure: Dropped newest event %s on topic %s", event.event_id, topic)
+                    return event
+                elif self.backpressure_strategy == BackpressureStrategy.DROP_OLDEST:
+                    self._ring_buffer.popleft()
+                    self.dropped_count += 1
+                elif self.backpressure_strategy == BackpressureStrategy.BLOCK:
+                    raise BufferError("Stream buffer full; BLOCK strategy requires async publish or backpressure release")
 
-        self._ring_buffer.append(event)
-        self.published_count += 1
+            self._ring_buffer.append(event)
+            self.published_count += 1
 
-        # Immediate dispatch to in-process sync subscribers
-        self._dispatch_sync(topic, event)
-        return event
+            targets = list(self._subscribers.get(topic, [])) + list(self._subscribers.get("*", []))
 
-    def _dispatch_sync(self, topic: str, event: TelemetryEvent) -> None:
-        """Dispatches event to matching subscribers (exact match or wildcard '*')."""
-        targets = self._subscribers.get(topic, []) + self._subscribers.get("*", [])
+        # Immediate dispatch to in-process sync subscribers outside lock
         for callback in targets:
             try:
                 callback(event)
-                self.delivered_count += 1
+                with self._lock:
+                    self.delivered_count += 1
             except Exception as e:
-                logger.error(f"Subscriber error on topic {topic}: {e}")
+                logger.error("Subscriber error on topic %s: %s", topic, e)
+
+        return event
+
+    async def publish(
+        self,
+        topic: str,
+        payload: Dict[str, Any],
+        metadata: Optional[Dict[str, Any]] = None,
+        timeout: Optional[float] = None,
+    ) -> TelemetryEvent:
+        """
+        Asynchronously publish an event, awaiting queue capacity if backpressure is BLOCK.
+        """
+        start_time = time.monotonic()
+        while True:
+            with self._lock:
+                if len(self._ring_buffer) < self.max_queue_size or self.backpressure_strategy != BackpressureStrategy.BLOCK:
+                    return self.publish_nowait(topic, payload, metadata)
+
+            if timeout is not None and (time.monotonic() - start_time) >= timeout:
+                with self._lock:
+                    self.dropped_count += 1
+                raise TimeoutError(f"Timed out after {timeout}s waiting for queue capacity on topic {topic}")
+
+            await asyncio.sleep(0.005)
 
     def subscribe(self, topic: str, callback: Callable[[TelemetryEvent], None]) -> None:
         """Registers a consumer callback for a topic or wildcard '*'."""
-        self._subscribers[topic].append(callback)
+        with self._lock:
+            self._subscribers[topic].append(callback)
 
     def unsubscribe(self, topic: str, callback: Callable[[TelemetryEvent], None]) -> bool:
         """Removes a consumer callback."""
-        if topic in self._subscribers and callback in self._subscribers[topic]:
-            self._subscribers[topic].remove(callback)
-            return True
-        return False
+        with self._lock:
+            if topic in self._subscribers and callback in self._subscribers[topic]:
+                self._subscribers[topic].remove(callback)
+                return True
+            return False
+
+    def get_events(self) -> List[TelemetryEvent]:
+        """Returns a snapshot of currently buffered events."""
+        with self._lock:
+            return list(self._ring_buffer)
 
     def get_stats(self) -> Dict[str, Any]:
         """Returns streaming and backpressure statistics."""
-        return {
-            "backend": self.backend.value,
-            "max_queue_size": self.max_queue_size,
-            "current_queue_depth": len(self._ring_buffer),
-            "published_total": self.published_count,
-            "dropped_total": self.dropped_count,
-            "delivered_total": self.delivered_count,
-            "active_subscriptions": sum(len(subs) for subs in self._subscribers.values()),
-        }
+        with self._lock:
+            return {
+                "backend": self.backend.value,
+                "max_queue_size": self.max_queue_size,
+                "current_queue_depth": len(self._ring_buffer),
+                "published_total": self.published_count,
+                "dropped_total": self.dropped_count,
+                "delivered_total": self.delivered_count,
+                "active_subscriptions": sum(len(subs) for subs in self._subscribers.values()),
+            }
 
     def clear(self) -> None:
         """Clears buffers and reset metrics (useful for testing)."""
-        self._ring_buffer.clear()
-        self.published_count = 0
-        self.dropped_count = 0
-        self.delivered_count = 0
+        with self._lock:
+            self._ring_buffer.clear()
+            self.published_count = 0
+            self.dropped_count = 0
+            self.delivered_count = 0
 
 
 # Global instance
@@ -164,3 +204,4 @@ def get_stream_manager() -> EventStreamManager:
     if _DEFAULT_STREAM_MANAGER is None:
         _DEFAULT_STREAM_MANAGER = EventStreamManager()
     return _DEFAULT_STREAM_MANAGER
+
