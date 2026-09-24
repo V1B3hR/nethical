@@ -79,13 +79,29 @@ class PIIDetector:
     ]
 
     def __init__(self):
-        """Initialize the PII detector."""
+        """Initialise the PII detector."""
         self.detection_count = 0
         self.false_positive_hints = {
             PIIType.EMAIL: ["example.com", "test.com", "domain.com"],
             PIIType.SSN: ["000-00-0000", "123-45-6789"],  # Common test values
             PIIType.CREDIT_CARD: ["0000-0000-0000-0000", "1111-1111-1111-1111"],
         }
+
+    @staticmethod
+    def _luhn_checksum(digits: str) -> bool:
+        """Validate credit card number using Luhn algorithm."""
+        digits_list = [int(c) for c in digits if c.isdigit()]
+        if len(digits_list) < 13 or len(digits_list) > 19:
+            return False
+        checksum = 0
+        reverse_digits = digits_list[::-1]
+        for i, d in enumerate(reverse_digits):
+            if i % 2 == 1:
+                doubled = d * 2
+                checksum += doubled - 9 if doubled > 9 else doubled
+            else:
+                checksum += d
+        return checksum % 10 == 0
 
     def detect_all(self, text: str) -> List[PIIMatch]:
         """Detect all PII types in text."""
@@ -151,9 +167,12 @@ class PIIDetector:
         for pattern in self.CC_PATTERNS:
             for match in pattern.finditer(text):
                 matched_text = match.group()
-                # Basic validation: not all zeros or all ones
+                digits = "".join(c for c in matched_text if c.isdigit())
                 if not self._is_likely_cc(matched_text):
                     continue
+
+                # Luhn-verified cards get higher confidence
+                confidence = 0.95 if self._luhn_checksum(digits) else 0.70
 
                 matches.append(
                     PIIMatch(
@@ -161,7 +180,7 @@ class PIIDetector:
                         text=matched_text,
                         start=match.start(),
                         end=match.end(),
-                        confidence=0.8,
+                        confidence=confidence,
                         context=self._get_context(text, match.start(), match.end()),
                     )
                 )
@@ -201,6 +220,22 @@ class PIIDetector:
 
         self.detection_count += len(matches)
         return matches
+
+    def mask_pii(self, text: str) -> str:
+        """
+        Redact all detected PII in text by replacing matched spans with typed placeholders.
+        """
+        matches = self.detect_all(text)
+        if not matches:
+            return text
+
+        # Sort matches by start position descending to replace without shifting earlier indices
+        sorted_matches = sorted(matches, key=lambda m: m.start, reverse=True)
+        result = text
+        for m in sorted_matches:
+            placeholder = f"[{m.pii_type.value.upper()}_REDACTED]"
+            result = result[: m.start] + placeholder + result[m.end :]
+        return result
 
     def _get_context(self, text: str, start: int, end: int, window: int = 30) -> str:
         """Get context around a match."""
