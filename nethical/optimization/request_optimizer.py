@@ -156,7 +156,7 @@ class RequestOptimizer:
         """
         # Convert request to hashable string
         request_str = str(sorted(request.items()) if isinstance(request, dict) else request)
-        return hashlib.md5(request_str.encode()).hexdigest()
+        return hashlib.sha256(request_str.encode()).hexdigest()
 
     async def process(
         self,
@@ -296,7 +296,7 @@ class RequestCoalescer:
         """
         # Compute request key
         request_str = str(sorted(request.items()) if isinstance(request, dict) else request)
-        request_key = hashlib.md5(request_str.encode()).hexdigest()
+        request_key = hashlib.sha256(request_str.encode()).hexdigest()
 
         async with self._lock:
             # Check if request is already pending
