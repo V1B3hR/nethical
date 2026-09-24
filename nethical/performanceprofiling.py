@@ -451,6 +451,7 @@ class PerformanceProfiler:
         return {
             "top": top_entries,
             "text": text_output[:2000],  # Limit size to avoid bloating results
+            "profile_output": text_output,
         }
 
     def _record_result(
@@ -468,13 +469,12 @@ class PerformanceProfiler:
                 benchmark.add_sample(execution_time)
                 is_regression, pct_change = benchmark.check_regression(execution_time)
                 if is_regression:
-                    logger.warning(
-                        "Performance regression detected for %s: %.1f%% slower than baseline (%.2fms vs %.2fms)",
-                        func_name,
-                        pct_change,
-                        execution_time,
-                        benchmark.baseline_ms,
+                    msg = (
+                        f"Performance regression detected for {func_name}: "
+                        f"{pct_change:.1f}% slower than baseline ({execution_time:.2f}ms vs {benchmark.baseline_ms:.2f}ms)"
                     )
+                    logger.warning(msg)
+                    print(f"WARNING: {msg}")
                 # Persist benchmarks periodically
                 self._save_benchmarks()
 
