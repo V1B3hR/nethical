@@ -149,26 +149,26 @@ async def run_load_test(config: LoadTestConfig) -> dict[str, any]:
     latencies_sorted = sorted(all_latencies)
 
     metrics = {
-        "total_agents": config.num_agents,
-        "successful_agents": successful_agents,
-        "total_requests": total_requests,
-        "total_time_seconds": total_time,
-        "throughput_req_per_sec": throughput,
-        "avg_latency_ms": np.mean(all_latencies),
-        "median_latency_ms": np.median(all_latencies),
-        "std_latency_ms": np.std(all_latencies),
-        "min_latency_ms": min(all_latencies),
-        "max_latency_ms": max(all_latencies),
-        "p50_latency_ms": latencies_sorted[int(len(latencies_sorted) * 0.50)],
-        "p95_latency_ms": latencies_sorted[int(len(latencies_sorted) * 0.95)],
-        "p99_latency_ms": latencies_sorted[int(len(latencies_sorted) * 0.99)],
+        "total_agents": int(config.num_agents),
+        "successful_agents": int(successful_agents),
+        "total_requests": int(total_requests),
+        "total_time_seconds": float(total_time),
+        "throughput_req_per_sec": float(throughput),
+        "avg_latency_ms": float(np.mean(all_latencies)),
+        "median_latency_ms": float(np.median(all_latencies)),
+        "std_latency_ms": float(np.std(all_latencies)),
+        "min_latency_ms": float(min(all_latencies)),
+        "max_latency_ms": float(max(all_latencies)),
+        "p50_latency_ms": float(latencies_sorted[int(len(latencies_sorted) * 0.50)]),
+        "p95_latency_ms": float(latencies_sorted[int(len(latencies_sorted) * 0.95)]),
+        "p99_latency_ms": float(latencies_sorted[int(len(latencies_sorted) * 0.99)]),
     }
 
     # Target metrics
-    metrics["meets_throughput_target"] = throughput >= 5000
-    metrics["meets_avg_latency_target"] = metrics["avg_latency_ms"] <= 50
-    metrics["meets_p95_latency_target"] = metrics["p95_latency_ms"] <= 100
-    metrics["meets_p99_latency_target"] = metrics["p99_latency_ms"] <= 200
+    metrics["meets_throughput_target"] = bool(throughput >= 5000)
+    metrics["meets_avg_latency_target"] = bool(metrics["avg_latency_ms"] <= 50)
+    metrics["meets_p95_latency_target"] = bool(metrics["p95_latency_ms"] <= 100)
+    metrics["meets_p99_latency_target"] = bool(metrics["p99_latency_ms"] <= 200)
 
     return metrics
 

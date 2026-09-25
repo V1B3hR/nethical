@@ -1,0 +1,41 @@
+[Unit]
+Description=Nethical Sovereign AI Governance & Defense Daemon
+Documentation=https://github.com/V1B3hR/nethical
+After=network.target local-fs.target
+
+[Service]
+Type=simple
+User=nethical
+Group=nethical
+WorkingDirectory=/opt/nethical
+Environment="NETHICAL_LOCAL_FIRST=1"
+Environment="NETHICAL_SAFETY_ACKNOWLEDGED=1"
+Environment="NETHICAL_HSM_PROVIDER=tpm-2.0"
+Environment="NETHICAL_IPC_PIPE=/var/run/nethical/governance.sock"
+
+ExecStart=/opt/nethical/venv/bin/python -m uvicorn nethical.api.v1.app:create_v1_app --factory --host 127.0.0.1 --port 8000
+Restart=always
+RestartSec=3s
+
+# Security Hardening
+NoNewPrivileges=true
+ProtectSystem=strict
+ProtectHome=true
+PrivateTmp=true
+PrivateDevices=false
+ProtectKernelTunables=true
+ProtectControlGroups=true
+RestrictAddressFamilies=AF_UNIX AF_INET AF_INET6
+MemoryMax=512M
+CPUQuota=100%
+
+# State directories
+RuntimeDirectory=nethical
+RuntimeDirectoryMode=0750
+LogsDirectory=nethical
+LogsDirectoryMode=0750
+ConfigurationDirectory=nethical
+ConfigurationDirectoryMode=0750
+
+[Install]
+WantedBy=multi-user.target

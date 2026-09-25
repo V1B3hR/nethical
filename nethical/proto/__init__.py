@@ -41,6 +41,73 @@ class Explanation:
 
 
 @dataclass
+class CellularTelemetry:
+    """Cellular radio telemetry message (mirrors proto)."""
+    cell_id: str = "CELL_01"
+    generation: str = "5G_Sub6"
+    frequency_mhz: float = 3500.0
+    bandwidth_mhz: float = 100.0
+    rsrp_dbm: float = -85.0
+    rsrq_db: float = -10.0
+    sinr_db: float = 15.0
+    cqi: int = 12
+    latency_ms: float = 8.0
+    jitter_ms: float = 1.5
+    packet_loss_percent: float = 0.0
+    handover_count: int = 0
+    connected: bool = True
+    signal_grade: str = "EXCELLENT"
+
+
+@dataclass
+class EmfRadiationTelemetry:
+    """Biological EMF radiation telemetry message (mirrors proto)."""
+    emitter_id: str = "default_emitter"
+    frequency_hz: float = 2.4e9
+    tx_power_dbm: float = 20.0
+    estimated_sar_w_kg: Optional[float] = None
+    power_density_w_m2: Optional[float] = None
+    human_distance_meters: Optional[float] = None
+    pulse_modulation_hz: Optional[float] = None
+    exposure_zone: str = "general_public"
+    is_medical_device: bool = False
+
+
+@dataclass
+class NetworkFlowTelemetry:
+    """IP network flow intrusion telemetry message (mirrors proto)."""
+    flow_id: str = ""
+    source_ip: str = "127.0.0.1"
+    destination_ip: str = "127.0.0.1"
+    destination_port: int = 443
+    protocol: str = "TCP"
+    flow_duration_ms: float = 100.0
+    total_fwd_packets: int = 10
+    total_bwd_packets: int = 10
+    flow_bytes_per_sec: float = 1000.0
+    flow_packets_per_sec: float = 20.0
+    syn_flag_count: int = 1
+    ack_flag_count: int = 1
+    dst_port_entropy: float = 0.5
+    is_anomaly: bool = False
+    source_dataset: str = "CICIDS2017"
+
+
+@dataclass
+class OSTelemetry:
+    """Host operating system and sandbox telemetry (mirrors proto)."""
+    platform_name: str = "Windows"
+    os_version: str = ""
+    cpu_percent: float = 0.0
+    total_ram_mb: float = 16384.0
+    available_ram_mb: float = 8192.0
+    used_ram_percent: float = 50.0
+    somatic_condition: str = "HOMEOSTASIS_OPTIMAL"
+    sandbox_tier: str = "STANDARD"
+    privileges_dropped: bool = False
+
+
+@dataclass
 class EvaluateRequest:
     """Evaluate request message (mirrors proto)."""
     
@@ -52,6 +119,10 @@ class EvaluateRequest:
     priority: str = "normal"
     require_explanation: bool = False
     request_id: Optional[str] = None
+    cellular_telemetry: Optional[CellularTelemetry] = None
+    emf_telemetry: Optional[EmfRadiationTelemetry] = None
+    network_flow_telemetry: Optional[NetworkFlowTelemetry] = None
+    os_telemetry: Optional[OSTelemetry] = None
 
 
 @dataclass
@@ -70,6 +141,7 @@ class EvaluateResponse:
     cache_hit: bool = False
     fundamental_laws_checked: list[int] = field(default_factory=list)
     timestamp: str = ""
+    primary_mitigation: Optional[str] = None
 
 
 @dataclass
@@ -182,4 +254,8 @@ __all__ = [
     "ListPoliciesResponse",
     "HealthCheckRequest",
     "HealthCheckResponse",
+    "CellularTelemetry",
+    "EmfRadiationTelemetry",
+    "NetworkFlowTelemetry",
+    "OSTelemetry",
 ]

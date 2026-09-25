@@ -1,0 +1,67 @@
+# syntax=docker/dockerfile:1.4
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+#
+# Production Hardened AI Agent Governance Sidecar Container
+# Compliant with EU AI Act Annex IV, CRA, and CIS Docker Benchmark.
+
+# Stage 1: Build & Dependencies
+FROM python:3.12-slim-bookworm AS builder
+
+ENV DEBIAN_FRONTEND=noninteractive \
+    PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PIP_NO_CACHE_DIR=1 \
+    PIP_DISABLE_PIP_VERSION_CHECK=1
+
+WORKDIR /build
+
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libffi-dev \
+    libssl-dev \
+    git \
+    && rm -rf /var/lib/apt/lists/*
+
+COPY requirements.txt .
+RUN pip install --user --no-warn-script-location -r requirements.txt
+
+# Stage 2: Final Minimal Runtime
+FROM python:3.12-slim-bookworm AS runtime
+
+LABEL org.opencontainers.image.title="Nethical AI Governance Sidecar" \
+      org.opencontainers.image.description="Hardware-enforced, deterministic AI safety runtime & sidecar proxy" \
+      org.opencontainers.image.version="2.7.0" \
+      org.opencontainers.image.vendor="Nethical Foundation" \
+      org.opencontainers.image.licenses="MIT"
+
+ENV PYTHONUNBUFFERED=1 \
+    PYTHONDONTWRITEBYTECODE=1 \
+    NETHICAL_LOCAL_FIRST=1 \
+    NETHICAL_SAFETY_ACKNOWLEDGED=1 \
+    NETHICAL_IPC_PIPE="/var/run/nethical/governance.sock" \
+    PATH="/home/nethical/.local/bin:$PATH"
+
+# Hardened unprivileged system user
+RUN groupadd -g 10001 nethical && \
+    useradd -u 10001 -g nethical -m -s /sbin/nologin nethical && \
+    mkdir -p /var/run/nethical /var/log/nethical /etc/nethical && \
+    chown -R nethical:nethical /var/run/nethical /var/log/nethical /etc/nethical
+
+WORKDIR /app
+
+# Copy installed python dependencies from builder
+COPY --from=builder --chown=nethical:nethical /root/.local /home/nethical/.local
+
+# Copy application code
+COPY --chown=nethical:nethical nethical/ /app/nethical/
+COPY --chown=nethical:nethical pyproject.toml /app/
+
+USER 10001:10001
+
+EXPOSE 8000 8443
+
+HEALTHCHECK --interval=10s --timeout=3s --start-period=5s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health').read()" || exit 1
+
+ENTRYPOINT ["python", "-m", "uvicorn", "nethical.api.v1.app:create_v1_app", "--factory", "--host", "0.0.0.0", "--port", "8000"]

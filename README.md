@@ -16,6 +16,7 @@
   
   <p>
     <a href="#purpose">Purpose</a> •
+    <a href="docs/overview/STRATEGIC_POSITIONING_AND_ROADMAP.md">Strategy & Roadmap</a> •
     <a href="#25-fundamental-laws">25 Laws</a> •
     <a href="#features">Features</a> •
     <a href="#security">Security</a> •
@@ -57,6 +58,8 @@
 > * **Prawdziwy audyt kryptograficzny:** Niezaprzeczalny rejestr decyzji."*
 > 
 > *The true value and identity of Nethical is not an LLM chatbot that memorized NCSC or Alan Turing Institute guidelines. Nethical's institutional mission is deterministic mathematical verification (Z3 SMT First-Order Logic), hardware-grade sub-millisecond kinetic circuit breakers, and tamper-proof post-quantum cryptographic audit ledgers.*
+>
+> 📖 **Raport Strategiczny i Pozycjonowanie Rynkowe (2026):** Zobacz pełną analizę porównawczą Nethical vs NeMo Guardrails, Guardrails AI, Credo AI, Lakera oraz roadmapę w [docs/overview/STRATEGIC_POSITIONING_AND_ROADMAP.md](docs/overview/STRATEGIC_POSITIONING_AND_ROADMAP.md).
 
 ---
 

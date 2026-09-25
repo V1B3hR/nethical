@@ -61,6 +61,18 @@ message EvaluateRequest {
   
   // Request ID for tracing
   optional string request_id = 8;
+  
+  // Optional physical cellular radio telemetry
+  optional CellularTelemetry cellular_telemetry = 9;
+  
+  // Optional biological EMF / RF radiation telemetry
+  optional EmfRadiationTelemetry emf_telemetry = 10;
+  
+  // Optional IP network flow intrusion telemetry
+  optional NetworkFlowTelemetry network_flow_telemetry = 11;
+  
+  // Optional host OS somatic health and sandbox confinement telemetry
+  optional OSTelemetry os_telemetry = 12;
 }
 
 // EvaluateResponse contains the governance decision.
@@ -100,6 +112,9 @@ message EvaluateResponse {
   
   // Timestamp of the decision
   string timestamp = 12;
+  
+  // Primary mitigation action instructed by governance
+  optional string primary_mitigation = 13;
 }
 
 // Violation represents a detected policy or law violation.
@@ -290,3 +305,68 @@ message HealthCheckResponse {
   // Current timestamp
   string timestamp = 4;
 }
+
+// CellularTelemetry represents 3GPP cellular radio link telemetry.
+message CellularTelemetry {
+  string cell_id = 1;
+  string generation = 2; // 3G, 4G_LTE, 5G_Sub6, 5G_mmWave, 6G_JCAS
+  double frequency_mhz = 3;
+  double bandwidth_mhz = 4;
+  double rsrp_dbm = 5;
+  double rsrq_db = 6;
+  double sinr_db = 7;
+  int32 cqi = 8;
+  double latency_ms = 9;
+  double jitter_ms = 10;
+  double packet_loss_percent = 11;
+  int32 handover_count = 12;
+  bool connected = 13;
+  string signal_grade = 14;
+}
+
+// EmfRadiationTelemetry represents biological RF and EMF radiation exposure.
+message EmfRadiationTelemetry {
+  string emitter_id = 1;
+  double frequency_hz = 2;
+  double tx_power_dbm = 3;
+  optional double estimated_sar_w_kg = 4;
+  optional double power_density_w_m2 = 5;
+  optional double human_distance_meters = 6;
+  optional double pulse_modulation_hz = 7;
+  string exposure_zone = 8;
+  bool is_medical_device = 9;
+}
+
+// NetworkFlowTelemetry represents an 8-dimensional IP flow sample for intrusion analysis.
+message NetworkFlowTelemetry {
+  string flow_id = 1;
+  string source_ip = 2;
+  string destination_ip = 3;
+  int32 destination_port = 4;
+  string protocol = 5;
+  double flow_duration_ms = 6;
+  int64 total_fwd_packets = 7;
+  int64 total_bwd_packets = 8;
+  double flow_bytes_per_sec = 9;
+  double flow_packets_per_sec = 10;
+  int32 syn_flag_count = 11;
+  int32 ack_flag_count = 12;
+  double dst_port_entropy = 13;
+  bool is_anomaly = 14;
+  string source_dataset = 15;
+}
+
+// OSTelemetry represents host operating system health and sandbox confinement.
+message OSTelemetry {
+  string platform_name = 1;
+  string os_version = 2;
+  double cpu_percent = 3;
+  double total_ram_mb = 4;
+  double available_ram_mb = 5;
+  double used_ram_percent = 6;
+  string somatic_condition = 7;
+  string sandbox_tier = 8;
+  bool privileges_dropped = 9;
+}
+
+

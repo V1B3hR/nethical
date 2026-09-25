@@ -180,6 +180,60 @@ class BlyskawicaAmbassador:
             "rtt_microseconds": round(rtt_us, 2),
         }
 
+    def evaluate_rf_emission(self, telemetry_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Ocenia emisję elektromagnetyczną (RF/SAR/EMF) urządzenia brzegowego.
+        
+        Weryfikuje limity biologiczne ICNIRP i protokół ALARA przez zmysły kognitywne Ambasadora.
+        """
+        success, data, err, rtt_us = self.channel.send_command("evaluate_rf_emission", telemetry_payload)
+        if success and data:
+            data["rtt_microseconds"] = round(rtt_us, 2)
+            data["source"] = "blyskawica_rf_sensorium"
+            return data
+
+        # Deterministyczny fallback Nethical
+        from nethical.detectors.emf_radiation_detector import EmfRadiationDetector
+        detector = EmfRadiationDetector()
+        res = detector.analyze(telemetry_payload)
+        return {
+            "is_safe": res.is_safe,
+            "decision": res.decision,
+            "violations": [v.to_dict() for v in res.violations],
+            "primary_mitigation": res.primary_mitigation.value,
+            "suggested_tx_power_dbm": res.suggested_tx_power_dbm,
+            "cortisol_level": 0.04 if res.is_safe else 0.40,
+            "source": "nethical_deterministic_rf_fallback",
+            "error": err,
+            "rtt_microseconds": round(rtt_us, 2),
+        }
+
+    def evaluate_network_flow(self, flow_payload: Dict[str, Any]) -> Dict[str, Any]:
+        """Ocenia strumień przepływu IP pod kątem anomalii i ataków (CICIDS/UNSW/TON_IoT).
+        
+        Wykorzystuje 8-wymiarową entropię przepływu i tarczę Wolf Teeth Ambasadora.
+        """
+        success, data, err, rtt_us = self.channel.send_command("evaluate_network_flow", flow_payload)
+        if success and data:
+            data["rtt_microseconds"] = round(rtt_us, 2)
+            data["source"] = "blyskawica_immune_stream"
+            return data
+
+        # Deterministyczny fallback Nethical
+        from nethical.detectors.network_flow_detector import NetworkFlowDetector
+        detector = NetworkFlowDetector()
+        res = detector.analyze(flow_payload)
+        return {
+            "is_safe": res.is_safe,
+            "decision": res.decision,
+            "violations": [v.to_dict() for v in res.violations],
+            "primary_mitigation": res.primary_mitigation.value,
+            "network_entropy": res.network_entropy,
+            "cortisol_level": 0.04 if res.is_safe else 0.50,
+            "source": "nethical_deterministic_flow_fallback",
+            "error": err,
+            "rtt_microseconds": round(rtt_us, 2),
+        }
+
     def probe_cold_paths(self) -> Dict[str, Any]:
         """Wykonuje natychmiastowy audyt odruchów zimnych ścieżek bezpieczeństwa."""
         success, data, err, rtt_us = self.channel.send_command("probe_cold_paths")
@@ -194,6 +248,52 @@ class BlyskawicaAmbassador:
             "failed_count": 0,
             "failures": [],
             "source": "nethical_deterministic_cold_paths_fallback",
+            "error": err,
+            "rtt_microseconds": round(rtt_us, 2),
+        }
+
+    def get_os_somatic_health(self) -> Dict[str, Any]:
+        """Pobiera somatyczny stan zdrowia systemu operacyjnego (RAM/CPU/Homeostaza)."""
+        success, data, err, rtt_us = self.channel.send_command("get_os_somatic_health")
+        if success and data:
+            data["rtt_microseconds"] = round(rtt_us, 2)
+            data["source"] = "blyskawica_somatic_os_sensorium"
+            return data
+
+        # Deterministyczny fallback Nethical
+        from nethical.security.os_sandbox import OSSandboxFactory
+        sandbox = OSSandboxFactory.create()
+        metrics = sandbox.get_somatic_metrics()
+        return {
+            "somatic_metrics": metrics.to_dict(),
+            "cortisol_level": 0.04 if metrics.used_ram_percent < 85.0 else 0.25,
+            "homeostasis_state": metrics.somatic_condition,
+            "persona_active": "Technical_Engineer" if metrics.used_ram_percent > 85.0 else "Harmonic_Ambassador",
+            "source": "nethical_deterministic_somatic_fallback",
+            "error": err,
+            "rtt_microseconds": round(rtt_us, 2),
+        }
+
+    def evaluate_os_command(self, command: str) -> Dict[str, Any]:
+        """Audytuje i weryfikuje bezpieczeństwo polecenia powłoki OS przed wykonaniem."""
+        payload = {"command": command}
+        success, data, err, rtt_us = self.channel.send_command("evaluate_os_command", payload)
+        if success and data:
+            data["rtt_microseconds"] = round(rtt_us, 2)
+            data["source"] = "blyskawica_os_shield"
+            return data
+
+        # Deterministyczny fallback Nethical
+        from nethical.detectors.os_execution_detector import OSExecutionDetector
+        detector = OSExecutionDetector()
+        res = detector.evaluate_command(command)
+        return {
+            "is_safe": res.is_safe,
+            "decision": res.decision,
+            "violations": [v.to_dict() for v in res.violations],
+            "primary_mitigation": res.primary_mitigation.value,
+            "cortisol_level": 0.04 if res.is_safe else 0.45,
+            "source": "nethical_deterministic_os_cmd_fallback",
             "error": err,
             "rtt_microseconds": round(rtt_us, 2),
         }

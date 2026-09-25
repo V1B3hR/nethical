@@ -27,6 +27,12 @@ The laws cover seven critical categories:
 
 ---
 
+## 🎯 Pozycjonowanie Strategiczne i Roadmapa (2026)
+
+- [**Pozycjonowanie Strategiczne, Stan Rozwoju i Dalsza Droga Nethical**](overview/STRATEGIC_POSITIONING_AND_ROADMAP.md) — Dogłębne porównanie Nethical z systemami rynkowymi (NeMo Guardrails, Guardrails AI, Credo AI, Lakera), 5 warstw suwerennej obrony AI (od L1 fizycznej po L5 regulacyjną), stan TRL 7/8 oraz roadmapa operacjonalizacji (Etap 2).
+
+---
+
 ## 🏛️ Institutional & Government Briefings (NEW)
 
 > For government bodies, research institutes, regulatory agencies, and grant committees.

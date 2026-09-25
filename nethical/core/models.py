@@ -509,7 +509,10 @@ class SafetyViolation(_BaseModel):
                 data["violation_type"] = ViolationType.SECURITY
             # Map severity if needed
             if "severity" in data:
-                if isinstance(data["severity"], str):
+                sev = data["severity"]
+                if hasattr(sev, "value"):
+                    sev = sev.value
+                if isinstance(sev, str):
                     sev_map = {
                         "low": Severity.LOW,
                         "medium": Severity.MEDIUM,
@@ -517,10 +520,10 @@ class SafetyViolation(_BaseModel):
                         "critical": Severity.CRITICAL,
                         "emergency": Severity.EMERGENCY,
                     }
-                    data["severity"] = sev_map.get(data["severity"].lower(), Severity.HIGH)
-                elif isinstance(data["severity"], int):
+                    data["severity"] = sev_map.get(sev.lower(), Severity.HIGH)
+                elif isinstance(sev, int):
                     try:
-                        data["severity"] = Severity(data["severity"])
+                        data["severity"] = Severity(sev)
                     except Exception:
                         data["severity"] = Severity.HIGH
             # Default confidence if missing

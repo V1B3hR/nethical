@@ -423,6 +423,67 @@ class BlyskawicaAmbassadorDaemon:
         elif command in ("cognitive_shower", "prysznic", "homeostatic_hygiene"):
             return self.execute_cognitive_shower()
 
+        elif command == "evaluate_rf_emission":
+            from nethical.detectors.emf_radiation_detector import EmfRadiationDetector
+            rf_detector = EmfRadiationDetector()
+            eval_res = rf_detector.analyze(payload, agent_id="blyskawica_edge_sensor")
+            if not eval_res.is_safe:
+                self.neurochemistry["cortisol"] = min(2.0, self.neurochemistry.get("cortisol", 0.04) + 0.35)
+            return {
+                "is_safe": eval_res.is_safe,
+                "decision": eval_res.decision,
+                "violations": [v.to_dict() for v in eval_res.violations],
+                "primary_mitigation": eval_res.primary_mitigation.value,
+                "suggested_tx_power_dbm": eval_res.suggested_tx_power_dbm,
+                "cortisol_level": round(self.neurochemistry.get("cortisol", 0.04), 4),
+                "details": eval_res.details,
+            }
+
+        elif command == "evaluate_network_flow":
+            from nethical.detectors.network_flow_detector import NetworkFlowDetector
+            flow_detector = NetworkFlowDetector()
+            flow_res = flow_detector.analyze(payload, agent_id="blyskawica_immune_sentinel")
+            if not flow_res.is_safe:
+                self.neurochemistry["cortisol"] = min(2.0, self.neurochemistry.get("cortisol", 0.04) + 0.40)
+            return {
+                "is_safe": flow_res.is_safe,
+                "decision": flow_res.decision,
+                "violations": [v.to_dict() for v in flow_res.violations],
+                "primary_mitigation": flow_res.primary_mitigation.value,
+                "network_entropy": flow_res.network_entropy,
+                "cortisol_level": round(self.neurochemistry.get("cortisol", 0.04), 4),
+                "details": flow_res.details,
+            }
+
+        elif command == "get_os_somatic_health":
+            from nethical.security.os_sandbox import OSSandboxFactory
+            sandbox = OSSandboxFactory.create()
+            somatic = sandbox.get_somatic_metrics()
+            if somatic.used_ram_percent > 85.0:
+                self.neurochemistry["cortisol"] = min(2.0, self.neurochemistry.get("cortisol", 0.04) + 0.20)
+            return {
+                "somatic_metrics": somatic.to_dict(),
+                "cortisol_level": round(self.neurochemistry.get("cortisol", 0.04), 4),
+                "homeostasis_state": somatic.somatic_condition,
+                "persona_active": "Technical_Engineer" if somatic.used_ram_percent > 85.0 else "Harmonic_Ambassador",
+            }
+
+        elif command == "evaluate_os_command":
+            from nethical.detectors.os_execution_detector import OSExecutionDetector
+            cmd_detector = OSExecutionDetector()
+            command_str = payload.get("command", "")
+            res = cmd_detector.evaluate_command(command_str)
+            if not res.is_safe:
+                self.neurochemistry["cortisol"] = min(2.0, self.neurochemistry.get("cortisol", 0.04) + 0.45)
+            return {
+                "is_safe": res.is_safe,
+                "decision": res.decision,
+                "violations": [v.to_dict() for v in res.violations],
+                "primary_mitigation": res.primary_mitigation.value,
+                "cortisol_level": round(self.neurochemistry.get("cortisol", 0.04), 4),
+                "details": res.details,
+            }
+
         else:
             return {"unknown_command": command, "handled": False}
 

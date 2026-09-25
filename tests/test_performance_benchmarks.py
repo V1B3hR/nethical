@@ -328,5 +328,11 @@ async def main():
         raise
 
 
+def test_performance_benchmarks_overhead():
+    """Pytest entrypoint verifying plugin and policy benchmark execution and latency overhead."""
+    asyncio.run(main())
+
+
 if __name__ == "__main__":
     asyncio.run(main())
+

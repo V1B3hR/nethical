@@ -1,0 +1,123 @@
+# SPDX-License-Identifier: MIT
+# Copyright (c) 2025-2026 Nethical Contributors
+#
+# Kubernetes Deployment: AI Autonomous Agent with Nethical Governance Sidecar
+# Enforces real-time determinism, OS call confinement, and Merkle DAG audit trails.
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: autonomous-agent-with-nethical
+  namespace: nethical-system
+  labels:
+    app.kubernetes.io/name: sovereign-ai-agent
+    app.kubernetes.io/part-of: nethical-governance
+    compliance.eu.ai.act/classification: high-risk-annex-iii
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: sovereign-ai-agent
+  template:
+    metadata:
+      labels:
+        app: sovereign-ai-agent
+    spec:
+      # Pod-level security context
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 10001
+        runAsGroup: 10001
+        fsGroup: 10001
+        seccompProfile:
+          type: RuntimeDefault
+
+      volumes:
+        # High-performance shared in-memory IPC volume for low-latency (<0.5ms) communication
+        - name: nethical-ipc
+          emptyDir:
+            medium: Memory
+            sizeLimit: 128Mi
+        # Immutable config volume
+        - name: nethical-policy-volume
+          configMap:
+            name: nethical-fundamental-laws-policy
+
+      containers:
+        # =====================================================================
+        # 1. Primary AI Agent (e.g., LangChain / AutoGen / CrewAI / Robotics)
+        # =====================================================================
+        - name: agent-workload
+          image: autonomous-agent:v2.1
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NETHICAL_GOVERNANCE_HOST
+              value: "127.0.0.1"
+            - name: NETHICAL_GOVERNANCE_PORT
+              value: "8000"
+            - name: NETHICAL_IPC_SOCKET
+              value: "/var/run/nethical/governance.sock"
+          resources:
+            requests:
+              cpu: "1000m"
+              memory: "2Gi"
+            limits:
+              cpu: "4000m"
+              memory: "8Gi"
+          volumeMounts:
+            - name: nethical-ipc
+              mountPath: /var/run/nethical
+
+        # =====================================================================
+        # 2. Nethical Sovereign Governance Sidecar Proxy
+        # =====================================================================
+        - name: nethical-sidecar
+          image: nethical/sidecar:2.7.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: NETHICAL_LOCAL_FIRST
+              value: "1"
+            - name: NETHICAL_SAFETY_ACKNOWLEDGED
+              value: "1"
+            - name: NETHICAL_HSM_PROVIDER
+              value: "tpm-2.0"
+            - name: NETHICAL_IPC_PIPE
+              value: "/var/run/nethical/governance.sock"
+          ports:
+            - name: http-gov
+              containerPort: 8000
+              protocol: TCP
+            - name: https-audit
+              containerPort: 8443
+              protocol: TCP
+          securityContext:
+            readOnlyRootFilesystem: true
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop:
+                - ALL
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          readinessProbe:
+            httpGet:
+              path: /health
+              port: 8000
+            initialDelaySeconds: 2
+            periodSeconds: 5
+          volumeMounts:
+            - name: nethical-ipc
+              mountPath: /var/run/nethical
+            - name: nethical-policy-volume
+              mountPath: /etc/nethical/policies
+              readOnly: true

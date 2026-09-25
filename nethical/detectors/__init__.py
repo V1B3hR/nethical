@@ -13,15 +13,48 @@ from .law_violation_detector import LawViolationDetector
 # from .system_limits_detector import SystemLimitsDetector
 from .base_detector import BaseDetector
 from .corruption import CorruptionDetector
+from .emf_radiation_detector import (
+    EmfRadiationDetector,
+    EmfEmissionTelemetry,
+    EmfEvaluationResult,
+    EmfViolation,
+    EmfExposureZone,
+    EmfMitigationAction,
+)
+from .network_flow_detector import (
+    NetworkFlowDetector,
+    NetworkFlowEvaluationResult,
+    FlowViolation,
+    FlowMitigationAction,
+)
+from .os_execution_detector import (
+    OSExecutionDetector,
+    OSExecutionEvaluationResult,
+    OSExecutionViolation,
+    OSThreatCategory,
+    OSExecutionMitigation,
+)
 
 __all__ = [
     "EthicalViolationDetector",
     "SafetyViolationDetector",
     "ManipulationDetector",
     "LawViolationDetector",
-    # "EnhancedDarkPatternDetector",
-    # "CognitiveWarfareDetector",
-    # "SystemLimitsDetector",
     "BaseDetector",
     "CorruptionDetector",
+    "EmfRadiationDetector",
+    "EmfEmissionTelemetry",
+    "EmfEvaluationResult",
+    "EmfViolation",
+    "EmfExposureZone",
+    "EmfMitigationAction",
+    "NetworkFlowDetector",
+    "NetworkFlowEvaluationResult",
+    "FlowViolation",
+    "FlowMitigationAction",
+    "OSExecutionDetector",
+    "OSExecutionEvaluationResult",
+    "OSExecutionViolation",
+    "OSThreatCategory",
+    "OSExecutionMitigation",
 ]

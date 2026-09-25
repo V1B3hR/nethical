@@ -53,6 +53,7 @@ htmlcov/
 tests/validation/results/
 tests/performance/results/
 tests/storage/results/
+tests/results/
 
 # Logs & Runtime Chunks
 *.log

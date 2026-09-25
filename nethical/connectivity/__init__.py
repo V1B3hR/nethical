@@ -41,6 +41,16 @@ from .satellite import (
     SignalQuality,
     ConnectionMetrics,
 )
+from .cellular import (
+    BaseCellularModem,
+    CellularGeneration,
+    CellularTelemetry,
+    SignalQualityGrade,
+    Cellular5GModem,
+    HybridCellularSatelliteRouter,
+    ActiveRoute,
+    RouteDecision,
+)
 
 __all__ = [
     # Base classes
@@ -73,4 +83,13 @@ __all__ = [
     "SatelliteMetrics",
     "SignalQuality",
     "ConnectionMetrics",
+    # Cellular & Terrestrial
+    "BaseCellularModem",
+    "CellularGeneration",
+    "CellularTelemetry",
+    "SignalQualityGrade",
+    "Cellular5GModem",
+    "HybridCellularSatelliteRouter",
+    "ActiveRoute",
+    "RouteDecision",
 ]

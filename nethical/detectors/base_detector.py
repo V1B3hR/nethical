@@ -193,6 +193,7 @@ class BaseDetector(ABC):
         "status",
         "config",
         "metrics",
+        "_metrics",
         "security_context",
         "supported_actions",
         "ethical_principles",
@@ -240,6 +241,7 @@ class BaseDetector(ABC):
         self.status: DetectorStatus = DetectorStatus.ACTIVE
         self.config: Dict[str, Any] = config or {}
         self.metrics: DetectorMetrics = DetectorMetrics()
+        self._metrics: DetectorMetrics = self.metrics
         self.security_context: SecurityContext = security_context or SecurityContext()
         self.supported_actions: Set[str] = supported_actions or set()
         self.ethical_principles: Set[EthicalPrinciple] = ethical_principles or {
