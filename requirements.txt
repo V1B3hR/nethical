@@ -52,7 +52,7 @@ typing-inspect==0.9.0
 typing-inspection==0.4.4
 mypy-extensions==1.1.0
 python-dateutil==2.9.0.post0
-pytz==2024.2
+pytz==2026.3.post1
 tzdata==2025.3
 # Pin starlette to the range fastapi 0.121.0 supports for reproducibility and security.
 # This explicit pin ensures builds remain consistent even if fastapi's range allows
