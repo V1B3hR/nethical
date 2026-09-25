@@ -37,10 +37,13 @@ cryptography>=50.0.0
 defusedxml==0.7.1
 PyJWT>=2.0.0
 passlib[bcrypt]>=1.7.4
+pyotp>=2.9.0
 
 # Database
 sqlalchemy>=2.0.52
 alembic>=1.19.1    
+aiosqlite>=0.20.0
+
 
 # Transitive/supporting (explicitly pinned to keep lock stable)
 annotated-types==0.8.0

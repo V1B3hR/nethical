@@ -343,13 +343,33 @@ class MFAManager:
                     "pyotp library is required for TOTP verification but is not installed. "
                     "Install it with: pip install pyotp"
                 )
-            # Fallback: reject all codes when pyotp is not available
-            log.error(
-                "pyotp not available for TOTP verification. "
-                "Install pyotp for production use: pip install pyotp"
-            )
-            self._record_failed_attempt(user_id)
-            return False
+            # Sovereign RFC 6238 pure-Python standard library fallback
+            import base64
+            import hmac
+            import struct
+            import time
+
+            try:
+                secret = mfa_setup.totp_secret.strip().replace(" ", "").upper()
+                pad = len(secret) % 8
+                if pad:
+                    secret += "=" * (8 - pad)
+                key = base64.b32decode(secret)
+                now_ts = int(time.time())
+                is_valid = False
+                # Check current window, previous 30s, and next 30s window
+                for offset_sec in (-30, 0, 30):
+                    counter = (now_ts + offset_sec) // 30
+                    msg = struct.pack(">Q", counter)
+                    h = hmac.new(key, msg, hashlib.sha1).digest()
+                    off = h[19] & 0x0F
+                    calc_code = str((struct.unpack(">I", h[off:off + 4])[0] & 0x7FFFFFFF) % 1000000).zfill(6)
+                    if secrets.compare_digest(calc_code, code.strip()):
+                        is_valid = True
+                        break
+            except Exception as e:
+                log.error(f"Fallback TOTP calculation error: {e}")
+                is_valid = False
 
         if is_valid:
             self._clear_failed_attempts(user_id)

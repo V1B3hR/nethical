@@ -216,6 +216,17 @@ class TestPostgresMigrationsAndSchema:
         assert "model_versions" in content
         assert "policy_versions" in content
 
+    def test_auth_and_multi_tenant_migration_syntax(self) -> None:
+        migration_file = DEPLOY_DIR / "postgres" / "migrations" / "versions" / "002_auth_and_multi_tenant.py"
+        assert migration_file.exists()
+        content = migration_file.read_text(encoding="utf-8")
+        assert 'revision = "002_auth_and_multi_tenant"' in content
+        assert 'down_revision = "001_initial_schema"' in content
+        assert "tenants" in content
+        assert "users" in content
+        assert "revoked_tokens" in content
+        assert "tenant_id" in content
+
 
 class TestReleaseScripts:
     """Validates reproducible release shell scripts."""

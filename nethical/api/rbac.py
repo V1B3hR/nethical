@@ -39,6 +39,9 @@ logger = logging.getLogger(__name__)
 
 __all__ = [
     "Role",
+    "ADMIN_ROLES",
+    "AUDITOR_ROLES",
+    "OPERATOR_ROLES",
     "TokenData",
     "User",
     "create_access_token",
@@ -48,6 +51,8 @@ __all__ = [
     "require_auditor_or_admin",
     "verify_password",
     "get_password_hash",
+    "revoke_token",
+    "is_token_revoked",
     "_initialize_secret_key",
 ]
 
@@ -99,11 +104,43 @@ ACCESS_TOKEN_EXPIRE_MINUTES = int(os.getenv("ACCESS_TOKEN_EXPIRE_MINUTES", "30")
 
 
 class Role(str, Enum):
-    """User roles for RBAC."""
+    """User roles for RBAC supporting both canonical UserRole and legacy aliases."""
     
+    # Legacy short names
     ADMIN = "admin"
     AUDITOR = "auditor"
     OPERATOR = "operator"
+
+    # Canonical UserRole names
+    GLOBAL_ADMIN = "global_admin"
+    SECURITY_OFFICER = "security_officer"
+    COMPLIANCE_AUDITOR = "compliance_auditor"
+    HITL_REVIEWER = "hitl_reviewer"
+    AGENT_OPERATOR = "agent_operator"
+
+    @classmethod
+    def normalize(cls, role_val: Any) -> "Role":
+        """Normalize legacy or canonical role string into Role enum."""
+        if isinstance(role_val, Role):
+            return role_val
+        val = str(role_val or "").strip().lower()
+        mapping = {
+            "admin": cls.ADMIN,
+            "global_admin": cls.GLOBAL_ADMIN,
+            "auditor": cls.AUDITOR,
+            "compliance_auditor": cls.COMPLIANCE_AUDITOR,
+            "security_officer": cls.SECURITY_OFFICER,
+            "operator": cls.OPERATOR,
+            "agent_operator": cls.AGENT_OPERATOR,
+            "hitl_reviewer": cls.HITL_REVIEWER,
+        }
+        return mapping.get(val, cls.OPERATOR)
+
+
+# Role hierarchy sets for access checking
+ADMIN_ROLES = {Role.ADMIN, Role.GLOBAL_ADMIN, Role.SECURITY_OFFICER}
+AUDITOR_ROLES = {Role.AUDITOR, Role.COMPLIANCE_AUDITOR, *ADMIN_ROLES}
+OPERATOR_ROLES = {Role.OPERATOR, Role.AGENT_OPERATOR, Role.HITL_REVIEWER, *AUDITOR_ROLES}
 
 
 class TokenData(BaseModel):
@@ -111,6 +148,7 @@ class TokenData(BaseModel):
     
     username: str
     role: Role
+    tenant_id: str = "default_tenant"
     scopes: list[str] = []
 
 
@@ -122,7 +160,9 @@ class User(BaseModel):
     email: str
     full_name: Optional[str] = None
     role: Role
+    tenant_id: str = "default_tenant"
     is_active: bool = True
+
 
 
 def verify_password(plain_password: str, hashed_password: str) -> bool:
@@ -183,10 +223,64 @@ def create_access_token(data: dict[str, Any], expires_delta: Optional[timedelta]
     return encoded_jwt
 
 
+import hashlib
+
+_in_memory_revoked: set[str] = set()
+
+
+def is_token_revoked(identifier: str) -> bool:
+    """Check if token hash or JTI is revoked in cache or database."""
+    if identifier in _in_memory_revoked:
+        return True
+    try:
+        from nethical.database import RevokedToken, SessionLocal
+        if SessionLocal is not None and RevokedToken is not None:
+            with SessionLocal() as db:
+                entry = db.query(RevokedToken).filter(RevokedToken.jti == identifier).first()
+                if entry:
+                    _in_memory_revoked.add(identifier)
+                    return True
+    except Exception:
+        pass
+    return False
+
+
+def revoke_token(token: str, reason: Optional[str] = None) -> bool:
+    """Revoke token both in-memory and persistently in the database."""
+    token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+    _in_memory_revoked.add(token_hash)
+    try:
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM], options={"verify_exp": False})
+        jti = payload.get("jti", token_hash)
+        _in_memory_revoked.add(jti)
+        exp_ts = payload.get("exp")
+        expires_at = datetime.fromtimestamp(exp_ts, tz=timezone.utc) if exp_ts else datetime.now(timezone.utc) + timedelta(hours=24)
+        user_id = str(payload.get("user_id") or payload.get("sub") or "")
+
+        from nethical.database import RevokedToken, SessionLocal
+        if SessionLocal is not None and RevokedToken is not None:
+            with SessionLocal() as db:
+                existing = db.query(RevokedToken).filter(RevokedToken.jti == jti).first()
+                if not existing:
+                    rec = RevokedToken(
+                        jti=jti,
+                        token_type=payload.get("token_type", "access"),
+                        user_id=user_id,
+                        expires_at=expires_at,
+                        reason=reason or "logout",
+                    )
+                    db.add(rec)
+                    db.commit()
+        return True
+    except Exception as e:
+        logger.warning(f"Error persisting revoked token: {e}")
+        return True
+
+
 async def get_current_user(
     credentials: Annotated[HTTPAuthorizationCredentials, Depends(security)]
 ) -> User:
-    """Get current user from JWT token.
+    """Get current user from JWT token with revocation checking.
     
     Args:
         credentials: HTTP bearer credentials
@@ -195,7 +289,7 @@ async def get_current_user(
         Current user
         
     Raises:
-        HTTPException: If token is invalid or expired
+        HTTPException: If token is invalid, expired, or revoked
     """
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -205,16 +299,38 @@ async def get_current_user(
     
     try:
         token = credentials.credentials
-        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
-        username: str = payload.get("sub")
-        role: str = payload.get("role")
         
-        if username is None or role is None:
+        # Check revocation before heavy decoding
+        token_hash = hashlib.sha256(token.encode("utf-8")).hexdigest()
+        if is_token_revoked(token_hash):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been revoked",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        payload = jwt.decode(token, SECRET_KEY, algorithms=[ALGORITHM])
+        jti = payload.get("jti")
+        if jti and is_token_revoked(jti):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Token has been revoked",
+                headers={"WWW-Authenticate": "Bearer"},
+            )
+
+        username: str = payload.get("sub")
+        raw_role = payload.get("role")
+        
+        if username is None or raw_role is None:
             raise credentials_exception
+        
+        role = Role.normalize(raw_role)
+        tenant_id = payload.get("tenant_id", "default_tenant")
         
         token_data = TokenData(
             username=username,
-            role=Role(role),
+            role=role,
+            tenant_id=tenant_id,
             scopes=payload.get("scopes", [])
         )
     except jwt.ExpiredSignatureError:
@@ -223,17 +339,18 @@ async def get_current_user(
             detail="Token has expired",
             headers={"WWW-Authenticate": "Bearer"},
         )
+    except HTTPException:
+        raise
     except (jwt.InvalidTokenError, ValueError):
         raise credentials_exception
     
-    # In production, fetch user from database
-    # For now, return user from token data
     user = User(
         id=payload.get("user_id", 0),
         username=token_data.username,
         email=payload.get("email", f"{token_data.username}@example.com"),
         full_name=payload.get("full_name"),
         role=token_data.role,
+        tenant_id=token_data.tenant_id,
         is_active=True
     )
     
@@ -244,28 +361,12 @@ async def get_current_user(
 
 
 def require_role(*allowed_roles: Role) -> Callable:
-    """Decorator to require specific role(s) for endpoint access.
-    
-    Args:
-        *allowed_roles: Roles that are allowed to access the endpoint
-        
-    Returns:
-        Decorated function
-        
-    Example:
-        @app.get("/admin")
-        @require_role(Role.ADMIN)
-        async def admin_endpoint(user: User = Depends(get_current_user)):
-            return {"message": "Admin access granted"}
-    """
+    """Decorator to require specific role(s) for endpoint access."""
     def decorator(func: Callable) -> Callable:
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            # Get current user from kwargs (injected by FastAPI)
             user = kwargs.get("current_user")
-            
             if user is None:
-                # Try to get from args if not in kwargs
                 for arg in args:
                     if isinstance(arg, User):
                         user = arg
@@ -277,33 +378,22 @@ def require_role(*allowed_roles: Role) -> Callable:
                     detail="Authentication required"
                 )
             
-            if user.role not in allowed_roles:
+            # Check if user role matches or is contained in allowed roles
+            allowed_set = set(allowed_roles)
+            if user.role not in allowed_set:
                 raise HTTPException(
                     status_code=status.HTTP_403_FORBIDDEN,
                     detail=f"Access denied. Required role: {', '.join(r.value for r in allowed_roles)}"
                 )
             
             return await func(*args, **kwargs)
-        
         return wrapper
-    
     return decorator
 
 
-# Dependency for role checking in FastAPI
 def require_admin(current_user: Annotated[User, Depends(get_current_user)]) -> User:
-    """Require admin role.
-    
-    Args:
-        current_user: Current authenticated user
-        
-    Returns:
-        Current user if admin
-        
-    Raises:
-        HTTPException: If user is not admin
-    """
-    if current_user.role != Role.ADMIN:
+    """Require admin role (supports legacy admin and canonical global_admin/security_officer)."""
+    if current_user.role not in ADMIN_ROLES:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Admin access required"
@@ -312,20 +402,11 @@ def require_admin(current_user: Annotated[User, Depends(get_current_user)]) -> U
 
 
 def require_auditor_or_admin(current_user: Annotated[User, Depends(get_current_user)]) -> User:
-    """Require auditor or admin role.
-    
-    Args:
-        current_user: Current authenticated user
-        
-    Returns:
-        Current user if auditor or admin
-        
-    Raises:
-        HTTPException: If user is not auditor or admin
-    """
-    if current_user.role not in [Role.ADMIN, Role.AUDITOR]:
+    """Require auditor or admin role (supports legacy and canonical roles)."""
+    if current_user.role not in AUDITOR_ROLES:
         raise HTTPException(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="Auditor or admin access required"
         )
     return current_user
+

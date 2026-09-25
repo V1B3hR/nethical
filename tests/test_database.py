@@ -7,8 +7,8 @@ import pytest
 from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
-from nethical.database.models import Base, User, Agent, Policy, AuditLog
-from nethical.database.database import get_db, init_db
+from nethical.database.models import Base, User, Agent, Policy, AuditLog, Tenant, ApiKey, RevokedToken
+from nethical.database.database import get_db, init_db, get_async_db, init_async_db
 
 
 @pytest.fixture
@@ -143,3 +143,95 @@ def test_get_db_generator():
 def test_init_db_execution():
     """Test init_db executes without error."""
     init_db()
+
+
+def test_tenant_model_lifecycle(test_db_session):
+    """Test Tenant creation, sovereign jurisdiction, and to_dict."""
+    tenant = Tenant(
+        tenant_id="gov_pl_cyber",
+        name="Rządowy Węzeł Nadzoru Cyberbezpieczeństwa RP",
+        description="Narodowy suwerenny tenant bezpieczeństwa AI",
+        jurisdiction="PL",
+        classification="RESTRICTED",
+        config={"strict_merkle": True, "pqc_curve": "ML-DSA-65"},
+    )
+    test_db_session.add(tenant)
+    test_db_session.commit()
+    test_db_session.refresh(tenant)
+
+    data = tenant.to_dict()
+    assert data["tenant_id"] == "gov_pl_cyber"
+    assert data["jurisdiction"] == "PL"
+    assert data["classification"] == "RESTRICTED"
+    assert data["config"]["strict_merkle"] is True
+
+
+def test_api_key_model_lifecycle(test_db_session):
+    """Test ApiKey creation, hashing, tenant association, and to_dict."""
+    api_key = ApiKey(
+        key_id="key-001",
+        key_hash="e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855",
+        key_prefix="neth_live_",
+        name="CI/CD Pipeline Service Account",
+        tenant_id="gov_pl_cyber",
+        scopes=["telemetry:read", "action:execute"],
+        role="agent_operator",
+        rate_limit=5000,
+    )
+    test_db_session.add(api_key)
+    test_db_session.commit()
+    test_db_session.refresh(api_key)
+
+    data = api_key.to_dict()
+    assert data["key_id"] == "key-001"
+    assert data["key_prefix"] == "neth_live_"
+    assert data["tenant_id"] == "gov_pl_cyber"
+    assert "telemetry:read" in data["scopes"]
+    assert data["rate_limit"] == 5000
+
+
+def test_revoked_token_model_lifecycle(test_db_session):
+    """Test RevokedToken model persistence and blacklisting."""
+    from datetime import datetime, timedelta, timezone
+
+    revoked = RevokedToken(
+        jti="jwt-revoked-token-123",
+        token_type="access",
+        user_id="operator_1",
+        expires_at=datetime.now(timezone.utc) + timedelta(hours=1),
+        reason="user_logout",
+    )
+    test_db_session.add(revoked)
+    test_db_session.commit()
+    test_db_session.refresh(revoked)
+
+    data = revoked.to_dict()
+    assert data["jti"] == "jwt-revoked-token-123"
+    assert data["reason"] == "user_logout"
+    assert data["expires_at"] is not None
+
+
+@pytest.mark.asyncio
+async def test_async_database_lifecycle():
+    """Test asynchronous database engine and session generator."""
+    from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, AsyncSession
+
+    async_engine = create_async_engine("sqlite+aiosqlite:///:memory:")
+    async with async_engine.begin() as conn:
+        await conn.run_sync(Base.metadata.create_all)
+
+    AsyncTestSession = async_sessionmaker(async_engine, class_=AsyncSession, expire_on_commit=False)
+    async with AsyncTestSession() as session:
+        user = User(
+            username="async_user",
+            email="async@sovereign.local",
+            hashed_password="mocked_hash",
+            role="operator",
+            tenant_id="default_tenant",
+        )
+        session.add(user)
+        await session.commit()
+        await session.refresh(user)
+        assert user.id is not None
+        assert user.username == "async_user"
+
