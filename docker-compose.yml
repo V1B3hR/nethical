@@ -1,5 +1,3 @@
-version: '3.8'
-
 services:
   # v2.0: Main Nethical API service with semantic monitoring
   nethical-api:
@@ -8,7 +6,7 @@ services:
       dockerfile: Dockerfile
       args:
         PRELOAD_EMBEDDINGS: "true"  # Preload models to reduce cold start
-    image: nethical:v2.0
+    image: nethical:v2.7.0
     container_name: nethical-api
     environment:
       # v2.0: Semantic monitoring
@@ -17,7 +15,7 @@ services:
       
       # Storage and data
       - NETHICAL_STORAGE_DIR=/data/nethical
-      - NETHICAL_REGION_ID=us-east-1
+      - NETHICAL_REGION_ID=eu-central-1
       - NETHICAL_LOGICAL_DOMAIN=default
       
       # Feature flags
@@ -56,10 +54,11 @@ services:
       retries: 3
       start_period: 15s
 
-  # Optional: Redis for caching and persistence
+  # Redis for distributed caching, state synchronization and quota management
   redis:
-    image: redis:7-alpine
+    image: redis:7.4-alpine
     container_name: nethical-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-nethical_cluster_secure_sync_secret}
     ports:
       - "6379:6379"
     volumes:
@@ -68,14 +67,14 @@ services:
       - nethical-network
     restart: unless-stopped
     healthcheck:
-      test: ["CMD", "redis-cli", "ping"]
+      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD:-nethical_cluster_secure_sync_secret}", "ping"]
       interval: 10s
       timeout: 3s
       retries: 3
 
-  # Optional: OpenTelemetry Collector
+  # OpenTelemetry Collector (pinned sovereign release)
   otel-collector:
-    image: otel/opentelemetry-collector-contrib:latest
+    image: otel/opentelemetry-collector-contrib:0.108.0
     container_name: nethical-otel-collector
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
@@ -89,9 +88,9 @@ services:
       - nethical-network
     restart: unless-stopped
 
-  # Optional: Prometheus for metrics
+  # Prometheus for telemetry and metrics (pinned sovereign release)
   prometheus:
-    image: prom/prometheus:latest
+    image: prom/prometheus:v2.54.1
     container_name: nethical-prometheus
     command:
       - '--config.file=/etc/prometheus/prometheus.yml'
@@ -105,13 +104,15 @@ services:
       - nethical-network
     restart: unless-stopped
 
-  # Optional: Grafana for visualization
+  # Grafana for institutional dashboards and visualization (pinned sovereign release)
   grafana:
-    image: grafana/grafana:latest
+    image: grafana/grafana:11.2.0
     container_name: nethical-grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-ChangeMeInProduction2026!}
       - GF_USERS_ALLOW_SIGN_UP=false
+      - GF_SECURITY_COOKIE_SECURE=true
+      - GF_SECURITY_STRICT_TRANSPORT_SECURITY=true
     volumes:
       - grafana-data:/var/lib/grafana
       - ./dashboards:/etc/grafana/provisioning/dashboards:ro

@@ -2,7 +2,7 @@
 **System Name:** Nethical Enterprise OS & Jurisdictional Trust Engine  
 **Version:** v10.4-sovereign  
 **Framework Suite:** World Bank WGI, OECD iREG, Gothenburg QoG, UK i.AI, GDPR Schrems II, NATO CNI  
-**Generated At:** `2026-09-22T10:04:33.398114+00:00`  
+**Generated At:** `2026-09-25T15:22:10.419571+00:00`  
 **Merkle Verification Anchor:** `d4eb3d41086345f067581e3d819108eafba08786a35de9de534c5390a93b9fdd`  
 
 ---

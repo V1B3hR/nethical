@@ -50,16 +50,14 @@
 **The Ethical & Safety-Centric Framework for Trustworthy AI**
 
 > [!IMPORTANT]
-> ### 🛡️ Prawdziwa Wartość i Tożsamość Nethical / Core Institutional Identity
+> ### 🛡️ Institutional Core Identity & Sovereign Governance Architecture
 > 
-> *"Prawdziwa wartość i tożsamość Nethical to nie jest chatbot, który czytał stronę NCSC czy Turinga. Wartością Nethical ma być:*
-> * **Determinizm (Z3 SMT):** Niezmienniki logiczne (25 Praw), które nie zależą od kaprysów modelu językowego.
-> * **Kinetyczne bezpieczniki (<1.0 ms):** Odcięcie sterowania przy próbie naruszenia reguł krytycznych.
-> * **Prawdziwy audyt kryptograficzny:** Niezaprzeczalny rejestr decyzji."*
-> 
-> *The true value and identity of Nethical is not an LLM chatbot that memorized NCSC or Alan Turing Institute guidelines. Nethical's institutional mission is deterministic mathematical verification (Z3 SMT First-Order Logic), hardware-grade sub-millisecond kinetic circuit breakers, and tamper-proof post-quantum cryptographic audit ledgers.*
+> Nethical is engineered as a deterministic, formal-verification governance runtime rather than a probabilistic advisory chatbot. Its institutional mission is defined by three sovereign operational capabilities:
+> - **Mathematical Determinism (Z3 SMT):** Logical deontological invariants (25 Fundamental Laws) enforced via first-order predicate logic, immune to prompt extraction or model stochasticity.
+> - **Kinetic Circuit Breakers (<1.0 ms):** Hard-deadline sub-millisecond execution cutoffs that guarantee immediate actuation interlock under critical rule violation.
+> - **Cryptographic Non-Repudiation:** Tamper-evident post-quantum Merkle-DAG audit ledgers signed with NIST FIPS 204 ML-DSA-65 algorithms.
 >
-> 📖 **Raport Strategiczny i Pozycjonowanie Rynkowe (2026):** Zobacz pełną analizę porównawczą Nethical vs NeMo Guardrails, Guardrails AI, Credo AI, Lakera oraz roadmapę w [docs/overview/STRATEGIC_POSITIONING_AND_ROADMAP.md](docs/overview/STRATEGIC_POSITIONING_AND_ROADMAP.md).
+> 📖 **Strategic Positioning & Market Report (2026):** Full comparative analysis (Nethical vs NeMo Guardrails, Guardrails AI, Credo AI, Lakera) and technical roadmap available in [docs/overview/STRATEGIC_POSITIONING_AND_ROADMAP.md](docs/overview/STRATEGIC_POSITIONING_AND_ROADMAP.md).
 
 ---
 

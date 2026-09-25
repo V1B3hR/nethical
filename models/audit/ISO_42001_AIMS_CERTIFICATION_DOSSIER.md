@@ -2,7 +2,7 @@
 **Organization:** Nethical Autonomous Enterprise  
 **Standard:** ISO/IEC 42001:2023 (Artificial Intelligence Management System)  
 **Status:** FULLY COMPLIANT / CERTIFICATION READY  
-**Audit Timestamp:** `2026-09-22T10:04:33.352115+00:00`  
+**Audit Timestamp:** `2026-09-25T15:22:10.371649+00:00`  
 **Cryptographic Merkle Root:** `d4eb3d41086345f067581e3d819108eafba08786a35de9de534c5390a93b9fdd`  
 
 ---
@@ -22,5 +22,5 @@ System obejmuje ciągłe dopasowywanie modeli (DPO), dynamiczny nadzór etyczny 
 ## 3. Macierz Kontroli Załącznika A (Annex A Controls)
 - **A.2 Polityka SI:** Pełna zgodność z 25 Prawami.
 - **A.6 Cykl życia systemu SI:** Trening DPO z pieczęciami kryptograficznymi Merkle.
-- **A.7 Dane dla SI:** 3769 zweryfikowanych par w 20 archetypach.
+- **A.7 Dane dla SI:** 3878 zweryfikowanych par w 20 archetypach.
 - **A.10 Relacje z podmiotami zewnętrznymi:** Kwarantanna bizantyjska w przypadku wykrycia zmowy roju.

@@ -148,7 +148,10 @@ def main():
 
     # 3. Checksums (SHA256SUMS)
     checksums = []
-    for fpath in [cyclonedx_path, spdx_path, root_sbom_path]:
+    artifacts_to_hash = [cyclonedx_path, spdx_path, root_sbom_path]
+    for ext in ("*.whl", "*.tar.gz"):
+        artifacts_to_hash.extend(sorted(DIST_DIR.glob(ext)))
+    for fpath in artifacts_to_hash:
         sha = hashlib.sha256(fpath.read_bytes()).hexdigest()
         checksums.append(f"{sha}  {fpath.name}")
 

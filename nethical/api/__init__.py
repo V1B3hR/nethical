@@ -53,24 +53,19 @@ except ImportError:
     ResponseHeadersMiddleware = None
     ErrorHandlerMiddleware = None
 
-# Re-export app from the main API module (nethical/api.py is shadowed by this package)
-# Import the main FastAPI app for convenience
+# Core FastAPI application and global state instances
 try:
-    import importlib.util
-    from pathlib import Path
-
-    # Load the api.py module directly since it's shadowed by this package
-    api_py_path = Path(__file__).parent.parent / "api.py"
-    if api_py_path.exists():
-        spec = importlib.util.spec_from_file_location("nethical_api_main", api_py_path)
-        if spec and spec.loader:
-            api_module = importlib.util.module_from_spec(spec)
-            spec.loader.exec_module(api_module)
-            app = api_module.app
-            API_VERSION = api_module.API_VERSION
-            rbac_manager_instance = getattr(api_module, "rbac_manager_instance", None)
-            tenant_manager_instance = getattr(api_module, "tenant_manager_instance", None)
-            gateway_instance = getattr(api_module, "gateway_instance", None)
+    import sys
+    if "nethical.api.app" in sys.modules:
+        import importlib
+        importlib.reload(sys.modules["nethical.api.app"])
+    from .app import (
+        app,
+        API_VERSION,
+        rbac_manager_instance,
+        tenant_manager_instance,
+        gateway_instance,
+    )
 except Exception:
     app = None
     API_VERSION = "2.3.0"

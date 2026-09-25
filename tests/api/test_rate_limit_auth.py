@@ -268,9 +268,14 @@ class TestRateLimiting:
 class TestInputValidation:
     """Test input size validation."""
     
-    async def test_oversized_input_returns_413(self):
+    async def test_oversized_input_returns_413(self, monkeypatch):
         """Test that oversized input returns 413."""
-        transport = ASGITransport(app=app)
+        monkeypatch.delenv("NETHICAL_API_KEYS", raising=False)
+        import importlib
+        import nethical.api
+        importlib.reload(nethical.api)
+
+        transport = ASGITransport(app=nethical.api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Create input larger than MAX_INPUT_SIZE (default 4096)
             huge_action = "x" * 5000
@@ -290,9 +295,14 @@ class TestInputValidation:
             data = response.json()
             assert "too large" in data.get("detail", "").lower()
     
-    async def test_combined_intent_action_size_validated(self):
+    async def test_combined_intent_action_size_validated(self, monkeypatch):
         """Test that intent + action combined size is validated."""
-        transport = ASGITransport(app=app)
+        monkeypatch.delenv("NETHICAL_API_KEYS", raising=False)
+        import importlib
+        import nethical.api
+        importlib.reload(nethical.api)
+
+        transport = ASGITransport(app=nethical.api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Each under limit, but combined over limit
             medium_text = "x" * 2500

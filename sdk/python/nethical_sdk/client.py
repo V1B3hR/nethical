@@ -17,8 +17,11 @@ import logging
 import urllib.request
 import urllib.error
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Any, Optional, TYPE_CHECKING
 from urllib.parse import urljoin
+
+if TYPE_CHECKING:
+    from .async_client import AsyncNethicalClient
 
 from .models import (
     EvaluateRequest,

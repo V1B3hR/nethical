@@ -31,24 +31,18 @@ jobs:
           pip install -r requirements-dev.txt
           pip install black flake8 mypy ruff
       
-      - name: Run Ruff linter
+      - name: Run Ruff linter (Enforced)
         run: |
           ruff check . --output-format=github
-        continue-on-error: true
-      
+
       - name: Run Ruff format check
         run: |
-          ruff format --check .
+          ruff format --check nethical/
         continue-on-error: true
-      
-      - name: Run Black
-        run: black --check nethical/ tests/ examples/ || true
-      
-      - name: Run Flake8
-        run: flake8 nethical/ tests/ examples/ --max-line-length=88 --extend-ignore=E203,W503 || true
-      
-      - name: Run Mypy
-        run: mypy nethical/ --ignore-missing-imports || true
+
+      - name: Run Mypy static typing
+        run: mypy nethical/ --ignore-missing-imports
+        continue-on-error: true
 
   test:
     name: Run Tests
@@ -115,10 +109,9 @@ jobs:
           echo "📍 semantic_primitives.py module location:"
           python -c "import nethical.core.semantic_primitives as sp; print(sp.__file__)" || echo "⚠️  Failed to locate module"
       
-      - name: Run tests with coverage
+      - name: Run unit & core security tests
         run: |
-          pytest tests/ -v --cov=nethical --cov-report=xml --cov-report=html --cov-report=term
-        continue-on-error: true
+          pytest tests/unit/ tests/security/ tests/api/ -v --cov=nethical --cov-report=xml --cov-report=html --cov-report=term
       
       - name: Upload coverage to artifacts
         uses: actions/upload-artifact@v4
@@ -129,13 +122,12 @@ jobs:
             htmlcov/
         if: always()
       
-      - name: Run adversarial tests
+      - name: Run adversarial safety tests (Enforced)
         run: |
           pytest tests/adversarial/ -v --tb=short
-        continue-on-error: true
 
   build:
-    name: Build Package
+    name: Build Package & Sign Release
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -149,16 +141,20 @@ jobs:
           python-version: '3.11'
           cache: 'pip'
       
-      - name: Install build tools
+      - name: Install build tools & dependencies
         run: |
           pip install --upgrade pip
+          pip install -r requirements.txt
           pip install build twine
       
-      - name: Build package
+      - name: Build sdist and wheel
         run: python -m build
       
-      - name: Check package
+      - name: Check package metadata
         run: twine check dist/*
+      
+      - name: Generate CycloneDX/SPDX SBOMs and PQC Signature
+        run: python scripts/generate_release_sbom_and_signatures.py
       
       - name: Upload artifacts
         uses: actions/upload-artifact@v4

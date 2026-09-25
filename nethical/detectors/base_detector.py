@@ -445,13 +445,13 @@ class BaseDetector(ABC):
             "session_id",
         }
 
-        for field in sensitive_fields:
-            if field in anonymized:
-                if isinstance(anonymized[field], str):
+        for f_name in sensitive_fields:
+            if f_name in anonymized:
+                if isinstance(anonymized[f_name], str):
                     # Hash sensitive strings
-                    anonymized[field] = hashlib.sha256(anonymized[field].encode()).hexdigest()[:8]
+                    anonymized[f_name] = hashlib.sha256(anonymized[f_name].encode()).hexdigest()[:8]
                 else:
-                    anonymized[field] = "[REDACTED]"
+                    anonymized[f_name] = "[REDACTED]"
 
         return anonymized
 

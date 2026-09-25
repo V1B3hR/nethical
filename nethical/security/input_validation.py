@@ -861,9 +861,9 @@ class BehavioralAnalyzer:
                 values[key] = float(value)
 
         # Also check for common fields
-        for field in ["speed", "velocity", "rate", "value", "score"]:
-            if field in action and isinstance(action[field], (int, float)):
-                values[field] = float(action[field])
+        for f_name in ["speed", "velocity", "rate", "value", "score"]:
+            if f_name in action and isinstance(action[f_name], (int, float)):
+                values[f_name] = float(action[f_name])
 
         return values
 

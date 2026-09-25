@@ -400,9 +400,9 @@ class DataMinimization:
 
         # Extract only required fields
         minimal = {}
-        for field in required:
-            if field in data:
-                minimal[field] = data[field]
+        for f_name in required:
+            if f_name in data:
+                minimal[f_name] = data[f_name]
 
         # If no essential fields defined, keep all (but log warning)
         if not required:
@@ -434,18 +434,18 @@ class DataMinimization:
 
         fields_to_anonymize = sensitive_fields.get(category, [])
 
-        for field in fields_to_anonymize:
-            if field in anonymized:
+        for f_name in fields_to_anonymize:
+            if f_name in anonymized:
                 if level == "aggressive":
                     # Remove field entirely
-                    del anonymized[field]
+                    del anonymized[f_name]
                 elif level == "standard":
                     # Hash the field
-                    value = str(anonymized[field])
-                    anonymized[field] = hashlib.sha256(value.encode()).hexdigest()[:16]
+                    value = str(anonymized[f_name])
+                    anonymized[f_name] = hashlib.sha256(value.encode()).hexdigest()[:16]
                 elif level == "minimal":
                     # Generalize the field
-                    anonymized[field] = self._generalize_value(anonymized[field], field)
+                    anonymized[f_name] = self._generalize_value(anonymized[f_name], f_name)
 
         return anonymized
 

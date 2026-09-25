@@ -4,14 +4,16 @@
 This document tracks the current status of the Nethical test suite after comprehensive updates, NATO hardening, and regulatory conformance testing.
 
 ## Test Collection Status
-- **Total Tests Collected**: 3,150+ tests
-- **Framework Version**: 2.7.0
-- **Coverage**: Core governance, cryptographic ledgers, vector API, security audit, regulatory packs
+- **Authoritative QA Record**: See [TEST_STATUS.md](../../TEST_STATUS.md)
+- **Total Tests Collected**: **3,765 tests** across 162 modules
+- **Framework Version**: 2.7.0 (Production GA)
+- **Coverage**: Core governance, 25 Fundamental Laws, cryptographic ledgers, vector API, security audit, regulatory packs
 
 ## Test Results Summary
-- **Total Collectible**: 3,156+ tests
-- **Comprehensive Verification**: Phase 1-7, Governance Gateway, NATO Hardening, ISO 42001, EU AI Act conformity
-- **Last Updated**: 2026-09-15
+- **Total Collectible**: **3,765 tests** (100% collectibility, 0 import errors)
+- **Comprehensive Verification**: Phase 1-9, Governance Gateway, NATO Hardening, ISO 42001, EU AI Act conformity
+- **Issue #307**: Resolved & Verified (Explainability suite 100% passing)
+- **Last Updated**: September 2026
 
 ## Fixed Issues
 

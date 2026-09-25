@@ -5,7 +5,7 @@
     "Cabinet Office (CDDO)",
     "Department for Science, Innovation & Technology (DSIT)"
   ],
-  "generated_at": "2026-09-22T10:04:33.375510+00:00",
+  "generated_at": "2026-09-25T15:22:10.395844+00:00",
   "cryptographic_merkle_root": "d4eb3d41086345f067581e3d819108eafba08786a35de9de534c5390a93b9fdd",
   "tier_1_public_summary": {
     "tool_name": "Nethical Enterprise Governance OS & Błyskawica Ambassador Sidecar",
@@ -40,7 +40,7 @@
       "fail_safe_mechanism": "Prawo 25 Hardware Kinetic Circuit Breaker (sub-millisecond disconnect in < 1.0 ms)"
     },
     "section_4_data_governance_and_fairness": {
-      "training_preference_pairs": 3769,
+      "training_preference_pairs": 3878,
       "archetypes_covered": 20,
       "real_world_data_ratio": "53.26% Real-World / 46.74% Synthetic (MAD Autophagy Risk: LOW, Shannon Entropy: 7.17 bits)",
       "fairness_audit": "Disparate Impact Ratio > 0.80 across protected groups under UK Equality Act 2010"
