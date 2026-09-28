@@ -108,5 +108,8 @@ models/metadata/*.json
 models/benchmark_*/
 *.pt
 .agents/
+nethical_*_data/
+redaction_audit.jsonl
+tests/resilience/results/
 
 

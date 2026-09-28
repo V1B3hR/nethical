@@ -119,11 +119,11 @@ from .embedding_config import (
 )
 from .semantic_mapper import (
     SemanticMapper,
-    SemanticPrimitive,
     PolicyVector,
     ActionEmbedding,
 )
 from .semantic_primitives import (
+    SemanticPrimitive,
     EnhancedPrimitiveDetector,
     PRIMITIVE_KEYWORDS,
 )

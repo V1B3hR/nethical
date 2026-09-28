@@ -12,6 +12,7 @@ Refactored from the monolithic governance.py file.
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import sqlite3
 import statistics
@@ -383,10 +384,15 @@ class PersistenceManager:
         self._lock = threading.Lock()
         self._init_db()
 
+    @contextlib.contextmanager
     def _connect(self):
         conn = sqlite3.connect(self.db_path, check_same_thread=False)
         conn.execute("PRAGMA journal_mode=WAL;")
-        return conn
+        try:
+            with conn:
+                yield conn
+        finally:
+            conn.close()
 
     def _init_db(self):
         with self._connect() as conn:

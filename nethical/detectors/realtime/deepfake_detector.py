@@ -47,6 +47,8 @@ class DeepfakeDetectorConfig:
 class DeepfakeDetector(BaseDetector):
     """Multi-modal deepfake detection with lightweight neural networks."""
 
+    config: DeepfakeDetectorConfig
+
     def __init__(self, config: DeepfakeDetectorConfig | None = None):
         """Initialize the Deepfake Detector.
 

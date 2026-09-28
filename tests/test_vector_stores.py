@@ -100,22 +100,19 @@ class TestPineconeConnector:
     def mock_pinecone(self):
         """Mock Pinecone module"""
         with patch.dict('sys.modules', {'pinecone': MagicMock()}):
-            import sys
-            mock_pinecone = sys.modules['pinecone']
-            mock_index = MagicMock()
-            mock_pinecone.Index.return_value = mock_index
-            yield mock_pinecone, mock_index
+            with patch('nethical.integrations.vector_stores.pinecone_connector.PINECONE_AVAILABLE', True):
+                import sys
+                mock_pinecone = sys.modules['pinecone']
+                mock_index = MagicMock()
+                mock_pinecone.Index.return_value = mock_index
+                yield mock_pinecone, mock_index
     
     def test_pinecone_not_available(self):
         """Test error when Pinecone is not installed"""
-        with patch.dict('sys.modules', {'pinecone': None}):
-            from nethical.integrations.vector_stores import pinecone_connector
-            # Re-import to get updated PINECONE_AVAILABLE
-            import importlib
-            importlib.reload(pinecone_connector)
-            
-            # Should not raise during module import
-            assert pinecone_connector.PINECONE_AVAILABLE is False
+        with patch('nethical.integrations.vector_stores.pinecone_connector.PINECONE_AVAILABLE', False):
+            from nethical.integrations.vector_stores.pinecone_connector import PineconeConnector
+            with pytest.raises(ImportError, match="Pinecone not installed"):
+                PineconeConnector(api_key="key", environment="env", index_name="idx")
     
     def test_upsert_with_governance(self, mock_pinecone):
         """Test upserting vectors with governance checks"""
@@ -193,12 +190,13 @@ class TestWeaviateConnector:
     def mock_weaviate(self):
         """Mock Weaviate module"""
         with patch.dict('sys.modules', {'weaviate': MagicMock()}):
-            import sys
-            mock_weaviate = sys.modules['weaviate']
-            mock_client = MagicMock()
-            mock_client.is_ready.return_value = True
-            mock_weaviate.Client.return_value = mock_client
-            yield mock_weaviate, mock_client
+            with patch('nethical.integrations.vector_stores.weaviate_connector.WEAVIATE_AVAILABLE', True):
+                import sys
+                mock_weaviate = sys.modules['weaviate']
+                mock_client = MagicMock()
+                mock_client.is_ready.return_value = True
+                mock_weaviate.Client.return_value = mock_client
+                yield mock_weaviate, mock_client
     
     def test_weaviate_initialization(self, mock_weaviate):
         """Test Weaviate connector initialization"""
@@ -260,14 +258,15 @@ class TestChromaConnector:
     def mock_chromadb(self):
         """Mock ChromaDB module"""
         with patch.dict('sys.modules', {'chromadb': MagicMock()}):
-            import sys
-            mock_chromadb = sys.modules['chromadb']
-            mock_client = MagicMock()
-            mock_collection = MagicMock()
-            mock_client.get_or_create_collection.return_value = mock_collection
-            mock_chromadb.Client.return_value = mock_client
-            mock_chromadb.PersistentClient.return_value = mock_client
-            yield mock_chromadb, mock_client, mock_collection
+            with patch('nethical.integrations.vector_stores.chroma_connector.CHROMA_AVAILABLE', True):
+                import sys
+                mock_chromadb = sys.modules['chromadb']
+                mock_client = MagicMock()
+                mock_collection = MagicMock()
+                mock_client.get_or_create_collection.return_value = mock_collection
+                mock_chromadb.Client.return_value = mock_client
+                mock_chromadb.PersistentClient.return_value = mock_client
+                yield mock_chromadb, mock_client, mock_collection
     
     def test_chroma_local_mode(self, mock_chromadb):
         """Test Chroma in local mode"""
@@ -337,14 +336,15 @@ class TestQdrantConnector:
             'qdrant_client': MagicMock(),
             'qdrant_client.models': MagicMock(),
         }):
-            import sys
-            mock_qdrant = sys.modules['qdrant_client']
-            mock_client = MagicMock()
-            mock_collections = MagicMock()
-            mock_collections.collections = []
-            mock_client.get_collections.return_value = mock_collections
-            mock_qdrant.QdrantClient.return_value = mock_client
-            yield mock_qdrant, mock_client
+            with patch('nethical.integrations.vector_stores.qdrant_connector.QDRANT_AVAILABLE', True):
+                import sys
+                mock_qdrant = sys.modules['qdrant_client']
+                mock_client = MagicMock()
+                mock_collections = MagicMock()
+                mock_collections.collections = []
+                mock_client.get_collections.return_value = mock_collections
+                mock_qdrant.QdrantClient.return_value = mock_client
+                yield mock_qdrant, mock_client
     
     def test_qdrant_initialization(self, mock_qdrant):
         """Test Qdrant connector initialization"""

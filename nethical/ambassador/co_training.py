@@ -1014,7 +1014,7 @@ class SymbioticCoTrainingEngine:
         avg_yin = sum(r.verdict.yin_warmth_score for r in session_results) / max(1, total)
         avg_sycophancy = sum(r.verdict.sycophancy_score for r in session_results) / max(1, total)
 
-        report = {
+        report: Dict[str, Any] = {
             "session_id": f"SYM-SESS-{uuid.uuid4().hex[:8].upper()}",
             "total_rounds": total,
             "passed_rounds": passed_count,

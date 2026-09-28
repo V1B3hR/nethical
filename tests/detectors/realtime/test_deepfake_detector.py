@@ -9,12 +9,12 @@ class TestDeepfakeDetector:
     """Test cases for Deepfake Detector."""
 
     @pytest.fixture
-    def detector(self):
+    def detector(self) -> DeepfakeDetector:
         """Create detector instance for testing."""
         return DeepfakeDetector()
 
     @pytest.mark.asyncio
-    async def test_detect_image_deepfake(self, detector):
+    async def test_detect_image_deepfake(self, detector: DeepfakeDetector) -> None:
         """Test detection of deepfake images."""
         context = {
             "media": b"fake_image_data_with_gan_artifacts",
@@ -27,7 +27,7 @@ class TestDeepfakeDetector:
         assert isinstance(violations, list)
 
     @pytest.mark.asyncio
-    async def test_detect_missing_exif(self, detector):
+    async def test_detect_missing_exif(self, detector: DeepfakeDetector) -> None:
         """Test detection based on missing EXIF data."""
         context = {
             "media": b"image_without_exif",
@@ -40,7 +40,7 @@ class TestDeepfakeDetector:
         assert isinstance(violations, list)
 
     @pytest.mark.asyncio
-    async def test_detect_suspicious_software(self, detector):
+    async def test_detect_suspicious_software(self, detector: DeepfakeDetector) -> None:
         """Test detection of suspicious software tags."""
         context = {
             "media": b"suspicious_image",
@@ -55,7 +55,7 @@ class TestDeepfakeDetector:
         assert violations[0].category == "deepfake_media"
 
     @pytest.mark.asyncio
-    async def test_detect_video_deepfake(self, detector):
+    async def test_detect_video_deepfake(self, detector: DeepfakeDetector) -> None:
         """Test detection of deepfake videos."""
         context = {
             "media": b"fake_video_data",
@@ -67,7 +67,7 @@ class TestDeepfakeDetector:
         assert isinstance(violations, list)
 
     @pytest.mark.asyncio
-    async def test_detect_audio_deepfake(self, detector):
+    async def test_detect_audio_deepfake(self, detector: DeepfakeDetector) -> None:
         """Test detection of audio deepfakes."""
         context = {
             "media": b"fake_audio_data",
@@ -78,7 +78,7 @@ class TestDeepfakeDetector:
         assert isinstance(violations, list)
 
     @pytest.mark.asyncio
-    async def test_detect_api(self, detector):
+    async def test_detect_api(self, detector: DeepfakeDetector) -> None:
         """Test public detect API."""
         media_data = b"test_image_data"
 
@@ -91,7 +91,7 @@ class TestDeepfakeDetector:
         assert "latency_ms" in result
 
     @pytest.mark.asyncio
-    async def test_empty_media(self, detector):
+    async def test_empty_media(self, detector: DeepfakeDetector) -> None:
         """Test with empty media data."""
         context = {
             "media": b"",
@@ -102,7 +102,7 @@ class TestDeepfakeDetector:
         assert len(violations) == 0
 
     @pytest.mark.asyncio
-    async def test_performance_target(self, detector):
+    async def test_performance_target(self, detector: DeepfakeDetector) -> None:
         """Test that detection meets performance target (<30ms)."""
         import time
 
@@ -119,18 +119,19 @@ class TestDeepfakeDetector:
         # Should complete in under 30ms (with margin for test overhead)
         assert elapsed_ms < 100
 
-    def test_detector_initialization(self):
+    def test_detector_initialization(self) -> None:
         """Test detector initialization."""
         detector = DeepfakeDetector()
         assert detector.name == "deepfake_detector"
         assert detector.version == "1.0.0"
 
-    def test_custom_config(self):
+    def test_custom_config(self) -> None:
         """Test detector with custom configuration."""
         config = DeepfakeDetectorConfig(
             image_threshold=0.8,
             enable_frequency_analysis=False,
         )
         detector = DeepfakeDetector(config)
+        assert isinstance(detector.config, DeepfakeDetectorConfig)
         assert detector.config.image_threshold == 0.8
         assert detector.config.enable_frequency_analysis is False

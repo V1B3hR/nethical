@@ -102,6 +102,12 @@ class ChromaConnector(VectorStoreProvider):
     def _init_chroma(self):
         """Initialize Chroma client and collection."""
         try:
+            import sys
+            c_mod = sys.modules.get("chromadb")
+            if c_mod is None:
+                import chromadb as c_mod
+            global chromadb
+            chromadb = c_mod
             # Create client based on mode
             if self.host and self.port:
                 # Client/server mode

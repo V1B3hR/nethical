@@ -94,6 +94,12 @@ class WeaviateConnector(VectorStoreProvider):
     def _init_weaviate(self):
         """Initialize Weaviate client."""
         try:
+            import sys
+            w_mod = sys.modules.get("weaviate")
+            if w_mod is None:
+                import weaviate as w_mod
+            global weaviate
+            weaviate = w_mod
             if self.api_key:
                 self._client = weaviate.Client(
                     url=self.url,

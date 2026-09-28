@@ -78,7 +78,7 @@ class TestJSONFileConnector:
     @pytest.fixture
     def temp_dir(self):
         """Create temporary directory"""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             yield Path(tmpdir)
     
     def test_connector_creation(self, temp_dir):

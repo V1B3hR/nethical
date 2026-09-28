@@ -37,7 +37,7 @@ class TestActionReplayer:
     @pytest.fixture
     def temp_db(self):
         """Create a temporary database for testing."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             yield tmpdir
     
     @pytest.fixture
@@ -350,7 +350,7 @@ class TestActionReplayPerformance:
     @pytest.fixture
     def large_db(self):
         """Create a database with large number of actions for performance testing."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             persistence = PersistenceManager(
                 db_path=os.path.join(tmpdir, "action_streams.db"),
                 retention_days=365
@@ -433,7 +433,7 @@ class TestActionReplayIntegration:
     
     def test_end_to_end_workflow(self):
         """Test complete workflow: store, replay, compare."""
-        with tempfile.TemporaryDirectory() as tmpdir:
+        with tempfile.TemporaryDirectory(ignore_cleanup_errors=True) as tmpdir:
             # Step 1: Create and populate database
             persistence = PersistenceManager(
                 db_path=os.path.join(tmpdir, "action_streams.db"),

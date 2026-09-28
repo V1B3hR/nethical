@@ -236,7 +236,7 @@ class AmbassadorKnowledgeSync:
         for p in precedents:
             case_id_val = str(p["case_id"])
             resolution_val = str(p["resolution"])
-            laws_val = [int(x) for x in p["laws"]] if isinstance(p["laws"], list) else []
+            laws_val = list(p["laws"]) if isinstance(p["laws"], list) else []
             res = self.record_ethical_precedent(
                 case_id=case_id_val,
                 dilemma=f"[{p['framework']}] {p['dilemma']}",
@@ -486,13 +486,13 @@ class AmbassadorKnowledgeSync:
             logger.warning("Generowanie asynchroniczne AttackGenerator przełączone na tryb synchroniczny: %s", ex)
             for cat in categories:
                 for idx in range(variants_per_category):
-                    payload = generator._mutate_template(cat)
-                    variant_id = generator._generate_id(cat, GenerationMethod.TEMPLATE_MUTATION, idx)
-                    all_variants.append(
-                        generator._generate_single_variant_sync(cat, payload, variant_id, idx)
-                        if hasattr(generator, "_generate_single_variant_sync")
-                        else type("V", (), {"id": variant_id, "category": cat, "payload": payload})()
-                    )
+                    if hasattr(generator, "_generate_single_variant_sync"):
+                        variant = generator._generate_single_variant_sync(cat, GenerationMethod.TEMPLATE_MUTATION, idx)
+                    else:
+                        payload = generator._mutate_template(cat)
+                        variant_id = generator._generate_id(cat, GenerationMethod.TEMPLATE_MUTATION, idx, payload)
+                        variant = type("V", (), {"id": variant_id, "category": cat, "payload": payload})()
+                    all_variants.append(variant)
 
         # 4. Łączenie wariantów z kontekstem prawnym i zasilanie Błyskawicy
         synced_count = 0
@@ -530,7 +530,7 @@ class AmbassadorKnowledgeSync:
             )
 
             case_id = f"ML-PRED-{idx+1:03d}-{str(domain['framework'])[:4].upper()}"
-            domain_laws: List[int] = [int(x) for x in domain["laws"]] if isinstance(domain["laws"], list) else [1]
+            domain_laws: List[int] = list(domain["laws"]) if isinstance(domain["laws"], list) else [1]
 
             # Konstrukcja wyważonego orzeczenia (Yang rygor + Yin ciepło)
             chosen_resolution = (

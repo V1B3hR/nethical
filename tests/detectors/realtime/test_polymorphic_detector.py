@@ -9,12 +9,12 @@ class TestPolymorphicMalwareDetector:
     """Test cases for Polymorphic Malware Detector."""
 
     @pytest.fixture
-    def detector(self):
+    def detector(self) -> PolymorphicMalwareDetector:
         """Create detector instance for testing."""
         return PolymorphicMalwareDetector()
 
     @pytest.mark.asyncio
-    async def test_detect_high_entropy(self, detector):
+    async def test_detect_high_entropy(self, detector: PolymorphicMalwareDetector) -> None:
         """Test detection of high entropy (encrypted/packed) data."""
         # Generate high entropy data
         import random
@@ -30,7 +30,7 @@ class TestPolymorphicMalwareDetector:
         assert violations[0].category == "polymorphic_malware"
 
     @pytest.mark.asyncio
-    async def test_detect_suspicious_syscalls(self, detector):
+    async def test_detect_suspicious_syscalls(self, detector: PolymorphicMalwareDetector) -> None:
         """Test detection of suspicious syscall patterns."""
         context = {
             "executable_data": b"test_executable",
@@ -42,7 +42,7 @@ class TestPolymorphicMalwareDetector:
         assert any("syscall" in str(v.evidence).lower() for v in violations)
 
     @pytest.mark.asyncio
-    async def test_detect_code_injection(self, detector):
+    async def test_detect_code_injection(self, detector: PolymorphicMalwareDetector) -> None:
         """Test detection of code injection behavior."""
         context = {
             "executable_data": b"test_data",
@@ -57,7 +57,7 @@ class TestPolymorphicMalwareDetector:
         assert any("injection" in str(v.evidence).lower() for v in violations)
 
     @pytest.mark.asyncio
-    async def test_detect_memory_patterns(self, detector):
+    async def test_detect_memory_patterns(self, detector: PolymorphicMalwareDetector) -> None:
         """Test detection of suspicious memory access patterns."""
         context = {
             "executable_data": b"test_data",
@@ -71,7 +71,7 @@ class TestPolymorphicMalwareDetector:
         assert len(violations) > 0
 
     @pytest.mark.asyncio
-    async def test_analyze_api(self, detector):
+    async def test_analyze_api(self, detector: PolymorphicMalwareDetector) -> None:
         """Test public analyze API."""
         executable_data = b"test_executable_data"
 
@@ -84,14 +84,14 @@ class TestPolymorphicMalwareDetector:
         assert "latency_ms" in result
 
     @pytest.mark.asyncio
-    async def test_empty_executable(self, detector):
+    async def test_empty_executable(self, detector: PolymorphicMalwareDetector) -> None:
         """Test with empty executable data."""
         context = {"executable_data": b""}
         violations = await detector.detect_violations(context)
         assert len(violations) == 0
 
     @pytest.mark.asyncio
-    async def test_performance_target(self, detector):
+    async def test_performance_target(self, detector: PolymorphicMalwareDetector) -> None:
         """Test that detection meets performance target (<50ms)."""
         import time
 
@@ -108,13 +108,13 @@ class TestPolymorphicMalwareDetector:
         # Should complete in under 50ms (with margin)
         assert elapsed_ms < 150
 
-    def test_detector_initialization(self):
+    def test_detector_initialization(self) -> None:
         """Test detector initialization."""
         detector = PolymorphicMalwareDetector()
         assert detector.name == "polymorphic_detector"
         assert detector.version == "1.0.0"
 
-    def test_signature_database(self, detector):
+    def test_signature_database(self, detector: PolymorphicMalwareDetector) -> None:
         """Test signature database initialization."""
         assert len(detector._signature_db) > 0
         assert "polymorphic_packer" in detector._signature_db

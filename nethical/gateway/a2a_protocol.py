@@ -7,11 +7,11 @@ Zapewnia bezpieczną, obustronnie uwierzytelnioną i kryptograficznie wiążąc�
 pomiędzy autonomicznymi agentami AI (Multi-Agent Swarms, interakcje A2A).
 """
 
-from __future__ import annotations
-
 import hashlib
+import hmac
 import json
 import logging
+import os
 import secrets
 import uuid
 from datetime import datetime, timezone, timedelta
@@ -57,9 +57,30 @@ class A2ASessionContract(BaseModel):
 class A2AHandshakeManager:
     """Zarządca negocjacji kontraktów oraz weryfikacji operacji w protokole A2A."""
 
-    def __init__(self, default_ttl_seconds: int = 3600) -> None:
+    def __init__(
+        self,
+        default_ttl_seconds: int = 3600,
+        cluster_secret: Optional[str] = None,
+    ) -> None:
         self.default_ttl = default_ttl_seconds
+        raw_secret = (
+            cluster_secret
+            or os.getenv("NETHICAL_A2A_SECRET")
+            or os.getenv("NETHICAL_SECRET_KEY")
+            or "nethical_default_sovereign_a2a_cluster_key_2026"
+        )
+        self.cluster_secret = raw_secret.encode("utf-8")
         self.active_sessions: Dict[str, A2ASessionContract] = {}
+
+    def _sign_proposal(self, initiator_id: str, proposal_payload: Dict[str, Any]) -> str:
+        """Wylicza kryptograficzny HMAC-SHA256 dla propozycji kontraktu."""
+        msg = f"INIT_SIGN::{initiator_id}::".encode("utf-8") + canonical_json_bytes(proposal_payload)
+        return hmac.new(self.cluster_secret, msg, hashlib.sha256).hexdigest()
+
+    def _sign_accept(self, target_id: str, init_sig: str, proposal_payload: Dict[str, Any]) -> str:
+        """Wylicza kryptograficzną kontrasygnatę HMAC-SHA256 dla akceptacji kontraktu."""
+        msg = f"TARGET_ACCEPT::{target_id}::{init_sig}::".encode("utf-8") + canonical_json_bytes(proposal_payload)
+        return hmac.new(self.cluster_secret, msg, hashlib.sha256).hexdigest()
 
     def propose_handshake(
         self,
@@ -87,10 +108,8 @@ class A2AHandshakeManager:
             "expires_at": expires,
         }
 
-        # Podpis inicjatora (SHA-256 z kanonicznego JSON)
-        init_sig = hashlib.sha256(
-            f"INIT_SIGN::{initiator_id}::".encode("utf-8") + canonical_json_bytes(proposal_payload)
-        ).hexdigest()
+        # Podpis kryptograficzny HMAC-SHA256 inicjatora
+        init_sig = self._sign_proposal(initiator_id, proposal_payload)
 
         return {
             "proposal": proposal_payload,
@@ -103,19 +122,24 @@ class A2AHandshakeManager:
         target_id: str,
         merkle_receipt_id: Optional[str] = None,
     ) -> A2ASessionContract:
-        """Strona docelowa akceptuje i kontrasygnuje kontrakt partnerski."""
+        """Strona docelowa akceptuje i kontrasygnuje kontrakt partnerski po kryptograficznej weryfikacji."""
         proposal = handshake_offer["proposal"]
         init_sig = handshake_offer["initiator_signature"]
+
+        # Weryfikacja kryptograficzna podpisu inicjatora (HMAC Constant-Time)
+        expected_sig = self._sign_proposal(proposal["initiator_agent_id"], proposal)
+        if not hmac.compare_digest(init_sig, expected_sig):
+            raise PermissionError(
+                f"Sfałszowany lub unieważniony podpis inicjatora propozycji A2A (Agent: '{proposal.get('initiator_agent_id')}')!"
+            )
 
         if proposal["target_agent_id"] != target_id:
             raise PermissionError(
                 f"Niezgodność odbiorcy oferty: oczekiwano {proposal['target_agent_id']}, otrzymano {target_id}"
             )
 
-        # Kontrasygnata odbiorcy
-        target_sig = hashlib.sha256(
-            f"TARGET_ACCEPT::{target_id}::{init_sig}::".encode("utf-8") + canonical_json_bytes(proposal)
-        ).hexdigest()
+        # Kontrasygnata HMAC odbiorcy
+        target_sig = self._sign_accept(target_id, init_sig, proposal)
 
         contract = A2ASessionContract(
             session_id=proposal["session_id"],

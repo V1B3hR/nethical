@@ -121,6 +121,12 @@ class QdrantConnector(VectorStoreProvider):
     ):
         """Initialize Qdrant client and collection."""
         try:
+            import sys
+            q_mod = sys.modules.get("qdrant_client")
+            if q_mod is None:
+                import qdrant_client as q_mod
+            global QdrantClient
+            QdrantClient = q_mod.QdrantClient
             # Create client based on connection mode
             if path:
                 # Local mode
@@ -152,6 +158,13 @@ class QdrantConnector(VectorStoreProvider):
             collection_names = [c.name for c in collections]
             
             if self.collection_name not in collection_names:
+                import sys
+                q_models = sys.modules.get("qdrant_client.models")
+                if q_models is None:
+                    from qdrant_client import models as q_models
+                global Distance, VectorParams
+                Distance = q_models.Distance
+                VectorParams = q_models.VectorParams
                 # Map distance string to Qdrant Distance enum
                 distance_map = {
                     "Cosine": Distance.COSINE,
@@ -212,6 +225,12 @@ class QdrantConnector(VectorStoreProvider):
         try:
             # Prepare points for Qdrant
             import hashlib
+            import sys
+            q_models = sys.modules.get("qdrant_client.models")
+            if q_models is None:
+                from qdrant_client import models as q_models
+            global PointStruct
+            PointStruct = q_models.PointStruct
             
             points = []
             for vec in vectors:

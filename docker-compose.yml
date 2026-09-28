@@ -43,7 +43,7 @@ services:
       - ./correlation_rules.yaml:/app/correlation_rules.yaml:ro
       - ./ethics_taxonomy.json:/app/ethics_taxonomy.json:ro
     ports:
-      - "8000:8000"
+      - "${NETHICAL_API_BIND:-127.0.0.1:8000}:8000"
     networks:
       - nethical-network
     restart: unless-stopped
@@ -59,8 +59,8 @@ services:
     image: redis:7.4-alpine
     container_name: nethical-redis
     command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-nethical_cluster_secure_sync_secret}
-    ports:
-      - "6379:6379"
+    expose:
+      - "6379"
     volumes:
       - redis-data:/data
     networks:
@@ -79,11 +79,11 @@ services:
     command: ["--config=/etc/otel-collector-config.yaml"]
     volumes:
       - ./otel-collector-config.yaml:/etc/otel-collector-config.yaml:ro
-    ports:
-      - "4318:4318"   # OTLP HTTP
-      - "4317:4317"   # OTLP gRPC
-      - "8888:8888"   # Prometheus metrics
-      - "13133:13133" # Health check
+    expose:
+      - "4318"   # OTLP HTTP
+      - "4317"   # OTLP gRPC
+      - "8888"   # Prometheus metrics
+      - "13133" # Health check
     networks:
       - nethical-network
     restart: unless-stopped
@@ -98,8 +98,8 @@ services:
     volumes:
       - ./prometheus.yml:/etc/prometheus/prometheus.yml:ro
       - prometheus-data:/prometheus
-    ports:
-      - "9090:9090"
+    expose:
+      - "9090"
     networks:
       - nethical-network
     restart: unless-stopped
@@ -109,7 +109,7 @@ services:
     image: grafana/grafana:11.2.0
     container_name: nethical-grafana
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-ChangeMeInProduction2026!}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:?Error: GRAFANA_ADMIN_PASSWORD must be configured}
       - GF_USERS_ALLOW_SIGN_UP=false
       - GF_SECURITY_COOKIE_SECURE=true
       - GF_SECURITY_STRICT_TRANSPORT_SECURITY=true
@@ -117,7 +117,7 @@ services:
       - grafana-data:/var/lib/grafana
       - ./dashboards:/etc/grafana/provisioning/dashboards:ro
     ports:
-      - "3000:3000"
+      - "${GRAFANA_BIND:-127.0.0.1:3000}:3000"
     networks:
       - nethical-network
     restart: unless-stopped

@@ -114,6 +114,16 @@ class AuthManager:
                 self._iterations
             )
         else:
+            env_mode = os.getenv("NETHICAL_ENVIRONMENT", "").strip().lower()
+            if env_mode in ("production", "prod"):
+                logger.critical(
+                    "FAIL-CLOSED: Permissive authentication is strictly prohibited in production! "
+                    "NETHICAL_API_KEYS must be configured."
+                )
+                raise RuntimeError(
+                    "Critical Security Violation: Permissive authentication is prohibited in production. "
+                    "Set NETHICAL_API_KEYS environment variable."
+                )
             self._api_keys = None
             self._permissive_mode = True
             self._last_reload_ts = self._now()

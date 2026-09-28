@@ -28,13 +28,14 @@ import json
 import time
 from contextlib import asynccontextmanager
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Dict, List, Optional, Set
+from typing import Any, AsyncGenerator, Dict, List, Optional, Set, Tuple
 
 from fastapi import FastAPI, HTTPException, Header, Request, Response, WebSocket, WebSocketDisconnect
 from fastapi.responses import HTMLResponse, StreamingResponse, JSONResponse
 from pathlib import Path
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.gzip import GZipMiddleware
+from nethical.middleware.security import SecurityHeadersMiddleware
 from pydantic import BaseModel, Field
 
 try:
@@ -76,19 +77,41 @@ MAX_CONTEXT_SIZE = int(os.getenv("NETHICAL_MAX_CONTEXT_SIZE", "10000"))
 
 
 class ConnectionManager:
-    """Manages WebSocket connections for real-time streaming."""
+    """Manages WebSocket connections for real-time streaming with per-IP rate limiting."""
 
-    def __init__(self) -> None:
+    def __init__(self, max_connections_per_ip: Optional[int] = None) -> None:
         self.active_connections: Set[WebSocket] = set()
+        self.max_connections_per_ip = max_connections_per_ip or int(
+            os.getenv("NETHICAL_MAX_WS_PER_IP", "10")
+        )
+        self._ip_counts: Dict[str, int] = {}
+        self._lock = asyncio.Lock()
 
-    async def connect(self, websocket: WebSocket) -> None:
-        """Accept and register a new WebSocket connection."""
-        await websocket.accept()
-        self.active_connections.add(websocket)
+    async def connect(self, websocket: WebSocket, client_ip: str = "unknown") -> bool:
+        """Accept and register a new WebSocket connection with rate limits."""
+        async with self._lock:
+            current_count = self._ip_counts.get(client_ip, 0)
+            if current_count >= self.max_connections_per_ip:
+                logger.warning(
+                    "WebSocket connection rejected for IP %s: exceeded max connections (%d)",
+                    client_ip,
+                    self.max_connections_per_ip,
+                )
+                await websocket.close(code=1008, reason="Connection limit exceeded")
+                return False
 
-    def disconnect(self, websocket: WebSocket) -> None:
-        """Remove a WebSocket connection."""
+            await websocket.accept()
+            self.active_connections.add(websocket)
+            self._ip_counts[client_ip] = current_count + 1
+            return True
+
+    def disconnect(self, websocket: WebSocket, client_ip: str = "unknown") -> None:
+        """Remove a WebSocket connection and decrement IP counter."""
         self.active_connections.discard(websocket)
+        if client_ip in self._ip_counts:
+            self._ip_counts[client_ip] = max(0, self._ip_counts[client_ip] - 1)
+            if self._ip_counts[client_ip] == 0:
+                del self._ip_counts[client_ip]
 
     async def broadcast(self, message: Dict[str, Any]) -> None:
         """Broadcast a message to all connected clients."""
@@ -177,6 +200,9 @@ app.add_middleware(
 # High-Performance Response Compression (responses > 1024 bytes)
 app.add_middleware(GZipMiddleware, minimum_size=1024)
 
+# Military-grade Security Headers Middleware (OWASP, HSTS, CSP, Anti-Clickjacking)
+app.add_middleware(SecurityHeadersMiddleware)
+
 class EvaluateRequest(BaseModel):
     id: Optional[str] = Field(None)
     agent_id: str
@@ -239,13 +265,30 @@ def extract_api_key(
         return authorization[7:]
     return None
 
+TRUSTED_PROXIES: Set[str] = {
+    ip.strip()
+    for ip in os.getenv("NETHICAL_TRUSTED_PROXIES", "127.0.0.1,::1,localhost,testclient").split(",")
+    if ip.strip()
+}
+
 def get_client_ip(request: Request) -> str:
-    forwarded = request.headers.get("X-Forwarded-For")
-    if forwarded:
-        return forwarded.split(",")[0].strip()
-    if request.client:
-        return request.client.host
-    return "unknown"
+    """
+    Extract client IP address securely, defending against IP spoofing via unverified headers.
+    Only inspects X-Forwarded-For / X-Real-IP if the immediate peer is in TRUSTED_PROXIES.
+    """
+    peer_ip = request.client.host if request.client else "unknown"
+    if peer_ip in TRUSTED_PROXIES or peer_ip == "unknown":
+        forwarded = request.headers.get("X-Forwarded-For")
+        if forwarded:
+            candidate = forwarded.split(",")[0].strip()
+            if candidate:
+                return candidate
+        real_ip = request.headers.get("X-Real-IP")
+        if real_ip:
+            candidate = real_ip.strip()
+            if candidate:
+                return candidate
+    return peer_ip
 
 def get_request_id(request: Request) -> str:
     """
@@ -595,6 +638,35 @@ async def startup() -> Dict[str, Any]:
 # WebSocket Streaming Endpoints
 # =============================================================================
 
+def validate_websocket_auth(websocket: WebSocket) -> Tuple[bool, Optional[str]]:
+    """
+    Authenticate WebSocket handshake against active AuthManager and CORS origin rules.
+    Protects against Cross-Site WebSocket Hijacking (CSWSH) and unauthenticated stream tapping.
+    """
+    _ensure_initialized()
+    assert auth_manager is not None
+
+    # 1. Origin verification (CSWSH Defense)
+    origin = websocket.headers.get("origin")
+    if origin and "*" not in allowed_origins:
+        # Check against configured allowed origins
+        if origin not in allowed_origins:
+            logger.warning("WebSocket rejected: Origin '%s' disallowed by CORS policy", origin)
+            return False, f"Origin '{origin}' rejected by CORS policy"
+
+    # 2. Token verification if permissive mode is disabled
+    if not auth_manager.is_permissive():
+        token = websocket.query_params.get("token") or websocket.headers.get("x-api-key")
+        if not token:
+            auth_header = websocket.headers.get("authorization", "")
+            if auth_header.startswith("Bearer "):
+                token = auth_header[7:].strip()
+        if not token or not auth_manager.validate_key(token):
+            logger.warning("WebSocket rejected: Missing or invalid authentication token")
+            return False, "Authentication failed: valid API token required"
+
+    return True, None
+
 
 @app.websocket("/ws/violations")
 async def violations_stream(websocket: WebSocket) -> None:
@@ -603,7 +675,16 @@ async def violations_stream(websocket: WebSocket) -> None:
     
     Clients can subscribe to receive violation events as they occur.
     """
-    await violations_manager.connect(websocket)
+    is_valid, reason = validate_websocket_auth(websocket)
+    if not is_valid:
+        await websocket.close(code=1008, reason=reason or "Forbidden")
+        return
+
+    client_ip = websocket.client.host if websocket.client else "unknown"
+    connected = await violations_manager.connect(websocket, client_ip=client_ip)
+    if not connected:
+        return
+
     try:
         while True:
             # Keep connection alive and wait for messages
@@ -615,10 +696,10 @@ async def violations_stream(websocket: WebSocket) -> None:
                 "timestamp": datetime.now(timezone.utc).isoformat()
             })
     except WebSocketDisconnect:
-        violations_manager.disconnect(websocket)
+        violations_manager.disconnect(websocket, client_ip=client_ip)
         logger.info("Client disconnected from violations stream")
     except Exception as e:
-        violations_manager.disconnect(websocket)
+        violations_manager.disconnect(websocket, client_ip=client_ip)
         logger.error(f"WebSocket error in violations stream: {e}")
 
 
@@ -629,7 +710,16 @@ async def metrics_stream(websocket: WebSocket) -> None:
     
     Clients can subscribe to receive metric updates periodically.
     """
-    await metrics_manager.connect(websocket)
+    is_valid, reason = validate_websocket_auth(websocket)
+    if not is_valid:
+        await websocket.close(code=1008, reason=reason or "Forbidden")
+        return
+
+    client_ip = websocket.client.host if websocket.client else "unknown"
+    connected = await metrics_manager.connect(websocket, client_ip=client_ip)
+    if not connected:
+        return
+
     try:
         while True:
             # Send metrics every 5 seconds
@@ -655,10 +745,10 @@ async def metrics_stream(websocket: WebSocket) -> None:
             }
             await websocket.send_json(metric_data)
     except WebSocketDisconnect:
-        metrics_manager.disconnect(websocket)
+        metrics_manager.disconnect(websocket, client_ip=client_ip)
         logger.info("Client disconnected from metrics stream")
     except Exception as e:
-        metrics_manager.disconnect(websocket)
+        metrics_manager.disconnect(websocket, client_ip=client_ip)
         logger.error(f"WebSocket error in metrics stream: {e}")
 
 
@@ -1034,7 +1124,14 @@ async def get_tenant_ledger_status(tenant_id: str) -> Dict[str, Any]:
     }
 
 
-PORTAL_TEMPLATE_PATH = Path(__file__).resolve().parent.parent / "portal" / "templates" / "index.html"
+_candidate_portal_paths = [
+    Path(__file__).resolve().parent.parent / "portal" / "templates" / "index.html",
+    Path(__file__).resolve().parent.parent.parent / "portal" / "templates" / "index.html",
+]
+if os.environ.get("NETHICAL_PORTAL_PATH"):
+    _candidate_portal_paths.insert(0, Path(os.environ["NETHICAL_PORTAL_PATH"]))
+
+PORTAL_TEMPLATE_PATH = next((p for p in _candidate_portal_paths if p.exists()), _candidate_portal_paths[0])
 
 
 

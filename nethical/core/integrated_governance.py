@@ -16,6 +16,8 @@ This provides a complete governance system with all features in a single interfa
 from typing import Dict, List, Optional, Any, Tuple, Union
 from datetime import datetime, timezone
 from pathlib import Path
+import os
+import tempfile
 import time
 import hashlib
 import logging
@@ -185,7 +187,13 @@ class IntegratedGovernance:
             epsilon: Privacy budget for differential privacy
             redaction_policy: Redaction policy ('minimal', 'standard', 'aggressive')
         """
-        storage_path = Path(storage_dir)
+        if os.name == "nt" and str(storage_dir).replace("\\", "/").startswith("/tmp"):
+            rel = str(storage_dir).replace("\\", "/").lstrip("/")
+            if rel.startswith("tmp/"):
+                rel = rel[4:]
+            storage_path = Path(tempfile.gettempdir()) / rel
+        else:
+            storage_path = Path(storage_dir)
         storage_path.mkdir(parents=True, exist_ok=True)
 
         # ==================== Regional Configuration ====================

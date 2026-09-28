@@ -92,6 +92,12 @@ class PineconeConnector(VectorStoreProvider):
     def _init_pinecone(self):
         """Initialize Pinecone client and index."""
         try:
+            import sys
+            p_mod = sys.modules.get("pinecone")
+            if p_mod is None:
+                import pinecone as p_mod
+            global pinecone
+            pinecone = p_mod
             # Initialize Pinecone (v3.0.0+ uses new API)
             pinecone.init(api_key=self.api_key, environment=self.environment)
             

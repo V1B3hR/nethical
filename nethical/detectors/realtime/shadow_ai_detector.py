@@ -27,15 +27,8 @@ from ..base_detector import BaseDetector, DetectorStatus, ViolationSeverity
 class ShadowAIDetectorConfig:
     """Configuration for Shadow AI Detector."""
 
-    # Authorized model registry/whitelist
-    authorized_apis: set[str] = field(
-        default_factory=lambda: {
-            "api.openai.com",
-            "api.anthropic.com",
-            "api.cohere.ai",
-            "generativelanguage.googleapis.com",
-        }
-    )
+    # Authorized model registry/whitelist (default empty to detect unauthorized shadow AI)
+    authorized_apis: set[str] = field(default_factory=set)
     authorized_models: set[str] = field(default_factory=set)
     authorized_ports: set[int] = field(default_factory=lambda: {11434, 8080})
 
@@ -59,12 +52,12 @@ class ShadowAIDetector(BaseDetector):
 
     # API endpoint patterns for common LLM providers
     API_PATTERNS = {
-        "openai": re.compile(r"api\.openai\.com/v1/(chat/completions|completions|embeddings)"),
-        "anthropic": re.compile(r"api\.anthropic\.com/v1/(messages|complete)"),
-        "cohere": re.compile(r"api\.cohere\.ai/(generate|embed|classify)"),
+        "openai": re.compile(r"(?:[a-zA-Z0-9_-]+\.)*openai\.com/v1/(chat/completions|completions|embeddings)"),
+        "anthropic": re.compile(r"(?:[a-zA-Z0-9_-]+\.)*anthropic\.com/v1/(messages|complete)"),
+        "cohere": re.compile(r"(?:[a-zA-Z0-9_-]+\.)*cohere\.ai/(generate|embed|classify)"),
         "google": re.compile(r"generativelanguage\.googleapis\.com/v1/(models|generateContent)"),
-        "huggingface": re.compile(r"api-inference\.huggingface\.co/models/"),
-        "replicate": re.compile(r"api\.replicate\.com/v1/predictions"),
+        "huggingface": re.compile(r"(?:[a-zA-Z0-9_-]+\.)*huggingface\.co/models/"),
+        "replicate": re.compile(r"(?:[a-zA-Z0-9_-]+\.)*replicate\.com/v1/predictions"),
     }
 
     # Local model execution patterns

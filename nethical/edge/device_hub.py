@@ -14,11 +14,14 @@ Provides a vendor-agnostic admission protocol for edge devices:
 from __future__ import annotations
 
 import hashlib
+import hmac
 import json
 import logging
+import os
 import socket
 import threading
 import time
+from concurrent.futures import ThreadPoolExecutor
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
@@ -97,15 +100,20 @@ class EdgeDeviceHub:
         self,
         fieldbus_interlock: Optional[IndustrialFieldbusInterlock] = None,
         default_heartbeat_timeout_ms: int = 250,
+        admission_secret: Optional[str] = None,
+        max_socket_workers: int = 50,
     ) -> None:
         self.fieldbus = fieldbus_interlock or IndustrialFieldbusInterlock()
         self.heartbeat_timeout_ms = default_heartbeat_timeout_ms
+        self.admission_secret = admission_secret or os.getenv("NETHICAL_EDGE_ADMISSION_SECRET")
+        self.max_socket_workers = max_socket_workers
         self._devices: Dict[str, EdgeDeviceProfile] = {}
         self._device_tokens: Dict[str, str] = {}
         self._last_heartbeat: Dict[str, float] = {}
         self._admission_log: List[DeviceAdmissionResult] = []
         self._server_socket: Optional[socket.socket] = None
         self._server_thread: Optional[threading.Thread] = None
+        self._executor: Optional[ThreadPoolExecutor] = None
         self._running = False
         self._lock = threading.Lock()
 
@@ -262,11 +270,15 @@ class EdgeDeviceHub:
         return {"max_velocity_mps": 1.0, "max_torque_nm": 20.0}
 
     def start_socket_server(self, host: str = "127.0.0.1", port: int = 8990) -> None:
-        """Start dynamic admission socket server in background thread."""
+        """Start dynamic admission socket server in background thread with bounded worker pool."""
         if self._running:
             return
 
         self._running = True
+        self._executor = ThreadPoolExecutor(
+            max_workers=self.max_socket_workers,
+            thread_name_prefix="EdgeDeviceHubWorker"
+        )
         self._server_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server_socket.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._server_socket.bind((host, port))
@@ -275,10 +287,10 @@ class EdgeDeviceHub:
 
         self._server_thread = threading.Thread(target=self._socket_listener, daemon=True)
         self._server_thread.start()
-        logger.info("EdgeDeviceHub socket server listening on %s:%d", host, port)
+        logger.info("EdgeDeviceHub socket server listening on %s:%d (workers=%d)", host, port, self.max_socket_workers)
 
     def stop_socket_server(self) -> None:
-        """Stop admission socket server."""
+        """Stop admission socket server and worker pool."""
         self._running = False
         if self._server_socket:
             try:
@@ -286,6 +298,12 @@ class EdgeDeviceHub:
             except Exception:
                 pass
             self._server_socket = None
+        if self._executor:
+            try:
+                self._executor.shutdown(wait=False, cancel_futures=True)
+            except Exception:
+                pass
+            self._executor = None
         if self._server_thread and self._server_thread.is_alive():
             self._server_thread.join(timeout=1.0)
         logger.info("EdgeDeviceHub socket server stopped")
@@ -297,7 +315,10 @@ class EdgeDeviceHub:
                 if not self._server_socket:
                     break
                 client_sock, addr = self._server_socket.accept()
-                threading.Thread(target=self._handle_client, args=(client_sock, addr), daemon=True).start()
+                if self._executor and self._running:
+                    self._executor.submit(self._handle_client, client_sock, addr)
+                else:
+                    client_sock.close()
             except socket.timeout:
                 continue
             except Exception as exc:
@@ -306,17 +327,55 @@ class EdgeDeviceHub:
                 break
 
     def _handle_client(self, client_sock: socket.socket, addr: Tuple[str, int]) -> None:
-        """Process incoming handshake payload from connecting edge device."""
+        """Process incoming handshake payload with bounded frame sizing and admission authentication."""
+        max_payload_bytes = 65536
+        chunks = []
+        total_bytes = 0
         try:
             client_sock.settimeout(3.0)
-            data = client_sock.recv(4096)
-            if not data:
+            while True:
+                chunk = client_sock.recv(min(4096, max_payload_bytes - total_bytes + 1))
+                if not chunk:
+                    break
+                total_bytes += len(chunk)
+                if total_bytes > max_payload_bytes:
+                    logger.warning("Payload exceeded max limit (%d bytes) from %s", max_payload_bytes, addr)
+                    err_resp = {"status": "ERROR", "message": "Payload exceeds maximum allowed size (64KB)"}
+                    client_sock.sendall(json.dumps(err_resp).encode("utf-8"))
+                    return
+                chunks.append(chunk)
+                try:
+                    raw_data = b"".join(chunks).decode("utf-8")
+                    payload = json.loads(raw_data)
+                    break
+                except (ValueError, UnicodeDecodeError):
+                    if len(chunks) > 16:
+                        break
+                    continue
+
+            if not chunks:
                 return
 
-            payload = json.loads(data.decode("utf-8"))
+            if not isinstance(payload, dict):
+                client_sock.sendall(json.dumps({"status": "ERROR", "message": "Payload must be a JSON object"}).encode("utf-8"))
+                return
+
             action = payload.get("action", "admit")
 
             if action == "admit":
+                # Verify admission pre-shared secret if configured
+                if self.admission_secret:
+                    provided_secret = payload.get("admission_secret") or payload.get("secret")
+                    if not provided_secret or not hmac.compare_digest(
+                        self.admission_secret, str(provided_secret)
+                    ):
+                        logger.warning("Unauthorized admission attempt from edge client at %s", addr)
+                        client_sock.sendall(json.dumps({
+                            "status": "UNAUTHORIZED",
+                            "message": "Invalid or missing admission secret"
+                        }).encode("utf-8"))
+                        return
+
                 profile_data = payload.get("profile", {})
                 profile = EdgeDeviceProfile(**profile_data)
                 admission = self.admit_device(profile)

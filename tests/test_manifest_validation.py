@@ -10,6 +10,14 @@ from pathlib import Path
 BASE_DIR = Path(__file__).parent.parent
 
 
+def _find_manifest(filename: str) -> Path:
+    """Find manifest in repository root or config/integrations directory."""
+    for candidate in [BASE_DIR / filename, BASE_DIR / "config" / "integrations" / filename]:
+        if candidate.exists():
+            return candidate
+    return BASE_DIR / "config" / "integrations" / filename
+
+
 class TestManifestValidation:
     """Test suite for validating all manifest files."""
 
@@ -26,7 +34,7 @@ class TestManifestValidation:
 
     def test_ai_plugin_json_valid(self):
         """Test that ai-plugin.json is valid JSON."""
-        manifest_path = BASE_DIR / "ai-plugin.json"
+        manifest_path = _find_manifest("ai-plugin.json")
         assert manifest_path.exists(), "ai-plugin.json not found"
 
         with open(manifest_path) as f:
@@ -46,7 +54,7 @@ class TestManifestValidation:
 
     def test_grok_manifest_json_valid(self):
         """Test that grok-manifest.json is valid JSON."""
-        manifest_path = BASE_DIR / "grok-manifest.json"
+        manifest_path = _find_manifest("grok-manifest.json")
         assert manifest_path.exists(), "grok-manifest.json not found"
 
         with open(manifest_path) as f:
@@ -74,7 +82,7 @@ class TestManifestValidation:
 
     def test_gemini_manifest_json_valid(self):
         """Test that gemini-manifest.json is valid JSON."""
-        manifest_path = BASE_DIR / "gemini-manifest.json"
+        manifest_path = _find_manifest("gemini-manifest.json")
         assert manifest_path.exists(), "gemini-manifest.json not found"
 
         with open(manifest_path) as f:
@@ -94,7 +102,7 @@ class TestManifestValidation:
 
     def test_langchain_tool_json_valid(self):
         """Test that langchain-tool.json is valid JSON."""
-        manifest_path = BASE_DIR / "langchain-tool.json"
+        manifest_path = _find_manifest("langchain-tool.json")
         assert manifest_path.exists(), "langchain-tool.json not found"
 
         with open(manifest_path) as f:
@@ -114,7 +122,7 @@ class TestManifestValidation:
 
     def test_autogen_manifest_json_valid(self):
         """Test that autogen-manifest.json is valid JSON."""
-        manifest_path = BASE_DIR / "autogen-manifest.json"
+        manifest_path = _find_manifest("autogen-manifest.json")
         assert manifest_path.exists(), "autogen-manifest.json not found"
 
         with open(manifest_path) as f:
@@ -133,7 +141,7 @@ class TestManifestValidation:
 
     def test_huggingface_tool_yaml_valid(self):
         """Test that huggingface-tool.yaml is valid YAML."""
-        manifest_path = BASE_DIR / "huggingface-tool.yaml"
+        manifest_path = _find_manifest("huggingface-tool.yaml")
         assert manifest_path.exists(), "huggingface-tool.yaml not found"
 
         with open(manifest_path) as f:
@@ -152,7 +160,7 @@ class TestManifestValidation:
 
     def test_mlflow_integration_yaml_valid(self):
         """Test that mlflow-integration.yaml is valid YAML."""
-        manifest_path = BASE_DIR / "mlflow-integration.yaml"
+        manifest_path = _find_manifest("mlflow-integration.yaml")
         assert manifest_path.exists(), "mlflow-integration.yaml not found"
 
         with open(manifest_path) as f:
@@ -171,7 +179,7 @@ class TestManifestValidation:
 
     def test_enterprise_mcp_yaml_valid(self):
         """Test that enterprise-mcp-integrations.yaml is valid YAML."""
-        manifest_path = BASE_DIR / "enterprise-mcp-integrations.yaml"
+        manifest_path = _find_manifest("enterprise-mcp-integrations.yaml")
         assert manifest_path.exists(), "enterprise-mcp-integrations.yaml not found"
 
         with open(manifest_path) as f:
@@ -232,12 +240,12 @@ class TestManifestValidation:
         """Test that all manifest files have version field."""
         manifest_files = [
             # ai-plugin.json follows OpenAI spec which doesn't require version
-            (BASE_DIR / "grok-manifest.json", json.load),
-            (BASE_DIR / "gemini-manifest.json", json.load),
-            (BASE_DIR / "langchain-tool.json", json.load),
-            (BASE_DIR / "autogen-manifest.json", json.load),
-            (BASE_DIR / "huggingface-tool.yaml", yaml.safe_load),
-            (BASE_DIR / "mlflow-integration.yaml", yaml.safe_load),
+            (_find_manifest("grok-manifest.json"), json.load),
+            (_find_manifest("gemini-manifest.json"), json.load),
+            (_find_manifest("langchain-tool.json"), json.load),
+            (_find_manifest("autogen-manifest.json"), json.load),
+            (_find_manifest("huggingface-tool.yaml"), yaml.safe_load),
+            (_find_manifest("mlflow-integration.yaml"), yaml.safe_load),
         ]
 
         for path, loader in manifest_files:
@@ -249,12 +257,12 @@ class TestManifestValidation:
     def test_all_manifests_have_description(self):
         """Test that all manifest files have description field."""
         manifest_files = [
-            (BASE_DIR / "grok-manifest.json", json.load),
-            (BASE_DIR / "gemini-manifest.json", json.load),
-            (BASE_DIR / "langchain-tool.json", json.load),
-            (BASE_DIR / "autogen-manifest.json", json.load),
-            (BASE_DIR / "huggingface-tool.yaml", yaml.safe_load),
-            (BASE_DIR / "mlflow-integration.yaml", yaml.safe_load),
+            (_find_manifest("grok-manifest.json"), json.load),
+            (_find_manifest("gemini-manifest.json"), json.load),
+            (_find_manifest("langchain-tool.json"), json.load),
+            (_find_manifest("autogen-manifest.json"), json.load),
+            (_find_manifest("huggingface-tool.yaml"), yaml.safe_load),
+            (_find_manifest("mlflow-integration.yaml"), yaml.safe_load),
         ]
 
         for path, loader in manifest_files:
@@ -266,12 +274,12 @@ class TestManifestValidation:
     def test_consistent_naming(self):
         """Test that manifest names are consistent."""
         manifest_files = [
-            (BASE_DIR / "grok-manifest.json", json.load),
-            (BASE_DIR / "gemini-manifest.json", json.load),
-            (BASE_DIR / "langchain-tool.json", json.load),
-            (BASE_DIR / "autogen-manifest.json", json.load),
-            (BASE_DIR / "huggingface-tool.yaml", yaml.safe_load),
-            (BASE_DIR / "mlflow-integration.yaml", yaml.safe_load),
+            (_find_manifest("grok-manifest.json"), json.load),
+            (_find_manifest("gemini-manifest.json"), json.load),
+            (_find_manifest("langchain-tool.json"), json.load),
+            (_find_manifest("autogen-manifest.json"), json.load),
+            (_find_manifest("huggingface-tool.yaml"), yaml.safe_load),
+            (_find_manifest("mlflow-integration.yaml"), yaml.safe_load),
         ]
 
         for path, loader in manifest_files:

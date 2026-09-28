@@ -34,21 +34,21 @@ services:
       - BLY_IPC_SOCKET_PATH=/var/run/blyskawica/ambassador.sock
       - REDIS_URL=redis://redis-sync:6379/0
     ports:
-      - "8000:8000"
+      - "${NETHICAL_GATEWAY_BIND:-127.0.0.1:8000}:8000"
     volumes:
       - blyskawica_ipc:/var/run/blyskawica
       - nethical_ledger_data:/app/data
     networks:
       - nethical-mesh
 
-  # 3. REDIS DISTRIBUTED CLUSTER SYNC CACHE
+  # 3. REDIS DISTRIBUTED CLUSTER SYNC CACHE (Internal to Mesh Network)
   redis-sync:
     image: redis:7-alpine
     container_name: nethical-redis-sync
     restart: unless-stopped
-    command: redis-server --appendonly yes --requirepass nethical_cluster_secure_sync_secret
-    ports:
-      - "6379:6379"
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-nethical_cluster_secure_sync_secret}
+    expose:
+      - "6379"
     volumes:
       - redis_data:/data
     networks:

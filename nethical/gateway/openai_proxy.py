@@ -22,7 +22,7 @@ import secrets
 import time
 from collections import deque
 from datetime import datetime, timezone
-from typing import Any, AsyncGenerator, Deque, Dict, List, Optional, Tuple, Union
+from typing import Any, AsyncGenerator, Deque, Dict, List, Optional, Set, Tuple, Union
 
 import httpx
 from pydantic import BaseModel, Field
@@ -30,6 +30,7 @@ from pydantic import BaseModel, Field
 from nethical.gateway.proxy import GovernanceGateway, GatewayDecision
 from nethical.security.merkle_ledger import MerkleLedger
 from nethical.security.token_vault import ReversibleTokenVault, TokenizeResponse, DetokenizeResponse
+from nethical.security.ssrf_protection import assert_safe_url, validate_safe_url, SSRFValidationError
 
 logger = logging.getLogger("nethical.gateway.openai_proxy")
 
@@ -65,6 +66,9 @@ class OpenAIGovernanceProxy:
         default_upstream_url: Optional[str] = None,
         enable_in_flight_tokenization: bool = True,
         mock_mode: bool = False,
+        allowed_upstream_domains: Optional[Set[str]] = None,
+        allow_client_upstream: Optional[bool] = None,
+        allow_private_upstream: bool = False,
     ) -> None:
         self.gateway = gateway or GovernanceGateway()
         self.token_vault = token_vault or ReversibleTokenVault()
@@ -74,6 +78,16 @@ class OpenAIGovernanceProxy:
         )
         self.enable_in_flight_tokenization = enable_in_flight_tokenization
         self.mock_mode = mock_mode
+        self.allowed_upstream_domains = allowed_upstream_domains
+        if allow_client_upstream is not None:
+            self.allow_client_upstream = allow_client_upstream
+        else:
+            self.allow_client_upstream = os.getenv(
+                "NETHICAL_ALLOW_CLIENT_UPSTREAM", "false"
+            ).lower() in ("1", "true", "yes")
+        self.allow_private_upstream = allow_private_upstream or (
+            os.getenv("NETHICAL_ALLOW_PRIVATE_NETWORKS", "").lower() in ("1", "true", "yes")
+        )
 
     def _extract_text_content(self, content: Union[str, List[Dict[str, Any]]]) -> str:
         """Extracts plain text from message content."""
@@ -257,6 +271,13 @@ class OpenAIGovernanceProxy:
         if not target_url.endswith("/chat/completions"):
             target_url = f"{target_url}/chat/completions"
 
+        if upstream_url.lower() not in ("mock", "local", "internal"):
+            assert_safe_url(
+                target_url,
+                allow_private=self.allow_private_upstream,
+                allowed_domains=self.allowed_upstream_domains,
+            )
+
         forward_headers = {
             "Content-Type": "application/json",
         }
@@ -280,11 +301,30 @@ class OpenAIGovernanceProxy:
         t_start = time.perf_counter()
         session_id = headers.get("x-session-id") or f"sess_{secrets.token_hex(8)}"
         agent_id = headers.get("x-agent-id") or request_data.get("user") or "openai_client"
-        upstream_url = (
-            headers.get("x-nethical-upstream")
-            or os.getenv("NETHICAL_UPSTREAM_URL")
-            or self.default_upstream_url
-        )
+        
+        # Enforce strict SSRF & client-controlled upstream restrictions
+        client_upstream = headers.get("x-nethical-upstream")
+        if client_upstream:
+            if client_upstream.lower() in ("mock", "local", "internal"):
+                upstream_url = client_upstream
+            elif not self.allow_client_upstream:
+                logger.warning(
+                    "Client-specified x-nethical-upstream '%s' ignored by strict security policy. Using default upstream.",
+                    client_upstream,
+                )
+                upstream_url = os.getenv("NETHICAL_UPSTREAM_URL") or self.default_upstream_url
+            else:
+                assert_safe_url(
+                    client_upstream,
+                    allow_private=self.allow_private_upstream,
+                    allowed_domains=self.allowed_upstream_domains,
+                )
+                upstream_url = client_upstream
+        else:
+            upstream_url = (
+                os.getenv("NETHICAL_UPSTREAM_URL")
+                or self.default_upstream_url
+            )
 
         # Parse request body
         req = ChatCompletionRequest(**request_data)
@@ -492,6 +532,13 @@ class OpenAIGovernanceProxy:
         target_url = upstream_url.rstrip("/")
         if not target_url.endswith("/chat/completions"):
             target_url = f"{target_url}/chat/completions"
+
+        if upstream_url.lower() not in ("mock", "local", "internal"):
+            assert_safe_url(
+                target_url,
+                allow_private=self.allow_private_upstream,
+                allowed_domains=self.allowed_upstream_domains,
+            )
 
         forward_headers = {"Content-Type": "application/json"}
         if "authorization" in headers:

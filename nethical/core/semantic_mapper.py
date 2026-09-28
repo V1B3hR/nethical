@@ -27,46 +27,7 @@ from .fundamental_laws import get_fundamental_laws
 logger = logging.getLogger(__name__)
 
 
-class SemanticPrimitive(str, Enum):
-    """Semantic primitives for categorizing agent actions."""
-    
-    # Data operations
-    ACCESS_USER_DATA = "access_user_data"
-    MODIFY_USER_DATA = "modify_user_data"
-    DELETE_USER_DATA = "delete_user_data"
-    SHARE_USER_DATA = "share_user_data"
-    
-    # Code operations
-    EXECUTE_CODE = "execute_code"
-    GENERATE_CODE = "generate_code"
-    MODIFY_CODE = "modify_code"
-    
-    # System operations
-    ACCESS_SYSTEM = "access_system"
-    MODIFY_SYSTEM = "modify_system"
-    NETWORK_ACCESS = "network_access"
-    
-    # Content operations
-    GENERATE_CONTENT = "generate_content"
-    ANALYZE_CONTENT = "analyze_content"
-    TRANSFORM_CONTENT = "transform_content"
-    
-    # Decision making
-    MAKE_DECISION = "make_decision"
-    PROVIDE_RECOMMENDATION = "provide_recommendation"
-    
-    # Communication
-    COMMUNICATE_WITH_USER = "communicate_with_user"
-    COMMUNICATE_WITH_SYSTEM = "communicate_with_system"
-    
-    # Learning and adaptation
-    UPDATE_MODEL = "update_model"
-    LEARN_FROM_DATA = "learn_from_data"
-    
-    # Physical actions (for robotics)
-    PHYSICAL_MOVEMENT = "physical_movement"
-    PHYSICAL_MANIPULATION = "physical_manipulation"
-    EMERGENCY_STOP = "emergency_stop"
+from .semantic_primitives import SemanticPrimitive
 
 
 @dataclass
@@ -117,11 +78,11 @@ class SemanticMapper:
         10: {SemanticPrimitive.GENERATE_CONTENT, SemanticPrimitive.EXECUTE_CODE},
         
         # Law 11-15: Protection and safety
-        11: {SemanticPrimitive.ACCESS_USER_DATA, SemanticPrimitive.SHARE_USER_DATA},
+        11: {SemanticPrimitive.ACCESS_USER_DATA, SemanticPrimitive.SHARE_USER_DATA, SemanticPrimitive.MODIFY_USER_DATA},
         12: {SemanticPrimitive.PHYSICAL_MOVEMENT, SemanticPrimitive.PHYSICAL_MANIPULATION},
         13: {SemanticPrimitive.EMERGENCY_STOP, SemanticPrimitive.PHYSICAL_MOVEMENT},
         14: {SemanticPrimitive.MODIFY_SYSTEM, SemanticPrimitive.EXECUTE_CODE},
-        15: {SemanticPrimitive.ACCESS_USER_DATA, SemanticPrimitive.DELETE_USER_DATA},
+        15: {SemanticPrimitive.ACCESS_USER_DATA, SemanticPrimitive.DELETE_USER_DATA, SemanticPrimitive.MODIFY_USER_DATA},
         
         # Law 16-20: Coexistence
         16: {SemanticPrimitive.COMMUNICATE_WITH_USER, SemanticPrimitive.MAKE_DECISION},
@@ -364,6 +325,8 @@ class SemanticMapper:
         ]
         if sensitive_detected:
             base_risk += 0.2
+        elif SemanticPrimitive.MODIFY_USER_DATA in action.detected_primitives:
+            base_risk += 0.1
         
         # Multiple law matches increase risk
         if len(relevant_laws) > 3:

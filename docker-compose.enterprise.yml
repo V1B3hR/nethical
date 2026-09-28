@@ -48,11 +48,11 @@ services:
       - NETHICAL_AMBASSADOR_IPC_PATH=/var/run/blyskawica/ambassador.sock
       - NETHICAL_HOST=0.0.0.0
       - NETHICAL_PORT=8000
-      - NETHICAL_CORS_ALLOW_ORIGINS=*
+      - NETHICAL_CORS_ALLOW_ORIGINS=${NETHICAL_CORS_ALLOW_ORIGINS:-http://localhost:3000,http://127.0.0.1:3000}
       - NETHICAL_REGION_ID=eu-central-warsaw
     ports:
-      - "8000:8000"     # REST API / Gateway / Swagger
-      - "8001:8001"     # Model Context Protocol (MCP SSE Stream)
+      - "${NETHICAL_GATEWAY_BIND:-127.0.0.1:8000}:8000"     # REST API / Gateway / Swagger
+      - "${NETHICAL_MCP_BIND:-127.0.0.1:8001}:8001"     # Model Context Protocol (MCP SSE Stream)
     volumes:
       # Montowanie współdzielonego gniazda UNIX z Błyskawicą
       - ambassador-ipc-socket:/var/run/blyskawica

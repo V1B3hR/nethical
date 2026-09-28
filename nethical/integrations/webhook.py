@@ -28,6 +28,7 @@ Enhancements for nethical:
 
 import json
 import logging
+import os
 import time
 import hmac
 import hashlib
@@ -43,6 +44,8 @@ from urllib.parse import urlparse
 from http.client import HTTPResponse
 from email.message import Message
 from concurrent.futures import ThreadPoolExecutor, as_completed
+
+from nethical.security.ssrf_protection import assert_safe_url, SSRFValidationError
 
 
 class WebhookStatus(Enum):
@@ -136,6 +139,7 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
         user_agent: Optional[str] = "nethical-webhook/1.0 (+https://github.com/V1B3hR/nethical)",
         rate_limit_per_sec: Optional[float] = None,
         dry_run: bool = False,
+        allow_private: bool = False,
         on_success: Optional[Callable[[WebhookDelivery], None]] = None,
         on_failure: Optional[Callable[[WebhookDelivery], None]] = None,
     ):
@@ -153,11 +157,15 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
             user_agent: Optional User-Agent header value
             rate_limit_per_sec: Optional rate limit (requests per second)
             dry_run: If True, skip network calls and mark as success
+            allow_private: If True, allows RFC 1918 intranet IPs
             on_success: Callback invoked on successful delivery with WebhookDelivery
             on_failure: Callback invoked when delivery fails after retries with WebhookDelivery
         """
-        # Validate URL scheme for security
-        self._validate_url_scheme(url)
+        self.allow_private = allow_private or (
+            os.getenv("NETHICAL_ALLOW_PRIVATE_NETWORKS", "").lower() in ("1", "true", "yes")
+        )
+        # Validate URL scheme and address space for SSRF security
+        self._validate_url_scheme(url, allow_private=self.allow_private)
         self.url = url
         self.headers = dict(headers) if headers else {"Content-Type": "application/json"}
         self.timeout = timeout
@@ -186,17 +194,19 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
         self._retry_statuses = {408, 425, 429, 500, 502, 503, 504}
 
     @staticmethod
-    def _validate_url_scheme(url: str) -> None:
+    def _validate_url_scheme(url: str, allow_private: bool = False) -> None:
         """
-        Validate URL scheme to prevent SSRF attacks.
+        Validate URL scheme and target address to prevent SSRF attacks.
         
-        Only http and https schemes are allowed.
+        Only http and https schemes are allowed, and access to loopback,
+        link-local (cloud metadata), and private ranges is strictly prevented.
         
         Args:
             url: URL to validate
+            allow_private: If True, allows RFC 1918 private subnets
             
         Raises:
-            ValueError: If URL scheme is not http or https
+            ValueError: If URL scheme or target IP violates security constraints
         """
         parsed = urlparse(url)
         if parsed.scheme not in ['http', 'https']:
@@ -204,6 +214,7 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
                 f"Unsupported URL scheme: {parsed.scheme}. "
                 f"Only http and https are allowed."
             )
+        assert_safe_url(url, allow_private=allow_private, require_resolvable=False)
 
     def _should_retry(
         self, status_code: Optional[int], err: Optional[BaseException], attempt: int
@@ -312,6 +323,9 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
             start = time.monotonic()
             retry_after_secs: Optional[float] = None
             try:
+                # Pre-flight Anti-DNS-Rebinding validation
+                assert_safe_url(self.url, allow_private=self.allow_private)
+
                 # Prepare request
                 req = request.Request(self.url, data=body_bytes, headers=req_headers, method="POST")
 

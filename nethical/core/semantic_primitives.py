@@ -20,7 +20,7 @@ from .embedding_engine import EmbeddingEngine, EmbeddingResult
 logger = logging.getLogger(__name__)
 
 
-class SemanticPrimitive(Enum):
+class SemanticPrimitive(str, Enum):
     ACCESS_USER_DATA = "ACCESS_USER_DATA"
     MODIFY_USER_DATA = "MODIFY_USER_DATA"
     DELETE_USER_DATA = "DELETE_USER_DATA"
@@ -670,10 +670,30 @@ class EnhancedPrimitiveDetector:
         detected = set()
 
         for primitive, keyword_groups in PRIMITIVE_KEYWORDS.items():
+            matched_groups = {}
             for group_name, keywords in keyword_groups.items():
-                if any(keyword in text_lower for keyword in keywords):
+                if any(re.search(r"\b" + re.escape(keyword) + r"\b", text_lower) for keyword in keywords):
+                    matched_groups[group_name] = True
+
+            if not matched_groups:
+                continue
+
+            # For primitives that combine generic verbs (base) with specific domain terms,
+            # require domain-specific terms rather than generic verbs alone.
+            if primitive == SemanticPrimitive.MODIFY_CODE:
+                if "code_terms" in matched_groups or any(g != "base" for g in matched_groups):
                     detected.add(primitive)
-                    break
+            elif primitive == SemanticPrimitive.UPDATE_MODEL:
+                if "ml_terms" in matched_groups or "operations" in matched_groups:
+                    detected.add(primitive)
+            elif primitive == SemanticPrimitive.MODIFY_SYSTEM:
+                if "system_terms" in matched_groups or "files" in matched_groups or "dangerous" in matched_groups:
+                    detected.add(primitive)
+            elif primitive == SemanticPrimitive.PHYSICAL_MOVEMENT:
+                if "base" in matched_groups or "robot_terms" in matched_groups:
+                    detected.add(primitive)
+            else:
+                detected.add(primitive)
 
         return detected
 

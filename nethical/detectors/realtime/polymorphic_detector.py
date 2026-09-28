@@ -344,7 +344,7 @@ class PolymorphicMalwareDetector(BaseDetector):
 
         # Check for write-execute patterns (code injection)
         if write_execute_regions:
-            score = min(len(write_execute_regions) / 5, 0.8)
+            score = max(score, min(0.6 + len(write_execute_regions) * 0.1, 0.9))
             evidence.append(f"Write-execute memory patterns detected: {len(write_execute_regions)}")
             indicators.append("write_execute")
 

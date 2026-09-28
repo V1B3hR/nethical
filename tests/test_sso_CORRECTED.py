@@ -242,8 +242,9 @@ class TestSSOManager:
             token_url="https://oauth.example.com/token",
         )
         
-        # This will return a stub URL
-        auth_url = self.sso.initiate_oauth_login("test")
+        # This will return a stub URL and state
+        res = self.sso.initiate_oauth_login("test")
+        auth_url = res[0] if isinstance(res, tuple) else res
         
         assert isinstance(auth_url, str)
         assert urlparse(auth_url).hostname == "oauth.example.com"
@@ -259,10 +260,14 @@ class TestSSOManager:
             token_url="https://oauth.example.com/token",
         )
         
+        res = self.sso.initiate_oauth_login("test")
+        state = res[1] if isinstance(res, tuple) else "test_state"
+        
         # Mock callback response (will use fallback)
         user_info = self.sso.handle_oauth_callback(
-            authorization_response="https://test.nethical.local/callback?code=test_code",
-            config_name="test"
+            authorization_response=f"https://test.nethical.local/callback?code=test_code&state={state}",
+            config_name="test",
+            expected_state=state,
         )
         
         assert isinstance(user_info, dict)

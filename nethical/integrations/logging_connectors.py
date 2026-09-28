@@ -302,26 +302,33 @@ class SyslogConnector(LogConnector):
                 pass
         return (base + "\n").encode("utf-8")
 
+    def _send_raw(self, entry: LogEntry) -> bool:
+        data = self._format(entry)
+        if self.protocol == "UDP":
+            self.socket.sendto(data, (self.host, self.port))
+        else:
+            # TCP syslog often expects LF-delimited messages
+            if not data.endswith(b"\n"):
+                data += b"\n"
+            self.socket.sendall(data)
+        return True
+
     def send(self, entry: LogEntry) -> bool:
         try:
-            data = self._format(entry)
-            if self.protocol == "UDP":
-                self.socket.sendto(data, (self.host, self.port))
-            else:
-                # TCP syslog often expects LF-delimited messages
-                if not data.endswith(b"\n"):
-                    data += b"\n"
-                self.socket.sendall(data)
-            return True
+            return self._send_raw(entry)
         except Exception as e:
             logging.error(f"Failed to send syslog message: {e}")
             self.buffer.append(entry)
             return False
 
     def flush(self) -> bool:
+        to_send = self.buffer
+        self.buffer = []
         failed = []
-        for entry in self.buffer:
-            if not self.send(entry):
+        for entry in to_send:
+            try:
+                self._send_raw(entry)
+            except Exception:
                 failed.append(entry)
         self.buffer = failed
         return len(self.buffer) == 0
@@ -357,7 +364,7 @@ class CloudWatchConnector(LogConnector):
         self.create_if_missing = create_if_missing
 
         self.buffer: List[LogEntry] = []
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._client = None
         self._sequence_token: Optional[str] = None
 
@@ -489,7 +496,7 @@ class JSONFileConnector(LogConnector):
         self.backup_count = backup_count
         self.encoding = encoding
 
-        self._lock = threading.Lock()
+        self._lock = threading.RLock()
         self._open_file()
 
     def _open_file(self) -> None:
