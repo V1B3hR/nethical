@@ -10,9 +10,8 @@ These probes ensure the system meets SLO/SLA requirements.
 """
 
 from datetime import datetime, timedelta
-from typing import Any, Dict, List, Optional
+from typing import List
 import psutil
-import time
 
 from .base_probe import BaseProbe, ProbeResult, ProbeStatus
 

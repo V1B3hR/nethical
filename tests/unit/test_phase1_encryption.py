@@ -84,7 +84,7 @@ class TestKeyManagementService:
         kms = KeyManagementService()
         old_key_id = kms.generate_key(key_id="original-key")
         
-        new_key_id = kms.rotate_key(old_key_id, retain_old=False)
+        kms.rotate_key(old_key_id, retain_old=False)
         
         # Old key should be disabled
         old_key = kms.get_key(old_key_id)

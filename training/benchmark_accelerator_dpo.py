@@ -50,8 +50,6 @@ def run_benchmark(
     device_name = torch.cuda.get_device_name(0) if torch.cuda.is_available() else "CPU"
     logger.info(f"Rozpoczynanie benchmarku DPO na {device_name} (próbek: {len(bench_data)}, epok: {epochs}, batch: {batch_size})")
 
-    results = {}
-
     # 1. Baseline: Vanilla PyTorch DPO (AcceleratorAI DISABLED)
     logger.info("\n>>> [1/2] Uruchamianie Baseline: Vanilla PyTorch DPO...")
     if torch.cuda.is_available():

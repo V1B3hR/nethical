@@ -29,7 +29,6 @@ from nethical.security.stepping_stone_guard import (
     NetworkTier,
     NetworkHop,
 )
-from nethical.gateway.mcp_proxy import MCPGovernanceProxy
 
 logging.basicConfig(level=logging.INFO, format="%(asctime)s [%(levelname)s] %(message)s")
 logger = logging.getLogger("simulate_frontier_swarm_combat")
@@ -42,7 +41,6 @@ def run_frontier_swarm_simulation() -> None:
 
     arena = SwarmArenaEngine()
     memory_guard = MemoryIntegrityGuard()
-    mcp_proxy = MCPGovernanceProxy()
 
     # Inicjalizacja pamięci długotrwałej
     memory_guard.register_ltm_entry("LAW-01", "Prawo 1: Bezwzględna ochrona życia i zdrowia.")

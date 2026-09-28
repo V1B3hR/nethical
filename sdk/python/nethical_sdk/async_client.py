@@ -20,7 +20,7 @@ import asyncio
 import json
 import logging
 from typing import Any, AsyncIterator, Optional
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 from .models import (
     EvaluateRequest,
@@ -123,6 +123,9 @@ class AsyncNethicalClient:
         import urllib.error
         
         url = urljoin(self.api_url, path)
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            raise NethicalError(f"Unsupported URL scheme: {parsed.scheme}")
         headers = self._get_headers()
         
         body = None
@@ -138,7 +141,7 @@ class AsyncNethicalClient:
         
         def do_request():
             try:
-                with urllib.request.urlopen(request, timeout=self.timeout) as response:
+                with urllib.request.urlopen(request, timeout=self.timeout) as response:  # nosec B310
                     response_data = response.read().decode("utf-8")
                     return json.loads(response_data) if response_data else {}
             except urllib.error.HTTPError as e:

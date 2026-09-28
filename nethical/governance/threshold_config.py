@@ -141,7 +141,7 @@ class ThresholdVersionManager:
         if not (
             str(self.storage_dir).startswith(str(Path.cwd().resolve()))
             or str(self.storage_dir).startswith(str(system_temp))
-            or str(self.storage_dir).startswith('/tmp')
+            or str(self.storage_dir).startswith('/tmp')  # nosec B108
         ):
             raise ValueError(f"Storage directory must be within current directory: {storage_dir}")
         self.storage_dir.mkdir(parents=True, exist_ok=True)
@@ -401,7 +401,9 @@ DEFAULT_THRESHOLDS = {
 
 if __name__ == '__main__':
     # Demo usage
-    manager = ThresholdVersionManager('/tmp/test_thresholds')
+    import os
+    import tempfile
+    manager = ThresholdVersionManager(os.path.join(tempfile.gettempdir(), 'test_thresholds'))
     
     # Create baseline version
     manager.create_version(

@@ -449,7 +449,7 @@ class StorageMigrator:
                 compressed = gzip.compress(log_json.encode('utf-8'))
                 
                 date = datetime.strptime(date_str, '%Y-%m-%d').replace(tzinfo=timezone.utc)
-                log_id = hashlib.md5(date_str.encode()).hexdigest()[:16]
+                log_id = hashlib.sha256(date_str.encode(), usedforsecurity=False).hexdigest()[:16]
                 
                 result = self.s3.upload_audit_log(
                     date=date,

@@ -118,7 +118,6 @@ class NetworkMonitor:
         Returns:
             ConnectionStatus with result
         """
-        start_time = time.perf_counter()
         is_connected = False
         latency_ms = None
 

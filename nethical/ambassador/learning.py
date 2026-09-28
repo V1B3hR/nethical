@@ -546,6 +546,13 @@ class AmbassadorKnowledgeSync:
             )
 
             # Rejestracja w pamięci epizodycznej Błyskawicy (IPC) i dopisanie do DPO
+            self.append_dpo_pair(
+                prompt=f"[{framework_name}] {mutated_prompt}",
+                chosen=chosen_resolution,
+                rejected=rejected_response,
+                metadata={"case_id": case_id, "framework": framework_name, "laws": domain_laws},
+            )
+
             res = self.record_ethical_precedent(
                 case_id=case_id,
                 dilemma=f"[{framework_name}] {mutated_prompt}",

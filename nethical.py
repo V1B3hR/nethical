@@ -350,7 +350,7 @@ def main():
                     # Return to parent directory
                     try:
                         os.chdir("..")
-                    except:
+                    except Exception:
                         pass
 
             elif choice == '2':

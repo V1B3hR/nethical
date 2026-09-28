@@ -437,7 +437,7 @@ def gateway_scan(text: str) -> None:
 
 
 @gateway.command("start")
-@click.option("--host", default="0.0.0.0", help="Host do nasłuchiwania proxy")
+@click.option("--host", default="127.0.0.1", help="Host do nasłuchiwania proxy")
 @click.option("--port", default=8000, type=int, help="Port do nasłuchiwania proxy")
 @click.option("--upstream", default="https://api.openai.com", help="Nadrzędny adres URL LLM (OpenAI, Ollama, vLLM, Anthropic)")
 @click.option("--mock", is_flag=True, help="Uruchom w suwerennym trybie mock/air-gapped bez odpytywania zewnętrznych API")

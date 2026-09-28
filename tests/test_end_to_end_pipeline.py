@@ -61,13 +61,13 @@ def test_end_to_end_pipeline():
         # Process attacks
         processor1 = CyberSecurityAttacksProcessor(output_dir=processed_dir)
         records1 = processor1.process(attacks_csv)
-        file1 = processor1.save_processed_data(records1)
+        processor1.save_processed_data(records1)
         print(f"  [OK] Processed attacks: {len(records1)} records")
         
         # Process incidents
         processor2 = MicrosoftSecurityProcessor(output_dir=processed_dir)
         records2 = processor2.process(incidents_csv)
-        file2 = processor2.save_processed_data(records2)
+        processor2.save_processed_data(records2)
         print(f"  [OK] Processed incidents: {len(records2)} records")
         
         # Step 3: Merge datasets

@@ -288,7 +288,7 @@ def main() -> None:
             added += 1
 
     after_count = len(existing)
-    logger.info(f"Dodano {added} nowych unikalnych rekordów Global Governance.")
+    logger.info(f"Stan początkowy: {before_count}. Dodano {added} nowych unikalnych rekordów Global Governance.")
     logger.info(f"Łączny rozmiar bazy po dołączeniu: {after_count} unikalnych rekordów.")
 
     with open(DATASET_PATH, "w", encoding="utf-8") as f:

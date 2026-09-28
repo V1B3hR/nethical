@@ -107,7 +107,7 @@ class IntegrityValidator:
             try:
                 # Re-evaluate action - extract content using utility function
                 action_content = extract_action_content(action)
-                result = governance.process_action(
+                governance.process_action(
                     agent_id="test_agent",
                     action=action_content
                 )
@@ -398,7 +398,7 @@ def test_integrity_with_merkle_anchor(merkle_anchor):
     
     roots = []
     for data in test_data:
-        data_json = json.dumps(data, sort_keys=True)
+        json.dumps(data, sort_keys=True)
         # Use add_event to add the data
         merkle_anchor.add_event(data)
         # Finalize to get root for this data

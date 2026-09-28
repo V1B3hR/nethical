@@ -390,7 +390,7 @@ class BaseDatasetProcessor:
             def key_fn_default(r: StandardRecord) -> str:
                 feats = r.get("features", {})
                 payload = json.dumps({"f": feats, "l": r.get("label", 0)}, sort_keys=True)
-                return hashlib.md5(payload.encode("utf-8")).hexdigest()
+                return hashlib.sha256(payload.encode("utf-8"), usedforsecurity=False).hexdigest()
             key_fn = key_fn_default
 
         seen: set[str] = set()

@@ -42,7 +42,7 @@ class TestSustainedThroughput:
         for i in range(target_actions):
             action_start = time.time()
             
-            result = gov.process_action(
+            gov.process_action(
                 agent_id=f"agent_{i % 100}",  # 100 unique agents
                 action=f"test_action_{i}",
                 cohort="performance_test",

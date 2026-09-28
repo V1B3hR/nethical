@@ -205,9 +205,8 @@ def inspect_datasets(
     Returns:
         Comprehensive reconnaissance report dictionary.
     """
-    try:
-        import pandas as pd
-    except ImportError:
+    import importlib.util
+    if importlib.util.find_spec("pandas") is None:
         logging.error("Pandas is required for reconnaissance. Please install it.")
         return {"error": "pandas not installed"}
 

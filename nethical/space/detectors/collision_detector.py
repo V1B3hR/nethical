@@ -82,7 +82,6 @@ class CollisionCourseDetector:
         r1 = primary_state.position_eci_km
         v1 = primary_state.velocity_eci_kms
         r2 = secondary_state.position_eci_km
-        v2 = secondary_state.velocity_eci_kms
 
         # Relative position vector in ECI
         delta_r = r2.subtract(r1)

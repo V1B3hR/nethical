@@ -330,7 +330,7 @@ class HTTPWebhookDispatcher(WebhookDispatcher):
                 req = request.Request(self.url, data=body_bytes, headers=req_headers, method="POST")
 
                 # Send request
-                with request.urlopen(req, timeout=self.timeout) as response:
+                with request.urlopen(req, timeout=self.timeout) as response:  # nosec B310
                     duration = (time.monotonic() - start) * 1000.0
                     delivery.duration_ms = round(duration, 3)
                     delivery.response_code = response.getcode()

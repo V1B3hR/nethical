@@ -403,6 +403,7 @@ class AutomatedCertificationHub:
                 "standard_name": standard.value,
                 "can_auto_certify": True,
                 "audit_readiness_level": "TIER_1_CERTIFIED",
+                "metadata": meta,
             },
         )
 

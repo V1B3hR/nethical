@@ -111,7 +111,7 @@ def test_train_without_audit_logging():
     print("=" * 70)
     
     with tempfile.TemporaryDirectory() as tmpdir:
-        tmpdir_path = Path(tmpdir)
+        Path(tmpdir)
         
         # Run training WITHOUT audit logging
         script_path = Path(__file__).parent.parent / "training" / "train_any_model.py"

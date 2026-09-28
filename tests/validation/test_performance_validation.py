@@ -120,7 +120,7 @@ class LoadTester:
             
             start_time = time.perf_counter()
             try:
-                result = self.governance.process_action(
+                self.governance.process_action(
                     agent_id="load_tester",
                     action=action_text
                 )

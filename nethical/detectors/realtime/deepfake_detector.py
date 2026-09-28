@@ -183,7 +183,7 @@ class DeepfakeDetector(BaseDetector):
         """
         # Simulate frequency analysis (would use FFT in production)
         # This is a lightweight heuristic check
-        data_hash = hashlib.md5(image_data).hexdigest()
+        data_hash = hashlib.sha256(image_data, usedforsecurity=False).hexdigest()
         hash_value = int(data_hash[:8], 16)
 
         # Simulate artifact detection
@@ -246,7 +246,7 @@ class DeepfakeDetector(BaseDetector):
         # This is a placeholder for the actual implementation
 
         # Simulated check
-        data_hash = hashlib.md5(image_data).hexdigest()
+        data_hash = hashlib.sha256(image_data, usedforsecurity=False).hexdigest()
         hash_value = int(data_hash[8:16], 16)
 
         landmark_score = (hash_value % 100) / 100.0
@@ -274,7 +274,7 @@ class DeepfakeDetector(BaseDetector):
         # This is a placeholder simulating fast inference
 
         # Simple hash-based simulation
-        data_hash = hashlib.md5(image_data).hexdigest()
+        data_hash = hashlib.sha256(image_data, usedforsecurity=False).hexdigest()
         hash_value = int(data_hash[:16], 16)
 
         # Simulate CNN output
@@ -302,7 +302,7 @@ class DeepfakeDetector(BaseDetector):
         # Simulate temporal consistency check
         # In production, would analyze frame-to-frame consistency
 
-        data_hash = hashlib.md5(video_data).hexdigest()
+        data_hash = hashlib.sha256(video_data, usedforsecurity=False).hexdigest()
         hash_value = int(data_hash[:8], 16)
         temporal_score = (hash_value % 100) / 100.0
 
@@ -340,7 +340,7 @@ class DeepfakeDetector(BaseDetector):
         # Simulate audio analysis
         # In production, would analyze spectrograms and voice patterns
 
-        data_hash = hashlib.md5(audio_data).hexdigest()
+        data_hash = hashlib.sha256(audio_data, usedforsecurity=False).hexdigest()
         hash_value = int(data_hash[:8], 16)
         audio_score = (hash_value % 100) / 100.0
 

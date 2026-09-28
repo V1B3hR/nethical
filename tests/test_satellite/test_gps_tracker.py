@@ -187,7 +187,7 @@ class TestGPSTracker:
 
     def test_remove_geofence(self, tracker):
         """Test removing geofence."""
-        fence = tracker.create_circular_geofence(
+        tracker.create_circular_geofence(
             fence_id="zone-1",
             name="Test Zone",
             center_lat=37.7749,

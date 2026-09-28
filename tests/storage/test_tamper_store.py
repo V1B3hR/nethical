@@ -38,7 +38,7 @@ def test_merkle_appender_basics():
     assert root2 is not None and root2 != leaf0 and root2 != leaf1
 
     # Three leaves (odd number)
-    leaf2 = tree.add_leaf(b"leaf-2")
+    tree.add_leaf(b"leaf-2")
     assert tree.size == 3
     root3 = tree.root()
     assert root3 is not None
@@ -78,7 +78,7 @@ def test_tamper_store_append_and_proofs():
     assert ev1.payload["decision"] == "ALLOW"
 
     # Append second event
-    leaf2 = store.append_event({"action": "alert_dispatched", "severity": "HIGH"}, correlation_id="cid-002")
+    store.append_event({"action": "alert_dispatched", "severity": "HIGH"}, correlation_id="cid-002")
     assert store.size() == 2
     root2 = store.root()
     assert root2 is not None
@@ -89,7 +89,7 @@ def test_tamper_store_append_and_proofs():
     assert ev2.prev_root == leaf1
 
     # Append arbitrary bytes
-    leaf3 = store.append_bytes(b"signed_policy_binary_blob", correlation_id="cid-003")
+    store.append_bytes(b"signed_policy_binary_blob", correlation_id="cid-003")
     assert store.size() == 3
     ev3 = store.get_event(3)
     assert "_raw_b64" in ev3.payload

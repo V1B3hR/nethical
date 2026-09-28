@@ -176,9 +176,9 @@ class DelimiterDetector(BaseDetector):
                 for match in json_matches[:5]:  # Check first 5 matches
                     try:
                         json.loads(match)
-                    except:
+                    except (json.JSONDecodeError, ValueError):
                         score = max(score, 0.4)
-        except:
+        except Exception:
             pass
         
         return score

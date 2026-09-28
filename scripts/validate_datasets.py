@@ -217,7 +217,6 @@ def check_distribution_shift() -> Dict[str, Any]:
     
     try:
         import pandas as pd
-        import numpy as np
         
         for csv_file in csv_files:
             try:

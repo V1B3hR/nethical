@@ -27,7 +27,6 @@ class TruLensConnector(ObservabilityProvider):
         """
         try:
             from trulens_eval import Tru, TruSession
-            from trulens_eval.feedback import Feedback
             
             if database_url:
                 self.session = TruSession(database_url=database_url)

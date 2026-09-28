@@ -283,10 +283,6 @@ class HumanReviewQueue:
             1 for item in self._items.values()
             if item.status == ReviewStatus.PENDING
         )
-        in_progress = sum(
-            1 for item in self._items.values()
-            if item.status == ReviewStatus.IN_PROGRESS
-        )
         completed_items = len(self._completed_reviews)
         
         overdue_items = sum(

@@ -169,7 +169,7 @@ class SoakTestMetrics:
         
         # Save raw data
         raw_file = output_dir / f'soak_test_raw_{timestamp}.json'
-        with open(raw_file, 'w') as f:
+        with open(raw_file, 'w', encoding='utf-8') as f:
             json.dump({
                 'requests': self.requests,
                 'memory_samples': self.memory_samples,
@@ -177,12 +177,12 @@ class SoakTestMetrics:
         
         # Save summary report
         report_file = output_dir / f'soak_test_report_{timestamp}.json'
-        with open(report_file, 'w') as f:
+        with open(report_file, 'w', encoding='utf-8') as f:
             json.dump(stats, f, indent=2)
         
         # Save human-readable report
         md_file = output_dir / f'soak_test_report_{timestamp}.md'
-        with open(md_file, 'w') as f:
+        with open(md_file, 'w', encoding='utf-8') as f:
             f.write("# Soak Load Test Report\n\n")
             f.write(f"**Generated**: {datetime.now().isoformat()}\n\n")
             f.write(f"## Summary\n\n")

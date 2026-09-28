@@ -8,7 +8,7 @@ alerting and escalation policies.
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set
+from typing import Any, Callable, Dict, List, Optional
 import statistics
 
 from .base_probe import ProbeResult, ProbeStatus

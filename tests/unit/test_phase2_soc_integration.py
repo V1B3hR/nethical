@@ -333,8 +333,8 @@ class TestIncidentManager:
         manager = IncidentManager()
         
         # Create incidents with different severities
-        inc1 = await manager.create_incident("Inc 1", "Desc 1", AlertSeverity.HIGH)
-        inc2 = await manager.create_incident("Inc 2", "Desc 2", AlertSeverity.CRITICAL)
+        await manager.create_incident("Inc 1", "Desc 1", AlertSeverity.HIGH)
+        await manager.create_incident("Inc 2", "Desc 2", AlertSeverity.CRITICAL)
         
         critical_incidents = manager.list_incidents(severity=AlertSeverity.CRITICAL)
         

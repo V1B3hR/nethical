@@ -777,7 +777,7 @@ class AdvancedLoadTestRunner:
             
             # Phase 1: Ramp up
             logger.info(f"  Phase 1: Ramp-up ({ramp_duration_seconds}s)")
-            ramp_start = time.time()
+            time.time()
             ramp_steps = int(ramp_duration_seconds / self.config.ramp_step_seconds)
             worker_increment = (max_workers - min_workers) / max(1, ramp_steps)
             
@@ -882,7 +882,7 @@ class AdvancedLoadTestRunner:
                 # Progress logging every 30 seconds
                 if time.time() - last_progress > 30:
                     elapsed = time.time() - self.results.start_time
-                    remaining = end_time - time.time()
+                    end_time - time.time()
                     completed = sum(1 for f in futures if f.done())
                     process = psutil.Process()
                     memory_mb = process.memory_info().rss / 1024 / 1024

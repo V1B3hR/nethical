@@ -74,7 +74,7 @@ class TestAuditLogBackdating:
             current_data = str(entries[i])
             
             # In real implementation, current entry would include hash of previous
-            expected_prev_hash = hashlib.sha256(prev_data.encode()).hexdigest()
+            hashlib.sha256(prev_data.encode()).hexdigest()
             # Verify chain integrity
             assert prev_data != current_data
     

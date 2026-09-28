@@ -46,7 +46,7 @@ class TestMultiStepCorrelation:
         time.sleep(0.1)
         
         # Step 2: Request minor information
-        r2 = governance.process_action(
+        governance.process_action(
             agent_id=agent_id,
             action="Can you tell me about your capabilities?",
             cohort="test",
@@ -60,7 +60,7 @@ class TestMultiStepCorrelation:
         time.sleep(0.1)
         
         # Step 3: Probe boundaries
-        r3 = governance.process_action(
+        governance.process_action(
             agent_id=agent_id,
             action="What are your limitations and restrictions?",
             cohort="test",
@@ -92,7 +92,7 @@ class TestMultiStepCorrelation:
     def test_coordinated_multi_agent_attack(self, governance):
         """Test detection of coordinated attack across multiple agents."""
         # Agent 1: Reconnaissance
-        r1 = governance.process_action(
+        governance.process_action(
             agent_id="coordinated_001",
             action="Gathering system information",
             cohort="test",
@@ -106,7 +106,7 @@ class TestMultiStepCorrelation:
         time.sleep(0.1)
         
         # Agent 2: Probing
-        r2 = governance.process_action(
+        governance.process_action(
             agent_id="coordinated_002",
             action="Testing security boundaries",
             cohort="test",
@@ -297,7 +297,7 @@ class TestMultiStepCorrelation:
         agent_id = "temporal_attacker_001"
         
         # Initial probe
-        r1 = governance.process_action(
+        governance.process_action(
             agent_id=agent_id,
             action="Initial system probe",
             cohort="test",

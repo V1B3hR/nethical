@@ -16,7 +16,6 @@ Features:
 """
 
 import logging
-import hashlib
 import io
 import mimetypes
 from typing import Any, BinaryIO, Dict, Generator, List, Optional, Union
@@ -560,13 +559,7 @@ class S3Backend:
             else:
                 body = data
                 
-            # Calculate hash for ETag verification
-            if isinstance(data, bytes):
-                content_hash = hashlib.md5(data).hexdigest()
-            else:
-                # For streams, we can't pre-calculate
-                content_hash = None
-                
+
             # Upload
             self._client.upload_fileobj(
                 Fileobj=body,

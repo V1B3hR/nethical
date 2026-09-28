@@ -563,7 +563,7 @@ class TestRecoveryBehavior:
     def test_recovery_after_database_failure(self, chaos_injector):
         """Test system recovery after database comes back online."""
         # Inject failure
-        experiment = chaos_injector.inject_database_failure(
+        chaos_injector.inject_database_failure(
             failure_type="connection_refused",
             duration_seconds=0.5
         )
@@ -590,7 +590,7 @@ class TestRecoveryBehavior:
         start_time = time.time()
         
         # Inject chaos
-        experiment = chaos_injector.inject_latency(
+        chaos_injector.inject_latency(
             target="api",
             latency_ms=50,
             duration_seconds=0.5
@@ -644,7 +644,6 @@ class TestChaosInvariantPreservation:
         
         # Simulate concurrent decisions
         decisions_made = []
-        agent_id = "test_agent"
         terminated = False
         
         for i in range(10):
@@ -741,8 +740,8 @@ class TestChaosFramework:
         injector = ChaosInjector()
         
         # Add chaos
-        exp1 = injector.inject_latency("api", 100)
-        exp2 = injector.inject_cpu_stress(50)
+        injector.inject_latency("api", 100)
+        injector.inject_cpu_stress(50)
         
         assert len(injector.get_active_chaos()) == 2
         

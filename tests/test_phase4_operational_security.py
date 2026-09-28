@@ -568,8 +568,8 @@ class TestPhase4Integration:
         system = SecretManagementSystem(vault_config)
         
         # Create secrets
-        api_key = system.create_secret("api-key-1", SecretType.API_KEY, length=32)
-        password = system.create_secret("password-1", SecretType.PASSWORD, length=24)
+        system.create_secret("api-key-1", SecretType.API_KEY, length=32)
+        system.create_secret("password-1", SecretType.PASSWORD, length=24)
         
         assert len(system.secrets) == 2
         

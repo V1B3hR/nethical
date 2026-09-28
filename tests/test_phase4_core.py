@@ -72,7 +72,7 @@ class TestMerkleAnchor:
             for i in range(5):
                 anchor.add_event({'event_id': f'evt_{i}', 'data': i})
             
-            merkle_root = anchor.finalize_chunk()
+            anchor.finalize_chunk()
             chunk_id = list(anchor.finalized_chunks.keys())[0]
             
             # Verify chunk

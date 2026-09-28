@@ -983,10 +983,14 @@ class MarketplaceClient:
             return dest
 
         last_error: Optional[Exception] = None
+        parsed = urllib.parse.urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            raise InstallationError(f"Unsupported URL scheme '{parsed.scheme}'. Only http and https are allowed.")
+
         for attempt in range(1, self.download_retries + 2):
             try:
                 logger.info("Downloading %s (attempt %d)", url, attempt)
-                with urllib.request.urlopen(url, timeout=self.request_timeout_s) as resp:
+                with urllib.request.urlopen(url, timeout=self.request_timeout_s) as resp:  # nosec B310
                     data = resp.read()
                 dest.write_bytes(data)
                 return dest

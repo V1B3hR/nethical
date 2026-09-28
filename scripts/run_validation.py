@@ -204,8 +204,6 @@ class ValidationRunner:
     
     def check_thresholds(self) -> Dict:
         """Check if validation meets defined thresholds"""
-        thresholds = self.config.get("metrics", {})
-        
         # Dynamically check status of all executed suites
         checks = {
             s: self.results["suites"].get(s, {}).get("status") == "passed"

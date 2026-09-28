@@ -3,8 +3,8 @@
 **Mandated By:** Cabinet Office (CDDO) & Department for Science, Innovation and Technology (DSIT)  
 **System Name:** Nethical Enterprise Governance OS & Błyskawica Ambassador  
 **Version:** v10.4-sovereign  
-**Generated At:** `2026-09-27T09:36:30.264173+00:00`  
-**Merkle Verification Anchor:** `d4eb3d41086345f067581e3d819108eafba08786a35de9de534c5390a93b9fdd`  
+**Generated At:** `2026-09-28T05:17:04.991546+00:00`  
+**Merkle Verification Anchor:** `b6cf3693c0838358cf5e46b62c73fa72705435e351ff7121902f695d725e4447`  
 
 ---
 
@@ -47,7 +47,7 @@ Public sector adoption of AI presents profound opportunities alongside significa
 - **Inter-Process Transport:** Microsecond shared memory IPC (`emptyDir` RAM) with latency < 0.5 ms and zero open external network sockets.
 
 ### 2.3 Data Governance and Provenance
-- **Dataset Scale:** 3946 verified preference pairs across 20 threat and compliance archetypes.
+- **Dataset Scale:** 4002 verified preference pairs across 20 threat and compliance archetypes.
 - **Data Composition:** 53.26% curated real-world regulatory incidents (AIID) and 46.74% high-veracity synthetic sparring scenarios.
 - **Bias Mitigation:** Four-Fifths rule tested across all domains; null-byte and prompt injection input sanitisation.
 

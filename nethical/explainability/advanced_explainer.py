@@ -146,9 +146,6 @@ class AdvancedExplainer:
         features = self._extract_features(judgment_data)
         shap_values = {}
         
-        # Calculate base risk (average expected risk)
-        base_risk = 0.3  # Neutral baseline
-        
         for feature_name, feature_value in features.items():
             # Calculate the marginal contribution of this feature
             weight = self.feature_weights.get(feature_name, 0.1)

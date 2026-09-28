@@ -946,7 +946,6 @@ class SecurityDetector(BaseDetector):
         """Detect security violations in the action."""
         violations = []
         content = str(getattr(action, "content", str(action)))
-        action.__class__.__name__
 
         # Check for security patterns
         for category, patterns in self.security_patterns.items():

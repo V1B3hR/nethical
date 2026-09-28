@@ -187,7 +187,7 @@ class IntegratedGovernance:
             epsilon: Privacy budget for differential privacy
             redaction_policy: Redaction policy ('minimal', 'standard', 'aggressive')
         """
-        if os.name == "nt" and str(storage_dir).replace("\\", "/").startswith("/tmp"):
+        if os.name == "nt" and str(storage_dir).replace("\\", "/").startswith("/tmp"):  # nosec B108
             rel = str(storage_dir).replace("\\", "/").lstrip("/")
             if rel.startswith("tmp/"):
                 rel = rel[4:]

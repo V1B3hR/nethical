@@ -156,7 +156,6 @@ class LawInvariantProver:
         solver = z3.Solver()
 
         dist = z3.Real("human_distance_meters")
-        v_actuator = z3.Real("linear_velocity_mps")
         decision = z3.Int("kinetic_decision")  # 0=ALLOW, 1=RESTRICT, 2=BLOCK, 3=EMERGENCY_STOP
 
         # Aksjomaty gubernatora kinetycznego

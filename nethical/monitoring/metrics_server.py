@@ -38,7 +38,7 @@ class MetricsServer:
     Endpoint: /metrics
     """
 
-    def __init__(self, metrics: PrometheusMetrics, port: int = 9090, host: str = '0.0.0.0'):
+    def __init__(self, metrics: PrometheusMetrics, port: int = 9090, host: str = '127.0.0.1'):
         """Initialize metrics server.
         
         Args:
@@ -178,7 +178,7 @@ class MetricsServer:
 def start_metrics_server(
     metrics: Optional[PrometheusMetrics] = None,
     port: int = 9090,
-    host: str = '0.0.0.0'
+    host: str = '127.0.0.1'
 ) -> MetricsServer:
     """Start a metrics server (convenience function).
     
@@ -218,7 +218,7 @@ def start_metrics_server(
 async def start_metrics_server_async(
     metrics: Optional[PrometheusMetrics] = None,
     port: int = 9090,
-    host: str = '0.0.0.0'
+    host: str = '127.0.0.1'
 ) -> MetricsServer:
     """Start a metrics server asynchronously.
     

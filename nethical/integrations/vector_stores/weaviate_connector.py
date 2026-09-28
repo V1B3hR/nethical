@@ -36,11 +36,9 @@ from .base import VectorStoreProvider, VectorSearchResult
 logger = logging.getLogger(__name__)
 
 # Check if Weaviate is available
-try:
-    import weaviate
-    WEAVIATE_AVAILABLE = True
-except ImportError:
-    WEAVIATE_AVAILABLE = False
+import importlib.util
+WEAVIATE_AVAILABLE = importlib.util.find_spec("weaviate") is not None
+if not WEAVIATE_AVAILABLE:
     logger.warning("Weaviate not installed. Install with: pip install weaviate-client>=4.0.0")
 
 

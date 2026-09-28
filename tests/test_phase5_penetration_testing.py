@@ -227,7 +227,7 @@ class TestVulnerabilityScanner:
             "Vuln 1", "Test", VulnerabilitySeverity.HIGH, 7.0,
             ["test"], "Test", "test"
         )
-        vuln2 = scanner.register_vulnerability(
+        scanner.register_vulnerability(
             "Vuln 2", "Test", VulnerabilitySeverity.MEDIUM, 5.0,
             ["test"], "Test", "test"
         )

@@ -95,7 +95,7 @@ def compute_fingerprint(
 
         return xxhash.xxh64(json_str.encode()).hexdigest()
     except ImportError:
-        return hashlib.md5(json_str.encode()).hexdigest()
+        return hashlib.sha256(json_str.encode(), usedforsecurity=False).hexdigest()[:32]
 
 
 def compute_detailed_fingerprint(
@@ -117,7 +117,7 @@ def compute_detailed_fingerprint(
     context = context or {}
 
     components = {
-        "action_hash": hashlib.md5(action.encode()).hexdigest()[:16],
+        "action_hash": hashlib.sha256(action.encode(), usedforsecurity=False).hexdigest()[:16],
         "action_type": action_type,
     }
 
@@ -202,4 +202,4 @@ def action_similarity_hash(action: str, granularity: str = "medium") -> str:
         length_bucket = len(normalized) // 50
         key_text = f"{' '.join(words)}:{length_bucket}"
 
-    return hashlib.md5(key_text.encode()).hexdigest()[:12]
+    return hashlib.sha256(key_text.encode(), usedforsecurity=False).hexdigest()[:12]

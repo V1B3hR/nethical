@@ -236,11 +236,8 @@ class MLflowIntegration(MLPlatformInterface):
                 import mlflow
                 
                 # Set or create experiment
-                experiment = self.client.get_experiment_by_name(experiment_name)
-                if experiment is None:
-                    experiment_id = self.client.create_experiment(experiment_name)
-                else:
-                    experiment_id = experiment.experiment_id
+                if self.client.get_experiment_by_name(experiment_name) is None:
+                    self.client.create_experiment(experiment_name)
                 
                 mlflow.set_experiment(experiment_name)
                 

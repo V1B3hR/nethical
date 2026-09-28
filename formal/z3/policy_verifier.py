@@ -15,16 +15,13 @@ Usage:
     result = verifier.verify_policy_consistency(policies)
 """
 
-from typing import Dict, List, Optional, Tuple, Any
+from typing import Dict, List, Optional, Any
 from dataclasses import dataclass
 from enum import Enum
-import json
 
 try:
     from z3 import (
-        Solver, Int, Bool, Real, And, Or, Not, Implies, If,
-        ForAll, Exists, sat, unsat, unknown, IntSort, BoolSort,
-        RealSort, ArraySort, Select, Store, Function, Datatype
+        Solver, Int, Bool, Real, And, Or, If, sat, unsat
     )
     Z3_AVAILABLE = True
 except ImportError:

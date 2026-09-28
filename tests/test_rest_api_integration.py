@@ -293,7 +293,7 @@ class TestCORS:
         # Check that CORS middleware is added to the app
         # TestClient doesn't include CORS headers as it's not a real HTTP request
         # but we can verify the middleware is configured
-        middleware_types = [type(m) for m in rest_api.app.user_middleware]
+        [type(m) for m in rest_api.app.user_middleware]
         
         # Import middleware class
         from starlette.middleware.cors import CORSMiddleware

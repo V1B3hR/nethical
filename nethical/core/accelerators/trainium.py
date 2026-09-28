@@ -158,13 +158,9 @@ TRAINIUM_SPECS: Dict[TrainiumVersion, TrainiumSpecs] = {
 log = logging.getLogger(__name__)
 
 # Check for Neuron availability
-NEURON_AVAILABLE = False
-try:
-    import torch
-    import torch_neuronx
-
-    NEURON_AVAILABLE = True
-except ImportError:
+import importlib.util
+NEURON_AVAILABLE = importlib.util.find_spec("torch_neuronx") is not None
+if not NEURON_AVAILABLE:
     log.debug("torch-neuronx not available - Trainium acceleration disabled")
 
 
@@ -180,7 +176,6 @@ def detect_trainium_version() -> Optional[TrainiumVersion]:
     try:
         # Check environment variables first
         instance_type = os.environ.get("AWS_INSTANCE_TYPE", "").lower()
-        neuron_device = os.environ.get("NEURON_RT_VISIBLE_CORES", "")
 
         # Match against known instance type patterns
         if "trn3" in instance_type:
@@ -201,7 +196,7 @@ def detect_trainium_version() -> Optional[TrainiumVersion]:
                 "http://169.254.169.254/latest/meta-data/instance-type",
                 headers={"X-aws-ec2-metadata-token-ttl-seconds": "21600"}
             )
-            with urllib.request.urlopen(req, timeout=1) as response:
+            with urllib.request.urlopen(req, timeout=1) as response:  # nosec B310
                 instance_type = response.read().decode().lower()
 
             if "trn3" in instance_type:

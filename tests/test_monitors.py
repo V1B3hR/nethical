@@ -119,11 +119,11 @@ class TestBaseMonitorLifecycleAndCircuitBreaker:
         assert out1.risk_score >= 0.0
 
         # Second failure -> trips circuit to OPEN
-        out2 = await monitor.evaluate(action)
+        await monitor.evaluate(action)
         assert monitor._circuit_state in (CircuitState.OPEN, CircuitState.HALF_OPEN)
 
         # Third call short-circuits
-        out3 = await monitor.evaluate(action)
+        await monitor.evaluate(action)
         assert monitor._circuit_state == CircuitState.OPEN
 
 

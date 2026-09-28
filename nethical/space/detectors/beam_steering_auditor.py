@@ -107,11 +107,6 @@ class BeamSteeringAuditor:
         # 1. Calculate Equivalent Power Flux Density (EPFD)
         # Power Flux Density at slant range d: PFD = (P_tx * G_linear) / (4 * pi * d^2)
         d_m = max(1000.0, command.slant_range_km * 1000.0)
-        g_linear = 10.0 ** (command.tx_antenna_gain_dbi / 10.0)
-        eirp_watts = command.tx_power_watts * g_linear
-
-        pfd_w_m2 = eirp_watts / (4.0 * math.pi * (d_m ** 2))
-        pfd_dbw_m2 = 10.0 * math.log10(max(1e-30, pfd_w_m2))
 
         # EPFD scaling towards GSO arc considering off-axis roll-off
         off_axis = max(0.1, command.off_axis_angle_to_geo_arc_deg)

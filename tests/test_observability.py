@@ -275,7 +275,7 @@ class TestAlertRules:
         }
         
         # Evaluate (won't fire immediately due to duration requirement)
-        fired = manager.evaluate_rules(metrics)
+        manager.evaluate_rules(metrics)
         
         # Check rule states updated
         rule_status = manager.get_rule_status()

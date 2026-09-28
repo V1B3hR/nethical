@@ -94,7 +94,7 @@ class TestEnhancedRedactionPipeline:
         )
         
         text = "Contact: john@example.com and jane@test.com"
-        result = pipeline.redact(text, user_id="test_user")
+        pipeline.redact(text, user_id="test_user")
         
         assert len(pipeline.audit_trail) > 0
         assert pipeline.audit_trail[-1].action == "redact"

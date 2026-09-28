@@ -27,7 +27,6 @@ class WhyLabsConnector(ObservabilityProvider):
             dataset_id: Dataset/model ID
         """
         try:
-            import whylogs as why
             from whylogs.api.writer.whylabs import WhyLabsWriter
             
             self.writer = WhyLabsWriter(

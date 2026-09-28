@@ -261,7 +261,7 @@ class TestGlobalKillSwitch:
         self.kill_switch.register_callback(callback)
         self.kill_switch.register_agent("agent-1", "cohort-a")
 
-        result = self.kill_switch.activate()
+        self.kill_switch.activate()
 
         assert callback.pre_shutdown_called is True
         assert callback.post_shutdown_called is True

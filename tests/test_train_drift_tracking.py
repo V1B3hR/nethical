@@ -148,7 +148,7 @@ def test_train_without_drift_tracking():
     print("  Test: train_any_model.py without Drift Tracking")
     print("=" * 70)
     
-    with tempfile.TemporaryDirectory() as tmpdir:
+    with tempfile.TemporaryDirectory():
         # Run training WITHOUT drift tracking
         script_path = Path(__file__).parent.parent / "training" / "train_any_model.py"
         

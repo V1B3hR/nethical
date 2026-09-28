@@ -149,7 +149,7 @@ class TestNethicalQueryEngine:
             storage_dir=temp_storage
         )
         
-        result = wrapper.query("Test query")
+        wrapper.query("Test query")
         
         mock_query_engine.query.assert_called_once_with("Test query")
 
@@ -175,7 +175,7 @@ class TestNethicalQueryEngine:
         }
         wrapper._governance = mock_gov
         
-        result = wrapper.query("Test query")
+        wrapper.query("Test query")
         
         # Should have called governance for query check
         assert mock_gov.process_action.called

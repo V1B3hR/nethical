@@ -38,19 +38,9 @@ from .base import VectorStoreProvider, VectorSearchResult
 logger = logging.getLogger(__name__)
 
 # Check if Qdrant is available
-try:
-    from qdrant_client import QdrantClient
-    from qdrant_client.models import (
-        Distance,
-        VectorParams,
-        PointStruct,
-        Filter,
-        FieldCondition,
-        MatchValue,
-    )
-    QDRANT_AVAILABLE = True
-except ImportError:
-    QDRANT_AVAILABLE = False
+import importlib.util
+QDRANT_AVAILABLE = importlib.util.find_spec("qdrant_client") is not None
+if not QDRANT_AVAILABLE:
     logger.warning("Qdrant not installed. Install with: pip install qdrant-client>=1.7.0")
 
 
@@ -238,7 +228,7 @@ class QdrantConnector(VectorStoreProvider):
                 # Convert string IDs to deterministic hash if needed
                 if isinstance(vec_id, str):
                     # Use deterministic hash instead of Python's hash()
-                    vec_id = int(hashlib.md5(vec_id.encode()).hexdigest()[:8], 16)
+                    vec_id = int(hashlib.sha256(vec_id.encode(), usedforsecurity=False).hexdigest()[:8], 16)
                 
                 point = PointStruct(
                     id=vec_id,
@@ -295,6 +285,8 @@ class QdrantConnector(VectorStoreProvider):
             # Build filter if provided
             qdrant_filter = None
             if filter:
+                from qdrant_client.models import Filter, FieldCondition, MatchValue
+
                 # Simple filter implementation - can be extended
                 conditions = []
                 for field, value in filter.items():
@@ -379,7 +371,7 @@ class QdrantConnector(VectorStoreProvider):
             for vec_id in ids:
                 if isinstance(vec_id, str):
                     # Use deterministic hash instead of Python's hash()
-                    point_ids.append(int(hashlib.md5(vec_id.encode()).hexdigest()[:8], 16))
+                    point_ids.append(int(hashlib.sha256(vec_id.encode(), usedforsecurity=False).hexdigest()[:8], 16))
                 else:
                     point_ids.append(vec_id)
             

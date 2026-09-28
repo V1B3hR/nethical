@@ -11,13 +11,10 @@ This module provides REST API endpoints for the audit portal, including:
 All endpoints support rate limiting, authentication, and comprehensive logging.
 """
 
-import hashlib
-import json
-from datetime import datetime, timedelta
-from typing import Dict, List, Optional, Any
+from datetime import datetime
+from typing import Dict, Optional, Any
 from enum import Enum
-from dataclasses import dataclass, asdict
-from functools import wraps
+from dataclasses import dataclass
 import time
 
 

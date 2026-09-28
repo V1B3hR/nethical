@@ -49,7 +49,7 @@ def test_data_residency_mapper_persistence_and_cross_border(temp_dir):
         data_categories={DataCategory.PII, DataCategory.FINANCIAL},
         retention_days=365,
     )
-    store_us = mapper1.register_data_store(
+    mapper1.register_data_store(
         store_id="store-us-1",
         name="US Analytics Store",
         region=DataRegion.US,

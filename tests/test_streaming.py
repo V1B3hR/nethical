@@ -46,12 +46,12 @@ def test_event_stream_manager_drop_newest():
         backpressure_strategy=BackpressureStrategy.DROP_NEWEST,
     )
 
-    ev1 = manager.publish_nowait("test.topic", {"n": 1})
-    ev2 = manager.publish_nowait("test.topic", {"n": 2})
-    ev3 = manager.publish_nowait("test.topic", {"n": 3})
+    manager.publish_nowait("test.topic", {"n": 1})
+    manager.publish_nowait("test.topic", {"n": 2})
+    manager.publish_nowait("test.topic", {"n": 3})
 
     # Buffer is full (size 3)
-    ev4 = manager.publish_nowait("test.topic", {"n": 4})
+    manager.publish_nowait("test.topic", {"n": 4})
 
     stats = manager.get_stats()
     assert stats["current_queue_depth"] == 3

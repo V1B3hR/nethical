@@ -163,8 +163,6 @@ log = logging.getLogger(__name__)
 # Check for torch_xla availability
 XLA_AVAILABLE = False
 try:
-    import torch
-    import torch_xla
     import torch_xla.core.xla_model as xm
 
     XLA_AVAILABLE = True

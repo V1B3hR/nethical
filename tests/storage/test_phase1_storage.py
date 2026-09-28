@@ -177,7 +177,7 @@ class TestPostgresBackendMocked:
         mock_pool_instance.getconn.return_value = mock_conn
         mock_pool.ThreadedConnectionPool.return_value = mock_pool_instance
         
-        config = PostgresConfig()
+        PostgresConfig()
         # Since we're mocking, the backend would fail to initialize
         # This test validates the code structure is correct
 

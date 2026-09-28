@@ -39,12 +39,9 @@ from .base import VectorStoreProvider, VectorSearchResult
 logger = logging.getLogger(__name__)
 
 # Check if Chroma is available
-try:
-    import chromadb
-    from chromadb.config import Settings
-    CHROMA_AVAILABLE = True
-except ImportError:
-    CHROMA_AVAILABLE = False
+import importlib.util
+CHROMA_AVAILABLE = importlib.util.find_spec("chromadb") is not None
+if not CHROMA_AVAILABLE:
     logger.warning("ChromaDB not installed. Install with: pip install chromadb>=0.4.0")
 
 

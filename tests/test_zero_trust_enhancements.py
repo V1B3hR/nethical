@@ -120,7 +120,7 @@ class TestAnomalyDetector:
 
         # Record some normal requests
         for i in range(20):
-            result = detector.record_request(
+            detector.record_request(
                 identity="user1",
                 request_type="inference",
             )

@@ -264,7 +264,6 @@ class JurisdictionalTrustEngine:
         cloud_vendor: str = "AWS / Azure / Sovereign Node",
     ) -> CrossBorderAuditResult:
         """Audytuje transfer danych lub zapytania AI przez granice państwowe (Art. 44-49 RODO / NATO)."""
-        src = self.get_profile(source_country)
         dst = self.get_profile(destination_country)
 
         reasons: List[str] = []

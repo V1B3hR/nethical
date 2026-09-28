@@ -142,7 +142,7 @@ class TestPhase8HumanFeedback:
     def test_sla_metrics(self, escalation_queue):
         """Test SLA metrics calculation."""
         # Add and process some cases
-        case = escalation_queue.add_case(
+        escalation_queue.add_case(
             judgment_id="judg_1",
             action_id="act_1",
             agent_id="agent_1",
@@ -171,7 +171,7 @@ class TestPhase8HumanFeedback:
         """Test feedback summary for continuous improvement."""
         # Add and process cases with different feedback
         for i in range(3):
-            case = escalation_queue.add_case(
+            escalation_queue.add_case(
                 judgment_id=f"judg_{i}",
                 action_id=f"act_{i}",
                 agent_id=f"agent_{i}",
@@ -282,7 +282,7 @@ class TestPhase9Optimization:
         """Test promotion gate validation."""
         # Create baseline config
         baseline_config = optimizer.create_configuration(config_version="baseline_v1")
-        baseline_metrics = optimizer.record_metrics(
+        optimizer.record_metrics(
             config_id=baseline_config.config_id,
             detection_recall=0.80,
             detection_precision=0.85,
@@ -294,7 +294,7 @@ class TestPhase9Optimization:
         
         # Create candidate config with better metrics
         candidate_config = optimizer.create_configuration(config_version="candidate_v1")
-        candidate_metrics = optimizer.record_metrics(
+        optimizer.record_metrics(
             config_id=candidate_config.config_id,
             detection_recall=0.84,  # +4% recall gain
             detection_precision=0.87,
@@ -417,7 +417,7 @@ class TestPhase89Integration:
     def test_continuous_improvement_cycle(self, governance):
         """Test continuous improvement cycle."""
         # Add some feedback first
-        result = governance.process_with_escalation(
+        governance.process_with_escalation(
             judgment_id="judg_1",
             action_id="act_1",
             agent_id="agent_1",

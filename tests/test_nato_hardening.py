@@ -32,13 +32,13 @@ from nethical.api.rbac import (
 def test_tactical_01_package_import():
     """Verify all core modules and API components import without dependency lockup."""
     import importlib
-    neth = importlib.import_module("nethical")
-    gov_core = importlib.import_module("nethical.core.governance_core")
-    gov_det = importlib.import_module("nethical.core.governance_detectors")
-    gov_integ = importlib.import_module("nethical.core.integrated_governance")
+    importlib.import_module("nethical")
+    importlib.import_module("nethical.core.governance_core")
+    importlib.import_module("nethical.core.governance_detectors")
+    importlib.import_module("nethical.core.integrated_governance")
     tax_val = importlib.import_module("nethical.core.taxonomy_validator")
     api_mod = importlib.import_module("nethical.api")
-    ks_api = importlib.import_module("nethical.api.kill_switch_api")
+    importlib.import_module("nethical.api.kill_switch_api")
     rbac_mod = importlib.import_module("nethical.api.rbac")
 
     assert hasattr(api_mod, "kill_switch_router")

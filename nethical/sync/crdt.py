@@ -865,7 +865,6 @@ class PolicyCRDT:
             else:
                 # Existing policy - merge with LWW
                 local_state = self.policies[policy_id].get()
-                other_state = other_register.get()
 
                 self.policies[policy_id].merge(other_register)
                 merged_state = self.policies[policy_id].get()

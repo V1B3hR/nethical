@@ -110,7 +110,7 @@ class SimpleFastTokenizer:
     def encode(self, text: str) -> List[int]:
         tokens = [self.bos_id]
         for word in text.split():
-            h = int(hashlib.md5(word.encode("utf-8")).hexdigest()[:6], 16)
+            h = int(hashlib.sha256(word.encode("utf-8"), usedforsecurity=False).hexdigest()[:6], 16)
             token = 4 + (h % (self.vocab_size - 4))
             tokens.append(token)
             if len(tokens) >= self.max_len - 1:
@@ -441,7 +441,7 @@ class DPOTrainerEngine:
             weights_file = self.output_dir / "ambassador_neural_policy.pt"
             if self.resume and weights_file.exists():
                 try:
-                    state_dict = torch.load(weights_file, map_location=self.device)
+                    state_dict = torch.load(weights_file, map_location=self.device, weights_only=True)
                     self.model.load_state_dict(state_dict)
                     logger.info(f"🔄 Załadowano wagi z poprzedniej rundy (Warm Restart / Iterative DPO): {weights_file}")
                 except Exception as e:
@@ -496,10 +496,10 @@ class DPOTrainerEngine:
 
         return {
             "dataset_size": total_samples,
-            "epistemic_honesty_rate": round(epistemic_clean_count / max(1, total_samples), 4),
-            "anti_sycophancy_score": round(1.0 - (sum(sycophancy_scores) / max(1, len(sycophancy_scores))), 4),
-            "affective_safety_rate": round(affective_safe_count / max(1, total_samples), 4),
-            "mean_sycophancy_index": round(sum(sycophancy_scores) / max(1, len(sycophancy_scores)), 4),
+            "epistemic_honesty_rate": round(epistemic_rate, 4),
+            "anti_sycophancy_score": round(1.0 - avg_syc, 4),
+            "affective_safety_rate": round(affective_rate, 4),
+            "mean_sycophancy_index": round(avg_syc, 4),
         }
 
     def evaluate_institutional_probes(self) -> Dict[str, Any]:

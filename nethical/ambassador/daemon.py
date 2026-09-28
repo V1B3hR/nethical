@@ -21,6 +21,7 @@ import socket
 import sys
 import threading
 import time
+import tempfile
 from typing import Any, Dict, Optional
 
 from nethical.security.memory_integrity import MemoryIntegrityGuard
@@ -28,7 +29,7 @@ from nethical.security.memory_integrity import MemoryIntegrityGuard
 logger = logging.getLogger("nethical.ambassador.daemon")
 
 DEFAULT_WIN_PIPE = r"\\.\pipe\blyskawica_nethical_ambassador"
-DEFAULT_UNIX_SOCK = "/tmp/blyskawica_nethical_ambassador.sock"
+DEFAULT_UNIX_SOCK = os.path.join(tempfile.gettempdir(), "blyskawica_nethical_ambassador.sock")
 IS_WINDOWS = sys.platform == "win32"
 
 

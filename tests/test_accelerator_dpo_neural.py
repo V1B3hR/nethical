@@ -111,7 +111,7 @@ def test_pneumatic_tanh_soft_clipping():
     norm_before = torch.linalg.vector_norm(torch.stack([torch.linalg.vector_norm(p.grad) for p in model.parameters() if p.grad is not None])).item()
     assert norm_before > 10.0, "Gradient powinien być duży dla testu wybuchu"
 
-    scaled_norm = trainer._apply_pneumatic_soft_clipping(max_norm=1.0, boost_ratio=1.0)
+    trainer._apply_pneumatic_soft_clipping(max_norm=1.0, boost_ratio=1.0)
     norm_after = torch.linalg.vector_norm(torch.stack([torch.linalg.vector_norm(p.grad) for p in model.parameters() if p.grad is not None])).item()
 
     assert norm_after < 2.0, f"Pneumatyczny soft-clipping nie stłumił gradientu (norm_after={norm_after})"

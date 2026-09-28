@@ -115,7 +115,7 @@ class SpoofingDetector:
                 "Enforcing encrypted sovereign signal selection."
             )
 
-        if is_jammed_or_spoofed := is_spoofed:
+        if is_spoofed:
             logger.warning(
                 "Orbital GNSS Spoofing Detected on %s! Severity: %s | Action: %s",
                 gnss_state.satellite_id,

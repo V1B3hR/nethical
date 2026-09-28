@@ -66,7 +66,6 @@ if __name__ == "__main__":
             import win32serviceutil
             import win32service
             import win32event
-            import servicemanager
 
             class NethicalWinService(win32serviceutil.ServiceFramework):
                 _svc_name_ = "NethicalGovernanceService"

@@ -149,7 +149,7 @@ def test_train_all_with_audit_and_governance():
         timeout=300
         )
         
-        combined_output = result.stdout + result.stderr
+        result.stdout + result.stderr
         
         assert result.returncode == 0, f"Training failed: {result.stderr}"
         print("  ✓ Training completed with all features enabled")

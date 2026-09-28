@@ -763,10 +763,6 @@ class MultiObjectiveOptimizer:
         # Phase 2: Bayesian optimization using acquisition function
         # Simplified approach: use expected improvement around best point
         for i in range(n_initial_random, n_iterations):
-            # Get best configuration so far
-            best_metrics = max(results, key=lambda x: x[1].fitness_score)[1]
-            best_metrics.fitness_score
-
             # Sample around best configuration with adaptive exploration
             # Higher variance early on, lower variance later
             exploration_factor = 1.0 - (i - n_initial_random) / (n_iterations - n_initial_random)

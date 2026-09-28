@@ -306,7 +306,6 @@ class TestContinuousAuthentication:
     @pytest.mark.medium
     def test_device_fingerprinting(self):
         """Test that device fingerprinting detects suspicious devices"""
-        known_device = {'device_id': 'device-123', 'trusted': True}
         unknown_device = {'device_id': 'device-456', 'trusted': False}
 
         # Unknown device should trigger additional verification
@@ -336,7 +335,6 @@ class TestTOCTOUAttacks:
         """Test that race conditions in resource allocation are prevented"""
         # Two threads trying to allocate the same resource
         # Only one should succeed
-        resource_id = "resource-123"
         allocations = []
 
         # Simulate concurrent allocation attempts
@@ -370,7 +368,8 @@ class TestPasswordPolicyEnforcement:
         has_digit = any(c.isdigit() for c in password)
         has_special = any(not c.isalnum() for c in password)
 
-        complexity_met = sum([has_upper, has_lower, has_digit, has_special]) >= 3
+        # Weak password fails 3-of-4 complexity criteria (only upper and lower, no digit/special)
+        assert not (sum([has_upper, has_lower, has_digit, has_special]) >= 3)
         assert has_upper and has_lower  # At minimum
 
     @pytest.mark.medium
@@ -389,8 +388,6 @@ def test_suite_coverage():
     total_tests = 40  # Approximate count
     critical_tests = 5
     high_tests = 15
-    medium_tests = 15
-    low_tests = 5
 
     assert total_tests >= 40
     assert critical_tests >= 5

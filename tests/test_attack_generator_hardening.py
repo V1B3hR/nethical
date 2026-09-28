@@ -161,7 +161,7 @@ class TestAttackGeneratorHardening:
         generator = AttackGenerator(max_history=5, seed=1)
 
         # Generate 8 variants; only last 5 must be retained
-        variants = await generator.generate_variants(AttackCategory.BEHAVIORAL, count=8)
+        await generator.generate_variants(AttackCategory.BEHAVIORAL, count=8)
         assert len(generator.generated_attacks) == 5
 
         # Test feedback recording

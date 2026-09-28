@@ -454,6 +454,7 @@ def generate_global_governance_intel_dossier() -> Tuple[Dict[str, Any], str]:
         "version": "v10.4-sovereign",
         "generated_at": now_iso,
         "cryptographic_merkle_root": merkle_root,
+        "dataset_statistics": dataset_stats,
         "institutions_integrated": [
             {
                 "institution": "World Bank",

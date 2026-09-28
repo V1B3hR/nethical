@@ -337,10 +337,8 @@ class AnomalyMLClassifier:
 try:
     import torch
     import torch.nn as nn
-    import torch.optim as optim
     import numpy as np
     from scipy.stats import entropy as scipy_entropy
-    from sklearn.metrics import roc_auc_score
     
     _TORCH_AVAILABLE = True
 except ImportError:

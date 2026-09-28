@@ -16,7 +16,7 @@ import numpy as np
 logger = logging.getLogger(__name__)
 
 try:
-    from numba import jit, njit, prange
+    from numba import njit, prange
 
     NUMBA_AVAILABLE = True
 except ImportError:

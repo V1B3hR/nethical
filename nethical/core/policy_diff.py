@@ -173,7 +173,7 @@ class PolicyDiffAuditor:
                             base_risk *= 1.3
                         elif percent_change > 1.0:
                             base_risk *= 1.5
-                except:
+                except (ValueError, TypeError):
                     pass
 
         return min(base_risk, 1.0)

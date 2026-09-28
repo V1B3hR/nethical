@@ -16,12 +16,13 @@ import time
 import uuid
 import socket
 import logging
+import tempfile
 from typing import Dict, Any, Optional, Tuple
 
 logger = logging.getLogger("nethical.ambassador.channel")
 
 DEFAULT_WIN_PIPE = r"\\.\pipe\blyskawica_nethical_ambassador"
-DEFAULT_UNIX_SOCK = "/tmp/blyskawica_nethical_ambassador.sock"
+DEFAULT_UNIX_SOCK = os.path.join(tempfile.gettempdir(), "blyskawica_nethical_ambassador.sock")
 
 IS_WINDOWS = sys.platform == "win32"
 

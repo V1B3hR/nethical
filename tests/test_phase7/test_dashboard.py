@@ -311,10 +311,10 @@ class TestGovernanceDashboard:
         dashboard = GovernanceDashboard(cache_ttl_seconds=60)
         
         # First query (cache miss)
-        metrics1 = dashboard.get_metrics(sections=["fairness"])
+        dashboard.get_metrics(sections=["fairness"])
         
         # Second query (cache hit)
-        metrics2 = dashboard.get_metrics(sections=["fairness"])
+        dashboard.get_metrics(sections=["fairness"])
         
         # Should be cached
         assert "fairness" in dashboard._cache

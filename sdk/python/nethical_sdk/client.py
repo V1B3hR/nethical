@@ -17,7 +17,7 @@ import logging
 import urllib.request
 import urllib.error
 from typing import Any, Optional, TYPE_CHECKING
-from urllib.parse import urljoin
+from urllib.parse import urljoin, urlparse
 
 if TYPE_CHECKING:
     from .async_client import AsyncNethicalClient
@@ -91,6 +91,9 @@ class NethicalClient:
     ) -> dict[str, Any]:
         """Make an HTTP request to the API."""
         url = urljoin(self.api_url, path)
+        parsed = urlparse(url)
+        if parsed.scheme not in ("http", "https"):
+            raise NethicalError(f"Unsupported URL scheme: {parsed.scheme}")
         headers = self._get_headers()
         
         body = None
@@ -105,7 +108,7 @@ class NethicalClient:
         )
         
         try:
-            with urllib.request.urlopen(request, timeout=self.timeout) as response:
+            with urllib.request.urlopen(request, timeout=self.timeout) as response:  # nosec B310
                 response_data = response.read().decode("utf-8")
                 return json.loads(response_data) if response_data else {}
         except urllib.error.HTTPError as e:

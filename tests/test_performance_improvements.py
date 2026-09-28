@@ -101,7 +101,7 @@ class TestJITOptimizationsPerformance:
         
         start = time.time()
         for _ in range(100):
-            score = calculate_risk_score_jit(severities, confidences)
+            calculate_risk_score_jit(severities, confidences)
         elapsed = time.time() - start
         
         # Should be fast even with many calculations

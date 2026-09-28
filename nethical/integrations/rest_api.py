@@ -338,7 +338,8 @@ def example_python_client():
             "action": "Generate a hello world program",
             "agent_id": "example-client",
             "action_type": "code_generation"
-        }
+        },
+        timeout=10.0
     )
     result = response.json()
     print(f"Decision: {result['decision']}")
@@ -353,7 +354,8 @@ def example_python_client():
             "action": "Delete all records from users table",
             "agent_id": "example-client",
             "action_type": "database_command"
-        }
+        },
+        timeout=10.0
     )
     result = response.json()
     print(f"Decision: {result['decision']}")
@@ -374,7 +376,8 @@ def example_openai_integration():
                 "action": action,
                 "agent_id": "openai-gpt4",
                 "action_type": "query"
-            }
+            },
+            timeout=10.0
         )
         result = response.json()
         return result["decision"] == "ALLOW"
@@ -401,7 +404,7 @@ if __name__ == "__main__":
     
     uvicorn.run(
         "nethical.integrations.rest_api:app",
-        host="0.0.0.0",
+        host="127.0.0.1",
         port=8000,
         reload=False,
         log_level="info"

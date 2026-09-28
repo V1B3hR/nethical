@@ -57,7 +57,7 @@ class TestMediumTermThroughput:
             latencies = []
             for i in range(num_actions):
                 action_start = time.time()
-                result = instance.process_action(
+                instance.process_action(
                     agent_id=f"agent_{region_name}_{i % 100}",
                     action=f"test_action_{i}",
                     context={"test": "sustained throughput"},
@@ -137,7 +137,7 @@ class TestMediumTermThroughput:
             for i, future in futures:
                 try:
                     action_start = time.time()
-                    result = future.result(timeout=5)
+                    future.result(timeout=5)
                     latency = (time.time() - action_start) * 1000
                     latencies.append(latency)
                 except Exception:
@@ -201,7 +201,7 @@ class TestMediumTermConcurrentAgents:
             
             for future in concurrent.futures.as_completed(futures):
                 try:
-                    result = future.result(timeout=10)
+                    future.result(timeout=10)
                     total_actions += 1
                 except Exception:
                     errors += 1
@@ -384,7 +384,7 @@ class TestMediumTermPerformance:
         action_count = 0
         while (time.time() - start_time) < duration:
             action_start = time.time()
-            result = gov.process_action(
+            gov.process_action(
                 agent_id=f"agent_{action_count % 100}",
                 action=f"latency_test_{action_count}",
                 context={"test": "latency"},

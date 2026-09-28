@@ -18,6 +18,7 @@ import socket
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional
+from urllib.parse import urlparse
 from urllib.request import Request, urlopen
 import json
 
@@ -117,8 +118,12 @@ class AISPMScanner:
             endpoint = "/api/tags"
 
         try:
-            req = Request(f"{url}{endpoint}", headers={"User-Agent": "Nethical-AISPM-Scanner/2.4"})
-            with urlopen(req, timeout=0.2) as resp:
+            target_url = f"{url}{endpoint}"
+            parsed = urlparse(target_url)
+            if parsed.scheme not in ("http", "https"):
+                return models
+            req = Request(target_url, headers={"User-Agent": "Nethical-AISPM-Scanner/2.4"})
+            with urlopen(req, timeout=0.2) as resp:  # nosec B310
                 if resp.status == 200:
                     data = json.loads(resp.read().decode("utf-8"))
                     if "models" in data and isinstance(data["models"], list):
@@ -131,9 +136,9 @@ class AISPMScanner:
                             name = m.get("id")
                             if name:
                                 models.append(str(name))
-        except Exception:
-            # Silent fallback: offline or unauthenticated
-            pass
+        except Exception as exc:
+            # Expected fallback: service offline, unauthenticated, or non-responsive
+            logger.debug(f"AISPM scanner probe on {host}:{port} skipped: {exc}")
 
         return models
 

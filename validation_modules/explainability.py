@@ -9,7 +9,6 @@ Implements:
 """
 
 import numpy as np
-import pandas as pd
 from typing import Dict, List, Optional, Any, Tuple
 from sklearn.inspection import permutation_importance
 import logging

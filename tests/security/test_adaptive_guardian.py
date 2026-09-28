@@ -188,7 +188,7 @@ class TestTripwires:
             )
         
         # One more to potentially trigger
-        alert = tripwires.check(
+        tripwires.check(
             module="TestModule",
             response_time_ms=50.0,
             decision="ALLOW",
@@ -688,7 +688,7 @@ class TestAutomaticModeTransitions:
         # Wait for pulse analysis
         time.sleep(0.5)
         
-        current_mode = guardian.get_mode()
+        guardian.get_mode()
         
         # Mode should have escalated (unless already at max)
         if initial_mode != GuardianMode.LOCKDOWN:

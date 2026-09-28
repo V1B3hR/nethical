@@ -521,7 +521,7 @@ class PersistenceManager:
         with self._lock, self._connect() as conn:
             # Safe: table names are from hardcoded tuple, not user input
             for table in ("actions", "violations", "judgments"):
-                conn.execute(f"DELETE FROM {table} WHERE timestamp < ?", (cutoff,))
+                conn.execute(f"DELETE FROM {table} WHERE timestamp < ?", (cutoff,))  # nosec B608
 
     def query_actions(
         self,
@@ -567,7 +567,7 @@ class PersistenceManager:
         with self._lock, self._connect() as conn:
             # Safe: placeholders is constructed from "?" * len(), not user input
             placeholders = ",".join("?" * len(action_ids))
-            query = f"SELECT * FROM judgments WHERE action_id IN ({placeholders})"
+            query = f"SELECT * FROM judgments WHERE action_id IN ({placeholders})"  # nosec B608
             cursor = conn.execute(query, action_ids)
             columns = [desc[0] for desc in cursor.description]
             results = {}
@@ -984,9 +984,8 @@ class EnhancedSafetyGovernance:
             if not hasattr(self, "_kill_switch_protocol"):
                 self._kill_switch_protocol = KillSwitchProtocol()
 
-            # Determine the agent and cohort to terminate
+            # Determine the agent to terminate
             agent_id = action.agent_id
-            cohort = action.metadata.get("cohort")
 
             # Log the termination trigger
             logger.warning(

@@ -108,7 +108,7 @@ class TestMultiAgentSwarmCollusionBenchmark:
             action_records.append(action)
             persistence.store_action(action)
 
-        ingest_time_s = time.perf_counter() - start_gen
+        time.perf_counter() - start_gen
 
         # Benchmark Multi-Agent Correlation Retrieval & Replay
         start_replay = time.perf_counter()

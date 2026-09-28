@@ -400,8 +400,8 @@ class AIvsAIDefender(BaseDetector):
         query1_str = str(sorted(query1.items()))
         query2_str = str(sorted(query2.items()))
 
-        hash1 = hashlib.md5(query1_str.encode()).hexdigest()
-        hash2 = hashlib.md5(query2_str.encode()).hexdigest()
+        hash1 = hashlib.sha256(query1_str.encode(), usedforsecurity=False).hexdigest()
+        hash2 = hashlib.sha256(query2_str.encode(), usedforsecurity=False).hexdigest()
 
         # Compare hashes
         matching_chars = sum(1 for a, b in zip(hash1, hash2) if a == b)

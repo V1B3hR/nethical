@@ -73,7 +73,7 @@ class MachineUnlearningProofEngine:
         attestation_id = f"UNLEARN-{scope.value}-{int(datetime.now(timezone.utc).timestamp())}"
 
         # 2. Append unlearning transaction to Post-Quantum Merkle-DAG
-        record = self.ledger.append_decision(
+        self.ledger.append_decision(
             decision_data={
                 "type": "MACHINE_UNLEARNING_RIGHT_TO_ERASURE",
                 "attestation_id": attestation_id,

@@ -127,7 +127,7 @@ class LangfuseConnector(ObservabilityProvider):
         # Return project URL
         try:
             return f"https://cloud.langfuse.com/project/{self.langfuse.project_id}"
-        except:
+        except Exception:
             return "https://cloud.langfuse.com"
     
     def flush(self) -> None:

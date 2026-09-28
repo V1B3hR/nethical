@@ -10,9 +10,8 @@ Implements:
 """
 
 import numpy as np
-import pandas as pd
 from typing import Dict, List, Optional, Tuple, Any
-from sklearn.model_selection import train_test_split, StratifiedKFold
+from sklearn.model_selection import train_test_split
 from sklearn.metrics import (
     accuracy_score, precision_recall_fscore_support, 
     roc_auc_score, roc_curve, precision_recall_curve,

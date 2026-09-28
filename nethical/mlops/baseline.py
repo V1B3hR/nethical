@@ -485,7 +485,7 @@ if _TORCH_AVAILABLE:
             with open(filepath + ".meta.json", "r", encoding="utf-8") as f:
                 meta = json.load(f)
             model = cls(meta["input_dim"], num_classes=meta["num_classes"], d_model=meta["d_model"])
-            model.load_state_dict(torch.load(filepath + ".pt"))
+            model.load_state_dict(torch.load(filepath + ".pt", weights_only=True))
             model.trained = meta["trained"]
             model.training_samples = meta["training_samples"]
             model.timestamp = meta["timestamp"]

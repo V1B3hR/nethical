@@ -199,7 +199,7 @@ class SupplyChainDashboard:
                 timeout=5,
             )
             return result.returncode == 0 and len(result.stdout.strip()) > 0
-        except:
+        except Exception:
             return False
     
     def _check_provenance(self) -> bool:

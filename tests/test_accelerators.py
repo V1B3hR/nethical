@@ -277,7 +277,7 @@ class TestAcceleratorManager:
 
         # Create a couple accelerators
         config = AcceleratorConfig(backend=AcceleratorBackend.CPU)
-        accelerator = manager.create_accelerator(config)
+        manager.create_accelerator(config)
 
         # Shutdown all
         manager.shutdown_all()

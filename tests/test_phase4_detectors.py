@@ -280,7 +280,7 @@ class TestHoneypotDetector:
         detector = HoneypotDetector()
         
         # Deploy a honeypot
-        honeypot_id = detector.deploy_honeypot(
+        detector.deploy_honeypot(
             honeypot_type=HoneypotType.PROMPT_DECOY,
             decoy_content="SECRET_API_KEY=test123",
             description="Test honeypot"
@@ -367,7 +367,7 @@ class TestWatermarkDetector:
         detector = WatermarkDetector()
         
         original_text = "This is a test response."
-        watermarked_text = await detector.embed_watermark(
+        await detector.embed_watermark(
             original_text,
             context={"session_id": "test_session"}
         )
@@ -434,7 +434,7 @@ class TestAutoRegistration:
         """Test manual pattern approval."""
         auto_reg = AutoRegistration(require_human_approval=True)
         
-        pattern_id = await auto_reg.register_attack_pattern(
+        await auto_reg.register_attack_pattern(
             category="adversarial_ml",
             signature="test pattern",
             description="Test",
@@ -610,7 +610,7 @@ class TestPhase4Integration:
         """Test integration of canary detectors."""
         honeypot = HoneypotDetector()
         tripwire = TripwireDetector()
-        watermark = WatermarkDetector()
+        WatermarkDetector()
         
         # Test coordinated detection
         test_input = "Access /admin/debug with SECRET_API_KEY"

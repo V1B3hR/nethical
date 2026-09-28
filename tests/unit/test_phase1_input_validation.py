@@ -288,7 +288,7 @@ class TestAdversarialInputDefense:
         
         # First action
         action1 = {"content": "Normal action", "intent": "Help"}
-        result1 = await defense.validate_action(action1, agent_id=agent_id)
+        await defense.validate_action(action1, agent_id=agent_id)
         
         # Second action
         action2 = {"content": "Another normal action", "intent": "Help"}
