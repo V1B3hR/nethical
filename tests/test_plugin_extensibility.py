@@ -9,17 +9,14 @@ Tests cover:
 - Policy evaluation
 """
 
-import asyncio
 import json
 import tempfile
-from datetime import datetime
 from pathlib import Path
 
 import pytest
-import yaml
 
 from nethical.core.plugin_interface import (
-    DetectorPlugin, PluginManager, PluginMetadata, PluginStatus
+    PluginManager, PluginMetadata, PluginStatus
 )
 from nethical.core.policy_dsl import (
     Policy, PolicyAction, PolicyEngine, PolicyParser, PolicyRule,

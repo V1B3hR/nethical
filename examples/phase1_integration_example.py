@@ -14,14 +14,11 @@ from datetime import datetime, timezone
 # Phase 1.1: Authentication & Identity Management
 from nethical.security.authentication import (
     AuthCredentials,
-    ClearanceLevel,
-    LDAPConnector,
     MilitaryGradeAuthProvider,
 )
 
 # Phase 1.2: End-to-End Encryption
 from nethical.security.encryption import (
-    HSMConfig,
     KeyRotationPolicy,
     MilitaryGradeEncryption,
 )
@@ -29,7 +26,6 @@ from nethical.security.encryption import (
 # Phase 1.3: Advanced Input Validation
 from nethical.security.input_validation import (
     AdversarialInputDefense,
-    ThreatLevel,
 )
 
 

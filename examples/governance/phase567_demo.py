@@ -8,7 +8,6 @@ This demo showcases the unified Phase 5-7 integration:
 """
 
 import sys
-import time
 from pathlib import Path
 
 # Add parent directory to path

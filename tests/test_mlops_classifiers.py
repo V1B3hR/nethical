@@ -13,7 +13,6 @@ These tests validate the end-to-end training workflow documented in
 docs/TRAINING_GUIDE.md.
 """
 
-import json
 import os
 import sys
 import tempfile

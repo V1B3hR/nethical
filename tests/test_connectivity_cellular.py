@@ -12,7 +12,6 @@ Verifies:
 """
 
 from typing import Any, Dict, Optional
-import pytest
 from nethical.connectivity.cellular import (
     ActiveRoute,
     Cellular5GModem,

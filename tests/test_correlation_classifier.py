@@ -1,5 +1,4 @@
 """Tests for CorrelationMLClassifier."""
-import pytest
 from nethical.mlops.correlation_classifier import CorrelationMLClassifier
 
 

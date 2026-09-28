@@ -10,7 +10,7 @@ from __future__ import annotations
 from collections import Counter, deque
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 
 def _ensure_utc(dt: Optional[datetime]) -> datetime:

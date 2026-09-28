@@ -45,7 +45,7 @@ from http.client import HTTPResponse
 from email.message import Message
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-from nethical.security.ssrf_protection import assert_safe_url, SSRFValidationError
+from nethical.security.ssrf_protection import assert_safe_url
 
 
 class WebhookStatus(Enum):

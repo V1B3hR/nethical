@@ -18,8 +18,6 @@ from enum import Enum
 from typing import Any, Callable, Dict, List, Optional
 
 from .base import (
-    ConnectionConfig,
-    ConnectionState,
     SatelliteProvider,
 )
 

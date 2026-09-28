@@ -10,8 +10,7 @@ from nethical.core import (
     Phase89IntegratedGovernance,
     Configuration,
     PerformanceMetrics,
-    ConfigStatus,
-    OutcomeRecord
+    ConfigStatus
 )
 from datetime import datetime
 

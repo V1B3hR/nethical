@@ -170,7 +170,6 @@ class Severity(Enum):
         return cls.LOW
 
 
-SeverityLevel = Severity
 
 
 class Decision(str, Enum):

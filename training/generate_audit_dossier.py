@@ -15,7 +15,7 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Tuple
+from typing import Any, Dict, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 MODELS_DIR = REPO_ROOT / "models"
@@ -48,8 +48,8 @@ def load_dataset_stats() -> Dict[str, Any]:
                     if "archetype" in meta:
                         archetypes.add(meta["archetype"])
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
-
     return {
         "total_pairs": count or 4101,
         "unique_domains": sorted(list(domains)) or [
@@ -70,6 +70,7 @@ def load_adapter_metadata() -> Dict[str, Any]:
             with open(ADAPTER_CONFIG_PATH, "r", encoding="utf-8") as f:
                 return json.load(f)
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
     return {
         "base_model": "meta-llama/Meta-Llama-3-8B-Instruct",

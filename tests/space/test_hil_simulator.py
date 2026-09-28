@@ -3,7 +3,6 @@
 
 """Tests for Orbital Hardware-in-the-Loop (HIL) Simulator (tests.space.test_hil_simulator)."""
 
-import pytest
 
 from nethical.space.hil_simulator import (
     OrbitalHILResult,

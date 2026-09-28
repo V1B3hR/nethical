@@ -10,7 +10,7 @@ Supports versioning, auditing, and rollback capabilities.
 from __future__ import annotations
 
 import json
-from dataclasses import dataclass, asdict
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone

@@ -8,7 +8,7 @@ Demonstrates:
 """
 
 import random
-from nethical.core import MLBlendedRiskEngine, RiskZone, MLShadowClassifier
+from nethical.core import MLBlendedRiskEngine, RiskZone
 
 
 def print_section(title):

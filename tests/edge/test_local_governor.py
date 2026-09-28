@@ -10,12 +10,10 @@ Target: <10ms p99 latency
 from __future__ import annotations
 
 import time
-import pytest
 
 from nethical.edge.local_governor import EdgeGovernor, EdgeDecision, DecisionType
 from nethical.edge.policy_cache import PolicyCache, CachedPolicy
-from nethical.edge.fast_detector import FastDetector, DetectionResult
-from nethical.edge.safe_defaults import SafeDefaults
+from nethical.edge.fast_detector import FastDetector
 from nethical.edge.predictive_engine import PredictiveEngine
 from nethical.edge.context_fingerprint import compute_fingerprint
 from nethical.edge.circuit_breaker import CircuitBreaker, CircuitState

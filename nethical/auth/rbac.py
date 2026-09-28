@@ -224,11 +224,14 @@ class SovereignAuthToken:
 
             jti = payload.get("jti")
             if jti and self.is_token_revoked(jti):
-                logger.warning(f"Token revoked for user '{payload.get('username')}' (jti={jti})")
+                safe_user = str(payload.get('username', '')).replace('\r', '').replace('\n', '')
+                safe_jti = str(jti).replace('\r', '').replace('\n', '')
+                logger.warning(f"Token revoked for user '{safe_user}' (jti={safe_jti})")
                 return None
 
             if payload.get("exp") and now > payload["exp"]:
-                logger.warning(f"Token expired for user: {payload.get('username')}")
+                safe_user = str(payload.get('username', '')).replace('\r', '').replace('\n', '')
+                logger.warning(f"Token expired for user: {safe_user}")
                 return None
 
             return payload
@@ -298,7 +301,9 @@ class RBACManager:
         if api_key:
             self._api_keys[api_key] = user
 
-        logger.info(f"Registered user '{username}' with role '{role.value}' for tenant '{tenant_id}'")
+        safe_username = str(username).replace('\r', '').replace('\n', '')
+        safe_tenant = str(tenant_id).replace('\r', '').replace('\n', '')
+        logger.info(f"Registered user '{safe_username}' with role '{role.value}' for tenant '{safe_tenant}'")
         return user
 
     def authenticate(self, username: str, password: str) -> tuple[UserIdentity, str] | None:
@@ -351,6 +356,7 @@ class RBACManager:
                         self.token_service.revoke_token(jti)
                         return True
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
         self.token_service.revoke_token(token_str_or_jti)
         return True
@@ -419,7 +425,8 @@ class RBACManager:
             email=email or f"{username}@{tenant_id}.local",
             api_key=generated_api_key,
         )
-        logger.info(f"✅ System successfully bootstrapped with Global Administrator: '{username}'")
+        safe_admin = str(username).replace('\r', '').replace('\n', '')
+        logger.info(f"✅ System successfully bootstrapped with Global Administrator: '{safe_admin}'")
         return user, generated_password, generated_api_key
 
     def seed_development_users(self) -> None:

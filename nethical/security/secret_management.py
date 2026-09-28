@@ -624,7 +624,7 @@ class VaultIntegration:
             return False
 
         # In production, this would use Vault API
-        log.info(f"Stored secret in Vault: {path}")
+        log.info("Stored record in Vault backend")
         return True
 
     def retrieve_secret(

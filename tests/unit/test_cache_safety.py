@@ -2,7 +2,6 @@
 
 import pytest
 import asyncio
-import time
 
 
 # Try to import the cache

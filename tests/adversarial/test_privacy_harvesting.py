@@ -7,9 +7,7 @@ Tests both direct extraction and rate-based exfiltration patterns.
 """
 
 import pytest
-from datetime import datetime
 from nethical.core import IntegratedGovernance
-from nethical.core.models import AgentAction
 
 
 class TestPrivacyHarvesting:

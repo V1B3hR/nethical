@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 import re
 from types import MappingProxyType
-from typing import Any, Callable, Dict, List, Optional, Set, Type
+from typing import Any, Callable, Dict, Optional, Set, Type
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request

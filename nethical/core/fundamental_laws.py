@@ -978,7 +978,7 @@ class LawEnforcer:
                 check_result = check(law, action)
                 if check_result:
                     violations.extend(check_result)
-            except Exception as e:
+            except Exception:
                 confidence *= 0.8  # Reduce confidence on check failure
 
         # Keyword-based violation detection

@@ -15,7 +15,6 @@ import os
 import time
 import logging
 import subprocess
-import signal
 
 logging.basicConfig(
     level=logging.INFO,

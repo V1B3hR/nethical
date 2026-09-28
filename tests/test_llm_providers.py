@@ -9,7 +9,6 @@ Tests the Nethical LLM provider integrations including:
 """
 
 import pytest
-from pathlib import Path
 from unittest.mock import Mock
 
 
@@ -150,7 +149,6 @@ class TestMistralProvider:
         from nethical.integrations.llm_providers.mistral_tools import (
             MistralProvider,
             get_nethical_tool,
-            handle_nethical_tool,
         )
         
         assert MistralProvider is not None

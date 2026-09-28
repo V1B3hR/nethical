@@ -8,23 +8,19 @@ Validates:
 5. REST API: FastAPI endpoint execution and response schemas.
 """
 
-import pytest
 from fastapi.testclient import TestClient
 
 from nethical.api import app
 from nethical.compliance.packs.healthcare_med_pack import (
     HealthcareMedPack,
-    SaMDClass,
     MedicalRiskLevel,
 )
 from nethical.compliance.packs.public_admin_gov_pack import (
     PublicAdminGovPack,
-    ClearanceLevel,
     AdminDecisionStatus,
 )
 from nethical.compliance.packs.academic_research_pack import (
     AcademicResearchPack,
-    ResearchDiscipline,
     ResearchIntegrityStatus,
 )
 from nethical.compliance.automated_certification_hub import (

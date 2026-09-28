@@ -15,13 +15,12 @@ import pytest
 import asyncio
 import random
 import string
-from typing import List, Dict, Any, Tuple
-from unittest.mock import Mock, patch
+from typing import List, Dict, Any
+from unittest.mock import patch
 import json
 import base64
 import codecs
-from datetime import datetime, timedelta
-import numpy as np
+from datetime import datetime
 from nethical import SafetyGovernance, AgentAction, MonitoringConfig
 from nethical.core.governance import Decision
 

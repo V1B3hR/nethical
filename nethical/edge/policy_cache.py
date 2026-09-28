@@ -8,7 +8,6 @@ Ultra-fast policy caching for edge deployment.
 Target: <0.1ms cache lookup
 """
 
-import hashlib
 import logging
 import threading
 import time

@@ -13,7 +13,6 @@ from nethical.security.auth import (
     TokenExpiredError,
     InvalidTokenError,
     AuthenticationError,
-    get_auth_manager,
     set_auth_manager,
     authenticate_request,
 )

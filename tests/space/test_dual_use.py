@@ -3,7 +3,6 @@
 
 """Tests for Dual-Use Classification & Export Control (tests.space.test_dual_use)."""
 
-import pytest
 
 from nethical.space.dual_use import (
     DualUseCategory,

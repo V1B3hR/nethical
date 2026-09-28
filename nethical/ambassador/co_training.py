@@ -15,8 +15,6 @@ from __future__ import annotations
 
 import json
 import logging
-import math
-import os
 import re
 import uuid
 from dataclasses import dataclass, field
@@ -348,8 +346,8 @@ class AntiHallucinationGovernor:
                             f"Wykryto halucynację {name}: powołano Art. {num}, podczas gdy akt kończy się na Art. {max_art}."
                         )
                 except ValueError:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
-
         # Sprawdzenie Poprawek do Konstytucji USA (1-27)
         if "amendment" in resp_lower or "poprawk" in resp_lower:
             amend_matches = re.findall(r"(\d+)(?:st|nd|rd|th)?\s*amendment", response_text, re.IGNORECASE)
@@ -361,8 +359,8 @@ class AntiHallucinationGovernor:
                             f"Wykryto halucynację Konstytucji USA: powołano {num}th Amendment, podczas gdy ratyfikowano 27 poprawek."
                         )
                 except ValueError:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
-
         is_grounded = len(violations) == 0
         return is_grounded, violations, sorted(list(set(cited_laws)))
 

@@ -1,7 +1,6 @@
 """Tests for API rate limiting and authentication."""
 
 import pytest
-import os
 from httpx import AsyncClient, ASGITransport
 
 
@@ -31,10 +30,10 @@ class TestAuthentication:
         
         # Need to reimport to pick up env change
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 "/evaluate",
@@ -59,10 +58,10 @@ class TestAuthentication:
         
         # Need to reimport to pick up env change
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 "/evaluate",
@@ -85,10 +84,10 @@ class TestAuthentication:
         
         # Need to reimport to pick up env change
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 "/evaluate",
@@ -111,10 +110,10 @@ class TestAuthentication:
         
         # Need to reimport to pick up env change
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 "/evaluate",
@@ -135,10 +134,10 @@ class TestAuthentication:
         
         # Need to reimport to pick up env change
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             response = await client.post(
                 "/evaluate",
@@ -165,10 +164,10 @@ class TestRateLimiting:
         
         # Need to reimport to pick up env change
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Make requests until we hit the limit
             responses = []
@@ -194,10 +193,10 @@ class TestRateLimiting:
         
         # Need to reimport
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Exhaust rate limit
             for i in range(5):
@@ -230,10 +229,10 @@ class TestRateLimiting:
         
         # Need to reimport
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Exhaust limit for key1
             key1_responses = []
@@ -272,10 +271,10 @@ class TestInputValidation:
         """Test that oversized input returns 413."""
         monkeypatch.delenv("NETHICAL_API_KEYS", raising=False)
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
 
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Create input larger than MAX_INPUT_SIZE (default 4096)
             huge_action = "x" * 5000
@@ -299,10 +298,10 @@ class TestInputValidation:
         """Test that intent + action combined size is validated."""
         monkeypatch.delenv("NETHICAL_API_KEYS", raising=False)
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
 
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Each under limit, but combined over limit
             medium_text = "x" * 2500
@@ -334,10 +333,10 @@ class TestConcurrencyControl:
         
         # Need to reimport
         import importlib
-        import nethical.api
-        importlib.reload(nethical.api)
+        neth_api = importlib.import_module("nethical.api")
+        importlib.reload(neth_api)
         
-        transport = ASGITransport(app=nethical.api.app)
+        transport = ASGITransport(app=neth_api.app)
         async with AsyncClient(transport=transport, base_url="http://test") as client:
             # Launch many concurrent requests
             async def make_request(i):

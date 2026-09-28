@@ -1,7 +1,5 @@
 #!/usr/bin/env python3
 """Test the updated train_model.py with real data loading."""
-import json
-import shutil
 import tempfile
 from pathlib import Path
 import sys

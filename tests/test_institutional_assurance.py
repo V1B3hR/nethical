@@ -2,9 +2,8 @@
 
 import json
 from pathlib import Path
-import pytest
 
-from nethical.formal.verify_rfc import RFCFormalVerifier, run_rfc_verification
+from nethical.formal.verify_rfc import RFCFormalVerifier
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 

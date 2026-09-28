@@ -241,6 +241,7 @@ def is_token_revoked(identifier: str) -> bool:
                     _in_memory_revoked.add(identifier)
                     return True
     except Exception:
+        # Expected: silently ignore exception during cleanup or fallback
         pass
     return False
 

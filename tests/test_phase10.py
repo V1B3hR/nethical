@@ -4,13 +4,12 @@ Validates maintenance policy, KPI monitoring, and audit readiness.
 """
 
 import json
-import os
 import sys
 import tempfile
 import unittest
 from datetime import datetime, timedelta
 from pathlib import Path
-from unittest.mock import MagicMock, patch
+from unittest.mock import patch
 
 # Add project root to path
 project_root = Path(__file__).parent.parent

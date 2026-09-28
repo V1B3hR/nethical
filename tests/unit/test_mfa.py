@@ -3,15 +3,11 @@ Tests for Multi-Factor Authentication (MFA) System
 """
 
 import pytest
-from datetime import datetime, timezone
 
 from nethical.security.mfa import (
     MFAManager,
     MFAMethod,
     MFASetup,
-    MFARequiredError,
-    InvalidMFACodeError,
-    get_mfa_manager,
     set_mfa_manager,
 )
 

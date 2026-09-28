@@ -7,9 +7,9 @@ DSPy integration with Nethical governance.
 Provides governed DSPy modules and chains for safe language model programs.
 """
 
-from typing import Any, Dict, Optional
+from typing import Any, Dict
 
-from .base import AgentFrameworkBase, GovernanceResult, GovernanceDecision
+from .base import AgentFrameworkBase
 
 
 # Check for DSPy availability

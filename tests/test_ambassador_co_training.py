@@ -13,13 +13,11 @@ Weryfikuje:
 
 import json
 from pathlib import Path
-import pytest
 
 from nethical.ambassador.co_training import (
     AntiHallucinationGovernor,
     SymbioticCoTrainingEngine,
     SparingDilemma,
-    VerificationVerdict,
     SymbioticRoundResult,
 )
 from nethical.security.merkle_ledger import MerkleLedger

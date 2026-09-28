@@ -15,7 +15,7 @@ import pytest
 import hashlib
 import json
 import logging
-from typing import List, Dict, Tuple
+from typing import List, Dict
 from datetime import datetime
 from nethical.core.audit_merkle import MerkleAnchor
 from nethical.core.integrated_governance import IntegratedGovernance

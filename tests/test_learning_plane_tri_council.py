@@ -8,11 +8,9 @@ Verifies:
 5. DPO Alignment & LoRA Training Engine: Bradley-Terry loss convergence on RTX 4070.
 """
 
-import asyncio
 import pytest
-from pathlib import Path
 
-from nethical.judges import SafetyJudge, LawJudge, BaseJudge
+from nethical.judges import SafetyJudge, LawJudge
 from nethical.core.compliance.ai_lawyer import (
     AILawyer,
     ReviewDecision,
@@ -29,9 +27,8 @@ from nethical.core.models import (
 from training.tri_council_trainer import (
     TriCouncilEvaluator,
     SyntheticCurriculumGenerator,
-    TriCouncilCurriculumPipeline,
 )
-from training.train_dpo_ambassador import DPOTrainerEngine, DPODatasetLoader
+from training.train_dpo_ambassador import DPOTrainerEngine
 
 
 class TestJudgesSystem:

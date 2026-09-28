@@ -1,12 +1,9 @@
 """Tests for Phase 5-7 Integration."""
 
-import pytest
 import tempfile
-from pathlib import Path
 
 from nethical.core import (
-    Phase567IntegratedGovernance,
-    MLModelType
+    Phase567IntegratedGovernance
 )
 
 

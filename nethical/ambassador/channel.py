@@ -147,13 +147,15 @@ class AmbassadorChannel:
                 t_elapsed_us,
             )
         except Exception as e:
+            logger.error("Błąd komunikacji IPC Windows: %s", e)
             t_elapsed_us = (time.perf_counter() - t_start) * 1_000_000
-            return False, None, f"Błąd komunikacji IPC Windows: {str(e)}", t_elapsed_us
+            return False, None, "Błąd komunikacji IPC Windows", t_elapsed_us
         finally:
             if handle is not None:
                 try:
                     _winapi.CloseHandle(handle)
                 except Exception:
+                    # Ignore handle closure error during cleanup
                     pass
 
     def _send_unix(self, raw_req: bytes, t_start: float) -> Tuple[bool, Optional[Dict[str, Any]], Optional[str], float]:
@@ -188,5 +190,6 @@ class AmbassadorChannel:
                 t_elapsed_us,
             )
         except Exception as e:
+            logger.error("Błąd komunikacji UNIX Socket: %s", e)
             t_elapsed_us = (time.perf_counter() - t_start) * 1_000_000
-            return False, None, f"Błąd komunikacji UNIX Socket: {str(e)}", t_elapsed_us
+            return False, None, "Błąd komunikacji UNIX Socket", t_elapsed_us

@@ -7,9 +7,9 @@ AutoGen integration with Nethical governance.
 Provides governed wrappers for AutoGen agents and conversations.
 """
 
-from typing import Any, Callable, Dict, List, Optional
+from typing import Any, Dict, List, Optional
 
-from .base import AgentFrameworkBase, AgentWrapper
+from .base import AgentFrameworkBase
 
 
 # Check for AutoGen availability

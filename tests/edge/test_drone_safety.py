@@ -10,7 +10,6 @@ GNSS anti-jamming, Safe2Ditch emergency landing, and Flight Termination System (
 
 from __future__ import annotations
 
-import time
 import pytest
 
 from nethical.edge.drone_safety import (
@@ -18,7 +17,6 @@ from nethical.edge.drone_safety import (
     DAATrafficAlert,
     DroneFlightState,
     DroneSafetyConfig,
-    DroneSafetyDecision,
     DroneSafetyGovernor,
     DroneTelemetry,
     FailsafeAction,

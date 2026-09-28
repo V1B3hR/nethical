@@ -3,31 +3,23 @@
 
 """Unit and integration tests for SatelliteCache, CacheKey, L2, and L3 global caching."""
 
-import asyncio
-import os
-import tempfile
-import time
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
 
 import pytest
 
 from nethical.cache.cache_key import (
-    CacheKey,
     generate_agent_key,
     generate_cache_key,
     generate_decision_key,
     generate_policy_key,
 )
-from nethical.cache.l2_redis import L2Config, L2RedisCache
 from nethical.cache.l3_global import L3Config, L3GlobalCache
 from nethical.cache.satellite_cache import (
     CacheEntry,
     ConflictResolutionStrategy,
-    OfflineRequest,
     SatelliteCache,
     SatelliteCacheConfig,
-    SyncState,
 )
 
 

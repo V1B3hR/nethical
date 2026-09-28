@@ -11,7 +11,6 @@ from sqlalchemy.orm import sessionmaker
 from nethical.api.v1.app import create_v1_app
 from nethical.database import Base, get_db, User
 from nethical.api.rbac import get_password_hash
-from nethical.security.mfa import MFAManager
 
 TEST_DB_URL = "sqlite:///./test_mfa_auth.db"
 test_engine = create_engine(TEST_DB_URL, connect_args={"check_same_thread": False})

@@ -3,8 +3,6 @@
 
 """Tests for the Sovereign Orbital Governor (tests.space.test_orbital_governor)."""
 
-from datetime import datetime, timezone
-import pytest
 
 from nethical.space.detectors import (
     BeamPointingCommand,
@@ -22,7 +20,6 @@ from nethical.space.models import (
 from nethical.space.orbital_governor import (
     OrbitalAction,
     OrbitalGovernor,
-    OrbitalGovernorConfig,
     OrbitalSafetyDecision,
 )
 

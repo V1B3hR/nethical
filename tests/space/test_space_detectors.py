@@ -3,7 +3,6 @@
 
 """Tests for space detectors: jamming, spoofing, collision, and beam steering (tests.space.test_space_detectors)."""
 
-import pytest
 
 from nethical.space.detectors import (
     BeamPointingCommand,

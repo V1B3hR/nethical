@@ -63,7 +63,7 @@ import asyncio
 
 # Vector/Embedding imports
 from .embedding_engine import EmbeddingEngine, EmbeddingProvider
-from .semantic_mapper import SemanticMapper, ActionEmbedding
+from .semantic_mapper import SemanticMapper
 
 # Resource Management imports
 try:
@@ -1974,4 +1974,5 @@ class IntegratedGovernance:
         try:
             self.close()
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass

@@ -20,7 +20,7 @@ import threading
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -46,11 +46,9 @@ from nethical.space.detectors.spoofing_detector import (
     SpoofingAlert,
     SpoofingDetector,
     SpoofingDetectorConfig,
-    SpoofingMitigationAction,
 )
 from nethical.space.models import (
     ConstellationTopology,
-    ISLLinkStatus,
     LinkBudget,
     OrbitalState,
     Vector3D,

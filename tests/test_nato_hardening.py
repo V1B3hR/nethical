@@ -9,7 +9,6 @@ Validates all 6 core vectors remediated in the NATO Cyber Defense SITREP:
 6. Kill-Switch API RBAC Lockdown & Explainability Suite Validation
 """
 
-import asyncio
 import os
 import pytest
 from unittest.mock import patch
@@ -22,13 +21,8 @@ from nethical.core.governance_core import (
 )
 from nethical.core.governance_detectors import EthicalViolationDetector
 from nethical.core.integrated_governance import IntegratedGovernance
-from nethical.core.taxonomy_validator import TaxonomyValidator
 from nethical.api.rbac import (
-    Role,
-    User,
     _initialize_secret_key,
-    require_admin,
-    require_auditor_or_admin,
 )
 
 
@@ -37,19 +31,20 @@ from nethical.api.rbac import (
 # =====================================================================
 def test_tactical_01_package_import():
     """Verify all core modules and API components import without dependency lockup."""
-    import nethical
-    import nethical.core.governance_core
-    import nethical.core.governance_detectors
-    import nethical.core.integrated_governance
-    import nethical.core.taxonomy_validator
-    import nethical.api
-    import nethical.api.kill_switch_api
-    import nethical.api.rbac
+    import importlib
+    neth = importlib.import_module("nethical")
+    gov_core = importlib.import_module("nethical.core.governance_core")
+    gov_det = importlib.import_module("nethical.core.governance_detectors")
+    gov_integ = importlib.import_module("nethical.core.integrated_governance")
+    tax_val = importlib.import_module("nethical.core.taxonomy_validator")
+    api_mod = importlib.import_module("nethical.api")
+    ks_api = importlib.import_module("nethical.api.kill_switch_api")
+    rbac_mod = importlib.import_module("nethical.api.rbac")
 
-    assert hasattr(nethical.api, "kill_switch_router")
-    assert hasattr(nethical.api.rbac, "require_admin")
-    assert hasattr(nethical.api.rbac, "require_auditor_or_admin")
-    assert hasattr(nethical.core.taxonomy_validator, "TaxonomyValidator")
+    assert hasattr(api_mod, "kill_switch_router")
+    assert hasattr(rbac_mod, "require_admin")
+    assert hasattr(rbac_mod, "require_auditor_or_admin")
+    assert hasattr(tax_val, "TaxonomyValidator")
 
 
 # =====================================================================

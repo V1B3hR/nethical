@@ -9,7 +9,6 @@ pomiędzy autonomicznymi agentami AI (Multi-Agent Swarms, interakcje A2A).
 
 import hashlib
 import hmac
-import json
 import logging
 import os
 import secrets

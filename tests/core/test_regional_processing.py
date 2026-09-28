@@ -6,10 +6,8 @@ These tests verify the effective_region variable ordering fix from PR #157.
 import pytest
 import tempfile
 import shutil
-from datetime import datetime, timezone
 
 from nethical.core.integrated_governance import IntegratedGovernance
-from nethical.core.models import AgentAction
 
 
 class TestRegionalProcessing:

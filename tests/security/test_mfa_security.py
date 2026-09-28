@@ -1,9 +1,7 @@
 """Tests for MFA brute-force protection."""
 
 import pytest
-import time
 from datetime import datetime, timedelta, timezone
-from unittest.mock import patch
 
 from nethical.security.mfa import (
     MFAManager,

@@ -9,11 +9,8 @@ Tests cover:
 
 import pytest
 import time
-from datetime import datetime, timezone
 
 from nethical.security.zero_trust import (
-    TrustLevel,
-    DeviceHealthStatus,
     RateLimiter,
     AnomalyDetector,
     QuarantineManager,

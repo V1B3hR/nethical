@@ -3,7 +3,6 @@
 
 """Tests for ECSS Software Qualification & ITU Filing Generators (tests.space.test_certification)."""
 
-import pytest
 
 from nethical.space.certification import CertificationArtifactGenerator
 from nethical.space.models import (

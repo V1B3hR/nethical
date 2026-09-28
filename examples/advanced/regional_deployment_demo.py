@@ -18,7 +18,6 @@ Status: Future Track F1 - Demonstration of planned functionality
 
 import sys
 from pathlib import Path
-from typing import Dict, Any, List, Optional
 
 # Add parent directory to path for demo utilities
 sys.path.insert(0, str(Path(__file__).parent))

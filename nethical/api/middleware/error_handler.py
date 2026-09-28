@@ -98,9 +98,9 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             "fundamental_law": "Law 23: Fail-Safe Design",
         }
         
-        # Add traceback in development mode
+        # Log traceback internally; avoid leaking stack traces externally (CWE-209)
         if self.include_traceback:
-            error_response["error"]["traceback"] = traceback.format_exc()
+            logger.debug("Internal exception traceback: %s", traceback.format_exc())
         
         # Add safety-first decision for governance endpoints
         if "/evaluate" in request.url.path:

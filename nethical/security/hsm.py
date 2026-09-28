@@ -35,14 +35,13 @@ import hmac
 import json
 import logging
 import os
-import platform
 import secrets
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Protocol, Tuple, TypeVar, Union
+from typing import Any, Dict, List, Optional
 import base64
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
@@ -1067,6 +1066,7 @@ class TPM2Provider(BaseHSMProvider):
             try:
                 ctypes.windll.ncrypt.NCryptFreeObject(self._provider_handle)
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
             self._provider_handle = None
         self._connected = False

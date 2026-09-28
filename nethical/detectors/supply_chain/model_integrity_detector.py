@@ -6,7 +6,7 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any, Sequence
 from ..base_detector import BaseDetector, DetectorStatus
-from ...core.models import AgentAction, SafetyViolation, ViolationType, Severity
+from ...core.models import SafetyViolation, ViolationType, Severity
 
 class ModelIntegrityDetector(BaseDetector):
     def __init__(self) -> None:

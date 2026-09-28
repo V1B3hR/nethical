@@ -16,13 +16,12 @@ from __future__ import annotations
 import json
 import logging
 import math
-import os
 import sys
 import time
 from collections import Counter
-from dataclasses import asdict, dataclass, field
+from dataclasses import asdict, dataclass
 from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import List, Optional, Tuple
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
@@ -30,9 +29,7 @@ if str(REPO_ROOT) not in sys.path:
 
 from nethical.ambassador.co_training import (
     AntiHallucinationGovernor,
-    CANONICAL_STATUTORY_REGISTRY,
     SymbioticCoTrainingEngine,
-    SparingDilemma,
 )
 from nethical.security.merkle_ledger import MerkleLedger
 

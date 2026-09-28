@@ -18,31 +18,26 @@ dla Nethical, eliminujący powierzchowne sprawdzanie szkieletu kodu:
 from __future__ import annotations
 
 import copy
-import hashlib
 import time
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import List
 
-import pytest
 import z3
 
 from nethical.edge.kinetic_safety import (
     KineticSafetyGovernor,
-    KineticSafetyEnvelope,
     RoboticSensorTelemetry,
-    KineticDecision,
 )
 from nethical.ethics.deep_alignment import (
     AntiSycophancyGuard,
     AffectiveSafetyGuard,
     AlgorithmicFairnessAuditor,
 )
-from nethical.formal.law_prover import LawInvariantProver, FormalProofResult
-from nethical.security.merkle_ledger import MerkleLedger, hash_leaf, canonical_json_bytes
+from nethical.formal.law_prover import LawInvariantProver
+from nethical.security.merkle_ledger import MerkleLedger
 from nethical.security.stepping_stone_guard import (
     SilentTargetSteppingStoneGuard,
     NetworkTier,
-    NetworkHop,
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent

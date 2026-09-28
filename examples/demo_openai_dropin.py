@@ -8,7 +8,6 @@ Uruchomienie:
     python examples/demo_openai_dropin.py
 """
 
-import json
 import sys
 import time
 from pathlib import Path
@@ -21,8 +20,8 @@ if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
+        # Expected: silently ignore exception during cleanup or fallback
         pass
-
 from fastapi.testclient import TestClient
 
 

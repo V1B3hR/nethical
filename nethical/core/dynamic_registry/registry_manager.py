@@ -18,14 +18,13 @@ Alignment: Law 24 (Adaptive Learning), Law 15 (Audit Compliance)
 
 from __future__ import annotations
 
-import asyncio
 import logging
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Set
+from typing import Any, Dict, List, Optional
 
 from .auto_registration import AutoRegistration, AttackPattern, RegistrationStage
-from .auto_deprecation import AutoDeprecation, DeprecationCandidate, ArchiveStatus
+from .auto_deprecation import AutoDeprecation, DeprecationCandidate
 
 logger = logging.getLogger(__name__)
 

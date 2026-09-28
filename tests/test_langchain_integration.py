@@ -13,13 +13,12 @@ import pytest
 import json
 import sys
 from pathlib import Path
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import Mock
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
 
 from nethical.core import IntegratedGovernance
-from nethical.core.models import Decision, ActionType
 
 
 class TestNethicalGuardToolWithoutLangChain:
@@ -285,7 +284,6 @@ class TestLlamaGuardChain:
         except ImportError:
             pytest.skip("LangChain not installed")
 
-        from nethical.integrations.langchain_tools import LlamaGuardChain
 
         # This test requires langchain to be properly installed
         # We'll just test that we can create the instance
@@ -298,7 +296,6 @@ class TestLlamaGuardChain:
         except ImportError:
             pytest.skip("LangChain not installed")
 
-        from nethical.integrations.langchain_tools import LlamaGuardChain
 
         # This test requires langchain to be properly installed
         pytest.skip("Requires full LangChain setup with transformers")
@@ -310,7 +307,6 @@ class TestLlamaGuardChain:
         except ImportError:
             pytest.skip("LangChain not installed")
 
-        from nethical.integrations.langchain_tools import LlamaGuardChain
 
         # This test requires langchain to be properly installed
         pytest.skip("Requires full LangChain setup with transformers")

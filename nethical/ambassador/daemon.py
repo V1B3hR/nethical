@@ -21,8 +21,7 @@ import socket
 import sys
 import threading
 import time
-from pathlib import Path
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Optional
 
 from nethical.security.memory_integrity import MemoryIntegrityGuard
 
@@ -154,13 +153,14 @@ class BlyskawicaAmbassadorDaemon:
             try:
                 self._server_sock.close()
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
             if os.path.exists(self.ipc_path):
                 try:
                     os.remove(self.ipc_path)
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
-
         if self._thread and self._thread.is_alive() and threading.current_thread() != self._thread:
             # Puknięcie do potoku, aby odblokować ConnectNamedPipe / accept
             try:
@@ -182,6 +182,7 @@ class BlyskawicaAmbassadorDaemon:
                     with socket.socket(af_unix, socket.SOCK_STREAM) as s:
                         s.connect(self.ipc_path)
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
             self._thread.join(timeout=1.0)
 
@@ -295,8 +296,8 @@ class BlyskawicaAmbassadorDaemon:
             try:
                 os.remove(self.ipc_path)
             except OSError:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
         af_unix = getattr(socket, "AF_UNIX", 1)
         self._server_sock = socket.socket(af_unix, socket.SOCK_STREAM)
         self._server_sock.bind(self.ipc_path)

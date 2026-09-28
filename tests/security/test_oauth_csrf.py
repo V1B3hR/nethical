@@ -1,9 +1,8 @@
 """Tests for OAuth CSRF protection."""
 
 import pytest
-import secrets
 from datetime import datetime, timedelta, timezone
-from urllib.parse import urlencode, parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse
 
 from nethical.security.sso import (
     SSOManager,

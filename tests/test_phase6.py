@@ -6,7 +6,6 @@ from pathlib import Path
 
 from nethical.core import (
     MLBlendedRiskEngine,
-    BlendedDecision,
     BlendingMetrics,
     RiskZone
 )

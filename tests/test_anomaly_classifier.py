@@ -1,5 +1,4 @@
 """Tests for AnomalyMLClassifier."""
-import pytest
 from nethical.mlops.anomaly_classifier import AnomalyMLClassifier
 
 

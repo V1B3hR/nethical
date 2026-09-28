@@ -22,11 +22,9 @@ import socket
 import threading
 import time
 from concurrent.futures import ThreadPoolExecutor
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
-from typing import Any, Callable, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -296,12 +294,14 @@ class EdgeDeviceHub:
             try:
                 self._server_socket.close()
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
             self._server_socket = None
         if self._executor:
             try:
                 self._executor.shutdown(wait=False, cancel_futures=True)
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
             self._executor = None
         if self._server_thread and self._server_thread.is_alive():
@@ -394,9 +394,11 @@ class EdgeDeviceHub:
             try:
                 client_sock.sendall(json.dumps(err_resp).encode("utf-8"))
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
         finally:
             try:
                 client_sock.close()
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass

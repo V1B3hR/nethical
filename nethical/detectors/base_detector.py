@@ -24,7 +24,7 @@ from abc import ABC, abstractmethod
 from contextlib import asynccontextmanager
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from enum import Enum, auto
+from enum import Enum
 from typing import (
     Any,
     AsyncGenerator,
@@ -35,7 +35,6 @@ from typing import (
     Set,
     Tuple,
     Type,
-    TYPE_CHECKING,
 )
 from collections import defaultdict
 

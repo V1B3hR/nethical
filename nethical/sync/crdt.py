@@ -27,7 +27,7 @@ import logging
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Generic, List, Optional, Set, Tuple, TypeVar, Union
+from typing import Any, Dict, Generic, List, Optional, Set, Tuple, TypeVar
 
 from .vector_clock import VectorClock, HybridLogicalClock, EventOrder
 

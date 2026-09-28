@@ -12,13 +12,11 @@ from __future__ import annotations
 import json
 import socket
 import time
-from typing import Generator
 
 import pytest
 
 from nethical.edge.device_hub import (
     ActuationBus,
-    DeviceAdmissionResult,
     DeviceType,
     EdgeCapabilityTier,
     EdgeDeviceHub,

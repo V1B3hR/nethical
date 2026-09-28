@@ -1962,7 +1962,7 @@ class AdversarialDefenseSystem:
                 adversarial_prediction = model_prediction_func(input_data)
                 if baseline_input is not None:
                     original_prediction = model_prediction_func(baseline_input)
-            except Exception as e:
+            except Exception:
                 logging.exception("Model prediction failed in adversarial example detection.")
 
         # Run chaos analysis if enabled
@@ -1972,7 +1972,7 @@ class AdversarialDefenseSystem:
                 chaos_result = self.chaos_system.analyze_input(
                     input_array, baseline_array
                 )
-            except Exception as e:
+            except Exception:
                 logging.exception("Chaos analysis failed in adversarial example detection.")
 
         # Run defense perturbation if enabled
@@ -1982,7 +1982,7 @@ class AdversarialDefenseSystem:
                 defense_result = self.defense_system.analyze_input(
                     input_array, model_prediction_func, adversarial_prediction
                 )
-            except Exception as e:
+            except Exception:
                 logging.exception("Defense perturbation analysis failed in adversarial example detection.")
 
         # Determine if adversarial

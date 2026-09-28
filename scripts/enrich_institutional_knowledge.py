@@ -279,8 +279,8 @@ def main() -> None:
                 if "prompt" in item:
                     existing_prompts.add(item["prompt"].strip())
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
     added_count = 0
     with open(out_path, "a", encoding="utf-8") as f:
         for r in dpo_records:

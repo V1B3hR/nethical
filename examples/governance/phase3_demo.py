@@ -16,7 +16,6 @@ from datetime import datetime, timedelta, timezone
 
 from nethical.core import (
     Phase3IntegratedGovernance,
-    DetectorTier,
     SamplingStrategy
 )
 

@@ -7,9 +7,9 @@ LlamaIndex integration with Nethical governance.
 Provides governed wrappers for LlamaIndex tools and query engines.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
-from .base import AgentFrameworkBase, GovernanceResult, GovernanceDecision
+from .base import AgentFrameworkBase
 
 
 # Check for LlamaIndex availability

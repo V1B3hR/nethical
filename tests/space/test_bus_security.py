@@ -5,7 +5,6 @@
 
 import hashlib
 import hmac
-import pytest
 
 from nethical.space.bus_security import (
     BusSecurityAlert,

@@ -7,7 +7,6 @@ Generuje zautomatyzowane raporty zgodności dla Jednostek Notyfikowanych UE (CE-
 oraz regulatorów w Wielkiej Brytanii w formatach JSON i Markdown.
 """
 
-import json
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 

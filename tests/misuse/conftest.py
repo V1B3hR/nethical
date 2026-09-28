@@ -5,7 +5,6 @@ Pytest fixtures for misuse testing suite
 import pytest
 from datetime import datetime, timedelta
 from typing import Dict, List, Any
-import uuid
 
 
 @pytest.fixture

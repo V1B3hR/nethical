@@ -21,7 +21,6 @@ from enum import Enum
 from datetime import datetime, timezone
 import threading
 import logging
-import json
 import time
 
 logger = logging.getLogger(__name__)

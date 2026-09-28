@@ -10,7 +10,6 @@ import pytest
 import tempfile
 import json
 from pathlib import Path
-from datetime import datetime
 
 from nethical.security.threat_modeling import (
     ThreatCategory,

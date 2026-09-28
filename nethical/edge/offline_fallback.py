@@ -11,9 +11,9 @@ Philosophy: "Safe by default when disconnected"
 import logging
 import threading
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, Optional
 
 logger = logging.getLogger(__name__)
 
@@ -278,4 +278,4 @@ from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
     from .network_monitor import NetworkMonitor
-    from .decision_queue import DecisionQueue, QueuedDecision
+    from .decision_queue import DecisionQueue

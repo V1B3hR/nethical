@@ -8,10 +8,8 @@ Provides signature verification and security validation for Nethical plugins.
 """
 
 import hashlib
-import hmac
 import json
 import logging
-import os
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum

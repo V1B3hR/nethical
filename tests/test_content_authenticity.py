@@ -8,8 +8,6 @@ import pytest
 from datetime import datetime, timezone
 
 from nethical.content_authenticity.c2pa_integration import (
-    C2PAAssertion,
-    C2PAIngredient,
     C2PAIntegration,
     C2PAManifest,
     C2PAVerificationResult,
@@ -20,7 +18,6 @@ from nethical.content_authenticity.deepfake_watermark import (
     ContentProvenance,
     DeepfakeWatermarkingSystem,
     DisclosureLabel,
-    ExtractionQuality,
     WatermarkedAudio,
     WatermarkedImage,
     WatermarkedVideo,

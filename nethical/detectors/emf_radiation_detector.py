@@ -103,7 +103,7 @@ class EmfEmissionTelemetry:
 
         zone_str = str(data.get("exposure_zone", EmfExposureZone.GENERAL_PUBLIC.value)).lower()
         zone = EmfExposureZone.GENERAL_PUBLIC
-        for ez in EmfExposureZone:
+        for ez in EmfExposureZone.__members__.values():
             if ez.value == zone_str:
                 zone = ez
                 break

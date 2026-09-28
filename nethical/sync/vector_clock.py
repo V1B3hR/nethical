@@ -18,7 +18,7 @@ import logging
 import time
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Dict, Optional, Tuple
+from typing import Any, Dict, Tuple
 
 
 logger = logging.getLogger(__name__)

@@ -21,7 +21,6 @@ import os
 import secrets
 import time
 from collections import deque
-from datetime import datetime, timezone
 from typing import Any, AsyncGenerator, Deque, Dict, List, Optional, Set, Tuple, Union
 
 import httpx
@@ -29,8 +28,8 @@ from pydantic import BaseModel, Field
 
 from nethical.gateway.proxy import GovernanceGateway, GatewayDecision
 from nethical.security.merkle_ledger import MerkleLedger
-from nethical.security.token_vault import ReversibleTokenVault, TokenizeResponse, DetokenizeResponse
-from nethical.security.ssrf_protection import assert_safe_url, validate_safe_url, SSRFValidationError
+from nethical.security.token_vault import ReversibleTokenVault, TokenizeResponse
+from nethical.security.ssrf_protection import assert_safe_url
 
 logger = logging.getLogger("nethical.gateway.openai_proxy")
 
@@ -338,9 +337,10 @@ class OpenAIGovernanceProxy:
 
         # If blocked by governance, return refusal or stream refusal
         if not is_allowed:
+            safe_agent = str(agent_id).replace('\r', '').replace('\n', '')[:128]
             logger.warning(
                 "Nethical Proxy BLOCKED request from agent '%s' (reasons: %s)",
-                agent_id, decision.reasons
+                safe_agent, decision.reasons
             )
             if req.stream:
                 return self._stream_refusal_generator(req.model, decision, session_id)

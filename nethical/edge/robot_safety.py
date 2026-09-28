@@ -26,10 +26,9 @@ import hashlib
 import logging
 import math
 import time
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -225,7 +224,7 @@ class RobotSafetyGovernor:
             )
 
         # 3. Spatial Limit Violations (SLP - Safely-Limited Position)
-        radial_distance = math.sqrt(tcp_pose.x_m ** 2 + tcp_pose.y_m ** 2)
+        radial_distance = math.hypot(tcp_pose.x_m, tcp_pose.y_m)
         if radial_distance > self.config.max_reach_radius_m:
             allowed = False
             safety_fn = RobotSafetyFunction.SS1

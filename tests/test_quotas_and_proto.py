@@ -4,8 +4,6 @@
 """Unit tests for quotas rate limiting and proto dataclass definitions."""
 
 import threading
-import time
-import pytest
 
 from nethical.proto import (
     Violation,
@@ -25,7 +23,6 @@ from nethical.proto import (
 from nethical.quotas import (
     QuotaConfig,
     QuotaEnforcer,
-    QuotaUsage,
     get_quota_enforcer,
     configure_quotas,
 )

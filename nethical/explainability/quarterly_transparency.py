@@ -13,7 +13,7 @@ Production Readiness Checklist - Section 10: Transparency
 - Anchored Merkle roots registry
 """
 
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from datetime import datetime, timezone, timedelta
 from typing import Dict, List, Optional, Any
 from pathlib import Path

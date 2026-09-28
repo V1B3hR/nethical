@@ -19,7 +19,6 @@ from starlette.requests import Request
 from starlette.responses import Response
 from nethical.middleware.security import (
     SecurityHeadersMiddleware,
-    create_security_middleware,
 )
 
 

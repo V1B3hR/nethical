@@ -1,12 +1,8 @@
 """Comprehensive tests for Phase 4 components."""
 
 import pytest
-import json
 import time
-from datetime import datetime, timedelta
-from pathlib import Path
 import tempfile
-import shutil
 
 from nethical.core import (
     # Phase 4 components
@@ -17,7 +13,6 @@ from nethical.core import (
     SLAMonitor,
     Phase4IntegratedGovernance,
     # Enums and types
-    ChangeType,
     RiskLevel,
     QuarantineReason,
     QuarantineStatus,

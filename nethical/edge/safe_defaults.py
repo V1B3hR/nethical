@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 # Use TYPE_CHECKING to avoid circular imports at runtime
 if TYPE_CHECKING:
-    from .local_governor import DecisionType
+    pass
 
 
 class DefaultDecisionType(str, Enum):

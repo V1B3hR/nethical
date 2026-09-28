@@ -10,10 +10,7 @@ import pytest
 from nethical.hooks.interfaces import Region
 from nethical.policy import (
     PolicyEngine,
-    PolicyError,
     PolicyPack,
-    PolicyVersion,
-    CanaryConfig,
     DeploymentStage,
 )
 

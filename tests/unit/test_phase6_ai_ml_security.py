@@ -3,8 +3,6 @@ Unit tests for Phase 6.1: AI/ML Security Framework
 """
 
 import pytest
-import numpy as np
-from datetime import datetime
 
 from nethical.security.ai_ml_security import (
     AdversarialDefenseSystem,

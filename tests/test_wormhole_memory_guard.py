@@ -3,13 +3,9 @@
 
 """Zestaw testów dla MemoryIntegrityGuard i obrony przed atakiem Wormhole (Pełzająca Demencja)."""
 
-from pathlib import Path
-import pytest
 
 from nethical.security.memory_integrity import (
     MemoryIntegrityGuard,
-    ColdPathCanary,
-    WormholeTamperAlert,
 )
 from nethical.ambassador.co_training import SymbioticCoTrainingEngine
 

@@ -330,6 +330,6 @@ if __name__ == "__main__":
     except KeyboardInterrupt:
         print("\n\nDemo interrupted by user")
         sys.exit(0)
-    except Exception as e:
+    except Exception:
         logger.exception("Demo failed")
         sys.exit(1)

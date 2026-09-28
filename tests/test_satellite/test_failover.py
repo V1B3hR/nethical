@@ -2,7 +2,7 @@
 
 import pytest
 from datetime import datetime, timezone
-from unittest.mock import MagicMock, AsyncMock, patch
+from unittest.mock import MagicMock
 
 from nethical.connectivity.satellite.failover import (
     FailoverManager,
@@ -13,7 +13,6 @@ from nethical.connectivity.satellite.failover import (
 )
 from nethical.connectivity.satellite.base import (
     ConnectionState,
-    ConnectionConfig,
     ConnectionMetrics,
 )
 

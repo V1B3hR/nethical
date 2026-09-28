@@ -1,12 +1,10 @@
 """Tests for Observability features."""
 
 import pytest
-import time
-from datetime import datetime, timedelta
 
-from nethical.observability.metrics import MetricsCollector, get_metrics_collector
+from nethical.observability.metrics import MetricsCollector
 from nethical.observability.sanitization import LogSanitizer, sanitize_log
-from nethical.observability.tracing import TracingManager, get_tracer
+from nethical.observability.tracing import TracingManager
 from nethical.observability.alerts import AlertRuleManager, AlertSeverity, AlertRule
 
 

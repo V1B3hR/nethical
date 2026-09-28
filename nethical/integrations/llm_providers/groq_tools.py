@@ -7,7 +7,7 @@ Groq integration with Nethical governance.
 Provides a governed wrapper around Groq's API for ultra-fast inference.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from .base import LLMProviderBase, LLMResponse
 

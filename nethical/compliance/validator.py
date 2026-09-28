@@ -32,7 +32,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional
 
 from .gdpr import GDPRComplianceValidator, GDPRValidationResult
-from .eu_ai_act import EUAIActValidator, ConformityAssessmentResult, AIRiskLevel
+from .eu_ai_act import EUAIActValidator, AIRiskLevel
 from .data_residency import DataResidencyManager
 
 logger = logging.getLogger(__name__)

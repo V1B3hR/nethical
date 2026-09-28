@@ -5,8 +5,6 @@ This module tests the ISO27001ControlMapper class and related
 compliance functionality for ISO 27001 certification support.
 """
 
-import pytest
-from datetime import datetime, timezone
 
 from nethical.security.compliance import (
     ISO27001ControlMapper,

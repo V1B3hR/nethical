@@ -22,7 +22,7 @@ import logging
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -138,10 +138,11 @@ class IndustrialFieldbusInterlock:
         self.trip_timestamp = datetime.now(timezone.utc).isoformat()
         self.last_latency_us = latency_us
 
+        safe_reason = str(reason).replace('\r', '').replace('\n', '')[:256]
         logger.critical(
             "🚨 INDUSTRIAL FIELDBUS INTERLOCK TRIPPED! Reason: %s, Latency: %f µs, ESM: %s",
-            reason,
-            latency_us,
+            safe_reason,
+            float(latency_us),
             self.ethercat_state.value,
         )
 

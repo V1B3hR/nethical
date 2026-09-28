@@ -158,8 +158,8 @@ def create_governor(
                 if file_config and "edge" in file_config:
                     config.update(file_config["edge"])
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
     fieldbus = IndustrialFieldbusInterlock() if config.get("fieldbus", False) else None
     kinetic = KineticSafetyGovernor() if config.get("kinetic", False) else None
     iso26262 = ISO26262SafetyEvaluator(fieldbus=fieldbus) if config.get("automotive", False) else None

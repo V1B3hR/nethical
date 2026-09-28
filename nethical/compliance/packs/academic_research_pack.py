@@ -35,7 +35,7 @@ import re
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 from pydantic import BaseModel, Field
 
 logger = logging.getLogger("nethical.compliance.packs.academic_research_pack")
@@ -124,6 +124,7 @@ class AcademicResearchPack:
         violations: List[str] = []
         missing_elements: List[str] = []
         remediations: List[str] = []
+        ffp_free: bool = True
 
         # 1. Hard Invariant I: ALLEA FFP Prohibition (Fabrication, Falsification, Plagiarism)
         fabrication_detected = payload.get("data_fabrication_detected", False)

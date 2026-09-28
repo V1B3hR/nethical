@@ -203,8 +203,8 @@ def enrich_dataset() -> None:
                     existing_prompts.add(p)
                 existing_lines.append(rec)
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
     initial_count = len(existing_lines)
     print(f"Initial dataset size: {initial_count} records.")
 

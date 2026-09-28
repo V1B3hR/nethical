@@ -12,10 +12,7 @@ the short-term (6 months) scalability targets:
 import pytest
 import time
 import tempfile
-import os
 from pathlib import Path
-from typing import List, Dict
-import json
 
 # Import core Nethical components
 from nethical.core import IntegratedGovernance

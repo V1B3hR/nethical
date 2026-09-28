@@ -7,7 +7,6 @@ Policy Subscriber - Policy Update Listener
 Listens for policy updates from event stream.
 """
 
-import asyncio
 import collections
 import logging
 import threading

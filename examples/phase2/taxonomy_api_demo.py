@@ -8,7 +8,6 @@ This example demonstrates:
 """
 
 from nethical.api.taxonomy_api import TaxonomyAPI
-import json
 
 
 def main():

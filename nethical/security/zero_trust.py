@@ -724,7 +724,6 @@ class AnomalyDetector:
             Anomaly details if detected, None otherwise
         """
         import time
-        from collections import deque
 
         now = time.time()
         request = {

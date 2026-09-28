@@ -16,7 +16,6 @@ Verifies:
 """
 
 import pytest
-import asyncio
 from nethical.security.hsm import (
     HSMConfig,
     HSMProvider,

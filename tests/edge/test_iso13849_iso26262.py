@@ -13,11 +13,9 @@ Validates quantitative machinery safety metrics:
 from __future__ import annotations
 
 import time
-import pytest
 
 from nethical.edge.industrial_fieldbus import IndustrialFieldbusInterlock
 from nethical.edge.iso13849_watchdog import (
-    CobotSafetyMode,
     HardwareWatchdogTimer,
     ISO13849Evaluation,
     ISO13849SafetyEvaluator,

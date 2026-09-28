@@ -20,8 +20,7 @@ from __future__ import annotations
 import logging
 import threading
 from functools import lru_cache
-from typing import Any, Optional, Tuple
-import warnings
+from typing import Any, Optional
 
 logger = logging.getLogger(__name__)
 

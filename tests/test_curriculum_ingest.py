@@ -6,9 +6,7 @@ as well as deterministic conversion to valid DPO pairs.
 
 from pathlib import Path
 import tempfile
-import pytest
 from nethical.ambassador.curriculum_ingest import (
-    CuratedPrecedent,
     GovernanceCurriculumSynthesizer,
     run_ingestion,
 )

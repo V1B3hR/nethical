@@ -6,7 +6,6 @@ and health probes for Nethical Gateway and Błyskawica Ambassador Sidecar.
 
 from pathlib import Path
 import yaml
-import pytest
 
 
 REPO_ROOT = Path(__file__).parent.parent

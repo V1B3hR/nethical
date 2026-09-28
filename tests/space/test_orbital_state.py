@@ -10,7 +10,6 @@ import pytest
 from nethical.space.models import (
     EARTH_EQUATORIAL_RADIUS_KM,
     MU_EARTH_KM3_S2,
-    Covariance3D,
     OrbitalRegime,
     OrbitalState,
     Vector3D,

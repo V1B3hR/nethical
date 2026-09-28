@@ -80,29 +80,29 @@ jobs:
           fi
 
           if [ -f "perf_results_current.csv" ]; then
-            python3 - << 'PY' > current_metrics.out
-import csv, math
-lat = []
-with open('perf_results_current.csv', newline='') as f:
-    r = csv.reader(f)
-    next(r, None)  # skip header
-    for row in r:
-        try:
-            lat.append(float(row[2]))
-        except Exception:
-            pass
-lat.sort()
-def percentile(data, p):
-    if not data: return None
-    k = (len(data) - 1) * (p / 100)
-    f = math.floor(k); c = math.ceil(k)
-    if f == c: return data[int(k)]
-    return data[f] * (c - k) + data[c] * (k - f)
-p50 = percentile(lat, 50)
-p95 = percentile(lat, 95)
-if p50 is not None: print(f"current_p50={p50:.2f}")
-if p95 is not None: print(f"current_p95={p95:.2f}")
-PY
+            python3 -c "import textwrap; exec(textwrap.dedent('''\
+            import csv, math
+            lat = []
+            with open('perf_results_current.csv', newline='') as f:
+                r = csv.reader(f)
+                next(r, None)  # skip header
+                for row in r:
+                    try:
+                        lat.append(float(row[2]))
+                    except Exception:
+                        pass
+            lat.sort()
+            def percentile(data, p):
+                if not data: return None
+                k = (len(data) - 1) * (p / 100)
+                f = math.floor(k); c = math.ceil(k)
+                if f == c: return data[int(k)]
+                return data[f] * (c - k) + data[c] * (k - f)
+            p50 = percentile(lat, 50)
+            p95 = percentile(lat, 95)
+            if p50 is not None: print(f'current_p50={p50:.2f}')
+            if p95 is not None: print(f'current_p95={p95:.2f}')
+            '''))" > current_metrics.out
             cat current_metrics.out | tee -a "$GITHUB_OUTPUT"
           else
             echo "No perf_results_current.csv found; skipping metrics extraction."
@@ -145,29 +145,29 @@ PY
           fi
 
           if [ -f "baseline/perf_results_baseline.csv" ]; then
-            python3 - << 'PY' > baseline_metrics.out
-import csv, math
-lat = []
-with open('baseline/perf_results_baseline.csv', newline='') as f:
-    r = csv.reader(f)
-    next(r, None)  # skip header
-    for row in r:
-        try:
-            lat.append(float(row[2]))
-        except Exception:
-            pass
-lat.sort()
-def percentile(data, p):
-    if not data: return None
-    k = (len(data) - 1) * (p / 100)
-    f = math.floor(k); c = math.ceil(k)
-    if f == c: return data[int(k)]
-    return data[f] * (c - k) + data[c] * (k - f)
-p50 = percentile(lat, 50)
-p95 = percentile(lat, 95)
-if p50 is not None: print(f"baseline_p50={p50:.2f}")
-if p95 is not None: print(f"baseline_p95={p95:.2f}")
-PY
+            python3 -c "import textwrap; exec(textwrap.dedent('''\
+            import csv, math
+            lat = []
+            with open('baseline/perf_results_baseline.csv', newline='') as f:
+                r = csv.reader(f)
+                next(r, None)  # skip header
+                for row in r:
+                    try:
+                        lat.append(float(row[2]))
+                    except Exception:
+                        pass
+            lat.sort()
+            def percentile(data, p):
+                if not data: return None
+                k = (len(data) - 1) * (p / 100)
+                f = math.floor(k); c = math.ceil(k)
+                if f == c: return data[int(k)]
+                return data[f] * (c - k) + data[c] * (k - f)
+            p50 = percentile(lat, 50)
+            p95 = percentile(lat, 95)
+            if p50 is not None: print(f'baseline_p50={p50:.2f}')
+            if p95 is not None: print(f'baseline_p95={p95:.2f}')
+            '''))" > baseline_metrics.out
             cat baseline_metrics.out | tee -a "$GITHUB_OUTPUT"
           else
             echo "No baseline/perf_results_baseline.csv found; skipping metrics extraction."
@@ -182,36 +182,36 @@ PY
           BASELINE_P50: ${{ steps.baseline_bench.outputs.baseline_p50 }}
           BASELINE_P95: ${{ steps.baseline_bench.outputs.baseline_p95 }}
         run: |
-          python3 - << 'PY' > compare.out
-import os
-def to_float(v):
-    try:
-        return float(v)
-    except (TypeError, ValueError):
-        return None
+          python3 -c "import textwrap; exec(textwrap.dedent('''\
+          import os
+          def to_float(v):
+              try:
+                  return float(v)
+              except (TypeError, ValueError):
+                  return None
 
-cp50 = to_float(os.getenv('CURRENT_P50'))
-cp95 = to_float(os.getenv('CURRENT_P95'))
-bp50 = to_float(os.getenv('BASELINE_P50'))
-bp95 = to_float(os.getenv('BASELINE_P95'))
+          cp50 = to_float(os.getenv('CURRENT_P50'))
+          cp95 = to_float(os.getenv('CURRENT_P95'))
+          bp50 = to_float(os.getenv('BASELINE_P50'))
+          bp95 = to_float(os.getenv('BASELINE_P95'))
 
-def pct_change(cur, base):
-    if cur is None or base in (None, 0.0):
-        return "N/A"
-    return f"{((cur - base) / base) * 100:.2f}"
+          def pct_change(cur, base):
+              if cur is None or base in (None, 0.0):
+                  return 'N/A'
+              return f'{((cur - base) / base) * 100:.2f}'
 
-p50_change = pct_change(cp50, bp50)
-p95_change = pct_change(cp95, bp95)
+          p50_change = pct_change(cp50, bp50)
+          p95_change = pct_change(cp95, bp95)
 
-print(f"p50_change={p50_change}")
-print(f"p95_change={p95_change}")
+          print(f'p50_change={p50_change}')
+          print(f'p95_change={p95_change}')
 
-if p50_change != "N/A":
-    regression = float(p50_change) > 10.0
-    print(f"regression_detected={'true' if regression else 'false'}")
-else:
-    print("regression_detected=false")
-PY
+          if p50_change != 'N/A':
+              regression = float(p50_change) > 10.0
+              print(f\"regression_detected={'true' if regression else 'false'}\")
+          else:
+              print('regression_detected=false')
+          '''))" > compare.out
           cat compare.out | tee -a "$GITHUB_OUTPUT"
 
       - name: Upload benchmark results
@@ -239,12 +239,12 @@ PY
             let emoji = regressionDetected ? '⚠️' : '✅';
             let status = regressionDetected ? '**Performance Regression Detected**' : 'No Performance Regression';
 
-            let comment = `## ${emoji} Performance Benchmark Results\n\n`;
-            comment += `### ${status}\n\n`;
+            let comment = '## ' + emoji + ' Performance Benchmark Results\n\n';
+            comment += '### ' + status + '\n\n';
             comment += '| Metric | Baseline | Current | Change |\n';
             comment += '|--------|----------|---------|--------|\n';
-            comment += `| P50 Latency | ${baselineP50 || 'N/A'} ms | ${currentP50 || 'N/A'} ms | ${p50Change || 'N/A'}% |\n`;
-            comment += `| P95 Latency | ${baselineP95 || 'N/A'} ms | ${currentP95 || 'N/A'} ms | ${p95Change || 'N/A'}% |\n`;
+            comment += '| P50 Latency | ' + (baselineP50 || 'N/A') + ' ms | ' + (currentP50 || 'N/A') + ' ms | ' + (p50Change || 'N/A') + '% |\n';
+            comment += '| P95 Latency | ' + (baselineP95 || 'N/A') + ' ms | ' + (currentP95 || 'N/A') + ' ms | ' + (p95Change || 'N/A') + '% |\n';
             comment += '\n';
 
             if (regressionDetected) {
@@ -256,7 +256,7 @@ PY
 
             comment += '---\n';
             comment += '*Benchmark Configuration: 100 agents, 50 RPS, 30 seconds*\n';
-            comment += `*Baseline: \`${context.payload.pull_request.base.ref}\`*\n`;
+            comment += '*Baseline: `' + context.payload.pull_request.base.ref + '`*\n';
 
             const { data: comments } = await github.rest.issues.listComments({
               owner: context.repo.owner,
@@ -320,48 +320,48 @@ PY
         run: |
           echo "Running memory profiling..."
 
-          cat > memory_test.py << 'EOF'
-from nethical.core import IntegratedGovernance
-from memory_profiler import profile
-import psutil
-import os
+          python3 -c "from pathlib import Path; import textwrap; Path('memory_test.py').write_text(textwrap.dedent('''\
+          from nethical.core import IntegratedGovernance
+          from memory_profiler import profile
+          import psutil
+          import os
 
-@profile
-def test_governance_memory():
-    process = psutil.Process(os.getpid())
-    start_memory = process.memory_info().rss / 1024 / 1024  # MB
+          @profile
+          def test_governance_memory():
+              process = psutil.Process(os.getpid())
+              start_memory = process.memory_info().rss / 1024 / 1024  # MB
 
-    gov = IntegratedGovernance(
-        storage_dir="./test_data",
-        enable_performance_optimization=True,
-        enable_merkle_anchoring=True,
-        enable_quarantine=True
-    )
+              gov = IntegratedGovernance(
+                  storage_dir='./test_data',
+                  enable_performance_optimization=True,
+                  enable_merkle_anchoring=True,
+                  enable_quarantine=True
+              )
 
-    for i in range(100):
-        _ = gov.process_action(
-            agent_id=f"agent_{i % 10}",
-            action=f"test action {i}",
-            cohort="test"
-        )
+              for i in range(100):
+                  _ = gov.process_action(
+                      agent_id=f'agent_{i % 10}',
+                      action=f'test action {i}',
+                      cohort='test'
+                  )
 
-    end_memory = process.memory_info().rss / 1024 / 1024  # MB
-    memory_increase = end_memory - start_memory
+              end_memory = process.memory_info().rss / 1024 / 1024  # MB
+              memory_increase = end_memory - start_memory
 
-    print(f"\nMemory Usage:")
-    print(f"  Start: {start_memory:.2f} MB")
-    print(f"  End: {end_memory:.2f} MB")
-    print(f"  Increase: {memory_increase:.2f} MB")
+              print(f'\nMemory Usage:')
+              print(f'  Start: {start_memory:.2f} MB')
+              print(f'  End: {end_memory:.2f} MB')
+              print(f'  Increase: {memory_increase:.2f} MB')
 
-    return memory_increase
+              return memory_increase
 
-if __name__ == '__main__':
-    memory_used = test_governance_memory()
-    if memory_used > 100:
-        print(f"⚠️  WARNING: High memory usage detected: {memory_used:.2f} MB")
-    else:
-        print(f"✅ Memory usage is acceptable: {memory_used:.2f} MB")
-EOF
+          if __name__ == '__main__':
+              memory_used = test_governance_memory()
+              if memory_used > 100:
+                  print(f'⚠️  WARNING: High memory usage detected: {memory_used:.2f} MB')
+              else:
+                  print(f'✅ Memory usage is acceptable: {memory_used:.2f} MB')
+          '''))"
 
           python memory_test.py > memory_profile.txt 2>&1 || true
           cat memory_profile.txt

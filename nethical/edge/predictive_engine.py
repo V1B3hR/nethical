@@ -8,7 +8,6 @@ Pre-computes decisions for likely scenarios before they're requested.
 Achieves 0ms apparent latency for 80%+ of decisions.
 """
 
-import hashlib
 import logging
 import threading
 import time
@@ -191,7 +190,7 @@ class PredictiveEngine:
 
     def _copy_decision(self, decision: Any) -> Any:
         """Create a copy of decision to avoid mutation."""
-        from .local_governor import EdgeDecision, DecisionType
+        from .local_governor import EdgeDecision
 
         if isinstance(decision, EdgeDecision):
             return EdgeDecision(

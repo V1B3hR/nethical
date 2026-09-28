@@ -10,7 +10,7 @@ import time
 from collections import deque, defaultdict
 from dataclasses import dataclass
 from threading import Lock
-from typing import Dict, List, Optional, Deque
+from typing import Dict, List, Deque
 
 from .guardian_modes import GuardianMode, get_mode_for_threat_score
 from .tripwires import TripwireAlert

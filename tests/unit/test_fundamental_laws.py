@@ -10,7 +10,6 @@ This module tests:
 
 import pytest
 import uuid
-from typing import List
 
 from nethical.core.fundamental_laws import (
     LawCategory,
@@ -19,7 +18,7 @@ from nethical.core.fundamental_laws import (
     FUNDAMENTAL_LAWS,
     get_fundamental_laws,
 )
-from nethical.core.governance import Decision, Severity, ViolationType
+from nethical.core.governance import Decision
 
 
 # Helper to import LawJudge and LawViolationDetector

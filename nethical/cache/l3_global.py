@@ -9,7 +9,6 @@ Supports Cloudflare Workers KV, AWS ElastiCache Global, etc.
 Target: <50ms latency globally
 """
 
-import json
 import logging
 import time
 from dataclasses import dataclass

@@ -16,8 +16,7 @@ Endpoints:
 
 from __future__ import annotations
 
-import secrets
-from datetime import timedelta, timezone
+from datetime import timedelta
 from typing import Annotated, Optional
 
 import jwt

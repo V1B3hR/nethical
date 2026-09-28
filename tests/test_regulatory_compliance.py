@@ -6,7 +6,6 @@ Tests EU AI Act, UK Law, and US Standards compliance modules.
 
 import json
 import pytest
-from datetime import datetime
 from pathlib import Path
 import tempfile
 
@@ -15,7 +14,6 @@ from nethical.security.regulatory_compliance import (
     RegulatoryFramework,
     ComplianceStatus,
     ControlCategory,
-    RegulatoryRequirement,
     EUAIActCompliance,
     UKLawCompliance,
     USStandardsCompliance,

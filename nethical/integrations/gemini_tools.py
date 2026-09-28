@@ -39,7 +39,7 @@ Features:
     - Compliance with OWASP LLM Top 10, GDPR, HIPAA
 """
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from datetime import datetime, timezone
 
 from nethical.core.integrated_governance import IntegratedGovernance
@@ -201,7 +201,7 @@ def handle_nethical_tool(
 
         return response
 
-    except Exception as e:
+    except Exception:
         # Log detailed error internally but return sanitized message for security
         # TODO: Implement proper logging for detailed error tracking
         return {

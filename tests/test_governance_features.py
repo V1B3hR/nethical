@@ -3,7 +3,6 @@
 import pytest
 from pathlib import Path
 import tempfile
-import json
 
 from nethical.governance.ethics_benchmark import (
     EthicsBenchmark, BenchmarkCase, DetectionResult, ViolationType

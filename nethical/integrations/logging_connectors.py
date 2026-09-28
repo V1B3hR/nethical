@@ -66,6 +66,7 @@ def _redact(value: Any) -> Any:
         if isinstance(value, dict):
             return {k: _redact(v) for k, v in value.items()}
     except Exception:
+        # Expected: silently ignore exception during cleanup or fallback
         pass
     return "***"
 
@@ -299,6 +300,7 @@ class SyslogConnector(LogConnector):
             try:
                 base += " " + json.dumps(sanitize_metadata(entry.metadata), ensure_ascii=False)
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
         return (base + "\n").encode("utf-8")
 
@@ -338,9 +340,8 @@ class SyslogConnector(LogConnector):
         try:
             self.socket.close()
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
-
 class CloudWatchConnector(LogConnector):
     """
     AWS CloudWatch Logs connector (production-ready with graceful degradation)
@@ -391,8 +392,8 @@ class CloudWatchConnector(LogConnector):
         except self._client.exceptions.ResourceAlreadyExistsException:  # type: ignore
             pass
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
         try:
             streams = self._client.describe_log_streams(
                 logGroupName=self.log_group, logStreamNamePrefix=self.log_stream
@@ -409,8 +410,8 @@ class CloudWatchConnector(LogConnector):
                         self._sequence_token = s.get("uploadSequenceToken")
                         break
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
     def send(self, entry: LogEntry) -> bool:
         with self._lock:
             self.buffer.append(entry)
@@ -516,8 +517,8 @@ class JSONFileConnector(LogConnector):
         try:
             self.file.close()
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
         # Rotate files: .N -> .N+1, base -> .1
         for i in range(self.backup_count - 1, 0, -1):
             s = self.filepath.with_suffix(self.filepath.suffix + f".{i}")
@@ -528,8 +529,8 @@ class JSONFileConnector(LogConnector):
                         d.unlink()
                     s.rename(d)
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
-
         first = self.filepath.with_suffix(self.filepath.suffix + ".1")
         try:
             if first.exists():
@@ -537,8 +538,8 @@ class JSONFileConnector(LogConnector):
             if self.filepath.exists():
                 self.filepath.rename(first)
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
         self._open_file()
 
     def send(self, entry: LogEntry) -> bool:
@@ -572,9 +573,8 @@ class JSONFileConnector(LogConnector):
             try:
                 self.file.close()
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
-
 class MerkleAnchorConnector(LogConnector):
     """
     Optional Merkle audit anchoring connector.

@@ -23,7 +23,6 @@ import time
 import uuid
 import logging
 from datetime import datetime, timezone
-from concurrent import futures
 from typing import Iterator, Optional
 
 logger = logging.getLogger(__name__)

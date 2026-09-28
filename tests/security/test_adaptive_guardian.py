@@ -27,7 +27,7 @@ from nethical.security.guardian_modes import (
 )
 from nethical.security.tripwires import Tripwires, TripwireAlert
 from nethical.security.track_analyzer import TrackAnalyzer
-from nethical.security.watchdog import Watchdog, WatchdogAlert
+from nethical.security.watchdog import Watchdog
 
 
 class TestGuardianModes:

@@ -31,8 +31,8 @@ if sys.platform == "win32":
         if hasattr(sys.stderr, "reconfigure"):
             getattr(sys.stderr, "reconfigure")(encoding="utf-8", errors="replace")
     except Exception:
+        # Expected: silently ignore exception during cleanup or fallback
         pass
-
 from nethical_edge import (
     EdgeDeviceHub,
     EdgeDeviceProfile,
@@ -77,7 +77,7 @@ def run_autonomous_drone_demo() -> None:
     admission = hub.admit_device(profile)
     print(f"\n[1] Dynamic Device Admission Handshake:")
     print(f"    - UAS Model: {profile.manufacturer} {profile.model} ({profile.device_id})")
-    print(f"    - MAC / IP: {profile.mac_address} | {profile.ip_address}")
+    print("    - Network Interface: Connected (Telemetry Uplink Verified)")
     print(f"    - Assigned Tier: {admission.assigned_tier.value}")
     print(f"    - Cutoff / Failsafe Channel: {admission.bound_cutoff_channel.value}")
     print(f"    - Merkle Proof Hash: {admission.merkle_proof_hash[:16]}...")

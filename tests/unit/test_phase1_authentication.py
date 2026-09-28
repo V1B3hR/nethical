@@ -3,7 +3,6 @@ Unit tests for Phase 1: Military-Grade Authentication Module
 """
 
 import pytest
-from datetime import datetime, timedelta, timezone
 from nethical.security.authentication import (
     AuthCredentials,
     AuthResult,

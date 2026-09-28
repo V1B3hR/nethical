@@ -11,12 +11,11 @@ This module tests the audit portal REST API including:
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from portal.api import (
     AuditPortalAPI,
     RateLimitTier,
-    RateLimiter,
-    RateLimitStatus
+    RateLimiter
 )
 
 

@@ -20,7 +20,7 @@ from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
-from nethical.edge.industrial_fieldbus import IndustrialFieldbusInterlock, FieldbusInterlockStatus
+from nethical.edge.industrial_fieldbus import IndustrialFieldbusInterlock
 
 logger = logging.getLogger("nethical.edge.kinetic_safety")
 

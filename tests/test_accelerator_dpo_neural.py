@@ -17,7 +17,6 @@ from training.train_dpo_ambassador import (
     DPOTrainerEngine,
     AmbassadorNeuralPolicy,
     TORCH_AVAILABLE,
-    ACCELERATOR_AI_AVAILABLE,
 )
 from nethical.security.merkle_ledger import MerkleLedger
 

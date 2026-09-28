@@ -17,7 +17,6 @@ import threading
 from typing import Dict, Any, Optional, Callable
 from contextlib import contextmanager
 from dataclasses import dataclass, field
-from datetime import datetime
 
 # Optional OpenTelemetry imports
 try:

@@ -3,8 +3,6 @@
 
 """Tests for constellation topology and orbital routing (tests.space.test_constellation_topology)."""
 
-from datetime import datetime, timezone
-import pytest
 
 from nethical.space.models import (
     ConstellationTopology,

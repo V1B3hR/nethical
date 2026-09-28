@@ -4,7 +4,6 @@ Pytest configuration for Nethical tests
 Adds custom command line options for extended tests and common fixtures.
 """
 
-import os
 import tempfile
 import shutil
 import pytest

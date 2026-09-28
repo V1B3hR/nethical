@@ -19,7 +19,6 @@ from __future__ import annotations
 import json
 import logging
 import sys
-import time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Dict, List, Set
@@ -221,8 +220,8 @@ def append_unique_to_dataset(items: List[Dict[str, Any]]) -> int:
                         seen.add(p)
                         existing.append(obj)
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
-
     added = 0
     for item in items:
         p = item.get("prompt", "").strip()

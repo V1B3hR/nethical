@@ -7,7 +7,7 @@ Mistral AI integration with Nethical governance.
 Provides a governed wrapper around Mistral AI's API.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from .base import LLMProviderBase, LLMResponse
 

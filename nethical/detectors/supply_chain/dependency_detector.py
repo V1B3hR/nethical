@@ -15,10 +15,10 @@ from __future__ import annotations
 import re
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple
+from typing import Any, List, Optional, Sequence, Set, Tuple
 
 from ..base_detector import BaseDetector, DetectorStatus
-from ...core.models import AgentAction, SafetyViolation, Severity, ViolationType
+from ...core.models import SafetyViolation, Severity, ViolationType
 
 # Top Canonical Packages on PyPI
 TOP_PYPI_CANONICAL: Set[str] = {

@@ -3,7 +3,6 @@
 
 """Tests for High-Altitude Platform Station (HAPS) Governor (tests.edge.test_haps_governor)."""
 
-from datetime import datetime, timezone
 import pytest
 
 from nethical.edge.haps_governor import (

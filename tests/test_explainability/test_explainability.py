@@ -1,12 +1,11 @@
 """Tests for the explainability module."""
 
-import pytest
 from nethical.explainability import (
     DecisionExplainer,
     NaturalLanguageGenerator,
     TransparencyReportGenerator,
 )
-from datetime import datetime, timedelta
+from datetime import datetime
 
 
 class TestDecisionExplainer:

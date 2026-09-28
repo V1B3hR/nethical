@@ -6,7 +6,6 @@ Tests SHAP-like, LIME-like, and counterfactual explanation capabilities.
 import pytest
 from nethical.explainability.advanced_explainer import (
     AdvancedExplainer,
-    FeatureImportance,
     LocalExplanation,
     CounterfactualExplanation
 )

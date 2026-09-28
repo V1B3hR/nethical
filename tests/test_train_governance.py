@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test the governance integration in train_any_model.py."""
 import json
-import shutil
 import tempfile
 from pathlib import Path
 import sys

@@ -6,7 +6,6 @@ Tests cache invalidation across all levels.
 
 import time
 
-import pytest
 
 from nethical.cache.l1_memory import L1MemoryCache
 from nethical.cache.l3_global import L3GlobalCache

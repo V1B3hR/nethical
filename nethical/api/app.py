@@ -651,7 +651,8 @@ def validate_websocket_auth(websocket: WebSocket) -> Tuple[bool, Optional[str]]:
     if origin and "*" not in allowed_origins:
         # Check against configured allowed origins
         if origin not in allowed_origins:
-            logger.warning("WebSocket rejected: Origin '%s' disallowed by CORS policy", origin)
+            safe_origin = str(origin).replace('\r', '').replace('\n', '')[:256]
+            logger.warning("WebSocket rejected: Origin '%s' disallowed by CORS policy", safe_origin)
             return False, f"Origin '{origin}' rejected by CORS policy"
 
     # 2. Token verification if permissive mode is disabled
@@ -833,7 +834,7 @@ from nethical.ethics.deep_alignment import DeepAlignmentEngine
 from nethical.edge.iso13849_watchdog import ISO13849SafetyEvaluator, HardwareWatchdogTimer, PerformanceLevel
 from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker, FinancialTransaction
 from nethical.security.air_gapped_node import AirGappedSovereignNode
-from nethical.security.data_diode import DataDiodeBridge, SovereignPackage, SovereignPackageHeader
+from nethical.security.data_diode import DataDiodeBridge, SovereignPackage
 
 # Three Advanced Horizons Singletons
 from nethical.compliance.packs.asian_sovereign_pack import AsianSovereignPack
@@ -903,8 +904,8 @@ hardware_watchdog_instance.register_fieldbus_callback(
 # MULTI-TENANCY & SOVEREIGN AUTHENTICATION SUBSYSTEM (Faza 1 Planu)
 # ==============================================================================
 
-from nethical.auth import TenantManager, RBACManager, SovereignAuthToken
-from nethical.core.models import ClassificationLevel, UserRole, UserIdentity, TenantConfig
+from nethical.auth import TenantManager, RBACManager
+from nethical.core.models import ClassificationLevel, UserRole, UserIdentity
 
 tenant_manager_instance = TenantManager(default_ledger=gateway_instance.ledger)
 gateway_instance.tenant_manager = tenant_manager_instance
@@ -1462,7 +1463,7 @@ async def list_a2a_sessions() -> Dict[str, Any]:
 # KINETIC SAFETY OS & ISO/IEC 42001:2023 GLOBAL TRUST ENDPOINTS (Faza 4 Part 2)
 # ==============================================================================
 
-from nethical.edge.kinetic_safety import RoboticSensorTelemetry, KineticDecision
+from nethical.edge.kinetic_safety import RoboticSensorTelemetry
 from nethical.compliance.packs.iso42001_pack import ISO42001CompliancePack
 
 iso42001_pack_instance = ISO42001CompliancePack()
@@ -1570,8 +1571,7 @@ async def run_custom_iso42001_audit(req: ISO42001AuditRequest) -> Dict[str, Any]
 # HUMAN-IN-THE-LOOP (HITL) & MULTI-REGION CLUSTER SYNC ENDPOINTS (Faza 5)
 # ==============================================================================
 
-from nethical.gateway.hitl import HITLTicket, HITLResolution
-from nethical.security.cluster_sync import ClusterNodeIdentity, ClusterCheckpoint, SyncReconciliationResult
+from nethical.security.cluster_sync import ClusterNodeIdentity, ClusterCheckpoint
 
 
 class HITLEnqueueRequest(BaseModel):
@@ -1708,8 +1708,7 @@ async def reconcile_cluster_checkpoint(req: ClusterReconcileRequest) -> Dict[str
 # FORMAL SMT PROVER, eBPF INTERCEPTOR & TEE ENCLAVE ATTESTATION (Faza 6)
 # ==============================================================================
 
-from nethical.formal.law_prover import FormalVerificationCertificate
-from nethical.edge.ebpf_interceptor import EBPFPacketVerdict, EBPFRule
+from nethical.edge.ebpf_interceptor import EBPFRule
 from nethical.security.enclave_attestation import EnclaveAttestationQuote
 
 

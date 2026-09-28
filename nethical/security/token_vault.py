@@ -16,12 +16,11 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
-import os
 import re
 import secrets
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional, Tuple
 
 from cryptography.hazmat.primitives.ciphers.aead import AESGCM
 from pydantic import BaseModel, Field
@@ -213,7 +212,8 @@ class ReversibleTokenVault:
         """Restores synthetic tokens back to original plaintext values."""
         now = datetime.now(timezone.utc)
         if session_id not in self._vault or self._session_expiry.get(session_id, now) < now:
-            logger.warning(f"Session {session_id} expired or not found in vault.")
+            safe_session = str(session_id).replace('\r', '').replace('\n', '')[:128]
+            logger.warning(f"Session {safe_session} expired or not found in vault.")
             return DetokenizeResponse(
                 session_id=session_id,
                 restored_text=text,
@@ -239,7 +239,8 @@ class ReversibleTokenVault:
                     restored = restored.replace(token, original_val)
                     count += 1
                 except Exception as e:
-                    logger.error(f"Failed to decrypt token {token}: {e}")
+                    safe_tok = str(token).replace('\r', '').replace('\n', '')[:64]
+                    logger.error(f"Failed to decrypt token {safe_tok}: {e}")
 
         return DetokenizeResponse(
             session_id=session_id,

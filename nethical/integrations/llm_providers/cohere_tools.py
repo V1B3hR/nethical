@@ -10,7 +10,7 @@ Provides a governed wrapper around Cohere's API including:
 - Tool definitions for function calling
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict, List
 
 from .base import LLMProviderBase, LLMResponse
 

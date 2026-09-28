@@ -14,14 +14,11 @@ Features:
 - Saves individual test class results
 """
 
-import asyncio
 import json
 import time
-import traceback
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Any, Optional
-import pytest
+from typing import List, Optional
 import sys
 import subprocess
 from dataclasses import dataclass, asdict

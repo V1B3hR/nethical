@@ -12,16 +12,15 @@ Ensures complete operational readiness in offline, air-gapped, and defense envir
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import time
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from pydantic import BaseModel, Field
 
-from nethical.security.merkle_ledger import canonical_json_bytes, MerkleLedger
+from nethical.security.merkle_ledger import MerkleLedger
 
 logger = logging.getLogger("nethical.security.air_gapped_node")
 
@@ -68,9 +67,10 @@ class AirGappedSovereignNode:
         """Blokuje wszelkie próby wyjścia na zewnątrz w trybie Air-Gapped."""
         if self.strict_airgap:
             self.blocked_egress_attempts += 1
+            safe_host = str(target_host_or_ip).replace('\r', '').replace('\n', '')[:256]
             logger.critical(
                 "🛡️ [AIR-GAP BREACH PREVENTED]: Zablokowano nieautoryzowaną próbę egress do '%s:%d' na węźle o klauzuli %s!",
-                target_host_or_ip, port, self.classification.value
+                safe_host, int(port), self.classification.value
             )
             return {
                 "allowed": False,

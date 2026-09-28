@@ -24,7 +24,7 @@ from contextlib import asynccontextmanager
 
 from fastapi import FastAPI, Request
 from fastapi.responses import StreamingResponse
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.utils.pii import PIIDetector
@@ -641,7 +641,7 @@ class MCPServer:
                 "id": msg_id,
                 "result": result,
             }
-        except Exception as e:
+        except Exception:
             # Log full traceback for internal diagnostics (server-side only)
             logging.error("Exception in _handle_message:", exc_info=True)
             return {

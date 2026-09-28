@@ -219,7 +219,7 @@ class MitreAtlasMapper:
             posture = "VULNERABLE"
 
         tactics_summary: Dict[str, Dict[str, Any]] = {}
-        for tactic in AtlasTactic:
+        for tactic in AtlasTactic.__members__.values():
             techs = [t for t in self.techniques if t.tactic == tactic]
             if techs:
                 avg_risk = sum(t.residual_risk for t in techs) / len(techs)

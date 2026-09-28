@@ -17,7 +17,7 @@ This migration synchronizes PostgreSQL schema with Nethical's unified ORM:
 
 from alembic import op
 import sqlalchemy as sa
-from sqlalchemy.dialects.postgresql import UUID, JSONB
+from sqlalchemy.dialects.postgresql import JSONB
 
 # Revision identifiers
 revision = "002_auth_and_multi_tenant"

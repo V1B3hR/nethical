@@ -12,8 +12,6 @@ Usage:
     python llamaindex_demo.py
 """
 
-import os
-import sys
 from pathlib import Path
 
 

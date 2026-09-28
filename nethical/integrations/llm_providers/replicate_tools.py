@@ -7,7 +7,7 @@ Replicate integration with Nethical governance.
 Provides a governed wrapper around Replicate's API for running various models.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from .base import LLMProviderBase, LLMResponse
 

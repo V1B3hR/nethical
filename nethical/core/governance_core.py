@@ -681,8 +681,8 @@ class EnhancedSafetyGovernance:
                 self._retention_cleanup_task = loop.create_task(self._periodic_retention_cleanup())
                 self._retention_cleanup_started = True
             except RuntimeError:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
         # Cache
         self._judgment_cache: Dict[str, Tuple[float, JudgmentResult]] = {}
         self._cache_lock = threading.Lock()
@@ -782,8 +782,8 @@ class EnhancedSafetyGovernance:
                 self._retention_cleanup_task = loop.create_task(self._periodic_retention_cleanup())
                 self._retention_cleanup_started = True
             except RuntimeError:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
         await self._maybe_reload_patterns()
         start = time.time()
 
@@ -1201,8 +1201,8 @@ class EnhancedSafetyGovernance:
                 except Exception as e:
                     logger.error("Retention cleanup failed: %s", e)
         except asyncio.CancelledError:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
     # -------- Lifecycle & Cleanup --------
 
     def close(self):
@@ -1219,6 +1219,7 @@ class EnhancedSafetyGovernance:
             try:
                 await self._retention_cleanup_task
             except (asyncio.CancelledError, Exception):
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
             self._retention_cleanup_task = None
         self._retention_cleanup_started = False
@@ -1229,9 +1230,8 @@ class EnhancedSafetyGovernance:
         try:
             self.close()
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
-
 # Backwards compatibility alias
 SafetyGovernance = EnhancedSafetyGovernance
 

@@ -21,7 +21,7 @@ from pathlib import Path
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 import cryptography
-from packaging.version import Version, parse
+from packaging.version import parse
 
 logger = logging.getLogger("nethical.security.audit_crypto_curves")
 
@@ -81,7 +81,8 @@ def verify_cryptography_library_version() -> Tuple[bool, str]:
         )
         return is_safe, status_msg
     except Exception as exc:
-        return False, f"Failed to parse cryptography version '{current_version_str}': {exc}"
+        logger.warning("Failed to parse cryptography version '%s': %s", current_version_str, exc)
+        return False, f"Failed to parse cryptography version '{current_version_str}'"
 
 
 class CodebaseCurveScanner(ast.NodeVisitor):

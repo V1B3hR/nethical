@@ -20,7 +20,7 @@ import logging
 import sys
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List
+from typing import Any, Dict
 
 # Ensure repository root is on PYTHONPATH
 REPO_ROOT = Path(__file__).resolve().parent.parent

@@ -9,11 +9,9 @@ Verifies:
 
 import json
 from pathlib import Path
-import pytest
 
 from training.train_dpo_ambassador import DPODatasetLoader, DPOTrainerEngine
 from nethical.compliance.automated_certification_hub import (
-    AutomatedCertificationHub,
     CertificationStandard,
 )
 from nethical.security.merkle_ledger import MerkleLedger
@@ -110,7 +108,7 @@ def test_master_certification_dossier_integrity():
     content = DOSSIER_PATH.read_text(encoding="utf-8")
 
     # Sprawdzenie obecności kluczowych standardów
-    for std in CertificationStandard:
+    for std in CertificationStandard.__members__.values():
         assert std.value in content, f"Brak wzmianki o standardzie {std.value} w Dossier!"
 
     assert "TIER-1 CERTIFIED AUDIT READY" in content

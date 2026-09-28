@@ -13,14 +13,12 @@ from nethical.core.rbac import (
     Permission,
     require_role,
     require_permission,
-    get_rbac_manager,
     set_rbac_manager,
 )
 from nethical.security.auth import (
     AuthManager,
     authenticate_request,
     AuthenticationError,
-    get_auth_manager,
     set_auth_manager,
 )
 
@@ -110,7 +108,7 @@ def example_rbac_decorators():
     try:
         result = delete_policy("policy_123", current_user="regular_user")
         print(f"   ✅ Success: {result}")
-    except Exception as e:
+    except Exception:
         print(f"   ❌ Expected failure: Access denied for regular_user")
     
     print()

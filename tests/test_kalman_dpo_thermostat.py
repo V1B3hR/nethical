@@ -4,7 +4,6 @@ Validates proportional scaling of DPO Beta according to Kalman doubt/deviation,
 as well as continuous interleaving of foundational anchor samples.
 """
 
-import pytest
 from training.train_dpo_ambassador import (
     ContinuousReplayBuffer,
     KalmanBetaGovernor,

@@ -11,7 +11,6 @@ The canonical location is `nethical.api.app` or `nethical.api`.
 from __future__ import annotations
 
 # Forward all symbols from the modular nethical.api.app implementation
-from nethical.api.app import *  # noqa: F401, F403
 from nethical.api.app import (
     app,
     API_VERSION,

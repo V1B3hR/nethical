@@ -27,15 +27,13 @@ from __future__ import annotations
 
 import ctypes
 import logging
-import os
 import platform
-import subprocess
 import sys
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Any, Dict, List, Optional
 from uuid import uuid4
 
 logger = logging.getLogger("nethical.security.os_sandbox")
@@ -288,8 +286,8 @@ class LinuxCgroupsSandbox(BaseOSSandbox):
             avail_ram_mb = round(avail, 2)
             used_ram_pct = round(((total - avail) / total) * 100.0, 2)
         except Exception:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
         return SomaticHostMetrics(
             platform_name="Linux",
             os_version=platform.release(),

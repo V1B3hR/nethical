@@ -11,7 +11,6 @@ Generates:
 
 import hashlib
 import json
-import os
 import sys
 import uuid
 from datetime import datetime, timezone
@@ -21,7 +20,7 @@ VERSION = "2.7.0"
 REPO_ROOT = Path(__file__).resolve().parent.parent
 sys.path.insert(0, str(REPO_ROOT))
 
-from nethical.security.merkle_ledger import MerkleLedger, DilithiumKeyPair
+from nethical.security.merkle_ledger import MerkleLedger
 DIST_DIR = REPO_ROOT / "dist"
 DIST_DIR.mkdir(parents=True, exist_ok=True)
 

@@ -3,10 +3,8 @@
 
 """Tests for Stratospheric & HAPS Detectors (tests.space.test_stratospheric_detector)."""
 
-import pytest
 
 from nethical.space.detectors.stratospheric_detector import (
-    AirspaceClass,
     StratosphericDetector,
 )
 

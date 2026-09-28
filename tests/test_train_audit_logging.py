@@ -1,7 +1,6 @@
 #!/usr/bin/env python3
 """Test audit logging in train_any_model.py."""
 import json
-import shutil
 import tempfile
 import subprocess
 from pathlib import Path

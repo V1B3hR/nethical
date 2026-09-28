@@ -20,11 +20,9 @@ from typing import Any, Dict, Optional
 
 from .base import (
     ConnectionConfig,
-    ConnectionMetrics,
     ConnectionState,
     SatelliteConnectionError,
     SatelliteProvider,
-    SatelliteTimeoutError,
 )
 
 logger = logging.getLogger(__name__)

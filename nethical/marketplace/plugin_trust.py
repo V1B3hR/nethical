@@ -16,14 +16,13 @@ Production Readiness Checklist - Section 8: Plugin Trust
 
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from enum import Enum
 import logging
-import hashlib
 
 from nethical.marketplace.plugin_governance import PluginGovernance, SecurityScanResult
 from nethical.marketplace.community import CommunityManager
-from nethical.marketplace.plugin_registry import PluginRegistry, PluginTrustLevel
+from nethical.marketplace.plugin_registry import PluginRegistry
 
 logger = logging.getLogger(__name__)
 

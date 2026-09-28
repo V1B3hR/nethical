@@ -1,7 +1,6 @@
 """Testy jednostkowe i integracyjne mostu Ambasadora Błyskawicy (nethical.ambassador)."""
 
-import pytest
-from nethical.ambassador import BlyskawicaAmbassador, AmbassadorChannel
+from nethical.ambassador import BlyskawicaAmbassador
 
 
 def test_ambassador_initialization() -> None:

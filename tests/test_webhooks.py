@@ -6,18 +6,15 @@ Tests the webhook dispatchers and API integration interfaces.
 
 import pytest
 import json
-from datetime import datetime
-from unittest.mock import Mock, patch, MagicMock
+from unittest.mock import patch, MagicMock
 
 from nethical.integrations.webhook import (
     WebhookStatus,
     WebhookPayload,
     WebhookDelivery,
-    WebhookDispatcher,
     HTTPWebhookDispatcher,
     SlackWebhookDispatcher,
     DiscordWebhookDispatcher,
-    APIIntegration,
     GenericAPIIntegration,
     WebhookManager
 )

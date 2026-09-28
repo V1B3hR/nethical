@@ -11,11 +11,8 @@ Verifies:
 - Live hot-injection of new signatures into OSExecutionDetector without restart.
 """
 
-import pytest
 from nethical.detectors.os_execution_detector import (
     OSExecutionDetector,
-    OSThreatCategory,
-    OSExecutionMitigation,
 )
 from nethical.security.threat_feeds import (
     ThreatSignature,

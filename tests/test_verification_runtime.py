@@ -5,16 +5,13 @@
 
 import time
 from datetime import datetime, timezone
-import pytest
 
 from nethical.verification import (
     RuntimeVerifier,
     InvariantDefinition,
-    InvariantViolation,
     InvariantSeverity,
     InvariantStatus,
     RuntimeState,
-    get_runtime_verifier,
     verify_before_decision,
 )
 

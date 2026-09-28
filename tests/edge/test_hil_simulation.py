@@ -10,7 +10,6 @@ and sub-50 µs physical cutoff relay tripping.
 
 from __future__ import annotations
 
-import time
 import pytest
 
 from nethical.edge.hil_simulator import (

@@ -2,7 +2,6 @@
 Unit tests for Phase 3: Compliance & Audit Framework
 """
 
-import pytest
 from datetime import datetime, timezone
 from nethical.security.compliance import (
     ComplianceFramework,

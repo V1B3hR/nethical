@@ -14,9 +14,7 @@ from __future__ import annotations
 
 import logging
 import re
-import uuid
-from datetime import datetime, timezone
-from typing import Any, Dict, List, Optional, Sequence, Set
+from typing import Any, Dict, List, Optional, Sequence
 
 from .base_detector import BaseDetector, SafetyViolation, ViolationSeverity
 from ..core.fundamental_laws import (

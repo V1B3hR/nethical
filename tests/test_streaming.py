@@ -10,19 +10,15 @@ import pytest
 
 from nethical.streaming import (
     NATSClient,
-    NATSConfig,
     PolicySubscriber,
-    PolicyUpdate,
     EventPublisher,
     StreamEvent,
     EventStreamManager,
     StreamBackend,
     BackpressureStrategy,
     TelemetryEvent,
-    get_stream_manager,
 )
 from nethical.streaming.event_publisher import StreamEventType
-from nethical.streaming.policy_subscriber import PolicyEventType
 
 
 def test_telemetry_event_to_dict():

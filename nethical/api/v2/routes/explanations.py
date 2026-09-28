@@ -22,12 +22,11 @@ Version: 1.0.0
 
 from __future__ import annotations
 
-import time
 import uuid
 from datetime import datetime, timezone
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel, Field
 
 router = APIRouter()

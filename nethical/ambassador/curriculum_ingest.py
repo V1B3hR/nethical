@@ -311,8 +311,8 @@ class GovernanceCurriculumSynthesizer:
                             record = json.loads(line)
                             existing_prompts.add(record.get("prompt", "").strip())
                         except Exception:
+                            # Expected: silently ignore exception during cleanup or fallback
                             pass
-
         with open(dest, "a", encoding="utf-8") as f:
             for prec in self.precedents:
                 p_text = prec.prompt.strip()

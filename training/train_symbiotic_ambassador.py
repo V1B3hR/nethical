@@ -13,7 +13,6 @@ Uruchamia dynamiczne sesje sparingowe w parze:
 from __future__ import annotations
 
 import argparse
-import json
 import logging
 import os
 import sys

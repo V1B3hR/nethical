@@ -34,9 +34,8 @@ Example:
     agent = create_nethical_agent(llm, tools, storage_dir="./nethical_data")
 """
 
-from typing import Any, Dict, List, Optional, Type, Union
+from typing import Any, Dict, List, Optional, Type
 import json
-from datetime import datetime
 
 try:
     from langchain.tools import BaseTool
@@ -57,7 +56,6 @@ except ImportError:
     AsyncCallbackManagerForToolRun = object
 
 from ..core import IntegratedGovernance
-from ..core.models import Decision, ActionType, AgentAction
 
 
 class NethicalGuardInput(BaseModel):

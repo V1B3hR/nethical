@@ -15,10 +15,9 @@ Signals:
 Law Alignment: Laws 9 (Self-Disclosure), 18 (Non-Deception)
 """
 
-import re
 import uuid
 from datetime import datetime, timezone
-from typing import List, Optional, Sequence
+from typing import Sequence
 import unicodedata
 
 from ..base_detector import BaseDetector

@@ -5,10 +5,8 @@
 
 from __future__ import annotations
 
-import os
 import sys
-import pytest
-from unittest.mock import MagicMock, patch
+from unittest.mock import MagicMock
 
 from nethical.security.os_sandbox import (
     OSSandboxFactory,
@@ -16,7 +14,6 @@ from nethical.security.os_sandbox import (
     LinuxCgroupsSandbox,
     MacOSSeatbeltSandbox,
     SandboxTier,
-    SandboxLimits,
     SomaticHostMetrics,
 )
 from nethical.detectors.os_execution_detector import (

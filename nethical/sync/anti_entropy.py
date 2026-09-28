@@ -29,10 +29,9 @@ import time
 import uuid
 from dataclasses import dataclass, field
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Callable, Dict, List, Optional, Set
 
 from .crdt import PolicyCRDT, PolicyDelta, PolicyState, CRDTMergeResult
-from .vector_clock import HybridLogicalClock
 
 
 logger = logging.getLogger(__name__)

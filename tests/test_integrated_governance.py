@@ -1,6 +1,5 @@
 """Tests for Unified Integrated Governance."""
 
-import pytest
 from nethical.core import IntegratedGovernance
 
 

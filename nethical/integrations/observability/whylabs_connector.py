@@ -4,7 +4,7 @@
 """WhyLabs integration for Nethical governance observability."""
 
 from .base import ObservabilityProvider, TraceSpan, GovernanceMetrics
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)

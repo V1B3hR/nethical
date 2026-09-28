@@ -12,7 +12,6 @@ import asyncio
 import time
 
 from nethical.security.adaptive_guardian import (
-    AdaptiveGuardian,
     get_guardian,
     record_metric,
     trigger_lockdown,
@@ -69,7 +68,7 @@ class ManuallyMonitoredJudge:
             
             return {"decision": decision}
         
-        except Exception as e:
+        except Exception:
             error = True
             decision = "ERROR"
             raise

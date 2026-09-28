@@ -15,10 +15,10 @@ from fastapi.testclient import TestClient
 
 from nethical.api import app
 from nethical.security.aispm_scanner import AISPMScanner, RiskLevel, AIServiceType
-from nethical.security.mitre_atlas_mapper import MitreAtlasMapper, AtlasTactic, DefenseStatus
+from nethical.security.mitre_atlas_mapper import MitreAtlasMapper, AtlasTactic
 from nethical.security.hsm_bridge import BoardHSMCouplingBridge
-from nethical.compliance.packs.canada_aida_pack import CanadaAIDAPack, AIDASector, AIDARiskLevel
-from nethical.compliance.packs.nato_defense_pack import NATODefensePack, NATODefenseTier, NATOPRU
+from nethical.compliance.packs.canada_aida_pack import CanadaAIDAPack, AIDARiskLevel
+from nethical.compliance.packs.nato_defense_pack import NATODefensePack
 from nethical.compliance.automated_certification_hub import AutomatedCertificationHub, CertificationStandard
 from nethical.edge.iso26262_asil import ISO26262SafetyEvaluator, Severity, Exposure, Controllability, ASILRating, VehicleControlState
 from nethical.edge.hil_simulator import HILFieldbusBridge, TargetMCU, FaultType

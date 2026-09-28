@@ -6,7 +6,6 @@ Mierzy percentyle P50, P95, P99 dla operacji Ping, Tarczy Kognitywnej i Konsulta
 import os
 import sys
 import statistics
-import time
 
 os.environ["PYTHONIOENCODING"] = "utf-8"
 if hasattr(sys.stdout, "reconfigure"):

@@ -19,11 +19,9 @@ import logging
 import hashlib
 import io
 import mimetypes
-from pathlib import Path
 from typing import Any, BinaryIO, Dict, Generator, List, Optional, Union
 from datetime import datetime, timezone
 from dataclasses import dataclass
-import json
 
 try:
     import boto3

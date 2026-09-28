@@ -8,7 +8,7 @@ to integrate with Nethical governance.
 """
 
 from abc import ABC, abstractmethod
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 

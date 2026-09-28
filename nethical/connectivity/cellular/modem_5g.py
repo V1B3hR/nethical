@@ -10,14 +10,11 @@ cell handovers, and intent-based QoS requested by autonomous systems.
 from __future__ import annotations
 
 import logging
-import random
-from typing import Any, Dict, Optional
 
 from nethical.connectivity.cellular.base import (
     BaseCellularModem,
     CellularGeneration,
     CellularTelemetry,
-    SignalQualityGrade,
 )
 
 logger = logging.getLogger("nethical.connectivity.cellular.modem_5g")

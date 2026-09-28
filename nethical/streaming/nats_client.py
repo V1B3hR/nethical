@@ -7,7 +7,6 @@ NATS Client - NATS JetStream Client
 Real-time event streaming using NATS JetStream.
 """
 
-import asyncio
 import json
 import logging
 import threading

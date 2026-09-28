@@ -8,8 +8,7 @@ Checks if vulnerabilities exceed SLA timelines:
 
 import json
 import sys
-from datetime import datetime, timezone, timedelta
-from pathlib import Path
+from datetime import datetime, timezone
 from typing import Dict, List, Tuple
 
 # SLA thresholds in hours

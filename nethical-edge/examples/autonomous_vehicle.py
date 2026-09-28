@@ -21,8 +21,8 @@ if sys.platform == "win32":
         sys.stdout.reconfigure(encoding="utf-8", errors="replace")
         sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
+        # Expected: silently ignore exception during cleanup or fallback
         pass
-
 # Import Nethical Edge
 from nethical_edge import EdgeGovernor, create_governor
 

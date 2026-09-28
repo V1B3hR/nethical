@@ -1,9 +1,7 @@
 """Tests for performance and scalability optimizations."""
 
 import pytest
-import time
 import numpy as np
-from datetime import datetime, timedelta
 
 # Redis Cache Tests
 from nethical.storage.redis_cache import RedisCache

@@ -3,7 +3,7 @@ Unit tests for Phase 1: Military-Grade Encryption Module
 """
 
 import pytest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from nethical.security.encryption import (
     EncryptionAlgorithm,
     KeyRotationPolicy,

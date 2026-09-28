@@ -18,7 +18,6 @@ from nethical.marketplace import (
     MarketplaceClient,
     PluginInfo,
     PluginVersion,
-    SearchFilters,
     InstallStatus,
     PluginGovernance,
     SecurityLevel,

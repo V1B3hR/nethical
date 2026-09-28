@@ -55,7 +55,7 @@ class TruLensConnector(ObservabilityProvider):
             return
             
         try:
-            from trulens_eval.schema import Record, RecordAppCall
+            from trulens_eval.schema import Record
             
             # Create a record for the span
             record = Record(

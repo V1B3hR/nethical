@@ -13,7 +13,6 @@ Umożliwia generowanie i niezależną weryfikację dowodów zgodności etycznej 
 from __future__ import annotations
 
 import hashlib
-import json
 import logging
 import secrets
 import uuid
@@ -24,7 +23,6 @@ from pydantic import BaseModel, Field
 
 from nethical.security.merkle_ledger import (
     MerkleInclusionStep,
-    MerkleTree,
     TamperProofReceipt,
     canonical_json_bytes,
 )

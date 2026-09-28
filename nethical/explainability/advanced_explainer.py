@@ -14,10 +14,9 @@ Features:
 - Decision path visualization
 """
 
-from typing import Dict, List, Any, Optional, Tuple
+from typing import Dict, List, Any, Optional
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
-import math
 
 
 @dataclass

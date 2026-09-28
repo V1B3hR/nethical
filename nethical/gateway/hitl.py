@@ -86,12 +86,15 @@ class HITLQueueManager:
         )
         self.tickets[ticket.ticket_id] = ticket
         self.total_enqueued += 1
+        safe_priority = str(priority).replace('\r', '').replace('\n', '')[:32]
+        safe_agent = str(agent_id).replace('\r', '').replace('\n', '')[:128]
+        safe_tool = str(tool_name).replace('\r', '').replace('\n', '')[:128]
         logger.info(
             "Wprowadzono bilet HITL [%s] priorytet: %s dla agenta '%s' (narzędzie: '%s')",
             ticket.ticket_id,
-            priority,
-            agent_id,
-            tool_name,
+            safe_priority,
+            safe_agent,
+            safe_tool,
         )
         return ticket
 
@@ -148,7 +151,10 @@ class HITLQueueManager:
         else:
             self.total_rejected += 1
 
-        logger.info("Rozwiązano bilet HITL [%s]: %s przez audytora '%s'", ticket_id, decision, reviewer_id)
+        safe_t_id = str(ticket_id).replace('\r', '').replace('\n', '')[:64]
+        safe_dec = str(decision).replace('\r', '').replace('\n', '')[:32]
+        safe_rev = str(reviewer_id).replace('\r', '').replace('\n', '')[:128]
+        logger.info("Rozwiązano bilet HITL [%s]: %s przez audytora '%s'", safe_t_id, safe_dec, safe_rev)
         return ticket
 
     def get_pending_tickets(self, priority: Optional[str] = None) -> List[HITLTicket]:

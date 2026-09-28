@@ -10,9 +10,7 @@ Demonstrates:
 
 import random
 from nethical.core import (
-    AnomalyDriftMonitor,
-    AnomalyType,
-    DriftSeverity
+    AnomalyDriftMonitor
 )
 
 

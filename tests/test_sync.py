@@ -16,13 +16,8 @@ from nethical.sync import (
     MVRegister,
     PolicyCRDT,
     PolicyState,
-    PolicyDelta,
-    CRDTMergeResult,
     AntiEntropyProtocol,
-    SyncSession,
     SyncState,
-    MerkleTree,
-    DigestNode,
 )
 from nethical.sync.crdt import PolicyStatus
 
@@ -48,8 +43,10 @@ def test_vector_clock_causality_and_merging():
     # vc1 happened-before vc2
     assert vc1 < vc2
     assert vc2 > vc1
-    assert vc1.compare(vc2) == EventOrder.BEFORE
-    assert vc2.compare(vc1) == EventOrder.AFTER
+    res_before = vc1.compare(vc2)
+    assert res_before == EventOrder.BEFORE
+    res_after = vc2.compare(vc1)
+    assert res_after == EventOrder.AFTER
 
     # Roundtrip serialization
     d = vc2.to_dict()

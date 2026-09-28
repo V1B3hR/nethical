@@ -14,7 +14,7 @@ import pytest
 import numpy as np
 import logging
 from scipy import stats
-from typing import List, Dict, Tuple
+from typing import Dict, Tuple
 import json
 from datetime import datetime, timedelta
 

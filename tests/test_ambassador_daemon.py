@@ -5,8 +5,6 @@
 
 import os
 import sys
-import time
-import pytest
 
 from nethical.ambassador.channel import AmbassadorChannel
 from nethical.ambassador.client import BlyskawicaAmbassador

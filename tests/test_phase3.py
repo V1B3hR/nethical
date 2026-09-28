@@ -7,7 +7,7 @@ from pathlib import Path
 from datetime import datetime, timedelta
 
 from nethical.core.risk_engine import RiskEngine, RiskTier, RiskProfile
-from nethical.core.correlation_engine import CorrelationEngine, CorrelationMatch
+from nethical.core.correlation_engine import CorrelationEngine
 from nethical.core.fairness_sampler import FairnessSampler, SamplingStrategy
 from nethical.core.ethical_drift_reporter import EthicalDriftReporter
 from nethical.core.performance_optimizer import PerformanceOptimizer, DetectorTier

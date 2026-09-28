@@ -8,7 +8,6 @@ without requiring actual database/S3 connections.
 import pytest
 from unittest.mock import Mock, MagicMock, patch
 from datetime import datetime, timezone
-import json
 
 # Test imports work correctly
 def test_postgres_backend_imports():
@@ -163,7 +162,7 @@ class TestPostgresBackendMocked:
     @patch('nethical.storage.postgres_backend.pool')
     def test_insert_agent_mocked(self, mock_pool):
         """Test agent insertion with mocked connection."""
-        from nethical.storage.postgres_backend import PostgresBackend, PostgresConfig
+        from nethical.storage.postgres_backend import PostgresConfig
         
         # Skip if psycopg2 not available
         mock_pool.ThreadedConnectionPool = MagicMock()

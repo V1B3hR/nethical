@@ -9,8 +9,6 @@ import pytest
 from nethical.storage import (
     TamperStore,
     TamperEvidentOfflineStore,
-    Event,
-    Anchor,
     MerkleAppender,
     TamperStoreError,
 )

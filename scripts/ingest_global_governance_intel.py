@@ -26,10 +26,8 @@ sys.path.insert(0, str(REPO_ROOT))
 
 from nethical.governance.jurisdictional_intel import (
     DataClassification,
-    JurisdictionProfile,
     JurisdictionalTrustEngine,
     TransferVerdict,
-    DEFAULT_JURISDICTIONS,
 )
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -278,8 +276,8 @@ def main() -> None:
                         seen_prompts.add(p_str)
                         existing.append(obj)
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
-
     before_count = len(existing)
     added = 0
     for r in new_records:

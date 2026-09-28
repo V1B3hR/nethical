@@ -24,7 +24,6 @@ import tempfile
 import sys
 from datetime import datetime, timedelta
 from pathlib import Path
-from typing import Optional, Any, Dict
 
 # Add parent directory to path for demo utilities
 sys.path.insert(0, str(Path(__file__).parent))

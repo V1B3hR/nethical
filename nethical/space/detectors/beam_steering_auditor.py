@@ -20,7 +20,6 @@ from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
-from nethical.space.models import SPEED_OF_LIGHT_M_S, Vector3D
 
 logger = logging.getLogger("nethical.space.detectors.beam_steering_auditor")
 

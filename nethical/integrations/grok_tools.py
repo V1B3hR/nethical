@@ -205,7 +205,7 @@ def handle_nethical_tool(
 
         return response
 
-    except Exception as e:
+    except Exception:
         # Log detailed error internally but return sanitized message for security
         # TODO: Implement proper logging for detailed error tracking
         return {

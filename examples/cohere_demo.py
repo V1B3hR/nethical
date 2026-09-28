@@ -14,7 +14,6 @@ Usage:
 """
 
 import os
-import sys
 
 
 def demo_basic_generation():

@@ -12,7 +12,6 @@ Tests for:
 import json
 import pytest
 from pathlib import Path
-from unittest.mock import MagicMock, patch
 
 # Import the modules we're testing
 from nethical.core.plugin_security import (

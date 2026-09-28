@@ -20,7 +20,6 @@ import json
 import os
 from pathlib import Path
 from typing import Dict, List
-import pytest
 import yaml
 
 from nethical.core.correlation_engine import CorrelationEngine

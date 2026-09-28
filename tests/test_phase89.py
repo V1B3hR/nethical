@@ -4,7 +4,6 @@ import pytest
 import tempfile
 import shutil
 from pathlib import Path
-from datetime import datetime
 
 from nethical.core import (
     # Phase 8
@@ -14,7 +13,6 @@ from nethical.core import (
     ReviewStatus,
     # Phase 9
     MultiObjectiveOptimizer,
-    OptimizationTechnique,
     ConfigStatus,
     # Integration
     Phase89IntegratedGovernance

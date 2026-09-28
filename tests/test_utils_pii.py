@@ -5,7 +5,6 @@
 
 from nethical.utils import (
     PIIType,
-    PIIMatch,
     PIIDetector,
     get_pii_detector,
 )

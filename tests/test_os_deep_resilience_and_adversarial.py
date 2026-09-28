@@ -10,31 +10,23 @@ and high-stress operational loads.
 
 from __future__ import annotations
 
-import asyncio
 import concurrent.futures
-import ctypes
-import os
-import platform
-import sys
 import time
-from unittest.mock import MagicMock, mock_open, patch
+from unittest.mock import mock_open, patch
 import pytest
 
 from nethical.security.os_sandbox import (
-    BaseOSSandbox,
     OSSandboxFactory,
     WindowsJobObjectSandbox,
     LinuxCgroupsSandbox,
     MacOSSeatbeltSandbox,
     SandboxTier,
-    SandboxLimits,
     SomaticHostMetrics,
 )
 from nethical.detectors.os_execution_detector import (
     OSExecutionDetector,
     OSThreatCategory,
     OSExecutionMitigation,
-    OSExecutionViolation,
 )
 from nethical.ambassador.client import BlyskawicaAmbassador
 from nethical.proto import EvaluateRequest, OSTelemetry
@@ -361,7 +353,7 @@ class TestEndToEndOSTelemetryGovernance:
     """Verifies that OSTelemetry attaches properly to EvaluateRequest and interacts with pipeline."""
 
     def test_evaluate_request_with_combined_telemetry(self):
-        from nethical.proto import CellularTelemetry, EmfRadiationTelemetry, NetworkFlowTelemetry
+        from nethical.proto import NetworkFlowTelemetry
 
         os_tel = OSTelemetry(
             platform_name="Linux",

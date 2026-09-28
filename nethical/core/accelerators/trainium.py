@@ -619,7 +619,6 @@ class TrainiumAccelerator(AcceleratorInterface):
             log.warning("Example inputs required for Neuron compilation")
             return model
 
-        import torch
         import torch_neuronx
 
         try:

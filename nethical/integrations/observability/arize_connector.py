@@ -5,7 +5,7 @@
 
 from .base import ObservabilityProvider, TraceSpan, GovernanceMetrics
 from datetime import datetime, timezone
-from typing import Dict, Any, Optional
+from typing import Dict, Any
 import logging
 
 logger = logging.getLogger(__name__)

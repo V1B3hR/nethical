@@ -18,9 +18,7 @@ from functools import wraps
 
 from .guardian_modes import (
     GuardianMode,
-    TripwireSensitivity,
     get_mode_config,
-    ModeConfig,
 )
 from .tripwires import Tripwires, TripwireAlert
 from .track_analyzer import TrackAnalyzer, ThreatAnalysis
@@ -578,7 +576,7 @@ def monitored(module: str):
                         decision = str(result.decision)
                     
                     return result
-                except Exception as e:
+                except Exception:
                     error = True
                     raise
                 finally:
@@ -601,7 +599,7 @@ def monitored(module: str):
                         decision = str(result.decision)
                     
                     return result
-                except Exception as e:
+                except Exception:
                     error = True
                     raise
                 finally:

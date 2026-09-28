@@ -3,7 +3,7 @@ Tests for RBAC (Role-Based Access Control) System
 """
 
 import pytest
-from datetime import datetime, timezone
+from datetime import datetime
 
 from nethical.core.rbac import (
     Role,
@@ -12,7 +12,6 @@ from nethical.core.rbac import (
     AccessDeniedError,
     require_role,
     require_permission,
-    get_rbac_manager,
     set_rbac_manager,
 )
 

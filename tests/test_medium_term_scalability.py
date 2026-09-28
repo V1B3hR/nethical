@@ -14,10 +14,7 @@ import time
 import tempfile
 import os
 from pathlib import Path
-from typing import List, Dict
-import json
 import concurrent.futures
-from unittest.mock import Mock, patch
 
 # Import core Nethical components
 from nethical.core import IntegratedGovernance
@@ -143,7 +140,7 @@ class TestMediumTermThroughput:
                     result = future.result(timeout=5)
                     latency = (time.time() - action_start) * 1000
                     latencies.append(latency)
-                except Exception as e:
+                except Exception:
                     errors += 1
         
         total_time = time.time() - start_time
@@ -206,7 +203,7 @@ class TestMediumTermConcurrentAgents:
                 try:
                     result = future.result(timeout=10)
                     total_actions += 1
-                except Exception as e:
+                except Exception:
                     errors += 1
         
         total_time = time.time() - start_time

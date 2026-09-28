@@ -13,12 +13,10 @@ Waliduje i przygotowuje suwerenny pakiet wdrożeniowy dla środowisk odciętych 
 
 from __future__ import annotations
 
-import hashlib
-import json
 import re
 import sys
 from pathlib import Path
-from typing import Dict, List, Tuple
+from typing import List, Tuple
 
 # Ensure UTF-8 output on Windows consoles
 if hasattr(sys.stdout, "reconfigure"):
@@ -32,7 +30,6 @@ from nethical.compliance.automated_certification_hub import (
     AutomatedCertificationHub,
     CertificationStandard,
 )
-from nethical.security.merkle_ledger import MerkleLedger
 from nethical.security.data_diode import DataDiodeBridge
 
 

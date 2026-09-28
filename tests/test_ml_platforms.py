@@ -5,10 +5,8 @@ Tests the ML platform integration interfaces including MLflow, W&B, and SageMake
 """
 
 import pytest
-from datetime import datetime
 
 from nethical.integrations.ml_platforms import (
-    MLPlatform,
     ExperimentRun,
     MLPlatformInterface,
     MLflowIntegration,

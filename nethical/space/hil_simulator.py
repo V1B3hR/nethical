@@ -11,11 +11,9 @@ orbital eclipse thermal cycles, and high-velocity conjunction encounters.
 from __future__ import annotations
 
 import logging
-import math
 import time
-from datetime import datetime, timezone
 from enum import Enum
-from typing import Dict, List, Optional
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 

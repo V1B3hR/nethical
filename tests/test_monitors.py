@@ -5,13 +5,11 @@
 Unit test suite for sovereign monitors: BaseMonitor, AdvancedBaseMonitor, and IntentDeviationMonitor.
 """
 
-import asyncio
 import pytest
 
 from nethical.core.models import (
     AgentAction,
     ActionType,
-    SafetyViolation,
     ViolationType,
     Severity,
     SeverityLevel,
@@ -24,7 +22,6 @@ from nethical.monitors.base_monitor import (
     AdvancedBaseMonitor,
     EvaluationContext,
     EvaluationOutcome,
-    InMemoryTTLCache,
     CircuitState,
 )
 from nethical.monitors.intent_monitor import IntentMonitorConfig

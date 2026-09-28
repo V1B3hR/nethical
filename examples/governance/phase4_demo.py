@@ -10,7 +10,6 @@ This demo showcases all Phase 4 features:
 """
 
 import sys
-import time
 from pathlib import Path
 
 # Add parent directory to path

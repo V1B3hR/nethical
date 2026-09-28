@@ -8,7 +8,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.orm import sessionmaker
 
 from nethical.database.models import Base, User, Agent, Policy, AuditLog, Tenant, ApiKey, RevokedToken
-from nethical.database.database import get_db, init_db, get_async_db, init_async_db
+from nethical.database.database import get_db, init_db
 
 
 @pytest.fixture

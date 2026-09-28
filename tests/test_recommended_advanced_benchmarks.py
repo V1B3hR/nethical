@@ -13,11 +13,8 @@ Implements the 5 recommended deep benchmarks:
 
 from __future__ import annotations
 
-import asyncio
-import concurrent.futures
 import gc
 import hashlib
-import json
 import math
 import os
 import random
@@ -25,7 +22,6 @@ import shutil
 import tempfile
 import time
 from datetime import datetime, timezone, timedelta
-from typing import Any, Dict, List
 import numpy as np
 import pytest
 
@@ -35,15 +31,12 @@ from nethical.core.governance import (
     AgentAction,
     ActionType,
     PersistenceManager,
-    JudgmentResult,
-    Decision,
 )
 from nethical.ambassador.client import BlyskawicaAmbassador
-from training.train_dpo_ambassador import KalmanBetaGovernor, ContinuousReplayBuffer
+from training.train_dpo_ambassador import KalmanBetaGovernor
 from nethical.detectors.physical_safety_detector import (
     PhysicalSafetyDetector,
     AnalysisMode,
-    SixDOFContext,
     SafetyEnvelope,
     RobotType,
 )
@@ -69,6 +62,7 @@ class TestMultiAgentSwarmCollusionBenchmark:
                 try:
                     persistence.close()
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
             gc.collect()
             shutil.rmtree(tmpdir, ignore_errors=True)

@@ -30,7 +30,7 @@ from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Optional
 
-from fastapi import APIRouter, HTTPException, Query, Response
+from fastapi import APIRouter, Query, Response
 from pydantic import BaseModel, Field
 
 router = APIRouter(prefix="/oversight", tags=["Human Oversight"])

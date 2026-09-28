@@ -23,8 +23,6 @@ from pydantic import BaseModel, Field
 
 from nethical.security.merkle_ledger import MerkleLedger
 from nethical.security.quantum_crypto import (
-    CRYSTALSDilithium,
-    DilithiumKeyPair,
     PQCAlgorithm,
     QuantumSignature,
 )
@@ -141,7 +139,8 @@ class CrossRegionLedgerSync:
         """Dokonuje formalnej rekonsyliacji stanu lokalnego z punktem kontrolnym węzła partnerskiego."""
         # 1. Walidacja podpisu kryptograficznego punktu kontrolnego
         if not self.verify_peer_checkpoint(peer_checkpoint):
-            logger.error("Odrzucono punkt kontrolny węzła %s: Nieprawidłowy podpis PQC!", peer_checkpoint.node.node_id)
+            safe_peer_id = str(peer_checkpoint.node.node_id).replace('\r', '').replace('\n', '')[:128]
+            logger.error("Odrzucono punkt kontrolny węzła %s: Nieprawidłowy podpis PQC!", safe_peer_id)
             return SyncReconciliationResult(
                 is_consistent=False,
                 local_node_id=self.local_node.node_id,
@@ -190,7 +189,8 @@ class CrossRegionLedgerSync:
             )
 
         # 5. Równa liczba bloków, lecz odmienne pierścienie Merkle (Rozwidlenie / Fork)
-        logger.warning("Wykryto rozbieżność korzenia Merkle (Fork) z węzłem %s!", peer_checkpoint.node.node_id)
+        safe_peer_id = str(peer_checkpoint.node.node_id).replace('\r', '').replace('\n', '')[:128]
+        logger.warning("Wykryto rozbieżność korzenia Merkle (Fork) z węzłem %s!", safe_peer_id)
         return SyncReconciliationResult(
             is_consistent=False,
             local_node_id=self.local_node.node_id,

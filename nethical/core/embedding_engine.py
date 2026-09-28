@@ -249,7 +249,6 @@ class EmbeddingEngine:
         """
         # Support both legacy single provider and new config-based initialization
         if config is not None:
-            from .embedding_config import EmbeddingConfig
             self.config = config
             self.provider = self._create_provider_from_config(config.primary_provider)
             self.enable_cache = config.enable_cache

@@ -18,8 +18,7 @@ from __future__ import annotations
 
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Optional, Set, Tuple, Any
-from enum import Enum
+from typing import Dict, List, Optional, Set, Any
 
 from .embedding_engine import EmbeddingEngine, EmbeddingResult
 from .fundamental_laws import get_fundamental_laws

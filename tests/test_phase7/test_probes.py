@@ -6,7 +6,7 @@ governance probes, and performance probes.
 """
 
 import pytest
-from datetime import datetime, timedelta
+from datetime import datetime
 from probes import (
     BaseProbe,
     ProbeResult,
@@ -14,10 +14,7 @@ from probes import (
     DeterminismProbe,
     TerminationProbe,
     AcyclicityProbe,
-    AuditCompletenessProbe,
-    NonRepudiationProbe,
     MultiSigProbe,
-    PolicyLineageProbe,
     DataMinimizationProbe,
     TenantIsolationProbe,
     LatencyProbe,

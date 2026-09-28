@@ -3,8 +3,6 @@
 
 """Tests for Space Situational Awareness and CCSDS CDM ingestion (tests.space.test_ssa_client)."""
 
-from datetime import datetime, timezone
-import pytest
 
 from nethical.space.ssa_client import (
     CCSDSConjunctionDataMessage,

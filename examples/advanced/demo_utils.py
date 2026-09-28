@@ -5,7 +5,6 @@ This module provides common functionality used across all advanced demo scripts,
 including formatting, error handling, and progress reporting.
 """
 
-import sys
 import traceback
 from typing import Any, Callable, Dict, List, Optional
 from datetime import datetime

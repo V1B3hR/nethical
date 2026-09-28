@@ -25,7 +25,7 @@ from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional, Any, Tuple
+from typing import Dict, List, Optional, Any
 from collections import defaultdict, deque
 import statistics
 
@@ -645,8 +645,8 @@ class EscalationQueue:
                         sla_breaches=sla_breaches,
                     )
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
         median_triage = statistics.median(triage_times) if triage_times else 0.0
         p95_triage = percentile(triage_times, 0.95) if triage_times else 0.0
         median_resolution = (

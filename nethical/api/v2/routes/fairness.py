@@ -19,7 +19,7 @@ from __future__ import annotations
 
 import uuid
 from datetime import datetime, timezone
-from typing import Any, Optional
+from typing import Optional
 
 from fastapi import APIRouter, Query
 from pydantic import BaseModel, Field

@@ -17,7 +17,7 @@ from pydantic import BaseModel, Field
 from nethical.ambassador.client import BlyskawicaAmbassador
 from nethical.utils.pii import PIIDetector
 from nethical.security.merkle_ledger import MerkleLedger
-from nethical.edge.kinetic_safety import KineticSafetyGovernor, RoboticSensorTelemetry, KineticDecision
+from nethical.edge.kinetic_safety import KineticSafetyGovernor, RoboticSensorTelemetry
 from nethical.compliance.packs.uk_cyber_data_pack import ComputerMisuseActEvaluator
 from nethical.compliance.packs.poland_sovereign_ksc_uodo_pack import PolishPenalCodeEvaluator
 from nethical.security.financial_circuit_breaker import FinancialCircuitBreaker, FinancialTransaction
@@ -282,8 +282,8 @@ class GovernanceGateway:
                         tx_amount = float(arguments[key])
                         break
                     except (ValueError, TypeError):
+                        # Expected: silently ignore exception during cleanup or fallback
                         pass
-
             fin_tx = FinancialTransaction(
                 tx_id=f"TX-{secrets.token_hex(6).upper()}",
                 initiator_agent_id=agent_id,

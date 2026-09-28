@@ -17,7 +17,6 @@ Features:
 - Safe default fallbacks
 """
 
-import hashlib
 import logging
 import time
 from collections import deque
@@ -347,8 +346,8 @@ class EdgeGovernor:
                 confidences = np.array(detection_result.confidences, dtype=np.float64)
                 return calculate_risk_score_jit(severities, confidences)
         except ImportError:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
         # Fallback to simple calculation
         if not detection_result.severities:
             return 0.0
@@ -459,8 +458,8 @@ class EdgeGovernor:
                 _ = calculate_risk_score_jit(test_severities, test_confidences)
                 logger.info("JIT warmup complete")
         except ImportError:
+            # Expected: silently ignore exception during cleanup or fallback
             pass
-
         # Pre-compute common action decisions
         count = 0
         if common_actions:
@@ -473,6 +472,7 @@ class EdgeGovernor:
                     )
                     count += 1
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
             logger.info(f"Pre-computed {count} common decisions")
         return count

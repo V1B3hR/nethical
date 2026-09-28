@@ -8,8 +8,6 @@ from nethical.security.audit_crypto_curves import (
     scan_repository_for_crypto_curves,
     run_comprehensive_crypto_audit,
     CryptoSecurityViolation,
-    PROHIBITED_BINARY_CURVES,
-    MINIMUM_SECURE_CRYPTOGRAPHY_VERSION,
 )
 from nethical.security.token_vault import ReversibleTokenVault
 

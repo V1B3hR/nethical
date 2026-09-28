@@ -26,7 +26,6 @@ import hashlib
 import json
 import logging
 import math
-import os
 import sys
 import time
 from datetime import datetime, timezone
@@ -91,7 +90,6 @@ else:
 from nethical.ethics.deep_alignment import (
     AntiSycophancyGuard,
     AffectiveSafetyGuard,
-    DeepAlignmentEvaluation,
 )
 from nethical.security.merkle_ledger import MerkleLedger
 
@@ -771,7 +769,7 @@ class DPOTrainerEngine:
             batch_loss = 0.0
             batch_margin = 0.0
             current_beta = self.current_beta
-            for item in batch:
+            for _ in batch:
                 simulated_log_ratio_chosen = 0.45 + (0.15 * epoch)
                 simulated_log_ratio_rejected = -0.30 - (0.10 * epoch)
                 margin = current_beta * (simulated_log_ratio_chosen - simulated_log_ratio_rejected)

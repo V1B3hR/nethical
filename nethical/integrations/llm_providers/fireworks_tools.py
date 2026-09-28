@@ -7,7 +7,7 @@ Fireworks AI integration with Nethical governance.
 Provides a governed wrapper around Fireworks AI's API.
 """
 
-from typing import Any, Dict, List, Optional
+from typing import Any, Dict
 
 from .base import LLMProviderBase, LLMResponse
 

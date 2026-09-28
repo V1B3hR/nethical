@@ -10,7 +10,6 @@ from nethical.security.sso import (
     SSOConfig,
     SAMLConfig,
     SSOError,
-    get_sso_manager,
     set_sso_manager,
 )
 

@@ -14,7 +14,7 @@ thousands of unique synthetic examples for robust "live fire" training.
 
 import base64
 import random
-from typing import List, Dict, Any, Optional
+from typing import List, Dict, Any
 
 
 # Homoglyph mapping: visually similar characters from different alphabets

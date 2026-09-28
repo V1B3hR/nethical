@@ -9,14 +9,11 @@ Validates:
 5. API CORS hardening and GZip compression middleware
 """
 
-import gzip
-import pytest
 from starlette.testclient import TestClient
 
 from nethical.security.token_vault import (
     ReversibleTokenVault,
     SecretsSanitizer,
-    SensitiveEntityType,
 )
 from nethical.streaming.event_stream_manager import (
     EventStreamManager,

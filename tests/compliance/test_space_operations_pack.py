@@ -3,13 +3,10 @@
 
 """Tests for Space Operations Compliance Pack (tests.compliance.test_space_operations_pack)."""
 
-import pytest
 
 from nethical.compliance.packs.space_operations_pack import (
     SpaceComplianceResult,
-    SpaceMissionProfile,
     SpaceOperationsPack,
-    SpaceStandard,
 )
 
 

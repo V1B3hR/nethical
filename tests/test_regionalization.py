@@ -1,6 +1,5 @@
 """Tests for Regionalization & Sharding (F1) features."""
 
-import pytest
 from nethical.core import IntegratedGovernance
 from nethical.core.models import (
     AgentAction,

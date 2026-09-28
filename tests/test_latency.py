@@ -12,7 +12,7 @@ Tests cover:
 import pytest
 import time
 import numpy as np
-from datetime import datetime, timezone
+from datetime import datetime
 
 from nethical.core.latency import (
     LatencyLevel,

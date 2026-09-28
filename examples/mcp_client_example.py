@@ -12,7 +12,6 @@ Prerequisites:
     - requests library: pip install requests
 """
 
-import json
 import requests
 from typing import Dict, Any
 
@@ -250,7 +249,7 @@ ssn = "123-45-6789"
 if __name__ == "__main__":
     try:
         main()
-    except requests.exceptions.ConnectionError as e:
+    except requests.exceptions.ConnectionError:
         print("Error: Could not connect to Nethical MCP server.")
         # Extract base URL from client if available
         try:

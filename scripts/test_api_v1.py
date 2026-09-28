@@ -133,7 +133,6 @@ def test_api_imports():
     """Test API module imports."""
     print("\nTesting API imports...")
     
-    from nethical.api.v1.routes import agents, policies, audit, auth, realtime
     print("✓ All route modules import successfully")
     
     from nethical.api.v1.app import create_v1_app

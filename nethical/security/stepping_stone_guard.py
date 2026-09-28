@@ -22,16 +22,13 @@ Kluczowe mechanizmy obronne:
 
 from __future__ import annotations
 
-import hashlib
-import json
 import logging
 import math
 import time
 from dataclasses import asdict, dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
-from pathlib import Path
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from nethical.security.merkle_ledger import MerkleLedger
 

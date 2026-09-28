@@ -2,7 +2,6 @@
 Unit tests for Phase 3: Enhanced Audit Logging with Blockchain
 """
 
-import pytest
 from datetime import datetime, timedelta, timezone
 from nethical.security.audit_logging import (
     AuditEvent,

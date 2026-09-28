@@ -11,9 +11,7 @@ Version: 1.0.0
 """
 
 import pytest
-import asyncio
-from datetime import datetime, timedelta, timezone
-from typing import Optional
+from datetime import datetime
 
 from nethical.core.compliance.ai_lawyer import (
     AILawyer,

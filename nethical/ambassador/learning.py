@@ -13,12 +13,11 @@ import logging
 import re
 import asyncio
 import random
-import uuid
 from typing import Dict, Any, List, Optional
 from datetime import datetime, timezone
 
 from nethical.ambassador.client import BlyskawicaAmbassador
-from nethical.ml.red_team.attack_generator import AttackGenerator, AttackCategory, GenerationMethod, SafetyConstraints
+from nethical.ml.red_team.attack_generator import AttackGenerator, AttackCategory, GenerationMethod
 from nethical.core.feedback_finetuning import FeedbackLogger, FeedbackType, FeedbackSource
 
 logger = logging.getLogger("nethical.ambassador.learning")
@@ -291,7 +290,7 @@ class AmbassadorKnowledgeSync:
         - FeedbackLogger (nethical.core.feedback_finetuning) do dwustronnego zapisu
         - Pakiety 11 ram prawnych (UK, UE, Polska) oraz ISO 42001 / Kinetic Safety.
         """
-        logger.info("Rozpoczęto synchronizację wiedzy ML z repozytorium do Błyskawicy (cel: %d wariantów)...", num_variants)
+        logger.info("Rozpoczęto synchronizację wiedzy ML z repozytorium do Błyskawicy (cel: %d wariantów)...", int(num_variants))
 
         # 1. Przygotowanie szablonów ataków i dylematów regulacyjnych
         regulatory_templates = {
@@ -593,8 +592,8 @@ class AmbassadorKnowledgeSync:
                 with open(self.dpo_path, "r", encoding="utf-8") as f:
                     dpo_count = sum(1 for _ in f)
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
         logger.info(
             "Zakończono synchronizację ML: wygenerowano %d wariantów, zsynchronizowano %d do Błyskawicy, dataset DPO liczy %d par.",
             len(all_variants), synced_count, dpo_count

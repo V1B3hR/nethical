@@ -11,10 +11,8 @@ Weryfikuje zderzenie Nethical i Ambasadora Błyskawicy z 3 zaawansowanymi wektor
 
 from __future__ import annotations
 
-import json
 import logging
 import sys
-import time
 from pathlib import Path
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
@@ -24,9 +22,6 @@ if str(REPO_ROOT) not in sys.path:
 from nethical.ambassador.swarm_arena import (
     SwarmArenaEngine,
     SwarmAttackPayload,
-    AgentVelocityTier,
-    AgentIntelligenceTier,
-    DefenseCountermeasure,
 )
 from nethical.security.memory_integrity import MemoryIntegrityGuard
 from nethical.security.stepping_stone_guard import (

@@ -5,7 +5,6 @@ dynamic countermeasure selection, Byzantine collusion isolation, and homeostatic
 """
 
 import time
-import pytest
 from nethical.ambassador.swarm_arena import (
     AgentVelocityTier,
     AgentIntelligenceTier,

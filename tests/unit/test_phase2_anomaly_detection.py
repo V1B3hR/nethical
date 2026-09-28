@@ -3,7 +3,7 @@ Unit tests for Phase 2.1: Advanced Anomaly Detection
 """
 
 import pytest
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from nethical.security.anomaly_detection import (
     AnomalyType,
     AnomalyDetectionResult,

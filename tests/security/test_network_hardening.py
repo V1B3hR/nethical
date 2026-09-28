@@ -20,22 +20,20 @@ from __future__ import annotations
 import json
 import socket
 import time
-from unittest.mock import AsyncMock, MagicMock, patch
+from unittest.mock import AsyncMock, patch
 import pytest
 from fastapi.testclient import TestClient
 from starlette.requests import Request
 from starlette.websockets import WebSocketDisconnect
 
 from nethical.api.app import app, get_client_ip, ConnectionManager
-from nethical.api.auth import AuthManager
-from nethical.edge.device_hub import EdgeDeviceHub, EdgeDeviceProfile, DeviceType, ActuationBus
+from nethical.edge.device_hub import EdgeDeviceHub
 from nethical.gateway.a2a_protocol import A2AHandshakeManager, A2ACapabilityBoundary
-from nethical.gateway.openai_proxy import OpenAIGovernanceProxy, ChatMessage
+from nethical.gateway.openai_proxy import OpenAIGovernanceProxy
 from nethical.integrations.webhook import HTTPWebhookDispatcher
 from nethical.security.ssrf_protection import (
     assert_safe_url,
     validate_safe_url,
-    is_ip_private_or_restricted,
     SSRFValidationError,
 )
 

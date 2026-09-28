@@ -5,10 +5,8 @@
 
 import json
 from pathlib import Path
-import pytest
 
 from nethical.ambassador.aiid_ingest import (
-    AIIDIncidentPrecedent,
     AIIDCurriculumEngine,
 )
 

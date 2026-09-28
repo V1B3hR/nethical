@@ -15,9 +15,8 @@ from __future__ import annotations
 
 import logging
 import math
-from datetime import datetime, timezone
 from enum import Enum
-from typing import List, Optional, Tuple
+from typing import List, Optional
 
 from pydantic import BaseModel, Field
 
@@ -104,8 +103,8 @@ class CollisionCourseDetector:
         # Combined position variance (1-sigma sum)
         cov1 = primary_state.covariance
         cov2 = secondary_state.covariance
-        sigma_rad = math.sqrt(cov1.sigma_radial_m ** 2 + cov2.sigma_radial_m ** 2)
-        sigma_cross = math.sqrt(cov1.sigma_crosstrack_m ** 2 + cov2.sigma_crosstrack_m ** 2)
+        sigma_rad = math.hypot(cov1.sigma_radial_m, cov2.sigma_radial_m)
+        sigma_cross = math.hypot(cov1.sigma_crosstrack_m, cov2.sigma_crosstrack_m)
         sigma_comb = max(1.0, math.sqrt((sigma_rad ** 2 + sigma_cross ** 2) / 2.0))
 
         # Foster 2D Collision Probability (Pc)

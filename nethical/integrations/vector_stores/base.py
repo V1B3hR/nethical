@@ -9,7 +9,7 @@ ensuring consistent API and integrated governance checks.
 
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
-from typing import Any, Dict, List, Optional, Union
+from typing import Any, Dict, List, Optional
 from datetime import datetime, timezone
 import logging
 

@@ -19,8 +19,8 @@ if sys.platform == "win32":
         if hasattr(sys.stderr, "reconfigure"):
             sys.stderr.reconfigure(encoding="utf-8", errors="replace")
     except Exception:
+        # Expected: silently ignore exception during cleanup or fallback
         pass
-
 try:
     import click
 except ImportError:

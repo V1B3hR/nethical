@@ -20,10 +20,9 @@ Integruje empiryczne wskaźniki ładu państwowego i jakości regulacji:
 from __future__ import annotations
 
 import logging
-from dataclasses import dataclass
 from datetime import datetime, timezone
 from enum import Enum
-from typing import Any, Dict, List, Optional, Tuple
+from typing import Dict, List, Optional
 
 from pydantic import BaseModel, Field
 

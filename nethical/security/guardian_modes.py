@@ -9,7 +9,6 @@ SPRINT, CRUISE, ALERT, DEFENSE, LOCKDOWN
 
 from enum import Enum
 from dataclasses import dataclass
-from typing import Set
 
 
 class GuardianMode(str, Enum):

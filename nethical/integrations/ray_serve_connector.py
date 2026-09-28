@@ -32,8 +32,7 @@ Features:
     - Integration with Ray observability stack
 """
 
-from typing import Any, Dict, Optional, Callable
-from datetime import datetime, timezone
+from typing import Any, Optional, Callable
 
 from nethical.core.integrated_governance import IntegratedGovernance
 from nethical.integrations._decision_logic import compute_decision
@@ -109,7 +108,7 @@ class NethicalRayServeMiddleware:
         # Call the actual model
         try:
             output = self.deployment(request)
-        except Exception as e:
+        except Exception:
             # Log detailed error internally but return sanitized message
             # TODO: Implement proper logging
             return {

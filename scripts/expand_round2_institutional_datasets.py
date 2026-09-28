@@ -18,7 +18,7 @@ import json
 import logging
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Any, Dict, List, Set, Tuple
+from typing import Any, Dict, List, Set
 
 REPO_ROOT = Path(__file__).resolve().parent.parent
 DATASET_PATH = REPO_ROOT / "data" / "ambassador_dpo_dataset.jsonl"
@@ -353,8 +353,8 @@ def main() -> None:
                         seen_prompts.add(p_str)
                         existing.append(obj)
                 except Exception:
+                    # Expected: silently ignore exception during cleanup or fallback
                     pass
-
     before_count = len(existing)
     added = 0
     for r in new_records:

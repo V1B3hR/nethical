@@ -3,13 +3,11 @@
 
 """Zestaw testów jednostkowych dla modułu obrony przed atakiem 'Cichy Cel' (SilentTargetSteppingStoneGuard)."""
 
-import pytest
 
 from nethical.security.stepping_stone_guard import (
     SilentTargetSteppingStoneGuard,
     NetworkTier,
     NetworkHop,
-    SteppingStoneAlert,
 )
 from nethical.security.merkle_ledger import MerkleLedger
 

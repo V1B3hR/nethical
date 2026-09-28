@@ -8,13 +8,11 @@ production readiness checklist.
 import pytest
 import tempfile
 import shutil
-from pathlib import Path
-from datetime import datetime, timezone, timedelta
+from datetime import datetime
 
 # Section 8: Plugin Trust
 from nethical.marketplace.plugin_trust import (
     PluginTrustSystem,
-    TrustGatingResult,
     PluginTrustCheck
 )
 from nethical.marketplace.plugin_governance import PluginGovernance
@@ -37,8 +35,7 @@ from nethical.explainability.quarterly_transparency import (
 # Section 11: Release & Change
 from nethical.policy.release_management import (
     PolicyPack,
-    DeploymentStage,
-    CanaryConfig
+    DeploymentStage
 )
 
 # Section 12: Compliance

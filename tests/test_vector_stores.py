@@ -5,8 +5,7 @@ Tests the vector store integration interfaces including Pinecone, Weaviate, Chro
 """
 
 import pytest
-from unittest.mock import Mock, MagicMock, patch
-from typing import List, Dict, Any
+from unittest.mock import MagicMock, patch
 
 # Import base classes
 from nethical.integrations.vector_stores.base import (

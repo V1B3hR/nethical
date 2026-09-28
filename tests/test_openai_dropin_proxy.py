@@ -7,7 +7,6 @@ from fastapi.testclient import TestClient
 from nethical.api import app
 from nethical.gateway.openai_proxy import (
     OpenAIGovernanceProxy,
-    ChatCompletionRequest,
     ChatMessage,
 )
 from nethical.gateway.proxy import GovernanceGateway

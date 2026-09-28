@@ -3,14 +3,11 @@
 
 """Tests for nethical.hooks protocols and extension point interfaces."""
 
-from datetime import datetime, timezone
-from typing import Any, Mapping, Optional, Iterable, Tuple
-import pytest
+from datetime import timezone
+from typing import Any, Mapping, Optional, Tuple
 
 from nethical.hooks import (
     Region,
-    Purpose,
-    PrincipalId,
     PeerId,
     RoleName,
     FeatureName,
@@ -24,7 +21,6 @@ from nethical.hooks import (
     CommsPolicy,
     GeoFenceProvider,
     OfflineStore,
-    RoleAuthorityResolver,
     ExportControlAdvisor,
 )
 

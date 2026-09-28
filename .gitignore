@@ -11,6 +11,8 @@ __pycache__/
 *.py[cod]
 *$py.class
 *.so
+*.db-shm
+*.db-wal
 .Python
 build/
 develop-eggs/

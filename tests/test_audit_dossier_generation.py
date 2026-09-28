@@ -5,7 +5,6 @@ Validates generation of regulatory compliance packages and integrity of Merkle a
 
 from pathlib import Path
 import json
-import pytest
 from training.generate_audit_dossier import (
     generate_eu_ai_act_annex_iv_dossier,
     generate_iso_42001_dossier,

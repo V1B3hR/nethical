@@ -360,7 +360,7 @@ class AuthManager:
             raise InvalidTokenError("Invalid API key credentials")
 
         api_key.last_used_at = datetime.now(timezone.utc)
-        log.info(f"API key {key_id} verified")
+        log.info("API key verified successfully")
         return api_key
 
     def revoke_api_key(self, key_id: str) -> None:
@@ -427,4 +427,3 @@ def authenticate_request(
         except (TokenExpiredError, InvalidTokenError) as e:
             raise AuthenticationError(str(e))
 
-    raise AuthenticationError("Authentication failed")

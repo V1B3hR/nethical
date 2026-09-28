@@ -3,7 +3,7 @@
 
 """Databricks integration with Nethical governance."""
 
-from typing import Dict, Any, Optional, List
+from typing import Dict, Any, Optional
 import logging
 
 from .base import CloudMLProvider, ExperimentRun, RunStatus

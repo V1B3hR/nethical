@@ -18,7 +18,6 @@ Alignment: Law 23 (Fail-Safe Design), Law 22 (Boundary Respect)
 
 from __future__ import annotations
 
-import asyncio
 import logging
 import time
 from dataclasses import dataclass, field

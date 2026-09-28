@@ -34,8 +34,7 @@ from nethical.observability import (
     get_tracer,
     sanitize_log,
     sanitize_dict,
-    AlertRuleManager,
-    AlertSeverity
+    AlertRuleManager
 )
 
 

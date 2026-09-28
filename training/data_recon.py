@@ -14,7 +14,7 @@ from __future__ import annotations
 import argparse
 import logging
 from pathlib import Path
-from typing import TYPE_CHECKING, Dict, List, Optional, Set, Tuple
+from typing import Dict, List, Optional, Set, Tuple
 
 # Setup logging
 logging.basicConfig(level=logging.INFO, format="%(asctime)s | [RECON] %(message)s")

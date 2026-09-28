@@ -149,8 +149,8 @@ class DataSubjectRequest:
             try:
                 completed_at = datetime.fromisoformat(data["completed_at"])
             except Exception:
+                # Expected: silently ignore exception during cleanup or fallback
                 pass
-
         return cls(
             request_id=data["request_id"],
             request_type=RequestType(data["request_type"]),

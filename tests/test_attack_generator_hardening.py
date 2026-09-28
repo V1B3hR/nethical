@@ -17,7 +17,6 @@ Verifies:
 """
 
 import pytest
-import asyncio
 from nethical.ml.red_team.attack_generator import (
     AttackGenerator,
     AttackCategory,
@@ -50,7 +49,7 @@ class TestAttackGeneratorHardening:
         """K-7: Ensure no category returns generic 'Generated {category} attack variant'."""
         generator = AttackGenerator(seed=101)
 
-        for category in AttackCategory:
+        for category in AttackCategory.__members__.values():
             variants = await generator.generate_variants(category, count=3)
             assert len(variants) == 3
             for v in variants:

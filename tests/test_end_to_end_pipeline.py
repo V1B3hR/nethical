@@ -5,7 +5,6 @@ This test creates sample datasets, processes them, and trains a model.
 """
 import json
 import random
-import shutil
 import tempfile
 from pathlib import Path
 import sys

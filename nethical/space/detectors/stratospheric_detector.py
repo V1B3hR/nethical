@@ -13,11 +13,10 @@ EMF/RF spectrum eavesdropping prevention, and U-space / civil airspace climb-des
 from __future__ import annotations
 
 import logging
-from datetime import datetime, timezone
 from enum import Enum
 from typing import Dict, List, Optional
 
-from pydantic import BaseModel, Field
+from pydantic import BaseModel
 
 logger = logging.getLogger("nethical.space.detectors.stratospheric_detector")
 

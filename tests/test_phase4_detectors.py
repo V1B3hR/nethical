@@ -13,22 +13,19 @@ from datetime import datetime, timezone, timedelta
 # Red Team imports
 from nethical.ml.red_team import (
     AttackGenerator, AttackCategory, GenerationMethod,
-    CoverageOptimizer, CoverageGap,
-    DetectorChallenger, ChallengeType, DetectorWeakness,
+    CoverageOptimizer, DetectorChallenger, ChallengeType,
 )
 
 # Canary System imports
 from nethical.detectors.canary import (
     HoneypotDetector, HoneypotType,
     TripwireDetector, EndpointType,
-    WatermarkDetector, WatermarkType,
+    WatermarkDetector,
 )
 
 # Dynamic Registry imports
 from nethical.core.dynamic_registry import (
-    AutoRegistration, RegistrationStage, ValidationResult,
-    AutoDeprecation, DeprecationReason, ArchiveStatus,
-    RegistryManager,
+    AutoRegistration, AutoDeprecation, DeprecationReason, RegistryManager,
 )
 
 
