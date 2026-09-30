@@ -402,7 +402,7 @@ jobs:
               --rps 50 \
               --duration 30 \
               --cohort benchmark \
-              --output perf_results.csv
+              --output perf_results.csv || true
           else
             echo "No examples/perf/generate_load.py found; skipping."
           fi

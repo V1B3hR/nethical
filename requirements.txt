@@ -14,6 +14,8 @@ argon2-cffi==25.1.0
 # Web server framework (optional - for API server)
 fastapi==0.141.1
 uvicorn==0.54.0
+cachetools==5.5.2
+httpx>=0.27.0
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
 # SSE functionality is not currently used in the codebase.
