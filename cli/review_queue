@@ -29,7 +29,7 @@ import sys
 import argparse
 from pathlib import Path
 from datetime import datetime
-from typing import Any, Dict, List, Optional
+from typing import Any
 
 # Add parent directory to path for imports
 sys.path.insert(0, str(Path(__file__).parent.parent))
@@ -50,10 +50,8 @@ if hasattr(sys.stderr, 'reconfigure'):
 from nethical.core import (
     EscalationQueue,
     FeedbackTag,
-    ReviewStatus,
-    ReviewPriority,
 )
-from nethical.core.human_feedback import EscalationCase, HumanFeedback, SLAMetrics
+from nethical.core.human_feedback import EscalationCase
 
 
 def _format_datetime(dt: Any) -> str:

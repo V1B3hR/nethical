@@ -397,7 +397,29 @@ __all__ = [
     "DataDiodeBridge",
     "SovereignPackage",
     "SovereignPackageHeader",
+    # MLS Compartments & OPSEC Classification Guard
+    "MLSSecurityGuard",
+    "SecurityClearanceLevel",
+    "CompartmentCodeword",
+    "SubjectClearance",
+    "DocumentObjectClassification",
+    "MACEnforcementResult",
+    "OPSECInspectionResult",
+    "OPSECLeakFinding",
+    "OPSECCategory",
 ]
+
+from .mls_compartments import (
+    MLSSecurityGuard,
+    SecurityClearanceLevel,
+    CompartmentCodeword,
+    SubjectClearance,
+    DocumentObjectClassification,
+    MACEnforcementResult,
+    OPSECInspectionResult,
+    OPSECLeakFinding,
+    OPSECCategory,
+)
 
 from .data_diode import (
     DataDiodeBridge,
@@ -451,6 +473,30 @@ from .os_sandbox import (
     SandboxLimits,
     SomaticHostMetrics,
 )
+
+from .counter_reconnaissance import (
+    ForeignReconGuard,
+    ReconTechnique,
+    ReconSeverity,
+    CounterMeasure,
+    ReconInspectionResult,
+    ReconCampaignAlert,
+    PolymorphicVariantClusterer,
+    FrontierBoundaryTracker,
+    DeceptiveShadowingEngine,
+    CrossAgentSalamiCorrelator,
+)
+
+from .pkcs11_hsm_bridge import (
+    HSMPKCS11OfficerBridge,
+    VirtualPKCS11Enclave,
+    HardwareKeyAttestation,
+    SlotSecurityLevel,
+    PKCS11Mechanism,
+    PKCS11Session,
+)
+
+
 
 
 

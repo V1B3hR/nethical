@@ -209,12 +209,26 @@ class AuthManager:
 
         self._revocation_store = revocation_store
         self._revocation_checker = revocation_checker
+        self._revocation_file = os.environ.get("NETHICAL_REVOCATION_FILE")
 
-        if not revocation_store:
+        if not revocation_store and self._revocation_file:
+            try:
+                from pathlib import Path
+                rf = Path(self._revocation_file)
+                if rf.exists():
+                    with open(rf, "r", encoding="utf-8") as f:
+                        for line in f:
+                            j = line.strip()
+                            if j:
+                                self._revoked_tokens.add(j)
+                    log.info(f"Loaded {len(self._revoked_tokens)} revoked tokens from {self._revocation_file}")
+            except Exception as e:
+                log.error(f"Failed to load revocation file {self._revocation_file}: {e}")
+        elif not revocation_store:
             log.warning(
                 "AuthManager: Token revocation storage is in-memory only. "
-                "Revoked tokens will be lost on restart.   For production, "
-                "provide revocation_store and revocation_checker callbacks."
+                "Revoked tokens will be lost on restart. For production, "
+                "set NETHICAL_REVOCATION_FILE or provide revocation_store."
             )
 
         log.info("AuthManager initialized with secure secret key")
@@ -234,6 +248,15 @@ class AuthManager:
         self._revoked_tokens.add(jti)
         if self._revocation_store:
             self._revocation_store(jti)
+        elif getattr(self, "_revocation_file", None):
+            try:
+                from pathlib import Path
+                rf = Path(self._revocation_file)
+                rf.parent.mkdir(parents=True, exist_ok=True)
+                with open(rf, "a", encoding="utf-8") as f:
+                    f.write(f"{jti}\n")
+            except Exception as e:
+                log.error(f"Failed to persist revocation to {self._revocation_file}: {e}")
 
     def _encode_token(self, payload: TokenPayload) -> str:
         return jwt.encode(

@@ -75,22 +75,20 @@ def regex_timeout(seconds: int = REGEX_TIMEOUT_SECONDS):
     """
     Context manager for regex operations with timeout protection.
 
-    Note: Uses SIGALRM, so only works on Unix-like systems.
-    On Windows, the timeout is not enforced but input length limits still apply.
+    Uses SIGALRM on POSIX systems. On Windows, safe_regex_search provides
+    thread-based timeout enforcement.
     """
     import sys
-    if sys.platform == "win32":
-        # Windows doesn't support SIGALRM; just yield
+    if sys.platform != "win32" and hasattr(signal, "SIGALRM"):
+        old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
+        signal.alarm(seconds)
+        try:
+            yield
+        finally:
+            signal.alarm(0)
+            signal.signal(signal.SIGALRM, old_handler)
+    else:
         yield
-        return
-
-    old_handler = signal.signal(signal.SIGALRM, _timeout_handler)
-    signal.alarm(seconds)
-    try:
-        yield
-    finally:
-        signal.alarm(0)
-        signal.signal(signal.SIGALRM, old_handler)
 
 
 def safe_regex_search(
@@ -101,7 +99,9 @@ def safe_regex_search(
     max_length: int = MAX_REGEX_INPUT_LENGTH,
 ) -> Optional[re.Match]:
     """
-    Safely execute regex search with timeout and length limits.
+    Safely execute regex search with timeout and length limits (CWE-1333).
+
+    Cross-platform: Enforces timeout on Windows and Unix via ThreadPoolExecutor.
 
     Args:
         pattern: Regex pattern
@@ -123,12 +123,18 @@ def safe_regex_search(
         )
         content = content[:max_length]
 
-    try:
-        with regex_timeout(timeout):
-            return re.search(pattern, content, flags)
-    except RegexTimeoutError:
-        log.warning(f"Regex pattern timed out (possible ReDoS): {pattern[:50]}...")
-        raise
+    import concurrent.futures
+
+    def _exec_search():
+        return re.search(pattern, content, flags)
+
+    with concurrent.futures.ThreadPoolExecutor(max_workers=1) as executor:
+        future = executor.submit(_exec_search)
+        try:
+            return future.result(timeout=timeout)
+        except concurrent.futures.TimeoutError:
+            log.warning(f"Regex pattern timed out (possible ReDoS): {str(pattern)[:50]}...")
+            raise RegexTimeoutError("Regex operation timed out - possible ReDoS attack")
 
 
 class ThreatLevel(str, Enum):

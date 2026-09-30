@@ -14,11 +14,15 @@ Provides satellite-aware caching with:
 """
 
 import asyncio
+import base64
 import gzip
 import hashlib
+import hmac
 import json
 import logging
-import pickle
+# SECURITY: pickle is intentionally NOT used here.
+# pickle.loads() allows arbitrary code execution (CWE-502/RCE).
+# All serialization uses JSON which is safe against code injection.
 import tempfile
 import time
 from dataclasses import dataclass, field
@@ -258,7 +262,7 @@ class SatelliteCache:
         # Compress if beneficial
         compressed = False
         stored_value = value
-        size_bytes = len(pickle.dumps(value))
+        size_bytes = self._calculate_size(value)
 
         if (
             self.config.compression_enabled
@@ -286,7 +290,7 @@ class SatelliteCache:
             sync_state=SyncState.PENDING if write_through else SyncState.SYNCED,
             checksum=self._calculate_checksum(stored_value),
             compressed=compressed,
-            size_bytes=len(pickle.dumps(stored_value)),
+            size_bytes=self._calculate_size(stored_value),
             origin_region=self.region_id,
         )
 
@@ -543,17 +547,38 @@ class SatelliteCache:
         self._callbacks[event].append(callback)
 
     def _compress(self, value: Any) -> bytes:
-        """Compress value for storage."""
-        data = pickle.dumps(value)
+        """Compress value for storage using safe JSON serialization.
+
+        SECURITY: Uses json.dumps instead of pickle.dumps to prevent
+        arbitrary code execution during deserialization (CWE-502).
+        """
+        data = json.dumps(value, default=str).encode("utf-8")
         return gzip.compress(data, compresslevel=self.config.compression_level)
 
     def _decompress(self, data: bytes) -> Any:
-        """Decompress stored value."""
-        return pickle.loads(gzip.decompress(data))
+        """Decompress stored value using safe JSON deserialization.
+
+        SECURITY: Uses json.loads instead of pickle.loads to prevent
+        Remote Code Execution (RCE) attacks via crafted payloads.
+        """
+        return json.loads(gzip.decompress(data).decode("utf-8"))
+
+    def _calculate_size(self, val: Any) -> int:
+        """Calculate serialized size of a value safely without pickle."""
+        if isinstance(val, bytes):
+            return len(val)
+        if isinstance(val, str):
+            return len(val.encode("utf-8"))
+        try:
+            return len(json.dumps(val, default=str).encode("utf-8"))
+        except Exception:
+            return len(str(val).encode("utf-8"))
 
     def _calculate_checksum(self, value: Any) -> str:
         """Calculate checksum for value."""
-        data = pickle.dumps(value)
+        if isinstance(value, bytes):
+            return hashlib.sha256(value).hexdigest()[:16]
+        data = json.dumps(value, default=str, sort_keys=True).encode("utf-8")
         return hashlib.sha256(data).hexdigest()[:16]
 
     def _is_expired(self, entry: CacheEntry) -> bool:
@@ -565,19 +590,53 @@ class SatelliteCache:
         return now > expiry
 
     def _save_to_persistence(self, entry: CacheEntry):
-        """Save entry to persistent storage."""
+        """Save entry to persistent storage using safe JSON serialization.
+
+        SECURITY: Uses json.dump instead of pickle.dump to prevent RCE.
+        Stored data is integrity-protected with HMAC-SHA256.
+        """
         if not self.config.persistence_enabled:
             return
 
         try:
             file_path = self._persistence_path / f"{entry.key}.cache"
-            with open(file_path, "wb") as f:
-                pickle.dump(entry, f)
+            # Handle bytes values safely (e.g., when compressed)
+            if isinstance(entry.value, bytes):
+                encoded_val = {"__type__": "bytes", "b64": base64.b64encode(entry.value).decode("ascii")}
+            else:
+                encoded_val = {"__type__": "raw", "data": entry.value}
+
+            serializable = {
+                "key": entry.key,
+                "value": encoded_val,
+                "created_at": entry.created_at.isoformat() if hasattr(entry.created_at, 'isoformat') else str(entry.created_at),
+                "updated_at": entry.updated_at.isoformat() if hasattr(entry.updated_at, 'isoformat') else str(entry.updated_at),
+                "ttl_seconds": entry.ttl_seconds,
+                "version": entry.version,
+                "sync_state": entry.sync_state.value if hasattr(entry.sync_state, 'value') else str(entry.sync_state),
+                "checksum": entry.checksum,
+                "compressed": entry.compressed,
+                "size_bytes": entry.size_bytes,
+                "origin_region": entry.origin_region,
+            }
+            data_bytes = json.dumps(serializable, sort_keys=True, default=str).encode("utf-8")
+
+            # Compute HMAC for integrity verification
+            hmac_key = hashlib.sha256(b"nethical-cache-integrity").digest()
+            signature = hmac.new(hmac_key, data_bytes, hashlib.sha256).hexdigest()
+
+            with open(file_path, "w", encoding="utf-8") as f:
+                json.dump({"data": serializable, "hmac": signature}, f)
         except Exception as e:
             logger.error(f"Failed to persist cache entry {entry.key}: {e}")
 
     def _load_from_persistence(self, key: str) -> Optional[CacheEntry]:
-        """Load entry from persistent storage."""
+        """Load entry from persistent storage using safe JSON deserialization.
+
+        SECURITY: Uses json.load instead of pickle.load to prevent
+        Remote Code Execution (RCE) attacks. Verifies HMAC integrity
+        to detect tampered cache files.
+        """
         if not self.config.persistence_enabled:
             return None
 
@@ -586,8 +645,42 @@ class SatelliteCache:
             if not file_path.exists():
                 return None
 
-            with open(file_path, "rb") as f:
-                entry = pickle.load(f)
+            with open(file_path, "r", encoding="utf-8") as f:
+                wrapper = json.load(f)
+
+            # Verify HMAC integrity
+            hmac_key = hashlib.sha256(b"nethical-cache-integrity").digest()
+            data_bytes = json.dumps(wrapper["data"], sort_keys=True, default=str).encode("utf-8")
+            expected_hmac = hmac.new(hmac_key, data_bytes, hashlib.sha256).hexdigest()
+
+            if not hmac.compare_digest(wrapper.get("hmac", ""), expected_hmac):
+                logger.error(f"Cache integrity check FAILED for key {key}: HMAC mismatch (possible tampering)")
+                file_path.unlink()  # Remove tampered file
+                return None
+
+            d = wrapper["data"]
+            raw_val = d["value"]
+            if isinstance(raw_val, dict) and raw_val.get("__type__") == "bytes":
+                actual_val = base64.b64decode(raw_val["b64"])
+            elif isinstance(raw_val, dict) and raw_val.get("__type__") == "raw":
+                actual_val = raw_val["data"]
+            else:
+                actual_val = raw_val
+
+            from datetime import datetime
+            entry = CacheEntry(
+                key=d["key"],
+                value=actual_val,
+                created_at=datetime.fromisoformat(d["created_at"]).replace(tzinfo=timezone.utc) if d.get("created_at") else datetime.now(timezone.utc),
+                updated_at=datetime.fromisoformat(d["updated_at"]).replace(tzinfo=timezone.utc) if d.get("updated_at") else datetime.now(timezone.utc),
+                ttl_seconds=d.get("ttl_seconds", 1800),
+                version=d.get("version", 1),
+                sync_state=SyncState(d["sync_state"]) if d.get("sync_state") else SyncState.SYNCED,
+                checksum=d.get("checksum", ""),
+                compressed=d.get("compressed", False),
+                size_bytes=d.get("size_bytes", 0),
+                origin_region=d.get("origin_region", ""),
+            )
 
             if self._is_expired(entry):
                 file_path.unlink()

@@ -14,11 +14,16 @@ This module provides:
 
 import hashlib
 import json
+import logging
+import os
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
+from pathlib import Path
 from typing import Dict, List, Optional, Any
+
+logger = logging.getLogger(__name__)
 
 
 class AuditEventType(str, Enum):
@@ -161,14 +166,106 @@ class DigitalSignature:
 
 
 class AuditBlockchain:
-    """Blockchain-based audit log storage"""
+    """Blockchain-based audit log storage with durable persistence support (CWE-778)."""
 
-    def __init__(self, difficulty: int = 2):
+    def __init__(self, difficulty: int = 2, storage_path: Optional[str] = None):
         self.chain: List[BlockchainBlock] = []
         self.pending_events: List[AuditEvent] = []
         self.difficulty = difficulty
         self.max_events_per_block = 100
-        self._create_genesis_block()
+        self.storage_path = storage_path or os.environ.get("NETHICAL_AUDIT_LOG_PATH")
+
+        loaded = False
+        if self.storage_path:
+            loaded = self._load_chain_from_disk()
+
+        if not loaded or not self.chain:
+            self._create_genesis_block()
+
+    def _persist_block(self, block: BlockchainBlock):
+        """Append block to persistent storage for durable audit trail."""
+        if not self.storage_path:
+            return
+        try:
+            p = Path(self.storage_path)
+            p.parent.mkdir(parents=True, exist_ok=True)
+            block_dict = {
+                "index": block.index,
+                "timestamp": block.timestamp.isoformat(),
+                "events": [
+                    {
+                        "id": e.id,
+                        "timestamp": e.timestamp.isoformat(),
+                        "event_type": e.event_type.value,
+                        "severity": e.severity.value,
+                        "user_id": e.user_id,
+                        "action": e.action,
+                        "resource": e.resource,
+                        "result": e.result,
+                        "ip_address": e.ip_address,
+                        "user_agent": e.user_agent,
+                        "details": e.details,
+                        "metadata": e.metadata,
+                    }
+                    for e in block.events
+                ],
+                "previous_hash": block.previous_hash,
+                "nonce": block.nonce,
+                "hash": block.hash,
+            }
+            with open(p, "a", encoding="utf-8") as f:
+                f.write(json.dumps(block_dict) + "\n")
+        except Exception as e:
+            logger.warning(f"Failed to persist audit block {block.index}: {e}")
+
+    def _load_chain_from_disk(self) -> bool:
+        """Load audit chain from disk storage."""
+        if not self.storage_path:
+            return False
+        p = Path(self.storage_path)
+        if not p.exists():
+            return False
+        try:
+            chain: List[BlockchainBlock] = []
+            with open(p, "r", encoding="utf-8") as f:
+                for line in f:
+                    line = line.strip()
+                    if not line:
+                        continue
+                    b = json.loads(line)
+                    events = [
+                        AuditEvent(
+                            id=e["id"],
+                            timestamp=datetime.fromisoformat(e["timestamp"]),
+                            event_type=AuditEventType(e["event_type"]),
+                            severity=AuditSeverity(e["severity"]) if "severity" in e else AuditSeverity.INFO,
+                            user_id=e["user_id"],
+                            action=e["action"],
+                            resource=e["resource"],
+                            result=e["result"],
+                            ip_address=e.get("ip_address"),
+                            user_agent=e.get("user_agent"),
+                            details=e.get("details", {}),
+                            metadata=e.get("metadata", {}),
+                        )
+                        for e in b.get("events", [])
+                    ]
+                    block = BlockchainBlock(
+                        index=b["index"],
+                        timestamp=datetime.fromisoformat(b["timestamp"]),
+                        events=events,
+                        previous_hash=b["previous_hash"],
+                        nonce=b.get("nonce", 0),
+                        hash=b["hash"],
+                    )
+                    chain.append(block)
+            if chain:
+                self.chain = chain
+                return True
+        except Exception as e:
+            logger.warning(f"Failed to load audit chain from {self.storage_path}: {e}")
+            return False
+        return False
 
     def _create_genesis_block(self):
         """Create the first block in the chain"""
@@ -177,6 +274,7 @@ class AuditBlockchain:
         )
         genesis.mine_block(self.difficulty)
         self.chain.append(genesis)
+        self._persist_block(genesis)
 
     def add_event(self, event: AuditEvent):
         """Add event to pending events"""
@@ -201,6 +299,7 @@ class AuditBlockchain:
         new_block.mine_block(self.difficulty)
 
         self.chain.append(new_block)
+        self._persist_block(new_block)
         self.pending_events.clear()
         return new_block
 

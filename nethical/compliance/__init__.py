@@ -70,4 +70,48 @@ __all__ = [
     "ComplianceFramework",
     "ComplianceReport",
     "ValidationResult",
+    # Wave 3: AI Vendor & Model Supply Chain Governance
+    "AIVendorSupplyChainManager",
+    "VendorRiskAssessment",
+    "ModelWeightAttestation",
+    "AISoftwareBillOfMaterials",
+    "ModelAdmissionDecision",
+    "VendorTier",
+    "ModelArtifactFormat",
+    "LicenseRiskLevel",
+    "AdmissionVerdict",
+    "SupplyChainFinding",
+    # Sanctions Screening & Dual-Use Export Control
+    "SanctionsAndExportScreeningEngine",
+    "SanctionedEntity",
+    "SanctionRegime",
+    "ScreeningVerdict",
+    "DualUseCategory",
+    "ExportClassification",
+    "CounterpartyProfile",
+    "SanctionsScreeningResult",
 ]
+
+from .vendor_supply_chain import (
+    AIVendorSupplyChainManager,
+    VendorRiskAssessment,
+    ModelWeightAttestation,
+    AISoftwareBillOfMaterials,
+    ModelAdmissionDecision,
+    VendorTier,
+    ModelArtifactFormat,
+    LicenseRiskLevel,
+    AdmissionVerdict,
+    SupplyChainFinding,
+)
+
+from .sanctions_screening import (
+    SanctionsAndExportScreeningEngine,
+    SanctionedEntity,
+    SanctionRegime,
+    ScreeningVerdict,
+    DualUseCategory,
+    ExportClassification,
+    CounterpartyProfile,
+    SanctionsScreeningResult,
+)

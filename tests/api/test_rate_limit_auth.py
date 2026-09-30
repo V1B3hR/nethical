@@ -6,11 +6,10 @@ from httpx import AsyncClient, ASGITransport
 
 # Try to import the API
 try:
-    from nethical.api import app
+    import nethical.api
     API_AVAILABLE = True
 except ImportError:
     API_AVAILABLE = False
-    app = None
 
 
 pytestmark = pytest.mark.skipif(

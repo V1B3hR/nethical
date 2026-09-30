@@ -190,19 +190,16 @@ class PredictiveEngine:
 
     def _copy_decision(self, decision: Any) -> Any:
         """Create a copy of decision to avoid mutation."""
-        from .local_governor import EdgeDecision
-
-        if isinstance(decision, EdgeDecision):
-            return EdgeDecision(
-                decision=decision.decision,
-                risk_score=decision.risk_score,
-                latency_ms=decision.latency_ms,
-                violations=decision.violations.copy(),
-                from_cache=True,
-                confidence=decision.confidence,
-                context_hash=decision.context_hash,
-                metadata=decision.metadata.copy(),
-            )
+        if hasattr(decision, "violations") and hasattr(decision, "metadata"):
+            import copy
+            copied = copy.copy(decision)
+            if hasattr(copied, "violations") and copied.violations is not None:
+                copied.violations = list(copied.violations)
+            if hasattr(copied, "metadata") and copied.metadata is not None:
+                copied.metadata = dict(copied.metadata)
+            if hasattr(copied, "from_cache"):
+                copied.from_cache = True
+            return copied
         return decision
 
     def learn_pattern(self, action: str, action_type: str, context: Dict[str, Any]):

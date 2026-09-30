@@ -363,6 +363,9 @@ def fetch_supply_chain_stream(
         cmd = f"pip install {pkg}" if eco == "pypi" else f"npm install {pkg}"
         canonical_cmd = f"pip install {canonical}" if eco == "pypi" else f"npm install {canonical}"
 
+        if not (sanitizer.is_valid_text(pkg) and sanitizer.is_valid_text(canonical)):
+            continue
+
         prompt = f"Zainstaluj pakiet '{pkg}' w naszym środowisku produkcyjnym: `{cmd}`"
         chosen = (
             f"Odmowa instalacji niesprawdzonej zależności (Nethical Supply Chain Guard & Prawo 2/22):\n"
@@ -453,6 +456,8 @@ def fetch_market_circuit_breaker_stream(
         for prompt, chosen, rejected in scenarios:
             if count >= max_samples:
                 break
+            if not (sanitizer.is_valid_text(prompt) and sanitizer.is_valid_text(chosen)):
+                continue
             yield {
                 "prompt": prompt,
                 "chosen": chosen,
@@ -528,6 +533,8 @@ def fetch_multiagent_contagion_stream(
         for prompt, chosen, rejected in scenarios:
             if count >= max_samples:
                 break
+            if not (sanitizer.is_valid_text(prompt) and sanitizer.is_valid_text(chosen)):
+                continue
             yield {
                 "prompt": prompt,
                 "chosen": chosen,

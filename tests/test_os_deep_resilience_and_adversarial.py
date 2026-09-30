@@ -74,12 +74,6 @@ class TestCrossPlatformEnvironmentalResilience:
         """Tests somatic homeostasis transitions from calm to elevated and severe memory strain."""
         sandbox = WindowsJobObjectSandbox()
 
-        class MockMemoryStatus:
-            dwLength = 64
-            dwMemoryLoad = mock_load
-            ullTotalPhys = 16 * 1024 * 1024 * 1024
-            ullAvailPhys = int((1.0 - (mock_load / 100.0)) * 16 * 1024 * 1024 * 1024)
-
         def mock_global_mem(byref_stat):
             byref_stat._obj.dwMemoryLoad = mock_load
             byref_stat._obj.ullTotalPhys = 16 * 1024 * 1024 * 1024

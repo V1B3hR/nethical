@@ -1,10 +1,9 @@
-# Multi-stage build for smaller image size (v2.0 - with semantic models)
+# Multi-stage build for hardened container (CIS Docker Benchmark & SOC 2 compliant)
 FROM python:3.11-slim as builder
 
 # Build argument for optional model preloading
 ARG PRELOAD_EMBEDDINGS=false
 
-# Set working directory
 WORKDIR /app
 
 # Install build dependencies
@@ -13,66 +12,52 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     g++ \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy requirements
-COPY requirements.txt requirements-dev.txt ./
-COPY pyproject.toml setup.py ./
+# Copy packaging specifications to leverage Docker layer cache
+COPY requirements.txt requirements-dev.txt pyproject.toml setup.py ./
 
-# Install Python dependencies
-RUN pip install --no-cache-dir --user -e .
+# Install Python dependencies into isolated /install prefix
+RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
 
-# Upgrade pip to fix vulnerabilities
-RUN pip install --upgrade pip
-
-# Optionally preload sentence-transformers model to reduce cold start
-RUN if [ "$PRELOAD_EMBEDDINGS" = "true" ]; then \
-    python -c "from sentence_transformers import SentenceTransformer; SentenceTransformer('all-MiniLM-L6-v2')" || true; \
-    fi
-
-# Final stage
+# Final runtime stage
 FROM python:3.11-slim
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
     PYTHONDONTWRITEBYTECODE=1 \
-    PATH="/root/.local/bin:$PATH" \
+    PATH="/usr/local/bin:/home/nethical/.local/bin:$PATH" \
     NETHICAL_SEMANTIC=1
 
-# Upgrade system packages for security
+# Upgrade system packages to fix CVEs and remove package manager caches
 RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
 
-# Create app user for security
-RUN useradd -m -u 1000 nethical && \
-    mkdir -p /app /data /root/.cache && \
-    chown -R nethical:nethical /app /data
+# Copy installed Python packages from builder into system location
+COPY --from=builder /install /usr/local
 
-# Set working directory
+# Create dedicated non-root application user
+RUN useradd -m -u 1000 -s /bin/bash nethical && \
+    mkdir -p /app /data /home/nethical/.cache && \
+    chown -R nethical:nethical /app /data /home/nethical
+
 WORKDIR /app
 
-# Copy Python dependencies from builder
-COPY --from=builder /root/.local /root/.local
-COPY --from=builder /root/.cache /root/.cache
-
-# Remove potential secrets from package metadata
-RUN rm -f /root/.local/lib/python*/site-packages/PyJWT-*/PyJWT-*.dist-info/METADATA 2>/dev/null || true
-
-# Copy application code
+# Copy application source code with non-root ownership
 COPY --chown=nethical:nethical . .
 
-# Install the package
-RUN pip install --no-cache-dir -e .
-
-# Switch to non-root user
+# Switch to non-root user BEFORE installing package in user space
 USER nethical
 
-# Expose port for API
+# Install nethical package in user mode without re-downloading dependencies
+RUN pip install --no-cache-dir --no-deps -e .
+
+# Expose API port
 EXPOSE 8000
 
 # Volume for persistent data
 VOLUME ["/data"]
 
-# Health check (v2.0 - checks API)
+# Health check using built-in urllib to avoid external dependencies
 HEALTHCHECK --interval=30s --timeout=5s --start-period=10s --retries=3 \
-    CMD python -c "import requests; requests.get('http://localhost:8000/health', timeout=2)" || exit 1
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://localhost:8000/health', timeout=2)" || exit 1
 
-# Default command - run API server (v2.0)
+# Run API server with unprivileged user
 CMD ["uvicorn", "nethical.api:app", "--host", "0.0.0.0", "--port", "8000"]

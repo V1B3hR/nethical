@@ -6,11 +6,23 @@
 from nethical.gateway.proxy import GovernanceGateway, GatewayDecision
 from nethical.gateway.mcp_proxy import MCPGovernanceProxy
 from nethical.gateway.openai_proxy import OpenAIGovernanceProxy
+from nethical.gateway.retrofit_proxy import (
+    LegacyRetrofitProxy,
+    RetrofitVerdict,
+    RetrofitPolicyMode,
+    InboundRequestWrapper,
+    OutboundResponseWrapper,
+)
 
 __all__ = [
     "GovernanceGateway",
     "GatewayDecision",
     "MCPGovernanceProxy",
     "OpenAIGovernanceProxy",
+    "LegacyRetrofitProxy",
+    "RetrofitVerdict",
+    "RetrofitPolicyMode",
+    "InboundRequestWrapper",
+    "OutboundResponseWrapper",
 ]
 

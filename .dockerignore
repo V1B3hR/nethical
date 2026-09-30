@@ -1,0 +1,102 @@
+# Nethical Docker Ignore
+# Prevents sensitive files from being copied into container images
+
+# Environment files with secrets
+.env
+.env.local
+.env.*.local
+*.env
+
+# Git repository (contains full history)
+.git/
+.gitignore
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# Python cache
+__pycache__/
+*.py[cod]
+*$py.class
+*.so
+
+# Virtual environments
+venv/
+ENV/
+env/
+.venv/
+.venv*/
+
+# Testing & Reports
+.pytest_cache/
+.coverage
+htmlcov/
+.tox/
+tests/
+benchmark_results/
+profiling_results/
+
+# Logs & Audit Trails (contain sensitive data)
+*.log
+logs/
+audit_logs/
+feedback_logs/
+training_audit_logs/
+redaction_audit.jsonl
+
+# Secrets and keys (CRITICAL: never include in image)
+*.pem
+*.key
+*.crt
+*.p12
+*.pfx
+secrets/
+.secrets/
+kaggle.json
+*kaggle.json
+
+# Database files (may contain sensitive data)
+*.db
+*.sqlite
+*.sqlite3
+*.db-shm
+*.db-wal
+
+# Terraform state (contains secrets)
+*.tfstate
+*.tfstate.*
+.terraform/
+.terraform.lock.hcl
+
+# Kubernetes secrets
+*-secret.yaml
+sealed-secret.yaml
+
+# Test data
+test_unified_data*/
+test_governance*/
+nethical_test_mcp_data/
+nethical_*_data/
+
+# Build artifacts
+build/
+dist/
+*.egg-info/
+*.egg
+
+# Documentation (unnecessary in runtime image)
+docs/
+*.md
+LICENSE
+
+# Development tools
+.agents/
+.gemini/
+
+# Profiling
+*.stats
+*.svg

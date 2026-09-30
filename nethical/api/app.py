@@ -184,10 +184,15 @@ allowed_origins_str = os.getenv("NETHICAL_CORS_ALLOW_ORIGINS", default_dev_origi
 allowed_origins = [orig.strip() for orig in allowed_origins_str.split(",") if orig.strip()]
 
 if "*" in allowed_origins:
-    logger.warning(
-        "CORS SECURITY WARNING: Wildcard origins (*) configured. "
-        "Set NETHICAL_CORS_ALLOW_ORIGINS for production security."
+    logger.error(
+        "CORS SECURITY VIOLATION: Wildcard origins (*) with allow_credentials=True "
+        "enables cross-site credential theft (CWE-346). Stripping wildcard. "
+        "Set NETHICAL_CORS_ALLOW_ORIGINS to explicit domains for production."
     )
+    # SECURITY: Remove wildcard — allow_credentials=True is incompatible with wildcard CORS
+    allowed_origins = [o for o in allowed_origins if o != "*"]
+    if not allowed_origins:
+        allowed_origins = [orig.strip() for orig in default_dev_origins.split(",") if orig.strip()]
 
 app.add_middleware(
     CORSMiddleware,

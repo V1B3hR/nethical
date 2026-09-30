@@ -10,7 +10,7 @@ import time
 from dataclasses import dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
 # Ensure package roots are in sys.path
 sys.path.insert(0, str(Path(__file__).resolve().parent.parent / "src"))
@@ -24,7 +24,7 @@ if sys.platform == "win32":
         # Expected: silently ignore exception during cleanup or fallback
         pass
 # Import Nethical Edge
-from nethical_edge import EdgeGovernor, create_governor
+from nethical_edge import create_governor
 
 
 

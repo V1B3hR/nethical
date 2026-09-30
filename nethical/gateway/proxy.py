@@ -25,11 +25,6 @@ from nethical.gateway.a2a_protocol import A2AHandshakeManager
 from nethical.gateway.hitl import HITLQueueManager
 from nethical.streaming.event_stream_manager import EventStreamManager, get_stream_manager
 
-try:
-    from nethical.auth.tenant_manager import TenantManager
-except ImportError:
-    TenantManager = None
-
 logger = logging.getLogger("nethical.gateway.proxy")
 
 

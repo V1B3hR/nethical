@@ -48,6 +48,59 @@ __all__ = [
     'DataClassification',
     'TransferVerdict',
     'OECDRegulatoryImpactResult',
+    # Institutional Governance & Wave 1
+    'WorkflowEngine',
+    'WorkflowInstance',
+    'StageInstance',
+    'ImpactAssessmentEngine',
+    'ImpactAssessment',
+    # NTSG Tactical Gate & ROE
+    'NTSGCommandGate',
+    'DeterministicIHLGate',
+    'TwoManPQCAuthenticator',
+    'IHLArticle',
+    'TargetClassification',
+    'EffectorCategory',
+    'ROEGateVerdict',
+    'CanonicalOperationToken',
+    'OfficerSignature',
+    'ROEDecisionReceipt',
+    # Wave 3: Board Governance Dashboard & Executive Briefings
+    'BoardGovernanceDashboard',
+    'RiskAppetiteThresholds',
+    'EthicalDebtItem',
+    'RegulatoryPosture',
+    'DepartmentalRiskSummary',
+    'ExecutiveBoardPacket',
+    'RAGStatus',
+    'AppetiteBreachStatus',
+    'EthicalDebtCategory',
+    'ExecutiveBriefingGenerator',
+    'ExecutiveBriefingDocument',
+    'BriefingKPIs',
+    'IncidentHighlight',
+    'BriefingType',
+    'ClassificationMarking',
+    # Conflict of Laws & Jurisdictional Balancing
+    'ConflictOfLawsEngine',
+    'LegalObligation',
+    'ConflictAdjudicationResult',
+    'NormativeHierarchy',
+    'MandateAction',
+    'ResolutionPrinciple',
+    # Precedent Database & Jurisprudential Stare Decisis
+    'PrecedentDatabase',
+    'PrecedentCase',
+    'PrecedentRuling',
+    'PrecedentBindingLevel',
+    'PrecedentMatch',
+    # Governance KPI Framework
+    'AIGovernanceKPIEngine',
+    'GovernanceKPISnapshot',
+    'ReviewTicketMetric',
+    'PairedReviewRating',
+    'KPICategory',
+    'KPIHealth',
 ]
 
 from .doam_matrix import (
@@ -65,5 +118,76 @@ from .jurisdictional_intel import (
     DataClassification,
     TransferVerdict,
     OECDRegulatoryImpactResult,
+)
+
+from .workflow_engine import (
+    WorkflowEngine,
+    WorkflowInstance,
+    StageInstance,
+)
+
+from .impact_assessment import (
+    ImpactAssessmentEngine,
+    ImpactAssessment,
+)
+
+from .roe_gate import (
+    NTSGCommandGate,
+    DeterministicIHLGate,
+    TwoManPQCAuthenticator,
+    IHLArticle,
+    TargetClassification,
+    EffectorCategory,
+    ROEGateVerdict,
+    CanonicalOperationToken,
+    OfficerSignature,
+    ROEDecisionReceipt,
+)
+
+from .board_dashboard import (
+    BoardGovernanceDashboard,
+    RiskAppetiteThresholds,
+    EthicalDebtItem,
+    RegulatoryPosture,
+    DepartmentalRiskSummary,
+    ExecutiveBoardPacket,
+    RAGStatus,
+    AppetiteBreachStatus,
+    EthicalDebtCategory,
+)
+
+from .executive_briefing import (
+    ExecutiveBriefingGenerator,
+    ExecutiveBriefingDocument,
+    BriefingKPIs,
+    IncidentHighlight,
+    BriefingType,
+    ClassificationMarking,
+)
+
+from .conflict_of_laws import (
+    ConflictOfLawsEngine,
+    LegalObligation,
+    ConflictAdjudicationResult,
+    NormativeHierarchy,
+    MandateAction,
+    ResolutionPrinciple,
+)
+
+from .precedent_database import (
+    PrecedentDatabase,
+    PrecedentCase,
+    PrecedentRuling,
+    PrecedentBindingLevel,
+    PrecedentMatch,
+)
+
+from .kpi_framework import (
+    AIGovernanceKPIEngine,
+    GovernanceKPISnapshot,
+    ReviewTicketMetric,
+    PairedReviewRating,
+    KPICategory,
+    KPIHealth,
 )
 

@@ -11,11 +11,14 @@ This module implements:
 """
 
 import json
+import logging
 from typing import Dict, List, Optional, Any
 from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from pathlib import Path
 from enum import Enum
+
+logger = logging.getLogger(__name__)
 
 
 class ChangeType(str, Enum):
@@ -169,12 +172,12 @@ class PolicyDiffAuditor:
                     if old_val != 0:
                         percent_change = abs((new_val - old_val) / old_val)
                         # Large changes are riskier
-                        if percent_change > 0.5:
-                            base_risk *= 1.3
-                        elif percent_change > 1.0:
+                        if percent_change > 1.0:
                             base_risk *= 1.5
-                except (ValueError, TypeError):
-                    pass
+                        elif percent_change > 0.5:
+                            base_risk *= 1.3
+                except (ValueError, TypeError) as e:
+                    logger.debug("Failed to calculate percent change: %s", e)
 
         return min(base_risk, 1.0)
 

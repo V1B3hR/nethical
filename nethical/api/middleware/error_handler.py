@@ -71,21 +71,23 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
             exc_info=True,
         )
         
-        # Determine error type and status code
-        error_type = type(error).__name__
-        status_code = 500
-        
-        # Safe error message (don't leak internals)
-        safe_message = "An internal error occurred"
+        # Determine sanitized error type and status code (CWE-209 prevention)
         if isinstance(error, ValueError):
+            error_type = "ValidationError"
             safe_message = "Invalid request data"
             status_code = 400
         elif isinstance(error, PermissionError):
+            error_type = "AuthorizationError"
             safe_message = "Permission denied"
             status_code = 403
         elif isinstance(error, FileNotFoundError):
+            error_type = "NotFoundError"
             safe_message = "Resource not found"
             status_code = 404
+        else:
+            error_type = "InternalServerError"
+            safe_message = "An internal error occurred"
+            status_code = 500
         
         # Build error response
         error_response: dict[str, Any] = {

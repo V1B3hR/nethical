@@ -15,11 +15,14 @@ Signals:
 Law Alignment: Laws 18 (Non-Deception), 22 (Boundary Respect)
 """
 
+import json
+import logging
 import re
 import uuid
-import json
 from datetime import datetime, timezone
 from typing import Sequence
+
+logger = logging.getLogger(__name__)
 
 from ..base_detector import BaseDetector
 from ...core.models import AgentAction, SafetyViolation, ViolationType, Severity
@@ -178,7 +181,7 @@ class DelimiterDetector(BaseDetector):
                         json.loads(match)
                     except (json.JSONDecodeError, ValueError):
                         score = max(score, 0.4)
-        except Exception:
-            pass
+        except Exception as e:
+            logger.debug("Error while inspecting JSON pattern in delimiter detector: %s", e)
         
         return score

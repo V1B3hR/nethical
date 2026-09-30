@@ -24,6 +24,7 @@ Dependencies:
 from __future__ import annotations
 
 import hashlib
+import hmac
 import logging
 import secrets
 from datetime import datetime, timedelta, timezone
@@ -401,15 +402,17 @@ class MFAManager:
         if not mfa_setup.enabled:
             return False
 
-        code_hash = self._hash_code(code)
+        # Check against stored hashes using constant-time comparison (CWE-208 & CWE-916)
+        for stored_hash in list(mfa_setup.backup_codes):
+            if self._verify_code_hash(code, stored_hash):
+                # Remove used backup code
+                mfa_setup.backup_codes.remove(stored_hash)
+                mfa_setup.last_used_at = datetime.now(timezone.utc)
+                self._clear_failed_attempts(user_id)
+                log.info(f"Backup code verified and consumed for user {user_id}")
+                return True
 
-        if code_hash in mfa_setup.backup_codes:
-            # Remove used backup code
-            mfa_setup.backup_codes.remove(code_hash)
-            mfa_setup.last_used_at = datetime.now(timezone.utc)
-            log.info(f"Backup code verified and consumed for user {user_id}")
-            return True
-
+        self._record_failed_attempt(user_id)
         log.warning(f"Invalid backup code for user {user_id}")
         return False
 
@@ -549,17 +552,46 @@ class MFAManager:
             codes.append(formatted)
         return codes
 
-    def _hash_code(self, code: str) -> str:
+    def _hash_code(self, code: str, salt: Optional[str] = None) -> str:
         """
-        Hash a code for secure storage
+        Hash a backup code with cryptographic salt and PBKDF2 (CWE-916).
 
-        Args:
-            code: Code to hash
-
-        Returns:
-            SHA-256 hash of the code
+        Format: salt_hex$pbkdf2_hash_hex
+        Uses PBKDF2-HMAC-SHA256 with 50,000 iterations to resist brute-force
+        and dictionary attacks.
         """
-        return hashlib.sha256(code.encode()).hexdigest()
+        normalized = code.replace("-", "").strip().upper()
+        if salt is None:
+            salt_bytes = secrets.token_bytes(16)
+            salt_str = salt_bytes.hex()
+        else:
+            salt_str = salt
+            salt_bytes = bytes.fromhex(salt_str)
+
+        h = hashlib.pbkdf2_hmac("sha256", normalized.encode(), salt_bytes, iterations=50_000).hex()
+        return f"{salt_str}${h}"
+
+    def _verify_code_hash(self, code: str, stored_hash: str) -> bool:
+        """
+        Verify backup code against stored hash using constant-time comparison.
+
+        Supports both modern salted PBKDF2 hashes and legacy SHA-256 hashes
+        for backwards compatibility.
+        """
+        normalized = code.replace("-", "").strip().upper()
+        if "$" in stored_hash:
+            try:
+                salt_str, expected_h = stored_hash.split("$", 1)
+                salt_bytes = bytes.fromhex(salt_str)
+                h = hashlib.pbkdf2_hmac("sha256", normalized.encode(), salt_bytes, iterations=50_000).hex()
+                return hmac.compare_digest(h, expected_h)
+            except Exception:
+                return False
+        else:
+            # Legacy SHA-256 fallback
+            legacy_exact = hashlib.sha256(code.encode()).hexdigest()
+            legacy_norm = hashlib.sha256(normalized.encode()).hexdigest()
+            return hmac.compare_digest(legacy_exact, stored_hash) or hmac.compare_digest(legacy_norm, stored_hash)
 
     def regenerate_backup_codes(self, user_id: str) -> List[str]:
         """

@@ -110,7 +110,7 @@ class RequirementsValidation:
 
 @dataclass
 class SBOM:
-    """Software Bill of Materials."""
+    """Software Bill of Materials with cryptographic signature support (CRA & EO 14028)."""
     
     sbom_format: str  # "CycloneDX", "SPDX"
     sbom_version: str
@@ -120,6 +120,40 @@ class SBOM:
     metadata: Dict[str, Any]
     generated_at: datetime = field(default_factory=lambda: datetime.now(timezone.utc))
     sbom_id: str = field(default_factory=lambda: str(uuid.uuid4()))
+    signature: Optional[str] = None
+    signature_algorithm: Optional[str] = None
+
+    def sign(self, secret_key: bytes) -> str:
+        """Sign SBOM content with HMAC-SHA256 (CRA & EO 14028)."""
+        import hmac
+        import json
+        content = json.dumps({
+            "sbom_format": self.sbom_format,
+            "sbom_version": self.sbom_version,
+            "components": self.components,
+            "dependencies": self.dependencies,
+            "metadata": self.metadata,
+        }, sort_keys=True).encode("utf-8")
+        sig = hmac.new(secret_key, content, hashlib.sha256).hexdigest()
+        self.signature = sig
+        self.signature_algorithm = "HMAC-SHA256"
+        return sig
+
+    def verify_signature(self, secret_key: bytes) -> bool:
+        """Verify cryptographic signature of this SBOM."""
+        if not self.signature:
+            return False
+        import hmac
+        import json
+        content = json.dumps({
+            "sbom_format": self.sbom_format,
+            "sbom_version": self.sbom_version,
+            "components": self.components,
+            "dependencies": self.dependencies,
+            "metadata": self.metadata,
+        }, sort_keys=True).encode("utf-8")
+        expected = hmac.new(secret_key, content, hashlib.sha256).hexdigest()
+        return hmac.compare_digest(self.signature, expected)
 
 
 @dataclass

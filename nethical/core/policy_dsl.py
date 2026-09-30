@@ -279,6 +279,12 @@ class RuleEvaluator:
     Evaluates policy rules against actions.
 
     Provides a safe evaluation environment for policy conditions.
+
+    SECURITY: Uses a custom AST-walking evaluator instead of eval() to prevent
+    code injection (CWE-94). The eval() function with user-controlled input is
+    inherently unsafe even with __builtins__={} due to well-documented bypass
+    techniques (e.g., subclass traversal). This evaluator walks the AST tree
+    node-by-node and only supports safe operations.
     """
 
     def __init__(self):
@@ -297,7 +303,10 @@ class RuleEvaluator:
         self, condition: str, action: Any, context: Optional[Dict[str, Any]] = None
     ) -> bool:
         """
-        Evaluate a condition against an action.
+        Evaluate a condition against an action using safe AST evaluation.
+
+        SECURITY: Does NOT use eval(). Instead, walks the AST tree node-by-node
+        to prevent code injection attacks (CWE-94).
 
         Args:
             condition: Condition string (e.g., "action.content.contains('secret')")
@@ -317,16 +326,164 @@ class RuleEvaluator:
                     if not key.startswith("_"):
                         namespace[key] = value
 
-            # Sanitize and evaluate condition using AST validation
+            # Sanitize condition
             sanitized_condition = self._sanitize_condition(condition)
+
+            # Parse to AST and validate safety
+            tree = ast.parse(sanitized_condition, mode='eval')
             self._validate_ast_safety(sanitized_condition)
-            result = eval(sanitized_condition, {"__builtins__": {}}, namespace)
+
+            # SECURITY: Use safe AST-walking evaluator instead of eval()
+            result = self._safe_eval_ast(tree.body, namespace)
 
             return bool(result)
 
         except Exception as e:
             logger.error(f"Error evaluating condition '{condition}': {e}")
             return False
+
+    def _safe_eval_ast(self, node: ast.AST, namespace: Dict[str, Any]) -> Any:
+        """
+        Safely evaluate an AST node without using eval().
+
+        Walks the AST tree recursively, evaluating only allowed operations.
+        This is immune to eval() sandbox escape techniques.
+
+        Supported AST nodes:
+        - Constants (strings, numbers, booleans, None)
+        - Names (variable lookup in namespace)
+        - Comparisons (==, !=, <, <=, >, >=, in, not in, is, is not)
+        - Boolean operations (and, or)
+        - Unary operations (not, -)
+        - Binary operations (+, -, *, /, %)
+        - Attribute access (action.field)
+        - Function calls (only whitelisted functions)
+        - Collections (list, tuple, dict, set literals)
+        """
+        if isinstance(node, ast.Constant):
+            return node.value
+
+        elif isinstance(node, ast.Name):
+            if node.id in namespace:
+                return namespace[node.id]
+            raise ValueError(f"Undefined variable: {node.id}")
+
+        elif isinstance(node, ast.Compare):
+            left = self._safe_eval_ast(node.left, namespace)
+            for op, comparator in zip(node.ops, node.comparators):
+                right = self._safe_eval_ast(comparator, namespace)
+                if isinstance(op, ast.Eq):
+                    result = left == right
+                elif isinstance(op, ast.NotEq):
+                    result = left != right
+                elif isinstance(op, ast.Lt):
+                    result = left < right
+                elif isinstance(op, ast.LtE):
+                    result = left <= right
+                elif isinstance(op, ast.Gt):
+                    result = left > right
+                elif isinstance(op, ast.GtE):
+                    result = left >= right
+                elif isinstance(op, ast.In):
+                    result = left in right
+                elif isinstance(op, ast.NotIn):
+                    result = left not in right
+                elif isinstance(op, ast.Is):
+                    result = left is right
+                elif isinstance(op, ast.IsNot):
+                    result = left is not right
+                else:
+                    raise ValueError(f"Unsupported comparison operator: {type(op).__name__}")
+                if not result:
+                    return False
+                left = right
+            return True
+
+        elif isinstance(node, ast.BoolOp):
+            if isinstance(node.op, ast.And):
+                return all(self._safe_eval_ast(v, namespace) for v in node.values)
+            elif isinstance(node.op, ast.Or):
+                return any(self._safe_eval_ast(v, namespace) for v in node.values)
+            raise ValueError(f"Unsupported boolean operator: {type(node.op).__name__}")
+
+        elif isinstance(node, ast.UnaryOp):
+            operand = self._safe_eval_ast(node.operand, namespace)
+            if isinstance(node.op, ast.Not):
+                return not operand
+            elif isinstance(node.op, ast.USub):
+                return -operand
+            elif isinstance(node.op, ast.UAdd):
+                return +operand
+            raise ValueError(f"Unsupported unary operator: {type(node.op).__name__}")
+
+        elif isinstance(node, ast.BinOp):
+            left = self._safe_eval_ast(node.left, namespace)
+            right = self._safe_eval_ast(node.right, namespace)
+            if isinstance(node.op, ast.Add):
+                return left + right
+            elif isinstance(node.op, ast.Sub):
+                return left - right
+            elif isinstance(node.op, ast.Mult):
+                return left * right
+            elif isinstance(node.op, ast.Div):
+                if right == 0:
+                    raise ValueError("Division by zero")
+                return left / right
+            elif isinstance(node.op, ast.Mod):
+                return left % right
+            raise ValueError(f"Unsupported binary operator: {type(node.op).__name__}")
+
+        elif isinstance(node, ast.Attribute):
+            value = self._safe_eval_ast(node.value, namespace)
+            attr_name = node.attr
+            # Block access to dunder attributes
+            if attr_name.startswith("_"):
+                raise ValueError(f"Access to private/dunder attribute '{attr_name}' is forbidden")
+            if hasattr(value, attr_name):
+                return getattr(value, attr_name)
+            elif isinstance(value, dict) and attr_name in value:
+                return value[attr_name]
+            raise ValueError(f"Attribute '{attr_name}' not found")
+
+        elif isinstance(node, ast.Call):
+            func = self._safe_eval_ast(node.func, namespace)
+            # Only allow whitelisted callable functions
+            if func not in self._builtin_functions.values() and not callable(func):
+                raise ValueError(f"Function call not allowed: {ast.dump(node.func)}")
+            args = [self._safe_eval_ast(arg, namespace) for arg in node.args]
+            kwargs = {kw.arg: self._safe_eval_ast(kw.value, namespace) for kw in node.keywords}
+            return func(*args, **kwargs)
+
+        elif isinstance(node, ast.List):
+            return [self._safe_eval_ast(elt, namespace) for elt in node.elts]
+
+        elif isinstance(node, ast.Tuple):
+            return tuple(self._safe_eval_ast(elt, namespace) for elt in node.elts)
+
+        elif isinstance(node, ast.Dict):
+            keys = [self._safe_eval_ast(k, namespace) for k in node.keys]
+            values = [self._safe_eval_ast(v, namespace) for v in node.values]
+            return dict(zip(keys, values))
+
+        elif isinstance(node, ast.Set):
+            return {self._safe_eval_ast(elt, namespace) for elt in node.elts}
+
+        elif isinstance(node, ast.Subscript):
+            value = self._safe_eval_ast(node.value, namespace)
+            if isinstance(node.slice, ast.Constant):
+                return value[node.slice.value]
+            elif isinstance(node.slice, ast.Name):
+                idx = self._safe_eval_ast(node.slice, namespace)
+                return value[idx]
+            raise ValueError(f"Unsupported subscript type: {type(node.slice).__name__}")
+
+        elif isinstance(node, ast.IfExp):
+            test = self._safe_eval_ast(node.test, namespace)
+            if test:
+                return self._safe_eval_ast(node.body, namespace)
+            return self._safe_eval_ast(node.orelse, namespace)
+
+        raise ValueError(f"Unsupported AST node type: {type(node).__name__}")
 
     def _sanitize_condition(self, condition: str) -> str:
         """
@@ -368,7 +525,8 @@ class RuleEvaluator:
             ast.Eq, ast.NotEq, ast.Lt, ast.LtE, ast.Gt, ast.GtE,
             ast.And, ast.Or, ast.Not, ast.In, ast.NotIn, ast.Is, ast.IsNot,
             ast.Add, ast.Sub, ast.Mult, ast.Div, ast.Mod,
-            ast.List, ast.Tuple, ast.Dict, ast.Set
+            ast.List, ast.Tuple, ast.Dict, ast.Set,
+            ast.keyword, ast.Subscript, ast.IfExp, ast.USub, ast.UAdd,
         )
         
         for node in ast.walk(tree):

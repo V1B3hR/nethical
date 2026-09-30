@@ -93,10 +93,6 @@ class SafeDefaults:
             custom_restricted: Additional restricted action types
             custom_blocked: Additional blocked action types
         """
-        from .local_governor import DecisionType
-
-        self._decision_type = DecisionType
-
         self.default_decision = default_decision or DefaultDecisionType.RESTRICT
         self.safe_types = self.SAFE_ACTION_TYPES.copy()
         self.restricted_types = self.RESTRICTED_ACTION_TYPES.copy()

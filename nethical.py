@@ -347,11 +347,10 @@ def main():
                     print_colored(Fore.RED, f"[!] AI report generation failed: {e}")
                     log_report(target, scan_files, "failed", os.getcwd())
                 finally:
-                    # Return to parent directory
                     try:
                         os.chdir("..")
-                    except Exception:
-                        pass
+                    except OSError as err:
+                        logging.debug("Failed to return to parent directory: %s", err)
 
             elif choice == '2':
                 view_scan_history()

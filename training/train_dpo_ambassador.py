@@ -44,7 +44,6 @@ if TYPE_CHECKING:
     from accelerator_ai.security.vram_guard import VRAMPressureGuard, PressureLevel
     from accelerator_ai.ecu.kalman import KalmanLossGovernor
     from accelerator_ai.turbines.wastegate import WastegateValve
-    from accelerator_ai.integrations.huggingface import AcceleratorAICallback
     TORCH_AVAILABLE: bool = True
     TRANSFORMERS_AVAILABLE: bool = True
     ACCELERATOR_AI_AVAILABLE: bool = True
@@ -75,7 +74,6 @@ else:
         from accelerator_ai.security.vram_guard import VRAMPressureGuard, PressureLevel
         from accelerator_ai.ecu.kalman import KalmanLossGovernor
         from accelerator_ai.turbines.wastegate import WastegateValve
-        from accelerator_ai.integrations.huggingface import AcceleratorAICallback
         ACCELERATOR_AI_AVAILABLE = True
     except ImportError:
         ACCELERATOR_AI_AVAILABLE = False
@@ -84,7 +82,6 @@ else:
         PressureLevel = None
         KalmanLossGovernor = None
         WastegateValve = None
-        AcceleratorAICallback = None
 
 # Nethical Deep Alignment & Security
 from nethical.ethics.deep_alignment import (

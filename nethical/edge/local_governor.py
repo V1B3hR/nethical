@@ -26,6 +26,13 @@ from typing import Any, Deque, Dict, List, Optional
 
 import numpy as np
 
+from .circuit_breaker import CircuitBreaker
+from .fast_detector import FastDetector
+from .offline_fallback import OfflineFallback
+from .policy_cache import PolicyCache
+from .predictive_engine import PredictiveEngine
+from .safe_defaults import SafeDefaults
+
 logger = logging.getLogger(__name__)
 
 
@@ -120,14 +127,6 @@ class EdgeGovernor:
         self.fieldbus_interlock = fieldbus_interlock
         self.kinetic_governor = kinetic_governor
         self.iso26262_evaluator = iso26262_evaluator
-
-        # Import here to avoid circular imports
-        from .policy_cache import PolicyCache
-        from .fast_detector import FastDetector
-        from .safe_defaults import SafeDefaults
-        from .predictive_engine import PredictiveEngine
-        from .offline_fallback import OfflineFallback
-        from .circuit_breaker import CircuitBreaker
 
         self.policy_cache = policy_cache or PolicyCache()
         self.fast_detector = fast_detector or FastDetector()
@@ -478,13 +477,3 @@ class EdgeGovernor:
         return count
 
 
-# Import dependencies for type hints only
-from typing import TYPE_CHECKING
-
-if TYPE_CHECKING:
-    from .policy_cache import PolicyCache
-    from .fast_detector import FastDetector, DetectionResult
-    from .safe_defaults import SafeDefaults
-    from .predictive_engine import PredictiveEngine
-    from .offline_fallback import OfflineFallback
-    from .circuit_breaker import CircuitBreaker
