@@ -164,7 +164,9 @@ jobs:
             }
       
       - name: Send Slack notification on SLA breach
-        if: steps.sla_check.outcome == 'failure' && secrets.SLACK_WEBHOOK_URL != ''
+        if: steps.sla_check.outcome == 'failure' && env.SLACK_WEBHOOK_URL != ''
+        env:
+          SLACK_WEBHOOK_URL: ${{ secrets.SLACK_WEBHOOK_URL }}
         run: |
           CRITICAL=${{ steps.parse_vulns.outputs.critical }}
           HIGH=${{ steps.parse_vulns.outputs.high }}
