@@ -8,6 +8,10 @@ from unittest.mock import MagicMock, patch
 
 from nethical.api.v1.app import create_v1_app
 from nethical.database import Base, get_db, Agent
+if Base is None:
+    from nethical.database.models import Base
+if Agent is None:
+    from nethical.database.models import Agent
 from nethical.api.rbac import create_access_token, get_password_hash
 from nethical.database.models import User
 from nethical.core.ml_shadow import MLShadowClassifier, MLModelType

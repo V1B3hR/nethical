@@ -6,7 +6,7 @@
 from __future__ import annotations
 
 import os
-from typing import AsyncGenerator, Generator
+from typing import AsyncGenerator, Generator, Optional
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
@@ -53,20 +53,23 @@ engine = create_engine(
 SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 # Asynchronous engine
-async_engine: AsyncEngine = create_async_engine(
-    ASYNC_DATABASE_URL,
-    connect_args={"check_same_thread": False} if "sqlite" in ASYNC_DATABASE_URL else {},
-    echo=False,
-)
-
-# Asynchronous session factory
-AsyncSessionLocal = async_sessionmaker(
-    async_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-    autocommit=False,
-    autoflush=False,
-)
+try:
+    async_engine: Optional[AsyncEngine] = create_async_engine(
+        ASYNC_DATABASE_URL,
+        connect_args={"check_same_thread": False} if "sqlite" in ASYNC_DATABASE_URL else {},
+        echo=False,
+    )
+    # Asynchronous session factory
+    AsyncSessionLocal = async_sessionmaker(
+        async_engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+        autocommit=False,
+        autoflush=False,
+    )
+except Exception:
+    async_engine = None
+    AsyncSessionLocal = None
 
 
 def init_db() -> None:

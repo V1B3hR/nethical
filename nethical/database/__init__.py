@@ -31,17 +31,8 @@ __all__ = [
     "async_engine",
 ]
 
+# Models
 try:
-    from .database import (
-        AsyncSessionLocal,
-        SessionLocal,
-        async_engine,
-        engine,
-        get_async_db,
-        get_db,
-        init_async_db,
-        init_db,
-    )
     from .models import (
         Agent,
         ApiKey,
@@ -53,15 +44,6 @@ try:
         User,
     )
 except ImportError:
-    # Graceful fallback if SQLAlchemy not installed
-    SessionLocal = None
-    AsyncSessionLocal = None
-    engine = None
-    async_engine = None
-    get_db = None
-    get_async_db = None
-    init_db = None
-    init_async_db = None
     Base = None
     Agent = None
     Policy = None
@@ -70,4 +52,26 @@ except ImportError:
     Tenant = None
     ApiKey = None
     RevokedToken = None
+
+# Database connection & session management
+try:
+    from .database import (
+        AsyncSessionLocal,
+        SessionLocal,
+        async_engine,
+        engine,
+        get_async_db,
+        get_db,
+        init_async_db,
+        init_db,
+    )
+except ImportError:
+    SessionLocal = None
+    AsyncSessionLocal = None
+    engine = None
+    async_engine = None
+    get_db = None
+    get_async_db = None
+    init_db = None
+    init_async_db = None
 
