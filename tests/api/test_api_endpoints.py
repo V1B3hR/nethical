@@ -6,9 +6,11 @@ from httpx import AsyncClient, ASGITransport
 
 # Try to import the API
 try:
-    from nethical.api import app
-    API_AVAILABLE = True
-except ImportError:
+    from nethical.api.app import app
+    if hasattr(app, "app") and not callable(app):
+        app = getattr(app, "app")
+    API_AVAILABLE = callable(app)
+except (ImportError, Exception):
     API_AVAILABLE = False
     app = None
 

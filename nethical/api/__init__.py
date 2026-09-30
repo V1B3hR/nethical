@@ -55,17 +55,17 @@ except ImportError:
 
 # Core FastAPI application and global state instances
 try:
-    import sys
-    if "nethical.api.app" in sys.modules:
-        import importlib
-        importlib.reload(sys.modules["nethical.api.app"])
     from .app import (
-        app,
+        app as _fastapi_app,
         API_VERSION,
         rbac_manager_instance,
         tenant_manager_instance,
         gateway_instance,
     )
+    if hasattr(_fastapi_app, "app") and not callable(_fastapi_app):
+        app = getattr(_fastapi_app, "app")
+    else:
+        app = _fastapi_app
 except Exception:
     app = None
     API_VERSION = "2.3.0"

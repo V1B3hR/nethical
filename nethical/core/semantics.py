@@ -18,6 +18,7 @@ Features:
 from __future__ import annotations
 
 import logging
+import re
 import threading
 from functools import lru_cache
 from typing import Any, Optional
@@ -180,9 +181,9 @@ def _lexical_similarity(text_a: str, text_b: str) -> float:
     Returns:
         Jaccard similarity score (0.0 to 1.0)
     """
-    # Simple tokenization
-    tokens_a = set(text_a.lower().split())
-    tokens_b = set(text_b.lower().split())
+    # Tokenization stripping punctuation
+    tokens_a = set(re.findall(r'\b\w+\b', text_a.lower()))
+    tokens_b = set(re.findall(r'\b\w+\b', text_b.lower()))
     
     if not tokens_a or not tokens_b:
         return 0.0
