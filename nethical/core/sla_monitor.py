@@ -153,7 +153,7 @@ class SLAMonitor:
             agent_id: Optional agent identifier
         """
         if isinstance(timestamp, str):
-            agent_id = timestamp
+            # Accommodates callers passing agent_id positionally as 2nd argument
             ts = datetime.now(timezone.utc)
         elif isinstance(timestamp, datetime):
             ts = timestamp
