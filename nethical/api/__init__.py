@@ -55,6 +55,10 @@ except ImportError:
 
 # Core FastAPI application and global state instances
 try:
+    import sys
+    import importlib
+    if "nethical.api.app" in sys.modules:
+        importlib.reload(sys.modules["nethical.api.app"])
     from .app import (
         app as _fastapi_app,
         API_VERSION,
