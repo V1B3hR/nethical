@@ -281,6 +281,8 @@ class AmbassadorKnowledgeSync:
         except Exception as e:
             logger.error("Błąd zapisu do datasetu DPO: %s", e)
 
+    append_dpo_pair = _append_to_dpo_dataset
+
     def sync_repo_ml_knowledge_to_ambassador(
         self,
         num_variants: int = 50,

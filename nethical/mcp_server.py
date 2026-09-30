@@ -766,9 +766,54 @@ def create_app(
     return app
 
 
+async def run_stdio(storage_dir: str = "./nethical_mcp_data") -> None:
+    """Run MCP server over standard input/output (Stdio Transport)."""
+    import sys
+    if hasattr(sys.stdout, "reconfigure"):
+        sys.stdout.reconfigure(encoding="utf-8")
+    if hasattr(sys.stdin, "reconfigure"):
+        sys.stdin.reconfigure(encoding="utf-8")
+        
+    # Direct all loggers to stderr so stdout remains 100% clean JSON-RPC
+    for handler in logging.root.handlers[:]:
+        logging.root.removeHandler(handler)
+    logging.basicConfig(stream=sys.stderr, level=logging.INFO)
+    
+    server = MCPServer(storage_dir=storage_dir)
+    loop = asyncio.get_running_loop()
+    
+    def read_line() -> str:
+        return sys.stdin.readline()
+        
+    while True:
+        line = await loop.run_in_executor(None, read_line)
+        if not line:
+            break
+        text = line.strip()
+        if not text:
+            continue
+        try:
+            msg = json.loads(text)
+            resp = await server._handle_message(msg)
+            sys.stdout.write(json.dumps(resp, ensure_ascii=False) + "\n")
+            sys.stdout.flush()
+        except Exception as e:
+            err = {
+                "jsonrpc": "2.0",
+                "error": {"code": -32603, "message": str(e)}
+            }
+            sys.stdout.write(json.dumps(err, ensure_ascii=False) + "\n")
+            sys.stdout.flush()
+
+
 if __name__ == "__main__":
     import os
-    import uvicorn
+    import sys
     
-    app = create_app()
-    uvicorn.run(app, host=os.getenv("NETHICAL_MCP_HOST", "127.0.0.1"), port=int(os.getenv("NETHICAL_MCP_PORT", "8000")))
+    if "--stdio" in sys.argv or os.getenv("NETHICAL_MCP_TRANSPORT") == "stdio":
+        asyncio.run(run_stdio())
+    else:
+        import uvicorn
+        app = create_app()
+        uvicorn.run(app, host=os.getenv("NETHICAL_MCP_HOST", "127.0.0.1"), port=int(os.getenv("NETHICAL_MCP_PORT", "8000")))
+
