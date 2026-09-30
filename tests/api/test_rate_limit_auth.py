@@ -4,12 +4,9 @@ import pytest
 from httpx import AsyncClient, ASGITransport
 
 
-# Try to import the API
-try:
-    import nethical.api
-    API_AVAILABLE = True
-except ImportError:
-    API_AVAILABLE = False
+import importlib.util
+
+API_AVAILABLE = importlib.util.find_spec("nethical.api") is not None
 
 
 pytestmark = pytest.mark.skipif(

@@ -45,7 +45,6 @@ from nethical.governance.kpi_framework import (
     ReviewTicketMetric,
 )
 from nethical.governance.precedent_database import (
-    PrecedentCase,
     PrecedentDatabase,
     PrecedentRuling,
 )
@@ -54,12 +53,10 @@ from nethical.security.mls_compartments import (
     CompartmentCodeword,
     DocumentObjectClassification,
     MLSSecurityGuard,
-    OPSECCategory,
     SecurityClearanceLevel,
     SubjectClearance,
 )
 from nethical.training.curriculum import (
-    CertificationTier,
     InstitutionalCurriculumManager,
 )
 

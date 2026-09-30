@@ -25,11 +25,11 @@ import logging
 import uuid
 from datetime import datetime, timezone, timedelta
 from enum import Enum
-from typing import Any, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Set
 
 from pydantic import BaseModel, Field
 
-from ..core.models import UserIdentity, UserRole, ClassificationLevel
+from ..core.models import ClassificationLevel, UserRole
 
 logger = logging.getLogger("nethical.auth.hrbac")
 

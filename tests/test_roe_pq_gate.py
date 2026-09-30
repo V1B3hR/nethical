@@ -25,15 +25,12 @@ if str(REPO_ROOT) not in sys.path:
 
 from nethical.governance.roe_gate import (
     NTSGCommandGate,
-    DeterministicIHLGate,
-    TwoManPQCAuthenticator,
     IHLArticle,
     TargetClassification,
     EffectorCategory,
     ROEGateVerdict,
     CanonicalOperationToken,
     OfficerSignature,
-    ROEDecisionReceipt,
 )
 from nethical.security.merkle_ledger import MerkleLedger
 from nethical.security.quantum_crypto import CRYSTALSDilithium, PQCAlgorithm

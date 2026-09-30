@@ -27,7 +27,7 @@ from typing import Any, Deque, Dict, List, Optional
 import numpy as np
 
 from .circuit_breaker import CircuitBreaker
-from .fast_detector import FastDetector
+from .fast_detector import DetectionResult, FastDetector
 from .offline_fallback import OfflineFallback
 from .policy_cache import PolicyCache
 from .predictive_engine import PredictiveEngine

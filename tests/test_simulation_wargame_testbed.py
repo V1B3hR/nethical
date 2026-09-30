@@ -19,7 +19,6 @@ REPO_ROOT = Path(__file__).resolve().parent.parent
 if str(REPO_ROOT) not in sys.path:
     sys.path.insert(0, str(REPO_ROOT))
 
-from nethical.governance.roe_gate import ROEGateVerdict
 from nethical.security.merkle_ledger import MerkleLedger
 from nethical.simulation.readiness_env import (
     NTSGReadinessEnv,

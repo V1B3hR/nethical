@@ -31,7 +31,6 @@ from __future__ import annotations
 import hashlib
 import json
 import logging
-import time
 import uuid
 from datetime import datetime, timezone
 from enum import Enum
@@ -42,7 +41,6 @@ from pydantic import BaseModel, Field
 from nethical.security.merkle_ledger import MerkleLedger, TamperProofReceipt
 from nethical.security.quantum_crypto import (
     CRYSTALSDilithium,
-    DilithiumKeyPair,
     PQCAlgorithm,
     QuantumSignature,
 )

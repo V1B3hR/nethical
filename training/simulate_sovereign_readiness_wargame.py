@@ -27,7 +27,6 @@ if str(REPO_ROOT) not in sys.path:
 
 from nethical.simulation.readiness_env import (
     NTSGReadinessEnv,
-    ScenarioCategory,
     SimulationAction,
 )
 

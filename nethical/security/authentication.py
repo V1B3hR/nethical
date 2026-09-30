@@ -434,7 +434,7 @@ class PKICertificateValidator:
                 return False
 
             # Build OCSP request
-            from cryptography.hazmat.primitives import hashes
+            from cryptography.hazmat.primitives import hashes, serialization
 
             builder = ocsp.OCSPRequestBuilder()
             builder = builder.add_certificate(cert, issuer_cert, hashes.SHA256())
@@ -560,6 +560,7 @@ class PKICertificateValidator:
                     if emails:
                         result["email"] = emails[0]
                 except x509.ExtensionNotFound:
+                    # SubjectAlternativeName extension is optional in x509 certs, ignore if not present
                     pass
 
             # Build full subject DN string

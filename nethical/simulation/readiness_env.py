@@ -18,16 +18,13 @@ Czysto pythonowa implementacja środowiska poligonowego zgodnego z interfejsem G
 from __future__ import annotations
 
 import copy
-import hashlib
-import json
 import logging
 import random
-import time
 import uuid
 from dataclasses import dataclass, field
 from datetime import datetime, timedelta, timezone
 from enum import Enum
-from typing import Any, Callable, Dict, List, Optional, Set, Tuple
+from typing import Any, Dict, List, Optional, Tuple
 
 from pydantic import BaseModel, Field
 
@@ -41,12 +38,7 @@ from nethical.governance.roe_gate import (
     ROEGateVerdict,
     TargetClassification,
 )
-from nethical.security.counter_reconnaissance import (
-    ForeignReconGuard,
-    ReconInspectionResult,
-    ReconSeverity,
-    ReconTechnique,
-)
+from nethical.security.counter_reconnaissance import ForeignReconGuard
 from nethical.security.merkle_ledger import MerkleLedger, TamperProofReceipt
 from nethical.security.pkcs11_hsm_bridge import (
     HSMPKCS11OfficerBridge,
