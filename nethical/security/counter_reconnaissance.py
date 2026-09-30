@@ -36,26 +36,18 @@ from __future__ import annotations
 import hashlib
 import hmac
 import logging
-import math
 import random
 import re
 import time
 import uuid
 from collections import defaultdict, deque
-from dataclasses import dataclass, field
 from datetime import datetime, timezone
 from enum import Enum
 from typing import Any, Dict, List, Optional, Set, Tuple
 
 from pydantic import BaseModel, Field
 
-from nethical.core.models import (
-    AgentAction,
-    ActionType,
-    SafetyViolation,
-    ViolationType,
-    Severity,
-)
+from nethical.core.models import AgentAction
 from nethical.security.merkle_ledger import MerkleLedger, TamperProofReceipt
 
 logger = logging.getLogger("nethical.security.counter_reconnaissance")

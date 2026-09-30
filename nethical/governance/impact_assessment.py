@@ -305,7 +305,6 @@ class ImpactAssessmentEngine:
             "vulnerability_exploitation", "predictive_policing_individual",
         }
         system_features = set(assessment.data_categories_processed)
-        meta_features = set(assessment.stakeholders[0].rights_at_risk if assessment.stakeholders else [])
 
         if system_features & unacceptable_indicators:
             assessment.risk_tier = RiskTier.UNACCEPTABLE

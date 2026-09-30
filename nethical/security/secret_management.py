@@ -654,7 +654,7 @@ class VaultIntegration:
                     path=path,
                     secret=secret_data,
                 )
-                log.info(f"Stored secret in HashiCorp Vault at path: {path}")
+                log.info("Stored secret in HashiCorp Vault successfully")
                 return True
             except Exception as e:
                 log.error(f"Failed to store secret in HashiCorp Vault: {e}")
@@ -662,7 +662,7 @@ class VaultIntegration:
 
         # Local fallback store
         self._secret_store[path] = {"data": secret_data}
-        log.info(f"Stored secret in local Vault store at path: {path}")
+        log.info("Stored secret in local Vault store successfully")
         return True
 
     def retrieve_secret(

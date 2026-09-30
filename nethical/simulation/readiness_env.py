@@ -516,7 +516,6 @@ class NTSGReadinessEnv:
 
         # 5. Ewaluacja sukcesu i nagrody (Reward function)
         is_success = False
-        reward = 0.0
 
         if scen.is_benign:
             # Ruch legalny: sukces to pomyślna autoryzacja bez fałszywego odrzucenia (False Positive = 0)
