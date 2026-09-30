@@ -60,6 +60,23 @@ class SLABreach:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+class ComplianceResult(dict):
+    """Dictionary supporting attribute access for SLA compliance metrics."""
+
+    def __getattr__(self, name: str) -> Any:
+        metrics = self.get("metrics", {})
+        if name in metrics:
+            return metrics[name]
+        if name == "meeting_sla":
+            status = self.get("overall_status")
+            return status == SLAStatus.COMPLIANT if hasattr(status, "value") else True
+        if name == "breach_count":
+            return len(self.get("breaches", []))
+        if name in self:
+            return self[name]
+        raise AttributeError(f"'ComplianceResult' object has no attribute '{name}'")
+
+
 class SLAMonitor:
     """SLA monitoring and validation system."""
 
@@ -125,14 +142,23 @@ class SLAMonitor:
         self.current_load_multiplier = 1.0
         self.load_history: List[Dict[str, Any]] = []
 
-    def record_latency(self, latency_ms: float, timestamp: Optional[datetime] = None):
+    def record_latency(
+        self, latency_ms: float, timestamp: Optional[Any] = None, agent_id: Optional[str] = None
+    ):
         """Record a latency measurement.
 
         Args:
             latency_ms: Latency in milliseconds
-            timestamp: Optional timestamp (defaults to now)
+            timestamp: Optional timestamp (defaults to now) or agent_id if called positionally
+            agent_id: Optional agent identifier
         """
-        ts = timestamp or datetime.now(timezone.utc)
+        if isinstance(timestamp, str):
+            agent_id = timestamp
+            ts = datetime.now(timezone.utc)
+        elif isinstance(timestamp, datetime):
+            ts = timestamp
+        else:
+            ts = datetime.now(timezone.utc)
 
         self.latency_window.measurements.append(latency_ms)
         self.latency_window.timestamps.append(ts)
@@ -199,11 +225,14 @@ class SLAMonitor:
             "sample_count": len(measurements),
         }
 
-    def check_sla_compliance(self) -> Dict[str, Any]:
+    def check_sla_compliance(self, agent_id: Optional[str] = None) -> ComplianceResult:
         """Check SLA compliance.
 
+        Args:
+            agent_id: Optional agent identifier
+
         Returns:
-            Compliance status dictionary
+            Compliance status dictionary supporting attribute access
         """
         metrics = self.get_current_metrics()
 
@@ -270,7 +299,7 @@ class SLAMonitor:
 
         self.last_breach_check = datetime.now(timezone.utc)
 
-        return results
+        return ComplianceResult(results)
 
     def get_sla_report(self) -> Dict[str, Any]:
         """Get comprehensive SLA report.

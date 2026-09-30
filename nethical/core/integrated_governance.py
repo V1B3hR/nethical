@@ -237,6 +237,7 @@ class IntegratedGovernance:
             redis_client=redis_client,
             key_prefix="nethical:drift",
         )
+        self.drift_reporter = self.ethical_drift_reporter
 
         self.performance_optimizer = (
             PerformanceOptimizer(target_cpu_reduction_pct=30.0)
@@ -1545,9 +1546,9 @@ class IntegratedGovernance:
             }
 
         # Drift reporting
-        if self.drift_reporter and cohort:
-            self.drift_reporter.track_action(agent_id, cohort, violation_detected)
-            drift_score = self.drift_reporter.get_drift_score(cohort)
+        if self.ethical_drift_reporter and cohort:
+            self.ethical_drift_reporter.track_action(agent_id, cohort, violation_detected)
+            drift_score = self.ethical_drift_reporter.get_drift_score(cohort)
             results["phase3"]["drift_score"] = drift_score
             if drift_score > 0.8:
                 results["phase3"]["drift_alert"] = "High drift detected"
@@ -1579,7 +1580,7 @@ class IntegratedGovernance:
                 }
 
             # Policy diff auditing
-            if self.policy_auditor:
+            if self.policy_auditor and hasattr(self.policy_auditor, "get_recent_changes"):
                 diffs = self.policy_auditor.get_recent_changes(limit=5)
                 results["phase4"]["recent_policy_changes"] = len(diffs)
 
@@ -1590,7 +1591,7 @@ class IntegratedGovernance:
                 results["phase4"]["quarantined"] = True
 
             # Ethical taxonomy classification
-            if self.ethical_taxonomy:
+            if self.ethical_taxonomy and hasattr(self.ethical_taxonomy, "classify_action"):
                 classifications = self.ethical_taxonomy.classify_action(str(action))
                 results["phase4"]["ethical_categories"] = [
                     {

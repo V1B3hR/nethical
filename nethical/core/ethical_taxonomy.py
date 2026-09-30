@@ -49,6 +49,15 @@ class ViolationTagging:
     metadata: Dict[str, Any] = field(default_factory=dict)
 
 
+@dataclass
+class ActionEthicalClassification:
+    """Classification of an action into an ethical category."""
+
+    category_name: str
+    confidence: float = 1.0
+    sub_categories: List[str] = field(default_factory=list)
+
+
 class EthicalTaxonomy:
     """Ethical taxonomy system for multi-dimensional impact classification."""
 
@@ -423,3 +432,41 @@ class EthicalTaxonomy:
             "warnings": warnings,
             "coverage_stats": stats,
         }
+
+    def classify_action(self, action_content: str) -> List[ActionEthicalClassification]:
+        """Classify action content into ethical categories.
+
+        Args:
+            action_content: Content of the action to classify
+
+        Returns:
+            List of ActionEthicalClassification instances
+        """
+        classifications: List[ActionEthicalClassification] = []
+        action_lower = str(action_content).lower()
+
+        for dim_name, dim in self.dimensions.items():
+            matched_indicators = [
+                ind for ind in dim.indicators if ind.lower() in action_lower
+            ]
+            if matched_indicators:
+                confidence = min(1.0, 0.5 + 0.1 * len(matched_indicators))
+                classifications.append(
+                    ActionEthicalClassification(
+                        category_name=dim_name,
+                        confidence=confidence,
+                        sub_categories=matched_indicators,
+                    )
+                )
+
+        if not classifications:
+            classifications.append(
+                ActionEthicalClassification(
+                    category_name="operational_ethics",
+                    confidence=0.5,
+                    sub_categories=[],
+                )
+            )
+
+        return classifications
+

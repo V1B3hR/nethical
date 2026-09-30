@@ -104,6 +104,7 @@ class PolicyDiffAuditor:
 
         # Policy version history
         self.version_history: List[Dict[str, Any]] = []
+        self.diff_history: List[PolicyDiffResult] = []
 
     def _flatten_dict(
         self, d: Dict[str, Any], parent_key: str = "", sep: str = "."
@@ -288,7 +289,7 @@ class PolicyDiffAuditor:
         # Generate recommendations
         recommendations = self._generate_recommendations(changes, risk_level)
 
-        return PolicyDiffResult(
+        diff_result = PolicyDiffResult(
             old_version=old_version,
             new_version=new_version,
             changes=changes,
@@ -297,6 +298,8 @@ class PolicyDiffAuditor:
             summary=summary,
             recommendations=recommendations,
         )
+        self.diff_history.append(diff_result)
+        return diff_result
 
     def _generate_recommendations(
         self, changes: List[PolicyChange], risk_level: RiskLevel
@@ -377,6 +380,25 @@ class PolicyDiffAuditor:
             version_data = json.load(f)
 
         return version_data.get("policy")
+
+    def get_recent_changes(self, limit: int = 5) -> List[Any]:
+        """Get recent policy changes.
+
+        Args:
+            limit: Maximum number of recent changes to return
+
+        Returns:
+            List of recent policy changes or version records
+        """
+        if self.diff_history:
+            recent_changes: List[PolicyChange] = []
+            for diff in reversed(self.diff_history):
+                for change in reversed(diff.changes):
+                    recent_changes.append(change)
+                    if len(recent_changes) >= limit:
+                        return recent_changes
+            return recent_changes
+        return self.version_history[-limit:]
 
     def format_diff_report(self, diff_result: PolicyDiffResult) -> str:
         """Format diff result as human-readable report.
