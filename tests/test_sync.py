@@ -43,7 +43,7 @@ def test_vector_clock_causality_and_merging():
     # vc1 happened-before vc2
     res_before = vc1.compare(vc2)
     assert res_before == EventOrder.BEFORE
-    assert vc1 < vc2
+    assert vc1.__lt__(vc2)
     res_after = vc2.compare(vc1)
     assert res_after == EventOrder.AFTER
 
