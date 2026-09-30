@@ -71,6 +71,7 @@ anthropic>=1.8.0  # For Claude/Anthropic integration
 # Monitoring and observability
 prometheus-client>=0.26.0  # Prometheus metrics export
 aiohttp>=3.14.3  # Async HTTP for metrics server and webhooks
+psutil>=5.9.0  # System limits and resource profiling
 
 # Optional performance dependencies (uncomment if needed; then re-run pip-compile)
 # redis==4.0.0

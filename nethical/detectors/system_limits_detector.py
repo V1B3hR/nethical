@@ -5,8 +5,11 @@
 
 import time
 import tracemalloc
-import psutil
 import logging
+try:
+    import psutil
+except ImportError:
+    psutil = None
 import re
 import numpy as np
 from typing import List, Dict, Optional, Tuple, Any
@@ -671,18 +674,23 @@ class SystemLimitsDetector(BaseDetector):
 
     def get_system_stats(self) -> Dict[str, Any]:
         current_time = time.time()
-        mem = psutil.virtual_memory()
-        cpu = psutil.cpu_percent(interval=0.05)
+        if psutil is not None:
+            mem = psutil.virtual_memory()
+            mem_pct = mem.percent
+            cpu_pct = psutil.cpu_percent(interval=0.05)
+            try:
+                p = psutil.Process()
+                fd_count = p.num_fds() if hasattr(p, "num_fds") else -1
+            except (psutil.NoSuchProcess, psutil.AccessDenied, Exception):
+                fd_count = -1
+        else:
+            mem_pct = 0.0
+            cpu_pct = 0.0
+            fd_count = -1
+
         snapshot = tracemalloc.take_snapshot()
         stats = snapshot.statistics("filename")
         top_mem = sum(stat.size for stat in stats[:3]) / (1024 * 1024)
-
-        # Get current process file descriptor count
-        try:
-            p = psutil.Process()
-            fd_count = p.num_fds()
-        except (psutil.NoSuchProcess, psutil.AccessDenied):
-            fd_count = -1
 
         return {
             "total_agents_tracked": len(self.request_history),
@@ -700,8 +708,8 @@ class SystemLimitsDetector(BaseDetector):
             "last_detection": (
                 self.last_detection_time.isoformat() if self.last_detection_time else None
             ),
-            "system_memory_percent": mem.percent,
-            "system_cpu_percent": cpu,
+            "system_memory_percent": mem_pct,
+            "system_cpu_percent": cpu_pct,
             "python_heap_mb": top_mem,
             "process_file_descriptors": fd_count,
             "agent_reputation": dict(self.agent_reputation),

@@ -20,10 +20,13 @@ from nethical.ambassador.client import BlyskawicaAmbassador
 from nethical.ml.red_team.attack_generator import AttackGenerator, AttackCategory, GenerationMethod
 from nethical.core.feedback_finetuning import FeedbackLogger, FeedbackType, FeedbackSource
 
+from pathlib import Path
+
 logger = logging.getLogger("nethical.ambassador.learning")
 
-DEFAULT_LAWS_PATH = r"c:\Projekty\Nethical\FUNDAMENTAL_LAWS.md"
-DEFAULT_DPO_DATASET_PATH = r"c:\Projekty\Nethical\data\ambassador_dpo_dataset.jsonl"
+BASE_DIR = Path(__file__).resolve().parent.parent.parent
+DEFAULT_LAWS_PATH = str(BASE_DIR / "FUNDAMENTAL_LAWS.md")
+DEFAULT_DPO_DATASET_PATH = str(BASE_DIR / "data" / "ambassador_dpo_dataset.jsonl")
 
 
 class AmbassadorKnowledgeSync:
@@ -38,7 +41,9 @@ class AmbassadorKnowledgeSync:
         self.ambassador = ambassador or BlyskawicaAmbassador()
         self.laws_path = laws_path
         self.dpo_path = dpo_path
-        os.makedirs(os.path.dirname(self.dpo_path), exist_ok=True)
+        dpo_dir = os.path.dirname(self.dpo_path)
+        if dpo_dir:
+            os.makedirs(dpo_dir, exist_ok=True)
 
     def extract_fundamental_laws(self) -> List[Dict[str, Any]]:
         """Parsuje plik FUNDAMENTAL_LAWS.md i wyodrębnia 25 Praw."""
