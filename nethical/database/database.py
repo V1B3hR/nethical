@@ -10,12 +10,21 @@ from typing import AsyncGenerator, Generator, Optional
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import Session, sessionmaker
-from sqlalchemy.ext.asyncio import (
-    AsyncEngine,
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+
+try:
+    from sqlalchemy.ext.asyncio import (
+        AsyncEngine,
+        AsyncSession,
+        async_sessionmaker,
+        create_async_engine,
+    )
+    HAS_ASYNC_SQL = True
+except (ImportError, ModuleNotFoundError):
+    HAS_ASYNC_SQL = False
+    AsyncEngine = None  # type: ignore[misc, assignment]
+    AsyncSession = None  # type: ignore[misc, assignment]
+    async_sessionmaker = None  # type: ignore[misc, assignment]
+    create_async_engine = None  # type: ignore[misc, assignment]
 
 from .models import Base
 
@@ -79,6 +88,9 @@ def init_db() -> None:
 
 async def init_async_db() -> None:
     """Initialize database tables asynchronously."""
+    if async_engine is None:
+        init_db()
+        return
     async with async_engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
@@ -96,11 +108,14 @@ def get_db() -> Generator[Session, None, None]:
         db.close()
 
 
-async def get_async_db() -> AsyncGenerator[AsyncSession, None]:
+async def get_async_db() -> AsyncGenerator[Optional[AsyncSession], None]:
     """Get asynchronous database session.
     
     Yields:
         Async database session
     """
+    if AsyncSessionLocal is None:
+        yield None
+        return
     async with AsyncSessionLocal() as session:
         yield session

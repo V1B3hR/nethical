@@ -74,18 +74,18 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v3
+        uses: github/codeql-action/init@v4
         with:
           languages: python
           queries: security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v3
+        uses: github/codeql-action/autobuild@v4
 
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v3
+        uses: github/codeql-action/analyze@v4
         with:
-          category: "/language:python"
+          category: "/language:python/workflow:security-pipeline"
 
       - name: Run Semgrep
         uses: returntocorp/semgrep-action@v1
@@ -141,9 +141,10 @@ jobs:
 
       - name: Upload Trivy results to Security tab
         if: always() && hashFiles('trivy-dependency-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v3
+        uses: github/codeql-action/upload-sarif@v4
         with:
           sarif_file: trivy-dependency-results.sarif
+          category: "/tool:trivy/workflow:security-pipeline"
 
       - name: Upload dependency scan results
         if: always()

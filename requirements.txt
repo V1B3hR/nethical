@@ -42,9 +42,10 @@ passlib[bcrypt]>=1.7.4
 pyotp>=2.9.0
 
 # Database
-sqlalchemy>=2.0.52
+sqlalchemy>=2.0.52,<2.1.0
 alembic>=1.20.0    
 aiosqlite>=0.20.0
+greenlet>=3.0.0
 
 
 # Transitive/supporting (explicitly pinned to keep lock stable)

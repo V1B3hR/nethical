@@ -31,6 +31,19 @@ __all__ = [
     "async_engine",
 ]
 
+from typing import Any, AsyncGenerator, Generator
+
+
+def _fallback_get_db() -> Generator[Any, None, None]:
+    """Fallback generator for database session dependency."""
+    yield None
+
+
+async def _fallback_get_async_db() -> AsyncGenerator[Any, None]:
+    """Fallback async generator for async database session dependency."""
+    yield None
+
+
 # Models
 try:
     from .models import (
@@ -43,7 +56,7 @@ try:
         Tenant,
         User,
     )
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     Base = None
     Agent = None
     Policy = None
@@ -65,13 +78,19 @@ try:
         init_async_db,
         init_db,
     )
-except ImportError:
+except (ImportError, ModuleNotFoundError):
     SessionLocal = None
     AsyncSessionLocal = None
     engine = None
     async_engine = None
-    get_db = None
-    get_async_db = None
+    get_db = _fallback_get_db
+    get_async_db = _fallback_get_async_db
     init_db = None
     init_async_db = None
+
+if get_db is None:
+    get_db = _fallback_get_db
+
+if get_async_db is None:
+    get_async_db = _fallback_get_async_db
 
