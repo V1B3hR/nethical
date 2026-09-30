@@ -119,3 +119,22 @@ def test_legitimate_civilian_streaming_permitted() -> None:
 
     assert is_clean is True
     assert alert is None
+
+
+def test_high_entropy_encrypted_covert_tunnel_detected() -> None:
+    """Weryfikuje, że zaszyfrowany kanał ukryty o wysokiej entropii bez jawnych sygnatur tekstowych jest wykrywany i blokowany."""
+    guard = SilentTargetSteppingStoneGuard()
+
+    # Losowy/jednostajny ciąg bajtów symulujący zaszyfrowany tunel C2 (entropia bliska 8.0 bits/B)
+    encrypted_tunnel_payload = bytes(range(256)) * 4
+    is_clean, alert = guard.inspect_streaming_packet(
+        stream_id="stream_covert_encrypted_c2",
+        payload_bytes=encrypted_tunnel_payload,
+        declared_codec="H265_AV1",
+    )
+
+    assert is_clean is False
+    assert alert is not None
+    assert alert.threat_type == "STREAM_COVERT_TUNNEL"
+    assert any("anomalię wysokiej entropii" in ind for ind in alert.detected_indicators)
+

@@ -204,6 +204,7 @@ class SilentTargetSteppingStoneGuard:
         stream_id: str,
         payload_bytes: bytes,
         declared_codec: str = "H265_AV1",
+        entropy_threshold: float = 7.0,
     ) -> Tuple[bool, Optional[SteppingStoneAlert]]:
         """Bada ładunek strumienia wideo pod kątem wstrzykniętych komend C2 i nielegalnego tunelowania."""
         # Prosta analiza entropii i sygnatur poleceń shell / scada
@@ -229,13 +230,24 @@ class SilentTargetSteppingStoneGuard:
                 p = count / sample_len
                 entropy -= p * math.log2(p)
 
-        # Jeżeli w strumieniu wideo znajdują się komendy sterowania SCADA lub shell
-        if detected:
-            indicators = [
-                f"Wykryto sygnatury poleceń sterowania przemysłowego / C2 ukryte w strumieniu {stream_id}: {detected}",
+        # Wykrycie anomalii entropijnej (tunelowanie zaszyfrowane lub kompresja adwersarialna)
+        entropy_anomaly = len(payload_bytes) >= 256 and entropy >= entropy_threshold
+
+        # Jeżeli w strumieniu wideo znajdują się komendy sterowania SCADA/shell lub anomalia entropii
+        if detected or entropy_anomaly:
+            indicators = []
+            if detected:
+                indicators.append(
+                    f"Wykryto sygnatury poleceń sterowania przemysłowego / C2 ukryte w strumieniu {stream_id}: {detected}"
+                )
+            if entropy_anomaly:
+                indicators.append(
+                    f"Wykryto anomalię wysokiej entropii ({entropy:.2f} >= {entropy_threshold:.2f} bits/B) sugerującą zaszyfrowany kanał ukryty (Covert Tunnel)."
+                )
+            indicators.extend([
                 f"Zadeklarowany kodek: {declared_codec}, entropia próbki: {entropy:.2f} bitów",
                 "Próba maskowania ataku na infrastrukturę krytyczną w legalnym ruchu multimedialnym (Cichy Cel).",
-            ]
+            ])
             alert = SteppingStoneAlert(
                 alert_id=f"STEP-COVERT-{int(time.time() * 1000)}",
                 threat_type="STREAM_COVERT_TUNNEL",
@@ -259,3 +271,4 @@ class SilentTargetSteppingStoneGuard:
             return False, alert
 
         return True, None
+

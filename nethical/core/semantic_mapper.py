@@ -238,11 +238,11 @@ class SemanticMapper:
         
         # Check each policy vector
         for law_num, policy_vec in self.policy_vectors.items():
-            # Compute similarity
-            similarity = action_embedding.embedding.similarity(policy_vec.embedding)
+            # Compute raw cosine similarity [-1.0, 1.0]
+            raw_cosine = action_embedding.embedding.similarity(policy_vec.embedding)
             # Normalize cosine similarity from [-1, 1] to [0, 1]
             # where 1 = identical, 0 = orthogonal, -1 = opposite
-            similarity = (similarity + 1.0) / 2.0
+            similarity = (raw_cosine + 1.0) / 2.0
             
             # Check if law is relevant
             if similarity >= similarity_threshold:
@@ -251,6 +251,7 @@ class SemanticMapper:
                     "law_number": law_num,
                     "law_title": policy_vec.law_title,
                     "similarity": similarity,
+                    "raw_cosine": raw_cosine,
                     "category": policy_vec.category
                 })
                 max_similarity = max(max_similarity, similarity)
@@ -264,6 +265,7 @@ class SemanticMapper:
                             "law_number": law_num,
                             "law_title": policy_vec.law_title,
                             "similarity": similarity,
+                            "raw_cosine": raw_cosine,
                             "category": policy_vec.category,
                             "primitive_match": primitive.value
                         })
