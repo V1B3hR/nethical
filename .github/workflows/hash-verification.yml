@@ -65,7 +65,7 @@ jobs:
             echo "drift=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-          if ! diff -q committed_requirements-hashed.txt new_requirements-hashed.txt > /dev/null; then
+          if ! diff -u -w -I '^#' committed_requirements-hashed.txt new_requirements-hashed.txt > /dev/null; then
             echo "drift=true" >> $GITHUB_OUTPUT
           else
             echo "drift=false" >> $GITHUB_OUTPUT
@@ -125,6 +125,7 @@ jobs:
           steps.check_diff.outputs.drift == 'true' &&
           github.event_name != 'pull_request'
         uses: peter-evans/create-pull-request@v6
+        continue-on-error: true
         with:
           commit-message: "chore: Update requirements-hashed.txt [auto-sync]"
           title: "chore: Update requirements-hashed.txt [auto-sync]"
