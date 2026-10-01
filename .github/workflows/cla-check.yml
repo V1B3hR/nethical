@@ -29,6 +29,13 @@ jobs:
             [ -z "$line" ] && continue
             COMMIT_HASH=$(echo "$line" | cut -d' ' -f1)
             COMMIT_SUBJECT=$(echo "$line" | cut -d' ' -f2-)
+            COMMIT_AUTHOR=$(git log -n 1 --format='%an <%ae>' "$COMMIT_HASH")
+
+            if [ "$COMMIT_AUTHOR" = "github-actions[bot] <41898282+github-actions[bot]@users.noreply.github.com>" ] &&
+               [ "$COMMIT_SUBJECT" = "chore: Auto-sync requirements-hashed.txt with requirements.txt" ]; then
+              echo "ℹ️ Skipping automated requirements hash sync commit $COMMIT_HASH"
+              continue
+            fi
             
             if ! git log -n 1 --format='%B' "$COMMIT_HASH" | grep -Eq "^Signed-off-by: .+ <.+@.+>$"; then
               echo "❌ Commit $COMMIT_HASH ('$COMMIT_SUBJECT') is missing Signed-off-by footer"
