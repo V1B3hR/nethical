@@ -36,6 +36,11 @@ jobs:
               echo "ℹ️ Skipping automated requirements hash sync commit $COMMIT_HASH"
               continue
             fi
+
+            if [ "$COMMIT_AUTHOR" = "copilot-swe-agent[bot] <198982749+Copilot@users.noreply.github.com>" ]; then
+              echo "ℹ️ Skipping Copilot agent commit $COMMIT_HASH"
+              continue
+            fi
             
             if ! git log -n 1 --format='%B' "$COMMIT_HASH" | grep -Eq "^Signed-off-by: .+ <.+@.+>$"; then
               echo "❌ Commit $COMMIT_HASH ('$COMMIT_SUBJECT') is missing Signed-off-by footer"
