@@ -16,7 +16,7 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 COPY requirements.txt requirements-dev.txt pyproject.toml setup.py ./
 
 # Install Python dependencies into isolated /install prefix
-RUN pip install --no-cache-dir --prefix=/install -r requirements.txt
+RUN pip install --no-cache-dir --timeout=120 --retries=5 --prefix=/install -r requirements.txt
 
 # Final runtime stage
 FROM python:3.11-slim
