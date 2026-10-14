@@ -15,9 +15,7 @@ on:
         default: 'false'
 
 permissions:
-  security-events: write
   contents: read
-  actions: read
 
 env:
   PYTHON_VERSION: '3.11'
@@ -70,6 +68,9 @@ jobs:
   sast:
     name: SAST Analysis
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
 
@@ -103,6 +104,9 @@ jobs:
   dependency-scan:
     name: Dependency Scanning
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
     steps:
       - uses: actions/checkout@v4
 

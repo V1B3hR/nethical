@@ -14,13 +14,14 @@ on:
 
 permissions:
   contents: read
-  issues: write
-  security-events: write
 
 jobs:
   scan-and-enforce-sla:
     name: Scan Vulnerabilities and Enforce SLA
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      issues: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
