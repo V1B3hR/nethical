@@ -23,17 +23,12 @@ on:
       - main
 
 permissions:
-  contents: write
-  issues: write
+  contents: read
 
 jobs:
   train-models:
     name: Train ML Models
     runs-on: ubuntu-latest
-    permissions:
-      contents: write
-      issues: write
-
     steps:
       - uses: actions/checkout@v4
 
@@ -143,10 +138,6 @@ jobs:
     needs: train-models
     runs-on:  ubuntu-latest
     if: success()
-    permissions:
-      contents: write
-      issues: write
-
     steps: 
       - uses: actions/checkout@v4
 

@@ -19,6 +19,9 @@ on:
   schedule:
     - cron: '25 22 * * 6'
 
+permissions:
+  contents: read
+
 jobs:
   analyze:
     name: Analyze (${{ matrix.language }})

@@ -17,15 +17,15 @@ on:
 
 permissions:
   contents: read
-  pull-requests: write
-  issues: write
-  checks: write
 
 jobs:
   performance-benchmark:
     name: Run Performance Benchmarks
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    permissions:
+      contents: read
+      issues: write
 
     steps:
       - uses: actions/checkout@v4
