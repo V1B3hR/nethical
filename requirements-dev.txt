@@ -1,6 +1,6 @@
 pytest>=7.0.0
 pytest-asyncio>=0.21.0
-black>=26.10.0
+black>=26.10.1
 flake8>=7.4.1
 mypy>=2.4.0
 numpy>=1.26.0
