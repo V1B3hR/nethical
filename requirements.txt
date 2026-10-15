@@ -21,7 +21,7 @@ httpx>=0.27.0
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
-pydantic==2.14.0
+pydantic==2.14.1
 pydantic-core==2.50.0
 typing-extensions==4.16.0
 dataclasses-json==0.6.7
