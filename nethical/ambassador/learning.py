@@ -297,7 +297,8 @@ class AmbassadorKnowledgeSync:
         - FeedbackLogger (nethical.core.feedback_finetuning) do dwustronnego zapisu
         - Pakiety 11 ram prawnych (UK, UE, Polska) oraz ISO 42001 / Kinetic Safety.
         """
-        logger.info("Rozpoczęto synchronizację wiedzy ML z repozytorium do Błyskawicy (cel: %d wariantów)...", num_variants)
+        safe_variants = max(1, min(int(str(num_variants).replace("\r", "").replace("\n", "")), 10000))
+        logger.info("Rozpoczęto synchronizację wiedzy ML z repozytorium do Błyskawicy (cel: %d wariantów)...", safe_variants)
 
 
         # 1. Przygotowanie szablonów ataków i dylematów regulacyjnych
@@ -466,7 +467,7 @@ class AmbassadorKnowledgeSync:
             AttackCategory.ZERO_DAY,
         ]
 
-        variants_per_category = max(1, num_variants // len(categories))
+        variants_per_category = max(1, safe_variants // len(categories))
         all_variants = []
 
         async def _gather_variants() -> List[Any]:

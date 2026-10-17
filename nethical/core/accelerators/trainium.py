@@ -558,6 +558,7 @@ class TrainiumAccelerator(AcceleratorInterface):
 
                 xm.mark_step()
             except ImportError:
+                # torch_xla is not installed; synchronization is not needed in mock/fallback mode
                 pass
 
     def get_memory_info(self) -> Dict[str, Any]:
