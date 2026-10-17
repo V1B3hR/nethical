@@ -132,7 +132,7 @@ install_dependencies() {
     fi
     
     # Python dependencies
-    pip3 install --user --upgrade pip wheel
+    pip3 install --user --require-hashes -r "${PROJECT_ROOT}/requirements-build-hashed.txt"
 }
 
 # Download and install Nethical Edge
@@ -153,7 +153,7 @@ install_nethical_edge() {
     
     # Fallback: Install from GitHub
     log_info "Installing from GitHub..."
-    pip3 install --user git+https://github.com/V1B3hR/nethical.git#subdirectory=nethical-edge
+    pip3 install --user --no-deps git+https://github.com/V1B3hR/nethical.git#subdirectory=nethical-edge
 }
 
 # Configure for specific platform

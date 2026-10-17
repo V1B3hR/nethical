@@ -12,7 +12,7 @@ echo
 # Check if pip-tools is installed
 if ! command -v pip-compile &> /dev/null; then
     echo "pip-tools not found. Installing..."
-    python -m pip install --upgrade pip pip-tools
+    pip install --require-hashes -r requirements-build-hashed.txt
 fi
 
 # Check if requirements.txt exists

@@ -53,14 +53,8 @@ COPY --chown=builder:builder requirements-hashed.txt .
 RUN pip install --user --require-hashes -r requirements-hashed.txt
 
 # Install build tools
-RUN pip install --user \
-    build==1.0.3 \
-    wheel==0.42.0 \
-    setuptools==69.0.3 \
-    pip-tools==7.3.0 \
-    cyclonedx-bom==4.4.0 \
-    spdx-tools==0.8.2 \
-    pip-audit==2.6.1
+COPY --chown=builder:builder requirements-build-hashed.txt requirements-sec-hashed.txt .
+RUN pip install --user --require-hashes -r requirements-build-hashed.txt -r requirements-sec-hashed.txt
 
 # Add build tools to PATH
 ENV PATH="/home/builder/.local/bin:${PATH}"

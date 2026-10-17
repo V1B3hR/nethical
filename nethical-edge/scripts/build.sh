@@ -144,7 +144,7 @@ python3 -m venv .build-venv
 source .build-venv/bin/activate
 
 # Install build dependencies
-pip install --upgrade pip setuptools wheel cython numpy
+pip install --require-hashes -r ../requirements-build-hashed.txt -r ../requirements-hashed.txt
 
 # Build with optimization
 if [ "$CUDA_ENABLED" = true ] && [ "$TARGET" = "arm64" ]; then

@@ -29,6 +29,7 @@
   ![Status](https://img.shields.io/badge/status-active_development-green.svg)
   ![Focus](https://img.shields.io/badge/focus-AI_Safety_%26_Alignment-red.svg)
   ![Ethics](https://img.shields.io/badge/ethics-25_Fundamental_Laws-purple.svg)
+  [![OpenSSF Best Practices](https://www.bestpractices.dev/projects/1062129355/badge)](https://www.bestpractices.dev/projects/1062129355)
 </div>
  
 > [!WARNING]

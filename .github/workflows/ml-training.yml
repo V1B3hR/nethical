@@ -30,25 +30,18 @@ jobs:
     name: Train ML Models
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
           cache: 'pip'
 
-      - name: Install system dependencies
+      - name: Install dependencies
         run: |
-          pip install --upgrade pip setuptools wheel
-
-      - name: Install Python dependencies
-        run: |
-          pip install numpy pandas kaggle pyyaml
-
-      - name:  Install Nethical package
-        run: |
-          pip install -e .
+          pip install --require-hashes -r requirements-hashed.txt
+          pip install --require-hashes -r requirements-tools-hashed.txt
+          pip install --no-deps -e .
 
       - name: Verify installation
         run: |
@@ -96,7 +89,7 @@ jobs:
           fi
 
       - name: Upload baseline models
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: baseline-models
           path: models/current/
@@ -105,7 +98,7 @@ jobs:
         if: always()
 
       - name: Upload drift reports
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with: 
           name: drift-reports-${{ github.run_number }}
           path: training_drift_reports/
@@ -114,7 +107,7 @@ jobs:
         if: always()
 
       - name: Upload audit logs
-        uses:  actions/upload-artifact@v4
+        uses:  actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name:  audit-logs-${{ github. run_number }}
           path:  training_audit_logs/
@@ -123,7 +116,7 @@ jobs:
         if: always()
 
       - name: Upload all trained models
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: all-trained-models-${{ github.run_number }}
           path: |
@@ -139,27 +132,26 @@ jobs:
     runs-on:  ubuntu-latest
     if: success()
     steps: 
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: '3.11'
 
       - name: Install dependencies
         run: |
-          pip install --upgrade pip
-          pip install numpy pandas pyyaml
+          pip install --require-hashes -r requirements-hashed.txt
+          pip install --require-hashes -r requirements-tools-hashed.txt
 
       - name: Download baseline models
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.1
         with: 
           name: baseline-models
           path: models/baseline
         continue-on-error: true
 
       - name: Download performance history
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.1
         with: 
           name: performance-history
           path: performance_history/
@@ -177,7 +169,7 @@ jobs:
           echo "{\"timestamp\": \"$TIMESTAMP\", \"run_id\": \"${{ github.run_id }}\"}" > performance_history/run_${TIMESTAMP}.json
 
       - name: Upload performance history
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with: 
           name: performance-history
           path: performance_history/

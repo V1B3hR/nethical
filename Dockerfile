@@ -1,5 +1,5 @@
 # Multi-stage build for hardened container (CIS Docker Benchmark & SOC 2 compliant)
-FROM python:3.11-slim as builder
+FROM python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce as builder
 
 # Build argument for optional model preloading
 ARG PRELOAD_EMBEDDINGS=false
@@ -13,13 +13,13 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy packaging specifications to leverage Docker layer cache
-COPY requirements.txt requirements-dev.txt pyproject.toml setup.py ./
+COPY requirements.txt requirements-hashed.txt requirements-dev.txt pyproject.toml setup.py ./
 
 # Install Python dependencies into isolated /install prefix
-RUN pip install --no-cache-dir --timeout=120 --retries=5 --prefix=/install -r requirements.txt
+RUN pip install --no-cache-dir --timeout=120 --retries=5 --prefix=/install --require-hashes -r requirements-hashed.txt
 
 # Final runtime stage
-FROM python:3.11-slim
+FROM python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \

@@ -4,7 +4,7 @@
 # ==============================================================================
 
 # Stage 1: Build & Dependencies
-FROM python:3.12-slim-bookworm AS builder
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS builder
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -20,12 +20,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     && rm -rf /var/lib/apt/lists/*
 
-COPY requirements.txt pyproject.toml setup.py ./
-RUN pip install --upgrade pip && \
-    pip install --user --no-cache-dir -r requirements.txt
+COPY requirements.txt requirements-hashed.txt pyproject.toml setup.py ./
+RUN pip install --user --no-cache-dir --require-hashes -r requirements-hashed.txt
 
 # Stage 2: Hardened Minimal Production Runtime
-FROM python:3.12-slim-bookworm AS runner
+FROM python:3.12-slim-bookworm@sha256:34386ef0cb081344d7ec1c103ba398e6e9f64e9ab3a1509accc92a4e24a07258 AS runner
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PYTHONDONTWRITEBYTECODE=1 \
@@ -52,7 +51,7 @@ COPY --chown=nethical:nethical . /app
 
 # Install local package in editable mode as non-root user
 USER nethical
-RUN pip install --user --no-cache-dir -e .
+RUN pip install --user --no-cache-dir --no-deps -e .
 
 # Network Ports: 8000 (Gateway REST / WebSockets), 8001 (MCP Proxy SSE)
 EXPOSE 8000 8001

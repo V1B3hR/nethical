@@ -28,21 +28,21 @@ jobs:
     name: Pre-commit Security
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
         with:
           fetch-depth: 0
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install pre-commit tools
         run: |
-          pip install bandit pre-commit
+          pip install --require-hashes -r requirements-tools-hashed.txt
 
       - name: Run Gitleaks (Secrets Scanning)
-        uses: gitleaks/gitleaks-action@v2
+        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.8
         with:
           args: --redact --verbose
         env:
@@ -57,7 +57,7 @@ jobs:
 
       - name: Upload Bandit results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: bandit-results
           path: bandit-results.json
@@ -72,24 +72,22 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Initialize CodeQL
-        uses: github/codeql-action/init@v4
+        uses: github/codeql-action/init@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.0.5
         with:
           languages: python
           queries: security-and-quality
 
       - name: Autobuild
-        uses: github/codeql-action/autobuild@v4
-
+        uses: github/codeql-action/autobuild@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.0.5
       - name: Perform CodeQL Analysis
-        uses: github/codeql-action/analyze@v4
+        uses: github/codeql-action/analyze@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.0.5
         with:
           category: "/language:python/workflow:security-pipeline"
 
       - name: Run Semgrep
-        uses: returntocorp/semgrep-action@v1
+        uses: returntocorp/semgrep-action@713efdd345f3035192eaa63f56867b88e63e4e5d # v1
         with:
           config: >-
             p/python
@@ -108,20 +106,19 @@ jobs:
       contents: read
       security-events: write
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install tools
         run: |
-          pip install safety pip-audit
+          pip install --require-hashes -r requirements-sec-hashed.txt
 
       - name: Install project dependencies
         run: |
-          pip install -r requirements.txt
+          pip install --require-hashes -r requirements-hashed.txt
 
       - name: Run Safety Check
         run: |
@@ -134,7 +131,7 @@ jobs:
         continue-on-error: true
 
       - name: Run Trivy (Dependency Scan)
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@6abccf398f78b4c337599c0656f933d91efb91a0 # master
         with:
           scan-type: 'fs'
           scan-ref: '.'
@@ -145,14 +142,14 @@ jobs:
 
       - name: Upload Trivy results to Security tab
         if: always() && hashFiles('trivy-dependency-results.sarif') != ''
-        uses: github/codeql-action/upload-sarif@v4
+        uses: github/codeql-action/upload-sarif@6f2ac81f5cd81fe351a197ba0b00d91d03cd2aee # v4.0.5
         with:
           sarif_file: trivy-dependency-results.sarif
           category: "/tool:trivy/workflow:security-pipeline"
 
       - name: Upload dependency scan results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: dependency-scan-results
           path: |
@@ -167,8 +164,7 @@ jobs:
     name: Container Security
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Build Docker image
         id: docker_build
         run: |
@@ -178,7 +174,7 @@ jobs:
 
       - name: Run Trivy (Container Scan)
         if: success() && steps.docker_build.outcome == 'success'
-        uses: aquasecurity/trivy-action@master
+        uses: aquasecurity/trivy-action@6abccf398f78b4c337599c0656f933d91efb91a0 # master
         with:
           image-ref: 'nethical:security-scan'
           format: 'sarif'
@@ -188,7 +184,7 @@ jobs:
 
       - name: Run Grype (Container Scan)
         if: success() && steps.docker_build.outcome == 'success'
-        uses: anchore/scan-action@v4
+        uses: anchore/scan-action@64a33b277ea7a1215a3c142735a1091341939ff5 # v4.1.2
         with:
           image: 'nethical:security-scan'
           fail-build: false
@@ -198,7 +194,7 @@ jobs:
 
       - name: Upload container scan results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: container-scan-results
           path: |
@@ -211,24 +207,23 @@ jobs:
     name: SBOM Generation
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Generate SBOM with Syft (SPDX)
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.18.0
         with:
           path: '.'
           format: 'spdx-json'
           output-file: 'sbom-spdx.json'
 
       - name: Generate CycloneDX SBOM
-        uses: anchore/sbom-action@v0
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610 # v0.18.0
         with:
           path: '.'
           format: 'cyclonedx-json'
           output-file: 'sbom-cyclonedx.json'
 
       - name: Upload SBOM
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: sbom
           path: |
@@ -243,16 +238,15 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch' && github.event.inputs.full_scan == 'true'
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install dependencies
         run: |
-          pip install -r requirements.txt
+          pip install --require-hashes -r requirements-hashed.txt
 
       - name: Start application
         run: |
@@ -261,7 +255,7 @@ jobs:
         continue-on-error: true
 
       - name: OWASP ZAP Baseline Scan
-        uses: zaproxy/action-baseline@v0.12.0
+        uses: zaproxy/action-baseline@66042c8e7e24680119199a017e5b0e8603bf4dae # v0.12.0
         with:
           target: 'http://localhost:8000'
           allow_issue_writing: false
@@ -269,7 +263,7 @@ jobs:
 
       - name: Upload ZAP results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: zap-results
           path: |
@@ -283,10 +277,9 @@ jobs:
     name: IaC Security
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Run Checkov (IaC Security)
-        uses: bridgecrewio/checkov-action@master
+        uses: bridgecrewio/checkov-action@6f26dc90000b74feb589a906cdfae540f5119895 # master
         with:
           directory: deploy/
           soft_fail: true
@@ -294,7 +287,7 @@ jobs:
           output_file_path: checkov-results.sarif
 
       - name: Run KICS
-        uses: checkmarx/kics-github-action@master
+        uses: checkmarx/kics-github-action@4600d2f2e1dfb33fbf6e1dfd60a01fb18b202ba1 # master
         with:
           path: deploy/
           output_path: kics-results/
@@ -303,7 +296,7 @@ jobs:
 
       - name: Upload IaC scan results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: iac-security-results
           path: |
@@ -317,20 +310,19 @@ jobs:
     name: License Compliance
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
       - name: Install tools
         run: |
-          pip install pip-licenses
+          pip install --require-hashes -r requirements-sec-hashed.txt
 
       - name: Install project dependencies
         run: |
-          pip install -r requirements.txt
+          pip install --require-hashes -r requirements-hashed.txt
 
       - name: Generate license report
         run: |
@@ -340,7 +332,7 @@ jobs:
 
       - name: Upload license report
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: license-report
           path: |
@@ -363,15 +355,14 @@ jobs:
       - license-scan
     if: always()
     steps:
-      - uses: actions/checkout@v4
-
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
       - name: Download all artifacts
-        uses: actions/download-artifact@v4
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093 # v4.3.1
         with:
           path: security-reports
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065 # v5.6.0
         with:
           python-version: ${{ env.PYTHON_VERSION }}
 
@@ -415,7 +406,7 @@ jobs:
           python generate_report.py
 
       - name: Upload consolidated report
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
         with:
           name: consolidated-security-report
           path: consolidated-security-report.json

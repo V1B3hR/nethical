@@ -150,7 +150,9 @@ perform_verify_build() {
     export PYTHONDONTWRITEBYTECODE=1
     
     # Install dependencies
-    python3 -m pip install --quiet build
+    if [ -f "requirements-build-hashed.txt" ]; then
+        python3 -m pip install --require-hashes -r requirements-build-hashed.txt --quiet
+    fi
     
     if [ -f "requirements-hashed.txt" ]; then
         python3 -m pip install --require-hashes -r requirements-hashed.txt --quiet

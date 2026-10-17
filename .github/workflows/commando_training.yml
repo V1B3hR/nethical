@@ -16,17 +16,16 @@ jobs:
 
     steps:
     - name: Checkout code
-      uses: actions/checkout@v3
-
+      uses: actions/checkout@a37ce9120846195fa4ece8f58b268e6043cb2f26 # v3.0.0
     - name: Set up Python 3.10
-      uses: actions/setup-python@v4
+      uses: actions/setup-python@7f4fc3e22c37d6ff65e88745f38bd3157c663f7c # v4.7.1
       with:
         python-version: '3.10'
 
     - name: Install dependencies
       run: |
-        pip install -r requirements.txt
-        pip install kaggle
+        pip install --require-hashes -r requirements-hashed.txt
+        pip install --require-hashes -r requirements-tools-hashed.txt
 
     - name: Configure Kaggle API credentials
       run: |
@@ -57,7 +56,7 @@ jobs:
         tar -czf models-current.tar.gz models/current/
 
     - name: Upload trained model artifacts
-      uses: actions/upload-artifact@v4
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
       with:
         name: trained-models
         path: models-current.tar.gz

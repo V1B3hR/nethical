@@ -1,0 +1,6 @@
+language: python
+primary_contact: "security@nethical.org"
+auto_ccs:
+  - "V1B3hR@users.noreply.github.com"
+sanitizers:
+  - address

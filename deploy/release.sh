@@ -158,7 +158,7 @@ build_package() {
     cd "${PROJECT_ROOT}"
     
     # Build source distribution and wheel
-    python3 -m pip install --quiet build
+    pip install --quiet --require-hashes -r requirements-build-hashed.txt
     python3 -m build --outdir "${DIST_DIR}"
     
     # Generate checksums
@@ -177,7 +177,7 @@ generate_sbom_cyclonedx() {
     cd "${PROJECT_ROOT}"
     
     # Install cyclonedx-bom if not present
-    python3 -m pip install --quiet cyclonedx-bom
+    pip install --quiet --require-hashes -r requirements-sec-hashed.txt
     
     # Generate CycloneDX SBOM
     cyclonedx-py -r -i requirements.txt -o "${SBOM_DIR}/sbom-cyclonedx.json" --format json
@@ -193,7 +193,7 @@ generate_sbom_spdx() {
     cd "${PROJECT_ROOT}"
     
     # Generate SPDX SBOM
-    python3 -m pip install --quiet spdx-tools
+    pip install --quiet --require-hashes -r requirements-sec-hashed.txt
     
     # Create basic SPDX document
     cat > "${SBOM_DIR}/sbom-spdx.json" <<EOF
@@ -222,7 +222,7 @@ run_vulnerability_scan() {
     cd "${PROJECT_ROOT}"
     
     # Use pip-audit for Python dependencies
-    python3 -m pip install --quiet pip-audit
+    pip install --quiet --require-hashes -r requirements-sec-hashed.txt
     
     # Run audit and save results
     if python3 -m pip-audit -r requirements.txt --format json > "${SBOM_DIR}/vulnerability-scan.json" 2>/dev/null; then
