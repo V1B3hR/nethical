@@ -9,7 +9,7 @@ Target: 10-100x speedup over pure Python.
 """
 
 import logging
-from typing import Tuple
+from typing import Any, Tuple
 
 import numpy as np
 
@@ -23,13 +23,13 @@ except ImportError:
     NUMBA_AVAILABLE = False
     logger.warning("Numba not available for JIT detectors")
 
-    def njit(*args, **kwargs):
+    def njit(*args: Any, **kwargs: Any) -> Any:
         """Fallback decorator when Numba is not available."""
         import functools
         
-        def decorator(func):
+        def decorator(func: Any) -> Any:
             @functools.wraps(func)
-            def wrapper(*fargs, **fkwargs):
+            def wrapper(*fargs: Any, **fkwargs: Any) -> Any:
                 return func(*fargs, **fkwargs)
             return wrapper
         
@@ -39,6 +39,7 @@ except ImportError:
         return decorator
 
     prange = range
+
 
 
 @njit(cache=True)
@@ -125,8 +126,9 @@ def fast_pattern_match(
         dot_product = np.dot(action_vector, pattern_vectors[i])
         similarities[i] = dot_product / (action_norm * pattern_norm)
 
-    has_match = np.any(similarities >= threshold)
+    has_match = bool(np.any(similarities >= threshold))
     return has_match, similarities
+
 
 
 @njit(cache=True, parallel=True)
@@ -210,7 +212,8 @@ def fast_risk_aggregation(
     return aggregated, is_critical
 
 
-def warmup_jit_detectors():
+def warmup_jit_detectors() -> None:
+
     """
     Warmup JIT compilation for all detector functions.
     

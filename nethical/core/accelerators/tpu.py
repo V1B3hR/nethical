@@ -387,10 +387,11 @@ class TPUAccelerator(AcceleratorInterface):
             xla_flags.append("--xla_tpu_memory_bound_schedule=true")
 
         # Set batch size recommendation
+        tpu_version_str = self._tpu_version.value if self._tpu_version is not None else "unknown"
         if self.config.batch_size > self._tpu_specs.max_batch_size:
             log.warning(
                 f"Batch size {self.config.batch_size} exceeds recommendation "
-                f"for {self._tpu_version.value} (max: {self._tpu_specs.max_batch_size}). "
+                f"for {tpu_version_str} (max: {self._tpu_specs.max_batch_size}). "
                 f"Consider reducing batch size for optimal performance."
             )
 
@@ -403,7 +404,7 @@ class TPUAccelerator(AcceleratorInterface):
             else:
                 os.environ["XLA_FLAGS"] = new_flags
 
-        log.debug(f"XLA configured for TPU {self._tpu_version.value}")
+        log.debug(f"XLA configured for TPU {tpu_version_str}")
 
     def get_recommended_batch_size(self) -> int:
         """Get recommended batch size for current TPU version.
@@ -417,7 +418,7 @@ class TPUAccelerator(AcceleratorInterface):
 
     def get_info(self) -> AcceleratorInfo:
         """Get TPU device information."""
-        if not self._initialized or self._tpu_specs is None:
+        if not self._initialized or self._tpu_specs is None or self._tpu_version is None:
             return AcceleratorInfo(
                 backend=AcceleratorBackend.TPU,
                 device_id=self.config.device_id,
@@ -438,6 +439,7 @@ class TPUAccelerator(AcceleratorInterface):
                 "version": self._tpu_version.value,
                 "year": self._tpu_specs.year,
                 "tflops": self._tpu_specs.tflops,
+
                 "fp8_tflops": self._tpu_specs.fp8_tflops,
                 "memory_type": self._tpu_specs.memory_type,
                 "supports_fp8": self._tpu_specs.supports_fp8,
@@ -479,7 +481,8 @@ class TPUAccelerator(AcceleratorInterface):
             return np.array(tensor)
 
         # Move to CPU and convert
-        return tensor.cpu().detach().numpy()
+        from typing import cast
+        return cast(np.ndarray, tensor.cpu().detach().numpy())
 
     def execute(self, model: Any, inputs: Any) -> Any:
         """Execute model on TPU.
@@ -517,7 +520,7 @@ class TPUAccelerator(AcceleratorInterface):
         if self._initialized:
             xm.mark_step()
 
-    def get_memory_info(self) -> Dict[str, float]:
+    def get_memory_info(self) -> Dict[str, Any]:
         """Get TPU memory usage.
 
         Returns:
@@ -539,6 +542,7 @@ class TPUAccelerator(AcceleratorInterface):
             }
         except Exception:
             return {"total_gb": memory_gb}
+
 
     def clear_cache(self) -> None:
         """Clear XLA compilation cache."""

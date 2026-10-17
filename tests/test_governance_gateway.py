@@ -64,7 +64,8 @@ async def test_mcp_proxy_interception_and_blocking() -> None:
         }
     }
     resp_benign = await proxy.intercept_and_forward(benign_req, fake_downstream_tool)
-    assert bool(called) is True
+    assert called is True
+
     assert resp_benign["result"]["status"] == "executed"
 
     # 2. Malicious request (musimy zablokować bez wywołania downstream)

@@ -145,12 +145,13 @@ class DeepfakeDetector(BaseDetector):
         evidence = []
 
         for i, result in enumerate(results):
-            if isinstance(result, Exception):
+            if isinstance(result, BaseException):
                 continue
-            if result:
+            if result and isinstance(result, tuple):
                 score, method_evidence = result
                 scores.append(score)
                 evidence.extend(method_evidence)
+
 
         if scores:
             # Compute final confidence

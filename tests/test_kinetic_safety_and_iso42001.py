@@ -7,6 +7,8 @@ Weryfikuje:
 4. Endpointy FastAPI (Kinetic OS, E-STOP, ISO 42001, Portal stats).
 """
 
+from typing import Generator
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -26,11 +28,12 @@ def governor() -> KineticSafetyGovernor:
 
 
 @pytest.fixture
-def client():
+def client() -> Generator[TestClient, None, None]:
     """Inicjalizuje klienta testowego FastAPI."""
     assert app is not None
     with TestClient(app) as client:
         yield client
+
 
 
 # ==============================================================================
@@ -110,18 +113,19 @@ def test_kinetic_critical_proximity_estop_latch(governor: KineticSafetyGovernor)
 def test_kinetic_estop_reset_security(governor: KineticSafetyGovernor) -> None:
     """Wyłącznik E-STOP może zostać odblokowany wyłącznie właściwym kluczem PIN."""
     governor.trigger_estop("Testowy alarm bezpieczeństwa")
-    assert bool(governor.estop_active) is True
+    assert governor.estop_active is True
 
     # Próba nieautoryzowanego resetu
     success, msg = governor.reset_estop("INVALID_PIN")
     assert success is False
-    assert bool(governor.estop_active) is True
+    assert governor.estop_active is True
 
     # Prawidłowy autoryzowany reset
     success, msg = governor.reset_estop(KineticSafetyGovernor.RESET_PIN)
     assert success is True
-    assert bool(governor.estop_active) is False
+    assert governor.estop_active is False
     assert governor.estop_reason is None
+
 
 
 def test_kinetic_fail_closed_missing_telemetry(governor: KineticSafetyGovernor) -> None:

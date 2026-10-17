@@ -60,19 +60,19 @@ class TestSSRFProtection:
         "http://0.0.0.0:8000",
         "http://[::1]:8080",
     ])
-    def test_ssrf_blocks_private_and_dangerous_endpoints(self, blocked_url: str):
+    def test_ssrf_blocks_private_and_dangerous_endpoints(self, blocked_url: str) -> None:
         is_safe, reason = validate_safe_url(blocked_url, allow_private=False)
         assert is_safe is False
         assert len(reason) > 0
         with pytest.raises(SSRFValidationError):
             assert_safe_url(blocked_url, allow_private=False)
 
-    def test_ssrf_allows_legitimate_public_urls(self):
+    def test_ssrf_allows_legitimate_public_urls(self) -> None:
         is_safe, reason = validate_safe_url("https://api.openai.com/v1/chat/completions")
         assert is_safe is True
         assert reason == ""
 
-    def test_ssrf_allow_private_flag(self):
+    def test_ssrf_allow_private_flag(self) -> None:
         # 10.0.0.1 should be allowed when explicitly permitting private intranet
         is_safe, reason = validate_safe_url("http://10.0.0.1:8000/status", allow_private=True)
         assert is_safe is True
@@ -88,7 +88,8 @@ class TestSSRFProtection:
         assert is_safe_loop is False
         assert "loopback" in reason_loop.lower()
 
-    def test_ssrf_domain_whitelist_enforcement(self):
+    def test_ssrf_domain_whitelist_enforcement(self) -> None:
+
         whitelist = ["api.openai.com", "api.anthropic.com"]
         
         is_safe_ok, _ = validate_safe_url("https://api.openai.com/v1", allowed_domains=whitelist)
@@ -107,7 +108,7 @@ class TestOpenAIProxySSRF:
     """Verifies reverse proxy upstream sanitization."""
 
     @pytest.mark.asyncio
-    async def test_openai_proxy_rejects_ssrf_upstream_header(self):
+    async def test_openai_proxy_rejects_ssrf_upstream_header(self) -> None:
         proxy = OpenAIGovernanceProxy(mock_mode=False, allow_client_upstream=True)
         req_data = {
             "model": "gpt-4o",
@@ -120,7 +121,7 @@ class TestOpenAIProxySSRF:
             await proxy.handle_chat_completion(req_data, headers)
 
     @pytest.mark.asyncio
-    async def test_openai_proxy_ignores_client_upstream_by_default(self):
+    async def test_openai_proxy_ignores_client_upstream_by_default(self) -> None:
         # Default policy: allow_client_upstream=False
         proxy = OpenAIGovernanceProxy(
             mock_mode=True,
@@ -148,7 +149,7 @@ class TestOpenAIProxySSRF:
 class TestWebhookSSRF:
     """Verifies webhook dispatcher outbound URL enforcement."""
 
-    def test_webhook_dispatcher_blocks_internal_and_loopback_urls(self):
+    def test_webhook_dispatcher_blocks_internal_and_loopback_urls(self) -> None:
         with pytest.raises(ValueError):
             HTTPWebhookDispatcher("http://127.0.0.1:9090/metrics")
 
@@ -166,7 +167,7 @@ class TestWebhookSSRF:
 class TestIPSpoofingProtection:
     """Verifies that untrusted clients cannot spoof identity via X-Forwarded-For."""
 
-    def test_untrusted_client_cannot_spoof_x_forwarded_for(self):
+    def test_untrusted_client_cannot_spoof_x_forwarded_for(self) -> None:
         # Simulating external client connecting directly (e.g., from 198.51.100.77)
         scope = {
             "type": "http",
@@ -181,7 +182,8 @@ class TestIPSpoofingProtection:
         # MUST return the actual peer IP, NOT the spoofed header
         assert detected_ip == "198.51.100.77"
 
-    def test_trusted_proxy_correctly_forwards_client_ip(self):
+    def test_trusted_proxy_correctly_forwards_client_ip(self) -> None:
+
         # Simulating request from local reverse proxy (127.0.0.1 in TRUSTED_PROXIES)
         scope = {
             "type": "http",
@@ -203,7 +205,7 @@ class TestIPSpoofingProtection:
 class TestSecurityHeaders:
     """Verifies that hardened OWASP headers are injected on API responses."""
 
-    def test_security_headers_present_on_health_check(self):
+    def test_security_headers_present_on_health_check(self) -> None:
         with TestClient(app) as client:
             resp = client.get("/health")
             assert resp.status_code == 200
@@ -229,7 +231,7 @@ class TestSecurityHeaders:
 class TestWebSocketSecurity:
     """Verifies WebSocket origin validation and connection limits."""
 
-    def test_websocket_rejects_unauthorized_origin(self):
+    def test_websocket_rejects_unauthorized_origin(self) -> None:
         with patch("nethical.api.app.allowed_origins", ["https://app.nethical.ai"]):
             with TestClient(app) as client:
                 # Malicious origin CSWSH attack
@@ -239,7 +241,7 @@ class TestWebSocketSecurity:
                         pass
 
     @pytest.mark.asyncio
-    async def test_connection_manager_per_ip_rate_limit(self):
+    async def test_connection_manager_per_ip_rate_limit(self) -> None:
         manager = ConnectionManager(max_connections_per_ip=2)
         ip = "192.0.2.1"
 
@@ -267,7 +269,7 @@ class TestWebSocketSecurity:
 class TestEdgeDeviceHubSecurity:
     """Verifies admission secret enforcement and framing bounds in EdgeDeviceHub."""
 
-    def test_edge_hub_rejects_unauthorized_admission(self):
+    def test_edge_hub_rejects_unauthorized_admission(self) -> None:
         hub = EdgeDeviceHub(admission_secret="top_secret_edge_psk_2026")
         port = 18995
         hub.start_socket_server(host="127.0.0.1", port=port)
@@ -299,7 +301,7 @@ class TestEdgeDeviceHubSecurity:
         finally:
             hub.stop_socket_server()
 
-    def test_edge_hub_admits_with_valid_secret(self):
+    def test_edge_hub_admits_with_valid_secret(self) -> None:
         hub = EdgeDeviceHub(admission_secret="top_secret_edge_psk_2026")
         port = 18996
         hub.start_socket_server(host="127.0.0.1", port=port)
@@ -338,7 +340,8 @@ class TestEdgeDeviceHubSecurity:
 class TestA2ACryptographicSignatures:
     """Verifies HMAC signature verification and tamper detection in A2A handshakes."""
 
-    def test_a2a_handshake_detects_tampered_proposal(self):
+    def test_a2a_handshake_detects_tampered_proposal(self) -> None:
+
         secret = "sovereign_cluster_secret_key_fips_2026"
         manager = A2AHandshakeManager(cluster_secret=secret)
 

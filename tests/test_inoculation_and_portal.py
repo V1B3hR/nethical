@@ -1,5 +1,7 @@
 """Unit and Integration Tests for Inoculation Mesh and Enterprise Control Plane Portal."""
 
+from typing import Generator
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -8,10 +10,11 @@ from nethical.security.inoculation_mesh import InoculationAttackVector, Inoculat
 
 
 @pytest.fixture
-def client():
+def client() -> Generator[TestClient, None, None]:
     assert app is not None
     with TestClient(app) as client:
         yield client
+
 
 
 def test_portal_html_dashboard_endpoint(client: TestClient) -> None:

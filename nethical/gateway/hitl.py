@@ -86,9 +86,10 @@ class HITLQueueManager:
         )
         self.tickets[ticket.ticket_id] = ticket
         self.total_enqueued += 1
-        safe_priority = str(priority).replace('\r', '').replace('\n', '')[:32]
-        safe_agent = str(agent_id).replace('\r', '').replace('\n', '')[:128]
-        safe_tool = str(tool_name).replace('\r', '').replace('\n', '')[:128]
+        safe_priority = priority.replace('\r', '').replace('\n', '')[:32]
+        safe_agent = agent_id.replace('\r', '').replace('\n', '')[:128]
+        safe_tool = tool_name.replace('\r', '').replace('\n', '')[:128]
+
         logger.info(
             "Wprowadzono bilet HITL [%s] priorytet: %s dla agenta '%s' (narzędzie: '%s')",
             ticket.ticket_id,
@@ -151,9 +152,10 @@ class HITLQueueManager:
         else:
             self.total_rejected += 1
 
-        safe_t_id = str(ticket_id).replace('\r', '').replace('\n', '')[:64]
-        safe_dec = str(decision).replace('\r', '').replace('\n', '')[:32]
-        safe_rev = str(reviewer_id).replace('\r', '').replace('\n', '')[:128]
+        safe_t_id = ticket_id.replace('\r', '').replace('\n', '')[:64]
+        safe_dec = decision.replace('\r', '').replace('\n', '')[:32]
+        safe_rev = reviewer_id.replace('\r', '').replace('\n', '')[:128]
+
         logger.info("Rozwiązano bilet HITL [%s]: %s przez audytora '%s'", safe_t_id, safe_dec, safe_rev)
         return ticket
 

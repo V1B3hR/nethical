@@ -1,5 +1,7 @@
 """Unit and Integration Tests for Merkle-DAG Audit Ledger & Post-Quantum Attestation Mesh (Faza 3)."""
 
+from typing import Generator
+
 import pytest
 from fastapi.testclient import TestClient
 
@@ -13,10 +15,11 @@ from nethical.security.merkle_ledger import (
 
 
 @pytest.fixture
-def client():
+def client() -> Generator[TestClient, None, None]:
     assert app is not None
     with TestClient(app) as client:
         yield client
+
 
 
 def test_merkle_tree_root_and_inclusion_proof() -> None:

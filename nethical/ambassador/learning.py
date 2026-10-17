@@ -297,7 +297,8 @@ class AmbassadorKnowledgeSync:
         - FeedbackLogger (nethical.core.feedback_finetuning) do dwustronnego zapisu
         - Pakiety 11 ram prawnych (UK, UE, Polska) oraz ISO 42001 / Kinetic Safety.
         """
-        logger.info("Rozpoczęto synchronizację wiedzy ML z repozytorium do Błyskawicy (cel: %d wariantów)...", int(num_variants))
+        logger.info("Rozpoczęto synchronizację wiedzy ML z repozytorium do Błyskawicy (cel: %d wariantów)...", num_variants)
+
 
         # 1. Przygotowanie szablonów ataków i dylematów regulacyjnych
         regulatory_templates = {

@@ -23,18 +23,21 @@ from datetime import datetime, timezone
 from dataclasses import dataclass
 
 try:
-    import boto3
-    from botocore.config import Config
-    from botocore.exceptions import ClientError, NoCredentialsError
+    import boto3  # type: ignore[import-untyped, import-not-found]
+    from botocore.config import Config  # type: ignore[import-untyped, import-not-found]
+    from botocore.exceptions import ClientError, NoCredentialsError  # type: ignore[import-untyped, import-not-found]
     BOTO3_AVAILABLE = True
 except ImportError:
     BOTO3_AVAILABLE = False
-    boto3 = None
-    Config = None
-    ClientError = Exception
-    NoCredentialsError = Exception
+    boto3: Any = None
+    Config: Any = None
+    class ClientError(Exception):  # type: ignore[no-redef]
+        response: Dict[str, Any] = {}
+    class NoCredentialsError(Exception):  # type: ignore[no-redef]
+        pass
 
 logger = logging.getLogger(__name__)
+
 
 
 @dataclass
@@ -107,8 +110,8 @@ class S3Backend:
         """
         self.config = config or S3Config()
         self.enabled = enabled and BOTO3_AVAILABLE
-        self._client = None
-        self._resource = None
+        self._client: Any = None
+        self._resource: Any = None
         
         if not BOTO3_AVAILABLE:
             logger.warning("boto3 not available. Install with: pip install boto3")
@@ -123,9 +126,12 @@ class S3Backend:
     
     def _initialize_client(self) -> None:
         """Initialize S3 client and resource."""
+        if not BOTO3_AVAILABLE or Config is None or boto3 is None:
+            raise RuntimeError("boto3 is not available")
         try:
             # Configure retry strategy
             boto_config = Config(
+
                 connect_timeout=self.config.connect_timeout,
                 read_timeout=self.config.read_timeout,
                 retries={
@@ -184,7 +190,8 @@ class S3Backend:
             error_code = e.response.get('Error', {}).get('Code', '')
             if error_code == '404':
                 try:
-                    create_params = {'Bucket': bucket}
+                    create_params: Dict[str, Any] = {'Bucket': bucket}
+
                     # AWS requires LocationConstraint for non-us-east-1
                     if self.config.region != 'us-east-1' and not self.config.endpoint_url:
                         create_params['CreateBucketConfiguration'] = {
@@ -547,9 +554,10 @@ class S3Backend:
             self.ensure_bucket(bucket)
             
             # Prepare upload parameters
-            extra_args = {
+            extra_args: Dict[str, Any] = {
                 'ContentType': content_type
             }
+
             if metadata:
                 extra_args['Metadata'] = metadata
                 

@@ -33,7 +33,7 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
     - Fallback to blocking for safety-critical errors
     """
     
-    def __init__(self, app, include_traceback: bool = False):
+    def __init__(self, app: Any, include_traceback: bool = False) -> None:
         """Initialize middleware.
         
         Args:
@@ -43,12 +43,14 @@ class ErrorHandlerMiddleware(BaseHTTPMiddleware):
         super().__init__(app)
         self.include_traceback = include_traceback
     
-    async def dispatch(self, request: Request, call_next: Callable) -> Response:
+    async def dispatch(self, request: Request, call_next: Callable[..., Any]) -> Response:
         """Process request with error handling."""
         try:
-            return await call_next(request)
+            from typing import cast
+            return cast(Response, await call_next(request))
         except Exception as e:
             return await self._handle_error(request, e)
+
     
     async def _handle_error(self, request: Request, error: Exception) -> JSONResponse:
         """Handle an unhandled exception.

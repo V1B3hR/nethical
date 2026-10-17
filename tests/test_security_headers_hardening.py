@@ -14,6 +14,8 @@ Verifies:
 - Accurate URL segment matching in _is_sensitive_endpoint
 """
 
+from typing import Any
+
 import pytest
 from starlette.requests import Request
 from starlette.responses import Response
@@ -26,13 +28,13 @@ class TestSecurityHeadersHardening:
     """Test suite covering audit findings and hardening."""
 
     @pytest.fixture
-    def app_with_server_headers(self):
+    def app_with_server_headers(self) -> Any:
         """Mock app returning response with server fingerprint headers."""
-        async def app(scope, receive, send):
+        async def app(scope: Any, receive: Any, send: Any) -> None:
             pass
         return app
 
-    def test_fail_fast_hsts_validation(self, app_with_server_headers) -> None:
+    def test_fail_fast_hsts_validation(self, app_with_server_headers: Any) -> None:
         """K-3: Ensure invalid hsts_max_age fails immediately during __init__."""
         with pytest.raises(ValueError, match="non-negative integer"):
             SecurityHeadersMiddleware(app_with_server_headers, hsts_max_age=-1)
@@ -40,7 +42,8 @@ class TestSecurityHeadersHardening:
         with pytest.raises(ValueError, match="non-negative integer"):
             SecurityHeadersMiddleware(app_with_server_headers, hsts_max_age="invalid")  # type: ignore
 
-    def test_crlf_injection_prevention(self, app_with_server_headers) -> None:
+    def test_crlf_injection_prevention(self, app_with_server_headers: Any) -> None:
+
         """Ś-2: Ensure CRLF characters in custom headers are rejected."""
         with pytest.raises(ValueError, match="CRLF"):
             SecurityHeadersMiddleware(

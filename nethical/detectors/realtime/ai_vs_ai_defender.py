@@ -55,6 +55,8 @@ class AIvsAIDefenderConfig:
 class AIvsAIDefender(BaseDetector):
     """Defend against adversarial AI attacks on AI systems."""
 
+    config: AIvsAIDefenderConfig
+
     def __init__(self, config: AIvsAIDefenderConfig | None = None):
         """Initialize the AI vs AI Defender.
 
@@ -121,10 +123,11 @@ class AIvsAIDefender(BaseDetector):
 
             # Process results
             for result in results:
-                if isinstance(result, Exception):
+                if isinstance(result, BaseException):
                     continue
-                if result:
+                if result and isinstance(result, list):
                     violations.extend(result)
+
 
             # Check execution time
             elapsed_ms = (time.perf_counter() - start_time) * 1000

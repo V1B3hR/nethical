@@ -217,7 +217,7 @@ class BaseDetector(ABC):
         self,
         name: str,
         version: str = "1.0.0",
-        config: Optional[Dict[str, Any]] = None,
+        config: Optional[Any] = None,
         security_context: Optional[SecurityContext] = None,
         supported_actions: Optional[Set[str]] = None,
         ethical_principles: Optional[Set[EthicalPrinciple]] = None,
@@ -238,7 +238,8 @@ class BaseDetector(ABC):
         self.name: str = name.strip()
         self.version: str = version
         self.status: DetectorStatus = DetectorStatus.ACTIVE
-        self.config: Dict[str, Any] = config or {}
+        self.config: Any = config if config is not None else {}
+
         self.metrics: DetectorMetrics = DetectorMetrics()
         self._metrics: DetectorMetrics = self.metrics
         self.security_context: SecurityContext = security_context or SecurityContext()

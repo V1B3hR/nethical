@@ -139,8 +139,9 @@ class CrossRegionLedgerSync:
         """Dokonuje formalnej rekonsyliacji stanu lokalnego z punktem kontrolnym węzła partnerskiego."""
         # 1. Walidacja podpisu kryptograficznego punktu kontrolnego
         if not self.verify_peer_checkpoint(peer_checkpoint):
-            safe_peer_id = str(peer_checkpoint.node.node_id).replace('\r', '').replace('\n', '')[:128]
+            safe_peer_id = peer_checkpoint.node.node_id.replace('\r', '').replace('\n', '')[:128]
             logger.error("Odrzucono punkt kontrolny węzła %s: Nieprawidłowy podpis PQC!", safe_peer_id)
+
             return SyncReconciliationResult(
                 is_consistent=False,
                 local_node_id=self.local_node.node_id,
@@ -189,8 +190,9 @@ class CrossRegionLedgerSync:
             )
 
         # 5. Równa liczba bloków, lecz odmienne pierścienie Merkle (Rozwidlenie / Fork)
-        safe_peer_id = str(peer_checkpoint.node.node_id).replace('\r', '').replace('\n', '')[:128]
+        safe_peer_id = peer_checkpoint.node.node_id.replace('\r', '').replace('\n', '')[:128]
         logger.warning("Wykryto rozbieżność korzenia Merkle (Fork) z węzłem %s!", safe_peer_id)
+
         return SyncReconciliationResult(
             is_consistent=False,
             local_node_id=self.local_node.node_id,

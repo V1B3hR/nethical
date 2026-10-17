@@ -131,8 +131,9 @@ def resolve_all_ips(hostname: str) -> Set[str]:
         addrinfo = socket.getaddrinfo(hostname, None, socket.AF_UNSPEC, socket.SOCK_STREAM)
         for entry in addrinfo:
             sockaddr = entry[4]
-            ip_candidate = sockaddr[0]
+            ip_candidate = str(sockaddr[0])
             results.add(ip_candidate)
+
     except socket.gaierror as e:
         logger.warning("SSRF DNS resolution failed for host '%s': %s", hostname, e)
         raise SSRFValidationError(f"Could not resolve host '{hostname}': {e}") from e
@@ -255,7 +256,7 @@ def assert_safe_url(
         require_resolvable=require_resolvable,
     )
     if not is_safe:
-        logger.security_warning = getattr(logger, "security_warning", logger.warning)
         logger.warning("SSRF ATTEMPT BLOCKED: %s [URL: %s]", reason, url)
         raise SSRFValidationError(reason)
     return url.strip()
+

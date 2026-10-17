@@ -439,8 +439,14 @@ class SafetyViolation(_BaseModel):
         default_factory=lambda: f"violation_{uuid4().hex[:12]}",
         description="Unique identifier for the violation",
     )
-    action_id: str = Field(..., description="Related action ID")
-    violation_type: ViolationType = Field(..., description="Type of violation")
+    action_id: str = Field(
+        default_factory=lambda: f"action_{uuid4().hex[:12]}",
+        description="Related action ID",
+    )
+    violation_type: ViolationType = Field(
+        default=ViolationType.SECURITY,
+        description="Type of violation",
+    )
     severity: Severity = Field(..., description="Severity level")
     description: str = Field(..., min_length=1, description="Human-readable description")
     confidence: float = Field(..., ge=0.0, le=1.0, description="Confidence 0..1")
@@ -448,6 +454,10 @@ class SafetyViolation(_BaseModel):
     recommendations: List[str] = Field(
         default_factory=list, description="Recommended remediation steps"
     )
+    recommendation: Optional[str] = Field(
+        default=None, description="Legacy single recommendation"
+    )
+
     timestamp: datetime = Field(default_factory=now_tz, description="Timestamp (TZ-aware)")
     detector_name: Optional[str] = Field(
         default=None, description="Name of detector that found the violation"

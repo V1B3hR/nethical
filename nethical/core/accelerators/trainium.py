@@ -413,10 +413,11 @@ class TrainiumAccelerator(AcceleratorInterface):
             neuron_cc_flags.append("--auto-cast=matmul")
 
         # Batch size warning
+        trainium_version_str = self._trainium_version.value if self._trainium_version is not None else "unknown"
         if self.config.batch_size > self._trainium_specs.max_batch_size:
             log.warning(
                 f"Batch size {self.config.batch_size} exceeds recommendation "
-                f"for {self._trainium_version.value} (max: {self._trainium_specs.max_batch_size}). "
+                f"for {trainium_version_str} (max: {self._trainium_specs.max_batch_size}). "
                 f"Consider reducing batch size."
             )
 
@@ -429,7 +430,7 @@ class TrainiumAccelerator(AcceleratorInterface):
             else:
                 os.environ["NEURON_CC_FLAGS"] = new_flags
 
-        log.debug(f"Neuron configured for {self._trainium_version.value}")
+        log.debug(f"Neuron configured for {trainium_version_str}")
 
     def get_recommended_batch_size(self) -> int:
         """Get recommended batch size for current version.
@@ -453,7 +454,7 @@ class TrainiumAccelerator(AcceleratorInterface):
 
     def get_info(self) -> AcceleratorInfo:
         """Get Trainium device information."""
-        if not self._initialized or self._trainium_specs is None:
+        if not self._initialized or self._trainium_specs is None or self._trainium_version is None:
             return AcceleratorInfo(
                 backend=AcceleratorBackend.TRAINIUM,
                 device_id=self.config.device_id,
@@ -478,6 +479,7 @@ class TrainiumAccelerator(AcceleratorInterface):
                 "int8_tops": self._trainium_specs.int8_tops,
                 "memory_type": self._trainium_specs.memory_type,
                 "supports_training": self._trainium_specs.supports_training,
+
                 "supports_fp8": self._trainium_specs.supports_fp8,
                 "neuron_cores": self._trainium_specs.neuron_cores,
                 "max_batch_size": self._trainium_specs.max_batch_size,
@@ -517,7 +519,8 @@ class TrainiumAccelerator(AcceleratorInterface):
             return np.array(tensor)
 
         # Move to CPU and convert
-        return tensor.cpu().detach().numpy()
+        from typing import cast
+        return cast(np.ndarray, tensor.cpu().detach().numpy())
 
     def execute(self, model: Any, inputs: Any) -> Any:
         """Execute model on Trainium.
@@ -557,7 +560,7 @@ class TrainiumAccelerator(AcceleratorInterface):
             except ImportError:
                 pass
 
-    def get_memory_info(self) -> Dict[str, float]:
+    def get_memory_info(self) -> Dict[str, Any]:
         """Get Trainium memory usage.
 
         Returns:
@@ -573,6 +576,7 @@ class TrainiumAccelerator(AcceleratorInterface):
             "version": self._trainium_version.value if self._trainium_version else "unknown",
             "supports_training": self._trainium_specs.supports_training if self._trainium_specs else False,
         }
+
 
     def clear_cache(self) -> None:
         """Clear Neuron compilation cache."""

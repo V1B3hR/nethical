@@ -14,7 +14,7 @@ from __future__ import annotations
 import logging
 import re
 from types import MappingProxyType
-from typing import Any, Callable, Dict, Optional, Set, Type
+from typing import Any, Callable, Dict, Optional, Set, Type, cast
 
 from starlette.middleware.base import BaseHTTPMiddleware
 from starlette.requests import Request
@@ -187,7 +187,8 @@ class SecurityHeadersMiddleware(BaseHTTPMiddleware):
         self, request: Request, call_next: Callable[[Request], Any]
     ) -> Response:
         """Process the request and apply security headers to the response."""
-        response = await call_next(request)
+        response: Response = cast(Response, await call_next(request))
+
 
         # 1. Strip server fingerprinting headers
         for strip_hdr in self.STRIP_HEADERS:
