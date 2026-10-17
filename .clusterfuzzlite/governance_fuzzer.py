@@ -22,7 +22,9 @@ def TestOneInput(data):
     try:
         gov.process_action(agent_id=agent_id, action=action_text, cohort='fuzz')
     except (ValueError, TypeError, KeyError):
+        # Expected input validation and type errors during fuzzing
         pass
+
 
 def main():
     atheris.Setup(sys.argv, TestOneInput)

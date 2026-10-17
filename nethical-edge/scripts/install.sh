@@ -146,15 +146,16 @@ install_nethical_edge() {
     log_info "Detected platform: $platform"
     
     # Install from PyPI (preferred)
-    if pip3 install --user nethical-edge 2>/dev/null; then
+    if python3 -m pip install --user nethical-edge 2>/dev/null; then
         log_info "Installed from PyPI"
         return 0
     fi
     
     # Fallback: Install from GitHub
     log_info "Installing from GitHub..."
-    pip3 install --user --no-deps git+https://github.com/V1B3hR/nethical.git#subdirectory=nethical-edge
+    python3 -m pip install --user --no-deps git+https://github.com/V1B3hR/nethical.git#subdirectory=nethical-edge
 }
+
 
 # Configure for specific platform
 configure_platform() {
