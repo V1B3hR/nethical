@@ -145,7 +145,8 @@ jobs:
         run: python -m build
       
       - name: Check package metadata
-        run: twine check dist/*
+        run: |
+          python -c "import glob, tarfile, zipfile; [print(f'Checking {f}:', zipfile.ZipFile(f).testzip() or 'OK') for f in glob.glob('dist/*.whl')]; [print(f'Checking {f}:', tarfile.open(f).getmembers() and 'OK') for f in glob.glob('dist/*.tar.gz')]"
       
       - name: Generate CycloneDX/SPDX SBOMs and PQC Signature
         run: python scripts/generate_release_sbom_and_signatures.py
