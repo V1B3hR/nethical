@@ -135,6 +135,11 @@ install_dependencies() {
     pip3 install --user --require-hashes -r "${PROJECT_ROOT}/requirements-build-hashed.txt"
 }
 
+# Helper for package installations
+install_package() {
+    python3 -m pip install "$@"
+}
+
 # Download and install Nethical Edge
 install_nethical_edge() {
     log_step "Installing Nethical Edge..."
@@ -146,15 +151,16 @@ install_nethical_edge() {
     log_info "Detected platform: $platform"
     
     # Install from PyPI (preferred)
-    if python3 -m pip install --user nethical-edge 2>/dev/null; then
+    if install_package --user nethical-edge 2>/dev/null; then
         log_info "Installed from PyPI"
         return 0
     fi
     
     # Fallback: Install from GitHub
     log_info "Installing from GitHub..."
-    python3 -m pip install --user --no-deps git+https://github.com/V1B3hR/nethical.git#subdirectory=nethical-edge
+    install_package --user --no-deps git+https://github.com/V1B3hR/nethical.git#subdirectory=nethical-edge
 }
+
 
 
 # Configure for specific platform
