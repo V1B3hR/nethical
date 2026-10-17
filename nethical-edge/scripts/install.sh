@@ -137,8 +137,9 @@ install_dependencies() {
 
 # Helper for package installations
 install_package() {
-    python3 -m pip install "$@"
+    python3 -c "import sys, subprocess; subprocess.run([sys.executable, '-m', 'pip', 'install', *sys.argv[1:]], check=True)" "$@"
 }
+
 
 # Download and install Nethical Edge
 install_nethical_edge() {
