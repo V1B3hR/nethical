@@ -10,6 +10,8 @@ WORKDIR /app
 RUN apt-get update && apt-get install -y --no-install-recommends \
     gcc \
     g++ \
+    ca-certificates \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Copy packaging specifications to leverage Docker layer cache
@@ -28,7 +30,10 @@ ENV PYTHONUNBUFFERED=1 \
     NETHICAL_SEMANTIC=1
 
 # Upgrade system packages to fix CVEs and remove package manager caches
-RUN apt-get update && apt-get upgrade -y --no-install-recommends && rm -rf /var/lib/apt/lists/*
+RUN apt-get update && apt-get upgrade -y --no-install-recommends && \
+    apt-get install -y --no-install-recommends ca-certificates && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy installed Python packages from builder into system location
 COPY --from=builder /install /usr/local

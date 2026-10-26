@@ -21,6 +21,8 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libffi-dev \
     libssl-dev \
     git \
+    ca-certificates \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 COPY requirements.txt requirements-hashed.txt .
@@ -49,6 +51,11 @@ RUN groupadd -g 10001 nethical && \
     chown -R nethical:nethical /var/run/nethical /var/log/nethical /etc/nethical
 
 WORKDIR /app
+
+# Refresh the system trust store to reject the compromised eMudhra CA chain.
+RUN apt-get update && apt-get install -y --no-install-recommends ca-certificates && \
+    update-ca-certificates && \
+    rm -rf /var/lib/apt/lists/*
 
 # Copy installed python dependencies from builder
 COPY --from=builder --chown=nethical:nethical /root/.local /home/nethical/.local

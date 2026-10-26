@@ -17,19 +17,19 @@ import tempfile
 import shutil
 from pathlib import Path
 from datetime import datetime
-from typing import Dict, Any, Tuple
+from typing import Dict, Any, Tuple, Generator
 
 
 class BackupRestoreMetrics:
     """Collect and store backup/restore metrics"""
     
-    def __init__(self):
+    def __init__(self) -> None:
         self.events = []
         self.backup_time = None
         self.restore_time = None
         self.validation_results = []
         
-    def record_event(self, event_type: str, details: Dict[str, Any]):
+    def record_event(self, event_type: str, details: Dict[str, Any]) -> None:
         """Record an event"""
         self.events.append({
             'timestamp': time.time(),
@@ -37,15 +37,15 @@ class BackupRestoreMetrics:
             'details': details
         })
     
-    def set_backup_time(self, duration_seconds: float):
+    def set_backup_time(self, duration_seconds: float) -> None:
         """Set backup duration"""
         self.backup_time = duration_seconds
     
-    def set_restore_time(self, duration_seconds: float):
+    def set_restore_time(self, duration_seconds: float) -> None:
         """Set restore duration"""
         self.restore_time = duration_seconds
     
-    def record_validation(self, check_name: str, passed: bool, details: str = ""):
+    def record_validation(self, check_name: str, passed: bool, details: str = "") -> None:
         """Record a validation check"""
         self.validation_results.append({
             'check': check_name,
@@ -78,12 +78,12 @@ class BackupRestoreMetrics:
         
         # Save raw data
         raw_file = output_dir / f'backup_restore_raw_{timestamp}.json'
-        with open(raw_file, 'w') as f:
+        with open(raw_file, 'w', encoding='utf-8') as f:
             json.dump(stats, f, indent=2)
         
         # Save human-readable report
         md_file = output_dir / f'backup_restore_report_{timestamp}.md'
-        with open(md_file, 'w') as f:
+        with open(md_file, 'w', encoding='utf-8') as f:
             f.write("# Backup and Restore Test Report\n\n")
             f.write(f"**Generated**: {datetime.now().isoformat()}\n\n")
             f.write(f"## Summary\n\n")
@@ -123,7 +123,7 @@ class BackupRestoreMetrics:
 class BackupRestoreEngine:
     """Backup and restore engine"""
     
-    def __init__(self, simulation_mode: bool = True):
+    def __init__(self, simulation_mode: bool = True) -> None:
         self.simulation_mode = simulation_mode
         self.metrics = BackupRestoreMetrics()
     
@@ -151,7 +151,7 @@ class BackupRestoreEngine:
                 
                 # Create some backup metadata
                 metadata_file = backup_dir / 'backup_metadata.json'
-                with open(metadata_file, 'w') as f:
+                with open(metadata_file, 'w', encoding='utf-8') as f:
                     json.dump({
                         'timestamp': datetime.now().isoformat(),
                         'source': str(data_dir),
@@ -276,7 +276,7 @@ class BackupRestoreEngine:
         
         # Validate metadata content
         try:
-            with open(metadata_file, 'r') as f:
+            with open(metadata_file, 'r', encoding='utf-8') as f:
                 metadata = json.load(f)
                 
             if 'timestamp' not in metadata:
@@ -295,13 +295,13 @@ class BackupRestoreEngine:
 
 
 @pytest.fixture
-def backup_engine():
+def backup_engine() -> BackupRestoreEngine:
     """Create backup/restore engine"""
     return BackupRestoreEngine(simulation_mode=True)
 
 
 @pytest.fixture
-def test_dirs():
+def test_dirs() -> Generator[Dict[str, Path], None, None]:
     """Create temporary test directories"""
     with tempfile.TemporaryDirectory() as tmpdir:
         tmppath = Path(tmpdir)
@@ -321,13 +321,17 @@ def test_dirs():
 
 
 @pytest.fixture
-def output_dir():
+def output_dir() -> Path:
     """Output directory for test artifacts"""
     return Path("tests/resilience/results")
 
 
 @pytest.mark.asyncio
-async def test_backup_restore_dry_run(backup_engine, test_dirs, output_dir):
+async def test_backup_restore_dry_run(
+    backup_engine: BackupRestoreEngine,
+    test_dirs: Dict[str, Path],
+    output_dir: Path,
+) -> None:
     """
     Automated backup restore dry-run test
     
@@ -430,7 +434,11 @@ async def test_backup_restore_dry_run(backup_engine, test_dirs, output_dir):
 
 
 @pytest.mark.asyncio
-async def test_incremental_backup_restore(backup_engine, test_dirs, output_dir):
+async def test_incremental_backup_restore(
+    backup_engine: BackupRestoreEngine,
+    test_dirs: Dict[str, Path],
+    output_dir: Path,
+) -> None:
     """
     Test incremental backup and restore
     

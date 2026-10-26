@@ -9,8 +9,7 @@ updates:
     reviewers:
       - "V1B3hR"
     labels:
-      - "dependencies"
-      - "security"
+      - "automated"
     commit-message:
       prefix: "deps"
       include: "scope"
@@ -37,9 +36,7 @@ updates:
     reviewers:
       - "V1B3hR"
     labels:
-      - "edge"
-      - "dependencies"
-      - "security"
+      - "automated"
     commit-message:
       prefix: "deps(edge)"
       include: "scope"
@@ -55,7 +52,7 @@ updates:
     reviewers:
       - "V1B3hR"
     labels:
-      - "ci"
+      - "automated"
     commit-message:
       prefix: "ci"
       include: "scope"
@@ -69,8 +66,7 @@ updates:
       time: "06:00"
     open-pull-requests-limit: 5
     labels:
-      - "docker"
-      - "security"
+      - "automated"
     reviewers:
       - "V1B3hR"
     commit-message:

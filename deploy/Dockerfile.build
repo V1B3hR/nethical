@@ -29,8 +29,9 @@ RUN if [ -n "${SOURCE_DATE_EPOCH}" ]; then \
 # Install system dependencies with pinned versions
 RUN apt-get update && apt-get install -y --no-install-recommends \
     git=1:2.39.2-1.1 \
-    ca-certificates=20230311 \
+    ca-certificates=20250419~deb12u2 \
     build-essential=12.9 \
+    && update-ca-certificates \
     && rm -rf /var/lib/apt/lists/*
 
 # Set reproducible timestamps for system files

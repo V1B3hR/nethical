@@ -7,6 +7,7 @@ numpy>=1.26.0
 requests>=2.34.2
 requests-mock>=1.12.1
 httpx>=0.27.0
+certifi>=2026.10.19
 cachetools>=5.5.0
 psutil>=5.9.0
 ruff>=0.17.1
