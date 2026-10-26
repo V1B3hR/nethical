@@ -1,5 +1,5 @@
 # Multi-stage build for hardened container (CIS Docker Benchmark & SOC 2 compliant)
-FROM python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce as builder
+FROM python:3.12-slim@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704 as builder
 
 # Build argument for optional model preloading
 ARG PRELOAD_EMBEDDINGS=false
@@ -21,7 +21,7 @@ COPY requirements.txt requirements-hashed.txt requirements-dev.txt pyproject.tom
 RUN pip install --no-cache-dir --timeout=120 --retries=5 --prefix=/install --require-hashes -r requirements-hashed.txt
 
 # Final runtime stage
-FROM python:3.11-slim@sha256:e88e9763f943ec1834f992a4b51e0f24500486803e8bc534e5767af9ea65f6ce
+FROM python:3.12-slim@sha256:a0f57064cbdcd6285fa45f51237ab0b35ea8ebaed06a1f5973e89e19dfb86704
 
 # Set environment variables
 ENV PYTHONUNBUFFERED=1 \
