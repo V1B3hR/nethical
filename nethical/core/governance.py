@@ -14,6 +14,9 @@ The implementation has been refactored into multiple modules for better maintain
 This file maintains backward compatibility by re-exporting all public APIs.
 """
 
+# NOTE: Temporary comment-only change to verify ClusterFuzzLite PR workflow
+# permissions and coverage-artifact access (governance_fuzzer). No functional change.
+
 # Re-export everything from the modular files for backward compatibility
 
 # Core types and models
