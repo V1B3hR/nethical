@@ -69,3 +69,9 @@ updates:
       - "V1B3hR"
     commit-message:
       prefix: "docker"
+    ignore:
+      # CI and lockfiles currently support Python 3.10-3.12
+      - dependency-name: "python"
+        update-types:
+          - "version-update:semver-minor"
+          - "version-update:semver-major"
