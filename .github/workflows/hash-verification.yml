@@ -25,7 +25,7 @@ jobs:
     steps:
       # Conditional checkout: for PRs use head.ref (source branch), else default
       - name: Checkout (PR-aware)
-        uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683 # v4.2.2
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
         with:
           fetch-depth: 0
           ref: ${{ github.event_name == 'pull_request' && github.event.pull_request.head.ref || github.ref }}
@@ -66,7 +66,9 @@ jobs:
             echo "drift=true" >> $GITHUB_OUTPUT
             exit 0
           fi
-          if ! diff -u -w -I '^#' committed_requirements-hashed.txt new_requirements-hashed.txt > /dev/null; then
+          # Strip Python 3.10 conditional block (pip-compile on Python 3.11 omits <3.11 markers)
+          sed '/^# --- Python 3.10 conditional dependencies ---/,$d' committed_requirements-hashed.txt > committed_base.txt
+          if ! diff -u -w -I '^#' committed_base.txt new_requirements-hashed.txt > /dev/null; then
             echo "drift=true" >> $GITHUB_OUTPUT
           else
             echo "drift=false" >> $GITHUB_OUTPUT
@@ -74,7 +76,15 @@ jobs:
 
       - name: Replace working copy with new hashed file
         if: steps.check_diff.outputs.drift == 'true'
-        run: mv new_requirements-hashed.txt requirements-hashed.txt
+        run: |
+          if grep -q '^# --- Python 3.10 conditional dependencies ---' committed_requirements-hashed.txt 2>/dev/null; then
+            sed -n '/^# --- Python 3.10 conditional dependencies ---/,$p' committed_requirements-hashed.txt >> new_requirements-hashed.txt
+          fi
+          mv new_requirements-hashed.txt requirements-hashed.txt
+
+      - name: Cleanup temporary diff files
+        if: always()
+        run: rm -f committed_requirements-hashed.txt committed_base.txt new_requirements-hashed.txt
 
       - name: Upload hashed file artifact (debug)
         if: steps.check_diff.outputs.drift == 'true'
@@ -125,7 +135,7 @@ jobs:
         if: >
           steps.check_diff.outputs.drift == 'true' &&
           github.event_name != 'pull_request'
-        uses: peter-evans/create-pull-request@c5a7806660adbe173f04e3e038b0ccdcd758773c # v6.1.1
+        uses: peter-evans/create-pull-request@5f6978faf089d4d20b00c7766989d076bb2fc7f1 # v8.1.1
         continue-on-error: true
         with:
           commit-message: "chore: Update requirements-hashed.txt [auto-sync]"
