@@ -20,7 +20,8 @@ def fuzzer(monkeypatch):
             self.data = data
 
         def ConsumeUnicodeNoSurrogates(self, length):
-            return "hello" if length == 256 else "agent"
+            assert length == 256
+            return "hello"
 
     atheris.FuzzedDataProvider = Provider
     monkeypatch.setitem(sys.modules, "atheris", atheris)

@@ -19,11 +19,10 @@ loop = asyncio.new_event_loop()
 def TestOneInput(data):
     fdp = atheris.FuzzedDataProvider(data)
     action_text = fdp.ConsumeUnicodeNoSurrogates(256)
-    agent_id = fdp.ConsumeUnicodeNoSurrogates(64)
 
     action = AgentAction(
         action_id="fuzz",
-        agent_id=agent_id,
+        agent_id="fuzz-agent",
         action_type=ActionType.QUERY,
         content=action_text,
     )
