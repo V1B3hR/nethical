@@ -11,7 +11,9 @@ with atheris.instrument_imports():
         MonitoringConfig,
     )
 
-gov = EnhancedSafetyGovernance(MonitoringConfig(enable_persistence=False))
+gov = EnhancedSafetyGovernance(
+    MonitoringConfig(enable_persistence=False, enable_async_processing=False)
+)
 loop = asyncio.new_event_loop()
 
 def TestOneInput(data):
@@ -25,7 +27,10 @@ def TestOneInput(data):
         action_type=ActionType.QUERY,
         content=action_text,
     )
-    loop.run_until_complete(gov.evaluate_action(action, use_cache=False))
+    try:
+        loop.run_until_complete(gov.evaluate_action(action, use_cache=False))
+    finally:
+        gov.metrics["detector_timing"].clear()
 
 
 def main():
