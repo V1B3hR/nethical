@@ -1,29 +1,31 @@
 #!/usr/bin/env python3
+import asyncio
 import sys
 import atheris
 
 with atheris.instrument_imports():
-    from nethical.core.governance import EnhancedSafetyGovernance
+    from nethical.core.governance import (
+        ActionType,
+        AgentAction,
+        EnhancedSafetyGovernance,
+        MonitoringConfig,
+    )
 
-gov = None
+gov = EnhancedSafetyGovernance(MonitoringConfig(enable_persistence=False))
+loop = asyncio.new_event_loop()
 
 def TestOneInput(data):
-    global gov
-    if gov is None:
-        try:
-            gov = EnhancedSafetyGovernance(storage_dir='/tmp/fuzz_gov')
-        except Exception:
-            return
-
     fdp = atheris.FuzzedDataProvider(data)
     action_text = fdp.ConsumeUnicodeNoSurrogates(256)
     agent_id = fdp.ConsumeUnicodeNoSurrogates(64)
 
-    try:
-        gov.process_action(agent_id=agent_id, action=action_text, cohort='fuzz')
-    except (ValueError, TypeError, KeyError):
-        # Expected input validation and type errors during fuzzing
-        pass
+    action = AgentAction(
+        action_id="fuzz",
+        agent_id=agent_id,
+        action_type=ActionType.QUERY,
+        content=action_text,
+    )
+    loop.run_until_complete(gov.evaluate_action(action, use_cache=False))
 
 
 def main():
