@@ -1709,9 +1709,9 @@ pyjwt==2.15.1 \
     --hash=sha256:42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193 \
     --hash=sha256:4f259e80cdfb6b3fc18a7de51fd1ef9ec79652f25019bae68975ca2468a34df8
     # via -r requirements.txt
-pyotp==2.11.2 \
-    --hash=sha256:651926820da4adccbe9801c77bdc14558552485b1a957d3e1e842d587597cbb0 \
-    --hash=sha256:d693ddda5c2fd2c368a034ec1ad2fbbe0d3f59d9a662ab00f41ae839a0d00474
+pyotp==2.12.0 \
+    --hash=sha256:638ea37341567ec01277af3a16b682590d938f54f8ed3fb31963513233fd05f2 \
+    --hash=sha256:d66830ab614e857c1e1b810b80384bcf7d437972f1e96625686e128e2e17ff83
     # via -r requirements.txt
 python-dateutil==2.9.0.post0 \
     --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
