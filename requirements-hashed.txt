@@ -193,9 +193,9 @@ annotated-types==0.8.0 \
     # via
     #   -r requirements.txt
     #   pydantic
-anthropic==2.9.0 \
-    --hash=sha256:0a3379add94953db2dc736839bbafb0c624f6bec69caf13e44353d906c253981 \
-    --hash=sha256:410281f4b9fa6422ccc465e5e531a00d69c6f589c743134e77c23fefc3e5cb4f
+anthropic==2.10.0 \
+    --hash=sha256:1b91b2b4aa2bab44db8712e8a9053454bcff6daa3e6f5f11d85dc38b37d0a2a3 \
+    --hash=sha256:6f3ffbdc6eb0a09a197be2eabdc62b8395a13d692710b8cdfa0393a80b355585
     # via -r requirements.txt
 anyio==4.16.0 \
     --hash=sha256:59bb03251907983d1603d27c3087ddb1e93299ea2163adcdba37899a4fb12ffb \
@@ -1713,9 +1713,9 @@ pyotp==2.12.0 \
     --hash=sha256:638ea37341567ec01277af3a16b682590d938f54f8ed3fb31963513233fd05f2 \
     --hash=sha256:d66830ab614e857c1e1b810b80384bcf7d437972f1e96625686e128e2e17ff83
     # via -r requirements.txt
-python-dateutil==2.9.0.post0 \
-    --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
-    --hash=sha256:a8b2bc7bffae282281c8140a97d3aa9c14da0b136dfe83f850eea9a5f7470427
+python-dateutil==3.0.0 \
+    --hash=sha256:3c79630202e4152c6add678446984236efe4f57e84d8e892aab0637bab82e9fd \
+    --hash=sha256:7ebcb3c29a92f3ceafe79a7a48a5c45677e9e004bbeec5742ac0bbb00560b7a2
     # via
     #   -r requirements.txt
     #   pandas
@@ -2047,6 +2047,7 @@ tzdata==2026.6 \
     # via
     #   -r requirements.txt
     #   pandas
+    #   python-dateutil
 uvicorn==0.54.0 \
     --hash=sha256:505bdb0f318731d45f1f712071fc781a8981f6847a31c902c9f5e652d4f67faf \
     --hash=sha256:a2e33cbfaa0306f8e6b0c13e0cb89d7d7a2da3e62b90c66e18c33d9807b28620
