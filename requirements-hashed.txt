@@ -183,9 +183,9 @@ alembic==1.20.1 \
     --hash=sha256:83490def1f723413db5096591f7609ac52544805be93849170088ed04f5a2e0b \
     --hash=sha256:9970712cfb81ea26c8658d378aaa5b8f6ff9146e5bb111d70497c164016cf598
     # via -r requirements.txt
-annotated-doc==0.0.6 \
-    --hash=sha256:361ca0950cc7082f53fa69e9328409f40a62c61e57e0a47e1825a08078a58a53 \
-    --hash=sha256:7969bb69912085b2285849c0dcac0b4b374fd180c13cf10a87f284ffcf347bbf
+annotated-doc==0.0.7 \
+    --hash=sha256:0a30ef8f5322a4173720ae6712dc9a5e58f5a19868f3f167b4b5778db066c2b5 \
+    --hash=sha256:6bc31bbbec6dfaaedc1676dbc11dbda96fe22a2b5c400e9ebad113fec44a9dc6
     # via fastapi
 annotated-types==0.8.0 \
     --hash=sha256:13b2beaad985e05e2d6407ee4c4f35590b11f8d693a258a561055cac8f64cab7 \
@@ -193,9 +193,9 @@ annotated-types==0.8.0 \
     # via
     #   -r requirements.txt
     #   pydantic
-anthropic==2.9.0 \
-    --hash=sha256:0a3379add94953db2dc736839bbafb0c624f6bec69caf13e44353d906c253981 \
-    --hash=sha256:410281f4b9fa6422ccc465e5e531a00d69c6f589c743134e77c23fefc3e5cb4f
+anthropic==2.12.0 \
+    --hash=sha256:571e6d250bcd6bbaf5fd5f3c764b8e11af9901ad2e44b025f8e773c6cc7a7173 \
+    --hash=sha256:8631e3880ee18b0f87ce61d5d08e67804200463cf27c4182024715e232c99ba6
     # via -r requirements.txt
 anyio==4.16.0 \
     --hash=sha256:59bb03251907983d1603d27c3087ddb1e93299ea2163adcdba37899a4fb12ffb \
@@ -1709,9 +1709,9 @@ pyjwt==2.15.1 \
     --hash=sha256:42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193 \
     --hash=sha256:4f259e80cdfb6b3fc18a7de51fd1ef9ec79652f25019bae68975ca2468a34df8
     # via -r requirements.txt
-pyotp==2.12.0 \
-    --hash=sha256:638ea37341567ec01277af3a16b682590d938f54f8ed3fb31963513233fd05f2 \
-    --hash=sha256:d66830ab614e857c1e1b810b80384bcf7d437972f1e96625686e128e2e17ff83
+pyotp==2.12.1 \
+    --hash=sha256:2f65978d0a0afe5588ec960c810cbb974ba1957ffbf29775d8d4e1b2d4b8984c \
+    --hash=sha256:8d0c4192f3c5d1b1a8792df23b9d8acbb7e70abd2b160962af55c5700edbd236
     # via -r requirements.txt
 python-dateutil==2.9.0.post0 \
     --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
