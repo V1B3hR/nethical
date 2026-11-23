@@ -183,9 +183,9 @@ alembic==1.20.1 \
     --hash=sha256:83490def1f723413db5096591f7609ac52544805be93849170088ed04f5a2e0b \
     --hash=sha256:9970712cfb81ea26c8658d378aaa5b8f6ff9146e5bb111d70497c164016cf598
     # via -r requirements.txt
-annotated-doc==0.0.6 \
-    --hash=sha256:361ca0950cc7082f53fa69e9328409f40a62c61e57e0a47e1825a08078a58a53 \
-    --hash=sha256:7969bb69912085b2285849c0dcac0b4b374fd180c13cf10a87f284ffcf347bbf
+annotated-doc==0.0.7 \
+    --hash=sha256:0a30ef8f5322a4173720ae6712dc9a5e58f5a19868f3f167b4b5778db066c2b5 \
+    --hash=sha256:6bc31bbbec6dfaaedc1676dbc11dbda96fe22a2b5c400e9ebad113fec44a9dc6
     # via fastapi
 annotated-types==0.8.0 \
     --hash=sha256:13b2beaad985e05e2d6407ee4c4f35590b11f8d693a258a561055cac8f64cab7 \
@@ -193,9 +193,9 @@ annotated-types==0.8.0 \
     # via
     #   -r requirements.txt
     #   pydantic
-anthropic==2.9.0 \
-    --hash=sha256:0a3379add94953db2dc736839bbafb0c624f6bec69caf13e44353d906c253981 \
-    --hash=sha256:410281f4b9fa6422ccc465e5e531a00d69c6f589c743134e77c23fefc3e5cb4f
+anthropic==2.13.0 \
+    --hash=sha256:966718543d354aae57cba5b8b5693491b9538a55ac8d83d3ddc54448ae8f58e7 \
+    --hash=sha256:b9f61dc45a9630108f96135ecb726ffe1a6fd1f70dd2c9db5621eaaca62c16ec
     # via -r requirements.txt
 anyio==4.16.0 \
     --hash=sha256:59bb03251907983d1603d27c3087ddb1e93299ea2163adcdba37899a4fb12ffb \
@@ -331,9 +331,9 @@ cachetools==7.2.7 \
     --hash=sha256:88e6b53373a96786d20894fed9ce623ae5b73cbc07421b7a73098db088be69ae \
     --hash=sha256:e2154c809ce9e1247120258c36821467597b5663d44c3255a9790785f23c2b1e
     # via -r requirements.txt
-certifi==2026.10.23 \
-    --hash=sha256:a9895e6e2758b371e0545e321a3a8fd1fcfd9829ada8824a936dfb16aaaf36cd \
-    --hash=sha256:e9b54de76e530bb6cf0ccd036787103acb58fd42ba930ea8bf948ddbaa2f61d1
+certifi==2026.11.20 \
+    --hash=sha256:7422df25243767b9877031a2248cb14d09ddac9beee846f4cef3d5c9191d488f \
+    --hash=sha256:af1cb240a8133f105aa52684a3a3258339d7f2fd0bd4e2812698ff5cf5588c4e
     # via
     #   -r requirements.txt
     #   httpcore
@@ -1316,9 +1316,9 @@ opentelemetry-api==1.45.2 \
     # via
     #   anthropic
     #   fastapi
-packaging==26.3 \
-    --hash=sha256:94edc256424af38762eb31306eed28beb9f0efc50a8837492c9d6fd6004aed79 \
-    --hash=sha256:d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c
+packaging==26.4 \
+    --hash=sha256:81383611a09c1bc0b08b76e0fd5829d7c6824c65b27a6aee339da133f4233ea2 \
+    --hash=sha256:c4b671c41ddb9bf26e543c37723610d28fb6bf7affc4da17cf048d419d2c062a
     # via marshmallow
 pandas==2.3.3 \
     --hash=sha256:0242fe9a49aa8b4d78a4fa03acb397a58833ef6199e9aa40a95f027bb3a1b6e7 \
@@ -1377,9 +1377,9 @@ pandas==2.3.3 \
     --hash=sha256:f086f6fe114e19d92014a1966f43a3e62285109afe874f067f5abbdcbb10e59c \
     --hash=sha256:f8bfc0e12dc78f777f323f55c58649591b2cd0c43534e8355c51d3fede5f4dee
     # via -r requirements.txt
-passlib[bcrypt]==1.7.4 \
-    --hash=sha256:aa6bca462b8d8bda89c70b382f0c298a20b5560af6cbfa2dce410c0a2fb669f1 \
-    --hash=sha256:defd50f72b65c5402ab2c573830a6978e5f202ad0d984793c8dde2c4152ebe04
+passlib[bcrypt]==1.9.5 \
+    --hash=sha256:15d39a9b2044a86f341a2e443170e4e9a6d71fe0266fe28b91032a8ca723f8aa \
+    --hash=sha256:c9dac9b4c56322a2b386f8d7d5d2f5056a20ed21c491a7ff24f0b2747f57c28e
     # via -r requirements.txt
 prometheus-client==0.26.0 \
     --hash=sha256:04a91bcf94e2cf74a44a1a874d651a2e853ed354b6e822f3b7487751465d5c2b \
@@ -1709,9 +1709,9 @@ pyjwt==2.15.1 \
     --hash=sha256:42d59d631f7768a1028a64c7ff581a9bf7519804daf91fc5b6c56e30eec5e193 \
     --hash=sha256:4f259e80cdfb6b3fc18a7de51fd1ef9ec79652f25019bae68975ca2468a34df8
     # via -r requirements.txt
-pyotp==2.12.0 \
-    --hash=sha256:638ea37341567ec01277af3a16b682590d938f54f8ed3fb31963513233fd05f2 \
-    --hash=sha256:d66830ab614e857c1e1b810b80384bcf7d437972f1e96625686e128e2e17ff83
+pyotp==2.12.1 \
+    --hash=sha256:2f65978d0a0afe5588ec960c810cbb974ba1957ffbf29775d8d4e1b2d4b8984c \
+    --hash=sha256:8d0c4192f3c5d1b1a8792df23b9d8acbb7e70abd2b160962af55c5700edbd236
     # via -r requirements.txt
 python-dateutil==2.9.0.post0 \
     --hash=sha256:37dd54208da7e1cd875388217d5e00ebd4179249f90fb72437e91a35459a0ad3 \
