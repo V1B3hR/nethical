@@ -97,7 +97,7 @@ jobs:
 
       - name: Create alerts if drift detected
         if: steps.check-models.outputs.models-exist == 'true' && steps.drift-check.outputs.drift-detected == 'true'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const fs = require('fs');
@@ -149,7 +149,7 @@ jobs:
 
       - name: Auto-trigger retraining if needed
         if: steps.check-models.outputs.models-exist == 'true' && steps.drift-check.outputs.drift-detected == 'true'
-        uses: actions/github-script@f28e40c7f34bde8b3046d885e986cb6290c5673b # v7.0.1
+        uses: actions/github-script@3a2844b7e9c422d3c10d287c895573f7108da1b3 # v9.0.0
         with:
           script: |
             const driftScore = parseFloat('${{ steps.drift-check.outputs.drift-score }}');
@@ -184,7 +184,7 @@ jobs:
 
       - name: Upload monitoring results
         if: always() && steps.check-models.outputs.models-exist == 'true'
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4.6.2
+        uses: actions/upload-artifact@cf430e030ddbb5b0abf93d22962f4752f3646cd9 # v7.0.2
         with:
           name: monitoring-results-${{ github.run_number }}
           path: |
