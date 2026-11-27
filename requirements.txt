@@ -14,14 +14,14 @@ argon2-cffi==25.1.0
 # Web server framework (optional - for API server)
 fastapi==0.162.5
 uvicorn==0.54.0
-cachetools==7.2.7
+cachetools==7.3.0
 httpx>=0.27.0
 # Note: sse-starlette was removed due to incompatible starlette version requirements.
 # fastapi is updated to 0.121.0 which uses starlette 0.40.0+ (avoiding CVE in < 0.40.0).
 # SSE functionality is not currently used in the codebase.
 
 # Data validation and serialization
-pydantic==2.14.3
+pydantic==2.14.4
 typing-extensions==4.16.0
 dataclasses-json==0.6.7
 
@@ -30,15 +30,15 @@ numpy>=1.26.0,<2.3.0
 pandas>=2.0.0,<2.4.0
 
 # Configuration and data formats
-PyYAML==6.0.3
+PyYAML==6.0.4
 jsonschema>=4.19.0,<5.0.0
 
 # Security
-certifi>=2026.10.19
+certifi>=2026.11.20
 cryptography>=50.0.0
 defusedxml==0.7.1
-PyJWT>=2.0.0
-passlib[bcrypt]>=1.7.4
+PyJWT>=2.15.0
+passlib[bcrypt]>=1.7.4,<1.8
 pyotp>=2.9.0
 
 # Database
@@ -63,13 +63,14 @@ httpx2<2.15.0
 jiter<0.19.0
 multidict<7.2.0
 pycparser<3.12
+annotated-doc<0.0.7
 # Pin starlette to the range fastapi 0.121.0 supports for reproducibility and security.
 # This explicit pin ensures builds remain consistent even if fastapi's range allows
 # multiple versions. Update this when updating fastapi.
 starlette>=1.7.0,<1.8.0
 
 # LLM Integration SDKs (optional - for specific integrations)
-anthropic>=1.8.0  # For Claude/Anthropic integration
+anthropic>=2.13.0  # For Claude/Anthropic integration
 
 # Optional LangChain integration (uncomment if needed; then re-run pip-compile)
 # langchain>=0.1.0
@@ -77,7 +78,7 @@ anthropic>=1.8.0  # For Claude/Anthropic integration
 
 # Monitoring and observability
 prometheus-client>=0.26.0  # Prometheus metrics export
-aiohttp>=3.14.3  # Async HTTP for metrics server and webhooks
+aiohttp>=3.14.4  # Async HTTP for metrics server and webhooks
 psutil>=5.9.0  # System limits and resource profiling
 
 # Optional performance dependencies (uncomment if needed; then re-run pip-compile)

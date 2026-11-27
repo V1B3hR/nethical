@@ -42,7 +42,7 @@ jobs:
           pip install --require-hashes -r requirements-tools-hashed.txt
 
       - name: Run Gitleaks (Secrets Scanning)
-        uses: gitleaks/gitleaks-action@ff98106e4c7b2bc287b24eaf42907196329070c7 # v2.3.8
+        uses: gitleaks/gitleaks-action@e0c47f4f8be36e29cdc102c57e68cb5cbf0e8d1e # v3.0.0
         with:
           args: --redact --verbose
         env:
@@ -184,7 +184,7 @@ jobs:
 
       - name: Run Grype (Container Scan)
         if: success() && steps.docker_build.outcome == 'success'
-        uses: anchore/scan-action@64a33b277ea7a1215a3c142735a1091341939ff5 # v4.1.2
+        uses: anchore/scan-action@27805bf3b4e84b4a5c980df22ed233c00390a439 # v7.4.2
         with:
           image: 'nethical:security-scan'
           fail-build: false
@@ -279,7 +279,7 @@ jobs:
     steps:
       - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
       - name: Run Checkov (IaC Security)
-        uses: bridgecrewio/checkov-action@c3e106d5f8f4253a6de5110efb41a080f83db294 # master
+        uses: bridgecrewio/checkov-action@45edc9d8856b664db2ec251f5f8632361f0a67aa # master
         with:
           directory: deploy/
           soft_fail: true
